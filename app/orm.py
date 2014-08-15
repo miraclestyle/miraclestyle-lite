@@ -157,10 +157,10 @@ def get_multi_combined_clean(*args, **kwargs):
 
 
 def get_multi_clean(*args, **kwargs):
-  '''
-    This function will retrieve clean list of entities.
-    This is because get_multi can return None if key is not found.
-    This is mainly used for retriving data that does not need consistency of actual values.
+  '''This function will retrieve clean list of entities.
+  This is because get_multi can return None if key is not found.
+  This is mainly used for retriving data that does not need consistency of actual values.
+  
   '''
   entities = get_multi(*args, **kwargs)
   util.remove_value(entities)
@@ -168,22 +168,22 @@ def get_multi_clean(*args, **kwargs):
 
 
 def get_async_results(*args, **kwargs):
-  '''
-    It will mutate futures list into results after its done retrieving data.
-    This is mainly for making shorthands.
-    instead of
-    async_entities1 = get_multi_async(..)
-    entities1 = [future.get_result() for future in async_entities1]
-    async_entities2 = get_multi_async(..)
-    entities2 = [future.get_result() for future in async_entities2]
-    you write
-    entities1 = get_multi_async(..)
-    entities2 = get_multi_async(..)
-    get_async_results(entities1, entities2)
-    for entity in entities1:
-      ..
-    for entity in entities2:
-      ..
+  '''It will mutate futures list into results after its done retrieving data.
+  This is mainly for making shorthands.
+  instead of
+  async_entities1 = get_multi_async(..)
+  entities1 = [future.get_result() for future in async_entities1]
+  async_entities2 = get_multi_async(..)
+  entities2 = [future.get_result() for future in async_entities2]
+  you write
+  entities1 = get_multi_async(..)
+  entities2 = get_multi_async(..)
+  get_async_results(entities1, entities2)
+  for entity in entities1:
+  ..
+  for entity in entities2:
+  ..
+  
   '''
   if len(args) > 1:
     for set_of_futures in args:
@@ -191,7 +191,7 @@ def get_async_results(*args, **kwargs):
   elif not isinstance(args[0], list):
     raise ValueError('Futures must be a list, got %s' % args[0])
   futures = args[0]
-  Future.wait_all([future for future in futures if isinstance(future, Future) and not future.done()]) 
+  Future.wait_all([future for future in futures if isinstance(future, Future) and not future.done()])
   # calling in for loop future.get_result() vs Future.wait_all() was not tested if its faster but according to sdk
   # it appears that it will wait for every future to be completed in event loop
   entities = []
@@ -201,10 +201,10 @@ def get_async_results(*args, **kwargs):
     else:
       entities.append(future)
   if kwargs.get('remove', True):
-    util.remove_value(entities) # empty out the Nones
-  del futures[:] # this empties the list
+    util.remove_value(entities)  # empty out the Nones
+  del futures[:]  # this empties the list
   for entity in entities:
-    futures.append(entity) # and now we modify back the futures list
+    futures.append(entity)  # and now we modify back the futures list
 
 
 ################################################################
@@ -215,7 +215,7 @@ def get_async_results(*args, **kwargs):
 class _BaseModel(object):
   '''This is base class for all model types in the application.
   Every ndb model will always evaluate True on isinstance(entity, Model).
-
+  
   the following attribute names are reserved by the Model class in our ORM + ndb api.
   
   _Model__get_arg
@@ -408,7 +408,7 @@ class _BaseModel(object):
     self._search_documents_delete = []
     for key in self.get_fields():
         self.add_output(key)
-
+  
   def __repr__(self):
     original = 'No, '
     if hasattr(self, '_original') and self._original is not None:
@@ -440,15 +440,14 @@ class _BaseModel(object):
     return cls.__name__
   
   def _check_initialized(self):
-    """Internal helper to check for uninitialized properties.
-
+    '''Internal helper to check for uninitialized properties.
     Raises:
-      BadValueError if it finds any.
-    """
+    BadValueError if it finds any.
+    
+    '''
     baddies = self._find_uninitialized()
     if baddies:
-      raise datastore_errors.BadValueError(
-        'Entity %s has uninitialized properties: %s' % (self, ', '.join(baddies)))  
+      raise datastore_errors.BadValueError('Entity %s has uninitialized properties: %s' % (self, ', '.join(baddies)))
   
   @classmethod
   def get_kind(cls):
@@ -548,10 +547,10 @@ class _BaseModel(object):
     if key:
       entity = key.get()
       if entity is None:
-        return # already deleted, nothing we can do about it
+        return  # Already deleted, nothing we can do about it.
       entity.record()
       for field_key, field in entity.get_fields().iteritems():
-        # we have to check here if it has struct
+        # We have to check here if it has struct.
         if hasattr(field, 'is_structured') and field.is_structured:
           value = getattr(entity, field_key, None)
           if isinstance(value, SuperPropertyManager):
@@ -749,7 +748,7 @@ class _BaseModel(object):
   def _rule_read(cls, permissions, entity, field_key, field):  # @todo Not sure if this should be class method, but it seamed natural that way!?
     '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
     Otherwise go one level down and check again.
-
+    
     '''
     if (not field_key in permissions) or (not permissions[field_key]['visible']):
       entity.remove_output(field_key)
@@ -787,10 +786,10 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    # @todo this is the problem with catalog dates...
+    # @todo This is the problem with catalog dates...
     if (field_value is None and isinstance(field, SuperDateTimeProperty)) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
       return
-    if (field_key in permissions):  # @todo How this affects the outcome?? @answer it means that the rule engine will only run on fields that have specification in permissions
+    if (field_key in permissions):  # @todo How this affects the outcome?? @answer it means that the rule engine will only run on fields that have specification in permissions.
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       if not hasattr(field, 'is_structured') or not field.is_structured:
         if not permissions[field_key]['writable']:
@@ -819,7 +818,6 @@ class _BaseModel(object):
             util.log('RuleWrite: revert %s.%s = %s' % (entity.__class__.__name__, field._code_name, field_value))
             setattr(entity, field_key, field_value) # revert entire structure
           return
-         
         if field._repeated:
           # field_value can be none, and below we iterate it
           # @note field_value can be None. In that case field_value_mapping will remain empty dict
@@ -902,7 +900,7 @@ class _BaseModel(object):
   def _rule_reset(cls, entity):
     '''This method builds dictionaries that will hold permissions inside
     entity object.
-
+    
     '''
     entity._action_permissions = {}
     entity._field_permissions = {}
@@ -986,7 +984,7 @@ class _BaseModel(object):
   def rule_prepare(self, global_permissions, local_permissions=None, strict=False, **kwargs):
     '''This method generates permissions situation for the entity object,
     at the time of execution.
-
+    
     '''
     if local_permissions is None:
       local_permissions = []
@@ -1072,7 +1070,7 @@ class _BaseModel(object):
           value = field._get_value(self, internal=True)
           value.read_async() # for super-reference we always just call read_async() we do not pack it for future.get_result()
     for future, field_read_arguments in futures:
-      future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future. 
+      future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
     self.make_original()  # Finalize original before touching anything.
   
@@ -1266,7 +1264,7 @@ class _BaseModel(object):
         scan(self, field_key, field, value_options)
       self._next_read_arguments = value_options
       return self._next_read_arguments
-          
+  
   def add_output(self, names):
     if not isinstance(names, (list, tuple)):
       names = [names]
@@ -1462,7 +1460,7 @@ class BasePolyExpando(BasePoly, BaseExpando):
 ########## Superior Property Managers. ##########
 #################################################
 
-# Repository of all managers available
+# Repository of all managers available.
 PROPERTY_MANAGERS = []
 
 class SuperPropertyManager(object):
@@ -1474,8 +1472,9 @@ class SuperPropertyManager(object):
   
   def __repr__(self):
     return '%s(entity=instance of %s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__,
-                                                                       self._entity.__class__.__name__, self._property.__class__.__name__,
-                                                                       self.value, self._kwds)
+                                                                                   self._entity.__class__.__name__,
+                                                                                   self._property.__class__.__name__,
+                                                                                   self.value, self._kwds)
   
   @property
   def value(self):
@@ -1490,13 +1489,13 @@ class SuperPropertyManager(object):
     return name
   
   def _set_parent(self, entities=None):
-    '''
-     This function will be called on:
-      - set()
-      - read()
-      - duplicate()
-      and on every delete function because delete functions just query entities for deletation, not for storing it into
-      self._property_value, therefore the `entities` kwarg.
+    '''This function will be called on:
+    - set()
+    - read()
+    - duplicate()
+    and on every delete function because delete functions just query entities for deletation, not for storing it into
+    self._property_value, therefore the `entities` kwarg.
+    
     '''
     if entities is None:
       entities = self.value
@@ -1585,7 +1584,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     '''Possible values of _storage variable can be: 'local', 'remote_single', 'remote_multi' values stored.
     'local' is a structured value stored in a parent entity.
     'remote_single' is a single child (fan-out) entity of the parent entity.
-    'remote_multi' is set of children entities of the parent entity, they are usualy accessed by ancestor query.    
+    'remote_multi' is set of children entities of the parent entity, they are usualy accessed by ancestor query.
     '''
     return self._property._storage  # @todo Prehaps _storage rename to _storage_type
   
@@ -1643,7 +1642,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     else:
       if self._property._repeated:
         self._property_value = []
-    
   
   def _read_remote_single(self, read_arguments=None):
     '''Remote single storage always follows the same pattern,
@@ -1807,7 +1805,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _pre_update_remote_multi(self):
     pass
- 
+  
   def _post_update_local(self):
     pass
   
@@ -1849,7 +1847,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       self._property_value.remove(delete_entity)
     delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
- 
+  
   def pre_update(self):
     if self._property._updateable:
       if self.has_value():
@@ -1951,10 +1949,10 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def _duplicate_remote_multi(self):
     self._duplicate_remote()
-    
+  
   def _duplicate_reference(self):
     pass
- 
+  
   def duplicate(self):
     '''Calls storage type specific duplicate function.
     
@@ -1962,6 +1960,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     duplicate_function = getattr(self, '_duplicate_%s' % self.storage_type)
     duplicate_function()
     self._set_parent()
+
 
 class SuperReferencePropertyManager(SuperPropertyManager):
   
@@ -2019,7 +2018,9 @@ class SuperReferencePropertyManager(SuperPropertyManager):
   def delete(self):
     self._property_value = None
 
+
 PROPERTY_MANAGERS.extend((SuperStructuredPropertyManager, SuperReferencePropertyManager))
+
 
 #########################################################
 ########## Superior properties implementation! ##########
@@ -2033,7 +2034,7 @@ class _BaseProperty(object):
   _value_filters = None
   _searchable = None
   _search_document_field_name = None
- 
+  
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
@@ -2137,14 +2138,12 @@ class _BaseProperty(object):
     return False
   
   def initialize(self):
-    '''
-      This function is called by io def init() to prepare the field for work.
-      This is mostly because of get_modelclass lazy-loading of modelclass.
-      
-      In order to allow proper loading of modelclass for structured properties for example, we must wait for all python
-      classes to initilize, so they are waiting for us in _kind_map.
-      
-      Only then we will be in able to pick out the model by its kind from _kind_map registry.
+    '''This function is called by io def init() to prepare the field for work.
+    This is mostly because of get_modelclass lazy-loading of modelclass.
+    In order to allow proper loading of modelclass for structured properties for example, we must wait for all python
+    classes to initilize, so they are waiting for us in _kind_map.
+    Only then we will be in able to pick out the model by its kind from _kind_map registry.
+    
     '''
     pass
 
@@ -2179,13 +2178,12 @@ class _BaseStructuredProperty(_BaseProperty):
     super(_BaseStructuredProperty, self).__init__(*args, **kwargs)
   
   def get_modelclass(self, **kwargs):
-    '''
-      Function that will attempt to lazy-set model if its kind id was specified.
-      If model could not be found it will raise an error. This function is used instead of directly accessing
-      self._modelclass in our code.
-      
-      This function was mainly invented for purpose of structured and multi structured property. See its usage
-      trough the code for reference.
+    '''Function that will attempt to lazy-set model if its kind id was specified.
+    If model could not be found it will raise an error. This function is used instead of directly accessing
+    self._modelclass in our code.
+    This function was mainly invented for purpose of structured and multi structured property. See its usage
+    trough the code for reference.
+    
     '''
     if isinstance(self._modelclass, basestring):
       # model must be scanned when it reaches this call
@@ -2223,7 +2221,6 @@ class _BaseStructuredProperty(_BaseProperty):
         raise PropertyError('invalid_manager_supplied')
       else:
         kwds['managerclass'] = possible_managers.get(kwds['managerclass'])
-      
   
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
@@ -2305,7 +2302,7 @@ class _BaseStructuredProperty(_BaseProperty):
         continue
       provided_kind_id = v.get('kind')
       fields = self.get_model_fields(kind=provided_kind_id)
-      v.pop('class_', None) # never allow class_ or any read-only property to be set for that matter.
+      v.pop('class_', None)  # Never allow class_ or any read-only property to be set for that matter.
       self._structured_property_field_format(fields, v)
       modelclass = self.get_modelclass(kind=provided_kind_id)
       entity = modelclass(**v)
@@ -2322,7 +2319,7 @@ class _BaseStructuredProperty(_BaseProperty):
     return True
   
   def initialize(self):
-    self.get_modelclass() # enforce premature loading of lazy-set model logic to prevent errors.
+    self.get_modelclass()  # Enforce premature loading of lazy-set model logic to prevent errors.
 
 
 class BaseProperty(_BaseProperty, Property):
@@ -2346,28 +2343,23 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
   _kinds = None
   
   def __init__(self, *args, **kwargs):
-    '''
-      So basically:
-      
-      argument: SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself))
-      will allow instancing of both 51 and 21 that is provided from the input.
-      
-      This property should not be used for datastore. Its specifically used for arguments.
-      Currently we do not have the code that would allow this to be saved in datastore:
-      
-      Entity.images
-              => Image
-              => OtherTypeOfImage
-              => AnotherTypeOfImage
-              
-      We only support
-      
-      Entity.images
-            => Image
-            => Image
-            => Image
-      In order to support different instances in the repeated list we would also need to store KIND and implement 
-      additional logic that will load proper model based on protobuff.
+    '''So basically:
+    argument: SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself))
+    will allow instancing of both 51 and 21 that is provided from the input.
+    This property should not be used for datastore. Its specifically used for arguments.
+    Currently we do not have the code that would allow this to be saved in datastore:
+    Entity.images
+    => Image
+    => OtherTypeOfImage
+    => AnotherTypeOfImage
+    We only support
+    Entity.images
+    => Image
+    => Image
+    => Image
+    In order to support different instances in the repeated list we would also need to store KIND and implement
+    additional logic that will load proper model based on protobuff.
+    
     '''
     args = list(args)
     if isinstance(args[0], (tuple, list)):
@@ -2441,7 +2433,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       return search.TextField(name=self.search_document_field_name, value=value)
     else:
       return search.DateField(name=self.search_document_field_name, value=value)
-    
+  
   def get_meta(self):
     dic = super(SuperDateTimeProperty, self).get_meta()
     dic['auto_now'] = self._auto_now
@@ -3199,7 +3191,7 @@ class SuperReferenceProperty(SuperKeyProperty):
       return manager
     else:
       return manager.read()
-    
+  
   def get_output(self):
     dic = super(SuperReferenceProperty, self).get_meta()
     other = ['_target_field', '_readable', '_updateable', '_deleteable',  '_autoload',  '_store_key']
@@ -3240,43 +3232,36 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
         raise PropertyError('Could not locate model with kind %s' % self._modelclass2)
       else:
         self._modelclass2 = set_modelclass2
-        
-        
+
+
 class SuperPropertyStorageProperty(SuperPickleProperty):
-  
-  '''
-    This property is used to store instances of properties to the datastore pickled.
-    
-    Incoming data should be formatted exactly as properties get_output function e.g.
-    {
-      "searchable": null, 
-      "repeated": false, 
-      "code_name": "serving_url", 
-      "search_document_field_name": null, 
-      "max_size": null, 
-      "name": "serving_url", # note the friendly name used, this is intentional since all the names will be user-supplied 
-      "default": null, 
-      "type": "SuperStringProperty", 
-      "required": true, 
-      "is_structured": false, 
-      "choices": null, 
+  '''This property is used to store instances of properties to the datastore pickled.
+  Incoming data should be formatted exactly as properties get_output function e.g.
+  {
+      "searchable": null,
+      "repeated": false,
+      "code_name": "serving_url",
+      "search_document_field_name": null,
+      "max_size": null,
+      "name": "serving_url", # note the friendly name used, this is intentional since all the names will be user-supplied
+      "default": null,
+      "type": "SuperStringProperty",
+      "required": true,
+      "is_structured": false,
+      "choices": null,
       "verbose_name": null
-    }
-    
-    the config should be a list of property instances like so:
-    
-    JOURNAL_FIELDS = ((orm.SuperStringProperty(default_keyword_here=True, default_keyword2=False...), 
+  }
+  the config should be a list of property instances like so:
+  JOURNAL_FIELDS = ((orm.SuperStringProperty(default_keyword_here=True, default_keyword2=False...),
                           (... list of kwargs that cannot be set by user...),
                                (... kwargs that are implicitly required -- by default
                                  all kwargs found in property are required.)),  ... ))
- 
-    
-  '''
   
+  '''
   def __init__(self, *args, **kwargs):
     self._cfg = kwargs.pop('cfg', None)
     super(SuperPropertyStorageProperty, self).__init__(*args, **kwargs)
-    
+  
   def get_meta(self):
     dic = super(SuperPropertyStorageProperty, self).get_meta()
     dic['cfg'] = self._cfg
@@ -3318,8 +3303,8 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
         kwds.pop(bogus, None)
       out[kwds['name']] = field.__class__(**kwds)
     return out
-    
-    
+
+
 class SuperPluginStorageProperty(SuperPickleProperty):
   
   _kinds = None
@@ -3377,7 +3362,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       entity = modelclass(**v)
       out.append(entity)
     return out
-
+  
   def get_modelclass(self, kind):
     if self._kinds and kind:
       if kind:
@@ -3395,7 +3380,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
   
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
-
+  
   def get_meta(self):
     out = super(SuperPluginStorageProperty, self).get_meta()
     out['kinds'] = self._kinds
