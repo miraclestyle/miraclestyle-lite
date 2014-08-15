@@ -163,7 +163,7 @@ class Engine:
       value = input.get(key, util.Nonexistent)
       if argument and hasattr(argument, 'argument_format'):
         try:
-          value = argument.argument_format(value)
+          value = argument.value_format(value)
           if value is util.Nonexistent:
             continue  # If the formatter returns util.Nonexistent, that means we have to skip setting context.input[key] = value.
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by orm.

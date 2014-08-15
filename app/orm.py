@@ -1462,6 +1462,8 @@ class BasePolyExpando(BasePoly, BaseExpando):
 ########## Superior Property Managers. ##########
 #################################################
 
+# Repository of all managers available
+PROPERTY_MANAGERS = []
 
 class SuperPropertyManager(object):
   
@@ -1669,7 +1671,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
       cursor = None
     elif supplied_keys:
-      entities = get_multi_clean(SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).argument_format(supplied_keys))
+      entities = get_multi_clean(SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys))
       cursor = None
     else:
       query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -1961,7 +1963,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     duplicate_function()
     self._set_parent()
 
-
 class SuperReferencePropertyManager(SuperPropertyManager):
   
   def set(self, value):
@@ -2018,6 +2019,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
   def delete(self):
     self._property_value = None
 
+PROPERTY_MANAGERS.append(SuperStructuredPropertyManager, SuperReferencePropertyManager)
 
 #########################################################
 ########## Superior properties implementation! ##########
@@ -2048,6 +2050,7 @@ class _BaseProperty(object):
     if choices:
       choices = list(self._choices)
     dic = {'verbose_name': self._verbose_name,
+           'indexed': self._indexed,
            'name': self._name,
            'code_name': self._code_name,
            'required': self._required,
@@ -2142,6 +2145,8 @@ class _BaseStructuredProperty(_BaseProperty):
     self._autoload = kwargs.pop('autoload', self._autoload)
     self._storage_config = kwargs.pop('storage_config', {})
     self._read_arguments = kwargs.pop('read_arguments', {})
+    if self._managerclass is None:
+      self._managerclass = SuperStructuredPropertyManager
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
@@ -2175,7 +2180,9 @@ class _BaseStructuredProperty(_BaseProperty):
     '''
     dic = super(_BaseStructuredProperty, self).get_meta()
     dic['modelclass'] = self.get_modelclass().get_fields()
-    other = ['_autoload', '_readable', '_updateable', '_deleteable', '_storage']
+    dic['modelclass_kind'] = self.get_modelclass().get_kind()
+    dic['managerclass'] = self._managerclass.__name__
+    other = ['_autoload', '_readable', '_updateable', '_deleteable', '_storage', '_read_arguments']
     for o in other:
       dic[o[1:]] = getattr(self, o)
     return dic
@@ -2183,7 +2190,7 @@ class _BaseStructuredProperty(_BaseProperty):
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
   
-  def argument_format(self, value):
+  def value_format(self, value):
     return self._structured_property_format(value)
   
   def _set_value(self, entity, value):
@@ -2220,10 +2227,7 @@ class _BaseStructuredProperty(_BaseProperty):
       manager = entity._values[manager_name]
     else:
       #util.log('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
-      manager_class = SuperStructuredPropertyManager
-      if self._managerclass:
-        manager_class = self._managerclass
-      manager = manager_class(property_instance=self, storage_entity=entity)
+      manager = self._managerclass(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     super(_BaseStructuredProperty, self)._get_value(entity)
     return manager
@@ -2236,7 +2240,7 @@ class _BaseStructuredProperty(_BaseProperty):
       field = fields.get(value_key)
       if field:
         if hasattr(field, 'argument_format'):
-          val = field.argument_format(value)
+          val = field.value_format(value)
           if val is util.Nonexistent:
             del values[value_key]
           else:
@@ -2363,7 +2367,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2372,7 +2376,7 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
 
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2398,7 +2402,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2417,7 +2421,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
 
 class SuperTextProperty(_BaseProperty, TextProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2434,7 +2438,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 
 class SuperStringProperty(_BaseProperty, StringProperty):
   
-  def argument_format(self, value): # this would be called argument_format
+  def value_format(self, value): # this would be called argument_format
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2451,7 +2455,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2469,7 +2473,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2494,7 +2498,7 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
   If key existence feature isn't required, SuperVirtualKeyProperty() can be used in exchange.
   
   '''
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2538,7 +2542,7 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
   provided urlsafe key into a ndb.Key.
   
   '''
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2563,10 +2567,10 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
 
 class SuperKeyFromPathProperty(SuperKeyProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     try:
       # First it attempts to construct the key from urlsafe
-      return super(SuperKeyProperty, self).argument_format(value)
+      return super(SuperKeyProperty, self).value_format(value)
     except:
       # Failed to build from urlsafe, proceed with KeyFromPath.
       value = self._property_value_format(value)
@@ -2597,7 +2601,7 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2617,7 +2621,7 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2650,7 +2654,7 @@ class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
 class SuperDecimalProperty(SuperStringProperty):
   '''Decimal property that accepts only decimal.Decimal.'''
   
-  def argument_format(self, value):
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2699,7 +2703,7 @@ class SuperSearchProperty(SuperJsonProperty):
     }
     search = SuperSearchProperty(cfg=cfg)
     
-    Search values that are provided with input will be validated trough SuperSearchProperty().argument_format() function.
+    Search values that are provided with input will be validated trough SuperSearchProperty().value_format() function.
     Example of search values that are provided in input after processing:
     context.input['search'] = {'kind': '37',
                                'ancestor': 'fjdkahsekuarg4wi784wnvsxiu487',
@@ -2744,7 +2748,7 @@ class SuperSearchProperty(SuperJsonProperty):
     if ancestor is not None:
       ancestor_kind = self._cfg.get('ancestor_kind')
       if ancestor_kind is not None:
-        values['ancestor'] = SuperKeyProperty(kind=ancestor_kind, required=True).argument_format(ancestor)
+        values['ancestor'] = SuperKeyProperty(kind=ancestor_kind, required=True).value_format(ancestor)
       else:
         del values['ancestor']
   
@@ -2752,7 +2756,7 @@ class SuperSearchProperty(SuperJsonProperty):
     keys = values.get('keys')
     if keys is not None:
       if self._cfg.get('search_by_keys'):
-        values['keys'] = SuperKeyProperty(kind=values['kind'], repeated=True).argument_format(keys)
+        values['keys'] = SuperKeyProperty(kind=values['kind'], repeated=True).value_format(keys)
       else:
         del values['keys']
   
@@ -2816,7 +2820,7 @@ class SuperSearchProperty(SuperJsonProperty):
           input_field = input_filter['field']
           input_value = input_filter['value']
           cfg_field = cfg_filters[input_field]
-          input_filter['value'] = cfg_field.argument_format(input_value)
+          input_filter['value'] = cfg_field.value_format(input_value)
         success = True
         break
       except Exception as e:
@@ -2881,8 +2885,8 @@ class SuperSearchProperty(SuperJsonProperty):
       else:
         del options[value_key]
   
-  def argument_format(self, values):
-    values = super(SuperSearchProperty, self).argument_format(values)
+  def value_format(self, values):
+    values = super(SuperSearchProperty, self).value_format(values)
     values.update(self._cfg.get('search_arguments', {}))
     self._clean_format(values)
     self._kind_format(values)
@@ -3070,10 +3074,7 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
     if manager_name in entity._values:
       return entity._values[manager_name]
     #util.log('SuperStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
-    manager_class = SuperStructuredPropertyManager
-    if self._managerclass:
-      manager_class = self._managerclass
-    manager = manager_class(property_instance=self, storage_entity=entity)
+    manager = self._managerclass(property_instance=self, storage_entity=entity)
     entity._values[manager_name] = manager
     return manager
   
@@ -3219,8 +3220,8 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
     dic['cfg'] = self._cfg
     return dic
   
-  def argument_format(self, value):
-    value = super(SuperPropertyStorageProperty, self).argument_format(value)
+  def value_format(self, value):
+    value = super(SuperPropertyStorageProperty, self).value_format(value)
     if value is util.Nonexistent:
       return value
     out = collections.OrderedDict()
@@ -3243,7 +3244,7 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
           if not found_any:
             raise PropertyError('keyword_value_malformed')
         elif isinstance(kwd_definition, Property):
-          the_value = kwd_definition.argument_format(value)
+          the_value = kwd_definition.value_format(value)
         elif callable(kwd_definition):
           the_value = kwd_definition(self, value)
         if key == 'name':
@@ -3270,7 +3271,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
   
   # this is retarded, subclassing _BaseStructuredProperty, it has too much shit in it
   # we could try and make structured property field format class functions or public functions i dont know
-  def argument_format(self, value):
+  def value_format(self, value):
     return self._structured_property_format(value)
   
   def _structured_property_field_format(self, fields, values):
@@ -3281,7 +3282,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       field = fields.get(value_key)
       if field:
         if hasattr(field, 'argument_format'):
-          val = field.argument_format(value)
+          val = field.value_format(value)
           if val is util.Nonexistent:
             del values[value_key]
           else:

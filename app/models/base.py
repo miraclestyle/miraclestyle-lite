@@ -165,13 +165,15 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
         processed_value = self._property.process(self.value)
         setattr(self._entity, self.property_name, processed_value)
 
+# register new manager
+orm.PROPERTY_MANAGERS.append(SuperStructuredPropertyImageManager)
 
 class _BaseBlobProperty(object):
   '''Base helper class for blob-key-like orm properties.
   This property should be used in conjunction with orm Property baseclass, like so:
   class PDF(BaseBlobKeyInterface, orm.Property):
   ....
-  def argument_format(self, value):
+  def value_format(self, value):
   Example usage:
   new_file = gcs.open(value.path)
   new_file.write(..)
@@ -364,9 +366,9 @@ class _BaseImageProperty(_BaseBlobProperty):
       values = values[0]
     return values
   
-  def argument_format(self, value):
+  def value_format(self, value):
     if (self._repeated and (not len(value) or not isinstance(value[0], cgi.FieldStorage))) or (not self._repeated and not isinstance(value, cgi.FieldStorage)):
-      return super(_BaseImageProperty, self).argument_format(value)
+      return super(_BaseImageProperty, self).value_format(value)
     value = self._property_value_format(value)
     if value is Nonexistent:
       return value
