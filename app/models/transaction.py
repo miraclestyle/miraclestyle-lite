@@ -105,6 +105,7 @@ class Journal(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('49', [orm.Action.build_key('49', 'prepare'),
+                                  orm.Action.build_key('49', 'create'),
                                   orm.Action.build_key('49', 'read'),
                                   orm.Action.build_key('49', 'update'),
                                   orm.Action.build_key('49', 'delete'),
