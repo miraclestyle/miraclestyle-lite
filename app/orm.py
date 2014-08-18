@@ -2285,7 +2285,7 @@ class _BaseStructuredProperty(_BaseProperty):
       else:
         del values[value_key]
     if key:
-      values['key'] = Key(urlsafe=key)
+      values['key'] = Key(urlsafe=key) # will throw an error if key was malformed in any way.
     values['_state'] = _state  # Always keep track of _state for rule engine!
     if _sequence is not None:
       values['_sequence'] = _sequence
@@ -3545,10 +3545,12 @@ class Record(BaseExpando):
       kind = self.key_parent.kind()
       modelclass = self._kind_map.get(kind)
       # We cannot use entity.get_fields here directly as it returns 'friendly_field_name: prop', and we need 'prop._name: prop'.
+      # @todo @problem this is not going to work with either Line or Entry.
       properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().iteritems()])
       # Adds properties from parent class to the log entity making it possible to deserialize them properly.
       prop = properties.get(next)
       if prop:
+        prop = copy.deepcopy(prop)
         self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden!
         self._properties[next] = prop
         self.add_output(prop._code_name)  # Besides rule engine, this must be here as well.
@@ -3560,6 +3562,7 @@ class Record(BaseExpando):
       value = prop._get_value(entity)
       if isinstance(value, SuperPropertyManager):
         value = value.value
+      prop = copy.deepcopy(prop)
       self._properties[prop._name] = prop
       try:
         prop._set_value(self, value)

@@ -7,6 +7,22 @@ Created on Jul 8, 2014
 import unittest
 import random
 
+class Base():
+  
+  @classmethod
+  def out(cls):
+    print cls
+    
+class Sub(Base):
+  
+  def out(self):
+    Base.out.im_func(self)
+    
+d = Sub()
+d.out()
+
+exit()
+
 def yielder(a):
   yield a
 
@@ -29,7 +45,7 @@ class Tests():
     return False
   
 d = Tests()
-'''
+ 
 
 if d:
   print 'yes d'
@@ -37,7 +53,11 @@ if d:
 if not d:
   print 'not d'
   
-'''
+if d is d:
+  print 'yes'
+  
+exit()
+ 
   
 class Ba():
   
