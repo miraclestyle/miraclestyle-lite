@@ -57,26 +57,6 @@ class Context():
 class Engine:
   
   @classmethod
-  def init(cls):
-    '''This function initializes all models and its properties, so it must be called before executing anything!'''
-    from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing, transaction
-    for model_kind, model in orm.Model._kind_map.iteritems():
-      if hasattr(model, 'get_fields'):
-        try:
-          fields = model.get_fields()
-        except TypeError:  # Now, line and entry throw an error because get_fields is instance method.
-          continue
-        for field_key, field in fields.iteritems():
-          if hasattr(field, 'initialize'):
-            field.initialize()
-  
-  @classmethod
-  def get_schema(cls):
-    '''Calls init() and returns model structure as dict.'''
-    cls.init()
-    return orm.Model._kind_map
-  
-  @classmethod
   def process_blob_input(cls, input):
     uploaded_blobs = []
     for key, value in input.iteritems():
@@ -127,6 +107,26 @@ class Engine:
         if delete_blobs:
           util.log('DELETED %s BLOBS.' % len(delete_blobs))
           blobstore.delete(delete_blobs)
+  
+  @classmethod
+  def init(cls):
+    '''This function initializes all models and its properties, so it must be called before executing anything!'''
+    from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing, transaction
+    for model_kind, model in orm.Model._kind_map.iteritems():
+      if hasattr(model, 'get_fields'):
+        try:
+          fields = model.get_fields()
+        except TypeError:  # Now, line and entry throw an error because get_fields is instance method.
+          continue
+        for field_key, field in fields.iteritems():
+          if hasattr(field, 'initialize'):
+            field.initialize()
+  
+  @classmethod
+  def get_schema(cls):
+    '''Calls init() and returns model structure as dict.'''
+    cls.init()
+    return orm.Model._kind_map
   
   @classmethod
   def get_models(cls, context):
