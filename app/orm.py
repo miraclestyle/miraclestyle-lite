@@ -3292,11 +3292,15 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
           break
       if field is None:
         raise PropertyError('invalid_field_type_provided')
+      possible_kwargs = tuple(field.get_meta().keys())
       if required_kwargs is None:
-        required_kwargs = tuple(field.get_meta().keys())
+        required_kwargs = possible_kwargs
       for name in required_kwargs:
         if name not in kwds and name not in bogus_kwds:
           raise PropertyError('missing_keyword_%s' % name)
+      for name in kwds.iterkeys():
+        if name not in possible_kwargs:
+          raise PropertyError('unexpected_keyword_%s' % name)
       kwds['name'] = kwds.get('name') # @todo prefix for name
       field.property_keywords_format(kwds, skip_kwargs)
       for bogus in bogus_kwds:
