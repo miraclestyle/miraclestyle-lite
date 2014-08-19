@@ -29,10 +29,23 @@ MainApp.directive('outputconfig', ['$rootScope', function ($rootScope) {
                         };
                     },
                     'removeEntryField': function (field) {
-                        this.entity.entry_fields.remove(field);
+               
+                        var that = this;
+                        angular.forEach(this.entity.entry_fields, function (v, k) {
+                           if (v == arg)
+                           {
+                               delete that.entity.entry_fields[k];
+                           } 
+                        });
                     },
                     'removeLineField': function (field) {
-                        this.entity.line_fields.remove(field);
+                        var that = this;
+                        angular.forEach(that.entity.line_fields, function (v, k) {
+                           if (v == arg)
+                           {
+                               delete that.entity.line_fields[k];
+                           } 
+                        });
                     },
                      
                     'manageField': function (field, thing, config, what) {
@@ -47,8 +60,7 @@ MainApp.directive('outputconfig', ['$rootScope', function ($rootScope) {
                                     var new_content = field ? false : true;
                                     
                                     $scope.the_field = null;
-                                    
-                          
+                                     
                                     $scope.config = config;
                                     
                                     $scope.getTheField = function ()
@@ -95,11 +107,11 @@ MainApp.directive('outputconfig', ['$rootScope', function ($rootScope) {
                                             
                                             if (!thing[what])
                                             {
-                                               thing[what] = [];
-                                                
+                                               thing[what] = {};
                                             }
                                             
-                                            thing[what].push($scope.field);
+                                            thing[what][$scope.field.name] = $scope.field;
+                                            
                                          }
                                          else
                                          {
@@ -140,13 +152,19 @@ MainApp.directive('outputconfig', ['$rootScope', function ($rootScope) {
                     {
                         var info = KINDS.get(action_kind);
                         var config = info.fields['arguments']['cfg'];
-                        console.log(info, config);
                         return this.manageField(arg, this.child, config, 'arguments');
                     },
                     
                     'removeArgument' : function (arg)
                     {
-                        this.child.arguments.remove(arg);
+                        
+                        var that = this;
+                        angular.forEach(this.child.arguments, function (v, k) {
+                           if (v == arg)
+                           {
+                               delete that.child.arguments[k];
+                           } 
+                        });
                     }
                 };
             };

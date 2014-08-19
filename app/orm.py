@@ -2080,12 +2080,15 @@ class _BaseProperty(object):
         elif k in ('indexed', 'required', 'repeated', 'searchable'):
           v = bool(v)
         elif k == 'choices':
-          if not isinstance(v, list):
-            raise Property('expected_list_for_choices')
+          if v is not None:
+            if not isinstance(v, list):
+              raise PropertyError('expected_list_for_choices')
         elif k == 'default':
-          v = self.value_format(v) # default value must be acceptable by property value format standards
+          if v is not None:
+            v = self.value_format(v) # default value must be acceptable by property value format standards
         elif k == 'max_size':
-          v = int(v)
+          if v is not None:
+            v = int(v)
       kwds[k] = v
   
   def _property_value_validate(self, value):
@@ -3278,7 +3281,7 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
         return c[i]
       except IndexError:
         return d
-    for kwds in value:
+    for name, kwds in value.iteritems():
       field_type = kwds.get('type')
       field = None
       skip_kwargs = None

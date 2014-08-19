@@ -43,9 +43,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="argument in child.arguments track by $index" ng-hide="argument._state == 'deleted'">
-                        <td>{{argument.field}}</td>
-                        <td>{{argument.config}}</td>
+                    <tr ng-repeat="(k, argument) in child.arguments">
+                        <td>{{argument.type}}</td>
+                        <td>{{argument}}</td>
                         <td>
                             <span ng-show="rule.field._transaction_actions.arguments.writable">
                             <button type="button" ng-click="removeArgument(argument)" class="button">Remove</button>

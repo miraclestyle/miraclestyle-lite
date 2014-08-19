@@ -41,7 +41,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="entry_field in entity.entry_fields track by $index" ng-hide="entry_field._state == 'deleted'">
+                    <tr ng-repeat="(k, entry_field) in entity.entry_fields">
                         <td>{{entry_field.type}}</td>
                         <td>{{entry_field}}</td>
                         <td>
@@ -73,7 +73,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="line_field in entity.line_fields track by $index" ng-hide="line_field._state == 'deleted'">
+                    <tr ng-repeat="(k, line_field) in entity.line_fields">
                         <td>{{line_field.type}}</td>
                         <td>{{line_field}}</td>
                         <td>
@@ -144,7 +144,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="pg in entity._transaction_plugin_groups track by $index" ng-hide="pg._state == 'deleted'">
+                    <tr ng-repeat="pg in entity._transaction_plugin_groups track by $index">
                         <td>{{pg.name}}</td>
                         <td>{{pg.transactional}}</td>
                         <td>{{pg.active}}</td>

@@ -931,6 +931,36 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 	
                                 	    var entity_from_db = (options['entity_reader'] ? options['entity_reader']($scope, data) : data['entity']);
                                 	 	
+                                	 	if (data['errors'])
+                                        {
+    
+                                            angular.forEach(data['errors'], function (fields, actual_type) {
+                                                var type = 'invalid';
+                                                if (actual_type == 'required')
+                                                {
+                                                    type = actual_type;
+                                                }
+                                                if (type == 'required' || type == 'non_property_error')
+                                                {
+                                                    if (('container' in $scope)
+                                                         && ('main' in $scope.container))
+                                                    {
+                                                        angular.forEach(fields, function (field) {
+                                                            if (field in $scope.container.main)
+                                                            {
+                                                                $scope.container.main[field].$setValidity(type, true);
+                                                            }
+                                                            
+                                                        });
+                                                    }
+                                                    
+                                                }
+                                            });
+                                             
+                                            return false;
+                                        }
+                                	 	
+                                	 	
                                 	 	if (create)
                                 	 	{
                                 	 		action2 = pre_action2;
@@ -945,34 +975,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                 					    	$scope.history['args']['key'] = entity_from_db['key'];
                 					    }
                 					     
-                                		if (data['errors'])
-                                		{
-    
-                                			angular.forEach(data['errors'], function (fields, actual_type) {
-                                		 		var type = 'invalid';
-                                		 		if (actual_type == 'required')
-                                		 		{
-                                		 			type = actual_type;
-                                		 		}
-                                				if (type == 'required' || type == 'non_property_error')
-                                				{
-                                					if (('container' in $scope)
-                                					     && ('main' in $scope.container))
-                                					{
-                                						angular.forEach(fields, function (field) {
-                                							if (field in $scope.container.main)
-                                							{
-                                								$scope.container.main[field].$setValidity(type, true);
-                                							}
-                                							
-                                						});
-                                					}
-                                					
-                                				}
-                                			});
-                                			 
-                                			return false;
-                                		}
+                                		
                                 	  
                                         that.update_entity($scope, {'entity' : entity_from_db});
                                         
