@@ -31,7 +31,7 @@ class Meaning(object):
 
 
 Nonexistent = Meaning('Represents something that does not exist when built-in None cannot be used.')
-Nonexistent.__nonzero__ = lambda self: False # e.g. if not Nonexistent expr is always true
+Nonexistent.__nonzero__ = lambda self: False  # e.g. If not Nonexistent expression is always true.
 
 
 def remove_value(values, target=None):

@@ -27,12 +27,16 @@ class Template(orm.BasePolyExpando):
   
   _kind = 81
   
+  _use_rule_engine = False
+  
   _default_indexed = False
 
 
 class CustomTemplate(Template):
   
   _kind = 59
+  
+  _use_rule_engine = False
   
   message_recievers = orm.SuperPickleProperty('1', required=True, indexed=False)
   message_subject = orm.SuperStringProperty('2', required=True, indexed=False)
@@ -55,6 +59,8 @@ class CustomTemplate(Template):
 class MailTemplate(Template):
   
   _kind = 58
+  
+  _use_rule_engine = False
   
   message_reciever = orm.SuperKeyProperty('1', kind='60', required=True, indexed=False)  # All users that have this role.
   message_subject = orm.SuperStringProperty('2', required=True, indexed=False)
@@ -88,6 +94,8 @@ class MailTemplate(Template):
 class HttpTemplate(Template):
   
   _kind = 63
+  
+  _use_rule_engine = False
   
   message_reciever = orm.SuperStringProperty('1', required=True, indexed=False)
   message_subject = orm.SuperStringProperty('2', required=True, indexed=False)

@@ -16,6 +16,8 @@ class Address(orm.BaseExpando):
   
   _kind = 9
   
+  _use_rule_engine = False
+  
   internal_id = orm.SuperStringProperty('1', required=True, indexed=False)  # md5 hash => <timestamp>-<random_str>-<name>-<city>-<postal code>-<street>-<default_shipping>-<default_billing>
   name = orm.SuperStringProperty('2', required=True, indexed=False)
   country = orm.SuperKeyProperty('3', kind='15', required=True, indexed=False)

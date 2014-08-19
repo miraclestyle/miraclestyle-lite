@@ -94,6 +94,8 @@ class ProductContent(orm.BaseModel):
   
   _kind = 43
   
+  _use_rule_engine = False
+  
   title = orm.SuperStringProperty('1', required=True, indexed=False)
   body = orm.SuperTextProperty('2', required=True)
 
@@ -101,6 +103,8 @@ class ProductContent(orm.BaseModel):
 class ProductVariant(orm.BaseModel):
   
   _kind = 42
+  
+  _use_rule_engine = False
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   description = orm.SuperTextProperty('2')
@@ -147,6 +151,10 @@ class Product(orm.BaseExpando):
   
   _kind = 38
   
+  _use_rule_engine = False
+  
+  # _use_rule_engine = False Do we need this here??
+  
   product_category = orm.SuperKeyProperty('1', kind='17', required=True, searchable=True)
   name = orm.SuperStringProperty('2', required=True, searchable=True)
   description = orm.SuperTextProperty('3', required=True, searchable=True)  # Soft limit 64kb.
@@ -178,6 +186,8 @@ class CatalogPricetag(orm.BaseModel):
   
   _kind = 34
   
+  _use_rule_engine = False
+  
   product = orm.SuperKeyProperty('1', kind='38', required=True, indexed=False)
   image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
   image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
@@ -189,6 +199,8 @@ class CatalogPricetag(orm.BaseModel):
 class CatalogImage(Image):
   
   _kind = 36
+  
+  _use_rule_engine = False
   
   sequence = orm.SuperIntegerProperty('7', required=True, indexed=True)
   pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)

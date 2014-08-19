@@ -135,6 +135,8 @@ class UOM(orm.BaseExpando):
   
   _kind = 72  # @todo Perhaps this can be 18 since Measurement is gone!?
   
+  _use_rule_engine = False
+  
   measurement = orm.SuperStringProperty('1', required=True, indexed=False)
   name = orm.SuperStringProperty('2', required=True, indexed=False)
   symbol = orm.SuperStringProperty('3', required=True, indexed=False)

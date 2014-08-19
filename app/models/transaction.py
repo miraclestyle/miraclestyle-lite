@@ -4,6 +4,7 @@ Created on Jun 2, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 from google.appengine.ext.ndb.google_imports import entity_pb
 
 from app import orm, settings
@@ -27,6 +28,8 @@ class TransactionAction(orm.Action):
   
   _kind = 84
   
+  _use_rule_engine = False
+  
   arguments = orm.SuperPropertyStorageProperty('2', required=True, default={}, compressed=False, cfg=JOURNAL_FIELDS)
   
   @classmethod
@@ -39,6 +42,8 @@ class TransactionAction(orm.Action):
 class TransactionPluginGroup(orm.PluginGroup):
   
   _kind = 85
+  
+  _use_rule_engine = False
   
   subscriptions = orm.SuperKeyProperty('2', kind='84', repeated=True)
   plugins = orm.SuperPluginStorageProperty(('0',), '6', required=True, default=[], compressed=False)  # First arg is list of plugin kind ids that user can create, e.g. ('1', '2', '3').
@@ -345,6 +350,8 @@ class CategoryBalance(orm.BaseModel):
   
   _kind = 71
   
+  _use_rule_engine = False
+  
   from_date = orm.SuperDateTimeProperty('1', required=True, indexed=False)
   to_date = orm.SuperDateTimeProperty('2', required=True, indexed=False)
   debit = orm.SuperDecimalProperty('3', required=True, indexed=False)
@@ -578,62 +585,64 @@ class Category(orm.BaseExpando):
     category = self.query(self.parent_record == self.key).get()
     line = Line.query(Line.categories == self.key).get()
     return (category is not None) or (line is not None)
-  
-  
-"""
+
+
+'''
 Entry and Line instance notes:
 
 - fields can only be properly loaded if:
   - are loaded from datastore
   - are instanced with proper keyword argument Entry (journal or _model_schema) and Line (parent)
 
-"""
+'''
 
 class Line(orm.BaseExpando):
   
   _kind = 51
   
+  _use_rule_engine = False
+  
   _journal_fields_loaded = None
   
-  # to make instances of lines, you must always provide parent key, that is entry's key.
-  # otherwise it will break
+  # To make instances of lines, you must always provide parent key, that is entry's key.
+  # Otherwise it will break!
   
   # ancestor Entry (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
   # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
   # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
-  # uvek se prvo sekvencionisu linije koje imaju debit>0 a onda iza njih slede linije koje imaju credit>0
-  # u slucaju da je Entry balanced=True, zbir svih debit vrednosti u linijama mora biti jednak zbiru credit vrednosti
+  # We always seqence lines that have debit > 0, and after them come lines that have credit > 0
+  # In case that Entry.balanced=True, sum of all debit amounts must eqal to sum of all credit amounts.
   
   #journal = orm.SuperKeyProperty('1', kind=Journal, required=True)  # delete
   #company = orm.SuperKeyProperty('2', kind='44', required=True)  # delete
   #state = orm.SuperIntegerProperty('3', required=True)  # delete
   #date = orm.SuperDateTimeProperty('4', required=True)  # delete
-  sequence = orm.SuperIntegerProperty('5', required=True)  # @todo Can we sequence Line.id()? @answer we cannot
+  sequence = orm.SuperIntegerProperty('5', required=True)
   categories = orm.SuperKeyProperty('6', kind=Category, repeated=True)
-  debit = orm.SuperDecimalProperty('7', required=True, indexed=False)  # debit=0 u slucaju da je credit>0, negativne vrednosti su zabranjene
-  credit = orm.SuperDecimalProperty('8', required=True, indexed=False)  # credit=0 u slucaju da je debit>0, negativne vrednosti su zabranjene
+  debit = orm.SuperDecimalProperty('7', required=True, indexed=False)  # debit = 0 in case that credit > 0, negative values are forbidden.
+  credit = orm.SuperDecimalProperty('8', required=True, indexed=False)  # credit = 0 in case that debit > 0, negative values are forbidden.
   uom = orm.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
   # Expando
-  # neki upiti na Line zahtevaju "join" sa Entry poljima
-  # taj problem se mozda moze resiti map-reduce tehnikom ili kopiranjem polja iz Entry-ja u Line-ove
+  # Some queries on Line require "join" with Entry.
+  # That problem can be solved using search engine (or keeping some entry field values copied to lines)!
   
   def __init__(self, *args, **kwargs):
-    """
-    Beware. Making instances of Line() inside a transaction may 
-    cause to because of performing non-entity group queries (see in add journal fields).
+    '''Caution! Making instances of Line() inside a transaction may
+    cause performing non-entity group queries (see in add journal fields).
     As for get()s itself it will use in-memory cache when it can.
-    """
+    
+    '''
     entry_key = kwargs.get('parent')
-    complete_key = kwargs.get('key') # also observe the complete key instances
+    complete_key = kwargs.get('key')  # Also observe the complete key instances.
     if entry_key is not None:
       self.add_journal_fields(entry_key)
     elif complete_key is not None:
       self.add_journal_fields(complete_key.parent())
     # we intentionally call this code before __init__ due __init__ ability to deepcopy the entity and other things beside that.
     super(Line, self).__init__(*args, **kwargs)
-    
+  
   def add_journal_fields(self, entry_key=None):
     if entry_key is None:
       journal_key = self.parent_entity.journal
@@ -651,36 +660,19 @@ class Line(orm.BaseExpando):
   def get_kind(self):
     return '%s_%s' % (self._get_kind(), self.journal.id())
   
-  def get_actions(self):
-    actions = {}
-    for action in self._actions:
-      actions[action.key.urlsafe()] = action
-    return actions
-  
   def get_fields(self):
-    fields = orm.BaseExpando.get_fields.im_func(self) # calling parent get_fields
+    fields = orm.BaseExpando.get_fields.im_func(self)  # Calling parent get_fields.
     for name, prop in self._properties.iteritems():
       fields[name] = prop
     return fields
   
-  @property
-  def _actions(self): # @todo it is possible that we dont even need actions on lines?
-    # it is possible that we will have to cache this somehow.
-    # because calling entity._actions all the time will cause query to run every time.
-    journal_actions = TransactionAction.query(TransactionAction.active == True,
-                                       ancestor=self.parent_entity.journal).fetch()
-    actions = []
-    for action in journal_actions:
-      actions.append(action)
-    return actions
-  
   def _get_property_for(self, p, indexed=True, depth=0):
-    """
-    It is always easier to override _get_property_for because you immidiately get self which tells you on which
+    '''It is always easier to override _get_property_for because you immidiately get self which tells you on which
     entity you operate, and if the entity itself has a key.
-    """
+    
+    '''
     if self.key is None or self.key.parent() is None:
-      raise Exception('Cannot load properties of %s because it does not have parent key provided.')
+      raise Exception('Cannot load properties of %s because it does not have parent key provided.' % self)
     else:
       if self._journal_fields_loaded is None:
         self.add_journal_fields()
@@ -689,11 +681,11 @@ class Line(orm.BaseExpando):
 
 class Entry(orm.BaseExpando):
   
-  # in order to make proper instances of entries you must always either provide journal= in constructor, or _model_schema=
+  # In order to make proper instances of entries you must always either provide journal or _model_schema argument in constructor.
   
   _kind = 50
   
-  _journal_fields_loaded = None # used to flag if the journal fields were loaded.
+  _journal_fields_loaded = None  # Used to flag if the journal fields were loaded.
   
   # ancestor Group (namespace Domain)
   # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
@@ -706,15 +698,15 @@ class Entry(orm.BaseExpando):
   date = orm.SuperDateTimeProperty('6', required=True)
   
   _virtual_fields = {
-    '_lines': orm.SuperLocalStructuredProperty(Line, repeated=True)
+    '_lines': orm.SuperStorageStructuredProperty(Line, storage='remote_multi')
     }
   
   def __init__(self, *args, **kwargs):
-    """
-    Beware. Making instances of Entry() inside a transaction may 
-    cause to because of performing non-entity group queries (see journal_key.get() in add journal fields).
+    '''Caution! Making instances of Entry() inside a transaction may
+    cause performing non-entity group queries (see journal_key.get() in add journal fields).
     As for get() itself it will use in-memory cache when it can.
-    """
+    
+    '''
     journal = kwargs.get('journal')
     _model_schema = kwargs.pop('_model_schema', None)
     if journal is None and _model_schema is not None:
@@ -723,7 +715,7 @@ class Entry(orm.BaseExpando):
     if journal is not None:
       self.add_journal_fields(journal)
     super(Entry, self).__init__(*args, **kwargs)
-    
+  
   def add_journal_fields(self, journal_key=None):
     if journal_key is None:
       journal_key = self.journal
@@ -739,49 +731,41 @@ class Entry(orm.BaseExpando):
   def get_kind(self):
     return '%s_%s' % (self._get_kind(), self.journal.id())
   
+  @property
+  def _actions(self):  # @todo Cache if possible for performance gains!
+    return TransactionAction.query(TransactionAction.active == True, ancestor=self.journal).fetch()
+  
   def get_actions(self):
     actions = {}
-    for action in self._actions:
+    instance_actions = getattr(self, '_actions', [])
+    for action in instance_actions:
       actions[action.key.urlsafe()] = action
     return actions
   
   def get_fields(self):
-    fields = orm.BaseExpando.get_fields.im_func(self) # calling parent get_fields
+    fields = orm.BaseExpando.get_fields.im_func(self)  # Calling parent get_fields.
     for name, prop in self._properties.iteritems():
       fields[name] = prop
     return fields
   
-  @property
-  def _actions(self):
-    # it is possible that we will have to cache this somehow. @see mem library
-    # because calling entity._actions all the time will cause query to run every time.
-    journal_actions = TransactionAction.query(TransactionAction.active == True,
-                                       ancestor=self.journal).fetch()
-    actions = []
-    for action in journal_actions:
-      actions.append(action)
-    return actions
- 
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
-    """
-    Internal helper to create an entity from an EntityProto protobuf.
+    '''Internal helper to create an entity from an EntityProto protobuf.
     First 10 lines of code are copied from original from_pb in order to mimic
-    construction of entity instance based on its function args. The rest of the code bellow is 
+    construction of entity instance based on its function args. The rest of the code bellow is
     used to forcefully attempt to attach properties from journal config.
-    """
+    
+    '''
     if not isinstance(pb, entity_pb.EntityProto):
-      raise TypeError('pb must be a EntityProto; received %r' % pb)
+      raise TypeError('pb must be an instance of EntityProto; received %r' % pb)
     if ent is None:
       ent = cls()
-
     # A key passed in overrides a key in the pb.
     if key is None and pb.key().path().element_size():
       key = orm.Key(reference=pb.key())
     # If set_key is not set, skip a trivial incomplete key.
     if key is not None and (set_key or key.id() or key.parent()):
       ent._key = key
-
     indexed_properties = pb.property_list()
     unindexed_properties = pb.raw_property_list()
     projection = []
@@ -789,23 +773,25 @@ class Entry(orm.BaseExpando):
     added_fields = False
     for plist in all_props:
       for p in plist:
-        # first find the journal... then load all needed props and break the loop
+        # First find the journal. Then load all needed props and break the loop.
         journal_name = cls.journal.name
         if journal_name is None:
           journal_name = cls.journal._code_name
         if p.name() == journal_name:
           prop = ent._get_property_for(p, plist is indexed_properties)
-          prop._deserialize(ent, p) # calling deserialize on entities prop will unpack the property and set the value to the entity
-          ent.add_journal_fields() # calling add_journal_fields without argument will use self.journal as journal key.
+          prop._deserialize(ent, p)  # Calling deserialize on entities prop will unpack the property and set the value to the entity.
+          ent.add_journal_fields()  # Calling add_journal_fields without argument will use self.journal as journal key.
           added_fields = True
           break
     if not added_fields:
-      raise Exception('Cannot proceed with loading of entry %s. Journal fields failed to set.')
-    return orm.BaseExpando._from_pb.im_func(cls, pb, set_key, ent, ent.key) # calling parent from_pb to attempt to mantain compatibility with possible NDB upgrades?
-   
+      raise Exception('Cannot proceed with loading of entry %s. Journal fields failed to set.' % ent)
+    return orm.BaseExpando._from_pb.im_func(cls, pb, set_key, ent, ent.key)  # Calling parent from_pb to attempt to mantain compatibility with possible NDB upgrades?
+
 
 class Group(orm.BaseExpando):
   
   _kind = 48
+  
+  _use_rule_engine = False
   
   _default_indexed = False

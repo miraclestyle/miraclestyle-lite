@@ -18,6 +18,8 @@ class Session(orm.BaseModel):
   
   _kind = 70
   
+  _use_rule_engine = False
+  
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, indexed=False)
   session_id = orm.SuperStringProperty('2', required=True, indexed=False)
 
@@ -25,6 +27,8 @@ class Session(orm.BaseModel):
 class Identity(orm.BaseModel):
   
   _kind = 64
+  
+  _use_rule_engine = False
   
   identity = orm.SuperStringProperty('1', required=True)  # This property stores provider name joined with ID.
   email = orm.SuperStringProperty('2', required=True)

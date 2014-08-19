@@ -15,6 +15,8 @@ class Filter(orm.BaseModel):
   
   _kind = 65
   
+  _use_rule_engine = False
+  
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   model = orm.SuperStringProperty('2', required=True, indexed=False)
   query = orm.SuperJsonProperty('3', required=True, indexed=False, default={})
