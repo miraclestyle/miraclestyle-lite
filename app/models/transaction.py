@@ -742,6 +742,11 @@ class Entry(orm.BaseExpando):
       actions[action.key.urlsafe()] = action
     return actions
   
+  def get_plugin_groups(self, action):
+    return TransactionPluginGroup.query(TransactionPluginGroup.active == True,
+                                        TransactionPluginGroup.subscriptions == action.key,
+                                        ancestor=self.journal).order(TransactionPluginGroup.sequence).fetch()
+  
   def get_fields(self):
     fields = orm.BaseExpando.get_fields.im_func(self)  # Calling parent get_fields.
     for name, prop in self._properties.iteritems():
