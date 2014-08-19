@@ -36,6 +36,7 @@ class Reset(handler.Angular):
           keys_to_delete.extend(keys)
           indexes.append(search.Index(name=kind))
           for namespace in namespaces:
+            util.log(namespace)
             keys = yield model.query(namespace=namespace).fetch_async(keys_only=True)
             keys_to_delete.extend(keys)
             indexes.append(search.Index(name=kind, namespace=namespace))
