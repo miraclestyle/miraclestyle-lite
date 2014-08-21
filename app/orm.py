@@ -1208,7 +1208,7 @@ class _BaseModel(object):
       documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
       index = search.Index(name=name, namespace=namespace)
       cycles = int(math.ceil(len(documents) / documents_per_index))
-      for i in range(0, cycles + 1):
+      for i in xrange(0, cycles + 1):
         documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
         if len(documents_partition):
           try:
@@ -2307,8 +2307,11 @@ class _BaseStructuredProperty(_BaseProperty):
     out = []
     if not self._repeated:
       value = [value]
+    else:
+      if not isinstance(value, dict) and not self._required:
+        return util.Nonexistent
     for v in value:
-      if v is None and not self._required and len(value) < 2:
+      if isinstance(v, util.Nonexistent):
         continue
       provided_kind_id = v.get('kind')
       fields = self.get_model_fields(kind=provided_kind_id)
