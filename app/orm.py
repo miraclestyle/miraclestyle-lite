@@ -2583,7 +2583,7 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
-    if not self._repeated and not self._required and len(value) < 1:
+    if not self._repeated and not self._required and (value is None or len(value) < 1):
       return None
     if self._repeated:
       if not isinstance(value, (tuple, list)):
