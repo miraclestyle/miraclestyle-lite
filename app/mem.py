@@ -18,9 +18,10 @@ Wrapper for google memcache library, combined with in-memory cache (per-request 
 
 
 def get(k, d=None, callback=None, **kwargs):
-  ''''k' = identifier for cache,
-  'd' = what not to expect,
-  'callback' = expensive callable to execute and set its value into the memory, otherwise it will return 'd'.
+  '''
+  k = identifier for cache,
+  d = what not to expect,
+  callback = expensive callable to execute and set its value into the memory, otherwise it will return 'd'.
   
   '''
   force = kwargs.pop('force', None)
@@ -56,6 +57,10 @@ def delete(k):
 
 def temp_get(k, d=None):
   return getattr(_local, k, d)
+
+
+def tmp_exists(k):
+  return hasattr(_local, k)
 
 
 def temp_set(k, v):

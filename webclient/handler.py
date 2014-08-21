@@ -21,6 +21,7 @@ from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS, to_jso
 from webapp2 import Route
 
 __ROUTES = []
+__WSGI_CONFIG = None
 
 class InvalidRouteError(Exception):
       pass
@@ -60,10 +61,12 @@ class AngularRoute(Route):
     self.angular_path = self._angular_make_path(template)
     self.angular_controller = self._angular_make_controller(handler)
     self.angular_template = angular_template
-        
+      
+      
 def get_routes():
   global __ROUTES
   return __ROUTES        
+
 
 def register(*args):
   global __ROUTES
@@ -91,18 +94,14 @@ def register(*args):
   return __ROUTES
 
  
-__WSGI_CONFIG = None
- 
-def wsgi_config(as_tuple=False):
+def wsgi_config():
     
   """ Config function. Prepares all variables and routes for webapp2 WSGI startup """
   
   global __WSGI_CONFIG
   
-  if __WSGI_CONFIG:
-     if not as_tuple:
-        return __WSGI_CONFIG
-     return tuple(__WSGI_CONFIG.items())
+  if __WSGI_CONFIG is not None:
+    return __WSGI_CONFIG
   
   TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'template'),)
     
@@ -138,10 +137,8 @@ def wsgi_config(as_tuple=False):
                       TEMPLATE_DIRS=TEMPLATE_DIRS,
                       TEMPLATE_LOADER=TEMPLATE_LOADER
                      )
-  if not as_tuple:
-     return __WSGI_CONFIG
-  else:
-     return tuple(__WSGI_CONFIG.items())
+  return __WSGI_CONFIG
+   
    
 class Base(webapp2.RequestHandler):
   
@@ -223,12 +220,10 @@ class Base(webapp2.RequestHandler):
     This function is fired just after the handler is executed
     """
     pass
-  
-  @orm.toplevel
+ 
   def get(self, *args, **kwargs):
     return self.respond(*args, **kwargs)
-      
-  @orm.toplevel    
+       
   def post(self, *args, **kwargs):
     return self.respond(*args, **kwargs)
        
@@ -236,13 +231,14 @@ class Base(webapp2.RequestHandler):
     self.abort(404)
     self.response.write('<h1>404 Not found</h1>')
   
+  @orm.toplevel
   def dispatch(self):
     csrf = None
     csrf_cookie_value = self.request.cookies.get(webclient_settings.COOKIE_CSRF_KEY)
     if self.LOAD_CURRENT_USER:
-      from app.models import auth
-      auth.User.login_from_authorization_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
-      current_user = auth.User.current_user()
+      from app.models.auth import User
+      User.login_from_authorization_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
+      current_user = User.current_user()
       current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
       current_user.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
       csrf = current_user._csrf
@@ -253,7 +249,6 @@ class Base(webapp2.RequestHandler):
      self.response.set_cookie(webclient_settings.COOKIE_CSRF_KEY, csrf)
     try:
       self.before()
-      # Dispatch the request.
       super(Base, self).dispatch()
       self.after()
     finally:
@@ -314,4 +309,5 @@ class AngularBlank(Angular):
   
   def respond(self, *args, **kwargs):
     pass
+  
   

@@ -447,7 +447,14 @@ class _BaseModel(object):
     '''
     baddies = self._find_uninitialized()
     if baddies:
-      raise datastore_errors.BadValueError('Entity %s has uninitialized properties: %s' % (self, ', '.join(baddies)))
+      baddies_translated = []
+      for baddie in baddies:
+        prop = self._properties.get(baddie)
+        if prop._code_name:
+          baddies_translated.append(prop._code_name)
+        else:
+          baddies_translated.append(prop._name)
+      raise datastore_errors.BadValueError('Uninitialized properties %s. found on %s' % (', '.join(baddies_translated), self))
   
   @classmethod
   def get_kind(cls):
@@ -494,7 +501,7 @@ class _BaseModel(object):
     
     '''
     dic = {}
-    dic['_actions'] = getattr(cls, '_actions', {})
+    dic['_actions'] = getattr(cls, '_actions', [])
     dic.update(cls.get_fields())
     return dic
   

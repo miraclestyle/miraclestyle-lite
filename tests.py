@@ -7,7 +7,7 @@ Created on Jul 8, 2014
 import unittest
 import random
 
-class Base():
+class Base(object):
   
   @classmethod
   def out(cls):
@@ -16,8 +16,8 @@ class Base():
 class Sub(Base):
   
   def out(self):
-    Base.out.im_func(self)
-    
+    super(Sub, self.__class__).out()
+
 d = Sub()
 d.out()
 

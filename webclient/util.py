@@ -82,7 +82,6 @@ class JSONEncoderHTML(json.JSONEncoder):
             yield chunk
             
 
-
 MODULE_EXTENSIONS = ('.py',)
 
 def package_contents(package_name):

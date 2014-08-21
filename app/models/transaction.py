@@ -661,7 +661,7 @@ class Line(orm.BaseExpando):
     return '%s_%s' % (self._get_kind(), self.journal.id())
   
   def get_fields(self):
-    fields = orm.BaseExpando.get_fields.im_func(self)  # Calling parent get_fields.
+    fields = super(Line, self.__class__).get_fields()  # Calling parent get_fields.
     for name, prop in self._properties.iteritems():
       fields[name] = prop
     return fields
@@ -748,7 +748,7 @@ class Entry(orm.BaseExpando):
                                         ancestor=self.journal).order(TransactionPluginGroup.sequence).fetch()
   
   def get_fields(self):
-    fields = orm.BaseExpando.get_fields.im_func(self)  # Calling parent get_fields.
+    fields = super(Entry, self.__class__).get_fields()  # Calling parent get_fields.
     for name, prop in self._properties.iteritems():
       fields[name] = prop
     return fields
@@ -790,7 +790,7 @@ class Entry(orm.BaseExpando):
           break
     if not added_fields:
       raise Exception('Cannot proceed with loading of entry %s. Journal fields failed to set.' % ent)
-    return orm.BaseExpando._from_pb.im_func(cls, pb, set_key, ent, ent.key)  # Calling parent from_pb to attempt to mantain compatibility with possible NDB upgrades?
+    return super(Entry, cls)._from_pb(pb, set_key, ent, ent.key)  # Calling parent from_pb to attempt to mantain compatibility with possible NDB upgrades?
 
 
 class Group(orm.BaseExpando):
