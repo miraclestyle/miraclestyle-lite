@@ -1251,6 +1251,18 @@ class _BaseModel(object):
         dic[field.name] = field.value
     return dic
   
+  @classmethod
+  def search_document_to_entity(cls, document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
+    # @todo This can be avoided by subclassing search.Document, and implementing get_output on it.
+    if document and isinstance(document, search.Document):
+      entity = cls(key=Key(urlsafe=document.doc_id))
+      #util.set_attr(entity, 'language', document.language)
+      #util.set_attr(entity, 'rank', document.rank)
+      fields = document.fields
+      for field in fields:
+        util.set_attr(entity, field.name, field.value)
+    return entity
+  
   def _set_next_read_arguments(self):
     if self is self._root:
       def scan(value, field_key, field, value_options):
