@@ -163,8 +163,9 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity._use_rule_engine = False
       entity.sequence = i
-      entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
-    orm.put_multi(entities)
+      #entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
+      entity.write({'agent': self.context.user.key, 'action': self.context.action.key})  # @todo entity.write() has built in mechanism of using google search!!
+    #orm.put_multi(entities)
     self.config.next_operation = 'create_widget_step_2'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key,
@@ -200,8 +201,9 @@ class DomainSetup(Setup):
     for i, entity in enumerate(entities):
       entity._use_rule_engine = False
       entity.sequence = (i+1) + sequence
-      entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
-    orm.put_multi(entities)
+      #entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
+      entity.write({'agent': self.context.user.key, 'action': self.context.action.key})  # @todo entity.write() has built in mechanism of using google search!!
+    #orm.put_multi(entities)
     self.config.next_operation = 'create_domain_user'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
