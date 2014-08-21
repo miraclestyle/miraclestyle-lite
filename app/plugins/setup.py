@@ -13,11 +13,41 @@ from app.tools.base import callback_exec
 from app.util import *
 
 
+class ConfigurationInstall(orm.BaseModel):
+  
+  def run(self, context):
+    config = context._configuration
+    context.user = config.parent_entity
+    SetupClass = get_system_setup(config.setup)
+    setup = SetupClass(config, context)
+    setup.run()
+
+
+class ConfigurationCronInstall(orm.BaseModel):
+  
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    elapsed_time = self.cfg.get('time', 10)
+    limit = self.cfg.get('page', 50)
+    time_difference = datetime.datetime.now()-datetime.timedelta(minutes=elapsed_time)
+    configurations = context.model.query(context.model.state == 'active', context.model.updated < time_difference).fetch(limit=limit)
+    for config in configurations:
+      context.user = config.parent_entity
+      SetupClass = get_system_setup(config.setup)
+      setup = SetupClass(config, context)
+      setup.run()
+
+
 __SYSTEM_SETUPS = {}
+
 
 def get_system_setup(setup_name):
   global __SYSTEM_SETUPS
   return __SYSTEM_SETUPS.get(setup_name)
+
 
 def register_system_setup(*setups):
   global __SYSTEM_SETUPS
@@ -52,12 +82,6 @@ class Setup():
 
 
 class DomainSetup(Setup):
-  
-  @classmethod
-  def create_domain_notify_message_recievers(cls, entity, user):
-    primary_contact = entity.primary_contact.get()
-    user = orm.Key('0', int(primary_contact.key_id_str)).get()
-    return [user._primary_email]
   
   def execute_init(self):
     config_input = self.config.configuration_input
@@ -209,11 +233,43 @@ class DomainSetup(Setup):
     entity.primary_contact = config_input.get('user_key')
     entity._use_rule_engine = False
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
+    self.config.next_operation = 'create_transaction_categories'
+    self.config.next_operation_input = {'domain_key': domain_key}
+    self.config.write()
+  
+  def execute_create_transaction_categories(self):
+    config_input = self.config.next_operation_input
+    domain_key = config_input.get('domain_key')
+    namespace = domain_key.urlsafe()
+    # @todo Insert creation logic here!
+    self.config.next_operation = 'create_order_journal'
+    self.config.next_operation_input = {'domain_key': domain_key}
+    self.config.write()
+  
+  def execute_create_order_journal(self):
+    config_input = self.config.next_operation_input
+    domain_key = config_input.get('domain_key')
+    namespace = domain_key.urlsafe()
+    # @todo Insert creation logic here!
+    self.config.next_operation = 'complete'
+    self.config.next_operation_input = {'domain_key': domain_key}
+    self.config.write()
+  
+  def execute_complete(self):
+    config_input = self.config.next_operation_input
+    domain_key = config_input.get('domain_key')
+    entity = domain_key.get()
+    
+    def message_recievers(entity, user):
+      primary_contact = entity.primary_contact.get()
+      user = orm.Key('0', int(primary_contact.key_id_str)).get()
+      return [user._primary_email]
+    
     CustomTemplate = self.context.models['59']
     custom_notify = CustomTemplate(outlet='send_mail',
                                    message_subject='Your Application "{{entity.name}}" has been sucessfully created.',
                                    message_body='Your application has been created. Check your apps page (this message can be changed). Thanks.',
-                                   message_recievers=self.create_domain_notify_message_recievers)
+                                   message_recievers=message_recievers)
     kwargs = {}
     kwargs['caller_entity'] = entity
     kwargs['caller_user'] = self.context.user
@@ -227,31 +283,3 @@ class DomainSetup(Setup):
 
 
 register_system_setup(('setup_domain', DomainSetup))
-
-
-class ConfigurationInstall(orm.BaseModel):
-  
-  def run(self, context):
-    config = context._configuration
-    context.user = config.parent_entity
-    SetupClass = get_system_setup(config.setup)
-    setup = SetupClass(config, context)
-    setup.run()
-
-
-class ConfigurationCronInstall(orm.BaseModel):
-  
-  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    elapsed_time = self.cfg.get('time', 10)
-    limit = self.cfg.get('page', 50)
-    time_difference = datetime.datetime.now()-datetime.timedelta(minutes=elapsed_time)
-    configurations = context.model.query(context.model.state == 'active', context.model.updated < time_difference).fetch(limit=limit)
-    for config in configurations:
-      context.user = config.parent_entity
-      SetupClass = get_system_setup(config.setup)
-      setup = SetupClass(config, context)
-      setup.run()
