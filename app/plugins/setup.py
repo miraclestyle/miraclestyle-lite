@@ -57,6 +57,8 @@ def register_system_setup(*setups):
 
 class Setup():
   
+  skip_transactions = [] # @todo make a list of function names that dont need transaction wrapper
+  
   def __init__(self, config, context):
     self.config = config
     self.context = context
