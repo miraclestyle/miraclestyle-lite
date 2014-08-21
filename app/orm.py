@@ -1259,8 +1259,12 @@ class _BaseModel(object):
       #util.set_attr(entity, 'language', document.language)
       #util.set_attr(entity, 'rank', document.rank)
       fields = document.fields
+      entitiy_fields = entity.get_fields()
       for field in fields:
-        util.set_attr(entity, field.name, field.value)
+        entity_field = util.get_attr(entitiy_fields, field.name)
+        if entity_field:
+          value = entity_field.resolve_search_document_field(field.value)
+          util.set_attr(entity, field.name, value)
     return entity
   
   def _set_next_read_arguments(self):
@@ -2155,6 +2159,15 @@ class _BaseProperty(object):
       return self._search_document_field_name
     return self._code_name if self._code_name is not None else self._name
   
+  def get_search_document_field(self, value):
+    raise NotImplemented('Search representation of property %s not available.' % self)  
+  
+  def resolve_search_document_field(self, value):
+    if self._repeated:
+      return self.value_format(value.split(' '))
+    else:
+      return self.value_format(value)  
+  
   @property
   def is_structured(self):
     return False
@@ -2253,10 +2266,9 @@ class _BaseStructuredProperty(_BaseProperty):
       return value
     out = []
     if not self._repeated:
-      value = [value]
-    else:
       if not isinstance(value, dict) and not self._required:
         return util.Nonexistent
+      value = [value]
     for v in value:
       out.append(self._structured_property_format(v))
     if not self._repeated:
@@ -2455,6 +2467,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       return search.TextField(name=self.search_document_field_name, value=value)
     else:
       return search.DateField(name=self.search_document_field_name, value=value)
+ 
   
   def get_meta(self):
     dic = super(SuperDateTimeProperty, self).get_meta()
@@ -2486,7 +2499,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
     else:
       value = json.dumps(value)
     return search.TextField(name=self.search_document_field_name, value=value)
-
+  
 
 class SuperTextProperty(_BaseProperty, TextProperty):
   
@@ -2538,7 +2551,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
       value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.search_document_field_name, value=value)
     return search.NumberField(name=self.search_document_field_name, value=value)
-
+  
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
@@ -2686,6 +2699,17 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
     else:
       value = str(value)
       return search.AtomField(name=self.search_document_field_name, value=value)
+    
+  def resolve_search_document_field(self, value):
+    if self._repeated:
+      out = []
+      for v in value.split(' '):
+        if v == 'True':
+          out.append(True)
+        else:
+          out.append(False)
+    else:
+      return value == 'True'
 
 
 class SuperBlobKeyProperty(_BaseProperty, BlobKeyProperty):
@@ -2743,6 +2767,7 @@ class SuperDecimalProperty(SuperStringProperty):
       value = str(value)
       # Specifying this as a number field will either convert it to INT or FLOAT.
       return search.NumberField(name=self.search_document_field_name, value=value)
+
   
   def _validate(self, value):
     if not isinstance(value, decimal.Decimal):
