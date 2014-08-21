@@ -78,8 +78,9 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
           self._property.delete_blobs_on_success(entity.image)
         else:
           self._property.save_blobs_on_success(entity.image, False)
-      original_entities = getattr(self._entity, self.property_name, None)
+      original_entities = getattr(self._entity._original, self.property_name, None)
       if original_entities is not None:
+        original_entities = original_entities.value
         if not self._property._repeated:
           if entities[0].image != original_entities.image:
             self._property.delete_blobs_on_success(original_entities.image)
@@ -90,10 +91,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
             if entity is not None:
               if entity.image != original.image:
                 self._property.delete_blobs_on_success(original.image)
-          
-          
-        
-  
+            
   def _pre_update_local(self):
     self._update_blobs()
     super(SuperStructuredPropertyImageManager, self)._pre_update_local()
