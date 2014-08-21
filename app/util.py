@@ -277,7 +277,7 @@ def safe_eval(source, data=None):
 
 
 def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits):
-  return ''.join(random.choice(chars) for x in range(size))
+  return ''.join(random.choice(chars) for x in xrange(size))
 
 
 ########## Unit manipulation functions! ##########

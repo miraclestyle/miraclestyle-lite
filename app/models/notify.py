@@ -82,7 +82,7 @@ class MailTemplate(Template):
     recipients_per_task = int(math.ceil(len(data['recipient']) / settings.RECIPIENTS_PER_TASK))
     data_copy = data.copy()
     del data_copy['recipient']
-    for i in range(0, recipients_per_task+1):
+    for i in xrange(0, recipients_per_task+1):
       recipients = data['recipient'][settings.RECIPIENTS_PER_TASK*i:settings.RECIPIENTS_PER_TASK*(i+1)]
       if recipients:
         new_data = data_copy.copy()
