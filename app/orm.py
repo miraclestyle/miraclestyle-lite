@@ -2160,13 +2160,13 @@ class _BaseProperty(object):
     return self._code_name if self._code_name is not None else self._name
   
   def get_search_document_field(self, value):
-    raise NotImplemented('Search representation of property %s not available.' % self)  
+    raise NotImplemented('Search representation of property %s not available.' % self)
   
   def resolve_search_document_field(self, value):
     if self._repeated:
       return self.value_format(value.split(' '))
     else:
-      return self.value_format(value)  
+      return self.value_format(value)
   
   @property
   def is_structured(self):
@@ -2467,7 +2467,6 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       return search.TextField(name=self.search_document_field_name, value=value)
     else:
       return search.DateField(name=self.search_document_field_name, value=value)
- 
   
   def get_meta(self):
     dic = super(SuperDateTimeProperty, self).get_meta()
@@ -2499,7 +2498,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
     else:
       value = json.dumps(value)
     return search.TextField(name=self.search_document_field_name, value=value)
-  
+
 
 class SuperTextProperty(_BaseProperty, TextProperty):
   
@@ -2551,7 +2550,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
       value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.search_document_field_name, value=value)
     return search.NumberField(name=self.search_document_field_name, value=value)
-  
+
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
@@ -2699,7 +2698,7 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
     else:
       value = str(value)
       return search.AtomField(name=self.search_document_field_name, value=value)
-    
+  
   def resolve_search_document_field(self, value):
     if self._repeated:
       out = []
@@ -2767,7 +2766,6 @@ class SuperDecimalProperty(SuperStringProperty):
       value = str(value)
       # Specifying this as a number field will either convert it to INT or FLOAT.
       return search.NumberField(name=self.search_document_field_name, value=value)
-
   
   def _validate(self, value):
     if not isinstance(value, decimal.Decimal):

@@ -91,7 +91,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
             if entity is not None:
               if entity.image != original.image:
                 self._property.delete_blobs_on_success(original.image)
-            
+  
   def _pre_update_local(self):
     self._update_blobs()
     super(SuperStructuredPropertyImageManager, self)._pre_update_local()
