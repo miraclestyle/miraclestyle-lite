@@ -1,7 +1,7 @@
 eclipse.preferences.version=1
-encoding//_docs/py/business.py=utf-8
-encoding//_docs/py/performance_tester_io.py=utf-8
-encoding//_docs/py/temp.py=utf-8
+encoding//_docs/code/business.py=utf-8
+encoding//_docs/code/performance_tester_io.py=utf-8
+encoding//_docs/code/temp.py=utf-8
 encoding//app/io.py=utf-8
 encoding//app/mem.py=utf-8
 encoding//app/models/auth.py=utf-8
