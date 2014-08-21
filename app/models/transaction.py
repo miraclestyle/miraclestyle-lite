@@ -582,7 +582,7 @@ class Category(orm.BaseExpando):
   def _is_used(self):
     if self.key.id() is None:
       return False
-    category = self.query(self.parent_record == self.key).get()
+    category = self.query(self.__class__.parent_record == self.key).get()
     line = Line.query(Line.categories == self.key).get()
     return (category is not None) or (line is not None)
 
