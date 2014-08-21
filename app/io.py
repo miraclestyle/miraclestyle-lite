@@ -150,7 +150,7 @@ class Engine:
     model_kind = context.model.get_kind()
     if hasattr(context.model, 'get_actions') and callable(context.model.get_actions):
       actions = context.model.get_actions()
-      action_key = orm.Key(model_kind, 'action', '56', action_id).urlsafe() # @todo we cannot build a key like this anymore
+      action_key = orm.Key(model_kind, 'action', '56', action_id).urlsafe()  # @todo we cannot build a key like this anymore
       if action_key in actions:
         context.action = actions[action_key]
     if not context.action:
