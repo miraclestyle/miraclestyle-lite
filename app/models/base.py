@@ -78,6 +78,21 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
           self._property.delete_blobs_on_success(entity.image)
         else:
           self._property.save_blobs_on_success(entity.image, False)
+      original_entities = getattr(self._entity, self.property_name, None)
+      if original_entities is not None:
+        if not self._property._repeated:
+          if entities[0].image != original_entities.image:
+            self._property.delete_blobs_on_success(original_entities.image)
+        else:
+          tmp = dict((ent.key.urlsafe(), ent) for ent in entities if ent.key)
+          for original in original_entities:
+            entity = tmp.get(original.key.urlsafe())
+            if entity is not None:
+              if entity.image != original.image:
+                self._property.delete_blobs_on_success(original.image)
+          
+          
+        
   
   def _pre_update_local(self):
     self._update_blobs()
@@ -376,20 +391,23 @@ class _BaseImageProperty(_BaseBlobProperty):
       value = [value]
     out = []
     for i, v in enumerate(value):
-      if not isinstance(v, cgi.FieldStorage) and not self._required:
-        return Nonexistent  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
-      # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
-      file_info = blobstore.parse_file_info(v)
-      blob_info = blobstore.parse_blob_info(v)
-      meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
-      if file_info.content_type not in meta_required:
-        raise orm.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
-      new_image = self.get_modelclass()(**{'size': file_info.size,
-                                           'content_type': file_info.content_type,
-                                           'gs_object_name': file_info.gs_object_name,
-                                           'image': blob_info.key(),
-                                           '_sequence': i})
-      out.append(new_image)
+      if isinstance(v, dict):
+        out.append(self._structured_property_format(v))
+      else:
+        if not isinstance(v, cgi.FieldStorage) and not self._required:
+          return Nonexistent  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
+        # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
+        file_info = blobstore.parse_file_info(v)
+        blob_info = blobstore.parse_blob_info(v)
+        meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
+        if file_info.content_type not in meta_required:
+          raise orm.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
+        new_image = self.get_modelclass()(**{'size': file_info.size,
+                                             'content_type': file_info.content_type,
+                                             'gs_object_name': file_info.gs_object_name,
+                                             'image': blob_info.key(),
+                                             '_sequence': i})
+        out.append(new_image)
     if self._process_config.get('transform') or self._process_config.get('copy'):
       self.process(out)
     else:

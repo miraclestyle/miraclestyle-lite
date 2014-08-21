@@ -2236,7 +2236,23 @@ class _BaseStructuredProperty(_BaseProperty):
     return self.get_modelclass(**kwargs).get_fields()
   
   def value_format(self, value):
-    return self._structured_property_format(value)
+    value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
+    out = []
+    if not self._repeated:
+      value = [value]
+    else:
+      if not isinstance(value, dict) and not self._required:
+        return util.Nonexistent
+    for v in value:
+      out.append(self._structured_property_format(v))
+    if not self._repeated:
+      try:
+        out = out[0]
+      except IndexError as e:
+        out = None
+    return out
   
   def _set_value(self, entity, value):
     # __set__
@@ -2300,32 +2316,13 @@ class _BaseStructuredProperty(_BaseProperty):
     if _sequence is not None:
       values['_sequence'] = _sequence
   
-  def _structured_property_format(self, value):
-    value = self._property_value_format(value)
-    if value is util.Nonexistent:
-      return value
-    out = []
-    if not self._repeated:
-      value = [value]
-    else:
-      if not isinstance(value, dict) and not self._required:
-        return util.Nonexistent
-    for v in value:
-      if isinstance(v, util.Nonexistent):
-        continue
-      provided_kind_id = v.get('kind')
-      fields = self.get_model_fields(kind=provided_kind_id)
-      v.pop('class_', None)  # Never allow class_ or any read-only property to be set for that matter.
-      self._structured_property_field_format(fields, v)
-      modelclass = self.get_modelclass(kind=provided_kind_id)
-      entity = modelclass(**v)
-      out.append(entity)
-    if not self._repeated:
-      try:
-        out = out[0]
-      except IndexError as e:
-        out = None
-    return out
+  def _structured_property_format(self, entity_as_dict):
+    provided_kind_id = entity_as_dict.get('kind')
+    fields = self.get_model_fields(kind=provided_kind_id)
+    entity_as_dict.pop('class_', None)  # Never allow class_ or any read-only property to be set for that matter.
+    self._structured_property_field_format(fields, entity_as_dict)
+    modelclass = self.get_modelclass(kind=provided_kind_id)
+    return modelclass(**entity_as_dict)
   
   @property
   def is_structured(self):
@@ -3338,7 +3335,18 @@ class SuperPluginStorageProperty(SuperPickleProperty):
   # this is retarded, subclassing _BaseStructuredProperty, it has too much shit in it
   # we could try and make structured property field format class functions or public functions i dont know
   def value_format(self, value):
-    return self._structured_property_format(value)
+    value = self._property_value_format(value)
+    if value is util.Nonexistent:
+      return value
+    out = []
+    for v in value:
+      out.append(self._structured_property_format(v))
+    if not self._repeated:
+      try:
+        out = out[0]
+      except IndexError as e:
+        out = None
+    return out
   
   def _structured_property_field_format(self, fields, values):
     _state = values.get('_state')
@@ -3363,22 +3371,13 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     if _sequence is not None:
       values['_sequence'] = _sequence
   
-  def _structured_property_format(self, value):
-    value = self._property_value_format(value)
-    if value is util.Nonexistent:
-      return value
-    out = []
-    for v in value:
-      if v is None and not self._required and len(value) < 2:
-        continue
-      provided_kind_id = v.get('kind')
-      fields = self.get_model_fields(kind=provided_kind_id)
-      v.pop('class_', None) # never allow class_ or any read-only property to be set for that matter.
-      self._structured_property_field_format(fields, v)
-      modelclass = self.get_modelclass(kind=provided_kind_id)
-      entity = modelclass(**v)
-      out.append(entity)
-    return out
+  def _structured_property_format(self, entity_as_dict):
+    provided_kind_id = entity_as_dict.get('kind')
+    fields = self.get_model_fields(kind=provided_kind_id)
+    entity_as_dict.pop('class_', None)  # Never allow class_ or any read-only property to be set for that matter.
+    self._structured_property_field_format(fields, entity_as_dict)
+    modelclass = self.get_modelclass(kind=provided_kind_id)
+    return modelclass(**entity_as_dict)
   
   def get_modelclass(self, kind):
     if self._kinds and kind:
