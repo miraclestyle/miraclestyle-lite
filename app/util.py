@@ -281,6 +281,25 @@ def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase +
   return ''.join(random.choice(chars) for x in xrange(size))
 
 
+def chunks(l, n):
+  '''Returns iterator of provided list in chunks of length by n.
+  E.g.
+  >>>items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  >>>list(chunks(items, 5))
+  >>>[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11]]
+  
+  '''
+  for i in xrange(0, len(l), n):
+    yield l[i:i+n]
+
+
+def log(message, level=None):
+  if level == None:
+    level = 'info'
+  if settings.DO_LOGS:
+    getattr(logging, level)(message)
+
+
 ########## Unit manipulation functions! ##########
 
 
@@ -316,22 +335,3 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
     raise Exception('no_digits_in_uom')
   places = Decimal(10) ** -uom.digits
   return (value).quantize(places, rounding=rounding)
-
-
-def log(message, level=None):
-  if level == None:
-    level = 'info'
-  if settings.DO_LOGS:
-    getattr(logging, level)(message)
-
-
-def chunks(l, n):
-  '''Returns iterator of provided list in chunks of length by n.
-  E.g.
-  >>>items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-  >>>list(chunks(items, 5))
-  >>>[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11]]
-  
-  '''
-  for i in xrange(0, len(l), n):
-    yield l[i:i+n]
