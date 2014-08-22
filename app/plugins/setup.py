@@ -265,7 +265,7 @@ class DomainSetup(Setup):
     to_put = []
     for the_id, info in infos.iteritems():
       parent_id = info.get('parent_id')
-      data = {'name' : info.get('name'), 'complete_name' : make_complete_name(info, infos), 'namespace' : namespace, 'id' : info.get('code')}
+      data = {'name' : info.get('name'), 'complete_name': make_complete_name(info, infos), 'namespace': namespace, 'id': 'system_%s' % info.get('code')}
       if parent_id is not None:
         parent = infos.get(parent_id)
         data['parent_record'] = Category.build_key(parent['code'], namespace=namespace)  # Will throw an error if parent was specified but not found.
