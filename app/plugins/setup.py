@@ -77,14 +77,13 @@ class Setup():
     iterations = 100
     while self.config.state == 'active':
       iterations -= 1
-      fn = self.__get_next_operation()
-      runner = getattr(self, fn) # will throw error if next operation does not exist.
+      runner = getattr(self, self.__get_next_operation())
       if self.config.next_operation not in self.skip_transactions:
         orm.transaction(runner, xg=True)
       else:
         runner()
       time.sleep(1.5)  # Sleep between transactions.
-      if iterations < 1: # To prevent forever loops this is for testing purposes
+      if iterations < 1:  # This is for testing purposes, to prevent forever loops.
         log('Stopped iteration after 100')
         break
 
@@ -142,15 +141,12 @@ class DomainSetup(Setup):
     self.config.write()
   
   def execute_create_widgets(self):
-    
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
-    
     Widget = self.context.models['62']
     Filter = self.context.models['65']
-    
     entities = [Widget(id='system_search',
                        namespace=namespace,
                        name='Search',
@@ -196,7 +192,7 @@ class DomainSetup(Setup):
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
     self.config.write()
- 
+  
   def execute_create_domain_user(self):
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
@@ -249,7 +245,7 @@ class DomainSetup(Setup):
       names.reverse()
       return separator.join(names)
     
-    with file(settings.TRANSACTION_CATEGORIES_DATA_FILE) as f:
+    with file(settings.ORDER_ACCOUNT_CHART_DATA_FILE) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
       infos = collections.OrderedDict()
@@ -272,7 +268,7 @@ class DomainSetup(Setup):
       data = {'name' : info.get('name'), 'complete_name' : make_complete_name(info, infos), 'namespace' : namespace, 'id' : info.get('code')}
       if parent_id is not None:
         parent = infos.get(parent_id)
-        data['parent_record'] = Category.build_key(parent['code'], namespace=namespace) # will throw an error if parent was specified but not found
+        data['parent_record'] = Category.build_key(parent['code'], namespace=namespace)  # Will throw an error if parent was specified but not found.
       new_category = Category(**data)
       new_category._use_rule_engine = False
       to_put.append(new_category)
