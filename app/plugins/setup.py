@@ -7,6 +7,7 @@ Created on Apr 15, 2014
 
 import time
 import datetime
+import math
 
 from app import orm
 from app.tools.base import callback_exec
@@ -57,7 +58,7 @@ def register_system_setup(*setups):
 
 class Setup():
   
-  skip_transactions = [] # @todo make a list of function names that dont need transaction wrapper
+  skip_transactions = ['create_widgets', 'create_transaction_categories', 'create_order_journal']
   
   def __init__(self, config, context):
     self.config = config
@@ -74,11 +75,12 @@ class Setup():
     iterations = 100
     while self.config.state == 'active':
       iterations -= 1
-      runner = getattr(self, self.__get_next_operation())
-      if runner:
+      fn = self.__get_next_operation()
+      if fn not in self.skip_transactions:
+        runner = getattr(self, fn) # will throw error if next operation does not exist.
         orm.transaction(runner, xg=True)
       time.sleep(1.5)  # Sleep between transactions.
-      if iterations < 1:
+      if iterations < 1: # To prevent forever loops this is for testing purposes
         log('Stopped iteration after 100')
         break
 
@@ -135,14 +137,16 @@ class DomainSetup(Setup):
                                         'role_key': entity.key}
     self.config.write()
   
-  def execute_create_widget_step_1(self):
+  def execute_create_widgets(self):
+    
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     role_key = config_input.get('role_key')
-    i = 0  # @todo What is this?
+    
     Widget = self.context.models['62']
     Filter = self.context.models['65']
+    
     entities = [Widget(id='system_search',
                        namespace=namespace,
                        name='Search',
@@ -161,28 +165,8 @@ class DomainSetup(Setup):
                        role=role_key,
                        search_form=False,
                        filters=[Filter(name='Roles', model='60'),
-                                Filter(name='Users', model='8')])]
-    for i, entity in enumerate(entities):
-      entity._use_rule_engine = False
-      entity.sequence = i
-      #entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
-      entity.write({'agent': self.context.user.key, 'action': self.context.action.key})  # @todo entity.write() has built in mechanism of using google search!!
-    #orm.put_multi(entities)
-    self.config.next_operation = 'create_widget_step_2'
-    self.config.next_operation_input = {'domain_key': domain_key,
-                                        'role_key': role_key,
-                                        'sequence': i}
-    self.config.write()
-  
-  def execute_create_widget_step_2(self):
-    config_input = self.config.next_operation_input
-    domain_key = config_input.get('domain_key')
-    namespace = domain_key.urlsafe()
-    role_key = config_input.get('role_key')
-    sequence = config_input.get('sequence')
-    Widget = self.context.models['62']
-    Filter = self.context.models['65']
-    entities = [Widget(id='system_user_interface',
+                                Filter(name='Users', model='8')]),
+                Widget(id='system_user_interface',
                        namespace=namespace,
                        name='User Interface',
                        role=role_key,
@@ -202,15 +186,13 @@ class DomainSetup(Setup):
                        filters=[Filter(name='Templates', model='61')])]
     for i, entity in enumerate(entities):
       entity._use_rule_engine = False
-      entity.sequence = (i+1) + sequence
-      #entity._record_arguments = {'agent': self.context.user.key, 'action': self.context.action.key}
-      entity.write({'agent': self.context.user.key, 'action': self.context.action.key})  # @todo entity.write() has built in mechanism of using google search!!
-    #orm.put_multi(entities)
+      entity.sequence = i
+    orm.write_multi_transactions(entities, {'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_domain_user'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': role_key}
     self.config.write()
-  
+ 
   def execute_create_domain_user(self):
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')

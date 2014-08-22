@@ -322,3 +322,14 @@ def log(message, level=None):
     level = 'info'
   if settings.DO_LOGS:
     getattr(logging, level)(message)
+    
+def chunks(l, n):
+    '''
+    Returns iterator of provided list in chunks of length by n.
+    E.g.
+    >>>items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    >>>list(chunks(items, 5))
+    >>>[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11]]
+    '''
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]

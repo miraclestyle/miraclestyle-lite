@@ -205,6 +205,36 @@ def get_async_results(*args, **kwargs):
   del futures[:]  # this empties the list
   for entity in entities:
     futures.append(entity)  # and now we modify back the futures list
+    
+def _perform_multi_transactions(entities, write=None, transaction_callack=None, sleep=None):
+  '''
+  *_multi_transactions functions are used to perform multiple transactions based on number of 
+  entities provided for writing.
+  
+  Entities provided should always be entities which do not have parent, that is, they are not 
+  originating from the same entity group
+  '''
+  if transaction_callack is None:
+    def run(group, write):
+      if write is not None:
+        for ent in group:
+          ent.write(write)
+      else:
+        put_multi(group)
+  else:
+    run = transaction_callack
+  for group in util.chunks(entities, 5):
+    transaction(lambda: run(group, write), xg=True)
+    if sleep is not None: # if sleep is specified, the for loop will block before issuing another transaction
+      time.sleep(sleep)
+    
+def write_multi_transactions(entities, write_config=None, transaction_callack=None, sleep=None):
+  if write_config is None:
+    write_config = {}
+  _perform_multi_transactions(entities, write_config, transaction_callack, sleep)
+
+def put_multi_transactions(entities, transaction_callack=None, sleep=None):
+  _perform_multi_transactions(entities, transaction_callack, sleep)
 
 
 ################################################################

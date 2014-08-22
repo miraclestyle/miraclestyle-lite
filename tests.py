@@ -6,6 +6,46 @@ Created on Jul 8, 2014
 '''
 import unittest
 import random
+import math
+
+def tests(a, b, z):
+  return a, b, z
+
+a = 1
+b = 2  
+print map(lambda x: tests(a, b, x), [1,2,3,4])
+
+def chunks2(l, n):
+    if n < 1:
+        n = 1
+    return [l[i:i + n] for i in range(0, len(l), n)]
+
+def chunks(l, n):
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
+dd = [1]
+print 'working with', dd        
+print list(chunks(dd, 5))
+print list(chunks2(dd, 5))
+
+exit()
+
+def prepare_multi_transactions(entities):
+  per_entity_group = 5
+  total = len(entities)
+  loops = int(math.ceil(float(total) / float(per_entity_group)))
+  total_offset = 0
+  for i in xrange(0, loops):
+    off = i*per_entity_group
+    entities[i*per_entity_group:total_offset+per_entity_group]
+    total_offset += per_entity_group
+    
+dd = range(1, 43)
+print 'working with', dd
+prepare_multi_transactions(dd)
+    
+exit()
 
 class Base(object):
   
