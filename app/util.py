@@ -15,6 +15,7 @@ from decimal import Decimal, ROUND_HALF_EVEN
 
 from app import settings
 
+# @todo __all__ is needed for everything that gets wildcard imported
 
 class Meaning(object):
   '''Class used to provide meaning for variables. E.g.:

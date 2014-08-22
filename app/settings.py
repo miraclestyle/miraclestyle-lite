@@ -78,6 +78,7 @@ ETC_DATA_DIR = os.path.join(APPDIR, 'etc', 'data')
 UOM_DATA_FILE = os.path.join(ETC_DATA_DIR, 'uom.xml')
 LOCATION_DATA_FILE = os.path.join(ETC_DATA_DIR, 'location.xml')
 CURRENCY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'currency.xml')
+TRANSACTION_CATEGORIES_DATA_FILE = os.path.join(ETC_DATA_DIR, 'order_account_chart.xml')
 PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 
 

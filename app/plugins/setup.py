@@ -7,9 +7,11 @@ Created on Apr 15, 2014
 
 import time
 import datetime
+import collections
 import math
+from xml.etree import ElementTree
 
-from app import orm
+from app import orm, settings
 from app.tools.base import callback_exec
 from app.util import *
 
@@ -76,9 +78,11 @@ class Setup():
     while self.config.state == 'active':
       iterations -= 1
       fn = self.__get_next_operation()
-      if fn not in self.skip_transactions:
-        runner = getattr(self, fn) # will throw error if next operation does not exist.
+      runner = getattr(self, fn) # will throw error if next operation does not exist.
+      if self.config.next_operation not in self.skip_transactions:
         orm.transaction(runner, xg=True)
+      else:
+        runner()
       time.sleep(1.5)  # Sleep between transactions.
       if iterations < 1: # To prevent forever loops this is for testing purposes
         log('Stopped iteration after 100')
@@ -132,7 +136,7 @@ class DomainSetup(Setup):
     entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
     entity._use_rule_engine = False
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
-    self.config.next_operation = 'create_widget_step_1'
+    self.config.next_operation = 'create_widgets'
     self.config.next_operation_input = {'domain_key': domain_key,
                                         'role_key': entity.key}
     self.config.write()
@@ -227,7 +231,52 @@ class DomainSetup(Setup):
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
-    # @todo Insert creation logic here!
+    Category = self.context.models['47']
+    
+    def make_complete_name(info, infos):
+      separator = unicode(' / ')
+      parent_id = info.get('parent_id')
+      names = [info.get('name')]
+      if parent_id is not None:
+        while True:
+          find_end = infos.get(parent_id)
+          if find_end is None:
+            break
+          names.append(find_end.get('name'))
+          parent_id = find_end.get('parent_id')
+          if parent_id is None:
+            break
+      names.reverse()
+      return separator.join(names)
+    
+    with file(settings.TRANSACTION_CATEGORIES_DATA_FILE) as f:
+      tree = ElementTree.fromstring(f.read())
+      root = tree.findall('data')
+      infos = collections.OrderedDict()
+      for child in root[0]:
+        new_category = {}
+        the_id = child.attrib.get('id')
+        new_category['id'] = the_id
+        for child2 in child:
+          name = child2.attrib.get('name')
+          if name is not None:
+            if name == 'parent_id':
+              val = child2.get('ref')
+            else:
+              val = child2.text
+            new_category[name] = val
+        infos[the_id] = new_category
+    to_put = []
+    for the_id, info in infos.iteritems():
+      parent_id = info.get('parent_id')
+      data = {'name' : info.get('name'), 'complete_name' : make_complete_name(info, infos), 'namespace' : namespace, 'id' : info.get('code')}
+      if parent_id is not None:
+        parent = infos.get(parent_id)
+        data['parent_record'] = Category.build_key(parent['code'], namespace=namespace) # will throw an error if parent was specified but not found
+      new_category = Category(**data)
+      new_category._use_rule_engine = False
+      to_put.append(new_category)
+    orm.write_multi_transactions(to_put, {'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_order_journal'
     self.config.next_operation_input = {'domain_key': domain_key}
     self.config.write()

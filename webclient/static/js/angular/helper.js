@@ -122,7 +122,9 @@ FRIENDLY_KIND_NAMES = {
     "56": "Action", 
     "36": "CatalogImage", 
     "35": "Catalog", 
-    "34": "CatalogPricetag"
+    "34": "CatalogPricetag",
+    "47": "Transaction Category",
+    "49": "Transaction Journal",
 };
 
 function always_object(obj)
