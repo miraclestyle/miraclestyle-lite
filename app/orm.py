@@ -1051,7 +1051,7 @@ class _BaseModel(object):
     self.add_output('_field_permissions')
   
   def record(self):
-    if not isinstance(self, Record) and self._use_record_engine and hasattr(self, 'key') and self.key_id:
+    if not isinstance(self, Record) and self._use_record_engine and self.key and self.key_id:
       record_arguments = getattr(self._root, '_record_arguments', None)
       if record_arguments and record_arguments.get('agent') and record_arguments.get('action'):
         log_entity = record_arguments.pop('log_entity', True)
@@ -1237,9 +1237,7 @@ class _BaseModel(object):
     if len(documents):
       documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
       index = search.Index(name=name, namespace=namespace)
-      cycles = int(math.ceil(len(documents) / documents_per_index))
-      for i in xrange(0, cycles + 1):
-        documents_partition = documents[documents_per_index*i:documents_per_index*(i+1)]
+      for documents_partition in util.chunks(documents, 200):
         if len(documents_partition):
           try:
             if operation == 'index':
@@ -1283,7 +1281,6 @@ class _BaseModel(object):
   
   @classmethod
   def search_document_to_entity(cls, document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
-    # @todo This can be avoided by subclassing search.Document, and implementing get_output on it.
     if document and isinstance(document, search.Document):
       entity = cls(key=Key(urlsafe=document.doc_id))
       #util.set_attr(entity, 'language', document.language)
@@ -1295,7 +1292,9 @@ class _BaseModel(object):
         if entity_field:
           value = entity_field.resolve_search_document_field(field.value)
           util.set_attr(entity, field.name, value)
-    return entity
+      return entity
+    else:
+      raise ValueError('Expected instance of Document, got %s' % document)
   
   def _set_next_read_arguments(self):
     if self is self._root:
@@ -1550,20 +1549,14 @@ class SuperPropertyManager(object):
     self._property_value, therefore the `entities` kwarg.
     
     '''
+    as_list = False
     if entities is None:
       entities = self.value
-      if entities is not None:
-        if self._property._repeated:
-          for entity in entities:
-            if entity._parent is None:
-              entity._parent = self._entity
-            else:
-              continue
-        else:
-          if entities._parent is None:
-            entities._parent = self._entity
+      as_list = self._property._repeated
     else:
-      if isinstance(entities, list):
+      as_list = isinstance(entities, list)
+    if entities is not None:
+      if as_list:
         for entity in entities:
           if entity._parent is None:
             entity._parent = self._entity
@@ -1571,7 +1564,7 @@ class SuperPropertyManager(object):
             continue
       else:
         if entities._parent is None:
-          entities._parent = self._entity
+          entities._parent = self._entity    
     return entities
   
   def has_value(self):
@@ -1981,19 +1974,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     On every entity called, .duplicate() function will be called in order to ensure complete recursion.
     
     '''
-    cursor = Cursor()
-    limit = 200
-    query = self._property.get_modelclass().query(ancestor=self._entity.key)
     entities = []
-    while True:
-      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-      if len(_entities):
-        for entity in _entities:
-          entities.append(entity.duplicate())
-        if not cursor or not more:
-          break
-      else:
-        break
+    _entities = self._property.get_modelclass().query(ancestor=self._entity.key).fetch()
+    if len(_entities):
+      for entity in _entities:
+        entities.append(entity.duplicate())
+    del _entities
     self._property_value = entities
   
   def _duplicate_remote_single(self):
