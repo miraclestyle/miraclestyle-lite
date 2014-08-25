@@ -268,7 +268,7 @@ class DomainSetup(Setup):
       data = {'name' : info.get('name'), 'complete_name': make_complete_name(info, infos), 'namespace': namespace, 'id': 'system_%s' % info.get('code')}
       if parent_id is not None:
         parent = infos.get(parent_id)
-        data['parent_record'] = Category.build_key(parent['code'], namespace=namespace)  # Will throw an error if parent was specified but not found.
+        data['parent_record'] = Category.build_key('system_%s' % parent['code'], namespace=namespace)  # Will throw an error if parent was specified but not found.
       new_category = Category(**data)
       new_category._use_rule_engine = False
       to_put.append(new_category)
