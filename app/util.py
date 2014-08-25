@@ -300,7 +300,7 @@ def log(message, level=None):
     level = 'info'
   if settings.DO_LOGS:
     getattr(logging, level)(message)
-    
+
 
 def generate_duplicate_appendix():
   # generates unique appendix using current time and 10 random characters

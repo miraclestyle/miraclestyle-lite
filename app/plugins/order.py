@@ -87,6 +87,7 @@ class CartInit(orm.BaseModel):
       raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('entry_not_in_cart_state')!?
 
 
+# This is system plugin, which means end user can not use it!
 class AccountsReceivable(orm.BaseModel):
   
   def run(self, context):
@@ -100,16 +101,34 @@ class AccountsReceivable(orm.BaseModel):
                                categories=[Category.build_key('1102', namespace=context.namespace)]))
 
 
+# This is system plugin, which means end user can not use it!
 class ProductSubtotalCalculate(orm.BaseModel):
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
     for line in entry._lines:
-      if hasattr(line, 'product_instance_reference'):
+      if hasattr(line, 'product_reference'):
         line.subtotal = format_value((line.unit_price * line.quantity), line.uom)  # @todo Is this ok!?
         line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), line.uom) # @todo Is this ok!?
         line.debit = format_value('0', line.uom)
         line.credit = format_value(line.discount_subtotal, line.uom)  # @todo Is this ok!?
+
+
+class OrderTotalCalculate(orm.BaseModel):
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    untaxed_amount = format_value('0', entry.currency)
+    tax_amount = format_value('0', entry.currency)
+    total_amount = format_value('0', entry.currency)
+    for line in entry._lines:
+      if hasattr(line, 'product_reference'):
+        untaxed_amount += line.subtotal
+        tax_amount += line.tax_subtotal
+        total_amount += line.subtotal + line.tax_subtotal
+    entry.untaxed_amount = format_value(untaxed_amount, entry.currency)
+    entry.tax_amount = format_value(tax_amount, entry.currency)
+    entry.total_amount = format_value(total_amount, entry.currency)
 
 
 class Location(orm.BaseModel):
