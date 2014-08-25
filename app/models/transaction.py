@@ -801,7 +801,15 @@ class Group(orm.BaseExpando):
   
   _default_indexed = False
   
-  def get_entry(self, journal_key=None):
-    for entry in self._entries:
-      if entry.journal == journal_key:
-        return entry
+  _entries = None
+  
+  def get_entry(self, journal_key):
+    for _entry in self._entries:
+      if _entry.journal == journal_key:
+        return _entry
+  
+  def insert_entry(self, entry):
+    for _entry in self._entries:
+      if _entry.journal == entry.journal:
+        return
+    self._entries.append(entry)

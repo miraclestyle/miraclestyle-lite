@@ -29,14 +29,13 @@ class CartInit(orm.BaseModel):
       entry.journal = context.model.journal
       entry.company_address = # Source of company address required!
       entry.state = 'cart'
-      entry.date = datetime.datetime.today()
+      entry.date = datetime.datetime.now()
       entry.party = user_key
       context._group = Group()
-      context._group._entries = [entry]
     else:
       entry.read(read_arguments)  # @todo What read arguments do we put here? We surely need entry._lines loaded.
       context._group = entry.parent_entity
-      context._group._entries = [entry]
+    context._group.insert_entry(entry)
     if entry.state != 'cart':
       raise orm.ActionDenied(action)
 
