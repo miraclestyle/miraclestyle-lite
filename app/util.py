@@ -281,16 +281,16 @@ def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase +
   return ''.join(random.choice(chars) for x in xrange(size))
 
 
-def chunks(l, n):
+def partition_list(complete_list, partition_length):
   '''Returns iterator of provided list in chunks of length by n.
   E.g.
   >>>items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-  >>>list(chunks(items, 5))
+  >>>list(partition_list(items, 5))
   >>>[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11]]
   
   '''
-  for i in xrange(0, len(l), n):
-    yield l[i:i+n]
+  for i in xrange(0, len(complete_list), partition_length):
+    yield complete_list[i:i+partition_length]
 
 
 def log(message, level=None):
