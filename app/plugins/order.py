@@ -15,7 +15,6 @@ from app.models import location, uom
 
 
 # Virtual representation of order entry object to serve as a reference of expected structure (will be removed later)!
-from app.models import auth, location
 class OrderEntry(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
@@ -96,8 +95,8 @@ class AccountsReceivable(orm.BaseModel):
     Category = context.models['47']
     if not entry._lines:
       entry._lines.append(Line(sequence=0, uom=entry.currency,
-                               credit=uom.format_value('0', entry.currency),
-                               debit=uom.format_value('0', entry.currency),
+                               credit=format_value('0', entry.currency),
+                               debit=format_value('0', entry.currency),
                                categories=[Category.build_key('1102', namespace=context.namespace)]))
 
 
@@ -107,10 +106,10 @@ class ProductSubtotalCalculate(orm.BaseModel):
     entry = context._group.get_entry(context.model.journal)
     for line in entry._lines:
       if hasattr(line, 'product_instance_reference'):
-        line.subtotal = line.unit_price * line.quantity # decimal formating required
-        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-        line.debit = uom.format_value('0', line.uom) # decimal formating required
-        line.credit = line.discount_subtotal # decimal formating required
+        line.subtotal = format_value((line.unit_price * line.quantity), line.uom)  # @todo Is this ok!?
+        line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), line.uom) # @todo Is this ok!?
+        line.debit = format_value('0', line.uom)
+        line.credit = format_value(line.discount_subtotal, line.uom)  # @todo Is this ok!?
 
 
 class Location(orm.BaseModel):
