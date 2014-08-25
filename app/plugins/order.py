@@ -1,5 +1,54 @@
 # -*- coding: utf-8 -*-
 '''
+Created on Aug 25, 2014
+
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
+'''
+
+from app import orm
+from app.tools.base import *
+from app.util import *
+
+
+# This is system plugin, which means end user can not use it!
+class CartInit(orm.BaseModel):
+  
+  _kind = xx
+  
+  def run(self, context):
+    catalog_key = context.input.get('catalog')
+    catalog = catalog_key.get()
+    user_key = context.user.key()
+    Group = context.models['48']
+    Entry = context.models['50']
+    entry = Entry.query(Entry.journal == context.model.journal,
+                        Entry.party == user_key,
+                        Entry.state.IN(['cart', 'checkout', 'processing'])).get()
+    if entry is None:
+      entry = Entry()
+      entry.journal = context.model.journal
+      entry.company_address = # Source of company address required!
+      entry.state = 'cart'
+      entry.date = datetime.datetime.today()
+      entry.party = user_key
+      context._group = Group()
+      context._group._entries = [entry]
+    else:
+      entry.read(read_arguments)  # @todo What read arguments do we put here? We surely need entry._lines loaded.
+      context._group = entry.parent_entity
+      context._group._entries = [entry]
+    if entry.state != 'cart':
+      raise orm.ActionDenied(action)
+
+      
+      
+      
+      
+      
+      
+      
+# -*- coding: utf-8 -*-
+'''
 Created on Dec 17, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)

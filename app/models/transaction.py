@@ -800,3 +800,8 @@ class Group(orm.BaseExpando):
   _use_rule_engine = False
   
   _default_indexed = False
+  
+  def get_entry(self, journal_key=None):
+    for entry in self._entries:
+      if entry.journal == journal_key:
+        return entry
