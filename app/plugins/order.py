@@ -5,15 +5,56 @@ Created on Aug 25, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import datetime
+import collections
+
 from app import orm
 from app.tools.base import *
 from app.util import *
+
+
+# Virtual representation of order entry object to serve as a reference of expected structure (will be removed later)!
+from app.models import auth, location
+class OrderEntry(orm.BaseExpando):
+  
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
+  journal = orm.SuperKeyProperty('3', kind=Journal, required=True)
+  name = orm.SuperStringProperty('4', required=True)
+  state = orm.SuperStringProperty('5', required=True)
+  date = orm.SuperDateTimeProperty('6', required=True)
+  company_address = orm.SuperLocalStructuredProperty(location.Location, '7', required=True)
+  party = orm.SuperKeyProperty('8', kind=auth.User, required=True)
+  
+  _actions = [
+    orm.Action(
+      key=orm.Action.build_key('47', 'add_to_cart'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            CartInit(),
+          ]
+        ),
+      ]
+    )
+  ]
+
+
+# @todo Not sure if we are gonna use this instead of orm.ActionDenied()? ActionDenied lacks descreptive messaging!
+class PluginError(Exception):
+  
+  def __init__(self, plugin_error):
+    self.message = plugin_error
 
 
 # This is system plugin, which means end user can not use it!
 class CartInit(orm.BaseModel):
   
   _kind = xx
+  
+  _use_rule_engine = False
   
   def run(self, context):
     catalog_key = context.input.get('catalog')
@@ -37,15 +78,125 @@ class CartInit(orm.BaseModel):
       context._group = entry.parent_entity
     context._group.insert_entry(entry)
     if entry.state != 'cart':
-      raise orm.ActionDenied(action)
+      raise orm.ActionDenied(context.action)
 
-      
-      
-      
-      
-      
-      
-      
+
+class Location(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  country = orm.SuperKeyProperty('1', kind='15', required=True, indexed=False)
+  region = orm.SuperKeyProperty('2', kind='16', indexed=False)
+  postal_code_from = orm.SuperStringProperty('3', indexed=False)
+  postal_code_to = orm.SuperStringProperty('4', indexed=False)
+  city = orm.SuperStringProperty('5', indexed=False)
+  
+  # @todo Do we need __init__ at all!?
+  def __init__(self, *args, **kwargs):
+    super(Address, self).__init__(**kwargs)
+    if len(args):
+      country, region, postal_code_from, postal_code_to, city = args
+      self.country = country
+      self.region = region
+      self.postal_code_from = postal_code_from
+      self.postal_code_to = postal_code_to
+      self.city = city
+
+
+class AddressRule(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  exclusion = orm.SuperBooleanProperty('1', required=True, default=False)
+  address_type = orm.SuperStringProperty('2', required=True, default='billing', choices=['billing', 'shipping'])
+  locations = orm.SuperLocalStructuredProperty(Location, '3', required=True)
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    valid_addresses = collections.OrderedDict()
+    default_address = None
+    address_reference_key = '%s_address_reference' % self.address_type
+    address_key = '%s_address' % self.address_type
+    addresses_key = '%s_addresses' % self.address_type
+    default_address_key = 'default_%s' % self.address_type
+    input_address_reference = context.input.get(address_reference_key)
+    entry_address_reference = getattr(entry, address_reference_key, None)
+    entry_address = getattr(entry, address_key, None)
+    buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
+    if buyer_addresses is None:
+      raise orm.ActionDenied(context.action) # @todo Replace with raise PluginError('no_address')!?
+    for buyer_address in buyer_addresses.addresses:
+      if self.validate_address(buyer_address):
+        valid_addresses[buyer_address.internal_id] = buyer_address
+        if getattr(buyer_address, default_address_key):
+          default_address = buyer_address
+    if not len(valid_addresses):
+      raise orm.ActionDenied(context.action) # @todo Replace with raise PluginError('no_valid_address')!?
+    context.output[addresses_key] = valid_addresses
+    if (default_address is None) and valid_addresses:
+      default_address = valid_addresses.values()[0]
+    if input_address_reference in valid_addresses:
+      default_address = valid_addresses[input_address_reference]
+    elif entry_address_reference in valid_addresses:
+      default_address = valid_addresses[entry_address_reference]
+    if default_address:
+      setattr(entry, address_reference_key, default_address.internal_id)
+      setattr(entry, address_key, location.get_location(default_address))
+      context.output[default_address_key] = default_address
+    else:
+      raise orm.ActionDenied(context.action) # @todo Replace with raise PluginError('no_address_found')!?
+  
+  def validate_address(self, address):
+    # Shipping everywhere except at the following locations
+    if not (self.exclusion):
+      allowed = True
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = False
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = False
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = False
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = False
+            break
+    # Shipping only at the following locations
+    else:
+      allowed = False
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = True
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = True
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = True
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = True
+            break
+    return allowed
+
+
+
+
+
 # -*- coding: utf-8 -*-
 '''
 Created on Dec 17, 2013
