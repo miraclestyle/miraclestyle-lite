@@ -214,8 +214,18 @@ MainApp
                                          });
 									    
                                 	};
+                                	
+                                	$scope.manageProductById = function (pricetag)
+                                	{
+                                	    $scope.manageProduct(_.findWhere(this.entity._products, {key : pricetag.product}), function (cancel) {
+                                	         Confirm.sure(function () {
+                                	             pricetag._state = 'deleted';
+                                                 cancel();
+                                	         });
+                                	    });  
+                                	};
  
-                                    $scope.manageProduct = function (product) {
+                                    $scope.manageProduct = function (product, can_delete) {
                                     	
                                     	var find_child = function(child, entity)
 					        	  	    { 
@@ -236,6 +246,7 @@ MainApp
     					                	 'kind' : kind,
     					                	 'scope' : angular.extend(make_product_scope(), {
     					                	 	'completed' : complete_upload,
+    					                	 	'can_delete' : can_delete,
     					                	 }),
     					                	 'update_child' : update_child,
     					                	 'parentScope' : $scope,

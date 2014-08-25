@@ -1,6 +1,6 @@
 <div class="grid-wrapper">
 	<div ng-repeat="catalog in catalogs"  homepage-grid class="grid-item frontpage">
-		<a class="inner" href="#">
+		<a ng-click="viewCatalog(catalog)" class="inner" href="#">
 			<img ng-src="{{catalog.cover}}=s360">
 		</a>
 	</div>

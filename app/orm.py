@@ -13,6 +13,7 @@ import copy
 import collections
 import string
 import time
+import re
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
@@ -30,7 +31,6 @@ from app import mem, util, settings
 ctx = get_context()
 ctx.set_memcache_policy(False)
 # ctx.set_cache_policy(False)
-
 
 #############################################
 ########## System wide exceptions. ##########
@@ -423,7 +423,8 @@ class _BaseModel(object):
   _parent = None
   _write_custom_indexes = None
   _delete_custom_indexes = None
-  
+  _duplicate_appendix = None # used to memorize appendix that was used to duplicate this entity. it exists only in duplication runtime
+ 
   def __init__(self, *args, **kwargs):
     _deepcopied = '_deepcopy' in kwargs
     if _deepcopied:
@@ -1125,6 +1126,25 @@ class _BaseModel(object):
       self.key.delete()
       self.unindex_search_documents()
   
+  @property    
+  def duplicate_appendix(self):
+    ent = self._root
+    if ent._duplicate_appendix is None:
+      ent._duplicate_appendix = util.generate_duplicate_appendix()
+    return ent._duplicate_appendix
+  
+  def duplicate_key_id(self, key=None):
+    '''If key is provided, it will use its id for construction'''
+    if key is None:
+      the_id = self.key_id_str
+    else:
+      the_id = key._id_str
+    try:
+      the_id = util.parse_duplicated_value(the_id)
+    except IndexError:
+      pass
+    return '%s_duplicate_%s' % (the_id, self.duplicate_appendix)
+  
   def duplicate(self):
     '''Duplicate this entity.
     Based on entire model configuration and hierarchy, the .duplicate() methods will be called
@@ -1167,9 +1187,35 @@ class _BaseModel(object):
     multiple tasks that could duplicate them in paralel.
     That fragmentation could be achieved via existing cron infrastructure or by implementing something with setup engine.
     
+    
+    @todo Referenced entity keys pose a problem when doing duplicates. E.g.
+ 
+    ProductCopy = Product.duplicate
+    CatalogPricetagCopy = CatalogPricetag.duplicate
+    
+    CatalogPricetagCopy
+     ->product = Product # old product key stays
+     ...
+      
+    What can be done to avoid this is writing logic that will override those values with proper ones.
+    But problems with that we do not have any keys ready, cause we set them to none to re-generate.
+    
+    Catalog
+     ->duplicate():
+       new = super.duplicate()
+       for image in new.images:
+        for pricetag in pricetags:
+           pricetag.product = pricetag.product.id + '_prefix that we know'
+        etc...
+        
+    But this behaviour expects custom keys, making it without custom keys would mean that you would first have to .put()
+    duplicated entity, make changes, then again do the put(). But in that process you lose references to old entitiy keys.
+    
     '''
     new_entity = copy.deepcopy(self) # deep copy will copy all static properties
     new_entity._use_rule_engine = False # we skip the rule engine here because if we dont
+    new_entity._parent = self._parent
+    the_id = new_entity.duplicate_key_id()
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
     for field_key, field in new_entity.get_fields().iteritems():
@@ -1179,7 +1225,7 @@ class _BaseModel(object):
            value.duplicate() # call duplicate for every structured field
     if new_entity.key:
       # '%s_duplicate_%s' % (self.key_id, time.time())
-      new_entity.set_key(None, parent=self.key_parent, namespace=self.key_namespace)
+      new_entity.set_key(the_id, parent=self.key_parent, namespace=self.key_namespace)
       # we append _duplicate to the key, this we could change the behaviour of this by implementing something like
       # prepare_duplicate_key()
       # we always set the key last, because if we dont, then ancestor queries wont work because we placed a new key that
@@ -1291,6 +1337,8 @@ class _BaseModel(object):
         entity_field = util.get_attr(entitiy_fields, field.name)
         if entity_field:
           value = entity_field.resolve_search_document_field(field.value)
+          if value is util.Nonexistent:
+            continue
           util.set_attr(entity, field.name, value)
       return entity
     else:
@@ -1546,7 +1594,7 @@ class SuperPropertyManager(object):
     - read()
     - duplicate()
     and on every delete function because delete functions just query entities for deletation, not for storing it into
-    self._property_value, therefore the `entities` kwarg.
+    self._property_value, hence the `entities` kwarg.
     
     '''
     as_list = False
@@ -1978,6 +2026,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     _entities = self._property.get_modelclass().query(ancestor=self._entity.key).fetch()
     if len(_entities):
       for entity in _entities:
+        self._set_parent(entity)
         entities.append(entity.duplicate())
     del _entities
     self._property_value = entities
@@ -2277,6 +2326,7 @@ class _BaseStructuredProperty(_BaseProperty):
     return self.get_modelclass(**kwargs).get_fields()
   
   def value_format(self, value):
+    source_value = value
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2285,6 +2335,8 @@ class _BaseStructuredProperty(_BaseProperty):
       if not isinstance(value, dict) and not self._required:
         return util.Nonexistent
       value = [value]
+    elif source_value is None:
+      return util.Nonexistent
     for v in value:
       out.append(self._structured_property_format(v))
     if not self._repeated:
@@ -2483,6 +2535,13 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       return search.TextField(name=self.search_document_field_name, value=value)
     else:
       return search.DateField(name=self.search_document_field_name, value=value)
+    
+  def resolve_search_document_field(self, value):
+    if self._repeated:
+      value = ' '.join(map(lambda v: str(v), value))
+      return value
+    else:
+      return value
   
   def get_meta(self):
     dic = super(SuperDateTimeProperty, self).get_meta()

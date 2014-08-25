@@ -47,7 +47,7 @@ MainApp
 }])
 .controller('HomePage', ['$scope', 'Title', 'Endpoint', function ($scope, Title, Endpoint) {
     $scope.catalogs = [];
-    Endpoint.post('search', '82').success(function (data) {
+    Endpoint.post('public_search', '35', {'search' : {'filters' : [], 'kind' : '35', 'orders' : [{"field": 'created',"operator": 'desc'}]}}).success(function (data) {
     	$scope.catalogs = data.entities;
     });
 }])

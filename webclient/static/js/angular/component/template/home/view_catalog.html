@@ -1,0 +1,40 @@
+<form ng-submit="save()" name="container.main">
+    
+<div class="modal-body scrollable">
+ 
+<div class="clearfix">
+    <div load-infinite-catalog-images class="overflow-x">
+        <div class="overflow-master">
+            <ol>
+             <li class="catalog-image-scroll" ng-repeat="catalog_image in entity._images track by $index"
+                  ng-model='catalog_image.pricetags'
+                 data-width="{{catalog_image.width}}" data-height="{{catalog_image.height}}">
+                 <img catalog-slider class="img" ng-src="{{catalog_image.serving_url}}=s1000" />
+                 
+                 <div ng-style="{top: pricetag._position_top + 'px', left : pricetag._position_left + 'px'}"
+                      class="button pricetag"
+                      catalog-pricetag-position
+                      ng-repeat="pricetag in catalog_image.pricetags track by $index"
+                      >
+                    <a ng-click="viewProduct(pricetag)" href="javascript:;">{{pricetag.value}}</a>
+                 </div>
+                 
+             </li>
+            </ol>
+        </div>
+    </div>
+ 
+    <div class="corner-right">
+ 
+        <button type="button" class="button" ng-click="cancel()">
+            Cancel
+        </button>
+     </div>    
+    
+</div>
+   
+
+</div>
+
+ 
+</form>

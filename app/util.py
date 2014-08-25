@@ -10,6 +10,8 @@ import logging
 import string
 import random
 import dis
+import time
+import re
 
 from decimal import Decimal, ROUND_HALF_EVEN
 
@@ -274,7 +276,7 @@ def safe_eval(source, data=None):
                                         'globals': locals, 'locals': locals, 'bool': bool,
                                         'dict': dict, 'round': round, 'Decimal': Decimal}}, data)
   except Exception as e:
-    raise Exception('Failed to process code "%s" error: %s' % ((source, data), e))
+    raise Exception('Failed to process code: "%s" | error: %s | data: %s' % (source, e, data))
 
 
 def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits):
@@ -335,3 +337,19 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
     raise Exception('no_digits_in_uom')
   places = Decimal(10) ** -uom.digits
   return (value).quantize(places, rounding=rounding)
+
+def generate_duplicate_appendix():
+  # generates unique appendix using current time and 10 random characters
+  return '%s_%s' % (long(time.time()), random_chars(10))
+
+
+def parse_duplicated_value(value):
+  # parses value that might contain appendix. throws error if not.
+  # @todo this might have to be revised, problem with it that if the custom key is named
+  # 24194912412_duplicate_2481412481284_14912941294 it will detect it as a duplicated thing.
+  # result will be that the _duplicate_2481412481284_14912941294 will be stripped and a new appendix will be generated
+  # 24194912412_<new appendix>
+  # but i think this is not big concern since this logic is only employed when we duplicate things, in which case
+  # we do not need to keep the original key.
+  results = re.findall(r'(.*)_duplicate_.*_.*', value)
+  return results[0]

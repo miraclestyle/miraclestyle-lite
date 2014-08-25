@@ -8,7 +8,6 @@ Created on Jun 14, 2014
 import cgi
 import cloudstorage
 import copy
-import time
 
 from google.appengine.ext import blobstore
 from google.appengine.api import images, urlfetch
@@ -78,19 +77,21 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
           self._property.delete_blobs_on_success(entity.image)
         else:
           self._property.save_blobs_on_success(entity.image, False)
-      original_entities = getattr(self._entity._original, self.property_name, None)
-      if original_entities is not None:
-        original_entities = original_entities.value
-        if not self._property._repeated:
-          if entities[0].image != original_entities.image:
-            self._property.delete_blobs_on_success(original_entities.image)
-        else:
-          tmp = dict((ent.key.urlsafe(), ent) for ent in entities if ent.key)
-          for original in original_entities:
-            entity = tmp.get(original.key.urlsafe())
-            if entity is not None:
-              if entity.image != original.image:
-                self._property.delete_blobs_on_success(original.image)
+      if hasattr(self._entity, '_original'):
+        original_entities = getattr(self._entity._original, self.property_name, None)
+        if original_entities is not None:
+          original_entities = original_entities.value
+          if not self._property._repeated:
+            if entities[0] is not None and original_entities is not None and entities[0].image != original_entities.image:
+              self._property.delete_blobs_on_success(original_entities.image)
+          else:
+            tmp = dict((ent.key.urlsafe(), ent) for ent in entities if ent.key)
+            if original_entities is not None:
+              for original in original_entities:
+                entity = tmp.get(original.key.urlsafe())
+                if entity is not None:
+                  if entity.image != original.image:
+                    self._property.delete_blobs_on_success(original.image)
   
   def _pre_update_local(self):
     self._update_blobs()
@@ -136,7 +137,11 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
     @orm.tasklet
     def async(entity):
       gs_object_name = entity.gs_object_name
-      new_gs_object_name = '%s_duplicate' % entity.gs_object_name
+      try:
+        gs_object_name = parse_duplicated_value(gs_object_name)
+      except IndexError:
+        pass
+      new_gs_object_name = '%s_duplicate_%s' % (gs_object_name, entity.duplicate_appendix)
       readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
       writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=entity.content_type)
       # Less consuming memory write, can be only used when using brute force copy.

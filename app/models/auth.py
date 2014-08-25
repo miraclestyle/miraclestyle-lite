@@ -344,7 +344,7 @@ class User(orm.BaseExpando):
     if not session_id:
       return  # Fail silently if the session id is not found in the split sequence.
     user = orm.Key(urlsafe=user_key).get()
-    if user:
+    if user and user.key_id != 'system':
       session = user.session_by_id(session_id)
       if session:
         cls.set_current_user(user, session)

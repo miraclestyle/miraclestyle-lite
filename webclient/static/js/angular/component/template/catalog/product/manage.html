@@ -312,7 +312,7 @@
 <div class="modal-footer">
  
     <button ng-disabled="$isUploading" type="button" 
-    		ng-click="remove()" ng-show="child.id && rule.action['delete'].executable" busy class="button">
+    		ng-click="can_delete(cancel)" ng-show="can_delete != undefined" busy class="button">
 		Remove
 	</button>
 	

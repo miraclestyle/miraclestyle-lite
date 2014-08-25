@@ -152,9 +152,7 @@ class Product(orm.BaseExpando):
   _kind = 38
   
   _use_rule_engine = False
-  
-  # _use_rule_engine = False Do we need this here??
-  
+ 
   product_category = orm.SuperKeyProperty('1', kind='17', required=True, searchable=True)
   name = orm.SuperStringProperty('2', required=True, searchable=True)
   description = orm.SuperTextProperty('3', required=True, searchable=True)  # Soft limit 64kb.
@@ -264,7 +262,7 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('35', 'discontinue'),
                                   orm.Action.build_key('35', 'log_message'),
                                   orm.Action.build_key('35', 'catalog_duplicate'),
-                                  orm.Action.build_key('35', 'product_duplicate')], False, 'entity._original.namespace_entity._original.state != "active"'),
+                                  orm.Action.build_key('35', 'product_duplicate')], False, 'entity._original.namespace_entity and entity._original.namespace_entity._original.state != "active"'),
       orm.ActionPermission('35', [orm.Action.build_key('35', 'update'),
                                   orm.Action.build_key('35', 'product_duplicate'),
                                   orm.Action.build_key('35', 'lock'),
@@ -294,7 +292,7 @@ class Catalog(orm.BaseExpando):
       orm.ActionPermission('35', [orm.Action.build_key('35', 'public_search')], True, 'True'),
       orm.FieldPermission('35', ['created', 'updated', 'state'], False, None, 'True'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], False, False,
-                          'entity._original.namespace_entity._original.state != "active"'),
+                          'entity._original.namespace_entity and entity._original.namespace_entity._original.state != "active"'),
       orm.FieldPermission('35', ['created', 'updated', 'name', 'publish_date', 'discontinue_date', 'state', 'cover', 'cost', '_images', '_products', '_records'], False, None,
                           'entity._original.state != "unpublished"'),
       orm.FieldPermission('35', ['state'], True, None,
@@ -950,7 +948,6 @@ class Catalog(orm.BaseExpando):
             RulePrepare(),
             RuleExec(),
             CatalogSearch(cfg={'index': settings.CATALOG_INDEX}),
-            #RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.total_matches': '_total_matches',
                            'output.entities_count': '_entities_count',
@@ -961,6 +958,15 @@ class Catalog(orm.BaseExpando):
         ]
       )
     ]
+  
+  def duplicate(self):
+    duplicated_entity = super(Catalog, self).duplicate()
+    if duplicated_entity._images.value:
+      for image in duplicated_entity._images.value:
+        if image.pricetags.value:
+          for tag in image.pricetags.value:
+            tag.product = Product.build_key(duplicated_entity.duplicate_key_id(tag.product), parent=duplicated_entity.key, namespace=duplicated_entity.key.namespace())
+    return duplicated_entity
   
   @property
   def _is_eligible(self):

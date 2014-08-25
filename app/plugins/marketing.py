@@ -241,7 +241,7 @@ class CatalogSearch(orm.BaseModel):
     result = index.search(query)
     context._total_matches = result.number_found
     context._entities_count = len(result.results)
-    context._entities = map(context.model.search_document_to_entity, result.results)
+    context._entities = map(context.model.search_document_to_dict, result.results)
     more = False
     cursor = result.cursor
     if cursor is not None:
