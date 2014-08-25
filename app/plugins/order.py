@@ -11,6 +11,7 @@ import collections
 from app import orm
 from app.tools.base import *
 from app.util import *
+from app.models import location, uom
 
 
 # Virtual representation of order entry object to serve as a reference of expected structure (will be removed later)!
@@ -25,6 +26,10 @@ class OrderEntry(orm.BaseExpando):
   date = orm.SuperDateTimeProperty('6', required=True)
   company_address = orm.SuperLocalStructuredProperty(location.Location, '7', required=True)
   party = orm.SuperKeyProperty('8', kind=auth.User, required=True)
+  billing_address_reference = orm.SuperStringProperty('9', required=True)
+  shipping_address_reference = orm.SuperStringProperty('10', required=True)
+  billing_address = orm.SuperLocalStructuredProperty(location.Location, '11', required=True)
+  shipping_address = orm.SuperLocalStructuredProperty(location.Location, '12', required=True)
   
   _actions = [
     orm.Action(
@@ -64,9 +69,11 @@ class CartInit(orm.BaseModel):
     Entry = context.models['50']
     entry = Entry.query(Entry.journal == context.model.journal,
                         Entry.party == user_key,
-                        Entry.state.IN(['cart', 'checkout', 'processing'])).get()
+                        Entry.state.IN(['cart', 'checkout', 'processing']),
+                        namespace=context.namespace).get()
     if entry is None:
       entry = Entry()
+      entry.set_key(None, namespace=context.namespace)
       entry.journal = context.model.journal
       entry.company_address = # Source of company address required!
       entry.state = 'cart'
@@ -78,7 +85,32 @@ class CartInit(orm.BaseModel):
       context._group = entry.parent_entity
     context._group.insert_entry(entry)
     if entry.state != 'cart':
-      raise orm.ActionDenied(context.action)
+      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('entry_not_in_cart_state')!?
+
+
+class AccountsReceivable(orm.BaseModel):
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    Line = context.models['51']
+    Category = context.models['47']
+    if not entry._lines:
+      entry._lines.append(Line(sequence=0, uom=entry.currency,
+                               credit=uom.format_value('0', entry.currency),
+                               debit=uom.format_value('0', entry.currency),
+                               categories=[Category.build_key('1102', namespace=context.namespace)]))
+
+
+class ProductSubtotalCalculate(orm.BaseModel):
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    for line in entry._lines:
+      if hasattr(line, 'product_instance_reference'):
+        line.subtotal = line.unit_price * line.quantity # decimal formating required
+        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
+        line.debit = uom.format_value('0', line.uom) # decimal formating required
+        line.credit = line.discount_subtotal # decimal formating required
 
 
 class Location(orm.BaseModel):
@@ -128,14 +160,14 @@ class AddressRule(orm.BaseModel):
     entry_address = getattr(entry, address_key, None)
     buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
     if buyer_addresses is None:
-      raise orm.ActionDenied(context.action) # @todo Replace with raise PluginError('no_address')!?
+      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_address')!?
     for buyer_address in buyer_addresses.addresses:
       if self.validate_address(buyer_address):
         valid_addresses[buyer_address.internal_id] = buyer_address
         if getattr(buyer_address, default_address_key):
           default_address = buyer_address
     if not len(valid_addresses):
-      raise orm.ActionDenied(context.action) # @todo Replace with raise PluginError('no_valid_address')!?
+      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_valid_address')!?
     context.output[addresses_key] = valid_addresses
     if (default_address is None) and valid_addresses:
       default_address = valid_addresses.values()[0]
@@ -148,7 +180,7 @@ class AddressRule(orm.BaseModel):
       setattr(entry, address_key, location.get_location(default_address))
       context.output[default_address_key] = default_address
     else:
-      raise orm.ActionDenied(context.action) # @todo Replace with raise PluginError('no_address_found')!?
+      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_address_found')!?
   
   def validate_address(self, address):
     # Shipping everywhere except at the following locations

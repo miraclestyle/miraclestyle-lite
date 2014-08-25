@@ -701,6 +701,7 @@ class Entry(orm.BaseExpando):
     '_lines': orm.SuperStorageStructuredProperty(Line, storage='remote_multi')
     }
   
+  # @todo We have a bug here, supplied value for _model_schema in io.py is at best urlsafe key, which isn't deserialized!
   def __init__(self, *args, **kwargs):
     '''Caution! Making instances of Entry() inside a transaction may
     cause performing non-entity group queries (see journal_key.get() in add journal fields).
