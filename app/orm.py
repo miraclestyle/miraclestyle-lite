@@ -223,7 +223,7 @@ def _perform_multi_transactions(entities, write=None, transaction_callack=None, 
         put_multi(group)
   else:
     run = transaction_callack
-  for group in util.chunks(entities, 5):
+  for group in util.partition_list(entities, 5):
     transaction(lambda: run(group, write), xg=True)
     if sleep is not None: # if sleep is specified, the for loop will block before issuing another transaction
       time.sleep(sleep)
@@ -1283,7 +1283,7 @@ class _BaseModel(object):
     if len(documents):
       documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
       index = search.Index(name=name, namespace=namespace)
-      for documents_partition in util.chunks(documents, 200):
+      for documents_partition in util.partition_list(documents, 200):
         if len(documents_partition):
           try:
             if operation == 'index':
