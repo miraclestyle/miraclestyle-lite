@@ -69,10 +69,10 @@ class CartInit(orm.BaseModel):
     entry = Entry.query(Entry.journal == context.model.journal,
                         Entry.party == user_key,
                         Entry.state.IN(['cart', 'checkout', 'processing']),
-                        namespace=context.namespace).get()
+                        namespace=context.model.journal._namespace).get()
     if entry is None:
       entry = Entry()
-      entry.set_key(None, namespace=context.namespace)
+      entry.set_key(None, namespace=context.model.journal._namespace)
       entry.journal = context.model.journal
       entry.company_address = # Source of company address required!
       entry.state = 'cart'
@@ -90,19 +90,135 @@ class CartInit(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class AccountsReceivable(orm.BaseModel):
   
+  _kind = xx
+  
+  _use_rule_engine = False
+  
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
-    Line = context.models['51']
     Category = context.models['47']
+    Line = context.models['51']
     if not entry._lines:
       entry._lines.append(Line(sequence=0, uom=entry.currency,
                                credit=format_value('0', entry.currency),
                                debit=format_value('0', entry.currency),
-                               categories=[Category.build_key('1102', namespace=context.namespace)]))
+                               categories=[Category.build_key('1102', namespace=context.model.journal._namespace)]))  # Debtors (1102) account.
+
+
+# This is system plugin, which means end user can not use it!
+class ProductToLine(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    product_key = context.input.get('product')
+    variant_signature = context.input.get('variant_signature')
+    line_exists = False
+    for line in entry._lines:
+      if hasattr(line, 'product_reference')
+      and line.product_reference == product_key
+      and line.product_variant_signature == variant_signature:
+        line.quantity = line.quantity + format_value('1', line.product_uom)
+        line_exists = True
+        break
+    if not line_exists:
+      ProductInstance = context.models['39']
+      Category = context.models['47']
+      Line = context.models['51']
+      product = product_key.get()
+      product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
+      product_instance = product_instance_key.get()
+      new_line = Line()
+      new_line.sequence = entry._lines[-1].sequence + 1
+      new_line.categories = [Category.build_key('200', namespace=context.model.journal._namespace)]  # Product Sales (200) account.
+      new_line.uom = entry.currency
+      new_line.product_reference = product_key
+      new_line.product_variant_signature = variant_signature
+      new_line.product_category_complete_name = product._product_category.complete_name
+      new_line.product_category_reference = product.product_category
+      new_line.description = product.name
+      new_line.code = product.code
+      new_line.unit_price = product.unit_price
+      new_line.product_uom = uom.get_uom(product.product_uom)  # @todo Where is get_uom function? We lost it somewhere!
+      new_line.quantity = format_value('1', new_line.product_uom)
+      new_line.discount = format_value('0', uom.UOM(digits=4))
+      if hasattr(product, 'weight'):
+        new_line._weight = product.weight  # @todo Perhaps we might need to build these fields during certain actions, and not only while adding new lines (to ensure thir life accros carrier plugins)!
+      if hasattr(product, 'volume'):
+        new_line._volume = product.volume
+      if product_instance is not None:
+        if hasattr(product_instance, 'unit_price'):
+          new_line.unit_price = product_instance.unit_price
+        if hasattr(product_instance, 'code'):
+          new_line.code = product_instance.code
+        if hasattr(product_instance, 'weight'):
+          new_line._weight = product_instance.weight
+        if hasattr(product_instance, 'volume'):
+          new_line._volume = product_instance.volume
+      entry._lines.append(new_line)
+
+
+# This is system plugin, which means end user can not use it!
+# @todo Not sure if need this plugin, since we have field level rule engine, which would be capable of controling which field can be edited!?
+class UpdateProductLine(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    delete_lines = []
+    quantity = context.input.get('quantity')
+    discount = context.input.get('discount')
+    for i, line in enumerate(entry._lines):
+      if hasattr(line, 'product_reference'):
+        if quantity is not None:
+          if quantity[i] <= 0:
+            delete_lines.append(i)
+          else:
+            line.quantity = format_value(quantity[i], line.product_uom)
+        if discount is not None:
+          line.discount = format_value(discount[i], uom.UOM(digits=4))
+    for line in delete_lines:
+      entry._lines.pop(line)
+
+
+# This is system plugin, which means end user can not use it!
+class EntryFieldAutoUpdate(transaction.Plugin):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    static_values = self.cfg.get('s', {})
+    dynamic_values = self.cfg.get('d', {})
+    remove_values = self.cfg.get('rm', [])
+    entry = context._group.get_entry(context.model.journal)
+    for key, value in static_values.iteritems():
+      set_attr(entry, key, value)
+    for key, value in dynamic_values.iteritems():
+      set_value = get_attr(context, value, Nonexistent)
+      if set_value is not Nonexistent:
+        set_attr(entry, key, set_value)
+    for key in remove_values:
+      del_attr(entry, key)
 
 
 # This is system plugin, which means end user can not use it!
 class ProductSubtotalCalculate(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
@@ -114,7 +230,12 @@ class ProductSubtotalCalculate(orm.BaseModel):
         line.credit = format_value(line.discount_subtotal, line.uom)  # @todo Is this ok!?
 
 
+# This is system plugin, which means end user can not use it!
 class OrderTotalCalculate(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
@@ -131,6 +252,7 @@ class OrderTotalCalculate(orm.BaseModel):
     entry.total_amount = format_value(total_amount, entry.currency)
 
 
+# Not a plugin!
 class Location(orm.BaseModel):
   
   _kind = xx
@@ -244,371 +366,46 @@ class AddressRule(orm.BaseModel):
     return allowed
 
 
-
-
-
-# -*- coding: utf-8 -*-
-'''
-Created on Dec 17, 2013
-
-@author:  Edis Sehalic (edis.sehalic@gmail.com)
-'''
-import datetime
-import collections
-import re
- 
-from app import ndb
-from app.models import transaction, rule, uom, location, log
- 
-class PluginValidationError(Exception):
-  pass
-
-class Write(transaction.Plugin):
+# This plugin is incomplete!
+class PayPalPayment(orm.BaseModel):
   
-  def run(self, journal, context):
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-        group = context.transaction.group
-        if not group:
-           group = Group(namespace=context.auth.domain.key.urlsafe()) # ?
-           group.put()
-        
-        group_key = group.key # - put main key
-        for key, entry in context.transaction.entities.items():
-            entry.set_key(parent=group_key) # parent key for entry
-            entry_key = entry.put()
-            
-            """
-             notice the `_` before `lines` that is because 
-             if you set it without underscore it will be considered as new property in expando
-             so all operations should use the following paradigm:
-             entry._lines = []
-             entry._lines.append(Line(...))
-             etc..
-            """
-            lines = []
-            
-            for line in entry._lines:
-                line.journal = entry.journal
-                line.company = entry.company
-                line.state = entry.state
-                line.date = entry.date
-                line.set_key(parent=entry_key) # parent key for line, and if posible, sequence value should be key.id
-                lines.append(line)
-            
-            ndb.put_multi(lines)
-            
-    transaction()
+  _kind = xx
   
-class Location:
+  _use_rule_engine = False
   
-  def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
-    self.country = country
-    self.region = region
-    self.postal_code_from = postal_code_from
-    self.postal_code_to = postal_code_to
-    self.city = city
-    
-class AddressRule(transaction.Plugin):
-  
-  _kind = 54
-  
-  exclusion = ndb.SuperBooleanProperty('5', default=False)
-  address_type = ndb.SuperStringProperty('6')
-  locations = ndb.SuperPickleProperty('7')
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
- 
-    valid_addresses = collections.OrderedDict()
-    default_address = None
-    address_reference_key = '%s_address_reference' % self.address_type
-    address_key = '%s_address' % self.address_type
-    addresses_key = '%s_addresses' % self.address_type
-    default_address_key = 'default_%s' % self.address_type
-    
-    input_address_reference = context.input.get(address_reference_key)
-    entry_address_reference = getattr(entry, address_reference_key, None)
-    entry_address = getattr(entry, address_key, None)
-    
-    from app.opt import buyer
-      
-    buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
-    
-    if not len(buyer_addresses):
-       raise PluginValidationError('no_address')
-    
-    for buyer_address in buyer_addresses:
-      if self.validate_address(buyer_address):
-         valid_addresses[buyer_address.key.urlsafe()] = buyer_address
-         if getattr(buyer_address, default_address_key):
-             default_address = buyer_address
-             
-    if not len(valid_addresses):
-       raise PluginValidationError('no_valid_address')
-    
-    context.output[addresses_key] = valid_addresses
-    
-    if not default_address and valid_addresses:
-      default_address = valid_addresses.values()[0]
-    
-    if input_address_reference and input_address_reference.urlsafe() in valid_addresses:
-       default_address = input_address_reference.get()
-    elif entry_address_reference and entry_address_reference.urlsafe() in valid_addresses:
-       default_address = entry_address_reference.get()
-    
-    if default_address:
- 
-      setattr(entry, address_reference_key, default_address.key)
-      setattr(entry, address_key, location.get_location(default_address))
-      
-      context.output[default_address_key] = default_address
-    else:
-      raise PluginValidationError('no_address_found')
- 
-  def validate_address(self, address):
-    
-    # Shipping everywhere except at the following locations
-    if not (self.exclusion):
-      allowed = True
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
-      allowed = False
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = True
-            break
-    return allowed
- 
- 
-class CartInit(transaction.Plugin):
-  
-  _kind = 55
-  
-  def run(self, journal, context):
-    # ucitaj postojeci entry na kojem ce se raditi write
-    catalog_key = context.input.get('catalog')
-    user_key = context.auth.user.key
-    catalog = catalog_key.get()
-    company = catalog.company.get()
-    company_key = company.key
-    journal_key = journal.get_key(journal.key.id(), namespace=catalog.key.namespace())
-     
-    Entry = transaction.Entry
-  
-    entry = Entry.query(Entry.journal == journal_key, 
-                        Entry.company == company_key, Entry.state.IN(['cart', 'checkout', 'processing']),
-                        Entry.party == user_key
-                        ).get()
-    # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
-
-    if not entry:
-       if context.action.operation == 'write':
-          entry = Entry()
-          entry.journal = journal_key
-          entry.company = company_key
-          entry.company_address = location.get_location(company)
-          entry.state = 'cart'
-          entry.date = datetime.datetime.today()
-          entry.party = user_key
-          # accounts recieveable
-          entry._lines = []
-       else:
-          raise PluginValidationError('not_found')
- 
-    # proveravamo da li je entry u state-u 'cart'
-    journal.set_entry_global_role(entry)
- 
-    context.rule.entity = entry
-    rule.Engine.run(context)
-    
-    if not rule.executable(context):
-      # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
-      # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
-      raise PluginValidationError('entry_not_in_cart_state')
-    else:
-      if entry.key:
-         if not context.transaction.group:
-            context.transaction.group = entry.parent_entity
-         entry._lines = transaction.Line.query(ancestor=entry.key).fetch(-transaction.Line.sequence)
-      context.transaction.entities[journal.key.id()] = entry
-      
-
-class AccountsReceivable(transaction.Plugin):
-  
-   def run(self, journal, context):
-     
-       entry = context.transaction.entities[journal.key.id()]
-       
-       if not entry._lines:
-          entry._lines.append(transaction.Line(sequence=0, uom=entry.currency, 
-                                           credit=uom.format_value('0', entry.currency), debit=uom.format_value('0', entry.currency),
-                                           categories=[transaction.Category.build_key('key')]))
-      
-
-class ProductToLine(transaction.Plugin):
-    
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-   
-    catalog_pricetag_key = context.input.get('catalog_pricetag')
-    product_template_key = context.input.get('product_template')
-    product_instance_key = context.input.get('product_instance')
-    variant_signature = context.input.get('variant_signature')
-    custom_variants = context.input.get('custom_variants')
- 
-    # svaka komponenta mora postovati pravila koja su odredjena u journal-u
-    # izmene na postojecim entry.lines ili dodavanje novog entry.line zavise od state-a 
-    line_exists = False
-    
-    for line in entry._lines:
-        if (hasattr(line, 'catalog_pricetag_reference')
-            and catalog_pricetag_key == line.catalog_pricetag_reference
-            and hasattr(line, 'product_instance_reference')
-            and product_instance_key == line.product_instance_reference):
-          line.quantity = line.quantity + uom.format_value('1', line.product_uom) # decmail formating required
-          line_exists = True
-          break
-      
-    if not (line_exists):
-      product_template = product_template_key.get()
-      product_instance = product_instance_key.get()
-      product_category = product_template.product_category.get()
-      product_category_complete_name = product_category.complete_name
- 
-      new_line = transaction.Line()
- 
-      new_line.sequence = entry._lines[-1].sequence + 1
-         
-      new_line.categories.append(transaction.Category.build_key('key')) # ovde ide ndb.Key('Category', 'key')
- 
-      new_line.description = product_template.name
-      
-      if (hasattr(product_template, 'product_instance_count') and product_template.product_instance_count > 1000):
-        new_line.description += '\n %s' % variant_signature
-      else:
-        if (custom_variants):
-          new_line.description += '\n %s' % variant_signature
-      
-      new_line.uom = entry.currency
-      new_line.product_uom = uom.get_uom(product_template.product_uom)
-      
-      if hasattr(product_template, 'weight'):
-         new_line._weight = product_template.weight
-      
-      if hasattr(product_template, 'volume'):   
-         new_line._volume = product_template.volume
-      
-      new_line.code = product_instance.code
-      new_line.product_category_complete_name = product_category_complete_name
-      new_line.product_category_reference = product_template.product_category
-      new_line.catalog_pricetag_reference = catalog_pricetag_key
-      new_line.product_instance_reference = product_instance_key # this cannot happen if the product_instance is over 1000 count
- 
-      if hasattr(product_instance, 'unit_price'):
-        new_line.unit_price = product_instance.unit_price
-      else:
-        new_line.unit_price = product_template.unit_price
-      
-      new_line.quantity = uom.format_value('1', new_line.product_uom) # decimal formating required
-      new_line.discount = uom.format_value('0', uom.UOM(digits=4)) # decimal formating required
-      entry._lines.append(new_line)
-
-      
-class ProductSubtotalCalculate(transaction.Plugin):
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-    
-    for line in entry._lines:
-      if hasattr(line, 'product_instance_reference'):
-        
-        line.subtotal = line.unit_price * line.quantity # decimal formating required
-        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-       
-        line.debit = uom.format_value('0', line.uom) # decimal formating required
-        line.credit = line.discount_subtotal # decimal formating required
-        
-        
-class PayPalPayment(transaction.Plugin):
-  # ovaj plugin ce biti subscribed na mnostvo akcija, medju kojima je i add_to_cart
-  # PayPal Shipping: Prompt for an address, but do not require one, 
+  # This plugin will be subscribed to many actions, among which is add_to_cart as well.
+  # PayPal Shipping: Prompt for an address, but do not require one,
   # PayPal Shipping: Do not prompt for an address
   # PayPal Shipping: Prompt for an address, and require one
   
-  currency = ndb.SuperKeyProperty('5', kind=uom.Unit)
-  reciever_email = ndb.SuperStringProperty('6')
-  business = ndb.SuperStringProperty('7')
+  currency = orm.SuperKeyProperty('1', kind=uom.Unit)
+  reciever_email = orm.SuperStringProperty('2')
+  business = orm.SuperStringProperty('3')
   
-  def run(self, journal, context):
-    # u contextu add_to_cart akcije ova funkcija radi sledece:
-    
-    entry = context.transaction.entities[journal.key.id()]
-    
-    entry.currency = uom.get_uom(self.currency)
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    # In context of add_to_cart action runner does the following:
+    entry.currency = uom.get_uom(self.currency)  # @todo Where is get_uom function? We lost it somewhere!
     entry.paypal_reciever_email = self.reciever_email
     entry.paypal_business = self.business
-    
-    
-class OrderTotalCalculate(transaction.Plugin):
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-    
-    untaxed_amount = uom.format_value('0', entry.currency) # decimal formating required
-    tax_amount = uom.format_value('0', entry.currency) # decimal formating required
-    total_amount = uom.format_value('0', entry.currency) # decimal formating required
-    
-    for line in entry._lines:
-      if hasattr(line, 'product_instance_reference'):
-        untaxed_amount += line.subtotal
-        tax_amount += line.tax_subtotal
-        total_amount += line.subtotal + line.tax_subtotal
-    
-    entry.untaxed_amount = untaxed_amount
-    entry.tax_amount = tax_amount
-    entry.total_amount = total_amount
+
+
+# OLD CODE #
+
+import datetime
+import collections
+import re
+
+from app import ndb
+from app.models import transaction, rule, uom, location, log
+
 
 class LineTax():
   
   def __init__(self, name, formula):
      self.name = name
      self.formula = formula
+
 
 class Tax(transaction.Plugin):
   
@@ -704,7 +501,8 @@ class Tax(transaction.Plugin):
        
           
     return allowed
-  
+
+
 class TaxSubtotalCalculate(transaction.Plugin):
   
   def run(self, journal, context):
@@ -744,31 +542,8 @@ class TaxSubtotalCalculate(transaction.Plugin):
        tax_line.credit = tax_total 
        tax_line.sequence = entry._lines[-1].sequence + 1
        entry._lines.append(tax_line)
-      
-    
 
-class Field:
-  
-  def __init__(self, name, value):
-    
-    self.name = name
-    self.value = value
-    
 
-class EntryFieldAutoUpdate(transaction.Plugin):
-  
-  fields = ndb.SuperPickleProperty('5')
-  
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
- 
-    for field in self.fields:
-      if field.name not in ['name', 'company', 'journal', 'created', 'updated']:
-         # control required
-         setattr(entry, field.name, field.value)
- 
 class CarrierLine:
   
   def __init__(self, name, exclusion=False, active=True, locations=None, rules=None):
@@ -777,7 +552,8 @@ class CarrierLine:
     self.active = active
     self.locations = locations
     self.rules = rules
-  
+
+
 class CarrierLineRule:
   
   def __init__(self, condition, price):
@@ -942,23 +718,8 @@ class Carrier(transaction.Plugin):
              break
   
     return allowed
-  
-class UpdateProductLine(transaction.Plugin):
-   
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-  
-    i = 0
-    for line in entry._lines:
-      if hasattr(line, 'catalog_pricetag_reference') and hasattr(line, 'product_instance_reference'):
-        if context.input.get('quantity')[i] <= 0:
-            entry._lines.pop(i)
-        else:
-            line.quantity = uom.format_value(context.input.get('quantity')[i], line.product_uom)
-        line.discount = uom.format_value(context.input.get('discount')[i], uom.UOM(digits=4))
-      i += 1
-      
+
+
 class PayPalInit(transaction.Plugin):
   
   # user plugin, saved in datastore
@@ -1094,5 +855,42 @@ class PayPalInit(transaction.Plugin):
          return True
       else:
          return False
+
+
+class Write(transaction.Plugin):
+  
+  def run(self, journal, context):
     
-    
+    @ndb.transactional(xg=True)
+    def transaction():
+        group = context.transaction.group
+        if not group:
+           group = Group(namespace=context.auth.domain.key.urlsafe()) # ?
+           group.put()
+        
+        group_key = group.key # - put main key
+        for key, entry in context.transaction.entities.items():
+            entry.set_key(parent=group_key) # parent key for entry
+            entry_key = entry.put()
+            
+            """
+             notice the `_` before `lines` that is because 
+             if you set it without underscore it will be considered as new property in expando
+             so all operations should use the following paradigm:
+             entry._lines = []
+             entry._lines.append(Line(...))
+             etc..
+            """
+            lines = []
+            
+            for line in entry._lines:
+                line.journal = entry.journal
+                line.company = entry.company
+                line.state = entry.state
+                line.date = entry.date
+                line.set_key(parent=entry_key) # parent key for line, and if posible, sequence value should be key.id
+                lines.append(line)
+            
+            ndb.put_multi(lines)
+            
+    transaction()
