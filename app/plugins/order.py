@@ -69,10 +69,10 @@ class CartInit(orm.BaseModel):
     entry = Entry.query(Entry.journal == context.model.journal,
                         Entry.party == user_key,
                         Entry.state.IN(['cart', 'checkout', 'processing']),
-                        namespace=context.namespace).get()
+                        namespace=context.model.journal._namespace).get()
     if entry is None:
       entry = Entry()
-      entry.set_key(None, namespace=context.namespace)
+      entry.set_key(None, namespace=context.model.journal._namespace)
       entry.journal = context.model.journal
       entry.company_address = # Source of company address required!
       entry.state = 'cart'
@@ -92,13 +92,64 @@ class AccountsReceivable(orm.BaseModel):
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
-    Line = context.models['51']
     Category = context.models['47']
+    Line = context.models['51']
     if not entry._lines:
       entry._lines.append(Line(sequence=0, uom=entry.currency,
                                credit=format_value('0', entry.currency),
                                debit=format_value('0', entry.currency),
-                               categories=[Category.build_key('1102', namespace=context.namespace)]))
+                               categories=[Category.build_key('1102', namespace=context.model.journal._namespace)]))  # Debtors (1102) account.
+
+
+# This is system plugin, which means end user can not use it!
+class ProductToLine(orm.BaseModel):
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    product_key = context.input.get('product')
+    variant_signature = context.input.get('variant_signature')
+    line_exists = False
+    for line in entry._lines:
+      if hasattr(line, 'product_reference')
+      and line.product_reference == product_key
+      and line.product_variant_signature == variant_signature:
+        line.quantity = line.quantity + format_value('1', line.product_uom)
+        line_exists = True
+        break
+    if not line_exists:
+      ProductInstance = context.models['39']
+      Category = context.models['47']
+      Line = context.models['51']
+      product = product_key.get()
+      product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
+      product_instance = product_instance_key.get()
+      new_line = Line()
+      new_line.sequence = entry._lines[-1].sequence + 1
+      new_line.categories = [Category.build_key('200', namespace=context.model.journal._namespace)]  # Product Sales (200) account.
+      new_line.product_category_complete_name = product._product_category.complete_name
+      new_line.product_category_reference = product.product_category
+      new_line.description = product.name
+      new_line.code = product.code
+      new_line.unit_price = product.unit_price
+      new_line.product_variant_signature = variant_signature
+      new_line.uom = entry.currency
+      new_line.product_uom = uom.get_uom(product.product_uom)  # @todo Where is get_uom function? We lost it somewhere!
+      new_line.quantity = format_value('1', new_line.product_uom)
+      new_line.discount = format_value('0', uom.UOM(digits=4))
+      if hasattr(product, 'weight'):
+        new_line._weight = product.weight
+      if hasattr(product, 'volume'):
+        new_line._volume = product.volume
+      if product_instance is not None:
+        if hasattr(product_instance, 'unit_price'):
+          new_line.unit_price = product_instance.unit_price
+        if hasattr(product_instance, 'code'):
+          new_line.code = product_instance.code
+        if hasattr(product_instance, 'weight'):
+          new_line._weight = product_instance.weight
+        if hasattr(product_instance, 'volume'):
+          new_line._volume = product_instance.volume
+      entry._lines.append(new_line)
 
 
 # This is system plugin, which means end user can not use it!
@@ -114,6 +165,7 @@ class ProductSubtotalCalculate(orm.BaseModel):
         line.credit = format_value(line.discount_subtotal, line.uom)  # @todo Is this ok!?
 
 
+# This is system plugin, which means end user can not use it!
 class OrderTotalCalculate(orm.BaseModel):
   
   def run(self, context):
@@ -301,181 +353,7 @@ class Write(transaction.Plugin):
             
     transaction()
   
-class Location:
-  
-  def __init__(self, country, region=None, postal_code_from=None, postal_code_to=None, city=None):
-    self.country = country
-    self.region = region
-    self.postal_code_from = postal_code_from
-    self.postal_code_to = postal_code_to
-    self.city = city
-    
-class AddressRule(transaction.Plugin):
-  
-  _kind = 54
-  
-  exclusion = ndb.SuperBooleanProperty('5', default=False)
-  address_type = ndb.SuperStringProperty('6')
-  locations = ndb.SuperPickleProperty('7')
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
- 
-    valid_addresses = collections.OrderedDict()
-    default_address = None
-    address_reference_key = '%s_address_reference' % self.address_type
-    address_key = '%s_address' % self.address_type
-    addresses_key = '%s_addresses' % self.address_type
-    default_address_key = 'default_%s' % self.address_type
-    
-    input_address_reference = context.input.get(address_reference_key)
-    entry_address_reference = getattr(entry, address_reference_key, None)
-    entry_address = getattr(entry, address_key, None)
-    
-    from app.opt import buyer
-      
-    buyer_addresses = buyer.Address.query(ancestor=entry.partner).fetch()
-    
-    if not len(buyer_addresses):
-       raise PluginValidationError('no_address')
-    
-    for buyer_address in buyer_addresses:
-      if self.validate_address(buyer_address):
-         valid_addresses[buyer_address.key.urlsafe()] = buyer_address
-         if getattr(buyer_address, default_address_key):
-             default_address = buyer_address
-             
-    if not len(valid_addresses):
-       raise PluginValidationError('no_valid_address')
-    
-    context.output[addresses_key] = valid_addresses
-    
-    if not default_address and valid_addresses:
-      default_address = valid_addresses.values()[0]
-    
-    if input_address_reference and input_address_reference.urlsafe() in valid_addresses:
-       default_address = input_address_reference.get()
-    elif entry_address_reference and entry_address_reference.urlsafe() in valid_addresses:
-       default_address = entry_address_reference.get()
-    
-    if default_address:
- 
-      setattr(entry, address_reference_key, default_address.key)
-      setattr(entry, address_key, location.get_location(default_address))
-      
-      context.output[default_address_key] = default_address
-    else:
-      raise PluginValidationError('no_address_found')
- 
-  def validate_address(self, address):
-    
-    # Shipping everywhere except at the following locations
-    if not (self.exclusion):
-      allowed = True
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
-      allowed = False
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = True
-            break
-    return allowed
- 
- 
-class CartInit(transaction.Plugin):
-  
-  _kind = 55
-  
-  def run(self, journal, context):
-    # ucitaj postojeci entry na kojem ce se raditi write
-    catalog_key = context.input.get('catalog')
-    user_key = context.auth.user.key
-    catalog = catalog_key.get()
-    company = catalog.company.get()
-    company_key = company.key
-    journal_key = journal.get_key(journal.key.id(), namespace=catalog.key.namespace())
-     
-    Entry = transaction.Entry
-  
-    entry = Entry.query(Entry.journal == journal_key, 
-                        Entry.company == company_key, Entry.state.IN(['cart', 'checkout', 'processing']),
-                        Entry.party == user_key
-                        ).get()
-    # ako entry ne postoji onda ne pravimo novi entry na kojem ce se raditi write
 
-    if not entry:
-       if context.action.operation == 'write':
-          entry = Entry()
-          entry.journal = journal_key
-          entry.company = company_key
-          entry.company_address = location.get_location(company)
-          entry.state = 'cart'
-          entry.date = datetime.datetime.today()
-          entry.party = user_key
-          # accounts recieveable
-          entry._lines = []
-       else:
-          raise PluginValidationError('not_found')
- 
-    # proveravamo da li je entry u state-u 'cart'
-    journal.set_entry_global_role(entry)
- 
-    context.rule.entity = entry
-    rule.Engine.run(context)
-    
-    if not rule.executable(context):
-      # ukoliko je entry u drugom state-u od 'cart' satate-a, onda abortirati pravljenje entry-ja
-      # taj abortus bi trebala da verovatno da bude neka "error" class-a koju client moze da interpretira useru
-      raise PluginValidationError('entry_not_in_cart_state')
-    else:
-      if entry.key:
-         if not context.transaction.group:
-            context.transaction.group = entry.parent_entity
-         entry._lines = transaction.Line.query(ancestor=entry.key).fetch(-transaction.Line.sequence)
-      context.transaction.entities[journal.key.id()] = entry
-      
-
-class AccountsReceivable(transaction.Plugin):
-  
-   def run(self, journal, context):
-     
-       entry = context.transaction.entities[journal.key.id()]
-       
-       if not entry._lines:
-          entry._lines.append(transaction.Line(sequence=0, uom=entry.currency, 
-                                           credit=uom.format_value('0', entry.currency), debit=uom.format_value('0', entry.currency),
-                                           categories=[transaction.Category.build_key('key')]))
       
 
 class ProductToLine(transaction.Plugin):
@@ -548,20 +426,7 @@ class ProductToLine(transaction.Plugin):
       entry._lines.append(new_line)
 
       
-class ProductSubtotalCalculate(transaction.Plugin):
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-    
-    for line in entry._lines:
-      if hasattr(line, 'product_instance_reference'):
-        
-        line.subtotal = line.unit_price * line.quantity # decimal formating required
-        line.discount_subtotal = line.subtotal - (line.subtotal * line.discount) # decimal formating required
-       
-        line.debit = uom.format_value('0', line.uom) # decimal formating required
-        line.credit = line.discount_subtotal # decimal formating required
+
         
         
 class PayPalPayment(transaction.Plugin):
@@ -584,25 +449,7 @@ class PayPalPayment(transaction.Plugin):
     entry.paypal_business = self.business
     
     
-class OrderTotalCalculate(transaction.Plugin):
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-    
-    untaxed_amount = uom.format_value('0', entry.currency) # decimal formating required
-    tax_amount = uom.format_value('0', entry.currency) # decimal formating required
-    total_amount = uom.format_value('0', entry.currency) # decimal formating required
-    
-    for line in entry._lines:
-      if hasattr(line, 'product_instance_reference'):
-        untaxed_amount += line.subtotal
-        tax_amount += line.tax_subtotal
-        total_amount += line.subtotal + line.tax_subtotal
-    
-    entry.untaxed_amount = untaxed_amount
-    entry.tax_amount = tax_amount
-    entry.total_amount = total_amount
+
 
 class LineTax():
   

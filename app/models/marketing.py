@@ -139,11 +139,11 @@ class ProductInstance(orm.BaseExpando):
   _virtual_fields = {
     '_weight_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'weight_uom'}, storage='reference'),
     '_volume_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'volume_uom'}, storage='reference')
-    }  
+    }
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
-    variant_signature = input.get('variant_signature')
+    variant_signature = input.get('variant_signature')  # @todo This variant signature has to be filtered to remove custom variant values!
     key_id = hashlib.md5(json.dumps(variant_signature)).hexdigest()
     product_instance_key = cls.build_key(key_id, parent=kwargs.get('parent'))
     return product_instance_key
@@ -157,7 +157,7 @@ class Product(orm.BaseExpando):
   _kind = 38
   
   _use_rule_engine = False
- 
+  
   product_category = orm.SuperKeyProperty('1', kind='17', required=True, searchable=True)
   name = orm.SuperStringProperty('2', required=True, searchable=True)
   description = orm.SuperTextProperty('3', required=True, searchable=True)  # Soft limit 64kb.
