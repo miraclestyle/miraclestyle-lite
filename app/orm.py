@@ -566,7 +566,7 @@ class _BaseModel(object):
     self.rule_write()
     for field_key, field in self.get_fields().iteritems():
       value = getattr(self, field_key, None)
-      if isinstance(value, SuperPropertyManager):
+      if isinstance(value, SuperPropertyManager) and hasattr(value, 'pre_update'):
         value.pre_update()
   
   def _post_put_hook(self, future):
@@ -574,7 +574,7 @@ class _BaseModel(object):
     entity.record()
     for field_key, field in entity.get_fields().iteritems():
       value = getattr(entity, field_key, None)
-      if isinstance(value, SuperPropertyManager):
+      if isinstance(value, SuperPropertyManager) and hasattr(value, 'post_update'):
         value.post_update()
     entity.write_search_document()
     # @todo General problem with documents is that they are not transactional, and upon failure of transaction
@@ -591,7 +591,7 @@ class _BaseModel(object):
         # We have to check here if it has struct.
         if hasattr(field, 'is_structured') and field.is_structured:
           value = getattr(entity, field_key, None)
-          if isinstance(value, SuperPropertyManager):
+          if isinstance(value, SuperPropertyManager) and hasattr(value, 'delete'):
             value.delete()
   
   @classmethod
@@ -707,6 +707,7 @@ class _BaseModel(object):
   
   @classmethod
   def build_key(cls, *args, **kwargs):
+    # shorthand for Key(ModelClass.get_kind()...)
     new_args = [cls._get_kind()]
     new_args.extend(args)
     return Key(*new_args, **kwargs)
@@ -1196,20 +1197,9 @@ class _BaseModel(object):
     CatalogPricetagCopy
      ->product = Product # old product key stays
      ...
-      
-    What can be done to avoid this is writing logic that will override those values with proper ones.
-    But problems with that we do not have any keys ready, cause we set them to none to re-generate.
     
-    Catalog
-     ->duplicate():
-       new = super.duplicate()
-       for image in new.images:
-        for pricetag in pricetags:
-           pricetag.product = pricetag.product.id + '_prefix that we know'
-        etc...
-        
-    But this behaviour expects custom keys, making it without custom keys would mean that you would first have to .put()
-    duplicated entity, make changes, then again do the put(). But in that process you lose references to old entitiy keys.
+    This was solved with making unique duplicate key appendixes. The duplicate appendix is only generated once
+    per root entity duplicated. So for duplicating Catalog, appendix would be located on new_catalog._duplicate_appendix.
     
     '''
     new_entity = copy.deepcopy(self) # deep copy will copy all static properties
@@ -1234,7 +1224,7 @@ class _BaseModel(object):
   
   def make_original(self):
     '''This function will make a copy of the current state of the entity
-    and put it into _original field.
+    and put it into _original field. Again note that only get_fields() and key will be copied.
     
     '''
     if self._use_rule_engine:
@@ -1258,10 +1248,10 @@ class _BaseModel(object):
         doc_fields.append(search.AtomField(name='ancestor', value=self.key_parent.urlsafe()))
       for field_key, field in self.get_fields().iteritems():
         if field._searchable:
-          doc_fields.append(field.get_search_document_field(util.get_attr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
+          doc_fields.append(field.get_search_document_field(util.get_attr(self, field_key, None)))
       if fields is not None:
         for field_key, field in fields.iteritems():
-          doc_fields.append(field.get_search_document_field(util.get_attr(self, field_key, None)))  # @todo Do we replace getattr with util.get_attr!??
+          doc_fields.append(field.get_search_document_field(util.get_attr(self, field_key, None)))
       if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
@@ -1313,8 +1303,8 @@ class _BaseModel(object):
       self._delete_custom_indexes = {}
   
   @classmethod
-  def search_document_to_dict(cls, document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
-    # @todo This can be avoided by subclassing search.Document, and implementing get_output on it.
+  def search_document_to_dict(cls, document):
+    # so far we use callbacks to map the retrieved documents, lets keep that practice like that then.
     if document and isinstance(document, search.Document):
       dic = {}
       dic['doc_id'] = document.doc_id
@@ -1326,7 +1316,9 @@ class _BaseModel(object):
     return dic
   
   @classmethod
-  def search_document_to_entity(cls, document):  # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
+  def search_document_to_entity(cls, document):  
+    # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
+    # @answer you mean live active with get multi or this function was to solve that?
     if document and isinstance(document, search.Document):
       entity = cls(key=Key(urlsafe=document.doc_id))
       #util.set_attr(entity, 'language', document.language)
@@ -1345,6 +1337,8 @@ class _BaseModel(object):
       raise ValueError('Expected instance of Document, got %s' % document)
   
   def _set_next_read_arguments(self):
+    # this function sets next_read_arguments for the entity that was read
+    # purpose of inner function scan is to completely iterate all structured properties which have value and options
     if self is self._root:
       def scan(value, field_key, field, value_options):
         if isinstance(value, SuperPropertyManager) and hasattr(value, 'value_options') and value.has_value():
@@ -1358,8 +1352,11 @@ class _BaseModel(object):
         elif value is not None and isinstance(value, Model):
           for field_key, field in value.get_fields().iteritems():
             val = getattr(value, field_key, None)
-            scan(val, field_key, field, value_options)
-      value_options = {}
+            scan(val, field_key, field, value_options)  
+      if hasattr(self, '_read_arguments'): # if read_args are present, use them as base dict
+        value_options = copy.deepcopy(self._read_arguments)
+      else:
+        value_options = {}
       for field_key, field in self.get_fields().iteritems():
         scan(self, field_key, field, value_options)
       self._next_read_arguments = value_options
@@ -1381,7 +1378,7 @@ class _BaseModel(object):
   
   def get_output(self):
     '''This function returns dictionary of stored or dynamically generated data (but not meta data) of the model.
-    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    The returned dictionary can be transalted into other understandable representation to clients (e.g. JSON).
     
     '''
     self.rule_read()  # Apply rule read before output.
@@ -1582,20 +1579,23 @@ class SuperPropertyManager(object):
   
   @property
   def property_name(self):
-    # Retrieves proper name of the field for setattr usage.
+    # Retrieves code name of the field for setattr usage. If _code_name is not available it will use _name
     name = self._property._code_name
     if not name:
       name = self._property._name
     return name
   
   def _set_parent(self, entities=None):
-    '''This function will be called on:
-    - set()
-    - read()
-    - duplicate()
-    and on every delete function because delete functions just query entities for deletation, not for storing it into
-    self._property_value, hence the `entities` kwarg.
-    
+    '''This function should be called whenever a new entity is instanced / retrieved inside a root entity.
+    It either accepts entities, or it will use self.value to iterate.
+    Its purpose is to maintain hierarchy like so:
+    catalog._parent = None # its root
+     product._parent = catalog
+       product_instance._parent = product
+         product_instance.contents[0]._parent = product_instance
+         ....
+    So based on that, you can always reach for the top by simply finding which ._parent is None.
+           
     '''
     as_list = False
     if entities is None:
@@ -2029,7 +2029,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       for entity in _entities:
         self._set_parent(entity)
         entities.append(entity.duplicate())
-    del _entities
     self._property_value = entities
   
   def _duplicate_remote_single(self):
@@ -2097,12 +2096,6 @@ class SuperReferencePropertyManager(SuperPropertyManager):
           else:
             self._property_value = self._property._format_callback(self._entity, self._property_value)
       return self._property_value
-  
-  def pre_update(self):
-    pass
-  
-  def post_update(self):
-    pass
   
   def delete(self):
     self._property_value = None
@@ -2239,10 +2232,10 @@ class _BaseProperty(object):
     return False
   
   def initialize(self):
-    '''This function is called by io def init() to prepare the field for work.
+    '''This function is called by io def init() in io.py to prepare the field for work.
     This is mostly because of get_modelclass lazy-loading of modelclass.
     In order to allow proper loading of modelclass for structured properties for example, we must wait for all python
-    classes to initilize, so they are waiting for us in _kind_map.
+    classes to initilize into _kind_map.
     Only then we will be in able to pick out the model by its kind from _kind_map registry.
     
     '''
@@ -2595,7 +2588,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 
 class SuperStringProperty(_BaseProperty, StringProperty):
   
-  def value_format(self, value): # this would be called argument_format
+  def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
@@ -2660,15 +2653,15 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
     if value is util.Nonexistent:
       return value
     if not self._repeated and not self._required and (value is None or len(value) < 1):
+      # if key is not required, and value is either none or length is not larger than 1, its considered as none
       return None
-    if self._repeated:
-      if not isinstance(value, (tuple, list)):
-        value = [value]
-      out = [Key(urlsafe=v) for v in value]
-    else:
-      if not self._required and value is None:
-        return value
-      out = [Key(urlsafe=value)]
+    try:
+      if self._repeated:
+        out = [Key(urlsafe=v) for v in value]
+      else:
+        out = [Key(urlsafe=value)]
+    except ValueError:
+      raise PropertyError('malformed_key_%s' % value)
     for key in out:
       if self._kind and key.kind() != self._kind:
         raise PropertyError('invalid_kind')
@@ -3261,9 +3254,8 @@ class SuperReferenceProperty(SuperKeyProperty):
   Getter usually retrieves entire entity instance,
   or something else can be returned based on the _format_callback option.
   >>> entity.user.email
-  Beware with usage of this property. It will automatically perform RPC calls in async mode as soon as the
+  Beware with usage of this property. It will automatically start RPC calls in async mode as soon as the
   from_pb and _post_get callback are executed unless autoload is set to False.
-  
   '''
   _readable = True
   _updateable = True
@@ -3335,7 +3327,7 @@ class SuperRecordProperty(SuperStorageStructuredProperty):
     kwargs['storage'] = 'remote_multi'
     read_arguments = kwargs.get('read_arguments', {})
     if 'config' not in read_arguments:
-      read_arguments['config'] = {} # enforce logged and direction
+      read_arguments['config'] = {} # enforce logged and direction.
     read_arguments['config']['order'] = {'field': 'logged', 'direction': 'desc'}
     kwargs['read_arguments'] = read_arguments
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
@@ -3402,6 +3394,7 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
         return c[i]
       except IndexError:
         return d
+    parsed = {}
     for name, kwds in value.iteritems():
       field_type = kwds.get('type')
       field = None
@@ -3426,10 +3419,14 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
         if name not in possible_kwargs:
           raise PropertyError('unexpected_keyword_%s' % name)
       kwds['name'] = kwds.get('name') # @todo prefix for name
+      if kwds['name'] in parsed:
+        raise PropertyError('duplicate_property_name_%s' % kwds['name'])
+      parsed[kwds['name']] = 1
       field.property_keywords_format(kwds, skip_kwargs)
       for bogus in bogus_kwds:
         kwds.pop(bogus, None)
       out[kwds['name']] = field.__class__(**kwds)
+    del parsed
     return out
 
 

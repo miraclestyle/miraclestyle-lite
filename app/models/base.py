@@ -312,7 +312,6 @@ class _BaseImageProperty(_BaseBlobProperty):
             pause = pause * 2
         image = images.Image(image_data=fetched_image.content)
         value.proportion = float(image.width) / float(image.height)
-        del fetched_image, image
         raise orm.Return(True)
     
     @orm.tasklet

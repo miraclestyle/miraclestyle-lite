@@ -14,17 +14,7 @@ APPDIR = os.path.dirname(os.path.abspath(__file__))
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
 
-# This is for key-based encryption we can change before we go into production
-# - however changing this, automatically corrupts data (keys) and renders them unusable and undecryptable
-SALT = u'salt'
-# Separator for hashing, for example
-# Model.hash_create_key(key=value, key2=value2)
-# with HASH_BINDER "-" would produce plaintext:
-# {SALT}-value-value2
-HASH_BINDER = u'-'
-
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-DEVELOPMENT_SERVER = False
 DEBUG = True
 DO_LOGS = True
 
@@ -40,8 +30,6 @@ DOMAINS_PER_CRON = 10
 SETUP_ELAPSED_TIME = 15
 
 # User settings.
-USER_AUTHENTICATED_KEYNAME = 'authenticated_user'
-USER_ANONYMOUS_KEYNAME = 'anonymous_user'
 ROOT_ADMINS = ('edis.sehalic@gmail.com', 'elvinkosova@gmail.com')
 
 # Record settings.
@@ -49,12 +37,7 @@ RECORDS_PAGE = 10
 SEARCH_PAGE = 10
 
 # Blob cloud storage settings.
-# @todo these should be prefixed "BUCKET" instead of suffix
 BUCKET_PATH = 'universal-trail-608.appspot.com'
-DOMAIN_LOGO_BUCKET = 'universal-trail-608.appspot.com/domain_logo'
-CATALOG_IMAGE_BUCKET = 'universal-trail-608.appspot.com/catalog_image'
-PRODUCT_TEMPLATE_BUCKET = 'universal-trail-608.appspot.com/product_image'
-PRODUCT_INSTANCE_BUCKET = 'universal-trail-608.appspot.com/product_instance_image'
 
 # Catalog settings.
 CATALOG_PAGE = 10
@@ -63,15 +46,13 @@ CATALOG_DISCONTINUED_LIFE = 1  # @todo This will be something like 120-180 days
 CATALOG_INDEX = 'catalogs'
 CATALOG_DOCUMENTS_PER_INDEX = 200
 
-
-
-_http = 'http://'
-
-if os.environ.get('HTTPS') == 'on':
-  _http = 'https://'
-
-
-HOST = '%s%s' % (_http, os.environ.get('HTTP_HOST'))
+def __discover_host():
+  http = 'http://'
+  if os.environ.get('HTTPS') == 'on':
+    http = 'https://'
+  return '%s%s' % (http, os.environ.get('HTTP_HOST'))
+ 
+HOST = __discover_host()
 
 ETC_DATA_DIR = os.path.join(APPDIR, 'etc', 'data')
 
