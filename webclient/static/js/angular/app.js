@@ -1210,6 +1210,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     			try
     			{
     				search_argument = kindinfo.mapped_actions['search']['arguments']['search'];	
+    				
+    				this.default_send = search_argument['default'];
     			}
     			catch(e){}
     			

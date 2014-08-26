@@ -88,12 +88,12 @@ MainApp
                     };
                     
                     that.parents('.overflow-master:first').find('.catalog-image-scroll .img').load(resize);
-
-                    $timeout(function () {
-                        resize();
-                    });
-
+ 
                     $(window).resize(resize);
+                    
+                    $timeout(function () {
+                        $(window).trigger('resize');
+                    });
 
                     scope.$on('$destroy', function () {
                         $(window).unbind('resize', resize);
@@ -271,6 +271,21 @@ MainApp
                                                      }
                                                  }; 
     								            
+    								         },
+    								         'update_entity' : function ()
+    								         {
+    								            var that = this;
+    								            angular.forEach(that.entity._images, function (img) {
+    								                if (img.pricetags)
+    								                {
+    								                    angular.forEach(img.pricetags, function (pricetag) {
+    								                       if (pricetag.product == that.child.key)
+    								                       {
+    								                           pricetag.value = that.child.unit_price;
+    								                       } 
+    								                    });
+    								                }
+    								            });
     								         },
     					                	 'templateUrl' : logic_template('catalog/product/manage.html')
 								         };

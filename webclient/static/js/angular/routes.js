@@ -72,6 +72,7 @@ MainApp.config(['$stateProvider',
                             query['domain'] = $stateParams['domain_key'];
           
                             $rootScope.search.setSearch($stateParams['kind'], query['search']);
+                            $rootScope.search.the_query = query;
 
                             return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
                                 return output.data;
@@ -108,6 +109,7 @@ MainApp.config(['$stateProvider',
                             if(!angular.isObject(query)) query = {};
                             
                             $rootScope.search.setSearch($stateParams['kind'], query['search']);
+                            $rootScope.search.the_query = query;
 
                             return Endpoint.post('search', $stateParams['kind'], query).then(function (output) {
                                 return output.data;

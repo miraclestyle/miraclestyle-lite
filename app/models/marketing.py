@@ -136,6 +136,11 @@ class ProductInstance(orm.BaseExpando):
     'low_stock_quantity': orm.SuperDecimalProperty('12', default='0.00')
     }
   
+  _virtual_fields = {
+    '_weight_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'weight_uom'}, storage='reference'),
+    '_volume_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'volume_uom'}, storage='reference')
+    }  
+  
   @classmethod
   def prepare_key(cls, input, **kwargs):
     variant_signature = input.get('variant_signature')
@@ -176,7 +181,9 @@ class Product(orm.BaseExpando):
   
   _virtual_fields = {
     '_instances': orm.SuperStorageStructuredProperty(ProductInstance, storage='remote_multi'),
-    '_product_category': orm.SuperStorageStructuredProperty(ProductCategory, autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'product_category'}, storage='reference')
+    '_product_category': orm.SuperStorageStructuredProperty(ProductCategory, autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'product_category'}, storage='reference'),
+    '_weight_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'weight_uom'}, storage='reference'),
+    '_volume_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'volume_uom'}, storage='reference')
     }
 
 

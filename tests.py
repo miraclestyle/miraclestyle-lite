@@ -8,6 +8,17 @@ import unittest
 import random
 import math
 
+a = (1,2,3,4,5)
+
+for i in a:
+  print i
+  
+for i in a:
+  print i
+  
+for i in a:
+  print i
+
 def tests(a, b, z):
   return a, b, z
 

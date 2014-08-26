@@ -27,3 +27,7 @@
 				</tr>
 			</tbody>
 </table>
+
+<div ng-show="search.more && !search.loading">
+    <button style="width:100%;" class="button block" busy ng-click="search.loadsMore()" type="button">Load More</button>
+</div>

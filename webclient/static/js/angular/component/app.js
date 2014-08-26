@@ -416,6 +416,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
   
             $rootScope.search.doSearch = function ()
             {
+         
                 var cfg = {
                     'domain_key': $rootScope.nav.domain.key,
                     'kind': this.kind,
@@ -491,9 +492,7 @@ MainApp.factory('App', ['$rootScope', '$http', '$location', '$modal', 'Endpoint'
  
             	entities.push(domain);
             });
-            
-            console.log(entities);
-            
+      
    
             $scope.apps = entities;
 

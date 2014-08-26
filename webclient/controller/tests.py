@@ -203,6 +203,14 @@ class TestImageUrl(BaseTestHandler):
         <input type="submit" name="Upload" />
       </form>
       """ % upload_url)
+      
+tao = (1,2,3,4,5)
+      
+class TestIterTuple(BaseTestHandler):
+  
+  def respond(self):
+    for i in tao:
+      self.response.write(i)
  
 for k,o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):

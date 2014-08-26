@@ -2,7 +2,7 @@
 	<span class="fieldset-text">{{title}}</span>
 	<span class="fieldset-button"><a class="button" busy ng-click="create()">{{add_new}}</a></span>
 </h1>
-<table class="table">
+<table load-on-window-scroll-end class="table">
 			<thead>
 				<tr>
 					<th ng-repeat="field in fields track by $index">{{field.label}}</th>
@@ -36,3 +36,7 @@
 				</tr>
 			</tbody>
 </table>
+
+<div ng-show="search.more && !search.loading">
+    <button style="width:100%;" class="button block" busy ng-click="search.loadsMore()" type="button">Load More</button>
+</div>

@@ -1970,6 +1970,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       value._state = 'deleted'
   
   def _delete_local(self):
+    self.read()
     self._mark_for_delete(self._property_value)
   
   def _delete_remote(self):
@@ -3056,7 +3057,8 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def value_format(self, values):
     values = super(SuperSearchProperty, self).value_format(values)
-    values.update(self._cfg.get('search_arguments', {}))
+    override = self._cfg.get('search_arguments', {})
+    util.merge_dicts(values, override)
     self._clean_format(values)
     self._kind_format(values)
     self._ancestor_format(values)

@@ -239,4 +239,56 @@ MainApp
             });
         }
     };
-});
+}).directive('loadOnWindowScrollEnd', ['$rootScope', '$stateParams', 'Endpoint', 'RuleEngine',
+  function ($rootScope, $stateParams, Endpoint, RuleEngine) {
+    return {
+        link : function (scope, element, attrs)
+        {
+            var not_loading = true;
+            
+            scope.search.loadsMore = function ()
+            {
+                if (scope.search.more)
+                    {
+                        scope.search.loading = true;
+                        var the_query = angular.copy($rootScope.search.the_query);
+         
+                        if (!the_query['search']) the_query['search'] = angular.copy($rootScope.search.default_send);
+                        the_query['search']['options'] = {
+                            start_cursor : scope.search.cursor,
+                        };
+                        
+                        Endpoint.post('search', $stateParams['kind'], the_query).success(function (data) {
+                             
+                            scope.search.cursor = data.cursor;
+                            
+                            angular.forEach(data.entities, function (value) {
+                                value.rule = RuleEngine.factory(value);
+                            });
+                            
+                            scope.search.entities.extend(data.entities);
+                            scope.search.more = data.more;
+                            
+                            scope.search.loading = false;
+                            
+                        });
+                    }  
+            };
+            
+            var scroll = function ()
+            {
+                
+                if($(window).scrollTop() + $(window).height() > $(document).height() - 100 && !scope.search.loading) {
+                    scope.search.loadsMore();
+                }
+                
+            };
+            
+            $(window).on('scroll', scroll);
+            
+            scope.$on('$destroy', function () {
+               $(window).off('scroll', scroll); 
+            });
+        }
+    };
+}]);

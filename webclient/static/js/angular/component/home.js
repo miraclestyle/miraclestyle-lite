@@ -45,11 +45,132 @@ MainApp
 		}
 	};
 }])
-.controller('HomePage', ['$scope', 'Title', 'Endpoint', function ($scope, Title, Endpoint) {
+.controller('HomePage', ['$scope', 'Title', 'Endpoint', '$modal', 'EntityEditor',
+    function ($scope, Title, Endpoint, $modal, EntityEditor) {
+    
     $scope.catalogs = [];
+    
     Endpoint.post('public_search', '35', {'search' : {'filters' : [], 'kind' : '35', 'orders' : [{"field": 'created',"operator": 'desc'}]}}).success(function (data) {
     	$scope.catalogs = data.entities;
     });
+     
+    $scope.viewCatalog = function (catalog)
+    {
+        Endpoint.post('read', '35', {
+            'key' : catalog.key,
+            'read_arguments' : {
+                '_images' : {},
+            },
+        }).success(function (data) {
+            
+            var modalInstance = $modal.open({
+                                templateUrl: logic_template('home/view_catalog.html'),
+                                controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                                    
+                                    $scope.entity = data.entity;
+                                    $scope.rule = RuleEngine.factory(data.entity);
+                                     
+                                    $scope.viewProduct = function(pricetag)
+                                    { 
+                                        Endpoint.post('read', '35', {
+                                            'key' : catalog.key,
+                                            'read_arguments' : {
+                                                '_products' : {
+                                                    'config' : {
+                                                        'keys' : [pricetag.product],
+                                                    },
+                                                    '_product_category' : {},
+                                                    '_weight_uom' : {},
+                                                    '_volume_uom' : {},
+                                                    '_instances' : {
+                                                        '_product_category' : {},
+                                                        '_weight_uom' : {},
+                                                        '_volume_uom' : {},
+                                                    },
+                                                },
+                                            },
+                                        }).success(function (data) {
+                                             
+                                            $modal.open({
+                                                templateUrl: logic_template('home/view_product.html'),
+                                                controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                                                    
+                                                    $scope.rule = RuleEngine.factory(data.entity);
+                                                    $scope.entity = data.entity;
+                                                    $scope.child = _.findWhere($scope.entity._products, {key : pricetag.product});
+                                                    
+                                                    $scope.original_child = angular.copy($scope.child);
+                                                    
+                                                    $scope.variant_combo = {};
+                                                    
+                                                    angular.forEach($scope.child.variants, function (v) {
+                                                        $scope.variant_combo[v.name] = null;
+                                                    });
+                                                    
+                                                    $scope.changeProductView = function ()
+                                                    {
+                                                        var packer = [];
+                                                        
+                                                        angular.forEach($scope.variant_combo, function (v, k) {
+                                                             var d = {};
+                                                             d[k] = v;
+                                                             packer.push(d);
+                                                        });
+                                                        angular.forEach($scope.child._instances, function (instance) {
+                                                            if (JSON.stringify(instance.variant_signature) == JSON.stringify(packer))
+                                                            {
+                                                                angular.forEach(instance, function (v, k) {
+                                                                   if (typeof v != undefined)
+                                                                   {
+                                                                       $scope.child[k] = v;
+                                                                   } 
+                                                                });
+                                                            }
+                                                            else
+                                                            {
+                                                                update($scope.child, $scope.original_child);
+                                                            }
+                                                        
+                                                        });
+                                                    };
+                                                    
+                                                    
+                                                    
+                                                    $scope.cancel = function () {
+                                                        $modalInstance.dismiss();
+                                                    };
+                                                }
+                                            });
+                                        
+                                         });
+                                    };
+                                    
+                                    $scope.getMoreImages = function () {
+                                 
+                                             var that = this;
+                                             
+                                             if (!that.entity._next_read_arguments._images.config.more) return false;
+                         
+                                             EntityEditor.read_entity_partial(that.entity, {
+                                                  '_images' : that.entity._next_read_arguments._images,
+                                             }, function (data) {
+                         
+                                                    if (data.entity && data.entity._images)
+                                                    {
+                                                        that.entity._images.extend(data.entity._images);
+                                                    }
+                                             });
+                                              
+                                    };
+
+                                    $scope.cancel = function () {
+                                        $modalInstance.dismiss();
+                                    };
+                                }
+               });
+        });  
+    };
+    
 }])
 .run(['$rootScope',
      function ($rootScope) {
