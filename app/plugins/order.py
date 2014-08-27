@@ -15,6 +15,7 @@ from app.models import location, uom
 
 
 # Virtual representation of order entry object to serve as a reference of expected structure (will be removed later)!
+# Regarding the structured properties in entries and lines, shall we standardize thos properties to be JSON and transform data apropriately on input?
 class OrderEntry(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
@@ -88,7 +89,7 @@ class CartInit(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class AccountsReceivable(orm.BaseModel):
+class LinesInit(orm.BaseModel):
   
   _kind = xx
   
@@ -98,11 +99,14 @@ class AccountsReceivable(orm.BaseModel):
     entry = context._group.get_entry(context.model.journal)
     Category = context.models['47']
     Line = context.models['51']
-    if not entry._lines:
-      entry._lines.append(Line(sequence=0, uom=entry.currency,
-                               credit=format_value('0', entry.currency),
-                               debit=format_value('0', entry.currency),
-                               categories=[Category.build_key('1102', namespace=context.model.journal._namespace)]))  # Debtors (1102) account.
+    receivable_line = Line(sequence=0, uom=entry.currency, description='Accounts Receivable',
+                           debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
+                           categories=[Category.build_key('1102', namespace=context.model.journal._namespace)])  # Debtors (1102) account.
+    tax_line = Line(sequence=1, uom=entry.currency, description='Sales Tax',
+                    debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
+                    categories=[Category.build_key('121', namespace=context.model.journal._namespace)])  # Tax Received (1102) account.
+    if len(entry._lines) == 0:
+      entry._lines = [receivable_line, tax_line]
 
 
 # This is system plugin, which means end user can not use it!
@@ -285,7 +289,7 @@ class AddressRule(orm.BaseModel):
   
   exclusion = orm.SuperBooleanProperty('1', required=True, default=False)
   address_type = orm.SuperStringProperty('2', required=True, default='billing', choices=['billing', 'shipping'])
-  locations = orm.SuperLocalStructuredProperty(Location, '3', required=True)
+  locations = orm.SuperLocalStructuredProperty(Location, '3', repeated=True)
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
@@ -297,7 +301,6 @@ class AddressRule(orm.BaseModel):
     default_address_key = 'default_%s' % self.address_type
     input_address_reference = context.input.get(address_reference_key)
     entry_address_reference = getattr(entry, address_reference_key, None)
-    entry_address = getattr(entry, address_key, None)
     buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
     if buyer_addresses is None:
       raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_address')!?
@@ -309,7 +312,7 @@ class AddressRule(orm.BaseModel):
     if not len(valid_addresses):
       raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_valid_address')!?
     context.output[addresses_key] = valid_addresses
-    if (default_address is None) and valid_addresses:
+    if (default_address is None) and len(valid_addresses):
       default_address = valid_addresses.values()[0]
     if input_address_reference in valid_addresses:
       default_address = valid_addresses[input_address_reference]
@@ -323,46 +326,29 @@ class AddressRule(orm.BaseModel):
       raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_address_found')!?
   
   def validate_address(self, address):
-    # Shipping everywhere except at the following locations
-    if not (self.exclusion):
-      allowed = True
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
+    if self.exclusion:
+      # Shipping only at the following locations.
       allowed = False
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = True
-            break
+    else:
+      # Shipping everywhere except at the following locations.
+      allowed = True
+    for loc in self.locations:
+      if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+        if (address.country == loc.country):
+          allowed = self.exclusion
+          break
+      elif not (loc.postal_code_from and loc.postal_code_to):
+        if (address.country == loc.country and address.region == loc.region):
+          allowed = self.exclusion
+          break
+      elif not (loc.postal_code_to):
+        if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+          allowed = self.exclusion
+          break
+      else:
+        if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+          allowed = self.exclusion
+          break
     return allowed
 
 
@@ -390,6 +376,118 @@ class PayPalPayment(orm.BaseModel):
     entry.paypal_business = self.business
 
 
+# This plugin is incomplete!
+class Tax(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  name = orm.SuperStringProperty('1')
+  formula = orm.SuperStringProperty('2')
+  exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
+  address_type = orm.SuperStringProperty('4', required=True, default='billing', choices=['billing', 'shipping'])
+  locations = orm.SuperLocalStructuredProperty(Location, '5', repeated=True)
+  carriers = orm.SuperKeyProperty('6', repeated=True)  # @todo This is not possible anymore!
+  product_categories = orm.SuperKeyProperty('7', kind='17', repeated=True)  # @todo This is not possible anymore!
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    allowed = self.validate_tax(entry)
+    for line in entry._lines:
+      if self.carriers:
+        if self.carriers.count(line.carrier_reference):  # @todo Have to check if all lines have carrier_reference proeprty??
+          if not allowed:
+            del line.taxes[self.key.urlsafe()]  # @todo This is not possible anymore!
+          elif allowed:
+            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore!
+      elif self.product_categories:
+        if self.product_categories.count(line.product_category):
+          if not (allowed):
+            del line.taxes[self.key.urlsafe()]  # @todo This is not possible anymore!
+          elif allowed:
+            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore!
+  
+  def validate_tax(self, entry):
+    address = None
+    address_reference_key = '%s_address_reference' % self.address_type
+    entry_address_reference = getattr(entry, address_reference_key, None)
+    if entry_address_reference is None:  # @todo Is this ok??
+      return False
+    buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
+    for buyer_address in buyer_addresses.addresses:
+      if buyer_address.internal_id == entry_address_reference:
+        address = buyer_address
+        break
+    if address is None:  # @todo IS this ok??
+      return False
+    if self.exclusion:
+      # Apply only at the following locations.
+      allowed = False
+    else:
+      # Apply everywhere except at the following locations.
+      allowed = True
+    for loc in self.locations:
+      if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+        if (address.country == loc.country):
+          allowed = self.exclusion
+          break
+      elif not (loc.postal_code_from and loc.postal_code_to):
+        if (address.country == loc.country and address.region == loc.region):
+          allowed = self.exclusion
+          break
+      elif not (loc.postal_code_to):
+        if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+          allowed = self.exclusion
+          break
+      else:
+        if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+          allowed = self.exclusion
+          break
+    if allowed:
+      # If tax is configured for carriers then check if the entry references carrier on which the tax applies.
+      if self.carriers:
+        allowed = False
+        if entry.carrier_reference and self.carrieres.count(entry.carrier_reference):
+          allowed = True
+      # If tax is configured for product categories, then check if the entry contains a line which has product category to which the tax applies.
+      elif self.product_categories:
+        allowed = False
+        for line in entry._lines:
+          if self.product_categories.count(line.product_category):
+            allowed = True
+            break
+    return allowed
+
+
+class TaxSubtotalCalculate(orm.BaseModel):
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    Category = context.models['47']
+    Line = context.models['51']
+    tax_category_key = Category.build_key('121', namespace=context.model.journal._namespace)  # Tax Received (121) account.
+    tax_line = False
+    tax_total = format_value('0', entry.currency)
+    for line in entry._lines:
+      if tax_category_key in line.categories:
+        tax_line = line
+      tax_subtotal = format_value('0', line.uom)
+      for tax_key, tax in line.taxes.items():
+        if (tax['formula'][0] == 'percent'):
+          tax_amount = format_value(tax['formula'][1], line.uom) * format_value('0.01', line.uom)  # or "/ DecTools.form('100')"
+          tax_subtotal += line.credit * tax_amount
+          tax_total += line.credit * tax_amount
+        elif (tax['formula'][0] == 'amount'):
+          tax_amount = format_value(tax['formula'][1], line.uom)
+          tax_subtotal += tax_amount
+          tax_total += tax_amount
+      line.tax_subtotal = tax_subtota
+    if tax_line:  # @todo Or we can loop entry._lines again and do the math!
+      tax_line.debit = format_value('0', tax_line.uom)
+      tax_line.credit = tax_total
+
+
 # OLD CODE #
 
 import datetime
@@ -398,150 +496,6 @@ import re
 
 from app import ndb
 from app.models import transaction, rule, uom, location, log
-
-
-class LineTax():
-  
-  def __init__(self, name, formula):
-     self.name = name
-     self.formula = formula
-
-
-class Tax(transaction.Plugin):
-  
-  name = ndb.SuperStringProperty('5')
-  formula = ndb.SuperPickleProperty('6')
-  exclusion = ndb.SuperBooleanProperty('7', default=False)
-  address_type = ndb.SuperStringProperty('8')
-  locations = ndb.SuperPickleProperty('9')
-  carriers = ndb.SuperKeyProperty('10', repeated=True)
-  product_categories = ndb.SuperKeyProperty('11', kind='17', repeated=True)
-  
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-    
-    allowed = self.validate_tax(entry)
-    
-    for line in entry._lines:
-      if (self.carriers):
-        if (self.carriers.count(line.carrier_reference)):
-            if not (allowed):
-              del line.taxes[self.key.urlsafe()]
-            elif allowed:
-              line.taxes[self.key.urlsafe()] = LineTax(self.name, self.formula)
-              
-      elif (self.product_categories):
-        if (self.product_categories.count(line.product_category)):
-          if not (allowed):
-              del line.taxes[self.key.urlsafe()]
-          elif allowed:
-              line.taxes[self.key.urlsafe()] = LineTax(self.name, self.formula)
-  
-  def validate_tax(self, entry):
- 
-    address_key = '%s_address' % self.address_type
-    address = getattr(entry, address_key) 
-  
-    if not (self.exclusion):
-      allowed = True
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
-      allowed = False
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = True
-            break
-
-
-    if (allowed):
-      # ako je taxa konfigurisana za carriers onda se proverava da li entry ima carrier na kojeg se taxa odnosi
-      if (self.carriers):
-        allowed = False
-        if ((entry.carrier_reference) and (self.carrieres.count(entry.carrier_reference))):
-          allowed = True
- 
-      # ako je taxa konfigurisana za kategorije proizvoda onda se proverava da li entry ima liniju na koju se taxa odnosi
-      elif (self.product_categories):
-        allowed = False
-        for line in entry._lines:
-          if (self.product_categories.count(line.product_category)):
-            allowed = True
-       
-          
-    return allowed
-
-
-class TaxSubtotalCalculate(transaction.Plugin):
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-    tax_line = False
-    tax_total = uom.format_value('0', entry.currency)
-    
-    for line in entry._lines:
-      
-      # 'key' key needs to be something else
-      if transaction.Category.build_key('key') in line.categories:
-         tax_line = line
-      
-      tax_subtotal = uom.format_value('0', line.uom)
-      for tax_key, tax in line.taxes.items():
-          if (tax.formula[0] == 'percent'):
-              tax_amount = uom.format_value(tax.formula[1], line.uom) * uom.format_value('0.01', line.uom) # moze i "/ DecTools.form('100')"
-              tax_subtotal += line.credit * tax_amount
-              tax_total += line.credit * tax_amount
-          elif (tax.formula[0] == 'amount'):
-              tax_amount = uom.format_value(tax.formula[1], line.uom)
-              tax_subtotal += tax_amount
-              tax_total += tax_amount
-              
-      line.tax_subtotal = tax_subtotal
-       
-    if tax_line:
-       tax_line.debit = uom.format_value('0', line.uom)
-       tax_line.credit = tax_total
-    else:
-       tax_line = transaction.Line()
-       tax_line.categories.append(transaction.Category.build_key('key'))
-       tax_line.description = 'Sales Tax'
-       tax_line.line_uom = entry.currency
-       tax_line.debit = uom.format_value('0', entry.currency)
-       tax_line.credit = tax_total 
-       tax_line.sequence = entry._lines[-1].sequence + 1
-       entry._lines.append(tax_line)
 
 
 class CarrierLine:
