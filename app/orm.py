@@ -237,6 +237,17 @@ def put_multi_transactions(entities, transaction_callack=None, sleep=None):
   _perform_multi_transactions(entities, transaction_callack, sleep)
 
 
+def write_multi(entities, record_arguments=None):
+    if record_arguments is None:
+      record_arguments = {}
+    for entity in entities:
+      entity._record_arguments = record_arguments
+    put_multi(entities)
+    for entity in entities:
+      entity.index_search_documents()
+      entity.unindex_search_documents()
+
+
 ################################################################
 ########## Base extension classes for all ndb models! ##########
 ################################################################
