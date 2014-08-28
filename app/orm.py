@@ -206,6 +206,7 @@ def get_async_results(*args, **kwargs):
   for entity in entities:
     futures.append(entity)  # and now we modify back the futures list
     
+    
 def _perform_multi_transactions(entities, write=None, transaction_callack=None, sleep=None):
   '''
   *_multi_transactions functions are used to perform multiple transactions based on number of 
@@ -228,10 +229,12 @@ def _perform_multi_transactions(entities, write=None, transaction_callack=None, 
     if sleep is not None: # if sleep is specified, the for loop will block before issuing another transaction
       time.sleep(sleep)
     
+    
 def write_multi_transactions(entities, write_config=None, transaction_callack=None, sleep=None):
   if write_config is None:
     write_config = {}
   _perform_multi_transactions(entities, write_config, transaction_callack, sleep)
+
 
 def put_multi_transactions(entities, transaction_callack=None, sleep=None):
   _perform_multi_transactions(entities, transaction_callack, sleep)
@@ -240,8 +243,13 @@ def put_multi_transactions(entities, transaction_callack=None, sleep=None):
 def write_multi(entities, record_arguments=None):
     if record_arguments is None:
       record_arguments = {}
-    for entity in entities:
-      entity._record_arguments = record_arguments
+    is_listed = isinstance(record_arguments, (list, tuple))
+    for i, entity in enumerate(entities):
+      if is_listed:
+        record_arguments_config = record_arguments[i]
+      else:
+        record_arguments_config = record_arguments
+      entity._record_arguments = record_arguments_config
     put_multi(entities)
     for entity in entities:
       entity.index_search_documents()
