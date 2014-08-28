@@ -694,7 +694,7 @@ class Entry(orm.BaseExpando):
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   journal = orm.SuperKeyProperty('3', kind=Journal, required=True)
   name = orm.SuperStringProperty('4', required=True)
-  state = orm.SuperStringProperty('5', required=True)
+  state = orm.SuperStringProperty('5', required=True)  # @todo Bad thing about this prop being defined statically is that we can not have choices and default value, thus less abstraction!
   date = orm.SuperDateTimeProperty('6', required=True)
   
   _virtual_fields = {

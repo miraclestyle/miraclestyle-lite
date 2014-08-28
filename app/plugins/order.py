@@ -7,11 +7,12 @@ Created on Aug 25, 2014
 
 import datetime
 import collections
+import re
 
 from app import orm
 from app.tools.base import *
 from app.util import *
-from app.models import location, uom
+from app.models import location, uom  # transaction, rule, log
 
 
 # Virtual representation of order entry object to serve as a reference of expected structure (will be removed later)!
@@ -44,7 +45,7 @@ class OrderEntry(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('47', 'update_cart'),
+      key=orm.Action.build_key('47', 'update'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
@@ -180,7 +181,7 @@ class LinesInit(orm.BaseModel):
                            categories=[Category.build_key('1102', namespace=context.model.journal._namespace)])  # Debtors (1102) account.
     tax_line = Line(sequence=1, uom=entry.currency, description='Sales Tax',
                     debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
-                    categories=[Category.build_key('121', namespace=context.model.journal._namespace)])  # Tax Received (1102) account.
+                    categories=[Category.build_key('121', namespace=context.model.journal._namespace)])  # Tax Received (121) account.
     if len(entry._lines) == 0:
       entry._lines = [receivable_line, tax_line]
 
@@ -317,6 +318,7 @@ class OrderTotalCalculate(orm.BaseModel):
   
   _use_rule_engine = False
   
+  # @todo We need receivable calcualtior as well!
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
     untaxed_amount = format_value('0', entry.currency)
@@ -476,13 +478,13 @@ class Tax(orm.BaseModel):
           if not allowed:
             del line.taxes[self.key.urlsafe()]  # @todo This is not possible anymore!
           elif allowed:
-            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore!
+            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore! We are using JSON structure here, instead structured proeprty (has to be discussed)!
       elif self.product_categories:
         if self.product_categories.count(line.product_category):
           if not (allowed):
             del line.taxes[self.key.urlsafe()]  # @todo This is not possible anymore!
           elif allowed:
-            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore!
+            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore! We are using JSON structure here, instead structured proeprty (has to be discussed)!
   
   def validate_tax(self, entry):
     address = None
@@ -520,6 +522,7 @@ class Tax(orm.BaseModel):
         if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
           allowed = self.exclusion
           break
+    # @todo This block need changes!
     if allowed:
       # If tax is configured for carriers then check if the entry references carrier on which the tax applies.
       if self.carriers:
@@ -613,6 +616,7 @@ class CarrierLine(orm.BaseModel):
       self.rules = rules
 
 
+# This plugin is incomplete!
 class Carrier(orm.BaseModel):
   
   _kind = xx
@@ -638,15 +642,15 @@ class Carrier(orm.BaseModel):
   def calculate_lines(self, valid_lines, entry):
     weight_uom = uom.get_uom(uom.Unit.build_key('kg'))  # @todo Where is get_uom function? We lost it somewhere! Also, is the key unique without measurement filtering?
     volume_uom = uom.get_uom(uom.Unit.build_key('m3'))  # @todo Where is get_uom function? We lost it somewhere! Also, is the key unique without measurement filtering?
-    weight = uom.format_value('0', weight_uom)
-    volume = uom.format_value('0', volume_uom)
+    weight = format_value('0', weight_uom)
+    volume = format_value('0', volume_uom)
     for line in entry._lines:
       line_weight = line._weight[0]
       line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
       line_volume = line._volume[0]
       line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
-      weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
-      volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
+      weight += convert_value(line_weight, line_weight_uom, weight_uom)
+      volume += convert_value(line_volume, line_volume_uom, volume_uom)
       carrier_prices = []
       for carrier_line in valid_lines:
         line_prices = []
@@ -665,259 +669,70 @@ class Carrier(orm.BaseModel):
   def format_value(self, value):
     def run_format(match):
       matches = match.groups()
-      return 'Decimal("%s")' % uom.format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))
+      return 'Decimal("%s")' % format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))
       # this regex needs more work
     value = re.sub('\((.*)\,(.*)\)', run_format, value)
     return value
   
   def validate_line(self, carrier_line, entry):
-    address_key = '%s_address' % self.address_type
-    address = getattr(entry, address_key) 
-    
-    # Shipping everywhere except at the following locations
-    if not (carrier_line.exclusion):
-      allowed = True
-      for loc in carrier_line.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
+    address = None
+    entry_address_reference = getattr(entry, 'shipping_address_reference', None)
+    if entry_address_reference is None:  # @todo Is this ok??
+      return False
+    buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
+    for buyer_address in buyer_addresses.addresses:
+      if buyer_address.internal_id == entry_address_reference:
+        address = buyer_address
+        break
+    if address is None:  # @todo IS this ok??
+      return False
+    if carrier_line.exclusion:
+      # Apply only at the following locations.
       allowed = False
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = True
-            break
-
-
-    if (allowed):
-      
+    else:
+      # Apply everywhere except at the following locations.
+      allowed = True
+    for loc in carrier_line.locations:
+      if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+        if (address.country == loc.country):
+          allowed = carrier_line.exclusion
+          break
+      elif not (loc.postal_code_from and loc.postal_code_to):
+        if (address.country == loc.country and address.region == loc.region):
+          allowed = carrier_line.exclusion
+          break
+      elif not (loc.postal_code_to):
+        if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+          allowed = carrier_line.exclusion
+          break
+      else:
+        if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+          allowed = carrier_line.exclusion
+          break
+    if allowed:
       allowed = False
       price = entry.amount_total
-      
       weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
       volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
-      
-      weight = uom.format_value('0', weight_uom)
-      volume = uom.format_value('0', volume_uom)
-       
+      weight = format_value('0', weight_uom)
+      volume = format_value('0', volume_uom)
       for line in entry._lines:
-        
         line_weight = line._weight[0]
         line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
-        
         line_volume = line._volume[0]
         line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
-        
         weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
         volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
- 
       for rule in carrier_line.rules:
-          condition = rule.condition
- 
-          condition = self.format_value(condition)
-   
-          if safe_eval(condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
-             allowed = True
-             break
-  
+        condition = rule.condition
+        condition = self.format_value(condition)
+        if safe_eval(condition, {'weight': weight, 'volume': volume, 'price': price}):
+          allowed = True
+          break
     return allowed
 
 
 # OLD CODE #
-
-import datetime
-import collections
-import re
-
-from app import ndb
-from app.models import transaction, rule, uom, location, log
-
-
-
-class Carrier(transaction.Plugin):
-  
-  name = ndb.SuperStringProperty('5')
-  lines = ndb.SuperPickleProperty('6')
-  
-  def run(self, journal, context):
-    
-    entry = context.transaction.entities[journal.key.id()]
-    valid_lines = []
-    
-    for carrier_line in self.lines:
-      if self.validate_line(carrier_line, entry):
-         valid_lines.append(carrier_line)
-      
-    carrier_price = self.calculate_lines(valid_lines, entry)
-    
-    if 'carriers' not in context.output:
-        context.output['carriers'] = []
-    
-    context.output['carriers'].append({
-                                     'name' : self.name,
-                                     'price': carrier_price,
-                                     'id' : self.key.urlsafe(),
-                                  })
-    
-    
-  def calculate_lines(self, valid_lines, entry):
-  
-      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
-      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
-     
-      weight = uom.format_value('0', weight_uom)
-      volume = uom.format_value('0', volume_uom)
-     
-     
-      for line in entry._lines:
-        
-        line_weight = line._weight[0]
-        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
-       
-        line_volume = line._volume[0]
-        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
-       
-        weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
-        volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
-       
-      carrier_prices = []
-               
-      for carrier_line in valid_lines:
-        line_prices = []
-        for rule in carrier_line.rules:
-          condition = rule.condition
-          # this regex needs more work
-          condition = self.format_value(condition)
-          price = rule.price
-         
-          if safe_eval(condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
-            price = self.format_value(price)
-            price = safe_eval(price, {'weight' : weight, 'volume' : volume, 'price' : price})
-            line_prices.append(price)
-          
-        carrier_prices.append(min(line_prices))
-        
-      # lowest price possible from all lines
-      return min(carrier_prices)
-          
-  def format_value(self, value):
-    
-    def run_format(match):
-         matches = match.groups()
-         return "Decimal('%s')" % uom.format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))            
-          # this regex needs more work
-    value = re.sub('\((.*)\,(.*)\)', run_format, value)
-    
-    return value
-          
-          
-    
-  def validate_line(self, carrier_line, entry):
- 
-    address_key = '%s_address' % self.address_type
-    address = getattr(entry, address_key) 
-    
-    # Shipping everywhere except at the following locations
-    if not (carrier_line.exclusion):
-      allowed = True
-      for loc in carrier_line.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = False
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = False
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = False
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = False
-            break
-    # Shipping only at the following locations
-    else:
-      allowed = False
-      for loc in self.locations:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = True
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = True
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = True
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = True
-            break
-
-
-    if (allowed):
-      
-      allowed = False
-      price = entry.amount_total
-      
-      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
-      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
-      
-      weight = uom.format_value('0', weight_uom)
-      volume = uom.format_value('0', volume_uom)
-       
-      for line in entry._lines:
-        
-        line_weight = line._weight[0]
-        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
-        
-        line_volume = line._volume[0]
-        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
-        
-        weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
-        volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
- 
-      for rule in carrier_line.rules:
-          condition = rule.condition
- 
-          condition = self.format_value(condition)
-   
-          if safe_eval(condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
-             allowed = True
-             break
-  
-    return allowed
 
 
 class PayPalInit(transaction.Plugin):
