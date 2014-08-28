@@ -1736,6 +1736,14 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     else:
       if self._property._repeated:
         self._property_value = []
+        
+  def _process_read_async_remote_single(self, read_arguments=None):
+    result = self._property_value.get_result()
+    if result is None:
+      remote_single_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+      result = self._property.get_modelclass()(key=remote_single_key)
+    self._property_value = result
+      
   
   def _read_remote_single(self, read_arguments=None):
     '''Remote single storage always follows the same pattern,
@@ -1745,10 +1753,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     if read_arguments is None:
       read_arguments = {}
     property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    property_value = property_value_key.get()  # @todo How do we use async call here, when we need to investigate the value below?
-    if not property_value:
-      property_value = self._property.get_modelclass()(key=property_value_key)
-    self._property_value = property_value
+    self._property_value = property_value_key.get_async()
   
   def _read_remote_multi(self, read_arguments=None):
     if read_arguments is None:
@@ -1763,7 +1768,11 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
       cursor = None
     elif supplied_keys:
-      entities = get_multi_clean(SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys))
+      supplied_keys = SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
+      for supplied_key in supplied_keys:
+        if supplied_key.parent() != self._entity.key:
+          raise PropertyError('invalid_parent_for_key_%s' % supplied_key.urlsafe())
+      entities = get_multi_clean(supplied_keys)
       cursor = None
     else:
       query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -1838,7 +1847,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         process_read_fn = '_process_read_async_%s' % self.storage_type
         if hasattr(self, process_read_fn):
           process_read_fn = getattr(self, process_read_fn)
-          process_read_fn()
+          process_read_fn(read_arguments)
         else:
           property_value = []
           if isinstance(self._property_value, list):
@@ -1904,7 +1913,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     pass
   
   def _post_update_reference(self):
-    pass # we can invent here logic that would fire for reference's sake
+    pass
   
   def _post_update_remote_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
@@ -1916,8 +1925,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         self._property_value.set_key(key_id, parent=self._entity.key)
     else:
       self._property_value.prepare(parent=self._entity.key)
-    # We do put eitherway
-    # @todo If state is deleted, shall we delete the single storage entity?
     if self._property_value._state == 'deleted':
       self._property_value.key.delete()
     else:
@@ -1972,8 +1979,14 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def _delete_local(self):
     self.read()
     self._mark_for_delete(self._property_value)
+ 
+  def _delete_remote_single(self):
+    property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    entity = property_value_key.get()
+    self._set_parent(entity)
+    entity.key.delete()
   
-  def _delete_remote(self):
+  def _delete_remote_multi(self):
     cursor = Cursor()
     limit = 200
     query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -1987,17 +2000,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       else:
         break
   
-  def _delete_remote_single(self):
-    property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    entity = property_value_key.get()
-    self._set_parent(entity)
-    entity.key.delete()
-  
-  def _delete_remote_multi(self):
-    self._delete_remote()
-  
   def _delete_reference(self):
-    pass # nothing happens when you delete reference, we can however implement that logic too
+    pass
   
   def delete(self):
     '''Calls storage type specific delete function, in order to mark property values for deletion.
@@ -2017,8 +2021,12 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       entities = self._property_value.duplicate()
     setattr(self._entity, self.property_name, entities)
     self._property_value = entities
+ 
+  def _duplicate_remote_single(self):
+    self._read_remote_single()
+    self._property_value = self._property_value.duplicate()
   
-  def _duplicate_remote(self):
+  def _duplicate_remote_multi(self):
     '''Fetch ALL entities that belong to this entity.
     On every entity called, .duplicate() function will be called in order to ensure complete recursion.
     
@@ -2030,13 +2038,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
         self._set_parent(entity)
         entities.append(entity.duplicate())
     self._property_value = entities
-  
-  def _duplicate_remote_single(self):
-    self._read_remote_single()
-    self._property_value = self._property_value.duplicate()
-  
-  def _duplicate_remote_multi(self):
-    self._duplicate_remote()
   
   def _duplicate_reference(self):
     pass
@@ -2068,19 +2069,19 @@ class SuperReferencePropertyManager(SuperPropertyManager):
       field = getattr(self._entity, target_field)
       if field is None:  # If value is none the key was not set, therefore value must be null.
         self._property_value = None
-        return self._property_value
+        return self.value
       if not isinstance(field, Key):
         raise PropertyError('Targeted field value must be instance of Key. Got %s' % field)
       if self._property._kind != None and field.kind() != self._property._kind:
         raise PropertyError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
       self._property_value = field.get_async()
-    return self._property_value
+    return self.value
   
   def read_async(self):
     if self._property._readable:
       if not self.has_value():
         self._read()
-      return self._property_value
+      return self.value
   
   def read(self):
     if self._property._readable:
@@ -2095,7 +2096,7 @@ class SuperReferencePropertyManager(SuperPropertyManager):
             self._property_value = map(lambda x: self._property._format_callback(self._entity, x), self._property_value)
           else:
             self._property_value = self._property._format_callback(self._entity, self._property_value)
-      return self._property_value
+      return self.value
   
   def delete(self):
     self._property_value = None
@@ -2279,7 +2280,7 @@ class _BaseStructuredProperty(_BaseProperty):
     trough the code for reference.
     
     '''
-    if isinstance(self._modelclass, basestring):
+    if not isinstance(self._modelclass, Model):
       # model must be scanned when it reaches this call
       find = Model._kind_map.get(self._modelclass)
       if find is None:
@@ -2469,7 +2470,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
         args[0] = set_model1
     super(SuperMultiLocalStructuredProperty, self).__init__(*args, **kwargs)
   
-  def get_modelclass(self, kind=None):
+  def get_modelclass(self, kind=None, **kwds):
     if self._kinds and kind:
       if kind:
         _kinds = []
@@ -2480,7 +2481,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
             _the_kind = other
           _kinds.append(_the_kind)
         if kind not in _kinds:
-          raise PropertyError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
+          raise PropertyError('Expected Kind to be one of %s, got %s' % (_kinds, kind))
         model = Model._kind_map.get(kind)
         return model
     return super(SuperMultiLocalStructuredProperty, self).get_modelclass()

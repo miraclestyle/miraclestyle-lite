@@ -188,17 +188,23 @@ def sort_by_list(unsorted_list, sorting_list, field):
   return (sorted(unsorted_list, key=sorting_function), to_delete)
 
 
-def merge_dicts(a, b, path=None):
-  if path is None:
-    path = []
+def merge_dicts(a, b):
+  '''
+   Merges dict b into a maintaining values of a intact.
+    >>> stuff = {'1' : 'yes'}
+    >>> stuff2 = {'1' : 'no', 'other' : 1}
+    >>> merge_dicts(stuff, stuff2)
+    >>> {'1': 'yes', 'other': 1}
+  '''
   for key in b:
     if key in a:
       if isinstance(a[key], dict) and isinstance(b[key], dict):
-        merge_dicts(a[key], b[key], path + [str(key)])
+        merge_dicts(a[key], b[key])
       elif a[key] == b[key]:
         pass
       else:
-        raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        # in this segment we encounter that a[key] is not equal to b[key] which we do not want
+        pass
     else:
       a[key] = b[key]
   return a
