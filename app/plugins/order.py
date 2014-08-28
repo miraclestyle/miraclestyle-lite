@@ -39,12 +39,88 @@ class OrderEntry(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            CartInit(),
-          ]
-        ),
-      ]
-    )
-  ]
+            ]
+          ),
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'update_cart'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            ]
+          ),
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'checkout'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            ]
+          ),
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'cancel'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            ]
+          ),
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'pay'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            ]
+          ),
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'timeout'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            ]
+          ),
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'complete'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            ]
+          ),
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('47', 'message'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            ]
+          ),
+        ]
+      )
+    ]
 
 
 # @todo Not sure if we are gonna use this instead of orm.ActionDenied()? ActionDenied lacks descreptive messaging!
@@ -460,7 +536,12 @@ class Tax(orm.BaseModel):
     return allowed
 
 
+# This is system plugin, which means end user can not use it!
 class TaxSubtotalCalculate(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
@@ -488,6 +569,187 @@ class TaxSubtotalCalculate(orm.BaseModel):
       tax_line.credit = tax_total
 
 
+# Not a plugin!
+class CarrierLineRule(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  condition = orm.SuperStringProperty('1', required=True, indexed=False)
+  price = orm.SuperStringProperty('2', required=True, indexed=False)
+  
+  # @todo Do we need __init__ at all!?
+  def __init__(self, *args, **kwargs):
+    super(CarrierLineRule, self).__init__(**kwargs)
+    if len(args):
+      condition, price = args
+      self.condition = condition
+      self.price = price
+
+
+# Not a plugin!
+class CarrierLine(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
+  locations = orm.SuperLocalStructuredProperty(Location, '4', repeated=True)
+  rules = orm.SuperLocalStructuredProperty(CarrierLineRule, '5', repeated=True)
+  
+  # @todo Do we need __init__ at all!?
+  def __init__(self, *args, **kwargs):
+    super(CarrierLine, self).__init__(**kwargs)
+    if len(args):
+      name, active, exclusion, locations, rules = args
+      self.name = name
+      self.active = active
+      self.exclusion = exclusion
+      self.locations = locations
+      self.rules = rules
+
+
+class Carrier(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  lines = orm.SuperLocalStructuredProperty(CarrierLine, '2', repeated=True)
+  
+  def run(self, context):
+    entry = context._group.get_entry(context.model.journal)
+    valid_lines = []
+    for carrier_line in self.lines:
+      if self.validate_line(carrier_line, entry):
+        valid_lines.append(carrier_line)
+    carrier_price = self.calculate_lines(valid_lines, entry)
+    if 'carriers' not in context.output:
+      context.output['carriers'] = []
+    context.output['carriers'].append({'name': self.name,
+                                       'price': carrier_price,
+                                       'id': self.key.urlsafe()})
+  
+  def calculate_lines(self, valid_lines, entry):
+    weight_uom = uom.get_uom(uom.Unit.build_key('kg'))  # @todo Where is get_uom function? We lost it somewhere! Also, is the key unique without measurement filtering?
+    volume_uom = uom.get_uom(uom.Unit.build_key('m3'))  # @todo Where is get_uom function? We lost it somewhere! Also, is the key unique without measurement filtering?
+    weight = uom.format_value('0', weight_uom)
+    volume = uom.format_value('0', volume_uom)
+    for line in entry._lines:
+      line_weight = line._weight[0]
+      line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
+      line_volume = line._volume[0]
+      line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
+      weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
+      volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
+      carrier_prices = []
+      for carrier_line in valid_lines:
+        line_prices = []
+        for rule in carrier_line.rules:
+          condition = rule.condition
+          # @todo This regex needs more work
+          condition = self.format_value(condition)
+          price = rule.price
+          if safe_eval(condition, {'weight': weight, 'volume': volume, 'price': price}):
+            price = self.format_value(price)
+            price = safe_eval(price, {'weight': weight, 'volume': volume, 'price': price})
+            line_prices.append(price)
+        carrier_prices.append(min(line_prices))
+      return min(carrier_prices)  # Return the lowest price possible of all lines!
+  
+  def format_value(self, value):
+    def run_format(match):
+      matches = match.groups()
+      return 'Decimal("%s")' % uom.format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))
+      # this regex needs more work
+    value = re.sub('\((.*)\,(.*)\)', run_format, value)
+    return value
+  
+  def validate_line(self, carrier_line, entry):
+    address_key = '%s_address' % self.address_type
+    address = getattr(entry, address_key) 
+    
+    # Shipping everywhere except at the following locations
+    if not (carrier_line.exclusion):
+      allowed = True
+      for loc in carrier_line.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = False
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = False
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = False
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = False
+            break
+    # Shipping only at the following locations
+    else:
+      allowed = False
+      for loc in self.locations:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = True
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = True
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = True
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = True
+            break
+
+
+    if (allowed):
+      
+      allowed = False
+      price = entry.amount_total
+      
+      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
+      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
+      
+      weight = uom.format_value('0', weight_uom)
+      volume = uom.format_value('0', volume_uom)
+       
+      for line in entry._lines:
+        
+        line_weight = line._weight[0]
+        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
+        
+        line_volume = line._volume[0]
+        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
+        
+        weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
+        volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
+ 
+      for rule in carrier_line.rules:
+          condition = rule.condition
+ 
+          condition = self.format_value(condition)
+   
+          if safe_eval(condition, {'weight' : weight, 'volume' : volume, 'price' : price}):
+             allowed = True
+             break
+  
+    return allowed
+
+
 # OLD CODE #
 
 import datetime
@@ -497,22 +759,6 @@ import re
 from app import ndb
 from app.models import transaction, rule, uom, location, log
 
-
-class CarrierLine:
-  
-  def __init__(self, name, exclusion=False, active=True, locations=None, rules=None):
-    self.name = name
-    self.exclusion = exclusion
-    self.active = active
-    self.locations = locations
-    self.rules = rules
-
-
-class CarrierLineRule:
-  
-  def __init__(self, condition, price):
-    self.condition = condition
-    self.price = price
 
 
 class Carrier(transaction.Plugin):
