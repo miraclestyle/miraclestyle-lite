@@ -38,8 +38,49 @@ class OrderEntry(orm.BaseExpando):
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
+          name='Init'
           plugins=[
             Context(),
+            CartInit()
+            ]
+          ),
+        orm.PluginGroup(
+          name='Payment Config'  # User Editable
+          plugins=[
+            PayPalPayment()
+            ]
+          ),
+        orm.PluginGroup(
+          name='Lines Init'
+          plugins=[
+            LinesInit()
+            ]
+          ),
+        orm.PluginGroup(
+          name='Address Rules'  # User Editable
+          plugins=[
+            AddressRule()
+            ]
+          ),
+        orm.PluginGroup(
+          name='Taxes'  # User Editable
+          plugins=[
+            Tax()
+            ]
+          ),
+        orm.PluginGroup(
+          name='Carriers'  # User Editable
+          plugins=[
+            Carrier()
+            ]
+          ),
+        orm.PluginGroup(
+          name='Final'
+          plugins=[
+            ProductToLine(),
+            ProductSubtotalCalculate(),
+            TaxSubtotalCalculate(),
+            OrderTotalCalculate()
             ]
           ),
         ]
