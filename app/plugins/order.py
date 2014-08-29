@@ -254,7 +254,7 @@ class LinesInit(orm.BaseModel):
                     debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
                     categories=[Category.build_key('121', namespace=context.model.journal._namespace)])  # Tax Received (121) account.
     if len(entry._lines) == 0:
-      entry._lines = [receivable_line, tax_line]
+      entry._lines = [receivable_line, tax_line]  # @todo Do we need ._state='created' on receivable_line and tax_line!?
 
 
 # This is system plugin, which means end user can not use it!
@@ -273,6 +273,7 @@ class ProductToLine(orm.BaseModel):
       if hasattr(line, 'product_reference')
       and line.product_reference == product_key
       and line.product_variant_signature == variant_signature:
+        line._state = 'modified'  # @todo Not sure if this is ok!?
         line.quantity = line.quantity + format_value('1', line.product_uom)
         line_exists = True
         break
@@ -284,6 +285,7 @@ class ProductToLine(orm.BaseModel):
       product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
       product_instance = product_instance_key.get()
       new_line = Line()
+      line._state = 'created'  # @todo Do we need this!?
       new_line.sequence = entry._lines[-1].sequence + 1
       new_line.categories = [Category.build_key('200', namespace=context.model.journal._namespace)]  # Product Sales (200) account.
       new_line.uom = entry.currency
@@ -328,19 +330,20 @@ class UpdateProductLine(orm.BaseModel):
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
     delete_lines = []
+    # @todo It is likely that here we will receive whole lines in input, not just 'quantity' or whatever, so we have to figure how to do formating on values that are set on prop.
     quantity = context.input.get('quantity')
     discount = context.input.get('discount')
     for i, line in enumerate(entry._lines):
       if hasattr(line, 'product_reference'):
         if quantity is not None:
           if quantity[i] <= 0:
-            delete_lines.append(i)
+            line._state = 'deleted'  # @todo Not sure if this is ok!?
           else:
+            line._state = 'modified'  # @todo Not sure if this is ok!?
             line.quantity = format_value(quantity[i], line.product_uom)
         if discount is not None:
+          line._state = 'modified'  # @todo Not sure if this is ok!?
           line.discount = format_value(discount[i], uom.UOM(digits=4))
-    for line in delete_lines:
-      entry._lines.pop(line)
 
 
 # This is system plugin, which means end user can not use it!
@@ -380,6 +383,7 @@ class ProductSubtotalCalculate(orm.BaseModel):
     entry = context._group.get_entry(context.model.journal)
     for line in entry._lines:
       if hasattr(line, 'product_reference'):
+        line._state = 'modified'  # @todo Not sure if this is ok!?
         line.subtotal = format_value((line.unit_price * line.quantity), line.uom)  # @todo Is this ok!?
         line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), line.uom) # @todo Is this ok!?
         line.debit = format_value('0', line.uom)
@@ -440,9 +444,9 @@ class AddressRule(orm.BaseModel):
   
   _use_rule_engine = False
   
-  exclusion = orm.SuperBooleanProperty('1', required=True, default=False)
-  address_type = orm.SuperStringProperty('2', required=True, default='billing', choices=['billing', 'shipping'])
-  locations = orm.SuperLocalStructuredProperty(Location, '3', repeated=True)
+  exclusion = orm.SuperBooleanProperty('1', required=True, default=False, indexed=False)
+  address_type = orm.SuperStringProperty('2', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  locations = orm.SuperLocalStructuredProperty(Location, '3', repeated=True, indexed=False)
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
@@ -517,9 +521,9 @@ class PayPalPayment(orm.BaseModel):
   # PayPal Shipping: Do not prompt for an address
   # PayPal Shipping: Prompt for an address, and require one
   
-  currency = orm.SuperKeyProperty('1', kind=uom.Unit)
-  reciever_email = orm.SuperStringProperty('2')
-  business = orm.SuperStringProperty('3')
+  currency = orm.SuperKeyProperty('1', kind=uom.Unit, required=True, indexed=False)
+  reciever_email = orm.SuperStringProperty('2', required=True, indexed=False)
+  business = orm.SuperStringProperty('3', required=True, indexed=False)
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
@@ -536,30 +540,36 @@ class Tax(orm.BaseModel):
   
   _use_rule_engine = False
   
-  name = orm.SuperStringProperty('1')
-  formula = orm.SuperStringProperty('2')
-  exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
-  address_type = orm.SuperStringProperty('4', required=True, default='billing', choices=['billing', 'shipping'])
-  locations = orm.SuperLocalStructuredProperty(Location, '5', repeated=True)
-  carriers = orm.SuperKeyProperty('6', repeated=True)  # @todo This is not possible anymore!
-  product_categories = orm.SuperKeyProperty('7', kind='17', repeated=True)
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  code = orm.SuperStringProperty('2', required=True, indexed=False)  # @todo Not sure if we need this!
+  formula = orm.SuperStringProperty('3', required=True, indexed=False)  # @todo Formula has to be defined as touple (type, amount) (e.g. ('%', 15))! Or we can make it something different!
+  exclusion = orm.SuperBooleanProperty('4', required=True, default=False, indexed=False)
+  address_type = orm.SuperStringProperty('5', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  locations = orm.SuperLocalStructuredProperty(Location, '6', repeated=True)
+  carriers = orm.SuperKeyProperty('7', repeated=True, indexed=False)  # @todo This is not possible anymore!
+  product_categories = orm.SuperKeyProperty('8', kind='17', repeated=True, indexed=False)
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
     allowed = self.validate_tax(entry)
     for line in entry._lines:
-      if self.carriers:
-        if self.carriers.count(line.carrier_reference):  # @todo Have to check if all lines have carrier_reference proeprty??
-          if not allowed:
-            del line.taxes[self.key.urlsafe()]  # @todo This is not possible anymore!
-          elif allowed:
-            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore! We are using JSON structure here, instead structured proeprty (has to be discussed)!
-      elif self.product_categories:
-        if self.product_categories.count(line.product_category):
-          if not (allowed):
-            del line.taxes[self.key.urlsafe()]  # @todo This is not possible anymore!
-          elif allowed:
-            line.taxes[self.key.urlsafe()] = {'name': self.name, 'formula': self.formula}  # @todo This is not possible anymore! We are using JSON structure here, instead structured proeprty (has to be discussed)!
+      for tax in line.taxes:
+        if tax.key == self.key:
+          tax._state = 'deleted'
+      if (self.carriers and self.carriers.count(line.carrier_reference))
+      or (self.product_categories and self.product_categories.count(line.product_category)):  # @todo Have to check if all lines have carrier_reference property??
+        if allowed:
+          tax_exists = False
+          for tax in line.taxes:
+            if tax.key == self.key:
+              tax._state = 'modified'
+              tax.name = self.name
+              tax.code = self.code
+              tax.formula=self.formula
+              tax_exists = True
+              break
+          if not tax_exists:
+            line.taxes.append(order.LineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
   
   def validate_tax(self, entry):
     address = None
@@ -641,8 +651,10 @@ class TaxSubtotalCalculate(orm.BaseModel):
           tax_amount = format_value(tax['formula'][1], line.uom)
           tax_subtotal += tax_amount
           tax_total += tax_amount
+      line._state = 'modified'  # @todo Not sure if this is ok!?
       line.tax_subtotal = tax_subtotal
     if tax_line:  # @todo Or we can loop entry._lines again and do the math!
+      line._state = 'modified'  # @todo Not sure if this is ok!?
       tax_line.debit = format_value('0', tax_line.uom)
       tax_line.credit = tax_total
 
