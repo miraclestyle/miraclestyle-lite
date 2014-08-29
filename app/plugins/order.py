@@ -508,7 +508,7 @@ class Tax(orm.BaseModel):
   address_type = orm.SuperStringProperty('4', required=True, default='billing', choices=['billing', 'shipping'])
   locations = orm.SuperLocalStructuredProperty(Location, '5', repeated=True)
   carriers = orm.SuperKeyProperty('6', repeated=True)  # @todo This is not possible anymore!
-  product_categories = orm.SuperKeyProperty('7', kind='17', repeated=True)  # @todo This is not possible anymore!
+  product_categories = orm.SuperKeyProperty('7', kind='17', repeated=True)
   
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
@@ -607,7 +607,7 @@ class TaxSubtotalCalculate(orm.BaseModel):
           tax_amount = format_value(tax['formula'][1], line.uom)
           tax_subtotal += tax_amount
           tax_total += tax_amount
-      line.tax_subtotal = tax_subtota
+      line.tax_subtotal = tax_subtotal
     if tax_line:  # @todo Or we can loop entry._lines again and do the math!
       tax_line.debit = format_value('0', tax_line.uom)
       tax_line.credit = tax_total
