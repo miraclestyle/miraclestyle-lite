@@ -21,16 +21,23 @@ class OrderEntry(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  journal = orm.SuperKeyProperty('3', kind=Journal, required=True)
+  journal = orm.SuperKeyProperty('3', kind='49', required=True)
   name = orm.SuperStringProperty('4', required=True)
   state = orm.SuperStringProperty('5', required=True)
   date = orm.SuperDateTimeProperty('6', required=True)
+  # Jounral-Defined Fields!
   company_address = orm.SuperLocalStructuredProperty(location.Location, '7', required=True)
-  party = orm.SuperKeyProperty('8', kind=auth.User, required=True)
-  billing_address_reference = orm.SuperStringProperty('9', required=True)
-  shipping_address_reference = orm.SuperStringProperty('10', required=True)
+  party = orm.SuperKeyProperty('8', kind='0', required=True, indexed=False)
+  billing_address_reference = orm.SuperStringProperty('9', required=True, indexed=False)
+  shipping_address_reference = orm.SuperStringProperty('10', required=True, indexed=False)
   billing_address = orm.SuperLocalStructuredProperty(location.Location, '11', required=True)
   shipping_address = orm.SuperLocalStructuredProperty(location.Location, '12', required=True)
+  currency = orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True)
+  untaxed_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
+  tax_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
+  total_amount = orm.SuperDecimalProperty('16', required=True, indexed=False)
+  paypal_reciever_email = orm.SuperStringProperty('17', required=True, indexed=False)
+  paypal_business = orm.SuperStringProperty('18', required=True, indexed=False)
   
   _actions = [
     orm.Action(
@@ -165,6 +172,29 @@ class OrderEntry(orm.BaseExpando):
     ]
 
 
+class OrderEntryLine(orm.BaseExpando):
+  
+  sequence = orm.SuperIntegerProperty('1', required=True)
+  categories = orm.SuperKeyProperty('2', kind='47', repeated=True)
+  debit = orm.SuperDecimalProperty('3', required=True, indexed=False)
+  credit = orm.SuperDecimalProperty('4', required=True, indexed=False)
+  uom = orm.SuperLocalStructuredProperty(uom.UOM, '5', required=True)
+  # Jounral-Defined Fields!
+  description = ormSuperTextProperty('6', required=True)
+  product_reference = orm.SuperKeyProperty('7', kind='38', required=True, indexed=False)
+  product_variant_signature = ormSuperTextProperty('8', required=True)
+  product_category_complete_name = ormSuperTextProperty('9', required=True)
+  product_category_reference = orm.SuperKeyProperty('10', kind='17', required=True, indexed=False)
+  code = orm.SuperStringProperty('11', required=True, indexed=False)
+  unit_price = orm.SuperDecimalProperty('12', required=True, indexed=False)
+  product_uom = orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True)
+  quantity = orm.SuperDecimalProperty('14', required=True, indexed=False)
+  discount = orm.SuperDecimalProperty('15', required=True, indexed=False)
+  taxes = orm.SuperLocalStructuredProperty(order.LineTax, '16', required=True)
+  subtotal = orm.SuperDecimalProperty('17', required=True, indexed=False)
+  discount_subtotal = orm.SuperDecimalProperty('18', required=True, indexed=False)
+
+
 # @todo Not sure if we are gonna use this instead of orm.ActionDenied()? ActionDenied lacks descreptive messaging!
 class PluginError(Exception):
   
@@ -269,8 +299,10 @@ class ProductToLine(orm.BaseModel):
       new_line.discount = format_value('0', uom.UOM(digits=4))
       if hasattr(product, 'weight'):
         new_line._weight = product.weight  # @todo Perhaps we might need to build these fields during certain actions, and not only while adding new lines (to ensure thir life accros carrier plugins)!
+        new_line._weight_uom = product.weight_uom
       if hasattr(product, 'volume'):
         new_line._volume = product.volume
+        new_line._volume_uom = product.volume_uom
       if product_instance is not None:
         if hasattr(product_instance, 'unit_price'):
           new_line.unit_price = product_instance.unit_price
@@ -278,8 +310,10 @@ class ProductToLine(orm.BaseModel):
           new_line.code = product_instance.code
         if hasattr(product_instance, 'weight'):
           new_line._weight = product_instance.weight
+          new_line._weight_uom = product_instance.weight_uom
         if hasattr(product_instance, 'volume'):
           new_line._volume = product_instance.volume
+          new_line._volume_uom = product_instance.volume_uom
       entry._lines.append(new_line)
 
 
