@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-Created on May 6, 2014
+Created on Aug 30, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
