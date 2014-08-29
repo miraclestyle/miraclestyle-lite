@@ -6,9 +6,6 @@ Created on Aug 30, 2014
 '''
 
 from app import orm, util, settings
-from app.models.base import *
-from app.plugins.base import *
-from app.plugins.marketing import *
 
 
 class LineTax(orm.BaseModel):
