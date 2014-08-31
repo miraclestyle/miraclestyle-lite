@@ -138,7 +138,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
     def async(entity):
       gs_object_name = entity.gs_object_name
       try:
-        gs_object_name = parse_duplicated_value(gs_object_name)
+        gs_object_name = entity.parse_duplicate_appendix(gs_object_name)
       except IndexError:
         pass
       new_gs_object_name = '%s_duplicate_%s' % (gs_object_name, entity.duplicate_appendix)

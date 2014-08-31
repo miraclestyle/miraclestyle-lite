@@ -14,6 +14,7 @@ import collections
 import string
 import time
 import re
+import uuid
 
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
@@ -1145,12 +1146,24 @@ class _BaseModel(object):
       self._record_arguments = record_arguments
       self.key.delete()
       self.unindex_search_documents()
+      
+  @classmethod
+  def parse_duplicate_appendix(cls, value):
+    # parses value that might contain appendix. throws error if not.
+    # @todo this might have to be revised, problem with it that if the custom key is named
+    # 24194912412_duplicate_2481412481284_14912941294 it will detect it as a duplicated thing.
+    # result will be that the _duplicate_2481412481284_14912941294 will be stripped and a new appendix will be generated
+    # 24194912412_<new appendix>
+    # but i think this is not big concern since this logic is only employed when we duplicate things, in which case
+    # we do not need to keep the original key.
+    results = re.findall(r'(.*)_duplicate_.*', value)
+    return results[0] 
   
-  @property    
+  @property
   def duplicate_appendix(self):
     ent = self._root
     if ent._duplicate_appendix is None:
-      ent._duplicate_appendix = util.generate_duplicate_appendix()
+      ent._duplicate_appendix = str(uuid.uuid4())
     return ent._duplicate_appendix
   
   def duplicate_key_id(self, key=None):
@@ -1160,7 +1173,7 @@ class _BaseModel(object):
     else:
       the_id = key._id_str
     try:
-      the_id = util.parse_duplicated_value(the_id)
+      the_id = self.parse_duplicate_appendix(the_id)
     except IndexError:
       pass
     return '%s_duplicate_%s' % (the_id, self.duplicate_appendix)
@@ -1354,6 +1367,13 @@ class _BaseModel(object):
       return entity
     else:
       raise ValueError('Expected instance of Document, got %s' % document)
+    
+  def generate_unique_key(self):
+    random_uuid4 = str(uuid.uuid4())
+    if self.key:
+      self.key = self.build_key(random_uuid4, parent=self.key.parent(), namespace=self.key.namespace())
+    else:
+      self.key = self.build_key(random_uuid4)
   
   def _set_next_read_arguments(self):
     # this function sets next_read_arguments for the entity that was read
@@ -1749,7 +1769,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
       if not self._property._repeated:
         property_value_copy = [property_value_copy]
       for i, value in enumerate(property_value_copy):
-        value.set_key(str(i))
         value._sequence = i
       self._property_value = property_value
     else:
@@ -2299,7 +2318,7 @@ class _BaseStructuredProperty(_BaseProperty):
     trough the code for reference.
     
     '''
-    if not isinstance(self._modelclass, Model):
+    if isinstance(self._modelclass, basestring):
       # model must be scanned when it reaches this call
       find = Model._kind_map.get(self._modelclass)
       if find is None:
@@ -2364,20 +2383,38 @@ class _BaseStructuredProperty(_BaseProperty):
     # __set__
     manager = self._get_value(entity)
     current_values = value
-    if self._repeated and manager.has_value():
-      current_values = manager.value
-      if value:
-        for val in value:
-          if val.key:
-            for i,current_value in enumerate(current_values):
-              if current_value.key == val.key:
-                current_values[i] = val
-                break
+    if self._repeated:
+      if manager.has_value():
+        current_values = manager.value
+        if value:
+          for val in value:
+            if val.key:
+              for i,current_value in enumerate(current_values):
+                if current_value.key == val.key:
+                  current_values[i] = val
+                  break
+            else:
+              current_values.append(val)
+          def sorting_function(val):
+            return val._sequence
+          current_values = sorted(current_values, key=sorting_function)
+      for val in current_values:
+        if not val.key: # for entities w/o keys generate a key
+          val.generate_unique_key()
+    elif not self._repeated:
+      generate = False
+      if manager.has_value():
+        current_values = manager.value
+        if not value.key:
+          if current_values.key:
+            value.key = current_values.key
           else:
-            current_values.append(val)
-        def sorting_function(val):
-          return val._sequence
-        current_values = sorted(current_values, key=sorting_function)
+            generate = True
+        current_values = value
+      elif not value.key:
+        generate = True
+      if generate:
+        current_values.generate_unique_key()
     manager.set(current_values)
     return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
   
@@ -2447,11 +2484,48 @@ class SuperComputedProperty(_BaseProperty, ComputedProperty):
 
 
 class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
-  pass
+  
+  def __init__(self, *args, **kwargs):
+    super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
+    self._keep_keys = True # always keep keys!
 
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
-  pass
+
+  def __serialize(self, entity, pb, prefix='', parent_repeated=False,
+                   projection=None):
+      """Internal helper to serialize this property to a protocol buffer.
+  
+      Subclasses may override this method.
+  
+      Args:
+        entity: The entity, a Model (subclass) instance.
+        pb: The protocol buffer, an EntityProto instance.
+        prefix: Optional name prefix used for StructuredProperty
+          (if present, must end in '.').
+        parent_repeated: True if the parent (or an earlier ancestor)
+          is a repeated Property.
+        projection: A list or tuple of strings representing the projection for
+          the model instance, or None if the instance is not a projection.
+      """
+      name = prefix + 'stored_key'
+      p = pb.add_raw_property()
+      p.set_name(name)
+      p.set_multiple(False)
+      v = p.mutable_value()
+      entity.__class__.key._db_set_value(v, p, entity.key)
+      return super(SuperStructuredProperty, self)._serialize(
+          entity, pb, prefix=prefix, parent_repeated=parent_repeated,
+          projection=projection)
+   
+  def _serialize(self, *args, **kwargs):
+    print 'ser', self, args, kwargs
+    return super(SuperStructuredProperty, self)._serialize(*args, **kwargs)
+      
+  def _deserialize(self, entity, p, depth=1):
+    # deserialization is complicated @todo i need to figure out the easiest way
+    print 'deser', self, p.name(), depth
+    return super(SuperStructuredProperty, self)._deserialize(entity, p, depth)
 
 
 class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
@@ -3462,21 +3536,34 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       self._kinds = (args[0],)
     args = args[1:]
     super(SuperPluginStorageProperty, self).__init__(*args, **kwargs)
-  
-  # this is retarded, subclassing _BaseStructuredProperty, it has too much shit in it
-  # we could try and make structured property field format class functions or public functions i dont know
+     
+  def _set_value(self, entity, value):
+    # __set__
+    current_values = self._get_value(entity)
+    if value:
+      for val in value:
+        if val.key:
+          for i,current_value in enumerate(current_values):
+            if current_value.key == val.key:
+              current_values[i] = val
+              break
+        else:
+          val.generate_unique_key() # for new values always generate new keys
+          current_values.append(val)
+      def sorting_function(val):
+        return val._sequence
+      current_values = sorted(current_values, key=sorting_function)
+    return super(SuperPluginStorageProperty, self)._set_value(entity, current_values)
+   
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
     out = []
+    if not isinstance(value, list):
+      raise PropertyError('expected_list')
     for v in value:
       out.append(self._structured_property_format(v))
-    if not self._repeated:
-      try:
-        out = out[0]
-      except IndexError as e:
-        out = None
     return out
   
   def _structured_property_field_format(self, fields, values):
@@ -3693,7 +3780,7 @@ class Record(BaseExpando):
       # Adds properties from parent class to the log entity making it possible to deserialize them properly.
       prop = properties.get(next)
       if prop:
-        prop = copy.deepcopy(prop)
+        # prop = copy.deepcopy(prop) no need to deepcopy prop for now, we'll see.
         self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden!
         self._properties[next] = prop
         self.add_output(prop._code_name)  # Besides rule engine, this must be here as well.
@@ -3705,7 +3792,7 @@ class Record(BaseExpando):
       value = prop._get_value(entity)
       if isinstance(value, SuperPropertyManager):
         value = value.value
-      prop = copy.deepcopy(prop)
+      # prop = copy.deepcopy(prop) no need to deepcopy prop for now, we'll see.
       self._properties[prop._name] = prop
       try:
         prop._set_value(self, value)
