@@ -4,70 +4,112 @@ Created on Jul 15, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-import gc
 import os
 import json
 import webapp2
 import importlib
+import datetime
   
 from jinja2 import FileSystemLoader
+from webapp2 import Route
 from webapp2_extras import jinja2
 
 from app import orm, settings, util, mem
 
 from webclient import webclient_settings
-from webclient.util import JSONEncoderHTML, JINJA_GLOBALS, JINJA_FILTERS, to_json
-
-from webapp2 import Route
-
+ 
+ 
+JINJA_FILTERS = {}
+JINJA_GLOBALS = {}
 __ROUTES = []
 __WSGI_CONFIG = None
-
+ 
+ 
 class InvalidRouteError(Exception):
       pass
-  
-  
-class AngularRoute(Route):
+
+
+def register_filter(name, funct=None):
+  global JINJA_FILTERS
+  if isinstance(name, dict):
+    JINJA_FILTERS.update(name)
+  else:
+    JINJA_FILTERS[name] = funct
     
-  """
-  Angular compatible route
-  """
-  
-  angular_path = None
-  angular_controller = None
-  angular_template = None
-  angular_config = {}
-  
-  def _angular_make_path(self, p):
-    p = p.replace('<', ':')
-    p = p.replace('>', '')
-    return p
-  
-  def _angular_make_controller(self, c):
-    if not isinstance(c, basestring):
-        c = c.__name__
-    li = c.split('.')
-    li_last = li[-1]
-    del li[-1]
-    co = [k.title() for k in li]
-    co.append(li_last)
-    return u"".join(co)
     
-  def __init__(self, template, handler=None, name=None, angular_template=False, angular_config={}, build_only=False):
-    """Initializes this route."""
-    super(AngularRoute, self).__init__(template, handler, name, build_only)
+def register_global(name, value=None):
+  global JINJA_GLOBALS
+  if isinstance(name, dict):
+    JINJA_GLOBALS.update(name)
+  else:
+    JINJA_GLOBALS[name] = value
+        
+        
+def to_json(s, **kwargs):
+  '''
+    Converter of complex values into json
+  '''
+  defaults = {'indent': 2, 'check_circular': False, 'cls': JSONEncoderCommunicator}
+  defaults.update(kwargs)
+  return json.dumps(s, **defaults)
+  
+  
+def _static_dir(file_path):
+  return '/webclient/static/%s' % file_path
+            
+            
+register_filter('to_json', to_json)
+register_global({'static_dir': _static_dir, 
+                 'webclient_settings': webclient_settings})
+
+
+class JSONEncoderCommunicator(json.JSONEncoder):
+    '''An encoder that produces JSON safe to embed in HTML.
+
+    To embed JSON content in, say, a script tag on a web page, the
+    characters &, < and > should be escaped. They cannot be escaped
+    with the usual entities (e.g. &amp;) because they are not expanded
+    within <script> tags.
     
-    self.angular_config = angular_config
-    self.angular_path = self._angular_make_path(template)
-    self.angular_controller = self._angular_make_controller(handler)
-    self.angular_template = angular_template
-      
+    Also its `default` function will properly format data that is usually not serialized by json standard.
+    '''
+    
+    def default(self, o):
+      if isinstance(o, datetime.datetime):
+         return o.strftime(settings.DATETIME_FORMAT)
+      if isinstance(o, orm.Key):
+         return o.urlsafe()
+      if hasattr(o, 'get_output'):
+        try:
+          return o.get_output()
+        except TypeError as e:
+          pass
+      if hasattr(o, 'get_meta'):
+        try:
+         return o.get_meta()
+        except TypeError:
+         pass
+      try:
+        out = str(o)
+        return out
+      except TypeError:
+        pass
+      return json.JSONEncoder.default(self, o)
+  
+    def iterencode(self, o, _one_shot=False):
+      chunks = super(JSONEncoderCommunicator, self).iterencode(o, _one_shot)
+      for chunk in chunks:
+        chunk = chunk.replace('&', '\\u0026')
+        chunk = chunk.replace('<', '\\u003c')
+        chunk = chunk.replace('>', '\\u003e')
+        yield chunk
+
       
 def get_routes():
   global __ROUTES
   return __ROUTES        
-
-
+ 
+ 
 def register(*args):
   global __ROUTES
   prefix = None
@@ -77,26 +119,26 @@ def register(*args):
        continue
     if isinstance(arg, (list, tuple)):
         if prefix:
-            if isinstance(arg, tuple):
-               arg = list(arg)
-            try:
-               arg[1] = '%s.%s' % (prefix, arg[1])
-            except KeyError:
-               pass
-        arg = AngularRoute(*arg)
+          if isinstance(arg, tuple):
+             arg = list(arg)
+          try:
+             arg[1] = '%s.%s' % (prefix, arg[1])
+          except KeyError:
+             pass
+        arg = Route(*arg)
     if isinstance(arg, dict):
-        if prefix:
-           arg['handler'] = '%s.%s' % (prefix, arg['handler'])
-        arg = AngularRoute(**arg)
-    if not isinstance(arg, AngularRoute):
+      if prefix:
+         arg['handler'] = '%s.%s' % (prefix, arg['handler'])
+      arg = Route(**arg)
+    if not isinstance(arg, Route):
        raise InvalidRouteError
     __ROUTES.append(arg)
   return __ROUTES
 
  
-def wsgi_config():
+def get_wsgi_config():
     
-  """ Config function. Prepares all variables and routes for webapp2 WSGI startup """
+  ''' Config function. Prepares all variables and routes for webapp2 WSGI constructor '''
   
   global __WSGI_CONFIG
   
@@ -142,13 +184,9 @@ def wsgi_config():
    
 class Base(webapp2.RequestHandler):
   
-  """
-  General-purpose handler that comes with:
-  self.template to send variables to render template
-  and other hooks like `after`, `before` etc.
+  ''' General-purpose handler from which all other handlers must derrive from. '''
   
-  """
-  LOAD_CURRENT_USER = True
+  autoload_current_user = True
   
   def __init__(self, *args, **kwargs):
     super(Base, self).__init__(*args, **kwargs)
@@ -160,8 +198,9 @@ class Base(webapp2.RequestHandler):
     try:
       dicts = json.loads(self.request.body)
     except:
-      if self.request.get(special):
-        dicts = json.loads(self.request.get(special))
+      special_data = self.request.get(special)
+      if special_data:
+        dicts = json.loads(special_data)
       else:
         dicts = {}
     newparams = {}
@@ -182,10 +221,7 @@ class Base(webapp2.RequestHandler):
       newparams[param_key] = value
     dicts.update(newparams)
     return dicts
-  
-  def initialize(self, request, response):
-    super(Base, self).initialize(request, response)
-      
+   
   def send_json(self, data):
     """ sends `data` to json format, accepts anything json compatible """
     ent = 'application/json;charset=utf-8'
@@ -210,10 +246,8 @@ class Base(webapp2.RequestHandler):
     return self.render_response(tpl, **self.template)
    
   def before(self):
-    """
-    This function is fired just before the handler, usefull for setting variables
-    """
-    pass
+    from app.models.auth import User
+    self.template['current_user'] = User.current_user()
    
   def after(self):
     """
@@ -235,14 +269,13 @@ class Base(webapp2.RequestHandler):
   def dispatch(self):
     csrf = None
     csrf_cookie_value = self.request.cookies.get(webclient_settings.COOKIE_CSRF_KEY)
-    if self.LOAD_CURRENT_USER:
+    if self.autoload_current_user:
       from app.models.auth import User
-      User.login_from_authorization_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
+      User.set_current_user_from_auth_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
       current_user = User.current_user()
       current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
       current_user.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
       csrf = current_user._csrf
-      self.template['current_user'] = current_user
     if not csrf_cookie_value:
      if csrf == None:
        csrf = util.random_chars(32)
@@ -260,19 +293,8 @@ class Blank(Base):
   
   def respond(self, *args, **kwargs):
     pass
-     
-     
-class Segments(Base):
-  """
-   Segments handler behaves in the way that you can construct multi-function "view"
-  """
-  def respond(self, *args, **kwargs):
-    segment = kwargs.pop('segment')
-    f = 'segment_%s' % segment
-    if hasattr(self, f):
-       return getattr(self, f)(*args, **kwargs)
-         
-         
+  
+  
 class Angular(Base):
     
   # angular handles data differently, `respond` method can return value and that value will be force-set into self.data
@@ -299,12 +321,8 @@ class Angular(Base):
       # always return the index.html rendering as init
       self.template['initdata'] = self.data
       self.render('angular/index.html')
-          
-          
-class AngularSegments(Segments, Angular):
-  pass
-
-
+ 
+ 
 class AngularBlank(Angular):
   
   def respond(self, *args, **kwargs):

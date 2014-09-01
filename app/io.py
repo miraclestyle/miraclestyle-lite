@@ -140,7 +140,7 @@ class Engine:
     if action_model_schema is None:
       context.model = model
     else:
-      context.model = model(_model_schema=action_model_schema)
+      context.model = model(_model_schema=action_model_schema, namespace=input.get('domain'))
     if not context.model:
       raise InvalidModel(model_key)
   

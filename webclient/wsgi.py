@@ -12,7 +12,7 @@ import webapp2
 
 from app import settings
 
-from webclient.handler import wsgi_config
+from webclient.handler import get_wsgi_config
   
-cfg = wsgi_config()
+cfg = get_wsgi_config()
 app = webapp2.WSGIApplication(cfg['ROUTES'], debug=settings.DEBUG, config=cfg['WSGI_CONFIG'])

@@ -313,6 +313,7 @@ class User(orm.BaseExpando):
     current_user = mem.temp_get('_current_user')
     if not current_user:
       current_user = cls()
+      cls.set_current_user(current_user)
     return current_user
   
   @classmethod
@@ -336,18 +337,22 @@ class User(orm.BaseExpando):
     return None
   
   @classmethod
-  def login_from_authorization_code(cls, auth_code):
+  def set_current_user_from_auth_code(cls, auth_code):
     try:
       user_key, session_id = auth_code.split('|')
     except:
-      return  # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
+      return False # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
     if not session_id:
-      return  # Fail silently if the session id is not found in the split sequence.
-    user = orm.Key(urlsafe=user_key).get()
+      return False # Fail silently if the session id is not found in the split sequence.
+    user_key = orm.Key(urlsafe=user_key)
+    if user_key.kind() != cls.get_kind():
+      return False # Fail silently if the kind is not valid
+    user = user_key.get()
     if user and user.key_id != 'system':
       session = user.session_by_id(session_id)
       if session:
         cls.set_current_user(user, session)
+        return user
 
 
 class Domain(orm.BaseExpando):

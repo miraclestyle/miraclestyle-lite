@@ -710,11 +710,11 @@ class Entry(orm.BaseExpando):
     '''
     journal = kwargs.get('journal')
     _model_schema = kwargs.pop('_model_schema', None)
-    if journal is None and _model_schema is not None:
-      journal = _model_schema
-      setattr(self, 'journal', journal)
-    if journal is not None:
-      self.add_journal_fields(journal)
+    namespace = kwargs.get('namespace')
+    if journal is None and (_model_schema is not None and namespace is not None):
+      journal = Journal.build_key(_model_schema, namespace=namespace)
+      kwargs['journal'] = journal
+    self.add_journal_fields(journal)
     super(Entry, self).__init__(*args, **kwargs)
   
   def add_journal_fields(self, journal_key=None):

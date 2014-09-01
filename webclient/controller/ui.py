@@ -9,8 +9,7 @@ import json
 from app import io
 
 from webclient import handler
-from webclient.util import JSONEncoderHTML, to_json
-  
+
 class ModelInfo(handler.Base):
   
   def respond(self):
@@ -29,7 +28,7 @@ class ModelInfo(handler.Base):
           pass
     
     script = u"KINDS = {}; \n"
-    script += u'KINDS.info = %s;' % to_json(send)
+    script += u'KINDS.info = %s;' % handler.to_json(send)
      
     self.response.write(script)
       

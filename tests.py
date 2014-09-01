@@ -4,12 +4,9 @@ Created on Jul 8, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-import uuid
-a = []
-for x in xrange(10000):
-  i = str(uuid.uuid4())
-  if i in a:
-    print 'collision! at %s with %s' % (x, i)
-    break
-  a.append(i)
-a = None
+import time
+import urllib2
+
+while True:
+  time.sleep(0.2)
+  urllib2.urlopen('http://localhost:9982/Tests/Test1?pp=foo6')

@@ -67,12 +67,14 @@ class TestP(orm.BaseModel):
   _use_rule_engine = False
   _use_search_engine = False
   
-  tests1 = orm.SuperLocalStructuredProperty(TestA, repeated=True)
-  tests2 = orm.SuperLocalStructuredProperty(TestB)
+  tests1 = orm.SuperStructuredProperty(TestA, repeated=True)
+  tests2 = orm.SuperStructuredProperty(TestB)
     
 class Test1(BaseTestHandler):
   
   def respond(self):
+    if self.request.get('rr'):
+      orm.delete_multi(TestP.query().fetch(keys_only=True))
     pp = self.request.get('pp')
     cc = self.request.get('cc')
     if pp and cc:
@@ -82,9 +84,9 @@ class Test1(BaseTestHandler):
       outer = TestP.build_key(pp).get()
       outer.read()
       if self.request.get('edit'):
-        outer.tests1 = [TestA(name='zoobar1', gaa=2)]
+        outer.tests1 = [TestA(name='zoobar1', gaa=2, _sequence=10)]
         outer.put()
-    self.out_json(outer)
+    self.out_json([outer.tests2.value._properties, outer])
  
  
 for k,o in globals().items():

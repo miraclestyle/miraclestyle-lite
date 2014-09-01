@@ -19,6 +19,7 @@ import uuid
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
+from google.appengine.ext.ndb.model import _BaseValue
 from google.appengine.ext import blobstore
 from google.appengine.api import search, datastore_errors
 
@@ -268,7 +269,7 @@ class _BaseModel(object):
   
   the following attribute names are reserved by the Model class in our ORM + ndb api.
   
-  _Model__get_arg
+  __get_arg
   __class__
   __deepcopy__
   __delattr__
@@ -309,6 +310,8 @@ class _BaseModel(object):
   _default_pre_delete_hook
   _default_pre_get_hook
   _default_pre_put_hook
+  _delete_custom_indexes
+  _duplicate_appendix
   _entity_key
   _equivalent
   _fake_property
@@ -347,6 +350,7 @@ class _BaseModel(object):
   _put
   _put_async
   _query
+  _read_arguments
   _reset_kind_map
   _root
   _rule_compile
@@ -359,9 +363,14 @@ class _BaseModel(object):
   _rule_reset_actions
   _rule_reset_fields
   _rule_write
+  _search_documents_delete
+  _search_documents_write
+  _sequence
   _set_attributes
+  _set_next_read_arguments
   _set_projection
   _state
+  _subentity_counter
   _to_dict
   _to_pb
   _unknown_property
@@ -370,18 +379,23 @@ class _BaseModel(object):
   _use_memcache
   _use_record_engine
   _use_rule_engine
+  _use_search_engine
   _validate_key
   _values
+  _write_custom_indexes
   add_output
   allocate_ids
   allocate_ids_async
   build_key
   delete
+  delete_search_document
   duplicate
+  duplicate_appendix
+  duplicate_key_id
+  generate_unique_key
   get_actions
   get_by_id
   get_by_id_async
-  get_field
   get_fields
   get_kind
   get_meta
@@ -389,9 +403,11 @@ class _BaseModel(object):
   get_or_insert_async
   get_output
   get_plugin_groups
+  get_search_document
   get_virtual_fields
   gql
   has_complete_key
+  index_search_documents
   key
   key_id
   key_id_int
@@ -399,12 +415,13 @@ class _BaseModel(object):
   key_kind
   key_namespace
   key_parent
+  key_root
   key_urlsafe
   make_original
   namespace_entity
   parent_entity
+  parse_duplicate_appendix
   populate
-  prepare_field
   put
   put_async
   query
@@ -415,9 +432,16 @@ class _BaseModel(object):
   rule_read
   rule_write
   search
+  search_document_to_dict
+  search_document_to_entity
   set_key
+  tests1
+  tests2
   to_dict
+  unindex_search_documents
+  update_search_index
   write
+  write_search_document
   
   On top of the previous list, the following attribute names are reserved:
   _expando_fields
@@ -432,6 +456,7 @@ class _BaseModel(object):
   _record_arguments
   _read_arguments
   _field_permissions
+  store_key -- used by structured properties
   ........ to be continued...
   
   '''
@@ -704,7 +729,7 @@ class _BaseModel(object):
         except ComputedPropertyError as e:
           pass  # This is intentional
         except Exception as e:
-          #util.log('__deepcopy__: could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
+          # util.log('__deepcopy__: could not copy %s.%s. Error: %s' % (self.__class__.__name__, field, e))
           pass
     return new_entity
   
@@ -1141,8 +1166,10 @@ class _BaseModel(object):
     self.index_search_documents()
     self.unindex_search_documents()
   
-  def delete(self, record_arguments):
+  def delete(self, record_arguments=None):
     if hasattr(self, 'key') and isinstance(self.key, Key):
+      if record_arguments is None:
+        record_arguments = {}
       self._record_arguments = record_arguments
       self.key.delete()
       self.unindex_search_documents()
@@ -1230,8 +1257,9 @@ class _BaseModel(object):
      ->product = Product # old product key stays
      ...
     
-    This was solved with making unique duplicate key appendixes. The duplicate appendix is only generated once
-    per root entity duplicated. So for duplicating Catalog, appendix would be located on new_catalog._duplicate_appendix.
+    This was solved with making unique duplicate key appendixes + logic that changes those keys implicitly.
+    The duplicate appendix is only generated once per root entity duplicated. 
+    So for duplicating Catalog, appendix would be located on new_catalog._duplicate_appendix.
     
     '''
     new_entity = copy.deepcopy(self) # deep copy will copy all static properties
@@ -1353,8 +1381,8 @@ class _BaseModel(object):
     # @answer you mean live active with get multi or this function was to solve that?
     if document and isinstance(document, search.Document):
       entity = cls(key=Key(urlsafe=document.doc_id))
-      #util.set_attr(entity, 'language', document.language)
-      #util.set_attr(entity, 'rank', document.rank)
+      # util.set_attr(entity, 'language', document.language)
+      # util.set_attr(entity, 'rank', document.rank)
       fields = document.fields
       entitiy_fields = entity.get_fields()
       for field in fields:
@@ -1463,6 +1491,7 @@ class BaseModel(_BaseModel, Model):
 
 
 class BasePoly(_BaseModel, polymodel.PolyModel):
+  '''Base class for all 'polymodel.PolyModel' entities.'''
   
   @classmethod
   def _class_name(cls):
@@ -1589,7 +1618,7 @@ class BaseExpando(_BaseModel, Expando):
 
 
 class BasePolyExpando(BasePoly, BaseExpando):
-  pass
+  '''Base class for all 'polymodel.PolyModelExpando' entities.'''
 
 
 #################################################
@@ -1758,7 +1787,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     return self._property_value
   
   def _read_local(self, read_arguments=None):
-    '''Every structured/local structured value requires a sequence id for future identification purposes!
+    '''Every structured/local structured value requires a sequence generated upon reading
     
     '''
     if read_arguments is None:
@@ -1910,8 +1939,6 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   
   def add(self, entities):
     # @todo Is it preferable to branch this function to helper functions, like we do for read, update, delete (_add_local, _add_remote_sigle...)?
-    if self.storage_type == 'local':
-      self.read()  # We always call read when the local is mentioned because we always need local value for extending its list or complete override
     if self._property._repeated:
       if not self.has_value():
         self._property_value = []
@@ -2019,10 +2046,8 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     self._mark_for_delete(self._property_value)
  
   def _delete_remote_single(self):
-    property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    entity = property_value_key.get()
-    self._set_parent(entity)
-    entity.key.delete()
+    self.read()
+    self._property_value.key.delete()
   
   def _delete_remote_multi(self):
     cursor = Cursor()
@@ -2058,10 +2083,9 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     else:
       entities = self._property_value.duplicate()
     setattr(self._entity, self.property_name, entities)
-    self._property_value = entities
  
   def _duplicate_remote_single(self):
-    self._read_remote_single()
+    self.read()
     self._property_value = self._property_value.duplicate()
   
   def _duplicate_remote_multi(self):
@@ -2385,7 +2409,10 @@ class _BaseStructuredProperty(_BaseProperty):
     current_values = value
     if self._repeated:
       if manager.has_value():
-        current_values = manager.value
+        if manager.value:
+          current_values = manager.value
+        else:
+          current_values = []
         if value:
           for val in value:
             if val.key:
@@ -2394,24 +2421,24 @@ class _BaseStructuredProperty(_BaseProperty):
                   current_values[i] = val
                   break
             else:
+              val.generate_unique_key()
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
           current_values = sorted(current_values, key=sorting_function)
-      for val in current_values:
-        if not val.key: # for entities w/o keys generate a key
+      else:
+        for val in current_values:
           val.generate_unique_key()
     elif not self._repeated:
       generate = False
       if manager.has_value():
         current_values = manager.value
-        if not value.key:
-          if current_values.key:
-            value.key = current_values.key
-          else:
-            generate = True
+        if current_values and current_values.key: # ensure that we will always have a key
+          value.key = current_values.key
+        else:
+          generate = True
         current_values = value
-      elif not value.key:
+      else:
         generate = True
       if generate:
         current_values.generate_unique_key()
@@ -2430,7 +2457,6 @@ class _BaseStructuredProperty(_BaseProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      #util.log('%s._get_value.%s %s' % (self.__class__.__name__, manager_name, entity))
       manager = self._managerclass(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     super(_BaseStructuredProperty, self)._get_value(entity)
@@ -2492,7 +2518,7 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
 
-  def __serialize(self, entity, pb, prefix='', parent_repeated=False,
+  def _serialize(self, entity, pb, prefix='', parent_repeated=False,
                    projection=None):
       """Internal helper to serialize this property to a protocol buffer.
   
@@ -2508,24 +2534,42 @@ class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
         projection: A list or tuple of strings representing the projection for
           the model instance, or None if the instance is not a projection.
       """
-      name = prefix + 'stored_key'
-      p = pb.add_raw_property()
-      p.set_name(name)
-      p.set_multiple(False)
-      v = p.mutable_value()
-      entity.__class__.key._db_set_value(v, p, entity.key)
+      values = self._get_base_value_unwrapped_as_list(entity)
+      for value in values:
+        if value is not None:
+          name = prefix + self._name + '.' + 'stored_key'
+          p = pb.add_raw_property()
+          p.set_name(name)
+          p.set_multiple(self._repeated or parent_repeated)
+          v = p.mutable_value()
+          ref = value.key.reference()
+          rv = v.mutable_referencevalue()  # A Reference
+          rv.set_app(ref.app())
+          if ref.has_name_space():
+            rv.set_name_space(ref.name_space())
+          for elem in ref.path().element_list():
+            rv.add_pathelement().CopyFrom(elem)
       return super(SuperStructuredProperty, self)._serialize(
           entity, pb, prefix=prefix, parent_repeated=parent_repeated,
           projection=projection)
-   
-  def _serialize(self, *args, **kwargs):
-    print 'ser', self, args, kwargs
-    return super(SuperStructuredProperty, self)._serialize(*args, **kwargs)
-      
+ 
   def _deserialize(self, entity, p, depth=1):
-    # deserialization is complicated @todo i need to figure out the easiest way
-    print 'deser', self, p.name(), depth
-    return super(SuperStructuredProperty, self)._deserialize(entity, p, depth)
+    stored_key = 'stored_key'
+    super(SuperStructuredProperty, self)._deserialize(entity, p, depth)
+    basevalues = self._retrieve_value(entity)
+    if not self._repeated:
+      basevalues = [basevalues]
+    for basevalue in basevalues:
+      if isinstance(basevalue, _BaseValue):
+        # NOTE: It may not be a _BaseValue when we're deserializing a
+        # repeated structured property.
+        subentity = basevalue.b_val
+      if hasattr(subentity, stored_key):
+        subentity.key = subentity.store_key
+        delattr(subentity, stored_key)
+      elif stored_key in subentity._properties:
+        subentity.key = subentity._properties.get(stored_key)._get_value(subentity)
+        del subentity._properties[stored_key]
 
 
 class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
@@ -3331,7 +3375,6 @@ class SuperStorageStructuredProperty(_BaseStructuredProperty, Property):
     manager_name = '%s_manager' % self._name
     if manager_name in entity._values:
       return entity._values[manager_name]
-    #util.log('SuperStorageStructuredProperty._get_value.%s %s' % (manager_name, entity))
     manager = self._managerclass(property_instance=self, storage_entity=entity)
     entity._values[manager_name] = manager
     return manager
@@ -3392,7 +3435,6 @@ class SuperReferenceProperty(SuperKeyProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      #util.log('SuperReferenceProperty._get_value.%s %s' % (manager_name, entity))
       manager = SuperReferencePropertyManager(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     if internal:  # If internal is true, always retrieve manager.
