@@ -26,7 +26,7 @@ class Context(orm.BaseModel):
     context.namespace = None
     context.domain = None
     domain_key = context.input.get('domain')
-    if domain_key:
+    if domain_key is not None:
       context.domain = domain_key.get()
       context.namespace = context.domain.key_namespace
     context._callbacks = []  # @todo For now this stays here!
