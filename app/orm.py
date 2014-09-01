@@ -467,8 +467,8 @@ class _BaseModel(object):
   _parent = None
   _write_custom_indexes = None
   _delete_custom_indexes = None
-  _duplicate_appendix = None # used to memorize appendix that was used to duplicate this entity. it exists only in duplication runtime
- 
+  _duplicate_appendix = None  # Used to memorize appendix that was used to duplicate this entity. It exists only in duplication runtime.
+  
   def __init__(self, *args, **kwargs):
     _deepcopied = '_deepcopy' in kwargs
     if _deepcopied:
@@ -1245,19 +1245,14 @@ class _BaseModel(object):
     multi and single entity will be resolved by only retrieving keys and sending them to
     multiple tasks that could duplicate them in paralel.
     That fragmentation could be achieved via existing cron infrastructure or by implementing something with setup engine.
-    
-    
     @todo Referenced entity keys pose a problem when doing duplicates. E.g.
- 
     ProductCopy = Product.duplicate
     CatalogPricetagCopy = CatalogPricetag.duplicate
-    
     CatalogPricetagCopy
      ->product = Product # old product key stays
      ...
-    
     This was solved with making unique duplicate key appendixes + logic that changes those keys implicitly.
-    The duplicate appendix is only generated once per root entity duplicated. 
+    The duplicate appendix is only generated once per root entity duplicated.
     So for duplicating Catalog, appendix would be located on new_catalog._duplicate_appendix.
     
     '''
@@ -1375,7 +1370,7 @@ class _BaseModel(object):
     return dic
   
   @classmethod
-  def search_document_to_entity(cls, document):  
+  def search_document_to_entity(cls, document):
     # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
     # @answer you mean live active with get multi or this function was to solve that?
     if document and isinstance(document, search.Document):
@@ -1394,7 +1389,7 @@ class _BaseModel(object):
       return entity
     else:
       raise ValueError('Expected instance of Document, got %s' % document)
-    
+  
   def generate_unique_key(self):
     random_uuid4 = str(uuid.uuid4())
     if self.key:
@@ -1418,7 +1413,7 @@ class _BaseModel(object):
         elif value is not None and isinstance(value, Model):
           for field_key, field in value.get_fields().iteritems():
             val = getattr(value, field_key, None)
-            scan(val, field_key, field, value_options)  
+            scan(val, field_key, field, value_options)
       if hasattr(self, '_read_arguments'): # if read_args are present, use them as base dict
         value_options = copy.deepcopy(self._read_arguments)
       else:
@@ -1662,7 +1657,7 @@ class SuperPropertyManager(object):
          product_instance.contents[0]._parent = product_instance
          ....
     So based on that, you can always reach for the top by simply finding which ._parent is None.
-           
+    
     '''
     as_list = False
     if entities is None:
@@ -1679,7 +1674,7 @@ class SuperPropertyManager(object):
             continue
       else:
         if entities._parent is None:
-          entities._parent = self._entity    
+          entities._parent = self._entity
     return entities
   
   def has_value(self):
@@ -1802,14 +1797,13 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     else:
       if self._property._repeated:
         self._property_value = []
-        
+  
   def _process_read_async_remote_single(self, read_arguments=None):
     result = self._property_value.get_result()
     if result is None:
       remote_single_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
       result = self._property.get_modelclass()(key=remote_single_key)
     self._property_value = result
-      
   
   def _read_remote_single(self, read_arguments=None):
     '''Remote single storage always follows the same pattern,
@@ -2043,7 +2037,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
   def _delete_local(self):
     self.read()
     self._mark_for_delete(self._property_value)
- 
+  
   def _delete_remote_single(self):
     self.read()
     self._property_value.key.delete()
@@ -2082,7 +2076,7 @@ class SuperStructuredPropertyManager(SuperPropertyManager):
     else:
       entities = self._property_value.duplicate()
     setattr(self._entity, self.property_name, entities)
- 
+  
   def _duplicate_remote_single(self):
     self.read()
     self._property_value = self._property_value.duplicate()
@@ -2516,13 +2510,11 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
 
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
-
+  
   def _serialize(self, entity, pb, prefix='', parent_repeated=False,
-                   projection=None):
-      """Internal helper to serialize this property to a protocol buffer.
-  
+                   projection=None):  This method violates identation (uncommented to bring attention)!
+      '''Internal helper to serialize this property to a protocol buffer.
       Subclasses may override this method.
-  
       Args:
         entity: The entity, a Model (subclass) instance.
         pb: The protocol buffer, an EntityProto instance.
@@ -2532,7 +2524,7 @@ class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
           is a repeated Property.
         projection: A list or tuple of strings representing the projection for
           the model instance, or None if the instance is not a projection.
-      """
+      '''
       values = self._get_base_value_unwrapped_as_list(entity)
       for value in values:
         if value is not None:
@@ -2551,7 +2543,7 @@ class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
       return super(SuperStructuredProperty, self)._serialize(
           entity, pb, prefix=prefix, parent_repeated=parent_repeated,
           projection=projection)
- 
+  
   def _deserialize(self, entity, p, depth=1):
     stored_key = 'stored_key'
     super(SuperStructuredProperty, self)._deserialize(entity, p, depth)
@@ -2666,7 +2658,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
       return search.TextField(name=self.search_document_field_name, value=value)
     else:
       return search.DateField(name=self.search_document_field_name, value=value)
-    
+  
   def resolve_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
@@ -3577,7 +3569,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       self._kinds = (args[0],)
     args = args[1:]
     super(SuperPluginStorageProperty, self).__init__(*args, **kwargs)
-     
+  
   def _set_value(self, entity, value):
     # __set__
     current_values = self._get_value(entity)
@@ -3595,7 +3587,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
         return val._sequence
       current_values = sorted(current_values, key=sorting_function)
     return super(SuperPluginStorageProperty, self)._set_value(entity, current_values)
-   
+  
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
