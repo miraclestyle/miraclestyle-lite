@@ -8,8 +8,12 @@ ACTIVE_CONTROLLERS = ('api', 'auth', 'task', 'ui', 'admin', 'domain', 'cron', 't
 
 TEMPLATE_CACHE = 0
 
+WEBAPP2_EXTRAS = {}
 SESSION_USER_KEY = 'usr'
+COOKIE_CSRF_KEY = 'XSRF-TOKEN'
+COOKIE_USER_KEY = 'auth'
 
+# ui based configurations
 ANGULAR_MODULES = ['underscore',
                    'router', 
                    'ngStorage', 
@@ -45,9 +49,3 @@ ANGULAR_COMPONENTS = ['home',
 JQUERY_PLUGINS = [
                   'select2/select2',
                  ]
-
-
-COOKIE_CSRF_KEY = 'XSRF-TOKEN'
-COOKIE_USER_KEY = 'auth'
-
-WEBAPP2_EXTRAS = {}

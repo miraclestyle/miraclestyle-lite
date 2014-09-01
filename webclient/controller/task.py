@@ -9,13 +9,11 @@ from webclient import handler
 
 class IOEngineRun(handler.Base):
      
-     def respond(self):
-         util.log('Begin IOEngineRun execute')
-         
-         input = self.get_input()
-         io.Engine.run(input)
-         
-         util.log('End IOEngineRun execute')
+  def respond(self):
+    util.log('Begin IOEngineRun execute')
+    input = self.get_input()
+    io.Engine.run(input)
+    util.log('End IOEngineRun execute')
 
  
 handler.register(('/task/io_engine_run', IOEngineRun, 'io_engine_run'))

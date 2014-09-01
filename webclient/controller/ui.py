@@ -28,7 +28,7 @@ class ModelInfo(handler.Base):
           pass
     
     script = u"KINDS = {}; \n"
-    script += u'KINDS.info = %s;' % handler.to_json(send)
+    script += u'KINDS.info = %s;' % handler.output_json(send)
      
     self.response.write(script)
       

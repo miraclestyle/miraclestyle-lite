@@ -24,7 +24,7 @@ class BaseTestHandler(handler.Base):
     self.response.headers['Content-Type'] = 'text/plain;charset=utf8;'
   
   def out_json(self, s):
-    self.out(json.dumps(s, indent=2, cls=handler.JSONEncoderHTML))
+    self.out(handler.output_json(s))
   
   def out(self, s, a=0, before=True):
     sp = "\n"
