@@ -207,14 +207,13 @@ def get_async_results(*args, **kwargs):
   del futures[:]  # this empties the list
   for entity in entities:
     futures.append(entity)  # and now we modify back the futures list
-    
-    
+
+
 def _perform_multi_transactions(entities, write=None, transaction_callack=None, sleep=None):
   '''
-  *_multi_transactions functions are used to perform multiple transactions based on number of 
+  *_multi_transactions functions are used to perform multiple transactions based on number of
   entities provided for writing.
-  
-  Entities provided should always be entities which do not have parent, that is, they are not 
+  Entities provided should always be entities which do not have parent, that is, they are not
   originating from the same entity group
   '''
   if transaction_callack is None:
@@ -228,10 +227,10 @@ def _perform_multi_transactions(entities, write=None, transaction_callack=None, 
     run = transaction_callack
   for group in util.partition_list(entities, 5):
     transaction(lambda: run(group, write), xg=True)
-    if sleep is not None: # if sleep is specified, the for loop will block before issuing another transaction
+    if sleep is not None:  # If sleep is specified, the for loop will block before issuing another transaction.
       time.sleep(sleep)
-    
-    
+
+
 def write_multi_transactions(entities, write_config=None, transaction_callack=None, sleep=None):
   if write_config is None:
     write_config = {}
@@ -243,19 +242,19 @@ def put_multi_transactions(entities, transaction_callack=None, sleep=None):
 
 
 def write_multi(entities, record_arguments=None):
-    if record_arguments is None:
-      record_arguments = {}
-    is_listed = isinstance(record_arguments, (list, tuple))
-    for i, entity in enumerate(entities):
-      if is_listed:
-        record_arguments_config = record_arguments[i]
-      else:
-        record_arguments_config = record_arguments
-      entity._record_arguments = record_arguments_config
-    put_multi(entities)
-    for entity in entities:
-      entity.index_search_documents()
-      entity.unindex_search_documents()
+  if record_arguments is None:
+    record_arguments = {}
+  is_listed = isinstance(record_arguments, (list, tuple))
+  for i, entity in enumerate(entities):
+    if is_listed:
+      record_arguments_config = record_arguments[i]
+    else:
+      record_arguments_config = record_arguments
+    entity._record_arguments = record_arguments_config
+  put_multi(entities)
+  for entity in entities:
+    entity.index_search_documents()
+    entity.unindex_search_documents()
 
 
 ################################################################
@@ -1173,7 +1172,7 @@ class _BaseModel(object):
       self._record_arguments = record_arguments
       self.key.delete()
       self.unindex_search_documents()
-      
+  
   @classmethod
   def parse_duplicate_appendix(cls, value):
     # parses value that might contain appendix. throws error if not.
@@ -1184,7 +1183,7 @@ class _BaseModel(object):
     # but i think this is not big concern since this logic is only employed when we duplicate things, in which case
     # we do not need to keep the original key.
     results = re.findall(r'(.*)_duplicate_.*', value)
-    return results[0] 
+    return results[0]
   
   @property
   def duplicate_appendix(self):

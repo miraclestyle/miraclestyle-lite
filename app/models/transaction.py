@@ -701,7 +701,6 @@ class Entry(orm.BaseExpando):
     '_lines': orm.SuperStorageStructuredProperty(Line, storage='remote_multi')
     }
   
-  # @todo We have a bug here, supplied value for _model_schema in io.py is at best urlsafe key, which isn't deserialized!
   def __init__(self, *args, **kwargs):
     '''Caution! Making instances of Entry() inside a transaction may
     cause performing non-entity group queries (see journal_key.get() in add journal fields).
@@ -714,7 +713,7 @@ class Entry(orm.BaseExpando):
     if journal is None and (_model_schema is not None and namespace is not None):
       journal = Journal.build_key(_model_schema, namespace=namespace)
       kwargs['journal'] = journal
-    self.add_journal_fields(journal)
+    self.add_journal_fields(journal)  # @todo If journal is None and so are _model_schema and/or namespace, what goes on here?
     super(Entry, self).__init__(*args, **kwargs)
   
   def add_journal_fields(self, journal_key=None):
@@ -799,6 +798,7 @@ class Group(orm.BaseExpando):
   _kind = 48
   
   _use_rule_engine = False
+  _use_record_engine = False  # @todo This entity itself should probably not recorded, but we are not sure yet!
   
   _default_indexed = False
   

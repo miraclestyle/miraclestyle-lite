@@ -210,24 +210,20 @@ class CartInit(orm.BaseModel):
   _use_rule_engine = False
   
   def run(self, context):
-    catalog_key = context.input.get('catalog')
-    catalog = catalog_key.get()
-    user_key = context.user.key()
     Group = context.models['48']
     Entry = context.models['50']
     entry = Entry.query(Entry.journal == context.model.journal,
-                        Entry.party == user_key,
+                        Entry.party == context.user.key,
                         Entry.state.IN(['cart', 'checkout', 'processing']),
                         namespace=context.model.journal._namespace).get()
     if entry is None:
-      entry = Entry()
-      entry.set_key(None, namespace=context.model.journal._namespace)
+      context._group = Group(namespace=context.model.journal._namespace)
+      entry = Entry(namespace=context.model.journal._namespace)
       entry.journal = context.model.journal
       entry.company_address = # Source of company address required!
       entry.state = 'cart'
       entry.date = datetime.datetime.now()
-      entry.party = user_key
-      context._group = Group()
+      entry.party = context.user.key
     else:
       entry.read(read_arguments)  # @todo What read arguments do we put here? We surely need entry._lines loaded.
       context._group = entry.parent_entity
@@ -819,6 +815,17 @@ class Carrier(orm.BaseModel):
     return allowed
 
 
+# @todo This will be eventually improved.
+class TransactionWrite(orm.BaseModel):
+  
+  def run(self, context):
+    context._group.write()
+    if len(entities):
+      for entry in context._group._entries:
+        entry.set_key(None, parent=context._group.key)
+      orm.write_multi(context._group._entries)
+
+
 # OLD CODE #
 
 
@@ -957,42 +964,3 @@ class PayPalInit(transaction.Plugin):
          return True
       else:
          return False
-
-
-class Write(transaction.Plugin):
-  
-  def run(self, journal, context):
-    
-    @ndb.transactional(xg=True)
-    def transaction():
-        group = context.transaction.group
-        if not group:
-           group = Group(namespace=context.auth.domain.key.urlsafe()) # ?
-           group.put()
-        
-        group_key = group.key # - put main key
-        for key, entry in context.transaction.entities.items():
-            entry.set_key(parent=group_key) # parent key for entry
-            entry_key = entry.put()
-            
-            """
-             notice the `_` before `lines` that is because 
-             if you set it without underscore it will be considered as new property in expando
-             so all operations should use the following paradigm:
-             entry._lines = []
-             entry._lines.append(Line(...))
-             etc..
-            """
-            lines = []
-            
-            for line in entry._lines:
-                line.journal = entry.journal
-                line.company = entry.company
-                line.state = entry.state
-                line.date = entry.date
-                line.set_key(parent=entry_key) # parent key for line, and if posible, sequence value should be key.id
-                lines.append(line)
-            
-            ndb.put_multi(lines)
-            
-    transaction()
