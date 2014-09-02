@@ -372,7 +372,7 @@ class DomainSetup(Setup):
           transaction.Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
-          order.LinesInit()
+          
           ]
         ),
       transaction.PluginGroup(
@@ -384,6 +384,8 @@ class DomainSetup(Setup):
           transaction.Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
+          order.AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+          order.AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
           order.ProductToLine(),
           order.ProductSubtotalCalculate(),
           order.TaxSubtotalCalculate(),
