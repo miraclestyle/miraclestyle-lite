@@ -2512,37 +2512,37 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
   
   def _serialize(self, entity, pb, prefix='', parent_repeated=False,
-                   projection=None):  This method violates identation (uncommented to bring attention)!
-      '''Internal helper to serialize this property to a protocol buffer.
-      Subclasses may override this method.
-      Args:
-        entity: The entity, a Model (subclass) instance.
-        pb: The protocol buffer, an EntityProto instance.
-        prefix: Optional name prefix used for StructuredProperty
-          (if present, must end in '.').
-        parent_repeated: True if the parent (or an earlier ancestor)
-          is a repeated Property.
-        projection: A list or tuple of strings representing the projection for
-          the model instance, or None if the instance is not a projection.
-      '''
-      values = self._get_base_value_unwrapped_as_list(entity)
-      for value in values:
-        if value is not None:
-          name = prefix + self._name + '.' + 'stored_key'
-          p = pb.add_raw_property()
-          p.set_name(name)
-          p.set_multiple(self._repeated or parent_repeated)
-          v = p.mutable_value()
-          ref = value.key.reference()
-          rv = v.mutable_referencevalue()  # A Reference
-          rv.set_app(ref.app())
-          if ref.has_name_space():
-            rv.set_name_space(ref.name_space())
-          for elem in ref.path().element_list():
-            rv.add_pathelement().CopyFrom(elem)
-      return super(SuperStructuredProperty, self)._serialize(
-          entity, pb, prefix=prefix, parent_repeated=parent_repeated,
-          projection=projection)
+                   projection=None):
+    '''Internal helper to serialize this property to a protocol buffer.
+    Subclasses may override this method.
+    Args:
+      entity: The entity, a Model (subclass) instance.
+      pb: The protocol buffer, an EntityProto instance.
+      prefix: Optional name prefix used for StructuredProperty
+        (if present, must end in '.').
+      parent_repeated: True if the parent (or an earlier ancestor)
+        is a repeated Property.
+      projection: A list or tuple of strings representing the projection for
+        the model instance, or None if the instance is not a projection.
+    '''
+    values = self._get_base_value_unwrapped_as_list(entity)
+    for value in values:
+      if value is not None:
+        name = prefix + self._name + '.' + 'stored_key'
+        p = pb.add_raw_property()
+        p.set_name(name)
+        p.set_multiple(self._repeated or parent_repeated)
+        v = p.mutable_value()
+        ref = value.key.reference()
+        rv = v.mutable_referencevalue()  # A Reference
+        rv.set_app(ref.app())
+        if ref.has_name_space():
+          rv.set_name_space(ref.name_space())
+        for elem in ref.path().element_list():
+          rv.add_pathelement().CopyFrom(elem)
+    return super(SuperStructuredProperty, self)._serialize(
+        entity, pb, prefix=prefix, parent_repeated=parent_repeated,
+        projection=projection)
   
   def _deserialize(self, entity, p, depth=1):
     stored_key = 'stored_key'
@@ -2559,7 +2559,7 @@ class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
         subentity.key = subentity.store_key
         delattr(subentity, stored_key)
       elif stored_key in subentity._properties:
-        subentity.key = subentity._properties.get(stored_key)._get_value(subentity)
+        subentity.key = subentity._properties[stored_key]._get_value(subentity)
         del subentity._properties[stored_key]
 
 
