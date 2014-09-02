@@ -205,7 +205,7 @@ class PluginError(Exception):
 # This is system plugin, which means end user can not use it!
 class CartInit(orm.BaseModel):
   
-  _kind = xx
+  _kind = 99
   
   _use_rule_engine = False
   
@@ -235,7 +235,7 @@ class CartInit(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class LinesInit(orm.BaseModel):
   
-  _kind = xx
+  _kind = 100
   
   _use_rule_engine = False
   
@@ -256,7 +256,7 @@ class LinesInit(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class ProductToLine(orm.BaseModel):
   
-  _kind = xx
+  _kind = 101
   
   _use_rule_engine = False
   
@@ -319,7 +319,7 @@ class ProductToLine(orm.BaseModel):
 # @todo Not sure if need this plugin, since we have field level rule engine, which would be capable of controling which field can be edited!?
 class UpdateProductLine(orm.BaseModel):
   
-  _kind = xx
+  _kind = 102
   
   _use_rule_engine = False
   
@@ -345,7 +345,7 @@ class UpdateProductLine(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class EntryFieldAutoUpdate(transaction.Plugin):
   
-  _kind = xx
+  _kind = 103
   
   _use_rule_engine = False
   
@@ -371,7 +371,7 @@ class EntryFieldAutoUpdate(transaction.Plugin):
 # This is system plugin, which means end user can not use it!
 class ProductSubtotalCalculate(orm.BaseModel):
   
-  _kind = xx
+  _kind = 104
   
   _use_rule_engine = False
   
@@ -389,7 +389,7 @@ class ProductSubtotalCalculate(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class OrderTotalCalculate(orm.BaseModel):
   
-  _kind = xx
+  _kind = 105
   
   _use_rule_engine = False
   
@@ -412,7 +412,7 @@ class OrderTotalCalculate(orm.BaseModel):
 # Not a plugin!
 class Location(orm.BaseModel):
   
-  _kind = xx
+  _kind = 106
   
   _use_rule_engine = False
   
@@ -436,7 +436,7 @@ class Location(orm.BaseModel):
 
 class AddressRule(orm.BaseModel):
   
-  _kind = xx
+  _kind = 107
   
   _use_rule_engine = False
   
@@ -508,7 +508,7 @@ class AddressRule(orm.BaseModel):
 # This plugin is incomplete!
 class PayPalPayment(orm.BaseModel):
   
-  _kind = xx
+  _kind = 108
   
   _use_rule_engine = False
   
@@ -532,7 +532,7 @@ class PayPalPayment(orm.BaseModel):
 # This plugin is incomplete!
 class Tax(orm.BaseModel):
   
-  _kind = xx
+  _kind = 109
   
   _use_rule_engine = False
   
@@ -623,7 +623,7 @@ class Tax(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class TaxSubtotalCalculate(orm.BaseModel):
   
-  _kind = xx
+  _kind = 110
   
   _use_rule_engine = False
   
@@ -658,7 +658,7 @@ class TaxSubtotalCalculate(orm.BaseModel):
 # Not a plugin!
 class CarrierLineRule(orm.BaseModel):
   
-  _kind = xx
+  _kind = 111
   
   _use_rule_engine = False
   
@@ -677,7 +677,7 @@ class CarrierLineRule(orm.BaseModel):
 # Not a plugin!
 class CarrierLine(orm.BaseModel):
   
-  _kind = xx
+  _kind = 112
   
   _use_rule_engine = False
   
@@ -702,7 +702,7 @@ class CarrierLine(orm.BaseModel):
 # This plugin is incomplete!
 class Carrier(orm.BaseModel):
   
-  _kind = xx
+  _kind = 113
   
   _use_rule_engine = False
   
@@ -816,7 +816,10 @@ class Carrier(orm.BaseModel):
 
 
 # @todo This will be eventually improved.
+# This is system plugin, which means end user can not use it!
 class TransactionWrite(orm.BaseModel):
+  
+  _kind = 114
   
   def run(self, context):
     context._group.write()
@@ -826,7 +829,10 @@ class TransactionWrite(orm.BaseModel):
       orm.write_multi(context._group._entries)
 
 
+# This is system plugin, which means end user can not use it!
 class CallbackNotify(orm.BaseModel):
+  
+  _kind = 115
   
   def run(self, context):
     static_data = {}

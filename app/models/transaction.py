@@ -24,7 +24,7 @@ JOURNAL_FIELDS = ((orm.SuperStringProperty(), defaults1, defaults2), (orm.SuperT
                   (orm.SuperDateTimeProperty(), defaults1, defaults2))
 
 
-class Action(orm.Action):  # @todo Hope we can have the name TransactionAction replaced with Action!?
+class Action(orm.Action):
   
   _kind = 84
   
@@ -32,22 +32,14 @@ class Action(orm.Action):  # @todo Hope we can have the name TransactionAction r
   
   arguments = orm.SuperPropertyStorageProperty('2', required=True, default={}, compressed=False, cfg=JOURNAL_FIELDS)
   
-  _virtual_fields = {
-    '_code': orm.SuperComputedProperty(lambda self: self.key_id_str)
-    }
-  
   @classmethod
   def build_key(cls, *args, **kwargs):
     new_args = [cls._get_kind()]
     new_args.extend(args)
     return orm.Key(*new_args, **kwargs)
-  
-  def prepare(self, **kwds):
-    if self.key_id is None:
-      self.set_key(self._code, parent=kwds.get('parent'))
 
 
-class PluginGroup(orm.PluginGroup):  # @todo Hope we can have the name TransactionPluginGroup replaced with PluginGroup!?
+class PluginGroup(orm.PluginGroup):
   
   _kind = 85
   
@@ -708,6 +700,33 @@ class Entry(orm.BaseExpando):
   _virtual_fields = {
     '_lines': orm.SuperStorageStructuredProperty(Line, storage='remote_multi')
     }
+  
+  _global_roles = {'system_sales_order': GlobalRole(
+    permissions=[
+      orm.FieldPermission('50', ['created', 'updated', 'state'], False, None, 'True'),
+      orm.FieldPermission('50', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records',
+                                 '_code', '_transaction_actions', '_transaction_plugin_groups'], False, False,
+                          'entity._original.namespace_entity._original.state != "active"'),
+      orm.FieldPermission('50', ['created', 'updated', 'name', 'state', 'entry_fields', 'line_fields', '_records',
+                                 '_code'], False, None,
+                          'entity._original.state != "draft"'),
+      orm.FieldPermission('50', ['_transaction_actions',
+                                 '_transaction_plugin_groups.name',
+                                 '_transaction_plugin_groups.subscriptions',
+                                 '_transaction_plugin_groups.active',
+                                 '_transaction_plugin_groups.sequence',
+                                 '_transaction_plugin_groups.transactional'], False, None,
+                          'entity._is_system'),
+      orm.FieldPermission('50', ['_transaction_plugin_groups.plugins'], False, None,
+                          'entity._is_system and entity._original._transaction_plugin_groups.name != "User Plugins"'),  # @todo Missing index between _transaction_plugin_groups and name!
+      orm.FieldPermission('50', ['state'], True, None,
+                          '(action.key_id_str == "activate" and entity.state == "active") or (action.key_id_str == "decommission" and entity.state == "decommissioned")')
+      ]
+    )}
+  
+  @property
+  _global_role(self):
+    self._global_roles.get(self.journal._id_str)
   
   def __init__(self, *args, **kwargs):
     '''Caution! Making instances of Entry() inside a transaction may

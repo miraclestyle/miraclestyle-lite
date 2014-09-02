@@ -282,16 +282,30 @@ class DomainSetup(Setup):
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
     Journal = self.context.models['49']
+    Action = self.context.models['84']
+    PluginGroup = self.context.models['85']
+    CartInit = self.context.models['99']
+    PayPalPayment = self.context.models['108']
+    LinesInit = self.context.models['100']
+    AddressRule = self.context.models['107']
+    ProductToLine = self.context.models['101']
+    ProductSubtotalCalculate = self.context.models['104']
+    TaxSubtotalCalculate = self.context.models['110']
+    OrderTotalCalculate = self.context.models['105']
+    RulePrepare = self.context.models['93']
+    TransactionWrite = self.context.models['114']
+    CallbackNotify = self.context.models['115']
+    CallbackExec = self.context.models['97']
     entity = Journal(namespace=namespace, id='system_sales_order')
     entity.name = 'Sales Order Journal'
     entity.state = 'active'
-    entity.entry_fields = {'company_address': orm.SuperLocalStructuredProperty(location.Location, '7', required=True),
+    entity.entry_fields = {'company_address': orm.SuperLocalStructuredProperty('68', '7', required=True),
                            'party': orm.SuperKeyProperty('8', kind='0', required=True, indexed=False),  # @todo buyer_reference ??
                            'billing_address_reference': orm.SuperStringProperty('9', required=True, indexed=False),
                            'shipping_address_reference': orm.SuperStringProperty('10', required=True, indexed=False),
-                           'billing_address': orm.SuperLocalStructuredProperty(location.Location, '11', required=True),
-                           'shipping_address': orm.SuperLocalStructuredProperty(location.Location, '12', required=True),
-                           'currency': orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True),
+                           'billing_address': orm.SuperLocalStructuredProperty('68', '11', required=True),
+                           'shipping_address': orm.SuperLocalStructuredProperty('68', '12', required=True),
+                           'currency': orm.SuperLocalStructuredProperty('19', '13', required=True),
                            'untaxed_amount': orm.SuperDecimalProperty('14', required=True, indexed=False),
                            'tax_amount': orm.SuperDecimalProperty('15', required=True, indexed=False),
                            'total_amount': orm.SuperDecimalProperty('16', required=True, indexed=False),
@@ -304,7 +318,7 @@ class DomainSetup(Setup):
                           'product_category_reference': orm.SuperKeyProperty('10', kind='17', required=True, indexed=False),
                           'code': orm.SuperStringProperty('11', required=True, indexed=False),
                           'unit_price': orm.SuperDecimalProperty('12', required=True, indexed=False),
-                          'product_uom': orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True),
+                          'product_uom': orm.SuperLocalStructuredProperty('19', '13', required=True),
                           'quantity': orm.SuperDecimalProperty('14', required=True, indexed=False),
                           'discount': orm.SuperDecimalProperty('15', required=True, indexed=False),
                           'taxes': orm.SuperLocalStructuredProperty(order.LineTax, '16', required=True),
@@ -313,8 +327,8 @@ class DomainSetup(Setup):
     entity._use_rule_engine = False
     entity.write()  # @todo Don't know how else to obtain entity.key which is needed for PluginGroup subscriptions?
     entity._transaction_actions = [
-      transaction.Action(
-        _code='add_to_cart',
+      Action(
+        key=Action.build_key('add_to_cart', parent=entity.key),
         name='Add to Cart',
         active=True,
         arguments={
@@ -325,85 +339,85 @@ class DomainSetup(Setup):
         )
       ]
     entity._transaction_plugin_groups = [
-      transaction.PluginGroup(
+      PluginGroup(
         name='Entry Init',
         active=True,
         sequence=0,
         transactional=False,
         subscriptions=[
-          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
-          order.CartInit()
+          CartInit()
           ]
         ),
-      transaction.PluginGroup(
+      PluginGroup(
         name='Payment Services Configuration',
         active=True,
         sequence=1,
         transactional=False,
         subscriptions=[
-          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
-          order.PayPalPayment(currency=uom.Unit.build_key('usd'),
-                              reciever_email='paypal_email@example.com',
-                              business='paypal_email@example.com')
+          PayPalPayment(currency=uom.Unit.build_key('usd'),
+                        reciever_email='paypal_email@example.com',
+                        business='paypal_email@example.com')
           ]
         ),
-      transaction.PluginGroup(
+      PluginGroup(
         name='Entry Lines Init',
         active=True,
         sequence=2,
         transactional=False,
         subscriptions=[
-          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
-          order.LinesInit()
+          LinesInit()
           ]
         ),
-      transaction.PluginGroup(
+      PluginGroup(
         name='Address Exclusions, Taxes, Carriers...',
         active=True,
         sequence=3,
         transactional=False,
         subscriptions=[
-          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
           
           ]
         ),
-      transaction.PluginGroup(
+      PluginGroup(
         name='Calculating Algorithms',
         active=True,
         sequence=4,
         transactional=False,
         subscriptions=[
-          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
-          order.AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-          order.AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-          order.ProductToLine(),
-          order.ProductSubtotalCalculate(),
-          order.TaxSubtotalCalculate(),
-          order.OrderTotalCalculate()
+          AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+          AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+          ProductToLine(),
+          ProductSubtotalCalculate(),
+          TaxSubtotalCalculate(),
+          OrderTotalCalculate()
           ]
         ),
-      transaction.PluginGroup(
+      PluginGroup(
         name='Commit Transaction Plugins',
         active=True,
         sequence=5,
         transactional=True,
         subscriptions=[
-          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
           RulePrepare(cfg={'path': '_group._entries'}),
-          order.TransactionWrite(),
-          order.CallbackNotify(),
+          TransactionWrite(),
+          CallbackNotify(),
           CallbackExec()
           ]
         ),
