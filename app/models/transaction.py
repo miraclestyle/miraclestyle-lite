@@ -755,7 +755,7 @@ class Entry(orm.BaseExpando):
       self.add_output(name)
     self._journal_fields_loaded = True
   
-  def get_kind(self):
+  def get_kind(self):  # @todo Do we have security breach here, without inclusion of namespace?
     return '%s_%s' % (self._get_kind(), self.journal.id())
   
   @property
@@ -768,6 +768,13 @@ class Entry(orm.BaseExpando):
     for action in instance_actions:
       actions[action.key.urlsafe()] = action
     return actions
+  
+  def get_action(self, action_id):
+    actions = self.get_actions()
+    action_key = Action.build_key(action_id, parent=self.journal).urlsafe()
+    if action_key in actions:
+      return actions[action_key]
+    return None
   
   def get_plugin_groups(self, action):
     return PluginGroup.query(PluginGroup.active == True,
