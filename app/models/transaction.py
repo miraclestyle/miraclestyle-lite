@@ -752,8 +752,8 @@ class Entry(orm.BaseExpando):
   
   def get_plugin_groups(self, action):
     return PluginGroup.query(PluginGroup.active == True,
-                                        PluginGroup.subscriptions == action.key,
-                                        ancestor=self.journal).order(PluginGroup.sequence).fetch()
+                             PluginGroup.subscriptions == action.key,
+                             ancestor=self.journal).order(PluginGroup.sequence).fetch()
   
   def get_fields(self):
     fields = super(Entry, self.__class__).get_fields()  # Calling parent get_fields.
