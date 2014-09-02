@@ -24,7 +24,7 @@ JOURNAL_FIELDS = ((orm.SuperStringProperty(), defaults1, defaults2), (orm.SuperT
                   (orm.SuperDateTimeProperty(), defaults1, defaults2))
 
 
-class TransactionAction(orm.Action):
+class Action(orm.Action):  # @todo Hope we can have the name TransactionAction replaced with Action!?
   
   _kind = 84
   
@@ -32,14 +32,22 @@ class TransactionAction(orm.Action):
   
   arguments = orm.SuperPropertyStorageProperty('2', required=True, default={}, compressed=False, cfg=JOURNAL_FIELDS)
   
+  _virtual_fields = {
+    '_code': orm.SuperComputedProperty(lambda self: self.key_id_str)
+    }
+  
   @classmethod
   def build_key(cls, *args, **kwargs):
     new_args = [cls._get_kind()]
     new_args.extend(args)
     return orm.Key(*new_args, **kwargs)
+  
+  def prepare(self, **kwds):
+    if self.key_id is None:
+      self.set_key(self._code, parent=kwds.get('parent'))
 
 
-class TransactionPluginGroup(orm.PluginGroup):
+class PluginGroup(orm.PluginGroup):  # @todo Hope we can have the name TransactionPluginGroup replaced with PluginGroup!?
   
   _kind = 85
   
@@ -66,8 +74,8 @@ class Journal(orm.BaseExpando):
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('49'),
     '_code': orm.SuperComputedProperty(lambda self: self.key_id_str),
-    '_transaction_actions': orm.SuperStorageStructuredProperty(TransactionAction, storage='remote_multi'),
-    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty(TransactionPluginGroup, storage='remote_multi')
+    '_transaction_actions': orm.SuperStorageStructuredProperty(Action, storage='remote_multi'),
+    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty(PluginGroup, storage='remote_multi')
     }
   
   _global_role = GlobalRole(
@@ -180,8 +188,8 @@ class Journal(orm.BaseExpando):
         'name': orm.SuperStringProperty(required=True),
         'entry_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
         'line_fields': orm.SuperPropertyStorageProperty(required=True, cfg=JOURNAL_FIELDS),
-        '_transaction_actions': orm.SuperLocalStructuredProperty(TransactionAction, repeated=True),
-        '_transaction_plugin_groups': orm.SuperLocalStructuredProperty(TransactionPluginGroup, repeated=True)
+        '_transaction_actions': orm.SuperLocalStructuredProperty(Action, repeated=True),
+        '_transaction_plugin_groups': orm.SuperLocalStructuredProperty(PluginGroup, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -733,7 +741,7 @@ class Entry(orm.BaseExpando):
   
   @property
   def _actions(self):  # @todo Cache if possible for performance gains!
-    return TransactionAction.query(TransactionAction.active == True, ancestor=self.journal).fetch()
+    return Action.query(Action.active == True, ancestor=self.journal).fetch()
   
   def get_actions(self):
     actions = {}
@@ -743,9 +751,9 @@ class Entry(orm.BaseExpando):
     return actions
   
   def get_plugin_groups(self, action):
-    return TransactionPluginGroup.query(TransactionPluginGroup.active == True,
-                                        TransactionPluginGroup.subscriptions == action.key,
-                                        ancestor=self.journal).order(TransactionPluginGroup.sequence).fetch()
+    return PluginGroup.query(PluginGroup.active == True,
+                                        PluginGroup.subscriptions == action.key,
+                                        ancestor=self.journal).order(PluginGroup.sequence).fetch()
   
   def get_fields(self):
     fields = super(Entry, self.__class__).get_fields()  # Calling parent get_fields.

@@ -180,10 +180,10 @@ class OrderEntryLine(orm.BaseExpando):
   credit = orm.SuperDecimalProperty('4', required=True, indexed=False)
   uom = orm.SuperLocalStructuredProperty(uom.UOM, '5', required=True)
   # Jounral-Defined Fields!
-  description = ormSuperTextProperty('6', required=True)
+  description = orm.SuperTextProperty('6', required=True)
   product_reference = orm.SuperKeyProperty('7', kind='38', required=True, indexed=False)
-  product_variant_signature = ormSuperTextProperty('8', required=True)
-  product_category_complete_name = ormSuperTextProperty('9', required=True)
+  product_variant_signature = orm.SuperJsonProperty('8', required=True)
+  product_category_complete_name = orm.SuperTextProperty('9', required=True)
   product_category_reference = orm.SuperKeyProperty('10', kind='17', required=True, indexed=False)
   code = orm.SuperStringProperty('11', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('12', required=True, indexed=False)
@@ -825,6 +825,16 @@ class TransactionWrite(orm.BaseModel):
         entry.set_key(None, parent=context._group.key)
       orm.write_multi(context._group._entries)
 
+
+class CallbackNotify(orm.BaseModel):
+  
+  def run(self, context):
+    static_data = {}
+    entry = context._group.get_entry(context.model.journal)
+    static_data.update({'caller_entity': entry.key_urlsafe,
+                        'action_id': 'initiate',
+                        'action_model': '61'})
+    context._callbacks.append(('notify', static_data))
 
 # OLD CODE #
 

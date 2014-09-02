@@ -132,7 +132,7 @@ class DomainSetup(Setup):
           for prop_name, prop in props.iteritems():
             prop_names.append(prop_name)
           permissions.append(FieldPermission(obj.get_kind(), prop_names, True, True, 'True'))
-    entity = DomainRole(namespace=namespace, id='admin', name='Administrators', permissions=permissions)
+    entity = DomainRole(namespace=namespace, id='system_admin', name='Administrators', permissions=permissions)
     entity._use_rule_engine = False
     entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'create_widgets'
@@ -281,7 +281,132 @@ class DomainSetup(Setup):
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
-    # @todo Insert creation logic here!
+    Journal = self.context.models['49']
+    entity = Journal(namespace=namespace, id='system_sales_order')
+    entity.name = 'Sales Order Journal'
+    entity.state = 'active'
+    entity.entry_fields = {'company_address': orm.SuperLocalStructuredProperty(location.Location, '7', required=True),
+                           'party': orm.SuperKeyProperty('8', kind='0', required=True, indexed=False),  # @todo buyer_reference ??
+                           'billing_address_reference': orm.SuperStringProperty('9', required=True, indexed=False),
+                           'shipping_address_reference': orm.SuperStringProperty('10', required=True, indexed=False),
+                           'billing_address': orm.SuperLocalStructuredProperty(location.Location, '11', required=True),
+                           'shipping_address': orm.SuperLocalStructuredProperty(location.Location, '12', required=True),
+                           'currency': orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True),
+                           'untaxed_amount': orm.SuperDecimalProperty('14', required=True, indexed=False),
+                           'tax_amount': orm.SuperDecimalProperty('15', required=True, indexed=False),
+                           'total_amount': orm.SuperDecimalProperty('16', required=True, indexed=False),
+                           'paypal_reciever_email': orm.SuperStringProperty('17', required=True, indexed=False),
+                           'paypal_business': orm.SuperStringProperty('18', required=True, indexed=False)}
+    entity.line_fields = {'description': orm.SuperTextProperty('6', required=True),
+                          'product_reference': orm.SuperKeyProperty('7', kind='38', required=True, indexed=False),
+                          'product_variant_signature': orm.SuperJsonProperty('8', required=True),
+                          'product_category_complete_name': orm.SuperTextProperty('9', required=True),
+                          'product_category_reference': orm.SuperKeyProperty('10', kind='17', required=True, indexed=False),
+                          'code': orm.SuperStringProperty('11', required=True, indexed=False),
+                          'unit_price': orm.SuperDecimalProperty('12', required=True, indexed=False),
+                          'product_uom': orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True),
+                          'quantity': orm.SuperDecimalProperty('14', required=True, indexed=False),
+                          'discount': orm.SuperDecimalProperty('15', required=True, indexed=False),
+                          'taxes': orm.SuperLocalStructuredProperty(order.LineTax, '16', required=True),
+                          'subtotal': orm.SuperDecimalProperty('17', required=True, indexed=False),
+                          'discount_subtotal': orm.SuperDecimalProperty('18', required=True, indexed=False)}
+    entity._use_rule_engine = False
+    entity.write()  # @todo Don't know how else to obtain entity.key which is needed for PluginGroup subscriptions?
+    entity._transaction_actions = [
+      transaction.Action(
+        _code='add_to_cart',
+        name='Add to Cart',
+        active=True,
+        arguments={
+          'domain': orm.SuperKeyProperty(kind='6', required=True),
+          'product': orm.SuperKeyProperty(kind='38', required=True),
+          'variant_signature': orm.SuperJsonProperty()
+          }
+        )
+      ]
+    entity._transaction_plugin_groups = [
+      transaction.PluginGroup(
+        name='Entry Init',
+        active=True,
+        sequence=0,
+        transactional=False,
+        subscriptions=[
+          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          ],
+        plugins=[
+          order.CartInit()
+          ]
+        ),
+      transaction.PluginGroup(
+        name='Payment Services Configuration',
+        active=True,
+        sequence=1,
+        transactional=False,
+        subscriptions=[
+          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          ],
+        plugins=[
+          order.PayPalPayment(currency=uom.Unit.build_key('usd'),
+                              reciever_email='paypal_email@example.com',
+                              business='paypal_email@example.com')
+          ]
+        ),
+      transaction.PluginGroup(
+        name='Entry Lines Init',
+        active=True,
+        sequence=2,
+        transactional=False,
+        subscriptions=[
+          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          ],
+        plugins=[
+          order.LinesInit()
+          ]
+        ),
+      transaction.PluginGroup(
+        name='Address Exclusions, Taxes, Carriers...',
+        active=True,
+        sequence=3,
+        transactional=False,
+        subscriptions=[
+          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          ],
+        plugins=[
+          order.LinesInit()
+          ]
+        ),
+      transaction.PluginGroup(
+        name='Calculating Algorithms',
+        active=True,
+        sequence=4,
+        transactional=False,
+        subscriptions=[
+          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          ],
+        plugins=[
+          order.ProductToLine(),
+          order.ProductSubtotalCalculate(),
+          order.TaxSubtotalCalculate(),
+          order.OrderTotalCalculate()
+          ]
+        ),
+      transaction.PluginGroup(
+        name='Commit Transaction Plugins',
+        active=True,
+        sequence=5,
+        transactional=True,
+        subscriptions=[
+          transaction.Action.build_key('add_to_cart', parent=entity.key)
+          ],
+        plugins=[
+          RulePrepare(cfg={'path': '_group._entries'}),
+          order.TransactionWrite(),
+          order.CallbackNotify(),
+          CallbackExec()
+          ]
+        ),
+      ]
+    entity.write({'agent': self.context.user.key, 'action': self.context.action.key})
     self.config.next_operation = 'complete'
     self.config.next_operation_input = {'domain_key': domain_key}
     self.config.write()

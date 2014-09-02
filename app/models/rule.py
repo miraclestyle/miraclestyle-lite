@@ -201,8 +201,7 @@ class DomainRole(Role):
   
   @property
   def _is_system(self):
-    # return self.key_id_str.startswith('system_') @todo Perhaps we will have more than one system role!
-    return self.key_id_str == 'admin'
+    return self.key_id_str.startswith('system_')
 
 
 class DomainUser(orm.BaseExpando):
