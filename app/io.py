@@ -148,11 +148,8 @@ class Engine:
   def get_action(cls, context, input):
     action_id = input.get('action_id')
     model_kind = context.model.get_kind()
-    if hasattr(context.model, 'get_actions') and callable(context.model.get_actions):
-      actions = context.model.get_actions()
-      action_key = orm.Key(model_kind, 'action', '56', action_id).urlsafe()  # @todo we cannot build a key like this anymore
-      if action_key in actions:
-        context.action = actions[action_key]
+    if hasattr(context.model, 'get_action') and callable(context.model.get_action):
+      context.action = context.model.get_action(action_id)
     if not context.action:
       raise InvalidAction(action_key)
   

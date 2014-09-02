@@ -544,6 +544,14 @@ class _BaseModel(object):
     return actions
   
   @classmethod
+  def get_action(cls, action_id):
+    actions = cls.get_actions()
+    action_key = Key(cls.get_kind(), 'action', '56', action_id).urlsafe()
+    if action_key in actions:
+      return actions[action_key]
+    return None
+  
+  @classmethod
   def get_plugin_groups(cls, action):
     return getattr(action, '_plugin_groups', [])
   
