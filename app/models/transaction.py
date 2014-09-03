@@ -772,7 +772,7 @@ class Entry(orm.BaseExpando):
       try:
         action_key = orm.Key(urlsafe=action)
       except:
-        action_key = Action.build_key(action_id, parent=self.journal)
+        action_key = Action.build_key(action, parent=self.journal)
     return action_key.get()
   
   def get_plugin_groups(self, action):
