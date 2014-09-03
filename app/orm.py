@@ -2176,6 +2176,644 @@ PROPERTY_MANAGERS.extend((SuperStructuredPropertyManager, SuperReferenceProperty
 #########################################################
 
 
+class _PropertyValue(object):
+  
+  def __init__(self, property_instance, storage_entity, **kwds):
+    self._property = property_instance
+    self._entity = storage_entity  # Storage entity of the property.
+    self._kwds = kwds
+  
+  def __repr__(self):
+    return '%s(entity=instance of %s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__,
+                                                                                   self._entity.__class__.__name__,
+                                                                                   self._property.__class__.__name__,
+                                                                                   self.value, self._kwds)
+  
+  @property
+  def value(self):
+    return getattr(self, '_property_value', None)
+  
+  @property
+  def property_name(self):
+    # Retrieves code name of the field for setattr usage. If _code_name is not available it will use _name
+    name = self._property._code_name
+    if not name:
+      name = self._property._name
+    return name
+  
+  def _set_parent(self, entities=None):
+    '''This function should be called whenever a new entity is instanced / retrieved inside a root entity.
+    It either accepts entities, or it will use self.value to iterate.
+    Its purpose is to maintain hierarchy like so:
+    catalog._parent = None # its root
+     product._parent = catalog
+       product_instance._parent = product
+         product_instance.contents[0]._parent = product_instance
+         ....
+    So based on that, you can always reach for the top by simply finding which ._parent is None.
+    
+    '''
+    as_list = False
+    if entities is None:
+      entities = self.value
+      as_list = self._property._repeated
+    else:
+      as_list = isinstance(entities, list)
+    if entities is not None:
+      if as_list:
+        for entity in entities:
+          if entity._parent is None:
+            entity._parent = self._entity
+          else:
+            continue
+      else:
+        if entities._parent is None:
+          entities._parent = self._entity
+    return entities
+  
+  def has_value(self):
+    return hasattr(self, '_property_value')
+  
+  def has_future(self):
+    value = self.value
+    if isinstance(value, list):
+      if len(value):
+        value = value[0]
+    return isinstance(value, Future)
+  
+  def get_output(self):
+    return self.value
+
+
+class _LocalStructuredPropertyValue(_PropertyValue):
+  
+  def __init__(self, property_instance, storage_entity, **kwds):
+    super(_LocalStructuredPropertyValue, self).__init__(property_instance, storage_entity, **kwds)
+    self._property_value_options = {}
+    # @todo We might want to change this to something else, but right now it is the most elegant.
+  
+  @property
+  def value(self):
+    # overrides the parent value bcuz we have problem with ndb _BaseValue wrapping upon prepare_for_put hook
+    # so in that case we always call self.read() to mutate the list properly when needed
+    if self.storage_type == 'local': # it happens only on local props
+      self._read_local() # recursion is present if we call .read() at return self.value
+    return super(_LocalStructuredPropertyValue, self).value
+  
+  @property
+  def value_options(self):
+    ''''_property_value_options' is used for storing and returning information that
+    is related to property value(s). For exmaple: 'more' or 'cursor' parameter in querying.
+    
+    '''
+    return self._property_value_options
+  
+  def set(self, property_value):
+    '''We always verify that the property_value is instance
+    of the model that is specified in the property configuration.
+    
+    '''
+    if property_value is not None:
+      property_value_copy = property_value
+      if not self._property._repeated:
+        property_value_copy = [property_value_copy]
+      for property_value_item in property_value_copy:
+        if not isinstance(property_value_item, self._property.get_modelclass()):
+          raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), property_value_item))
+    self._property_value = property_value
+    self._set_parent()
+  
+  def _read_local(self, read_arguments=None):
+    '''Every structured/local structured value requires a sequence generated upon reading
+    
+    '''
+    if read_arguments is None:
+      read_arguments = {}
+    property_value = self._property._get_user_value(self._entity)
+    property_value_copy = property_value
+    if property_value_copy is not None:
+      if not self._property._repeated:
+        property_value_copy = [property_value_copy]
+      for i, value in enumerate(property_value_copy):
+        value._sequence = i
+      self._property_value = property_value
+    else:
+      if self._property._repeated:
+        self._property_value = []
+  
+  def _read_deep(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
+    '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
+    This solves the problem of hierarchy.
+    
+    '''
+    if read_arguments is None:
+      read_arguments = {}
+    if self.has_value():
+      entities = self._property_value
+      if not self._property._repeated:
+        entities = [entities]
+      futures = []
+      for entity in entities:
+        for field_key, field in entity.get_fields().iteritems():
+          if hasattr(field, 'is_structured') and field.is_structured:
+            if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
+              value = getattr(entity, field_key)
+              field_read_arguments = read_arguments.get(field_key, {})
+              value.read_async(field_read_arguments)
+              if value.has_future():
+                futures.append((value, field_read_arguments))
+      for future, field_read_arguments in futures:
+        future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
+  
+  def read_async(self, read_arguments=None):
+    '''Calls storage type specific read function, in order populate _property_value with values.
+    'force_read' keyword will always call storage type specific read function.
+    However we are not sure if we are gonna need to force read operation.
+    
+    '''
+    if read_arguments is None:
+      read_arguments = {}
+    if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
+      util.merge_dicts(read_arguments, self._property._read_arguments)
+    config = read_arguments.get('config', {})
+    if self._property._readable:
+      if (not self.has_value()) or config.get('force_read'):
+        # read_local must be called multiple times because it gets loaded between from_pb and post_get.
+        read_function = getattr(self, '_read_%s' % self.storage_type)
+        read_function(read_arguments)
+      return self.value
+  
+  def read(self, read_arguments=None):
+    if read_arguments is None:
+      read_arguments = {}
+    if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
+      util.merge_dicts(read_arguments, self._property._read_arguments)
+    if self._property._readable:
+      self.read_async(read_arguments)
+      if self.has_future():
+        process_read_fn = '_process_read_async_%s' % self.storage_type
+        if hasattr(self, process_read_fn):
+          process_read_fn = getattr(self, process_read_fn)
+          process_read_fn(read_arguments)
+        else:
+          property_value = []
+          if isinstance(self._property_value, list):
+            get_async_results(self._property_value)
+          elif isinstance(self._property_value, Future):
+            property_value = self._property_value.get_result()
+            if isinstance(property_value, tuple):
+              cursor = property_value[1]
+              if cursor:
+                cursor = cursor.urlsafe()
+              self._property_value = property_value[0]
+              self._property_value_options['cursor'] = cursor
+              self._property_value_options['more'] = property_value[2]
+            else:
+              self._property_value = property_value
+      format_callback = self._property._storage_config.get('format_callback')
+      if callable(format_callback):
+        self._property_value = format_callback(self._entity, self._property_value)
+      self._set_parent()
+      self._read_deep(read_arguments)
+      return self.value
+  
+  def add(self, entities):
+    # @todo Is it preferable to branch this function to helper functions, like we do for read, update, delete (_add_local, _add_remote_sigle...)?
+    if self._property._repeated:
+      if not self.has_value():
+        self._property_value = []
+      self._property_value.extend(entities)
+    else:
+      self._property_value = entities
+    # Always trigger setattr on the property itself
+    setattr(self._entity, self.property_name, self._property_value)
+  
+  def pre_update(self):
+    '''Process local structures.
+    
+    '''
+    if self._property._updateable:
+      if self.has_value():
+        if self._property._repeated:
+          delete_entities = []
+          for entity in self._property_value:
+            if entity._state == 'deleted':
+              delete_entities.append(entity)
+          for delete_entity in delete_entities:
+            self._property_value.remove(delete_entity)  # This mutates on the entity and on the _property_value.
+        else:
+          # We must mutate on the entity itself.
+          if self._property_value._state == 'deleted':
+            setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
+  
+  def post_update(self):
+    pass
+  
+  def _mark_for_delete(self, property_value, property_instance=None):
+    '''Mark each of property values for deletion by setting the '_state' to 'deleted'!
+    
+    '''
+    if not property_instance:
+      property_instance = self._property
+    if not property_instance._repeated:
+      property_value = [property_value]
+    for value in property_value:
+      value._state = 'deleted'
+  
+  def delete(self):
+    if self._property._deleteable:
+      self.read()
+      self._mark_for_delete(self._property_value)
+  
+  def duplicate(self):
+    self.read()
+    if self._property._repeated:
+      entities = []
+      for entity in self._property_value:
+        entities.append(entity.duplicate())
+    else:
+      entities = self._property_value.duplicate()
+    setattr(self._entity, self.property_name, entities)
+    self._set_parent()
+
+
+class _RemoteStructuredPropertyValue(_PropertyValue):
+  
+  def __init__(self, property_instance, storage_entity, **kwds):
+    super(_RemoteStructuredPropertyValue, self).__init__(property_instance, storage_entity, **kwds)
+    self._property_value_options = {}
+    # @todo We might want to change this to something else, but right now it is the most elegant.
+  
+  @property
+  def value_options(self):
+    ''''_property_value_options' is used for storing and returning information that
+    is related to property value(s). For exmaple: 'more' or 'cursor' parameter in querying.
+    
+    '''
+    return self._property_value_options
+  
+  def set(self, property_value):
+    '''We always verify that the property_value is instance
+    of the model that is specified in the property configuration.
+    
+    '''
+    if property_value is not None:
+      property_value_copy = property_value
+      if not self._property._repeated:
+        property_value_copy = [property_value_copy]
+      for property_value_item in property_value_copy:
+        if not isinstance(property_value_item, self._property.get_modelclass()):
+          raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), property_value_item))
+    self._property_value = property_value
+    self._set_parent()
+  
+  def _read_reference(self, read_arguments=None):
+    if read_arguments is None:
+      read_arguments = {}
+    target_field = self._property._storage_config.get('target_field')
+    callback = self._property._storage_config.get('callback')
+    if not target_field and not callback:
+      target_field = self.property_name
+    if callback:
+      self._property_value = callback(self._entity)
+    elif target_field:
+      field = getattr(self._entity, target_field)
+      if field is None:  # If value is none the key was not set, therefore value must be null.
+        self._property_value = None
+        return self._property_value
+      if not isinstance(field, Key):
+        raise PropertyError('Targeted field value must be instance of Key. Got %s' % field)
+      if self._property.get_modelclass().get_kind() != field.kind():
+        raise PropertyError('Kind must be %s, got %s' % (self._property.get_modelclass().get_kind(), field.kind()))
+      self._property_value = field.get_async()
+    return self._property_value
+  
+  def _read_local(self, read_arguments=None):
+    '''Every structured/local structured value requires a sequence generated upon reading
+    
+    '''
+    if read_arguments is None:
+      read_arguments = {}
+    property_value = self._property._get_user_value(self._entity)
+    property_value_copy = property_value
+    if property_value_copy is not None:
+      if not self._property._repeated:
+        property_value_copy = [property_value_copy]
+      for i, value in enumerate(property_value_copy):
+        value._sequence = i
+      self._property_value = property_value
+    else:
+      if self._property._repeated:
+        self._property_value = []
+  
+  def _process_read_async_remote_single(self, read_arguments=None):
+    result = self._property_value.get_result()
+    if result is None:
+      remote_single_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+      result = self._property.get_modelclass()(key=remote_single_key)
+    self._property_value = result
+  
+  def _read_remote_single(self, read_arguments=None):
+    '''Remote single storage always follows the same pattern,
+    it composes its own key by using its kind, ancestor string id, and ancestor key as parent!
+    
+    '''
+    if read_arguments is None:
+      read_arguments = {}
+    property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    self._property_value = property_value_key.get_async()
+  
+  def _read_remote_multi(self, read_arguments=None):
+    if read_arguments is None:
+      read_arguments = {}
+    config = read_arguments.get('config', {})
+    urlsafe_cursor = config.get('cursor')
+    limit = config.get('limit', 10)
+    order = config.get('order')
+    supplied_entities = config.get('entities')
+    supplied_keys = config.get('keys')
+    if supplied_entities:
+      entities = get_multi_clean([entity.key for entity in supplied_entities if entity.key is not None])
+      cursor = None
+    elif supplied_keys:
+      supplied_keys = SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
+      for supplied_key in supplied_keys:
+        if supplied_key.parent() != self._entity.key:
+          raise PropertyError('invalid_parent_for_key_%s' % supplied_key.urlsafe())
+      entities = get_multi_clean(supplied_keys)
+      cursor = None
+    else:
+      query = self._property.get_modelclass().query(ancestor=self._entity.key)
+      if order:
+        order_field = getattr(self._property.get_modelclass(), order['field'])
+        if order['direction'] == 'asc':
+          query = query.order(order_field)
+        else:
+          query = query.order(-order_field)
+      try:
+        cursor = Cursor(urlsafe=urlsafe_cursor)
+      except:
+        cursor = Cursor()
+      if limit == -1:
+        entities = query.fetch_async()
+      else:
+        entities = query.fetch_page_async(limit, start_cursor=cursor)
+      cursor = None
+    self._property_value = entities
+    self._property_value_options['cursor'] = cursor
+  
+  def _read_deep(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
+    '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
+    This solves the problem of hierarchy.
+    
+    '''
+    if read_arguments is None:
+      read_arguments = {}
+    if self.has_value():
+      entities = self._property_value
+      if not self._property._repeated:
+        entities = [entities]
+      futures = []
+      for entity in entities:
+        for field_key, field in entity.get_fields().iteritems():
+          if hasattr(field, 'is_structured') and field.is_structured:
+            if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
+              value = getattr(entity, field_key)
+              field_read_arguments = read_arguments.get(field_key, {})
+              value.read_async(field_read_arguments)
+              if value.has_future():
+                futures.append((value, field_read_arguments))
+      for future, field_read_arguments in futures:
+        future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
+  
+  def read_async(self, read_arguments=None):
+    '''Calls storage type specific read function, in order populate _property_value with values.
+    'force_read' keyword will always call storage type specific read function.
+    However we are not sure if we are gonna need to force read operation.
+    
+    '''
+    if read_arguments is None:
+      read_arguments = {}
+    if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
+      util.merge_dicts(read_arguments, self._property._read_arguments)
+    config = read_arguments.get('config', {})
+    if self._property._readable:
+      if (not self.has_value()) or config.get('force_read'):
+        # read_local must be called multiple times because it gets loaded between from_pb and post_get.
+        read_function = getattr(self, '_read_%s' % self.storage_type)
+        read_function(read_arguments)
+      return self.value
+  
+  def read(self, read_arguments=None):
+    if read_arguments is None:
+      read_arguments = {}
+    if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
+      util.merge_dicts(read_arguments, self._property._read_arguments)
+    if self._property._readable:
+      self.read_async(read_arguments)
+      if self.has_future():
+        process_read_fn = '_process_read_async_%s' % self.storage_type
+        if hasattr(self, process_read_fn):
+          process_read_fn = getattr(self, process_read_fn)
+          process_read_fn(read_arguments)
+        else:
+          property_value = []
+          if isinstance(self._property_value, list):
+            get_async_results(self._property_value)
+          elif isinstance(self._property_value, Future):
+            property_value = self._property_value.get_result()
+            if isinstance(property_value, tuple):
+              cursor = property_value[1]
+              if cursor:
+                cursor = cursor.urlsafe()
+              self._property_value = property_value[0]
+              self._property_value_options['cursor'] = cursor
+              self._property_value_options['more'] = property_value[2]
+            else:
+              self._property_value = property_value
+      format_callback = self._property._storage_config.get('format_callback')
+      if callable(format_callback):
+        self._property_value = format_callback(self._entity, self._property_value)
+      self._set_parent()
+      self._read_deep(read_arguments)
+      return self.value
+  
+  def add(self, entities):
+    # @todo Is it preferable to branch this function to helper functions, like we do for read, update, delete (_add_local, _add_remote_sigle...)?
+    if self._property._repeated:
+      if not self.has_value():
+        self._property_value = []
+      self._property_value.extend(entities)
+    else:
+      self._property_value = entities
+    # Always trigger setattr on the property itself
+    setattr(self._entity, self.property_name, self._property_value)
+  
+  def _pre_update_local(self):
+    '''Process local structures.
+    
+    '''
+    if self.has_value():
+      if self._property._repeated:
+        delete_entities = []
+        for entity in self._property_value:
+          if entity._state == 'deleted':
+            delete_entities.append(entity)
+        for delete_entity in delete_entities:
+          self._property_value.remove(delete_entity)  # This mutates on the entity and on the _property_value.
+      else:
+        # We must mutate on the entity itself.
+        if self._property_value._state == 'deleted':
+          setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
+  
+  def _pre_update_reference(self):
+    pass
+  
+  def _pre_update_remote_single(self):
+    pass
+  
+  def _pre_update_remote_multi(self):
+    pass
+  
+  def _post_update_local(self):
+    pass
+  
+  def _post_update_reference(self):
+    pass
+  
+  def _post_update_remote_single(self):
+    '''Ensure that every entity has the entity ancestor by enforcing it.
+    
+    '''
+    if not hasattr(self._property_value, 'prepare'):
+      if self._property_value.key_parent != self._entity.key:
+        key_id = self._property_value.key_id
+        self._property_value.set_key(key_id, parent=self._entity.key)
+    else:
+      self._property_value.prepare(parent=self._entity.key)
+    if self._property_value._state == 'deleted':
+      self._property_value.key.delete()
+    else:
+      self._property_value.put()
+  
+  def _post_update_remote_multi(self):
+    '''Ensure that every entity has the entity ancestor by enforcing it.
+    
+    '''
+    delete_entities = []
+    for entity in self._property_value:
+      if not hasattr(entity, 'prepare'):
+        if entity.key_parent != self._entity.key:
+          key_id = entity.key_id
+          entity.set_key(key_id, parent=self._entity.key)
+      else:
+        entity.prepare(parent=self._entity.key)
+      if entity._state == 'deleted':
+        delete_entities.append(entity)
+    for delete_entity in delete_entities:
+      self._property_value.remove(delete_entity)
+    delete_multi([entity.key for entity in delete_entities])
+    put_multi(self._property_value)
+  
+  def pre_update(self):
+    if self._property._updateable:
+      if self.has_value():
+        pre_update_function = getattr(self, '_pre_update_%s' % self.storage_type)
+        pre_update_function()
+      else:
+        pass
+  
+  def post_update(self):
+    if self._property._updateable:
+      if self.has_value():
+        post_update_function = getattr(self, '_post_update_%s' % self.storage_type)
+        post_update_function()
+      else:
+        pass
+  
+  def _mark_for_delete(self, property_value, property_instance=None):
+    '''Mark each of property values for deletion by setting the '_state' to 'deleted'!
+    
+    '''
+    if not property_instance:
+      property_instance = self._property
+    if not property_instance._repeated:
+      property_value = [property_value]
+    for value in property_value:
+      value._state = 'deleted'
+  
+  def _delete_local(self):
+    self.read()
+    self._mark_for_delete(self._property_value)
+  
+  def _delete_remote_single(self):
+    self.read()
+    self._property_value.key.delete()
+  
+  def _delete_remote_multi(self):
+    cursor = Cursor()
+    limit = 200
+    query = self._property.get_modelclass().query(ancestor=self._entity.key)
+    while True:
+      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      if len(_entities):
+        self._set_parent(_entities)
+        delete_multi([entity.key for entity in _entities])
+        if not cursor or not more:
+          break
+      else:
+        break
+  
+  def _delete_reference(self):
+    pass
+  
+  def delete(self):
+    '''Calls storage type specific delete function, in order to mark property values for deletion.
+    
+    '''
+    if self._property._deleteable:
+      delete_function = getattr(self, '_delete_%s' % self.storage_type)
+      delete_function()
+  
+  def _duplicate_local(self):
+    self.read()
+    if self._property._repeated:
+      entities = []
+      for entity in self._property_value:
+        entities.append(entity.duplicate())
+    else:
+      entities = self._property_value.duplicate()
+    setattr(self._entity, self.property_name, entities)
+  
+  def _duplicate_remote_single(self):
+    self.read()
+    self._property_value = self._property_value.duplicate()
+  
+  def _duplicate_remote_multi(self):
+    '''Fetch ALL entities that belong to this entity.
+    On every entity called, .duplicate() function will be called in order to ensure complete recursion.
+    
+    '''
+    entities = []
+    _entities = self._property.get_modelclass().query(ancestor=self._entity.key).fetch()
+    if len(_entities):
+      for entity in _entities:
+        self._set_parent(entity)
+        entities.append(entity.duplicate())
+    self._property_value = entities
+  
+  def _duplicate_reference(self):
+    pass
+  
+  def duplicate(self):
+    '''Calls storage type specific duplicate function.
+    
+    '''
+    duplicate_function = getattr(self, '_duplicate_%s' % self.storage_type)
+    duplicate_function()
+    self._set_parent()
+
+
 class _BaseProperty(object):
   '''Base property class for all superior properties.'''
   
@@ -2517,7 +3155,50 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
   
   def __init__(self, *args, **kwargs):
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
-    self._keep_keys = True # always keep keys!
+    self._keep_keys = True
+
+
+class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
+  '''This property is not meant to be used as property storage. It should be always defined as virtual property.
+  E.g. the property that never gets saved to the datastore.
+  
+  '''
+  _indexed = False
+  _modelclass = None
+  _repeated = False
+  _readable = True
+  _updateable = True
+  _deleteable = True
+  _autoload = False
+  
+  def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
+    if isinstance(modelclass, basestring):
+      set_modelclass = Model._kind_map.get(modelclass)
+      if set_modelclass is not None:
+        modelclass = set_modelclass
+    kwds['generic'] = True
+    super(SuperRemoteStructuredProperty, self).__init__(name, **kwds)
+    self._modelclass = modelclass
+  
+  def get_model_fields(self, **kwargs):
+    return self.get_modelclass(**kwargs).get_fields()
+  
+  def _set_value(self, entity, value):
+    # __set__
+    value_instance = self._get_value(entity)
+    value_instance.set(value)
+  
+  def _get_value(self, entity):
+    # __get__
+    value_name = '%s_value' % self._name
+    if value_name in entity._values:
+      return entity._values[value_name]
+    value_instance = _RemoteStructuredPropertyValue(property_instance=self, storage_entity=entity)
+    entity._values[value_name] = value_instance
+    return value_instance
+  
+  def _prepare_for_put(self, entity):
+    self._get_value(entity)  # For its side effects.
 
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
