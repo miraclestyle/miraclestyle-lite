@@ -346,6 +346,19 @@ class Journal(orm.BaseExpando):
     return self.key_id_str.startswith('system_')
 
 
+# @todo Chained category keys conclusion!
+# While ancestor quieries work on incomplete keys (e.g. root keys of ancestor keys), key fields can not be filtered this way!
+# Chained categories prove to be useless in terms of filtering and obtaining debit/credit balances.
+# Prmitive example of balance calculation algorithm is provided under the Category class.
+# The provided algorithm mimics that of OpenERP however, it is extreamly inflexibile and limited.
+# We would probably have to use it only for obtaining category._children_records, nothing more!
+# The balance calcualtion would probably have to be done from Line perspective, with search action that will take
+# Line.categories.IN(category._children_records) filter among the others! This way complex queries could be triggered,
+# e.g. Line.query(Line.categories.IN(category._children_records), Line.product_reference == 'product_key', Line.uom.symbol == 'kg').fetch()
+# Nevertheless, this aproach is practically unscalable,
+# and will dramatically degrade in terms of performance as the dataset expands (to do inventory you have to query for lines from the beginning of time)!
+# Google search engine will not be of any help here, as it imposes index size limit (10GB) and number of results returned (10K)!
+# And data in this case is expected to expand, probably beyond any other model defined in the app!
 class CategoryBalance(orm.BaseModel):
   
   _kind = 71
@@ -373,6 +386,42 @@ class Category(orm.BaseExpando):
   
   _default_indexed = False
   
+  ######################################################
+  # Primitive example of real time balance calculator! #
+  ######################################################
+  
+  @classmethod
+  def _get_children(cls, parent_records, children):
+    entities = []
+    for parent_record in parent_records:
+      entities.extend(cls.query(cls.parent_record == parent_record).fetch(keys_only=True))
+    if len(entities):
+      children.extend(entities)
+      cls._get_children(entities, children)
+  
+  @classmethod
+  def _get_balance(cls, category):
+    debit = 0
+    credit = 0
+    lines = Line.query(Line.categories.IN(category._children_records)).fetch()
+    for line in lines:
+      debit += line.debit
+      credit += line.credit
+    return (debit, credit, (debit - credit))
+  
+  @classmethod
+  def _post_get_hook(cls, key, future):
+    # @todo Missing super extension!
+    entity = future.get_result()
+    if entity is not None and entity.key:
+      entity._children_records = [entity.key]
+      entity._get_children([entity.key], entity._children_records)
+      entity._debit, entity._credit, entity._balance = entity._get_balance(entity)
+  
+  ###################
+  # End of example! #
+  ###################
+  
   _expando_fields = {
     'description': orm.SuperTextProperty('7'),
     'balances': orm.SuperLocalStructuredProperty(CategoryBalance, '8', repeated=True)
@@ -381,6 +430,9 @@ class Category(orm.BaseExpando):
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('47'),
     '_code': orm.SuperComputedProperty(lambda self: self.key_id_str)
+    #'_debit': orm.SuperComputedProperty(lambda self: self._debit),
+    #'_credit': orm.SuperComputedProperty(lambda self: self._credit),
+    #'_balance': orm.SuperComputedProperty(lambda self: self._balance),
     }
   
   _global_role = GlobalRole(
@@ -587,46 +639,41 @@ class Category(orm.BaseExpando):
     return (category is not None) or (line is not None)
 
 
-'''
-Entry and Line instance notes:
-
-- fields can only be properly loaded if:
-  - are loaded from datastore
-  - are instanced with proper keyword argument Entry (journal or _model_schema) and Line (parent)
-
-'''
-
+# @todo Conclusion regarding Line fields!
+# The only field that is mandated to every line instance, regardless of its role in transaction engine, is sequence!
+# Other fields are included to improve datastore query profile on entry lines!
+# Sugestion: Search engine has to be tested against minimum fields possible, and that will bring final answer to the
+# final entry line design!
 class Line(orm.BaseExpando):
+  '''Notes:
+  We always seqence lines that have debit > 0, and after them come lines that have credit > 0
+  In case that Entry.balanced=True, sum of all debit amounts must eqal to sum of all credit amounts.
+  To make instances of lines, you must always provide parent key, that is entry's key.
+  Otherwise it will break!
+  Fields can only be properly loaded if are:
+  - loaded from datastore
+  - instanced with proper keyword argument Entry (journal or _model_schema) and Line (parent)
   
+  '''
   _kind = 51
   
   _use_rule_engine = False
   
   _journal_fields_loaded = None
   
-  # To make instances of lines, you must always provide parent key, that is entry's key.
-  # Otherwise it will break!
-  
-  # ancestor Entry (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_move_line.py#L432
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account_analytic_line.py#L29
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l486
-  # http://hg.tryton.org/modules/analytic_account/file/d06149e63d8c/line.py#l14
-  # We always seqence lines that have debit > 0, and after them come lines that have credit > 0
-  # In case that Entry.balanced=True, sum of all debit amounts must eqal to sum of all credit amounts.
+  # Expando
+  # Some queries on Line require "join" with Entry.
+  # That problem can be solved using search engine (or keeping some entry field values copied to lines)!
   
   #journal = orm.SuperKeyProperty('1', kind=Journal, required=True)  # delete
   #company = orm.SuperKeyProperty('2', kind='44', required=True)  # delete
   #state = orm.SuperIntegerProperty('3', required=True)  # delete
   #date = orm.SuperDateTimeProperty('4', required=True)  # delete
   sequence = orm.SuperIntegerProperty('5', required=True)
-  categories = orm.SuperKeyProperty('6', kind=Category, repeated=True)
+  categories = orm.SuperKeyProperty('6', kind='47', repeated=True)
   debit = orm.SuperDecimalProperty('7', required=True, indexed=False)  # debit = 0 in case that credit > 0, negative values are forbidden.
   credit = orm.SuperDecimalProperty('8', required=True, indexed=False)  # credit = 0 in case that debit > 0, negative values are forbidden.
   uom = orm.SuperLocalStructuredProperty(uom.UOM, '9', required=True)
-  # Expando
-  # Some queries on Line require "join" with Entry.
-  # That problem can be solved using search engine (or keeping some entry field values copied to lines)!
   
   def __init__(self, *args, **kwargs):
     '''Caution! Making instances of Line() inside a transaction may
@@ -679,17 +726,23 @@ class Line(orm.BaseExpando):
     return super(Line, self)._get_property_for(p, indexed, depth)
 
 
+# @todo Conclusion regarding Entry fields!
+# The only fields that are mandated to every entry instance, regardless of its role in transaction engine, are:
+# created, updated and journal! Other fields are included to improve datastore query profile on entries!
+# Sugestion: Search engine has to be tested against minimum fields possible, and that will bring final answer to the
+# final entry design!
 class Entry(orm.BaseExpando):
+  '''Notes:
+  In order to make proper instances of entries you must always either provide journal or _model_schema argument in constructor.
+  Fields can only be properly loaded if are:
+  - loaded from datastore
+  - instanced with proper keyword argument Entry (journal or _model_schema) and Line (parent)
   
-  # In order to make proper instances of entries you must always either provide journal or _model_schema argument in constructor.
-  
+  '''
   _kind = 50
   
   _journal_fields_loaded = None  # Used to flag if the journal fields were loaded.
   
-  # ancestor Group (namespace Domain)
-  # http://bazaar.launchpad.net/~openerp/openobject-addons/7.0/view/head:/account/account.py#L1279
-  # http://hg.tryton.org/modules/account/file/933f85b58a36/move.py#l38
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   journal = orm.SuperKeyProperty('3', kind=Journal, required=True)
