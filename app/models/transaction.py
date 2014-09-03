@@ -766,11 +766,11 @@ class Entry(orm.BaseExpando):
     return getattr(self, '_actions', [])
   
   def get_action(self, action):
-    if isinstance(action, Key):
+    if isinstance(action, orm.Key):
       action_key = action
     else:
       try:
-        action_key = Key(urlsafe=action)
+        action_key = orm.Key(urlsafe=action)
       except:
         action_key = Action.build_key(action_id, parent=self.journal)
     return action_key.get()
