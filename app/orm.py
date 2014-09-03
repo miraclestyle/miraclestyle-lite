@@ -537,18 +537,21 @@ class _BaseModel(object):
   
   @classmethod
   def get_actions(cls):
-    actions = {}
-    class_actions = getattr(cls, '_actions', [])
-    for action in class_actions:
-      actions[action.key.urlsafe()] = action
-    return actions
+    return getattr(cls, '_actions', [])
   
   @classmethod
-  def get_action(cls, action_id):
-    actions = cls.get_actions()
-    action_key = Key(cls.get_kind(), 'action', '56', action_id).urlsafe()
-    if action_key in actions:
-      return actions[action_key]
+  def get_action(cls, action):
+    if isinstance(action, Key):
+      action_key = action
+    else:
+      try:
+        action_key = Key(urlsafe=action)
+      except:
+        action_key = Key(cls.get_kind(), 'action', '56', action)
+    class_actions = cls.get_actions()
+    for class_action in class_actions:
+      if action_key == class_action.key:
+        return class_action
     return None
   
   @classmethod
@@ -973,8 +976,8 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_reset_actions(cls, action_permissions, actions):
-    for action_key in actions:
-      action_permissions[action_key] = {'executable': []}
+    for action in actions:
+      action_permissions[action.key.urlsafe()] = {'executable': []}
   
   @classmethod
   def _rule_reset_fields(cls, field_permissions, fields):
@@ -3882,7 +3885,7 @@ class ActionPermission(Permission):
     kwargs['entity'] = entity
     if (self.model == entity.get_kind()):
       for action in self.actions:
-        if (action.urlsafe() in entity.get_actions()) and (util.safe_eval(self.condition, kwargs)) and (self.executable != None):
+        if (entity.get_action(action) is not None) and (util.safe_eval(self.condition, kwargs)) and (self.executable != None):
           entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
 
 

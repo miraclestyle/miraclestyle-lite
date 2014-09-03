@@ -763,18 +763,17 @@ class Entry(orm.BaseExpando):
     return Action.query(Action.active == True, ancestor=self.journal).fetch()
   
   def get_actions(self):
-    actions = {}
-    instance_actions = getattr(self, '_actions', [])
-    for action in instance_actions:
-      actions[action.key.urlsafe()] = action
-    return actions
+    return getattr(self, '_actions', [])
   
-  def get_action(self, action_id):
-    actions = self.get_actions()
-    action_key = Action.build_key(action_id, parent=self.journal).urlsafe()
-    if action_key in actions:
-      return actions[action_key]
-    return None
+  def get_action(self, action):
+    if isinstance(action, orm.Key):
+      action_key = action
+    else:
+      try:
+        action_key = orm.Key(urlsafe=action)
+      except:
+        action_key = Action.build_key(action, parent=self.journal)
+    return action_key.get()
   
   def get_plugin_groups(self, action):
     return PluginGroup.query(PluginGroup.active == True,
