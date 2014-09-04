@@ -3373,7 +3373,7 @@ class SuperReferenceProperty(SuperKeyProperty):
     if value_name in entity._values:
       value_instance = entity._values[value_name]
     else:
-      value_instance = self._value_class(property_instance=self, storage_entity=entity)
+      value_instance = self._value_class(property_instance=self, entity=entity)
       entity._values[value_name] = value_instance
     if internal:
       return value_instance
