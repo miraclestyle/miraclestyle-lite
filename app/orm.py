@@ -2301,6 +2301,7 @@ class _BaseStructuredProperty(_BaseProperty):
     dic = super(_BaseStructuredProperty, self).get_meta()
     dic['modelclass'] = self.get_modelclass().get_fields()
     dic['modelclass_kind'] = self.get_modelclass().get_kind()
+    dic['value_class'] = self._value_class.__name__
     other = ['_autoload', '_readable', '_updateable', '_deleteable', '_read_arguments']
     for o in other:
       dic[o[1:]] = getattr(self, o)
