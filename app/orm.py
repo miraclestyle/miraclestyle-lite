@@ -33,6 +33,7 @@ from app import mem, util, settings
 ctx = get_context()
 ctx.set_memcache_policy(False)
 
+
 #############################################
 ########## System wide exceptions. ##########
 #############################################
@@ -1715,7 +1716,7 @@ class StructuredPropertyValue(PropertyValue):
           raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), property_value_item))
     self._property_value = property_value
     self._set_parent()
- 
+  
   def _deep_read(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
     This solves the problem of hierarchy.
@@ -1793,10 +1794,10 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   
   @property
   def value(self):
-    self._read()  # Always enforce reads because local structured property values get wrapped into _BaseValue before puts
+    self._read()  # Always enforce reads because local structured property values get wrapped into _BaseValue before puts.
     return super(LocalStructuredPropertyValue, self).value
   
-  def _read(self, read_arguments=None): # implicitly default argument is set to None because we call it from def value too
+  def _read(self, read_arguments=None):  # Implicitly, default argument is set to None because we call it from def value too.
     property_value = self._property._get_user_value(self._entity)
     property_value_copy = property_value
     if property_value_copy is not None:
@@ -1823,7 +1824,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           # We must mutate on the entity itself.
           if self._property_value._state == 'deleted':
             setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
- 
+  
   def delete(self):
     if self._property._deleteable:
       self.read()
@@ -1852,7 +1853,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     if isinstance(value, list):
       if len(value):
         value = value[0]
-    return isinstance(value, Future)  
+    return isinstance(value, Future)
   
   def _read_single(self, read_arguments):
     property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
@@ -2052,7 +2053,7 @@ class ReferencePropertyValue(PropertyValue):
     if isinstance(value, list):
       if len(value):
         value = value[0]
-    return isinstance(value, Future)    
+    return isinstance(value, Future)
   
   def set(self, value):
     if isinstance(value, Key):
