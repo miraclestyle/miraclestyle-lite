@@ -190,7 +190,6 @@ class RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm.RemoteStructur
         break
 
 
-
 orm.PROPERTY_VALUES.extend((LocalStructuredImagePropertyValue, RemoteStructuredImagePropertyValue))
 
 
