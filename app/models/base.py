@@ -147,18 +147,18 @@ class _ImagePropertyValue(object):
       setattr(self._entity, self.property_name, processed_value)
   
   
-class _LocalStructuredImagePropertyValue(_ImagePropertyValue, orm._LocalStructuredPropertyValue):
+class LocalStructuredImagePropertyValue(_ImagePropertyValue, orm.LocalStructuredPropertyValue):
   
   def pre_update(self):
     self._update_blobs()
-    super(_LocalStructuredImagePropertyValue, self).pre_update()
+    super(LocalStructuredImagePropertyValue, self).pre_update()
     
   
-class _RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm._RemoteStructuredPropertyValue):
+class RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm.RemoteStructuredPropertyValue):
  
   def post_update(self):
     self._update_blobs()
-    super(_RemoteStructuredImagePropertyValue, self).post_update()
+    super(RemoteStructuredImagePropertyValue, self).post_update()
   
   def _delete_single(self):
     self.read()
@@ -182,7 +182,7 @@ class _RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm._RemoteStruct
         break
       
 # register
-orm.PROPERTY_MANAGERS.extend((_LocalStructuredImagePropertyValue, _RemoteStructuredImagePropertyValue))
+orm.PROPERTY_MANAGERS.extend((LocalStructuredImagePropertyValue, RemoteStructuredImagePropertyValue))
 
 class _BaseBlobProperty(object):
   '''Base helper class for blob-key-like orm properties.
@@ -421,14 +421,14 @@ class _BaseImageProperty(_BaseBlobProperty):
 
 class SuperImageRemoteStructuredProperty(_BaseImageProperty, orm.SuperRemoteStructuredProperty):
   
-  _managerclass = _RemoteStructuredImagePropertyValue
+  _managerclass = RemoteStructuredImagePropertyValue
 
 
 class SuperImageLocalStructuredProperty(_BaseImageProperty, orm.SuperLocalStructuredProperty):
   
-  _managerclass = _LocalStructuredImagePropertyValue
+  _managerclass = LocalStructuredImagePropertyValue
 
 
 class SuperImageStructuredProperty(_BaseImageProperty, orm.SuperStructuredProperty):
   
-  _managerclass = _LocalStructuredImagePropertyValue
+  _managerclass = LocalStructuredImagePropertyValue

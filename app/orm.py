@@ -619,7 +619,7 @@ class _BaseModel(object):
     self.rule_write()
     for field_key, field in self.get_fields().iteritems():
       value = getattr(self, field_key, None)
-      if isinstance(value, _PropertyValue) and hasattr(value, 'pre_update'):
+      if isinstance(value, PropertyValue) and hasattr(value, 'pre_update'):
         value.pre_update()
   
   def _post_put_hook(self, future):
@@ -627,7 +627,7 @@ class _BaseModel(object):
     entity.record()
     for field_key, field in entity.get_fields().iteritems():
       value = getattr(entity, field_key, None)
-      if isinstance(value, _PropertyValue) and hasattr(value, 'post_update'):
+      if isinstance(value, PropertyValue) and hasattr(value, 'post_update'):
         value.post_update()
     entity.write_search_document()
     # @todo General problem with documents is that they are not transactional, and upon failure of transaction
@@ -644,7 +644,7 @@ class _BaseModel(object):
         # We have to check here if it has struct.
         if hasattr(field, 'is_structured') and field.is_structured:
           value = getattr(entity, field_key, None)
-          if isinstance(value, _PropertyValue) and hasattr(value, 'delete'):
+          if isinstance(value, PropertyValue) and hasattr(value, 'delete'):
             value.delete()
   
   @classmethod
@@ -724,7 +724,7 @@ class _BaseModel(object):
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
-        if isinstance(value, _PropertyValue):
+        if isinstance(value, PropertyValue):
           value = value.value
         if isinstance(value, Future) or (isinstance(value, list) and len(value) and isinstance(value[0], Future)):
           continue # this is a problem, we cannot copy futures, we might have to implement flags on properties like
@@ -847,7 +847,7 @@ class _BaseModel(object):
     else:
       if hasattr(field, 'is_structured') and field.is_structured:
         child_entity = getattr(entity, field_key)
-        if isinstance(child_entity, _PropertyValue):
+        if isinstance(child_entity, PropertyValue):
           child_entity = child_entity.value
         if field._repeated:
           if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
@@ -858,7 +858,7 @@ class _BaseModel(object):
                 cls._rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
         else:
           child_entity = getattr(entity, field_key)
-          if isinstance(child_entity, _PropertyValue):
+          if isinstance(child_entity, PropertyValue):
             child_entity = child_entity.value
           if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
             child_fields = child_entity.get_fields()
@@ -894,11 +894,11 @@ class _BaseModel(object):
             pass
       else:
         child_entity = getattr(entity, field_key) # child entity can also be none, same destiny awaits it as with field_value
-        if isinstance(child_entity, _PropertyValue):
+        if isinstance(child_entity, PropertyValue):
           if not child_entity.has_value(): # child entity was not loaded at all, we can skip its validation since user did not supply any value to it
             return
           child_entity = child_entity.value
-        if isinstance(field_value, _PropertyValue):
+        if isinstance(field_value, PropertyValue):
           field_value = field_value.value
         is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
         field_value_mapping = {}  # Here we hold references of every key from original state.
@@ -1411,7 +1411,7 @@ class _BaseModel(object):
     # purpose of inner function scan is to completely iterate all structured properties which have value and options
     if self is self._root:
       def scan(value, field_key, field, value_options):
-        if isinstance(value, _PropertyValue) and hasattr(value, 'value_options') and value.has_value():
+        if isinstance(value, PropertyValue) and hasattr(value, 'value_options') and value.has_value():
           options = {'config': value.value_options}
           value_options[field_key] = options
           if value.has_value():
@@ -1635,7 +1635,7 @@ PROPERTY_MANAGERS = []
 #########################################################
 
 
-class _PropertyValue(object):
+class PropertyValue(object):
   
   def __init__(self, property_instance, storage_entity, **kwds):
     self._property = property_instance
@@ -1673,10 +1673,10 @@ class _PropertyValue(object):
   def get_output(self):
     return self.value
 
-class _StructuredPropertyValue(_PropertyValue):
+class StructuredPropertyValue(PropertyValue):
   
   def __init__(self, property_instance, storage_entity, **kwds):
-    super(_StructuredPropertyValue, self).__init__(property_instance, storage_entity, **kwds)
+    super(StructuredPropertyValue, self).__init__(property_instance, storage_entity, **kwds)
     self._property_value_options = {}  
      
   @property
@@ -1823,12 +1823,12 @@ class _StructuredPropertyValue(_PropertyValue):
       value._state = 'deleted'
 
 
-class _LocalStructuredPropertyValue(_StructuredPropertyValue):
+class LocalStructuredPropertyValue(StructuredPropertyValue):
  
   @property
   def value(self):
     self._read() # always enforce reads because of _BaseValue. This is just the case with local structured 
-    return super(_LocalStructuredPropertyValue, self).value
+    return super(LocalStructuredPropertyValue, self).value
  
   def _read(self, read_arguments=None):
     '''Every structured/local structured value requires a sequence generated upon reading
@@ -1884,7 +1884,7 @@ class _LocalStructuredPropertyValue(_StructuredPropertyValue):
     self._set_parent()
 
 
-class _RemoteStructuredPropertyValue(_PropertyValue):
+class RemoteStructuredPropertyValue(PropertyValue):
   
   def _read_single(self, read_arguments):
     '''Remote single storage always follows the same pattern,
@@ -2065,7 +2065,7 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
     self._set_parent()
 
      
-class _ReferenceStructuredPropertyValue(_StructuredPropertyValue):
+class ReferenceStructuredPropertyValue(StructuredPropertyValue):
  
   def _read(self, read_arguments):
     target_field = self._property._target_field
@@ -2101,7 +2101,7 @@ class _ReferenceStructuredPropertyValue(_StructuredPropertyValue):
     pass
   
   
-class _ReferencePropertyValue(_PropertyValue):
+class ReferencePropertyValue(PropertyValue):
   
   def set(self, value):
     if isinstance(value, Key):
@@ -2152,7 +2152,7 @@ class _ReferencePropertyValue(_PropertyValue):
     self._property_value = None
  
     
-PROPERTY_MANAGERS.extend((_LocalStructuredPropertyValue, _RemoteStructuredPropertyValue, _ReferencePropertyValue))
+PROPERTY_MANAGERS.extend((LocalStructuredPropertyValue, RemoteStructuredPropertyValue, ReferencePropertyValue))
 
 class _BaseProperty(object):
   '''Base property class for all superior properties.'''
@@ -2291,7 +2291,7 @@ class _BaseStructuredProperty(_BaseProperty):
   '''Base class for structured property.
   
   '''
-  _managerclass = _LocalStructuredPropertyValue
+  _managerclass = LocalStructuredPropertyValue
   _readable = True
   _updateable = True
   _deleteable = True
@@ -2495,7 +2495,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
   E.g. the property that never gets saved to the datastore.
   
   '''
-  _managerclass = _RemoteStructuredPropertyValue # default manager
+  _managerclass = RemoteStructuredPropertyValue # default manager
   _indexed = False
   _repeated = False
   _readable = True
@@ -2538,7 +2538,7 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
   updating, deleting are always false.
   
   '''
-  _managerclass = _ReferenceStructuredPropertyValue # default manager
+  _managerclass = ReferenceStructuredPropertyValue # default manager
  
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
@@ -3423,7 +3423,7 @@ class SuperReferenceProperty(SuperKeyProperty):
     if manager_name in entity._values:
       manager = entity._values[manager_name]
     else:
-      manager = _ReferencePropertyValue(property_instance=self, storage_entity=entity)
+      manager = ReferencePropertyValue(property_instance=self, storage_entity=entity)
       entity._values[manager_name] = manager
     if internal:  # If internal is true, always retrieve manager.
       return manager
@@ -3817,7 +3817,7 @@ class Record(BaseExpando):
     self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
     for _, prop in entity._properties.iteritems():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
-      if isinstance(value, _PropertyValue):
+      if isinstance(value, PropertyValue):
         value = value.value
       # prop = copy.deepcopy(prop) no need to deepcopy prop for now, we'll see.
       self._properties[prop._name] = prop
