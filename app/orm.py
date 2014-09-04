@@ -2488,24 +2488,6 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
       self._property_value = field.get_async()
     return self._property_value
   
-  def _read_local(self, read_arguments=None):
-    '''Every structured/local structured value requires a sequence generated upon reading
-    
-    '''
-    if read_arguments is None:
-      read_arguments = {}
-    property_value = self._property._get_user_value(self._entity)
-    property_value_copy = property_value
-    if property_value_copy is not None:
-      if not self._property._repeated:
-        property_value_copy = [property_value_copy]
-      for i, value in enumerate(property_value_copy):
-        value._sequence = i
-      self._property_value = property_value
-    else:
-      if self._property._repeated:
-        self._property_value = []
-  
   def _process_read_async_remote_single(self, read_arguments=None):
     result = self._property_value.get_result()
     if result is None:
@@ -2513,7 +2495,7 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
       result = self._property.get_modelclass()(key=remote_single_key)
     self._property_value = result
   
-  def _read_remote_single(self, read_arguments=None):
+  def _read_single(self, read_arguments=None):
     '''Remote single storage always follows the same pattern,
     it composes its own key by using its kind, ancestor string id, and ancestor key as parent!
     
@@ -2523,7 +2505,7 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
     property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
     self._property_value = property_value_key.get_async()
   
-  def _read_remote_multi(self, read_arguments=None):
+  def _read_repeated(self, read_arguments=None):
     if read_arguments is None:
       read_arguments = {}
     config = read_arguments.get('config', {})
@@ -2649,39 +2631,7 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
     # Always trigger setattr on the property itself
     setattr(self._entity, self.property_name, self._property_value)
   
-  def _pre_update_local(self):
-    '''Process local structures.
-    
-    '''
-    if self.has_value():
-      if self._property._repeated:
-        delete_entities = []
-        for entity in self._property_value:
-          if entity._state == 'deleted':
-            delete_entities.append(entity)
-        for delete_entity in delete_entities:
-          self._property_value.remove(delete_entity)  # This mutates on the entity and on the _property_value.
-      else:
-        # We must mutate on the entity itself.
-        if self._property_value._state == 'deleted':
-          setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
-  
-  def _pre_update_reference(self):
-    pass
-  
-  def _pre_update_remote_single(self):
-    pass
-  
-  def _pre_update_remote_multi(self):
-    pass
-  
-  def _post_update_local(self):
-    pass
-  
-  def _post_update_reference(self):
-    pass
-  
-  def _post_update_remote_single(self):
+  def _post_update_single(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
@@ -2696,7 +2646,7 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
     else:
       self._property_value.put()
   
-  def _post_update_remote_multi(self):
+  def _post_update_repeated(self):
     '''Ensure that every entity has the entity ancestor by enforcing it.
     
     '''
@@ -2716,18 +2666,15 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
     put_multi(self._property_value)
   
   def pre_update(self):
-    if self._property._updateable:
-      if self.has_value():
-        pre_update_function = getattr(self, '_pre_update_%s' % self.storage_type)
-        pre_update_function()
-      else:
-        pass
+    pass
   
   def post_update(self):
     if self._property._updateable:
       if self.has_value():
-        post_update_function = getattr(self, '_post_update_%s' % self.storage_type)
-        post_update_function()
+        if not self._property._repeated:
+          self._post_update_single()
+        else:
+          self._post_update_repeated()
       else:
         pass
   
@@ -2742,15 +2689,11 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
     for value in property_value:
       value._state = 'deleted'
   
-  def _delete_local(self):
-    self.read()
-    self._mark_for_delete(self._property_value)
-  
-  def _delete_remote_single(self):
+  def _delete_single(self):
     self.read()
     self._property_value.key.delete()
   
-  def _delete_remote_multi(self):
+  def _delete_repeated(self):
     cursor = Cursor()
     limit = 200
     query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -2764,32 +2707,21 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
       else:
         break
   
-  def _delete_reference(self):
-    pass
-  
   def delete(self):
     '''Calls storage type specific delete function, in order to mark property values for deletion.
     
     '''
     if self._property._deleteable:
-      delete_function = getattr(self, '_delete_%s' % self.storage_type)
-      delete_function()
+      if not self._property._repeated:
+        self._delete_single()
+      else:
+        self._delete_repeated()
   
-  def _duplicate_local(self):
-    self.read()
-    if self._property._repeated:
-      entities = []
-      for entity in self._property_value:
-        entities.append(entity.duplicate())
-    else:
-      entities = self._property_value.duplicate()
-    setattr(self._entity, self.property_name, entities)
-  
-  def _duplicate_remote_single(self):
+  def _duplicate_single(self):
     self.read()
     self._property_value = self._property_value.duplicate()
   
-  def _duplicate_remote_multi(self):
+  def _duplicate_repeated(self):
     '''Fetch ALL entities that belong to this entity.
     On every entity called, .duplicate() function will be called in order to ensure complete recursion.
     
@@ -2802,15 +2734,14 @@ class _RemoteStructuredPropertyValue(_PropertyValue):
         entities.append(entity.duplicate())
     self._property_value = entities
   
-  def _duplicate_reference(self):
-    pass
-  
   def duplicate(self):
     '''Calls storage type specific duplicate function.
     
     '''
-    duplicate_function = getattr(self, '_duplicate_%s' % self.storage_type)
-    duplicate_function()
+    if not self._property._repeated:
+      self._duplicate_single()
+    else:
+      self._duplicate_repeated()
     self._set_parent()
 
 
@@ -4389,24 +4320,21 @@ class PluginGroup(BaseExpando):
   _default_indexed = False
 
 
-'''
-The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
-It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for(). That is because
-if we do not call that method, the class(cls) scope - Record._properties will be altered which will cause variable leak,
-meaning that simultaneously based on user actions, new properties will be appended to Record._properties, and that will
-cause complete inconsistency and errors while fetching, storing and deleting data. This behavior was noticed upon testing.
-
-Same approach must be done with the transaction / entry / line scenario, which implements its own logic for new
-properties.
-
-This implementation will not cause any performance issues or variable leak whatsoever, the _properties will be adjusted to
-be available in "self" - not "cls".
-
-In the beginning i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
-allowed mutations to class(cls) scope.
-'''
 class Record(BaseExpando):
-  
+  '''
+  The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
+  It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for(). That is because
+  if we do not call that method, the class(cls) scope - Record._properties will be altered which will cause variable leak,
+  meaning that simultaneously based on user actions, new properties will be appended to Record._properties, and that will
+  cause complete inconsistency and errors while fetching, storing and deleting data. This behavior was noticed upon testing.
+  Same approach must be done with the transaction / entry / line scenario, which implements its own logic for new
+  properties.
+  This implementation will not cause any performance issues or variable leak whatsoever, the _properties will be adjusted to
+  be available in "self" - not "cls".
+  In the beginning i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
+  allowed mutations to class(cls) scope.
+
+  '''
   _kind = 5
   
   _use_record_engine = False
