@@ -217,9 +217,7 @@ class DomainUser(orm.BaseExpando):
   _virtual_fields = {
     '_primary_email': orm.SuperReferenceProperty(callback=lambda self: self._get_user_async(),
                                                  format_callback=lambda self, value: value._primary_email),
-    '_user': orm.SuperStorageStructuredProperty('0', updateable=False, deleteable=False,
-                                                storage='reference', autoload=False,
-                                                storage_config={'callback': lambda self: self._get_user_async()}),
+    '_user': orm.SuperReferenceStructuredProperty('0', callback=lambda self: self._get_user_async()),
     '_records': orm.SuperRecordProperty('8')
     }
   

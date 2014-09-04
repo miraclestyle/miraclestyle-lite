@@ -146,8 +146,8 @@ class User(orm.BaseExpando):
           plugins=[
             Write(),
             Set(cfg={'d': {'output.entity': '_user'}}),
-            CallbackNotify(),
-            CallbackExec()
+            # CallbackNotify(),
+            # CallbackExec() notify cannot work here
             ]
           )
         ]
@@ -212,8 +212,8 @@ class User(orm.BaseExpando):
           plugins=[
             Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
             Set(cfg={'d': {'output.entity': '_user'}}),
-            CallbackNotify(),
-            CallbackExec()
+            # CallbackNotify(),
+            # CallbackExec() notify cannot work here
             ]
           )
         ]

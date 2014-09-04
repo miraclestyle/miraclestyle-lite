@@ -15,7 +15,7 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import orm, mem, settings
 from app.util import *
-
+ 
 
 # @see https://developers.google.com/appengine/docs/python/googlecloudstorageclient/retryparams_class
 default_retry_params = cloudstorage.RetryParams(initial_delay=0.2, max_delay=5.0,
@@ -62,12 +62,11 @@ class Role(orm.BaseExpando):
 class GlobalRole(Role):
   
   _kind = 67
-
-
-class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
+  
+class _ImagePropertyValue(object):
   
   def _update_blobs(self):
-    if self.has_value() and isinstance(self._property, _BaseImageProperty):
+    if self.has_value():
       if self._property._repeated:
         entities = self._property_value
       else:
@@ -92,48 +91,13 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
                 if entity is not None:
                   if entity.image != original.image:
                     self._property.delete_blobs_on_success(original.image)
-  
-  def _pre_update_local(self):
-    self._update_blobs()
-    super(SuperStructuredPropertyImageManager, self)._pre_update_local()
-  
-  def _post_update_remote_single(self):
-    self._update_blobs()
-    super(SuperStructuredPropertyImageManager, self)._post_update_remote_single()
-  
-  def _post_update_remote_multi(self):
-    self._update_blobs()
-    super(SuperStructuredPropertyImageManager, self)._post_update_remote_multi()
-  
-  def _delete_remote(self):
-    cursor = Cursor()
-    limit = 200
-    query = self._property.get_modelclass().query(ancestor=self._entity.key)
-    while True:
-      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
-      if len(_entities):
-        for entity in _entities:
-          if isinstance(self._property, _BaseImageProperty):
-            self._property.delete_blobs_on_success(entity.image)
-        orm.delete_multi([entity.key for entity in _entities])
-        if not cursor or not more:
-          break
-      else:
-        break
-  
-  def _delete_remote_single(self):
-    property_value_key = orm.Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
-    entity = property_value_key.get()
-    if isinstance(self._property, _BaseImageProperty):
-      self._property.delete_blobs_on_success(entity.image)
-    entity.key.delete()
-  
+                    
   def duplicate(self):
     '''Override duplicate. Parent duplicate method will retrieve all data into self._property_value, and later on,
     here we can finalize duplicate by copying the blob.
     
     '''
-    super(SuperStructuredPropertyImageManager, self).duplicate()
+    super(_ImagePropertyValue, self).duplicate()
     @orm.tasklet
     def async(entity):
       gs_object_name = entity.gs_object_name
@@ -154,7 +118,7 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
       readonly_blob.close()
       writable_blob.close()
       entity.gs_object_name = new_gs_object_name
-      blob_key = blobstore.create_gs_key(new_gs_object_name)
+      blob_key = yield blobstore.create_gs_key_async(new_gs_object_name)
       entity.image = blobstore.BlobKey(blob_key)
       entity.serving_url = yield images.get_serving_url_async(entity.image)
       self._property.save_blobs_on_success(entity.image)
@@ -178,13 +142,47 @@ class SuperStructuredPropertyImageManager(orm.SuperStructuredPropertyManager):
     Resizing, cropping, and generation of serving url in the end.
     
     '''
-    if self.has_value() and not self.has_future():  # In case value is a future we cannot proceed. Everything must be already loaded!
-      if isinstance(self._property, _BaseImageProperty):
-        processed_value = self._property.process(self.value)
-        setattr(self._entity, self.property_name, processed_value)
-
-# register new manager
-orm.PROPERTY_MANAGERS.append(SuperStructuredPropertyImageManager)
+    if self.has_value():
+      processed_value = self._property.process(self.value)
+      setattr(self._entity, self.property_name, processed_value)
+  
+  
+class _LocalStructuredImagePropertyValue(_ImagePropertyValue, orm._LocalStructuredPropertyValue):
+  
+  def pre_update(self):
+    self._update_blobs()
+    super(_LocalStructuredImagePropertyValue, self).pre_update()
+    
+  
+class _RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm._RemoteStructuredPropertyValue):
+ 
+  def post_update(self):
+    self._update_blobs()
+    super(_RemoteStructuredImagePropertyValue, self).post_update()
+  
+  def _delete_single(self):
+    self.read()
+    self._property.delete_blobs_on_success(self._property_value.image)    
+    self._property_value.key.delete()
+  
+  def _delete_repeated(self):
+    cursor = Cursor()
+    limit = 200
+    query = self._property.get_modelclass().query(ancestor=self._entity.key)
+    while True:
+      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      if len(_entities):
+        self._set_parent(_entities)
+        for entity in _entities:
+          self._property.delete_blobs_on_success(entity.image)
+        orm.delete_multi([entity.key for entity in _entities])
+        if not cursor or not more:
+          break
+      else:
+        break
+      
+# register
+orm.PROPERTY_MANAGERS.extend((_LocalStructuredImagePropertyValue, _RemoteStructuredImagePropertyValue))
 
 class _BaseBlobProperty(object):
   '''Base helper class for blob-key-like orm properties.
@@ -281,7 +279,6 @@ class _BaseImageProperty(_BaseBlobProperty):
   def __init__(self, *args, **kwargs):
     self._process_config = kwargs.pop('process_config', {})
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
-    self._managerclass = SuperStructuredPropertyImageManager
   
   def generate_serving_urls(self, values):
     @orm.tasklet
@@ -420,15 +417,18 @@ class _BaseImageProperty(_BaseBlobProperty):
     if not self._repeated:
       out = out[0]
     return out
+ 
 
-
-class SuperImageStorageStructuredProperty(_BaseImageProperty, orm.SuperStorageStructuredProperty):
-  pass
+class SuperImageRemoteStructuredProperty(_BaseImageProperty, orm.SuperRemoteStructuredProperty):
+  
+  _managerclass = _RemoteStructuredImagePropertyValue
 
 
 class SuperImageLocalStructuredProperty(_BaseImageProperty, orm.SuperLocalStructuredProperty):
-  pass
+  
+  _managerclass = _LocalStructuredImagePropertyValue
 
 
 class SuperImageStructuredProperty(_BaseImageProperty, orm.SuperStructuredProperty):
-  pass
+  
+  _managerclass = _LocalStructuredImagePropertyValue

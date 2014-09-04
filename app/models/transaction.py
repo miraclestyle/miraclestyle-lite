@@ -66,8 +66,8 @@ class Journal(orm.BaseExpando):
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('49'),
     '_code': orm.SuperComputedProperty(lambda self: self.key_id_str),
-    '_transaction_actions': orm.SuperStorageStructuredProperty(Action, storage='remote_multi'),
-    '_transaction_plugin_groups': orm.SuperStorageStructuredProperty(PluginGroup, storage='remote_multi')
+    '_transaction_actions': orm.SuperRemoteStructuredProperty(Action, repeated=True),
+    '_transaction_plugin_groups': orm.SuperRemoteStructuredProperty(PluginGroup, repeated=True)
     }
   
   _global_role = GlobalRole(
@@ -751,7 +751,7 @@ class Entry(orm.BaseExpando):
   date = orm.SuperDateTimeProperty('6', required=True)
   
   _virtual_fields = {
-    '_lines': orm.SuperStorageStructuredProperty(Line, storage='remote_multi')
+    '_lines': orm.SuperRemoteStructuredProperty(Line, repeated=True)
     }
   
   _global_roles = {'system_sales_order': GlobalRole(
@@ -778,8 +778,8 @@ class Entry(orm.BaseExpando):
     )}
   
   @property
-  _global_role(self):
-    self._global_roles.get(self.journal._id_str)
+  def _global_role(self):
+    return self._global_roles.get(self.journal._id_str)
   
   def __init__(self, *args, **kwargs):
     '''Caution! Making instances of Entry() inside a transaction may

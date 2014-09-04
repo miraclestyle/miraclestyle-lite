@@ -5,8 +5,10 @@ Created on Oct 14, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 from webclient import handler
-from app import io
- 
+from app import io, util
+
+import hashlib
+
 
 class Login(handler.Angular):
   
@@ -23,7 +25,7 @@ class Login(handler.Angular):
     if 'authorization_code' in output:
         self.response.set_cookie('auth', output.get('authorization_code'), httponly=True)
     return output
-            
+  
  
 class Logout(handler.Angular):
     
@@ -38,7 +40,7 @@ class Logout(handler.Angular):
     return output
             
     
-handler.register((r'/login', Login, 'login'), 
-         (r'/login/<provider>', Login, 'login_provider'),
-         (r'/apps', handler.AngularBlank, 'apps'), 
-         (r'/logout', Logout, 'logout'))
+handler.register((r'/login', Login, 'login'),
+                 (r'/login/<provider>', Login, 'login_provider'),
+                 (r'/apps', handler.AngularBlank, 'apps'), 
+                 (r'/logout', Logout, 'logout'))

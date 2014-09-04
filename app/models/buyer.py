@@ -36,12 +36,8 @@ class Address(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_country': orm.SuperStorageStructuredProperty('15', autoload=True, storage='reference',
-                                                   storage_config={'target_field': 'country'},
-                                                   updateable=False, deleteable=False),
-    '_region': orm.SuperStorageStructuredProperty('16', autoload=True, storage='reference',
-                                                  storage_config={'target_field': 'region'},
-                                                  updateable=False, deleteable=False)
+    '_country': orm.SuperReferenceStructuredProperty('15', autoload=True, target_field='country'),
+    '_region': orm.SuperReferenceStructuredProperty('16', autoload=True, target_field='region')
   }
 
 
@@ -126,12 +122,9 @@ class Collection(orm.BaseModel):
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('10'),
-    '_domains': orm.SuperStorageStructuredProperty('6', autoload=False, storage='reference',
-                                                   repeated=True, updateable=False, deleteable=False,
-                                                   storage_config={'callback': lambda self: orm.get_multi_async([domain_key for domain_key in self.domains]),
-                                                                    # This format_callback is here, because inside entities, there can always be Nones.
-                                                                    # It is possible that we will have to make this more convinient, because we use same functionality on many places.
-                                                                   'format_callback': lambda self, entities: orm.get_async_results(entities)})
+    '_domains': orm.SuperReferenceStructuredProperty('6', autoload=False, 
+                                                     callback=lambda self: orm.get_multi_async([domain_key for domain_key in self.domains]),
+                                                     format_callback=lambda self, entities: orm.get_async_results(entities))
     }
   
   _global_role = GlobalRole(

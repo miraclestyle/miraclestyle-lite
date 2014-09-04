@@ -137,8 +137,8 @@ class ProductInstance(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_weight_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'weight_uom'}, storage='reference'),
-    '_volume_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'volume_uom'}, storage='reference')
+    '_weight_uom': orm.SuperReferenceStructuredProperty('19', target_field='weight_uom'),
+    '_volume_uom': orm.SuperReferenceStructuredProperty('19', target_field='volume_uom')
     }
   
   @classmethod
@@ -180,10 +180,10 @@ class Product(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_instances': orm.SuperStorageStructuredProperty(ProductInstance, storage='remote_multi'),
-    '_product_category': orm.SuperStorageStructuredProperty(ProductCategory, autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'product_category'}, storage='reference'),
-    '_weight_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'weight_uom'}, storage='reference'),
-    '_volume_uom': orm.SuperStorageStructuredProperty('19', autoload=False, updateable=False, deleteable=False, storage_config={'target_field': 'volume_uom'}, storage='reference')
+    '_instances': orm.SuperRemoteStructuredProperty(ProductInstance, repeated=True),
+    '_product_category': orm.SuperReferenceStructuredProperty(ProductCategory, target_field='product_category'),
+    '_weight_uom': orm.SuperReferenceStructuredProperty('19', target_field='weight_uom'),
+    '_volume_uom': orm.SuperReferenceStructuredProperty('19', target_field='volume_uom')
     }
 
 
@@ -248,10 +248,9 @@ class Catalog(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_images': SuperImageStorageStructuredProperty(CatalogImage, storage='remote_multi',
-                                                   read_arguments={'config': {'order': {'field': 'sequence',
-                                                                                        'direction': 'asc'}}}),
-    '_products': orm.SuperStorageStructuredProperty(Product, storage='remote_multi'),
+    '_images': SuperImageRemoteStructuredProperty(CatalogImage, read_arguments={'config': {'order': {'field': 'sequence',
+                                                                                           'direction': 'asc'}}}),
+    '_products': orm.SuperRemoteStructuredProperty(Product, repeated=True),
     '_records': orm.SuperRecordProperty('35')
     }
   

@@ -87,7 +87,7 @@ class UserLoginWrite(orm.BaseModel):
         if session_id not in session_ids:
           break
       session = Session(session_id=session_id)
-      entity.sessions.value.append(session)
+      entity.sessions = [session]
       return session
     
     if hasattr(context, '_identity_id') and context._identity_id is not None:
@@ -96,8 +96,8 @@ class UserLoginWrite(orm.BaseModel):
       entity = context._user
       if entity._is_guest:
         entity = context.model()
-        entity.emails.append(context._email)
-        entity.identities.value.append(Identity(identity=context._identity_id, email=context._email, primary=True))
+        entity.emails = [context._email]
+        entity.identities = [Identity(identity=context._identity_id, email=context._email, primary=True)]
         entity.state = 'active'
         session = new_session(entity)
         # We separate record procedure from write in this case, since we are creating new entity which is record agent at the same time!
@@ -117,7 +117,7 @@ class UserLoginWrite(orm.BaseModel):
             used_identity = True
             break
         if not used_identity:
-          entity.identities.value.append(Identity(identity=context._identity_id, email=context._email, primary=False))
+          entity.identities = [Identity(identity=context._identity_id, email=context._email, primary=False)]
         session = new_session(entity)
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       context.model.set_current_user(entity, session)
