@@ -2134,19 +2134,18 @@ class ReferencePropertyValue(PropertyValue):
       
   
   def read(self):
-    if self._property._readable:
-      self.read_async()
-      if self.has_future():
+    self.read_async()
+    if self.has_future():
+      if isinstance(self._property_value, list):
+        self._property_value = map(lambda x: x.get_result(), self._property_value)
+      else:
+        self._property_value = self._property_value.get_result()
+      if self._property._format_callback:
         if isinstance(self._property_value, list):
-          self._property_value = map(lambda x: x.get_result(), self._property_value)
+          self._property_value = map(lambda x: self._property._format_callback(self._entity, x), self._property_value)
         else:
-          self._property_value = self._property_value.get_result()
-        if self._property._format_callback:
-          if isinstance(self._property_value, list):
-            self._property_value = map(lambda x: self._property._format_callback(self._entity, x), self._property_value)
-          else:
-            self._property_value = self._property._format_callback(self._entity, self._property_value)
-      return self.value
+          self._property_value = self._property._format_callback(self._entity, self._property_value)
+    return self.value
   
   def delete(self):
     self._property_value = None

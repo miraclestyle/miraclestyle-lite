@@ -248,7 +248,7 @@ class Catalog(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_images': SuperImageRemoteStructuredProperty(CatalogImage, read_arguments={'config': {'order': {'field': 'sequence',
+    '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True, read_arguments={'config': {'order': {'field': 'sequence',
                                                                                            'direction': 'asc'}}}),
     '_products': orm.SuperRemoteStructuredProperty(Product, repeated=True),
     '_records': orm.SuperRecordProperty('35')
