@@ -2023,7 +2023,7 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
     if isinstance(value, list):
       if len(value):
         value = value[0]
-    return isinstance(value, Future)  
+    return isinstance(value, Future)
   
   def _read(self, read_arguments):
     target_field = self._property._target_field
