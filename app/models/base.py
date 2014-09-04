@@ -15,30 +15,17 @@ from google.appengine.datastore.datastore_query import Cursor
 
 from app import orm, mem, settings
 from app.util import *
- 
+
 
 # @see https://developers.google.com/appengine/docs/python/googlecloudstorageclient/retryparams_class
-default_retry_params = cloudstorage.RetryParams(initial_delay=0.2, max_delay=5.0,
-                                                backoff_factor=2, max_retries=5,
-                                                max_retry_period=60, urlfetch_timeout=30)
+default_retry_params = cloudstorage.RetryParams(initial_delay=0.2, max_delay=5.0, backoff_factor=2,
+                                                max_retries=5, max_retry_period=60, urlfetch_timeout=30)
 cloudstorage.set_default_retry_params(default_retry_params)
 
 
-class Image(orm.BaseExpando):
-  
-  _kind = 69
-  
-  image = orm.SuperBlobKeyProperty('1', required=True, indexed=False)
-  content_type = orm.SuperStringProperty('2', required=True, indexed=False)
-  size = orm.SuperFloatProperty('3', required=True, indexed=False)
-  gs_object_name = orm.SuperStringProperty('4', required=True, indexed=False)
-  serving_url = orm.SuperStringProperty('5', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'proportion': orm.SuperFloatProperty('6')
-    }
+##########################################
+########## Extra system models! ##########
+##########################################
 
 
 class Role(orm.BaseExpando):
@@ -62,7 +49,30 @@ class Role(orm.BaseExpando):
 class GlobalRole(Role):
   
   _kind = 67
+
+
+class Image(orm.BaseExpando):
   
+  _kind = 69
+  
+  image = orm.SuperBlobKeyProperty('1', required=True, indexed=False)
+  content_type = orm.SuperStringProperty('2', required=True, indexed=False)
+  size = orm.SuperFloatProperty('3', required=True, indexed=False)
+  gs_object_name = orm.SuperStringProperty('4', required=True, indexed=False)
+  serving_url = orm.SuperStringProperty('5', required=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'proportion': orm.SuperFloatProperty('6')
+    }
+
+
+#########################################################
+########## Superior properties implementation! ##########
+#########################################################
+
+
 class _ImagePropertyValue(object):
   
   def _update_blobs(self):
@@ -91,11 +101,10 @@ class _ImagePropertyValue(object):
                 if entity is not None:
                   if entity.image != original.image:
                     self._property.delete_blobs_on_success(original.image)
-                    
+  
   def duplicate(self):
     '''Override duplicate. Parent duplicate method will retrieve all data into self._property_value, and later on,
     here we can finalize duplicate by copying the blob.
-    
     '''
     super(_ImagePropertyValue, self).duplicate()
     @orm.tasklet
@@ -140,29 +149,28 @@ class _ImagePropertyValue(object):
     '''This function should be called inside a taskqueue.
     It will perform all needed operations based on the property configuration on how to process its images.
     Resizing, cropping, and generation of serving url in the end.
-    
     '''
     if self.has_value():
       processed_value = self._property.process(self.value)
       setattr(self._entity, self.property_name, processed_value)
-  
-  
+
+
 class LocalStructuredImagePropertyValue(_ImagePropertyValue, orm.LocalStructuredPropertyValue):
   
   def pre_update(self):
     self._update_blobs()
     super(LocalStructuredImagePropertyValue, self).pre_update()
-    
-  
+
+
 class RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm.RemoteStructuredPropertyValue):
- 
+  
   def post_update(self):
     self._update_blobs()
     super(RemoteStructuredImagePropertyValue, self).post_update()
   
   def _delete_single(self):
     self.read()
-    self._property.delete_blobs_on_success(self._property_value.image)    
+    self._property.delete_blobs_on_success(self._property_value.image)
     self._property_value.key.delete()
   
   def _delete_repeated(self):
@@ -180,9 +188,11 @@ class RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm.RemoteStructur
           break
       else:
         break
-      
-# register
-orm.PROPERTY_MANAGERS.extend((LocalStructuredImagePropertyValue, RemoteStructuredImagePropertyValue))
+
+
+
+orm.PROPERTY_VALUES.extend((LocalStructuredImagePropertyValue, RemoteStructuredImagePropertyValue))
+
 
 class _BaseBlobProperty(object):
   '''Base helper class for blob-key-like orm properties.
@@ -274,7 +284,6 @@ class _BaseImageProperty(_BaseBlobProperty):
   Example:
   class NewImageProperty(_BaseImageProperty, orm.Property):
   ...
-  
   '''
   def __init__(self, *args, **kwargs):
     self._process_config = kwargs.pop('process_config', {})
@@ -417,18 +426,18 @@ class _BaseImageProperty(_BaseBlobProperty):
     if not self._repeated:
       out = out[0]
     return out
- 
+
 
 class SuperImageRemoteStructuredProperty(_BaseImageProperty, orm.SuperRemoteStructuredProperty):
   
-  _managerclass = RemoteStructuredImagePropertyValue
+  _value_class = RemoteStructuredImagePropertyValue
 
 
 class SuperImageLocalStructuredProperty(_BaseImageProperty, orm.SuperLocalStructuredProperty):
   
-  _managerclass = LocalStructuredImagePropertyValue
+  _value_class = LocalStructuredImagePropertyValue
 
 
 class SuperImageStructuredProperty(_BaseImageProperty, orm.SuperStructuredProperty):
   
-  _managerclass = LocalStructuredImagePropertyValue
+  _value_class = LocalStructuredImagePropertyValue
