@@ -1773,7 +1773,6 @@ class StructuredPropertyValue(PropertyValue):
     if self._property._readable:
       if (not self.has_value()) or config.get('force_read'): # it will not attempt to load if there's already value present.
         self._read(read_arguments)
-      return self._property_value
     
   def _read(self, read_arguments):
     '''Purpose of _read is to perform proper logic which will populate _property_value with futures or real values
@@ -1798,7 +1797,7 @@ class StructuredPropertyValue(PropertyValue):
         self._property_value = format_callback(self._entity, self._property_value)
       self._set_parent()
       self._deep_read(read_arguments)
-      return self._property_value # this is intentional. it will throw an error if _read_sync or read_async didnt generate any value on _property_value
+      return self.value
      
   def add(self, entities):
     '''Primarly used to extend the values of the property, or override change it if its used on non repeated property.
@@ -1884,7 +1883,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     self._set_parent()
 
 
-class RemoteStructuredPropertyValue(PropertyValue):
+class RemoteStructuredPropertyValue(StructuredPropertyValue):
   
   def _read_single(self, read_arguments):
     '''Remote single storage always follows the same pattern,
@@ -1954,7 +1953,8 @@ class RemoteStructuredPropertyValue(PropertyValue):
           self._property_value = property_value[0]
           self._property_value_options['cursor'] = cursor
           self._property_value_options['more'] = property_value[2]
-      self._property_value = property_value
+        else:
+          self._property_value = property_value
     else: # this is for key.get_async()
       result = self._property_value.get_result()
       if result is None:
@@ -2128,10 +2128,10 @@ class ReferencePropertyValue(PropertyValue):
     return self.value
   
   def read_async(self):
-    if self._property._readable:
-      if not self.has_value():
-        self._read()
-      return self.value
+    if not self.has_value():
+      self._read()
+    return self.value
+      
   
   def read(self):
     if self._property._readable:
@@ -2421,7 +2421,7 @@ class _BaseStructuredProperty(_BaseProperty):
         current_values = value
       else:
         generate = True
-      if generate:
+      if generate and current_values:
         current_values.generate_unique_key()
     manager.set(current_values)
     return super(_BaseStructuredProperty, self)._set_value(entity, current_values)

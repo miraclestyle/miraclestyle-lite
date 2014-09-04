@@ -273,7 +273,7 @@ class DomainSetup(Setup):
       new_category._use_rule_engine = False
       to_put.append(new_category)
     orm.write_multi_transactions(to_put, {'agent': self.context.user.key, 'action': self.context.action.key})
-    self.config.next_operation = 'create_order_journal'
+    self.config.next_operation = 'complete' # create_order_journal
     self.config.next_operation_input = {'domain_key': domain_key}
     self.config.write()
   

@@ -12,11 +12,12 @@ import re
 from app import orm
 from app.tools.base import *
 from app.util import *
-from app.models import location, uom  # transaction, rule, log
+from app.models import location, uom, transaction, order # rule, log
 
 
 # Virtual representation of order entry object to serve as a reference of expected structure (will be removed later)!
 # Regarding the structured properties in entries and lines, shall we standardize thos properties to be JSON and transform data apropriately on input?
+'''
 class OrderEntry(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
@@ -45,44 +46,44 @@ class OrderEntry(orm.BaseExpando):
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
-          name='Init'
+          name='Init',
           plugins=[
             Context(),
             CartInit()
             ]
           ),
         orm.PluginGroup(
-          name='Payment Config'  # User Editable
+          name='Payment Config',  # User Editable
           plugins=[
             PayPalPayment()
             ]
           ),
         orm.PluginGroup(
-          name='Lines Init'
+          name='Lines Init',
           plugins=[
             LinesInit()
             ]
           ),
         orm.PluginGroup(
-          name='Address Rules'  # User Editable
+          name='Address Rules',  # User Editable
           plugins=[
             AddressRule()
             ]
           ),
         orm.PluginGroup(
-          name='Taxes'  # User Editable
+          name='Taxes',  # User Editable
           plugins=[
             Tax()
             ]
           ),
         orm.PluginGroup(
-          name='Carriers'  # User Editable
+          name='Carriers',  # User Editable
           plugins=[
             Carrier()
             ]
           ),
         orm.PluginGroup(
-          name='Final'
+          name='Final',
           plugins=[
             ProductToLine(),
             ProductSubtotalCalculate(),
@@ -193,7 +194,7 @@ class OrderEntryLine(orm.BaseExpando):
   taxes = orm.SuperLocalStructuredProperty(order.LineTax, '16', required=True)
   subtotal = orm.SuperDecimalProperty('17', required=True, indexed=False)
   discount_subtotal = orm.SuperDecimalProperty('18', required=True, indexed=False)
-
+'''
 
 # @todo Not sure if we are gonna use this instead of orm.ActionDenied()? ActionDenied lacks descreptive messaging!
 class PluginError(Exception):
@@ -220,12 +221,12 @@ class CartInit(orm.BaseModel):
       context._group = Group(namespace=context.model.journal._namespace)
       entry = Entry(namespace=context.model.journal._namespace)
       entry.journal = context.model.journal
-      entry.company_address = # Source of company address required!
+      # entry.company_address = # Source of company address required!
       entry.state = 'cart'
       entry.date = datetime.datetime.now()
       entry.party = context.user.key
     else:
-      entry.read(read_arguments)  # @todo What read arguments do we put here? We surely need entry._lines loaded.
+      entry.read({'_lines' : {'config' : {'limit': -1}}})  # @todo What read arguments do we put here? We surely need entry._lines loaded.
       context._group = entry.parent_entity
     context._group.insert_entry(entry)
     if entry.state != 'cart':
@@ -266,9 +267,7 @@ class ProductToLine(orm.BaseModel):
     variant_signature = context.input.get('variant_signature')
     line_exists = False
     for line in entry._lines:
-      if hasattr(line, 'product_reference')
-      and line.product_reference == product_key
-      and line.product_variant_signature == variant_signature:
+      if hasattr(line, 'product_reference') and line.product_reference == product_key and line.product_variant_signature == variant_signature:
         line._state = 'modified'  # @todo Not sure if this is ok!?
         line.quantity = line.quantity + format_value('1', line.product_uom)
         line_exists = True
@@ -292,7 +291,7 @@ class ProductToLine(orm.BaseModel):
       new_line.description = product.name
       new_line.code = product.code
       new_line.unit_price = product.unit_price
-      new_line.product_uom = uom.get_uom(product.product_uom)  # @todo Where is get_uom function? We lost it somewhere!
+      new_line.product_uom = product.product_uom.get()  # @todo Where is get_uom function? We lost it somewhere!
       new_line.quantity = format_value('1', new_line.product_uom)
       new_line.discount = format_value('0', uom.UOM(digits=4))
       if hasattr(product, 'weight'):
@@ -343,7 +342,7 @@ class UpdateProductLine(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class EntryFieldAutoUpdate(transaction.Plugin):
+class EntryFieldAutoUpdate(orm.BaseModel):
   
   _kind = 103
   
@@ -366,7 +365,6 @@ class EntryFieldAutoUpdate(transaction.Plugin):
         set_attr(entry, key, set_value)
     for key in remove_values:
       del_attr(entry, key)
-
 
 # This is system plugin, which means end user can not use it!
 class ProductSubtotalCalculate(orm.BaseModel):
@@ -424,7 +422,7 @@ class Location(orm.BaseModel):
   
   # @todo Do we need __init__ at all!?
   def __init__(self, *args, **kwargs):
-    super(Address, self).__init__(**kwargs)
+    super(Location, self).__init__(**kwargs)
     if len(args):
       country, region, postal_code_from, postal_code_to, city = args
       self.country = country
@@ -524,7 +522,7 @@ class PayPalPayment(orm.BaseModel):
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
     # In context of add_to_cart action runner does the following:
-    entry.currency = uom.get_uom(self.currency)  # @todo Where is get_uom function? We lost it somewhere!
+    entry.currency = self.currency.get()
     entry.paypal_reciever_email = self.reciever_email
     entry.paypal_business = self.business
 
@@ -552,7 +550,7 @@ class Tax(orm.BaseModel):
       for tax in line.taxes:
         if tax.key == self.key:
           tax._state = 'deleted'
-      if (self.carriers and self.carriers.count(line.carrier_reference))
+      if (self.carriers and self.carriers.count(line.carrier_reference)) \
       or (self.product_categories and self.product_categories.count(line.product_category)):  # @todo Have to check if all lines have carrier_reference property??
         if allowed:
           tax_exists = False
