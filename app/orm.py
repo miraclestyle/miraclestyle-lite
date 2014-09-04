@@ -2036,10 +2036,11 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
       self._property_value = field.get_async()
   
   def _read_sync(self, read_arguments):
-    self._property_value = self._property_value.get_result()
+    if isinstance(self._property_value, Future):
+      self._property_value = self._property_value.get_result()
   
   def delete(self):
-    pass
+    self._property_value = None
   
   def duplicate(self):
     pass
