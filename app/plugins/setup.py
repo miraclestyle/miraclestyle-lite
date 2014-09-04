@@ -301,6 +301,8 @@ class DomainSetup(Setup):
     entity = Journal(namespace=namespace, id='system_sales_order')
     entity.name = 'Sales Order Journal'
     entity.state = 'active'
+    # this two need to be ordered Dictionaries because using unordered dict will cause
+    # weird behaviour on user interface (e.g. on each refresh different order of properties
     entity.entry_fields = {'company_address': orm.SuperLocalStructuredProperty('68', '7', required=True),
                            'party': orm.SuperKeyProperty('8', kind='0', required=True, indexed=False),  # @todo buyer_reference ??
                            'billing_address_reference': orm.SuperStringProperty('9', required=True, indexed=False),

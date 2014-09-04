@@ -16,4 +16,4 @@ class LineTax(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   code = orm.SuperStringProperty('2', required=True, indexed=False)
-  formula = orm.SuperStringProperty('3', required=True, indexed=False)
+  formula = orm.SuperPickleProperty('3', required=True, indexed=False)

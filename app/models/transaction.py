@@ -683,7 +683,7 @@ class Line(orm.BaseExpando):
     '''
     entry_key = kwargs.get('parent')
     complete_key = kwargs.get('key')  # Also observe the complete key instances.
-    journal_key = kwargs.pop('journal', None) # if journal key is provided use it
+    journal_key = kwargs.pop('journal', None) # if journal key is provided use it. This is generally retarded but only way so far.
     if journal_key is not None:
       self.add_journal_fields(journal_key)
     elif entry_key is not None:
@@ -699,10 +699,12 @@ class Line(orm.BaseExpando):
         journal_key = self.parent_entity.journal
       journal = journal_key.get()
       if journal is None:
-        raise Exception('Cannot find journal with key %s.' % journal_key.urlsafe())
+        raise Exception('Cannot find journal with key %r.' % journal_key)
       self._clone_properties()
       for name, prop in journal.line_fields.iteritems():
-        self._properties[name] = copy.deepcopy(prop)
+        # still not 100% sure if we need to deepcopy these properties that get loaded from datastore
+        prop._code_name = name
+        self._properties[prop._name] = prop
         self.add_output(name)
       self._journal_fields_loaded = True
   
@@ -712,7 +714,7 @@ class Line(orm.BaseExpando):
   def get_fields(self):
     fields = super(Line, self.__class__).get_fields()  # Calling parent get_fields.
     for name, prop in self._properties.iteritems():
-      fields[name] = prop
+      fields[prop._code_name] = prop
     return fields
   
   def _get_property_for(self, p, indexed=True, depth=0):
@@ -800,15 +802,16 @@ class Entry(orm.BaseExpando):
     super(Entry, self).__init__(*args, **kwargs)
   
   def add_journal_fields(self, journal_key=None):
-    if not self._journal_fields_loaded:
+    if not self._journal_fields_loaded: # prevent from loading too many times
       if journal_key is None:
         journal_key = self.journal
       journal = journal_key.get()
       if journal is None:
-        raise Exception('Cannot find journal with key %s.' % journal_key.urlsafe())
+        raise Exception('Cannot find journal with key %r.' % journal_key)
       self._clone_properties()
       for name, prop in journal.entry_fields.iteritems():
-        self._properties[name] = copy.deepcopy(prop)
+        prop._code_name = name
+        self._properties[prop._name] = prop
         self.add_output(name)
       self._journal_fields_loaded = True
   
@@ -840,7 +843,7 @@ class Entry(orm.BaseExpando):
   def get_fields(self):
     fields = super(Entry, self.__class__).get_fields()  # Calling parent get_fields.
     for name, prop in self._properties.iteritems():
-      fields[name] = prop
+      fields[prop._code_name] = prop
     return fields
   
   @classmethod
@@ -848,7 +851,10 @@ class Entry(orm.BaseExpando):
     '''Internal helper to create an entity from an EntityProto protobuf.
     First 10 lines of code are copied from original from_pb in order to mimic
     construction of entity instance based on its function args. The rest of the code bellow is
-    used to forcefully attempt to attach properties from journal config.
+    used to forcefully attempt to attach properties from journal entry_fields.
+    
+    This is complicated because in order to properly deserialize from datastore, the deserialization
+    process can only begin after we have successfully retrieved entry_fields from journal.
     
     '''
     if not isinstance(pb, entity_pb.EntityProto):
