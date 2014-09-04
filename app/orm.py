@@ -2018,6 +2018,13 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
 
 class ReferenceStructuredPropertyValue(StructuredPropertyValue):
   
+  def has_future(self):
+    value = self.value
+    if isinstance(value, list):
+      if len(value):
+        value = value[0]
+    return isinstance(value, Future)  
+  
   def _read(self, read_arguments):
     target_field = self._property._target_field
     callback = self._property._callback
@@ -2037,10 +2044,11 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
       self._property_value = field.get_async()
   
   def _read_sync(self, read_arguments):
-    self._property_value = self._property_value.get_result()
+    if self.has_future():
+      self._property_value = self._property_value.get_result()
   
   def delete(self):
-    pass
+    self._property_value = None
   
   def duplicate(self):
     pass
@@ -2082,7 +2090,6 @@ class ReferencePropertyValue(PropertyValue):
   def read_async(self):
     if not self.has_value():
       self._read()
-    return self.value
   
   def read(self):
     self.read_async()
