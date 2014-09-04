@@ -32,7 +32,6 @@ from app import mem, util, settings
 # We set memory policy for google app engine ndb calls to False, and decide whether to use memcache or not per 'get' call.
 ctx = get_context()
 ctx.set_memcache_policy(False)
-# ctx.set_cache_policy(False)
 
 #############################################
 ########## System wide exceptions. ##########
@@ -1674,13 +1673,6 @@ class PropertyValue(object):
 
 class StructuredPropertyValue(PropertyValue):
   
-  def has_future(self):  # @todo Shall this be moved to exist only in entity reading classes?
-    value = self.value
-    if isinstance(value, list):
-      if len(value):
-        value = value[0]
-    return isinstance(value, Future)
-  
   def _set_parent(self, entities=None):
     '''This function should be called whenever a new entity is instanced / retrieved inside a root entity.
     It either accepts entities, or it will use self.value to iterate.
@@ -1723,14 +1715,11 @@ class StructuredPropertyValue(PropertyValue):
           raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), property_value_item))
     self._property_value = property_value
     self._set_parent()
-  
-  # @todo Can reading methods be deconstructed to be class proprietary?
+ 
   def _deep_read(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
     This solves the problem of hierarchy.
     '''
-    if read_arguments is None:
-      read_arguments = {}
     if self.has_value():
       entities = self._property_value
       if not self._property._repeated:
@@ -1743,8 +1732,6 @@ class StructuredPropertyValue(PropertyValue):
               value = getattr(entity, field_key)
               field_read_arguments = read_arguments.get(field_key, {})
               value.read_async(field_read_arguments)
-              if value.has_future():
-                futures.append((value, field_read_arguments))
       for future, field_read_arguments in futures:
         future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
   
@@ -1760,7 +1747,8 @@ class StructuredPropertyValue(PropertyValue):
   
   def read_async(self, read_arguments=None):
     '''Prepares read arguments for _read function. This function is called internaly trough ORM when possible,
-    however, it can be called publicly as well. Beware however, it will only perform the call once.
+    however, it can be called publicly as well. Beware however, it will only perform the call if no value is present
+    or if force_read in config is True.
     '''
     if read_arguments is None:
       read_arguments = {}
@@ -1773,18 +1761,15 @@ class StructuredPropertyValue(PropertyValue):
   
   def read(self, read_arguments=None):
     '''Reads the property values in sync mode. Calls read_async and _read_sync to complete full read.
-    Also callS _format_callback on the results, sets hierarchy and starts read recursion if possible.
+    Also calls _format_callback on the results, sets hierarchy and starts read recursion if possible.
     This function should always be called publicly if data is needed from the desired property.
     '''
     if read_arguments is None:
       read_arguments = {}
-    if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
-      util.merge_dicts(read_arguments, self._property._read_arguments)
     if self._property._readable:
       self.read_async(read_arguments) # first perform all in async mode
-      if self.has_future():
-        self._read_sync(read_arguments) # then immidiately perform in sync mode
-      format_callback = self._property._format_callback # @todo not sure if we are going to use this, because mostly we deal with real data. however format_callback can place some reading logic into it
+      self._read_sync(read_arguments) # then immidiately perform in sync mode
+      format_callback = self._property._format_callback
       if callable(format_callback):
         self._property_value = format_callback(self._entity, self._property_value)
       self._set_parent()
@@ -1808,10 +1793,10 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   
   @property
   def value(self):
-    self._read()  # Always enforce reads because of _BaseValue.
+    self._read()  # Always enforce reads because local structured property values get wrapped into _BaseValue before puts
     return super(LocalStructuredPropertyValue, self).value
   
-  def _read(self, read_arguments=None):
+  def _read(self, read_arguments=None): # implicitly default argument is set to None because we call it from def value too
     property_value = self._property._get_user_value(self._entity)
     property_value_copy = property_value
     if property_value_copy is not None:
@@ -1838,24 +1823,15 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           # We must mutate on the entity itself.
           if self._property_value._state == 'deleted':
             setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
-  
-  def post_update(self):
-    pass
-  
-  def _mark_for_delete(self, property_value, property_instance=None):
-    '''Mark each of property values for deletion by setting the '_state' to 'deleted'!
-    '''
-    if not property_instance:
-      property_instance = self._property
-    if not property_instance._repeated:
-      property_value = [property_value]
-    for value in property_value:
-      value._state = 'deleted'
-  
+ 
   def delete(self):
     if self._property._deleteable:
       self.read()
-      self._mark_for_delete(self._property_value)
+      property_value = self._property_value
+      if not self._property._repeated:
+        property_value = [self._property_value]
+      for value in property_value:
+        value._state = 'deleted'
   
   def duplicate(self):
     self.read()
@@ -1870,6 +1846,13 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
 
 
 class RemoteStructuredPropertyValue(StructuredPropertyValue):
+  
+  def has_future(self):
+    value = self.value
+    if isinstance(value, list):
+      if len(value):
+        value = value[0]
+    return isinstance(value, Future)  
   
   def _read_single(self, read_arguments):
     property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
@@ -1921,28 +1904,29 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   def _read_sync(self, read_arguments):
     '''Will perform all needed operations on how to retrieve all values from Future(s).
     '''
-    if self._property._repeated:
-      property_value = []
-      if isinstance(self._property_value, list): # this is for get_multi_async, fetch_async()
-        get_async_results(self._property_value)
-      elif isinstance(self._property_value, Future): # this is for .fetch_page_async()
-        property_value = self._property_value.get_result()
-        if isinstance(property_value, tuple):
-          cursor = property_value[1]
-          if cursor:
-            cursor = cursor.urlsafe()
-          util.remove_value(property_value[0])
-          self._property_value = property_value[0]
-          self._property_value_options['cursor'] = cursor
-          self._property_value_options['more'] = property_value[2]
-        else:
-          self._property_value = property_value
-    else: # this is for key.get_async()
-      result = self._property_value.get_result()
-      if result is None:
-        remote_single_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
-        result = self._property.get_modelclass()(key=remote_single_key)
-      self._property_value = result
+    if self.has_future():
+      if self._property._repeated:
+        property_value = []
+        if isinstance(self._property_value, list): # this is for get_multi_async, fetch_async()
+          get_async_results(self._property_value)
+        elif isinstance(self._property_value, Future): # this is for .fetch_page_async()
+          property_value = self._property_value.get_result()
+          if isinstance(property_value, tuple):
+            cursor = property_value[1]
+            if cursor:
+              cursor = cursor.urlsafe()
+            util.remove_value(property_value[0])
+            self._property_value = property_value[0]
+            self._property_value_options['cursor'] = cursor
+            self._property_value_options['more'] = property_value[2]
+          else:
+            self._property_value = property_value
+      else: # this is for key.get_async()
+        result = self._property_value.get_result()
+        if result is None:
+          remote_single_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+          result = self._property.get_modelclass()(key=remote_single_key)
+        self._property_value = result
   
   def _post_update_single(self):
     if not hasattr(self._property_value, 'prepare'):
@@ -1971,9 +1955,6 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       self._property_value.remove(delete_entity)
     delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
-  
-  def pre_update(self):
-    pass
   
   def post_update(self):
     if self._property._updateable:
@@ -2057,12 +2038,6 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
   def _read_sync(self, read_arguments):
     self._property_value = self._property_value.get_result()
   
-  def pre_update(self):
-    pass
-  
-  def post_update(self):
-    pass
-  
   def delete(self):
     pass
   
@@ -2072,10 +2047,17 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
 
 class ReferencePropertyValue(PropertyValue):
   
+  def has_future(self):
+    value = self.value
+    if isinstance(value, list):
+      if len(value):
+        value = value[0]
+    return isinstance(value, Future)    
+  
   def set(self, value):
     if isinstance(value, Key):
       self._property_value = value.get_async()
-    elif isinstance(value, Model):
+    else:
       self._property_value = value
   
   def _read(self):
@@ -2269,7 +2251,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._updateable = kwargs.pop('updateable', self._updateable)
     self._deleteable = kwargs.pop('deleteable', self._deleteable)
     self._autoload = kwargs.pop('autoload', self._autoload)
-    self._format_callback = kwargs.pop('format_callback', self._format_callback) # @todo not sure if we are going to use this?
+    self._format_callback = kwargs.pop('format_callback', self._format_callback)
     self._read_arguments = kwargs.pop('read_arguments', {})
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
