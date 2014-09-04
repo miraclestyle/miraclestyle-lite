@@ -2045,7 +2045,10 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
   
   def _read_sync(self, read_arguments):
     if self.has_future():
-      self._property_value = self._property_value.get_result()
+      if isinstance(self._property_value, list):
+        self._property_value = map(lambda x: x.get_result(), self._property_value)
+      else:
+        self._property_value = self._property_value.get_result()
   
   def delete(self):
     self._property_value = None
