@@ -598,8 +598,8 @@ class _BaseModel(object):
     if entity.key and entity.key.id():
       for field, field_instance in entity.get_fields().iteritems():
         if isinstance(field_instance, SuperReferenceProperty) and field_instance._autoload:
-          manager = field_instance._get_value(entity, internal=True)
-          manager.read_async()
+          value_instance = field_instance._get_value(entity, internal=True)
+          value_instance.read_async()
   
   @classmethod
   def _post_get_hook(cls, key, future):
@@ -1624,33 +1624,27 @@ class BasePolyExpando(BasePoly, BaseExpando):
   '''Base class for all 'polymodel.PolyModelExpando' entities.'''
 
 
-#################################################
-########## Superior Property Managers. ##########
-#################################################
-
-# Repository of all managers available.
-PROPERTY_MANAGERS = []
 #########################################################
 ########## Superior properties implementation! ##########
 #########################################################
 
 
+PROPERTY_VALUES = []
+
+
 class PropertyValue(object):
   
-  def __init__(self, property_instance, storage_entity, **kwds):
+  def __init__(self, property_instance, entity, **kwds):
     self._property = property_instance
-    self._entity = storage_entity  # Storage entity of the property.
+    self._entity = entity
     self._kwds = kwds
+    self._property_value_options = {}
   
   def __repr__(self):
     return '%s(entity=instance of %s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__,
                                                                                    self._entity.__class__.__name__,
                                                                                    self._property.__class__.__name__,
                                                                                    self.value, self._kwds)
-  
-  @property
-  def value(self):
-    return getattr(self, '_property_value', None)
   
   @property
   def property_name(self):
@@ -1660,33 +1654,33 @@ class PropertyValue(object):
       name = self._property._name
     return name
   
+  @property
+  def value_options(self):
+    ''''_property_value_options' is used for storing and returning information that
+    is related to property value(s). For exmaple: 'more' or 'cursor' parameter in querying.
+    '''
+    return self._property_value_options
+  
   def has_value(self):
     return hasattr(self, '_property_value')
   
-  def has_future(self):
+  @property
+  def value(self):
+    return getattr(self, '_property_value', None)
+  
+  def get_output(self):
+    return self.value
+
+
+class StructuredPropertyValue(PropertyValue):
+  
+  def has_future(self):  # @todo Shall this be moved to exist only in entity reading classes?
     value = self.value
     if isinstance(value, list):
       if len(value):
         value = value[0]
     return isinstance(value, Future)
   
-  def get_output(self):
-    return self.value
-
-class StructuredPropertyValue(PropertyValue):
-  
-  def __init__(self, property_instance, storage_entity, **kwds):
-    super(StructuredPropertyValue, self).__init__(property_instance, storage_entity, **kwds)
-    self._property_value_options = {}  
-     
-  @property
-  def value_options(self):
-    ''''_property_value_options' is used for storing and returning information that
-    is related to property value(s). For exmaple: 'more' or 'cursor' parameter in querying.
-    
-    '''
-    return self._property_value_options
-   
   def _set_parent(self, entities=None):
     '''This function should be called whenever a new entity is instanced / retrieved inside a root entity.
     It either accepts entities, or it will use self.value to iterate.
@@ -1697,7 +1691,6 @@ class StructuredPropertyValue(PropertyValue):
          product_instance.contents[0]._parent = product_instance
          ....
     So based on that, you can always reach for the top by simply finding which ._parent is None.
-    
     '''
     as_list = False
     if entities is None:
@@ -1716,11 +1709,10 @@ class StructuredPropertyValue(PropertyValue):
         if entities._parent is None:
           entities._parent = self._entity
     return entities
-   
+  
   def set(self, property_value):
     '''We always verify that the property_value is instance
     of the model that is specified in the property configuration.
-    
     '''
     if property_value is not None:
       property_value_copy = property_value
@@ -1731,11 +1723,11 @@ class StructuredPropertyValue(PropertyValue):
           raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), property_value_item))
     self._property_value = property_value
     self._set_parent()
-    
+  
+  # @todo Can reading methods be deconstructed to be class proprietary?
   def _deep_read(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
     This solves the problem of hierarchy.
-    
     '''
     if read_arguments is None:
       read_arguments = {}
@@ -1755,12 +1747,17 @@ class StructuredPropertyValue(PropertyValue):
                 futures.append((value, field_read_arguments))
       for future, field_read_arguments in futures:
         future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
-        
+  
   def _read_sync(self, read_arguments):
     '''Read sync should never be called directly, its primary use is for .read()
     the self._property_value in this method will always be list of futures, or a future.
     '''
-         
+  
+  def _read(self, read_arguments):
+    '''Purpose of _read is to perform proper logic which will populate _property_value with futures or real values
+    depending on the nature of the property.
+    '''
+  
   def read_async(self, read_arguments=None):
     '''Prepares read arguments for _read function. This function is called internaly trough ORM when possible,
     however, it can be called publicly as well. Beware however, it will only perform the call once.
@@ -1773,12 +1770,7 @@ class StructuredPropertyValue(PropertyValue):
     if self._property._readable:
       if (not self.has_value()) or config.get('force_read'): # it will not attempt to load if there's already value present.
         self._read(read_arguments)
-    
-  def _read(self, read_arguments):
-    '''Purpose of _read is to perform proper logic which will populate _property_value with futures or real values
-    depending on the nature of the property.
-    '''
-    
+  
   def read(self, read_arguments=None):
     '''Reads the property values in sync mode. Calls read_async and _read_sync to complete full read.
     Also callS _format_callback on the results, sets hierarchy and starts read recursion if possible.
@@ -1798,7 +1790,7 @@ class StructuredPropertyValue(PropertyValue):
       self._set_parent()
       self._deep_read(read_arguments)
       return self.value
-     
+  
   def add(self, entities):
     '''Primarly used to extend the values of the property, or override change it if its used on non repeated property.
     '''
@@ -1810,29 +1802,16 @@ class StructuredPropertyValue(PropertyValue):
       self._property_value = entities
     # Always trigger setattr on the property itself
     setattr(self._entity, self.property_name, self._property_value)
-    
-  def _mark_for_delete(self, property_value, property_instance=None):
-    '''Mark each of property values for deletion by setting the '_state' to 'deleted'!
-    '''
-    if not property_instance:
-      property_instance = self._property
-    if not property_instance._repeated:
-      property_value = [property_value]
-    for value in property_value:
-      value._state = 'deleted'
 
 
 class LocalStructuredPropertyValue(StructuredPropertyValue):
- 
+  
   @property
   def value(self):
-    self._read() # always enforce reads because of _BaseValue. This is just the case with local structured 
+    self._read()  # Always enforce reads because of _BaseValue.
     return super(LocalStructuredPropertyValue, self).value
- 
+  
   def _read(self, read_arguments=None):
-    '''Every structured/local structured value requires a sequence generated upon reading
-    
-    '''
     property_value = self._property._get_user_value(self._entity)
     property_value_copy = property_value
     if property_value_copy is not None:
@@ -1844,11 +1823,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     else:
       if self._property._repeated:
         self._property_value = []
- 
+  
   def pre_update(self):
-    '''Process local structures.
-    
-    '''
     if self._property._updateable:
       if self.has_value():
         if self._property._repeated:
@@ -1865,7 +1841,17 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   
   def post_update(self):
     pass
-   
+  
+  def _mark_for_delete(self, property_value, property_instance=None):
+    '''Mark each of property values for deletion by setting the '_state' to 'deleted'!
+    '''
+    if not property_instance:
+      property_instance = self._property
+    if not property_instance._repeated:
+      property_value = [property_value]
+    for value in property_value:
+      value._state = 'deleted'
+  
   def delete(self):
     if self._property._deleteable:
       self.read()
@@ -1886,10 +1872,6 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
 class RemoteStructuredPropertyValue(StructuredPropertyValue):
   
   def _read_single(self, read_arguments):
-    '''Remote single storage always follows the same pattern,
-    it composes its own key by using its kind, ancestor string id, and ancestor key as parent!
-    
-    '''
     property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
     self._property_value = property_value_key.get_async()
   
@@ -1929,15 +1911,15 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       cursor = None
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
-    
+  
   def _read(self, read_arguments):
     if self._property._repeated:
       self._read_repeated(read_arguments)
     else:
       self._read_single(read_arguments)
-      
+  
   def _read_sync(self, read_arguments):
-    '''Will perform all needed operations on how to retrieve all values from Future(s)
+    '''Will perform all needed operations on how to retrieve all values from Future(s).
     '''
     if self._property._repeated:
       property_value = []
@@ -1963,9 +1945,6 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       self._property_value = result
   
   def _post_update_single(self):
-    '''Ensure that every entity has the entity ancestor by enforcing it.
-    
-    '''
     if not hasattr(self._property_value, 'prepare'):
       if self._property_value.key_parent != self._entity.key:
         key_id = self._property_value.key_id
@@ -1978,9 +1957,6 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       self._property_value.put()
   
   def _post_update_repeated(self):
-    '''Ensure that every entity has the entity ancestor by enforcing it.
-    
-    '''
     delete_entities = []
     for entity in self._property_value:
       if not hasattr(entity, 'prepare'):
@@ -2028,9 +2004,6 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         break
   
   def delete(self):
-    '''Calls storage type specific delete function, in order to mark property values for deletion.
-    
-    '''
     if self._property._deleteable:
       if not self._property._repeated:
         self._delete_single()
@@ -2044,7 +2017,6 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   def _duplicate_repeated(self):
     '''Fetch ALL entities that belong to this entity.
     On every entity called, .duplicate() function will be called in order to ensure complete recursion.
-    
     '''
     entities = []
     _entities = self._property.get_modelclass().query(ancestor=self._entity.key).fetch()
@@ -2055,18 +2027,15 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     self._property_value = entities
   
   def duplicate(self):
-    '''Calls storage type specific duplicate function.
-    
-    '''
     if not self._property._repeated:
       self._duplicate_single()
     else:
       self._duplicate_repeated()
     self._set_parent()
 
-     
+
 class ReferenceStructuredPropertyValue(StructuredPropertyValue):
- 
+  
   def _read(self, read_arguments):
     target_field = self._property._target_field
     callback = self._property._callback
@@ -2084,23 +2053,23 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
       if self._property.get_modelclass().get_kind() != field.kind():
         raise PropertyError('Kind must be %s, got %s' % (self._property.get_modelclass().get_kind(), field.kind()))
       self._property_value = field.get_async()
-      
+  
   def _read_sync(self, read_arguments):
     self._property_value = self._property_value.get_result()
-      
+  
   def pre_update(self):
     pass
   
   def post_update(self):
     pass
-   
+  
   def delete(self):
     pass
   
   def duplicate(self):
     pass
-  
-  
+
+
 class ReferencePropertyValue(PropertyValue):
   
   def set(self, value):
@@ -2131,7 +2100,6 @@ class ReferencePropertyValue(PropertyValue):
     if not self.has_value():
       self._read()
     return self.value
-      
   
   def read(self):
     self.read_async()
@@ -2149,13 +2117,14 @@ class ReferencePropertyValue(PropertyValue):
   
   def delete(self):
     self._property_value = None
- 
-    
-PROPERTY_MANAGERS.extend((LocalStructuredPropertyValue, RemoteStructuredPropertyValue, ReferencePropertyValue))
+
+
+PROPERTY_VALUES.extend((LocalStructuredPropertyValue, RemoteStructuredPropertyValue, ReferencePropertyValue))
+
 
 class _BaseProperty(object):
-  '''Base property class for all superior properties.'''
-  
+  '''Base property class for all superior properties.
+  '''
   _max_size = None
   _value_filters = None
   _searchable = None
@@ -2171,7 +2140,6 @@ class _BaseProperty(object):
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
-    
     '''
     choices = self._choices
     if choices:
@@ -2281,32 +2249,28 @@ class _BaseProperty(object):
     In order to allow proper loading of modelclass for structured properties for example, we must wait for all python
     classes to initilize into _kind_map.
     Only then we will be in able to pick out the model by its kind from _kind_map registry.
-    
     '''
     pass
 
 
 class _BaseStructuredProperty(_BaseProperty):
   '''Base class for structured property.
-  
   '''
-  _managerclass = LocalStructuredPropertyValue
   _readable = True
   _updateable = True
   _deleteable = True
   _autoload = True
   _format_callback = None
+  _value_class = LocalStructuredPropertyValue
   
   def __init__(self, *args, **kwargs):
     args = list(args)
     self._readable = kwargs.pop('readable', self._readable)
     self._updateable = kwargs.pop('updateable', self._updateable)
     self._deleteable = kwargs.pop('deleteable', self._deleteable)
-    self._managerclass = kwargs.pop('managerclass', self._managerclass)
     self._autoload = kwargs.pop('autoload', self._autoload)
     self._format_callback = kwargs.pop('format_callback', self._format_callback) # @todo not sure if we are going to use this?
     self._read_arguments = kwargs.pop('read_arguments', {})
-    self._managerclass = kwargs.pop('managerclass', self._managerclass)
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
@@ -2320,7 +2284,6 @@ class _BaseStructuredProperty(_BaseProperty):
     self._modelclass in our code.
     This function was mainly invented for purpose of structured and multi structured property. See its usage
     trough the code for reference.
-    
     '''
     if isinstance(self._modelclass, basestring):
       # model must be scanned when it reaches this call
@@ -2334,12 +2297,10 @@ class _BaseStructuredProperty(_BaseProperty):
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
-    
     '''
     dic = super(_BaseStructuredProperty, self).get_meta()
     dic['modelclass'] = self.get_modelclass().get_fields()
     dic['modelclass_kind'] = self.get_modelclass().get_kind()
-    dic['managerclass'] = self._managerclass.__name__
     other = ['_autoload', '_readable', '_updateable', '_deleteable', '_read_arguments']
     for o in other:
       dic[o[1:]] = getattr(self, o)
@@ -2352,12 +2313,15 @@ class _BaseStructuredProperty(_BaseProperty):
       if model is None:
         raise PropertyError('invalid_kind')
       kwds['modelclass'] = model
+    '''
+    What to do with this?
     if 'managerclass' not in skip_kwds:
       possible_managers = dict((manager.__name__, manager) for manager in PROPERTY_MANAGERS)
       if kwds['managerclass'] not in possible_managers:
         raise PropertyError('invalid_manager_supplied')
       else:
         kwds['managerclass'] = possible_managers.get(kwds['managerclass'])
+    '''
   
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
@@ -2385,12 +2349,12 @@ class _BaseStructuredProperty(_BaseProperty):
   
   def _set_value(self, entity, value):
     # __set__
-    manager = self._get_value(entity)
+    value_instance = self._get_value(entity)
     current_values = value
     if self._repeated:
-      if manager.has_value():
-        if manager.value:
-          current_values = manager.value
+      if value_instance.has_value():
+        if value_instance.value:
+          current_values = value_instance.value
         else:
           current_values = []
         if value:
@@ -2411,8 +2375,8 @@ class _BaseStructuredProperty(_BaseProperty):
           val.generate_unique_key()
     elif not self._repeated:
       generate = False
-      if manager.has_value():
-        current_values = manager.value
+      if value_instance.has_value():
+        current_values = value_instance.value
         if current_values and current_values.key: # ensure that we will always have a key
           value.key = current_values.key
         else:
@@ -2422,25 +2386,25 @@ class _BaseStructuredProperty(_BaseProperty):
         generate = True
       if generate and current_values:
         current_values.generate_unique_key()
-    manager.set(current_values)
+    value_instance.set(current_values)
     return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
   
   def _delete_value(self, entity):
     # __delete__
-    manager = self._get_value(entity)
-    manager.delete()
+    value_instance = self._get_value(entity)
+    value_instance.delete()
     return super(_BaseStructuredProperty, self)._delete_value(entity)
   
   def _get_value(self, entity):
     # __get__
-    manager_name = '%s_manager' % self._name
-    if manager_name in entity._values:
-      manager = entity._values[manager_name]
+    value_name = '%s_value' % self._name
+    if value_name in entity._values:
+      value_instance = entity._values[value_name]
     else:
-      manager = self._managerclass(property_instance=self, storage_entity=entity)
-      entity._values[manager_name] = manager
+      value_instance = self._value_class(property_instance=self, entity=entity)
+      entity._values[value_name] = value_instance
     super(_BaseStructuredProperty, self)._get_value(entity)
-    return manager
+    return value_instance
   
   def _structured_property_field_format(self, fields, values):
     _state = values.get('_state')
@@ -2492,15 +2456,14 @@ class SuperComputedProperty(_BaseProperty, ComputedProperty):
 class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
   '''This property is not meant to be used as property storage. It should be always defined as virtual property.
   E.g. the property that never gets saved to the datastore.
-  
   '''
-  _managerclass = RemoteStructuredPropertyValue # default manager
   _indexed = False
   _repeated = False
   _readable = True
   _updateable = True
   _deleteable = True
   _autoload = False
+  _value_class = RemoteStructuredPropertyValue
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     if isinstance(modelclass, basestring):
@@ -2519,34 +2482,25 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
     value_instance = self._get_value(entity)
     value_instance.set(value)
   
-  def _get_value(self, entity):
-    # __get__
-    value_name = '%s_value' % self._name
-    if value_name in entity._values:
-      return entity._values[value_name]
-    value_instance = self._managerclass(property_instance=self, storage_entity=entity)
-    entity._values[value_name] = value_instance
-    return value_instance
-  
   def _prepare_for_put(self, entity):
     self._get_value(entity)  # For its side effects.
-    
-    
+
+
 class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
-  '''Reference structured is the same as remote, except it uses different default manager class and its default flags for
+  '''Reference structured is the same as remote, except it uses different default value class and its default flags for
   updating, deleting are always false.
   
   '''
-  _managerclass = ReferenceStructuredPropertyValue # default manager
- 
+  _value_class = ReferenceStructuredPropertyValue
+  
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
     self._target_field = kwargs.pop('target_field', None)
     super(SuperReferenceStructuredProperty, self).__init__(*args, **kwargs)
     self._updateable = False
     self._deleteable = False
-    
-    
+
+
 class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
   
   def __init__(self, *args, **kwargs):
@@ -2556,8 +2510,7 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
   
-  def _serialize(self, entity, pb, prefix='', parent_repeated=False,
-                   projection=None):
+  def _serialize(self, entity, pb, prefix='', parent_repeated=False, projection=None):
     '''Internal helper to serialize this property to a protocol buffer.
     Subclasses may override this method.
     Args:
@@ -2629,7 +2582,6 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     => Image
     In order to support different instances in the repeated list we would also need to store KIND and implement
     additional logic that will load proper model based on protobuff.
-    
     '''
     args = list(args)
     if isinstance(args[0], (tuple, list)):
@@ -3377,16 +3329,14 @@ class SuperReferenceProperty(SuperKeyProperty):
   >>> entity.user.email
   Beware with usage of this property. It will automatically start RPC calls in async mode as soon as the
   from_pb and _post_get callback are executed unless autoload is set to False.
-  
-  Main difference between SuperReferenceProperty and SuperReferenceStructuredProperty is that 
-  it does not have structured field permissions, ergo only permissions it has is on itself and 
+  Main difference between SuperReferenceProperty and SuperReferenceStructuredProperty is that
+  it does not have structured field permissions, ergo only permissions it has is on itself and
   it will load when _from_pb, _post_get_hook are executed, so its best usage is seen when retrieving multiple entities
   from datastore.
-  
-  Plainly said, it serves as automatic custom getter from the database that 
+  Plainly said, it serves as automatic custom getter from the database that
   can retreive whatever it wants and how it wants. @see class Record for reference.
-  
   '''
+  _value_class = ReferencePropertyValue
   
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
@@ -3402,8 +3352,8 @@ class SuperReferenceProperty(SuperKeyProperty):
   
   def _set_value(self, entity, value):
     # __set__
-    manager = self._get_value(entity, internal=True)
-    manager.set(value)
+    value_instance = self._get_value(entity, internal=True)
+    value_instance.set(value)
     if not isinstance(value, Key) and hasattr(value, 'key'):
       value = value.key
     if self._store_key:
@@ -3411,25 +3361,25 @@ class SuperReferenceProperty(SuperKeyProperty):
   
   def _delete_value(self, entity):
     # __delete__
-    manager = self._get_value(entity, internal=True)
-    manager.delete()
+    value_instance = self._get_value(entity, internal=True)
+    value_instance.delete()
     if self._store_key:
       return super(SuperReferenceProperty, self)._delete_value(entity)
   
   def _get_value(self, entity, internal=None):
     # __get__
-    manager_name = '%s_value' % self._name
-    if manager_name in entity._values:
-      manager = entity._values[manager_name]
+    value_name = '%s_value' % self._name
+    if value_name in entity._values:
+      value_instance = entity._values[value_name]
     else:
-      manager = ReferencePropertyValue(property_instance=self, storage_entity=entity)
-      entity._values[manager_name] = manager
-    if internal:  # If internal is true, always retrieve manager.
-      return manager
-    if not manager.has_value():
-      return manager
+      value_instance = self._value_class(property_instance=self, storage_entity=entity)
+      entity._values[value_name] = value_instance
+    if internal:
+      return value_instance
+    if not value_instance.has_value():
+      return value_instance
     else:
-      return manager.read()
+      return value_instance.read()
   
   def get_output(self):
     dic = super(SuperReferenceProperty, self).get_meta()
@@ -3441,7 +3391,6 @@ class SuperReferenceProperty(SuperKeyProperty):
 
 class SuperRecordProperty(SuperRemoteStructuredProperty):
   '''Usage: '_records': SuperRecordProperty(Domain or '6')
-  
   '''
   def __init__(self, *args, **kwargs):
     args = list(args)
