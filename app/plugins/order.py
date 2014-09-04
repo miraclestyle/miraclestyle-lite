@@ -213,14 +213,15 @@ class CartInit(orm.BaseModel):
   def run(self, context):
     Group = context.models['48']
     Entry = context.models['50']
-    entry = Entry.query(Entry.journal == context.model.journal,
-                        Entry.party == context.user.key,
-                        Entry.state.IN(['cart', 'checkout', 'processing']),
+    entry_fields = context.model.get_fields()
+    # this is only way to query properties that do not exist
+    entry = Entry.query(entry_fields['journal'] == context.model.journal,
+                        entry_fields['party'] == context.user.key,
+                        entry_fields['state'].IN(['cart', 'checkout', 'processing']),
                         namespace=context.model.journal._namespace).get()
     if entry is None:
       context._group = Group(namespace=context.model.journal._namespace)
-      entry = Entry(namespace=context.model.journal._namespace)
-      entry.journal = context.model.journal
+      entry = Entry(namespace=context.model.journal._namespace, journal=context.model.journal)
       # entry.company_address = # Source of company address required!
       entry.state = 'cart'
       entry.date = datetime.datetime.now()
@@ -267,7 +268,8 @@ class ProductToLine(orm.BaseModel):
     variant_signature = context.input.get('variant_signature')
     line_exists = False
     for line in entry._lines:
-      if hasattr(line, 'product_reference') and line.product_reference == product_key and line.product_variant_signature == variant_signature:
+      if hasattr(line, 'product_reference') and line.product_reference == product_key \
+      and line.product_variant_signature == variant_signature:
         line._state = 'modified'  # @todo Not sure if this is ok!?
         line.quantity = line.quantity + format_value('1', line.product_uom)
         line_exists = True
@@ -721,15 +723,15 @@ class Carrier(orm.BaseModel):
                                        'id': self.key.urlsafe()})
   
   def calculate_lines(self, valid_lines, entry):
-    weight_uom = uom.get_uom(uom.Unit.build_key('kg'))  # @todo Where is get_uom function? We lost it somewhere! Also, is the key unique without measurement filtering?
-    volume_uom = uom.get_uom(uom.Unit.build_key('m3'))  # @todo Where is get_uom function? We lost it somewhere! Also, is the key unique without measurement filtering?
+    weight_uom = uom.Unit.build_key('kilogram').get()
+    volume_uom = uom.Unit.build_key('cubic_meter').get()
     weight = format_value('0', weight_uom)
     volume = format_value('0', volume_uom)
     for line in entry._lines:
-      line_weight = line._weight[0]
-      line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
-      line_volume = line._volume[0]
-      line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
+      line_weight = line._weight
+      line_weight_uom = line._weight_uom.get()
+      line_volume = line._volume
+      line_volume_uom = line._volume_uom.get()
       weight += convert_value(line_weight, line_weight_uom, weight_uom)
       volume += convert_value(line_volume, line_volume_uom, volume_uom)
       carrier_prices = []
@@ -737,8 +739,7 @@ class Carrier(orm.BaseModel):
         line_prices = []
         for rule in carrier_line.rules:
           condition = rule.condition
-          # @todo This regex needs more work
-          condition = self.format_value(condition)
+          condition = self.format_value(condition) # @todo this regex needs to go out of here
           price = rule.price
           if safe_eval(condition, {'weight': weight, 'volume': volume, 'price': price}):
             price = self.format_value(price)
@@ -821,10 +822,9 @@ class TransactionWrite(orm.BaseModel):
   
   def run(self, context):
     context._group.write()
-    if len(entities):
-      for entry in context._group._entries:
-        entry.set_key(None, parent=context._group.key)
-      orm.write_multi(context._group._entries)
+    for entry in context._group._entries:
+      entry.set_key(None, parent=context._group.key)
+    orm.write_multi(context._group._entries)
 
 
 # This is system plugin, which means end user can not use it!
@@ -843,7 +843,7 @@ class CallbackNotify(orm.BaseModel):
 # OLD CODE #
 
 
-class PayPalInit(transaction.Plugin):
+class PayPalInit(orm.BaseModel):
   
   # user plugin, saved in datastore
   

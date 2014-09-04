@@ -281,21 +281,23 @@ class DomainSetup(Setup):
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
-    Journal = self.context.models['49']
-    Action = self.context.models['84']
-    PluginGroup = self.context.models['85']
-    CartInit = self.context.models['99']
-    PayPalPayment = self.context.models['108']
-    LinesInit = self.context.models['100']
-    AddressRule = self.context.models['107']
-    ProductToLine = self.context.models['101']
-    ProductSubtotalCalculate = self.context.models['104']
-    TaxSubtotalCalculate = self.context.models['110']
-    OrderTotalCalculate = self.context.models['105']
-    RulePrepare = self.context.models['93']
-    TransactionWrite = self.context.models['114']
-    CallbackNotify = self.context.models['115']
-    CallbackExec = self.context.models['97']
+    models = self.context.models
+    Journal = models['49']
+    Action = models['84']
+    PluginGroup = models['85']
+    CartInit = models['99']
+    PayPalPayment = models['108']
+    LinesInit = models['100']
+    AddressRule = models['107']
+    ProductToLine = models['101']
+    ProductSubtotalCalculate = models['104']
+    TaxSubtotalCalculate = models['110']
+    OrderTotalCalculate = models['105']
+    RulePrepare = models['93']
+    TransactionWrite = models['114']
+    CallbackNotify = models['115']
+    CallbackExec = models['97']
+    Unit = models['19']
     entity = Journal(namespace=namespace, id='system_sales_order')
     entity.name = 'Sales Order Journal'
     entity.state = 'active'
@@ -321,11 +323,11 @@ class DomainSetup(Setup):
                           'product_uom': orm.SuperLocalStructuredProperty('19', '13', required=True),
                           'quantity': orm.SuperDecimalProperty('14', required=True, indexed=False),
                           'discount': orm.SuperDecimalProperty('15', required=True, indexed=False),
-                          'taxes': orm.SuperLocalStructuredProperty(order.LineTax, '16', required=True),
+                          'taxes': orm.SuperLocalStructuredProperty('116', '16', required=True),
                           'subtotal': orm.SuperDecimalProperty('17', required=True, indexed=False),
                           'discount_subtotal': orm.SuperDecimalProperty('18', required=True, indexed=False)}
     entity._use_rule_engine = False
-    entity.write()  # @todo Don't know how else to obtain entity.key which is needed for PluginGroup subscriptions?
+    entity.write()
     entity._transaction_actions = [
       Action(
         key=Action.build_key('add_to_cart', parent=entity.key),
@@ -360,7 +362,7 @@ class DomainSetup(Setup):
           Action.build_key('add_to_cart', parent=entity.key)
           ],
         plugins=[
-          PayPalPayment(currency=uom.Unit.build_key('usd'),
+          PayPalPayment(currency=Unit.build_key('usd'),
                         reciever_email='paypal_email@example.com',
                         business='paypal_email@example.com')
           ]

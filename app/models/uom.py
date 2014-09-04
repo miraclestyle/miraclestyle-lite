@@ -129,36 +129,3 @@ class Unit(orm.BaseExpando):
         ]
       )
     ]
-
-
-class UOM(orm.BaseExpando):
-  
-  _kind = 72  # @todo Perhaps this can be 18 since Measurement is gone!?
-  
-  _use_rule_engine = False
-  
-  measurement = orm.SuperStringProperty('1', required=True, indexed=False)
-  name = orm.SuperStringProperty('2', required=True, indexed=False)
-  symbol = orm.SuperStringProperty('3', required=True, indexed=False)
-  rate = orm.SuperDecimalProperty('4', required=True, indexed=False)
-  factor = orm.SuperDecimalProperty('5', required=True, indexed=False)
-  rounding = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  digits = orm.SuperIntegerProperty('7', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'code': orm.SuperStringProperty('8', required=True),
-    'numeric_code': orm.SuperStringProperty('9'),
-    'grouping': orm.SuperIntegerProperty('10', repeated=True),
-    'decimal_separator': orm.SuperStringProperty('11', required=True),
-    'thousands_separator': orm.SuperStringProperty('12'),
-    'positive_sign_position': orm.SuperIntegerProperty('13', required=True),
-    'negative_sign_position': orm.SuperIntegerProperty('14', required=True),
-    'positive_sign': orm.SuperStringProperty('15'),
-    'negative_sign': orm.SuperStringProperty('16'),
-    'positive_currency_symbol_precedes': orm.SuperBooleanProperty('17', default=True),
-    'negative_currency_symbol_precedes': orm.SuperBooleanProperty('18', default=True),
-    'positive_separate_by_space': orm.SuperBooleanProperty('19', default=True),
-    'negative_separate_by_space': orm.SuperBooleanProperty('20', default=True)
-    }

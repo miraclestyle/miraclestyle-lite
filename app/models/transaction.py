@@ -683,26 +683,28 @@ class Line(orm.BaseExpando):
     '''
     entry_key = kwargs.get('parent')
     complete_key = kwargs.get('key')  # Also observe the complete key instances.
-    if entry_key is not None:
-      self.add_journal_fields(entry_key)
+    journal_key = kwargs.pop('journal', None) # if journal key is provided use it
+    if journal_key is not None:
+      self.add_journal_fields(journal_key)
+    elif entry_key is not None:
+      self.add_journal_fields(entry_key.entity.journal)
     elif complete_key is not None:
-      self.add_journal_fields(complete_key.parent())
+      self.add_journal_fields(complete_key.parent_entity.journal)
     # we intentionally call this code before __init__ due __init__ ability to deepcopy the entity and other things beside that.
     super(Line, self).__init__(*args, **kwargs)
   
-  def add_journal_fields(self, entry_key=None):
-    if entry_key is None:
-      journal_key = self.parent_entity.journal
-    else:
-      journal_key = entry_key.entity.journal
-    journal = journal_key.get()
-    if journal is None:
-      raise Exception('Cannot find journal with key %s.' % journal_key.urlsafe())
-    self._clone_properties()
-    for name, prop in journal.line_fields.iteritems():
-      self._properties[name] = copy.deepcopy(prop)
-      self.add_output(name)
-    self._journal_fields_loaded = True
+  def add_journal_fields(self, journal_key=None):
+    if not self._journal_fields_loaded:
+      if not journal_key and self.key:
+        journal_key = self.parent_entity.journal
+      journal = journal_key.get()
+      if journal is None:
+        raise Exception('Cannot find journal with key %s.' % journal_key.urlsafe())
+      self._clone_properties()
+      for name, prop in journal.line_fields.iteritems():
+        self._properties[name] = copy.deepcopy(prop)
+        self.add_output(name)
+      self._journal_fields_loaded = True
   
   def get_kind(self):
     return '%s_%s' % (self._get_kind(), self.journal.id())
@@ -793,20 +795,22 @@ class Entry(orm.BaseExpando):
     if journal is None and (_model_schema is not None and namespace is not None):
       journal = Journal.build_key(_model_schema, namespace=namespace)
       kwargs['journal'] = journal
-    self.add_journal_fields(journal)  # @todo If journal is None and so are _model_schema and/or namespace, what goes on here?
+    if journal:
+      self.add_journal_fields(journal)
     super(Entry, self).__init__(*args, **kwargs)
   
   def add_journal_fields(self, journal_key=None):
-    if journal_key is None:
-      journal_key = self.journal
-    journal = journal_key.get()
-    if journal is None:
-      raise Exception('Cannot find journal with key %s.' % journal_key.urlsafe())
-    self._clone_properties()
-    for name, prop in journal.entry_fields.iteritems():
-      self._properties[name] = copy.deepcopy(prop)
-      self.add_output(name)
-    self._journal_fields_loaded = True
+    if not self._journal_fields_loaded:
+      if journal_key is None:
+        journal_key = self.journal
+      journal = journal_key.get()
+      if journal is None:
+        raise Exception('Cannot find journal with key %s.' % journal_key.urlsafe())
+      self._clone_properties()
+      for name, prop in journal.entry_fields.iteritems():
+        self._properties[name] = copy.deepcopy(prop)
+        self.add_output(name)
+      self._journal_fields_loaded = True
   
   def get_kind(self):  # @todo Do we have security breach here, without inclusion of namespace?
     return '%s_%s' % (self._get_kind(), self.journal.id())
@@ -865,7 +869,7 @@ class Entry(orm.BaseExpando):
     for plist in all_props:
       for p in plist:
         # First find the journal. Then load all needed props and break the loop.
-        journal_name = cls.journal.name
+        journal_name = cls.journal._name
         if journal_name is None:
           journal_name = cls.journal._code_name
         if p.name() == journal_name:

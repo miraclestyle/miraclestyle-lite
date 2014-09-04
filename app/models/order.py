@@ -10,7 +10,7 @@ from app import orm, util, settings
 
 class LineTax(orm.BaseModel):
   
-  _kind = xx
+  _kind = 116
   
   _use_rule_engine = False
   
