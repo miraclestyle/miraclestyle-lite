@@ -341,6 +341,7 @@ class DomainSetup(Setup):
           'variant_signature': orm.SuperJsonProperty()
           }
         )
+      # Other actions: update, checkout, cancel, pay, timeout, complete, message
       ]
     entity._transaction_plugin_groups = [
       PluginGroup(
