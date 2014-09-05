@@ -11,6 +11,39 @@ from app.plugins.base import *
 from app.plugins.uom import *
 
 
+class UOM(orm.BaseExpando):
+  
+  _kind = 72
+  
+  _use_rule_engine = False
+  
+  measurement = orm.SuperStringProperty('1', required=True, indexed=False)
+  name = orm.SuperStringProperty('2', required=True, indexed=False)
+  symbol = orm.SuperStringProperty('3', required=True, indexed=False)
+  rate = orm.SuperDecimalProperty('4', required=True, indexed=False)
+  factor = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  rounding = orm.SuperDecimalProperty('6', required=True, indexed=False)
+  digits = orm.SuperIntegerProperty('7', required=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'code': orm.SuperStringProperty('8', required=True),
+    'numeric_code': orm.SuperStringProperty('9'),
+    'grouping': orm.SuperIntegerProperty('10', repeated=True),
+    'decimal_separator': orm.SuperStringProperty('11', required=True),
+    'thousands_separator': orm.SuperStringProperty('12'),
+    'positive_sign_position': orm.SuperIntegerProperty('13', required=True),
+    'negative_sign_position': orm.SuperIntegerProperty('14', required=True),
+    'positive_sign': orm.SuperStringProperty('15'),
+    'negative_sign': orm.SuperStringProperty('16'),
+    'positive_currency_symbol_precedes': orm.SuperBooleanProperty('17', default=True),
+    'negative_currency_symbol_precedes': orm.SuperBooleanProperty('18', default=True),
+    'positive_separate_by_space': orm.SuperBooleanProperty('19', default=True),
+    'negative_separate_by_space': orm.SuperBooleanProperty('20', default=True)
+    }
+
+
 class Unit(orm.BaseExpando):
   
   _kind = 19
@@ -129,48 +162,14 @@ class Unit(orm.BaseExpando):
         ]
       )
     ]
-
-
-class UOM(orm.BaseExpando):
   
-  _kind = 72
-  
-  _use_rule_engine = False
-  
-  measurement = orm.SuperStringProperty('1', required=True, indexed=False)
-  name = orm.SuperStringProperty('2', required=True, indexed=False)
-  symbol = orm.SuperStringProperty('3', required=True, indexed=False)
-  rate = orm.SuperDecimalProperty('4', required=True, indexed=False)
-  factor = orm.SuperDecimalProperty('5', required=True, indexed=False)
-  rounding = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  digits = orm.SuperIntegerProperty('7', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'code': orm.SuperStringProperty('8', required=True),
-    'numeric_code': orm.SuperStringProperty('9'),
-    'grouping': orm.SuperIntegerProperty('10', repeated=True),
-    'decimal_separator': orm.SuperStringProperty('11', required=True),
-    'thousands_separator': orm.SuperStringProperty('12'),
-    'positive_sign_position': orm.SuperIntegerProperty('13', required=True),
-    'negative_sign_position': orm.SuperIntegerProperty('14', required=True),
-    'positive_sign': orm.SuperStringProperty('15'),
-    'negative_sign': orm.SuperStringProperty('16'),
-    'positive_currency_symbol_precedes': orm.SuperBooleanProperty('17', default=True),
-    'negative_currency_symbol_precedes': orm.SuperBooleanProperty('18', default=True),
-    'positive_separate_by_space': orm.SuperBooleanProperty('19', default=True),
-    'negative_separate_by_space': orm.SuperBooleanProperty('20', default=True)
-    }
-  
-def get_uom(unit_key):
-  '''This is because using unit_key.get() does not guarantee fresh new instance of unit
-  that can be referenced as a entity, thats why we always create new instance of UOM.
-  '''
-  unit = unit_key.get()
-  new_uom = UOM()
-  uom_fields = UOM.get_fields()
-  for field_key, field in unit.get_fields().iteritems():
-    if field_key in uom_fields:
-      setattr(new_uom, field_key, getattr(unit, field_key))
-  return new_uom
+  # @todo Do we make this a property named _uom or something similar ?
+  def get_uom(self):
+    '''This is because using unit_key.get() does not guarantee fresh new instance of unit
+    that can be referenced as a entity, thats why we always create new instance of UOM.
+    '''
+    new_uom = UOM()
+    uom_fields = UOM.get_fields()
+    for field_key, field in uom_fields.iteritems():
+      setattr(new_uom, field_key, getattr(self, field_key))
+    return new_uom

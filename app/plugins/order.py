@@ -13,192 +13,9 @@ import copy
 from app import orm
 from app.tools.base import *
 from app.util import *
-from app.models import location, uom, transaction, order # rule, log
+from app.models import location, uom, transaction, order  # rule, log
 
 
-# Virtual representation of order entry object to serve as a reference of expected structure (will be removed later)!
-# Regarding the structured properties in entries and lines, shall we standardize thos properties to be JSON and transform data apropriately on input?
-'''
-class OrderEntry(orm.BaseExpando):
-  
-  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
-  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  journal = orm.SuperKeyProperty('3', kind='49', required=True)
-  name = orm.SuperStringProperty('4', required=True)
-  state = orm.SuperStringProperty('5', required=True)
-  date = orm.SuperDateTimeProperty('6', required=True)
-  # Jounral-Defined Fields!
-  company_address = orm.SuperLocalStructuredProperty(location.Location, '7', required=True)
-  party = orm.SuperKeyProperty('8', kind='0', required=True, indexed=False)
-  billing_address_reference = orm.SuperStringProperty('9', required=True, indexed=False)
-  shipping_address_reference = orm.SuperStringProperty('10', required=True, indexed=False)
-  billing_address = orm.SuperLocalStructuredProperty(location.Location, '11', required=True)
-  shipping_address = orm.SuperLocalStructuredProperty(location.Location, '12', required=True)
-  currency = orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True)
-  untaxed_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
-  tax_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
-  total_amount = orm.SuperDecimalProperty('16', required=True, indexed=False)
-  paypal_reciever_email = orm.SuperStringProperty('17', required=True, indexed=False)
-  paypal_business = orm.SuperStringProperty('18', required=True, indexed=False)
-  
-  _actions = [
-    orm.Action(
-      key=orm.Action.build_key('47', 'add_to_cart'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          name='Init',
-          plugins=[
-            Context(),
-            CartInit()
-            ]
-          ),
-        orm.PluginGroup(
-          name='Payment Config',  # User Editable
-          plugins=[
-            PayPalPayment()
-            ]
-          ),
-        orm.PluginGroup(
-          name='Lines Init',
-          plugins=[
-            LinesInit()
-            ]
-          ),
-        orm.PluginGroup(
-          name='Address Rules',  # User Editable
-          plugins=[
-            AddressRule()
-            ]
-          ),
-        orm.PluginGroup(
-          name='Taxes',  # User Editable
-          plugins=[
-            Tax()
-            ]
-          ),
-        orm.PluginGroup(
-          name='Carriers',  # User Editable
-          plugins=[
-            Carrier()
-            ]
-          ),
-        orm.PluginGroup(
-          name='Final',
-          plugins=[
-            ProductToLine(),
-            ProductSubtotalCalculate(),
-            TaxSubtotalCalculate(),
-            OrderTotalCalculate()
-            ]
-          ),
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'update'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            ]
-          ),
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'checkout'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            ]
-          ),
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'cancel'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            ]
-          ),
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'pay'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            ]
-          ),
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'timeout'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            ]
-          ),
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'complete'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            ]
-          ),
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('47', 'message'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            ]
-          ),
-        ]
-      )
-    ]
-
-
-class OrderEntryLine(orm.BaseExpando):
-  
-  sequence = orm.SuperIntegerProperty('1', required=True)
-  categories = orm.SuperKeyProperty('2', kind='47', repeated=True)
-  debit = orm.SuperDecimalProperty('3', required=True, indexed=False)
-  credit = orm.SuperDecimalProperty('4', required=True, indexed=False)
-  uom = orm.SuperLocalStructuredProperty(uom.UOM, '5', required=True)
-  # Jounral-Defined Fields!
-  description = orm.SuperTextProperty('6', required=True)
-  product_reference = orm.SuperKeyProperty('7', kind='38', required=True, indexed=False)
-  product_variant_signature = orm.SuperJsonProperty('8', required=True)
-  product_category_complete_name = orm.SuperTextProperty('9', required=True)
-  product_category_reference = orm.SuperKeyProperty('10', kind='17', required=True, indexed=False)
-  code = orm.SuperStringProperty('11', required=True, indexed=False)
-  unit_price = orm.SuperDecimalProperty('12', required=True, indexed=False)
-  product_uom = orm.SuperLocalStructuredProperty(uom.UOM, '13', required=True)
-  quantity = orm.SuperDecimalProperty('14', required=True, indexed=False)
-  discount = orm.SuperDecimalProperty('15', required=True, indexed=False)
-  taxes = orm.SuperLocalStructuredProperty(order.LineTax, '16', required=True)
-  subtotal = orm.SuperDecimalProperty('17', required=True, indexed=False)
-  discount_subtotal = orm.SuperDecimalProperty('18', required=True, indexed=False)
-'''
-
-# @todo Not sure if we are gonna use this instead of orm.ActionDenied()? ActionDenied lacks descreptive messaging!
-# @answer generally, all our errors should be revised
 class PluginError(Exception):
   
   def __init__(self, plugin_error):
@@ -216,26 +33,23 @@ class CartInit(orm.BaseModel):
     Group = context.models['48']
     Entry = context.models['50']
     entry_fields = context.model.get_fields()
-    # this is only way to query with properties that do not exist in Standard Entry model.
     entry = Entry.query(entry_fields['journal'] == context.model.journal,
                         entry_fields['party'] == context.user.key,
                         entry_fields['state'].IN(['cart', 'checkout', 'processing']),
-                        namespace=context.model.journal._namespace).get() # we will need composite index for this
+                        namespace=context.model.journal._namespace).get()  # we will need composite index for this
     if entry is None:
       context._group = Group(namespace=context.model.journal._namespace)
-      # it is important to pass journal to the constructor in order to trigger proper field loading mechanism
       entry = Entry(namespace=context.model.journal._namespace, journal=context.model.journal)
       # entry.company_address = # Source of company address required!
       entry.state = 'cart'
       entry.date = datetime.datetime.now()
       entry.party = context.user.key
     else:
-      entry.read({'_lines' : {'config' : {'limit': -1}}}) # it is possible that we will have to read more stuff here
+      entry.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
       context._group = entry.parent_entity
     context._group.insert_entry(entry)
     if entry.state != 'cart':
-      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('entry_not_in_cart_state')!?
-      # we do need descriptive error here because of client, because throwin action denied means nothing to user
+      raise PluginError('entry_not_in_cart_state')
 
 
 # This is system plugin, which means end user can not use it!
@@ -250,11 +64,10 @@ class LinesInit(orm.BaseModel):
     if len(entry._lines) == 0:
       Category = context.models['47']
       Line = context.models['51']
-      
       receivable_line = Line(sequence=0, uom=copy.deepcopy(entry.currency), description='Accounts Receivable',
                              debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
                              categories=[Category.build_key('1102', namespace=context.model.journal._namespace)])  # Debtors (1102) account.
-      tax_line = Line(sequence=1, uom=uom.get_uom(entry.currency), description='Sales Tax',
+      tax_line = Line(sequence=1, uom=copy.deepcopy(entry.currency), description='Sales Tax',
                       debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
                       categories=[Category.build_key('121', namespace=context.model.journal._namespace)])  # Tax Received (121) account.
       entry._lines = [receivable_line, tax_line]
@@ -276,7 +89,7 @@ class ProductToLine(orm.BaseModel):
       if hasattr(line, 'product_reference') and line.product_reference == product_key \
       and line.product_variant_signature == variant_signature:
         line._state = 'modified'  # @todo Not sure if this is ok!?
-        line.quantity = line.quantity + format_value('1', uom.get_uom(line.product_uom))
+        line.quantity = line.quantity + format_value('1', line.product_uom)
         line_exists = True
         break
     if not line_exists:
@@ -284,13 +97,13 @@ class ProductToLine(orm.BaseModel):
       Category = context.models['47']
       Line = context.models['51']
       product = product_key.get()
-      product.read({'_product_category': {}}) # more fields probably need to be specified
+      product.read({'_product_category': {}})  # more fields probably need to be specified
       product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
       product_instance = product_instance_key.get()
-      new_line = Line(journal=context.model.journal) # i generally dont like this
+      new_line = Line(journal=context.model.journal)  # i generally dont like this
       new_line.sequence = entry._lines[-1].sequence + 1
       new_line.categories = [Category.build_key('200', namespace=context.model.journal._namespace)]  # Product Sales (200) account.
-      new_line.uom = uom.get_uom(entry.currency)
+      new_line.uom = copy.deepcopy(entry.currency)
       new_line.product_reference = product_key
       new_line.product_variant_signature = variant_signature
       new_line.product_category_complete_name = product._product_category.complete_name
@@ -298,7 +111,7 @@ class ProductToLine(orm.BaseModel):
       new_line.description = product.name
       new_line.code = product.code
       new_line.unit_price = product.unit_price
-      new_line.product_uom = uom.get_uom(product.product_uom)
+      new_line.product_uom = product.product_uom.get().get_uom()
       new_line.quantity = format_value('1', new_line.product_uom)
       new_line.discount = format_value('0', uom.UOM(digits=4))
       if hasattr(product, 'weight'):
@@ -318,7 +131,7 @@ class ProductToLine(orm.BaseModel):
         if hasattr(product_instance, 'volume'):
           new_line._volume = product_instance.volume
           new_line._volume_uom = product_instance.volume_uom
-      entry._lines = [new_line]
+      entry._lines.append(new_line)
 
 
 # This is system plugin, which means end user can not use it!
@@ -372,6 +185,7 @@ class EntryFieldAutoUpdate(orm.BaseModel):
     for key in remove_values:
       del_attr(entry, key)
 
+
 # This is system plugin, which means end user can not use it!
 class ProductSubtotalCalculate(orm.BaseModel):
   
@@ -383,7 +197,6 @@ class ProductSubtotalCalculate(orm.BaseModel):
     entry = context._group.get_entry(context.model.journal)
     for line in entry._lines:
       if hasattr(line, 'product_reference'):
-        # by this point we should have line.uom populated
         line.subtotal = format_value((line.unit_price * line.quantity), line.uom)
         line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), line.uom)
         line.debit = format_value('0', line.uom)
@@ -400,18 +213,17 @@ class OrderTotalCalculate(orm.BaseModel):
   # @todo We need receivable calcualtior as well!
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
-    entry_currency = uom.get_uom(entry.currency)
-    untaxed_amount = format_value('0', entry_currency)
-    tax_amount = format_value('0', entry_currency)
-    total_amount = format_value('0', entry_currency)
+    untaxed_amount = format_value('0', entry.currency)
+    tax_amount = format_value('0', entry.currency)
+    total_amount = format_value('0', entry.currency)
     for line in entry._lines:
       if hasattr(line, 'product_reference'):
         untaxed_amount += line.subtotal
         tax_amount += line.tax_subtotal
         total_amount += line.subtotal + line.tax_subtotal
-    entry.untaxed_amount = format_value(untaxed_amount, entry_currency)
-    entry.tax_amount = format_value(tax_amount, entry_currency)
-    entry.total_amount = format_value(total_amount, entry_currency)
+    entry.untaxed_amount = format_value(untaxed_amount, entry.currency)
+    entry.tax_amount = format_value(tax_amount, entry.currency)
+    entry.total_amount = format_value(total_amount, entry.currency)
 
 
 # Not a plugin!
@@ -450,14 +262,14 @@ class AddressRule(orm.BaseModel):
     entry_address_reference = getattr(entry, address_reference_key, None)
     buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
     if buyer_addresses is None:
-      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_address')!? @answer yes
+      raise PluginError('no_address')
     for buyer_address in buyer_addresses.addresses:
       if self.validate_address(buyer_address):
         valid_addresses[buyer_address.key.urlsafe()] = buyer_address
         if getattr(buyer_address, default_address_key):
           default_address = buyer_address
     if not len(valid_addresses):
-      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_valid_address')!?
+      raise PluginError('no_valid_address')
     context.output[addresses_key] = valid_addresses
     if (default_address is None) and len(valid_addresses):
       default_address = valid_addresses.values()[0]
@@ -466,11 +278,11 @@ class AddressRule(orm.BaseModel):
     elif entry_address_reference in valid_addresses:
       default_address = valid_addresses[entry_address_reference]
     if default_address:
-      setattr(entry, address_reference_key, default_address.internal_id) # internal id should be replaced with key.urlsafe but that depends on property type that saves it?
+      setattr(entry, address_reference_key, default_address.key.urlsafe())  # internal id should be replaced with key.urlsafe but that depends on property type that saves it?
       setattr(entry, address_key, location.get_location(default_address))
       context.output[default_address_key] = default_address
     else:
-      raise orm.ActionDenied(context.action)  # @todo Replace with raise PluginError('no_address_found')!?
+      raise PluginError('no_address_found')
   
   def validate_address(self, address):
     if self.exclusion:
@@ -518,7 +330,7 @@ class PayPalPayment(orm.BaseModel):
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
     # In context of add_to_cart action runner does the following:
-    entry.currency = uom.get_uom(self.currency)
+    entry.currency = self.currency.get().get_uom()
     entry.paypal_reciever_email = self.reciever_email
     entry.paypal_business = self.business
 
@@ -544,7 +356,6 @@ class Tax(orm.BaseModel):
   def run(self, context):
     entry = context._group.get_entry(context.model.journal)
     allowed = self.validate_tax(entry)
-    taxes_to_add = []
     for line in entry._lines:
       for tax in line.taxes:
         if tax.key == self.key:
@@ -561,8 +372,7 @@ class Tax(orm.BaseModel):
               tax_exists = True
               break
           if not tax_exists:
-            taxes_to_add.append(order.LineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
-    line.taxes = taxes_to_add
+            line.taxes.append(order.LineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
   
   def validate_tax(self, entry):
     address = None
@@ -572,7 +382,7 @@ class Tax(orm.BaseModel):
       return False
     buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
     for buyer_address in buyer_addresses.addresses:
-      if buyer_address.internal_id == entry_address_reference: # this thing with internal_id needs to be resolved see all todos
+      if buyer_address.key.urlsafe() == entry_address_reference:
         address = buyer_address
         break
     if address is None:  # @todo IS this ok??
@@ -673,7 +483,6 @@ class CarrierLine(orm.BaseModel):
   exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
   locations = orm.SuperLocalStructuredProperty(Location, '4', repeated=True)
   rules = orm.SuperLocalStructuredProperty(CarrierLineRule, '5', repeated=True)
- 
 
 
 # This plugin is incomplete!
@@ -716,7 +525,7 @@ class Carrier(orm.BaseModel):
         line_prices = []
         for rule in carrier_line.rules:
           condition = rule.condition
-          condition = self.format_value(condition) # @todo this regex needs to go out of here
+          condition = self.format_value(condition)  # @todo this regex needs to go out of here
           price = rule.price
           if safe_eval(condition, {'weight': weight, 'volume': volume, 'price': price}):
             price = self.format_value(price)
@@ -728,7 +537,7 @@ class Carrier(orm.BaseModel):
   def format_value(self, value):
     def run_format(match):
       matches = match.groups()
-      return 'Decimal("%s")' % format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))
+      return 'Decimal("%s")' % format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))  # @todo To correct!
       # this regex needs more work
     value = re.sub('\((.*)\,(.*)\)', run_format, value)
     return value
@@ -771,15 +580,15 @@ class Carrier(orm.BaseModel):
     if allowed:
       allowed = False
       price = entry.amount_total
-      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))
-      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))
+      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))  # @todo To correct!
+      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))  # @todo To correct!
       weight = format_value('0', weight_uom)
       volume = format_value('0', volume_uom)
       for line in entry._lines:
         line_weight = line._weight[0]
-        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))
+        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))  # @todo To correct!
         line_volume = line._volume[0]
-        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))
+        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))  # @todo To correct!
         weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
         volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
       for rule in carrier_line.rules:

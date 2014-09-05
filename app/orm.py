@@ -1363,14 +1363,11 @@ class _BaseModel(object):
       index = search.Index(name=name, namespace=namespace)
       for documents_partition in util.partition_list(documents, 200):
         if len(documents_partition):
-          try:
-            if operation == 'index':
-              index.put(documents_partition)
-            elif operation == 'unindex':
-              index.delete(documents_partition)
-          except Exception as e:
-            util.log('INDEX FAILED! ERROR: %s' % e)
-            pass
+          # @todo try/except block was removed in order to fail wraping transactions in case of index operation failure!
+          if operation == 'index':
+            index.put(documents_partition)
+          elif operation == 'unindex':
+            index.delete(documents_partition)
   
   def index_search_documents(self):
     documents = mem.temp_get(self.key._search_index, [])
