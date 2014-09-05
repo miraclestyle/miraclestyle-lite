@@ -111,16 +111,16 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
-    from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing, transaction
+    from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing, transaction, order
+    from app.plugins import auth, base, buyer, cron, location, marketing, nav, notify, order, rule, setup, transaction, uom
+    
     for model_kind, model in orm.Model._kind_map.iteritems():
       if hasattr(model, 'get_fields'):
-        try:
+        if model.get_fields.__self__ is model:
           fields = model.get_fields()
-        except TypeError:  # Now, line and entry throw an error because get_fields is instance method.
-          continue
-        for field_key, field in fields.iteritems():
-          if hasattr(field, 'initialize'):
-            field.initialize()
+          for field_key, field in fields.iteritems():
+            if hasattr(field, 'initialize'):
+              field.initialize()
   
   @classmethod
   def get_schema(cls):
@@ -151,7 +151,7 @@ class Engine:
     if hasattr(context.model, 'get_action') and callable(context.model.get_action):
       context.action = context.model.get_action(action_id)
     if not context.action:
-      raise InvalidAction(action_key)
+      raise InvalidAction(context.action)
   
   @classmethod
   def process_action_input(cls, context, input):
@@ -181,7 +181,7 @@ class Engine:
   
   @classmethod
   def execute_action(cls, context, input):
-    util.log('Execute action: %s.%s' % (context.model.__name__, context))
+    util.log('Execute action: %s.%s' % (context.model.__name__, context.action.key_id_str))
     util.log('Arguments: %s' % (context.input))
     def execute_plugins(plugins):
       for plugin in plugins:

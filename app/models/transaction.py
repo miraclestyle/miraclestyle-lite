@@ -728,6 +728,17 @@ class Line(orm.BaseExpando):
       if self._journal_fields_loaded is None:
         self.add_journal_fields()
     return super(Line, self)._get_property_for(p, indexed, depth)
+  
+  @classmethod
+  def get_meta(cls):
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    '''
+    dic = {}
+    dic['_actions'] = getattr(cls, '_actions', [])
+    dic.update(super(Line, cls).get_fields())
+    return dic
 
 
 # @todo Conclusion regarding Entry fields!
@@ -888,6 +899,16 @@ class Entry(orm.BaseExpando):
       raise Exception('Cannot proceed with loading of entry %s. Journal fields failed to set.' % ent)
     return super(Entry, cls)._from_pb(pb, set_key, ent, ent.key)  # Calling parent from_pb to attempt to mantain compatibility with possible NDB upgrades?
 
+  @classmethod
+  def get_meta(cls):
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    
+    '''
+    dic = {}
+    dic['_actions'] = getattr(cls, '_actions', [])
+    dic.update(super(Entry, cls).get_fields())
+    return dic
 
 class Group(orm.BaseExpando):
   

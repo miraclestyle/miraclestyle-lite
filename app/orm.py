@@ -492,6 +492,7 @@ class _BaseModel(object):
     if virtual_fields:
       out = out[:-1]
       repr = []
+      repr.append('key=%s' % self.key)
       for field_key, field in virtual_fields.iteritems():
         val = getattr(self, field_key, None)
         repr.append('%s=%s' % (field._code_name, val))
@@ -724,14 +725,24 @@ class _BaseModel(object):
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
-        if isinstance(value, PropertyValue):
+        is_property_value_type = isinstance(value, PropertyValue)
+        if is_property_value_type:
           value = value.value
         if isinstance(value, Future) or (isinstance(value, list) and len(value) and isinstance(value[0], Future)):
-          continue # this is a problem, we cannot copy futures, we might have to implement flags on properties like
-          # copiable=True
-          # or deepcopy=True
+          continue
+          '''we cannot copy futures - this is mainly because of ReferenceProperty because it never exposes result
+          until second read was implied to it. we could solve this by implementing flags on properties that should not 
+          be copied.
+          '''
         else:
           value = copy.deepcopy(value)
+          if is_property_value_type:
+            new_entity_value = getattr(new_entity, field)
+            new_entity_value.set(value)
+            #if self.get_kind() == '38': # debug
+            #  print field
+            #  print value
+            #  print new_entity_value.value
         try:
           setattr(new_entity, field, value)
         except ComputedPropertyError as e:
@@ -925,6 +936,8 @@ class _BaseModel(object):
               if field_value_item.key:
                 field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
         if not permissions[field_key]['writable']:
+          # if user has no permission on top level, and attempts to append new items that do not exist in
+          # original values, those values will be removed completely.
           if field._repeated:
             to_delete = []
             for current_value in child_entity:
@@ -951,17 +964,29 @@ class _BaseModel(object):
           if field._repeated:
             # They are bound dict[key_urlsafe] = item
             for i, child_entity_item in enumerate(child_entity):
-              # If the item has the built key, it is obviously the item that needs update, so in that case fetch it from the
-              # field_value_mapping.
-              # If it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state.
-              if child_entity_item.key:
-                child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe())  # Always get by key in order to match the editing sequence.
-                child_field_value = getattr(child_field_value, child_field_key, None)
-              else:
-                child_field_value = None
-              cls._rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
+              if child_entity_item._state != 'deleted': 
+                '''No need to process deleted entity, since user already has permission to delete it.
+                This is mainly because of paradox:
+                  catalog._images = writable
+                    catalog._images.size = not writable
+                    .... and every other field is not writable
+                  So generally loop does not need to loop to substructure because user is deleteing entire branch.
+                '''
+                # If the item has the built key, it is obviously the item that needs update, so in that case fetch it from the
+                # field_value_mapping.
+                # If it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state.
+                if child_entity_item.key:
+                  child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe())  # Always get by key in order to match the editing sequence.
+                  if child_entity_item.get_kind() == '69':
+                    # print child_entity_item.key.id(), [v.key.id() for k,v in field_value_mapping.iteritems()]
+                    pass
+                  child_field_value = getattr(child_field_value, child_field_key, None)
+                else:
+                  child_field_value = None
+                cls._rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
           else:
-            cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key, None))
+            if child_entity._state != 'deleted':
+              cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key, None))
   
   def rule_write(self):
     if self._use_rule_engine and hasattr(self, '_field_permissions'):
@@ -1400,6 +1425,7 @@ class _BaseModel(object):
       raise ValueError('Expected instance of Document, got %s' % document)
   
   def generate_unique_key(self):
+    # print self.__class__.__name__, self.key # debug
     random_uuid4 = str(uuid.uuid4())
     if self.key:
       self.key = self.build_key(random_uuid4, parent=self.key.parent(), namespace=self.key.namespace())
@@ -1733,6 +1759,7 @@ class StructuredPropertyValue(PropertyValue):
               value = getattr(entity, field_key)
               field_read_arguments = read_arguments.get(field_key, {})
               value.read_async(field_read_arguments)
+              futures.append((value, field_read_arguments))
       for future, field_read_arguments in futures:
         future.read(field_read_arguments)  # Again, enforce read and re-loop if any.
   
@@ -1794,10 +1821,20 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   
   @property
   def value(self):
-    self._read()  # Always enforce reads because local structured property values get wrapped into _BaseValue before puts.
+    if self.has_value():
+      wrapped = False
+      if self._property._repeated:
+        if self._property_value:
+          if isinstance(self._property_value[0], _BaseValue):
+            wrapped = True
+      else:
+        if isinstance(self._property_value, _BaseValue):
+          wrapped = True
+      if wrapped:
+        self._property._get_user_value(self._entity) # _get_user_value will unwrap values from _BaseValue when possible
     return super(LocalStructuredPropertyValue, self).value
   
-  def _read(self, read_arguments=None):  # Implicitly, default argument is set to None because we call it from def value too.
+  def _read(self, read_arguments):  # Implicitly, default argument is set to None because we call it from def value too.
     property_value = self._property._get_user_value(self._entity)
     property_value_copy = property_value
     if property_value_copy is not None:
@@ -2333,7 +2370,8 @@ class _BaseStructuredProperty(_BaseProperty):
     elif source_value is None:
       return util.Nonexistent
     for v in value:
-      out.append(self._structured_property_format(v))
+      ent = self._structured_property_format(v)
+      out.append(ent)
     if not self._repeated:
       try:
         out = out[0]
@@ -2353,12 +2391,15 @@ class _BaseStructuredProperty(_BaseProperty):
           current_values = []
         if value:
           for val in value:
+            generate = True
             if val.key:
               for i,current_value in enumerate(current_values):
                 if current_value.key == val.key:
                   current_values[i] = val
+                  generate = False
                   break
-            else:
+            if generate:
+              # print 'not found in loop %s' % val.__class__.__name__, val.key, [e.key for e in value_instance.value]
               val.generate_unique_key()
               current_values.append(val)
           def sorting_function(val):
@@ -2366,6 +2407,7 @@ class _BaseStructuredProperty(_BaseProperty):
           current_values = sorted(current_values, key=sorting_function)
       else:
         for val in current_values:
+          # print 'novalue'
           val.generate_unique_key()
     elif not self._repeated:
       generate = False
@@ -2374,10 +2416,12 @@ class _BaseStructuredProperty(_BaseProperty):
         if current_values and current_values.key: # ensure that we will always have a key
           value.key = current_values.key
         else:
+          # print 'no current key for non repeated'
           generate = True
         current_values = value
       else:
         generate = True
+        # print 'no value for non repeated'
       if generate and current_values:
         current_values.generate_unique_key()
     value_instance.set(current_values)
@@ -2486,6 +2530,8 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
   
   '''
   _value_class = ReferenceStructuredPropertyValue
+  _updateable = False
+  _deleteable = False
   
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
@@ -3351,7 +3397,7 @@ class SuperReferenceProperty(SuperKeyProperty):
     if not isinstance(value, Key) and hasattr(value, 'key'):
       value = value.key
     if self._store_key:
-      return super(SuperReferenceProperty, self)._set_value(entity, value)
+      super(SuperReferenceProperty, self)._set_value(entity, value)
   
   def _delete_value(self, entity):
     # __delete__

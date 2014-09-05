@@ -349,6 +349,7 @@ class User(orm.BaseExpando):
       return False # Fail silently if the kind is not valid
     user = user_key.get()
     if user and user.key_id != 'system':
+      user.read()
       session = user.session_by_id(session_id)
       if session:
         cls.set_current_user(user, session)

@@ -445,8 +445,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'path': '_catalog._images',
-                              'images_path': 'input._images'}),
+            Set(cfg={'d': {'_catalog._images': 'input._images'}}),
             CatalogProcessCoverSet(),
             RulePrepare(),
             RuleExec()
@@ -475,8 +474,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'path': '_catalog._products.value.0.images',
-                              'images_path': 'input.images'}),
+            Set(cfg={'d': {'_catalog._products.value.0.images': 'input.images'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -503,8 +501,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'path': '_catalog._products.value.0._instances.value.0.images',
-                              'images_path': 'input.images'}),
+            Set(cfg={'d': {'_catalog._products.value.0._instances.value.0.images': 'input.images'}}),
             RulePrepare(),
             RuleExec()
             ]

@@ -389,6 +389,8 @@ class _BaseImageProperty(_BaseBlobProperty):
     return values
   
   def value_format(self, value):
+    if self._repeated and not isinstance(value, list):
+      value = [value]
     if (self._repeated and (not len(value) or not isinstance(value[0], cgi.FieldStorage))) or (not self._repeated and not isinstance(value, cgi.FieldStorage)):
       return super(_BaseImageProperty, self).value_format(value)
     value = self._property_value_format(value)
