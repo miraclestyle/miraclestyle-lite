@@ -492,7 +492,6 @@ class _BaseModel(object):
     if virtual_fields:
       out = out[:-1]
       repr = []
-      repr.append('key=%s' % self.key)
       for field_key, field in virtual_fields.iteritems():
         val = getattr(self, field_key, None)
         repr.append('%s=%s' % (field._code_name, val))
@@ -740,10 +739,6 @@ class _BaseModel(object):
           if is_property_value_type:
             new_entity_value = getattr(new_entity, field)
             new_entity_value.set(value)
-            if self.get_kind() == '38': # debug
-              print field
-              print value
-              print new_entity_value.value
         try:
           setattr(new_entity, field, value)
         except ComputedPropertyError as e:
@@ -1420,7 +1415,8 @@ class _BaseModel(object):
       raise ValueError('Expected instance of Document, got %s' % document)
   
   def generate_unique_key(self):
-    print self.__class__.__name__, self.key # debug
+    #print self.__class__.__name__, self.key # debug
+    #raise Exception('a')
     random_uuid4 = str(uuid.uuid4())
     if self.key:
       self.key = self.build_key(random_uuid4, parent=self.key.parent(), namespace=self.key.namespace())
@@ -1805,11 +1801,17 @@ class StructuredPropertyValue(PropertyValue):
     if self._property._repeated:
       if not self.has_value():
         self._property_value = []
-      self._property_value.extend(entities)
-    else:
-      self._property_value = entities
+      # @todo this is local's structure problem, because when appending new data, that does not mean anything to
+      # local structured properties, since their logic for setting data is completely different, because it relies on 
+      # _sequence for ordering and keys for editing what it needs.
+      # as for catalogImage that is solved trough prepare_key which builds last_sequence from query.
+      last_sequence = 0
+      if self._property_value:
+        last_sequence = self._property_value[-1]._sequence + 1
+      for ent in entities:
+        ent._sequence += last_sequence
     # Always trigger setattr on the property itself
-    setattr(self._entity, self.property_name, self._property_value)
+    setattr(self._entity, self.property_name, entities)
 
 
 class LocalStructuredPropertyValue(StructuredPropertyValue):
@@ -1829,7 +1831,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         self._property._get_user_value(self._entity) # _get_user_value will unwrap values from _BaseValue when possible
     return super(LocalStructuredPropertyValue, self).value
   
-  def _read(self, read_arguments):  # Implicitly, default argument is set to None because we call it from def value too.
+  def _read(self, read_arguments):
     property_value = self._property._get_user_value(self._entity)
     property_value_copy = property_value
     if property_value_copy is not None:
@@ -1851,11 +1853,12 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             if entity._state == 'deleted':
               delete_entities.append(entity)
           for delete_entity in delete_entities:
-            self._property_value.remove(delete_entity)  # This mutates on the entity and on the _property_value.
+            self._property_value.remove(delete_entity)
         else:
           # We must mutate on the entity itself.
           if self._property_value._state == 'deleted':
-            setattr(self._entity, self.property_name, None)  # Comply with expando and virtual fields.
+            self._property_value = None  # Comply with expando and virtual fields.
+        setattr(self._entity, self.property_name, self._property_value)
   
   def delete(self):
     if self._property._deleteable:
@@ -2378,10 +2381,6 @@ class _BaseStructuredProperty(_BaseProperty):
     # __set__
     value_instance = self._get_value(entity)
     current_values = value
-    if entity.get_kind() == '38':
-      print '_set_value'
-      print value
-      print value_instance.value
     if self._repeated:
       if value_instance.has_value():
         if value_instance.value:
@@ -2398,25 +2397,26 @@ class _BaseStructuredProperty(_BaseProperty):
                   generate = False
                   break
             if generate:
-              val.generate_unique_key()
+              if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+                val.generate_unique_key()
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
           current_values = sorted(current_values, key=sorting_function)
       else:
-        print 'noval'
         for val in current_values:
-          val.generate_unique_key()
+          if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+            val.generate_unique_key()
     elif not self._repeated:
       generate = False
       if value_instance.has_value():
         current_values = value_instance.value
         if current_values and current_values.key: # ensure that we will always have a key
           value.key = current_values.key
-        else:
+        elif not value.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
           generate = True
         current_values = value
-      else:
+      elif not current_values.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
         generate = True
       if generate and current_values:
         current_values.generate_unique_key()
@@ -2539,12 +2539,16 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
 
 class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
   
+  _autoload = True # always automatically load structured props since they dont take any io
+  
   def __init__(self, *args, **kwargs):
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
     self._keep_keys = True
 
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
+  
+  _autoload = True # always automatically load structured props since they dont take any io
   
   def _serialize(self, entity, pb, prefix='', parent_repeated=False, projection=None):
     '''Internal helper to serialize this property to a protocol buffer.
@@ -3554,6 +3558,8 @@ class SuperPluginStorageProperty(SuperPickleProperty):
   def _set_value(self, entity, value):
     # __set__
     current_values = self._get_value(entity)
+    if not current_values:
+      current_values = []
     if value:
       for val in value:
         if val.key:
@@ -3562,7 +3568,8 @@ class SuperPluginStorageProperty(SuperPickleProperty):
               current_values[i] = val
               break
         else:
-          val.generate_unique_key() # for new values always generate new keys
+          if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+            val.generate_unique_key() # for new values always generate new keys
           current_values.append(val)
       def sorting_function(val):
         return val._sequence
