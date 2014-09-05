@@ -722,6 +722,7 @@ class _BaseModel(object):
     model = self.__class__
     new_entity = model(_deepcopy=True)
     new_entity.key = copy.deepcopy(self.key)
+    new_entity._state = self._state
     for field in self.get_fields():
       if hasattr(self, field):
         value = getattr(self, field, None)
@@ -739,10 +740,10 @@ class _BaseModel(object):
           if is_property_value_type:
             new_entity_value = getattr(new_entity, field)
             new_entity_value.set(value)
-            #if self.get_kind() == '38': # debug
-            #  print field
-            #  print value
-            #  print new_entity_value.value
+            if self.get_kind() == '38': # debug
+              print field
+              print value
+              print new_entity_value.value
         try:
           setattr(new_entity, field, value)
         except ComputedPropertyError as e:
@@ -977,9 +978,6 @@ class _BaseModel(object):
                 # If it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state.
                 if child_entity_item.key:
                   child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe())  # Always get by key in order to match the editing sequence.
-                  if child_entity_item.get_kind() == '69':
-                    # print child_entity_item.key.id(), [v.key.id() for k,v in field_value_mapping.iteritems()]
-                    pass
                   child_field_value = getattr(child_field_value, child_field_key, None)
                 else:
                   child_field_value = None
@@ -1425,7 +1423,7 @@ class _BaseModel(object):
       raise ValueError('Expected instance of Document, got %s' % document)
   
   def generate_unique_key(self):
-    # print self.__class__.__name__, self.key # debug
+    print self.__class__.__name__, self.key # debug
     random_uuid4 = str(uuid.uuid4())
     if self.key:
       self.key = self.build_key(random_uuid4, parent=self.key.parent(), namespace=self.key.namespace())
@@ -2383,6 +2381,10 @@ class _BaseStructuredProperty(_BaseProperty):
     # __set__
     value_instance = self._get_value(entity)
     current_values = value
+    if entity.get_kind() == '38':
+      print '_set_value'
+      print value
+      print value_instance.value
     if self._repeated:
       if value_instance.has_value():
         if value_instance.value:
@@ -2399,15 +2401,14 @@ class _BaseStructuredProperty(_BaseProperty):
                   generate = False
                   break
             if generate:
-              # print 'not found in loop %s' % val.__class__.__name__, val.key, [e.key for e in value_instance.value]
               val.generate_unique_key()
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
           current_values = sorted(current_values, key=sorting_function)
       else:
+        print 'noval'
         for val in current_values:
-          # print 'novalue'
           val.generate_unique_key()
     elif not self._repeated:
       generate = False
@@ -2416,12 +2417,10 @@ class _BaseStructuredProperty(_BaseProperty):
         if current_values and current_values.key: # ensure that we will always have a key
           value.key = current_values.key
         else:
-          # print 'no current key for non repeated'
           generate = True
         current_values = value
       else:
         generate = True
-        # print 'no value for non repeated'
       if generate and current_values:
         current_values.generate_unique_key()
     value_instance.set(current_values)
