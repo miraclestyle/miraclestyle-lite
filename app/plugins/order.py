@@ -265,7 +265,7 @@ class AddressRule(orm.BaseModel):
       raise PluginError('no_address')
     for buyer_address in buyer_addresses.addresses:
       if self.validate_address(buyer_address):
-        valid_addresses[buyer_address.key.urlsafe()] = buyer_address
+        valid_addresses[buyer_address.key] = buyer_address
         if getattr(buyer_address, default_address_key):
           default_address = buyer_address
     if not len(valid_addresses):
@@ -278,7 +278,7 @@ class AddressRule(orm.BaseModel):
     elif entry_address_reference in valid_addresses:
       default_address = valid_addresses[entry_address_reference]
     if default_address:
-      setattr(entry, address_reference_key, default_address.key.urlsafe())  # internal id should be replaced with key.urlsafe but that depends on property type that saves it?
+      setattr(entry, address_reference_key, default_address.key)
       setattr(entry, address_key, location.get_location(default_address))
       context.output[default_address_key] = default_address
     else:
@@ -382,7 +382,7 @@ class Tax(orm.BaseModel):
       return False
     buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
     for buyer_address in buyer_addresses.addresses:
-      if buyer_address.key.urlsafe() == entry_address_reference:
+      if buyer_address.key == entry_address_reference:
         address = buyer_address
         break
     if address is None:  # @todo IS this ok??

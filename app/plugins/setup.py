@@ -305,8 +305,8 @@ class DomainSetup(Setup):
     # weird behaviour on user interface (e.g. on each refresh different order of properties
     entity.entry_fields = {'company_address': orm.SuperLocalStructuredProperty('68', '7', required=True),
                            'party': orm.SuperKeyProperty('8', kind='0', required=True, indexed=False),  # @todo buyer_reference ??
-                           'billing_address_reference': orm.SuperStringProperty('9', required=True, indexed=False),
-                           'shipping_address_reference': orm.SuperStringProperty('10', required=True, indexed=False),
+                           'billing_address_reference': orm.SuperKeyProperty('9', kind='9', required=True, indexed=False),
+                           'shipping_address_reference': orm.SuperKeyProperty('10', kind='9', required=True, indexed=False),
                            'billing_address': orm.SuperLocalStructuredProperty('68', '11', required=True),
                            'shipping_address': orm.SuperLocalStructuredProperty('68', '12', required=True),
                            'currency': orm.SuperLocalStructuredProperty('19', '13', required=True),
