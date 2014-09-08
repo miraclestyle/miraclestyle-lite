@@ -122,7 +122,7 @@ class Collection(orm.BaseModel):
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('10'),
-    '_domains': orm.SuperReferenceStructuredProperty('6', autoload=False, 
+    '_domains': orm.SuperReferenceStructuredProperty('6', autoload=False,
                                                      callback=lambda self: orm.get_multi_async([domain_key for domain_key in self.domains]),
                                                      format_callback=lambda self, entities: orm.get_async_results(entities))
     }

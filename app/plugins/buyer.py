@@ -12,13 +12,6 @@ from app import orm
 from app.util import *
 
 
-def generate_internal_id(address):
-  internal_id = u'%s-%s-%s-%s-%s-%s-%s-%s' % (str(time.time()), random_chars(10),
-                                              address.name, address.city, address.postal_code,
-                                              address.street, address.default_shipping, address.default_billing)
-  address.internal_id = hashlib.md5(internal_id.encode('utf8')).hexdigest()
-
-
 class AddressesUpdateSet(orm.BaseModel):
   
   def run(self, context):
@@ -27,12 +20,6 @@ class AddressesUpdateSet(orm.BaseModel):
       default_billing = 0
       default_shipping = 0
       for i, address in enumerate(addresses):
-        try:
-          # Ensure that the internal id is never changed by the client.
-          address.internal_id = context._addresses._original.addresses.value[i].internal_id
-        except IndexError as e:
-          # This is a new record, so force-feed it the internal_id.
-          generate_internal_id(address)
         if address.default_shipping:
           default_shipping = i
         if address.default_billing:
