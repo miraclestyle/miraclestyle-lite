@@ -15,14 +15,16 @@ from app.util import *
 class AddressesUpdateSet(orm.BaseModel):
   
   def run(self, context):
+    original_addresses = context._addresses._original.addresses.value
     addresses = context._addresses.addresses.value
     if addresses:
       default_billing = 0
       default_shipping = 0
       for i, address in enumerate(addresses):
-        if address.default_shipping:
+        original_address = get_attr(original_addresses, i)
+        if ((original_address is None) or (original_address and not original_address.default_shipping)) and address.default_shipping:
           default_shipping = i
-        if address.default_billing:
+        if ((original_address is None) or (original_address and not original_address.default_billing)) and address.default_billing:
           default_billing = i
         address.default_shipping = False
         address.default_billing = False
