@@ -359,6 +359,22 @@ class Journal(orm.BaseExpando):
 # and will dramatically degrade in terms of performance as the dataset expands (to do inventory you have to query for lines from the beginning of time)!
 # Google search engine will not be of any help here, as it imposes index size limit (10GB) and number of results returned (10K)!
 # And data in this case is expected to expand, probably beyond any other model defined in the app!
+
+# Possible solution...
+# The only reasonable solution to the balance calcualtion, would be use of google search engine in a unique to the category way.
+# The logic of this process should reside in plugin(s).
+# There should be search index per every Category, created using Category._code and namespace.
+# Each transaction should create search document per entry line that will be organized in search indexes per line category,
+# respectfully. Documents will contain the subset of line data, that is only valuable to the search queries, nothing more!
+# After a certain number of docuemnt entries for particualr category + custom filter (e.g. product reference),
+# agregate 'snapshot' should be created buy summarizing previous lines' debit/credit values, and erasing the same lines
+# from index, efectively preserving important data!
+# This way, searh documents per filter will be kept in low number and index could persist.
+# The reason we use google search engine is because of it's dynamic nature that can utilize different queries in runtime,
+# something that datastore can not do without composite indexes. Plugin(s) should exist for each category use case.
+# For example: inventory plugin(s) should be able to create search documents based on entry lines, record documents
+# (during transaction) in adequate indexes, query indexes before each transaction commit to validate that inventory
+# has product on stock. This arangement can be done for every scenario, and therefore should not have problem of scaling!
 class CategoryBalance(orm.BaseModel):
   
   _kind = 71
