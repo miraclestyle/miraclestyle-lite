@@ -6,14 +6,13 @@ Created on Jan 1, 2014
 '''
 
 from app import orm, settings
-from app.models.base import *
-from app.plugins.base import *
-from app.plugins.uom import *
+from app.models import *
+from app.plugins import *
 
 
-class UOM(orm.BaseExpando):
+class UOM(orm.BaseExpando):  # @todo Rename it!
   
-  _kind = 72
+  _kind = 16
   
   _use_rule_engine = False
   
@@ -46,7 +45,7 @@ class UOM(orm.BaseExpando):
 
 class Unit(orm.BaseExpando):
   
-  _kind = 19
+  _kind = 17
   
   _use_record_engine = False
   _use_cache = True
@@ -81,14 +80,14 @@ class Unit(orm.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('19', [orm.Action.build_key('19', 'update_currency'),
-                                  orm.Action.build_key('19', 'update_unit')], True, 'user._root_admin or user._is_taskqueue'),
-      orm.ActionPermission('19', [orm.Action.build_key('19', 'search')], True, 'not user._is_guest'),
-      orm.FieldPermission('19', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
+      orm.ActionPermission('17', [orm.Action.build_key('17', 'update_currency'),
+                                  orm.Action.build_key('17', 'update_unit')], True, 'user._root_admin or user._is_taskqueue'),
+      orm.ActionPermission('17', [orm.Action.build_key('17', 'search')], True, 'not user._is_guest'),
+      orm.FieldPermission('17', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
                                  'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
                                  'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
                                  'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], False, True, 'True'),
-      orm.FieldPermission('19', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
+      orm.FieldPermission('17', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
                                  'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
                                  'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
                                  'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], True, True,
@@ -98,14 +97,14 @@ class Unit(orm.BaseExpando):
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('19', 'update_currency'),
+      key=orm.Action.build_key('17', 'update_currency'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
             UnitCurrencyUpdateWrite(cfg={'file': settings.CURRENCY_DATA_FILE})
             ]
@@ -113,14 +112,14 @@ class Unit(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('19', 'update_unit'),
+      key=orm.Action.build_key('17', 'update_unit'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
             UnitUpdateWrite(cfg={'file': settings.UOM_DATA_FILE})
             ]
@@ -128,13 +127,13 @@ class Unit(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('19', 'search'),
+      key=orm.Action.build_key('17', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
             'search_by_keys': True,
-            'search_arguments': {'kind': '19', 'options': {'limit': 1000}},
+            'search_arguments': {'kind': '17', 'options': {'limit': 1000}},
             'filters': {'measurement': orm.SuperStringProperty(),
                         'active': orm.SuperBooleanProperty(choices=[True])},
             'indexes': [{'filters': [('active', ['=='])],
@@ -149,11 +148,11 @@ class Unit(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Search(),
             UnitRemoveCurrencies(),  # @todo This will be probably be removed!!
-            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
                            'output.more': '_more'}})

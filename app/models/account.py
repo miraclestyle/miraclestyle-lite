@@ -9,14 +9,13 @@ import hashlib
 import os
 
 from app import orm, mem, settings
-from app.models.base import *
-from app.plugins.base import *
-from app.plugins.auth import *
+from app.models import *
+from app.plugins import *
 
 
 class AccountSession(orm.BaseModel):
   
-  _kind = 8
+  _kind = 9
   
   _use_rule_engine = False
   
@@ -26,7 +25,7 @@ class AccountSession(orm.BaseModel):
 
 class AccountIdentity(orm.BaseModel):
   
-  _kind = 7
+  _kind = 10
   
   _use_rule_engine = False
   
@@ -38,7 +37,7 @@ class AccountIdentity(orm.BaseModel):
 
 class Account(orm.BaseExpando):
   
-  _kind = 6
+  _kind = 11
   
   _use_memcache = True
   
@@ -54,36 +53,35 @@ class Account(orm.BaseExpando):
   _virtual_fields = {
     'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
-    '_records': orm.SuperRecordProperty('6')
+    '_records': orm.SuperRecordProperty('11')
     }
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('6', orm.Action.build_key('6', 'login'), True,
+      orm.ActionPermission('11', orm.Action.build_key('11', 'login'), True,
                            'entity._is_guest or entity._original.state == "active"'),
-      orm.ActionPermission('6', [orm.Action.build_key('6', 'read'),
-                                 orm.Action.build_key('6', 'update'),
-                                 orm.Action.build_key('6', 'logout'),
-                                 orm.Action.build_key('6', 'read_domains')], True, 'not entity._is_guest and account.key == entity._original.key'),
-      orm.FieldPermission('6', ['created', 'updated', 'state', 'domains'], False, True,
+      orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
+                                  orm.Action.build_key('11', 'update'),
+                                  orm.Action.build_key('11', 'logout')], True, 'not entity._is_guest and account.key == entity._original.key'),
+      orm.FieldPermission('11', ['created', 'updated', 'state'], False, True,
                           'not account._is_guest and account.key == entity._original.key'),
-      orm.FieldPermission('6', ['identities', 'emails', 'sessions', '_primary_email'], True, True,
+      orm.FieldPermission('11', ['identities', 'emails', 'sessions', '_primary_email'], True, True,
                           'not account._is_guest and account.key == entity._original.key'),
       # Account is unit of administration, hence root admins need control over it!
       # Root admins can always: read account; search for accounts (exclusively);
       # read accounts history (exclusively); perform sudo operations (exclusively).
-      orm.ActionPermission('6', [orm.Action.build_key('6', 'read'),
-                                 orm.Action.build_key('6', 'search'),
-                                 orm.Action.build_key('6', 'sudo')], True, 'account._root_admin'),
-      orm.FieldPermission('6', ['created', 'updated', 'identities', 'emails', 'state', 'sessions', 'domains',
-                                'ip_address', '_primary_email', '_records'], None, True, 'account._root_admin'),
-      orm.FieldPermission('6', ['state'], True, None, 'action.key_id_str == "sudo" and account._root_admin')
+      orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
+                                  orm.Action.build_key('11', 'search'),
+                                  orm.Action.build_key('11', 'sudo')], True, 'account._root_admin'),
+      orm.FieldPermission('11', ['created', 'updated', 'identities', 'emails', 'state', 'sessions',
+                                 'ip_address', '_primary_email', '_records'], None, True, 'account._root_admin'),
+      orm.FieldPermission('11', ['state'], True, None, 'action.key_id_str == "sudo" and account._root_admin')
       ]
     )
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('6', 'login'),
+      key=orm.Action.build_key('11', 'login'),
       arguments={
         'login_method': orm.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
         'code': orm.SuperStringProperty(),
@@ -105,9 +103,9 @@ class Account(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('6', 'read'),
+      key=orm.Action.build_key('11', 'read'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'key': orm.SuperKeyProperty(kind='11', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -115,7 +113,7 @@ class Account(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_account'}})
             ]
@@ -123,9 +121,9 @@ class Account(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('6', 'update'),
+      key=orm.Action.build_key('11', 'update'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'key': orm.SuperKeyProperty(kind='11', required=True),
         'primary_email': orm.SuperStringProperty(),
         'disassociate': orm.SuperStringProperty(repeated=True),
         'read_arguments': orm.SuperJsonProperty()
@@ -136,7 +134,7 @@ class Account(orm.BaseExpando):
             Context(),
             Read(),
             AccountUpdateSet(),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec()
             ]
           ),
@@ -150,12 +148,12 @@ class Account(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('6', 'search'),
+      key=orm.Action.build_key('11', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
           cfg={
-            'search_arguments': {'kind': '6', 'options': {'limit': settings.SEARCH_PAGE}},
+            'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'emails': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty()},
             'indexes': [{'orders': [('emails', ['asc', 'desc'])]},
@@ -173,10 +171,10 @@ class Account(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Search(),
-            RulePrepare(cfg={'path': '_entities', 'skip_account_roles': True}),
+            RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
                            'output.more': '_more'}})
@@ -187,9 +185,9 @@ class Account(orm.BaseExpando):
     # @todo Treba obratiti paznju na to da suspenzija accounta ujedno znaci
     # i izuzimanje svih negativnih i neutralnih feedbackova koje je account ostavio dok je bio aktivan.
     orm.Action(
-      key=orm.Action.build_key('6', 'sudo'),
+      key=orm.Action.build_key('11', 'sudo'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='6', required=True),
+        'key': orm.SuperKeyProperty(kind='11', required=True),
         'state': orm.SuperStringProperty(required=True, choices=['active', 'suspended']),
         'message': orm.SuperStringProperty(required=True),
         'note': orm.SuperStringProperty()
@@ -200,7 +198,7 @@ class Account(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'d': {'_account.state': 'input.state'}, 's': {'_account.sessions': []}}),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec(),
             ]
           ),
@@ -214,9 +212,9 @@ class Account(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('6', 'logout'),
+      key=orm.Action.build_key('11', 'logout'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='6', required=True)
+        'key': orm.SuperKeyProperty(kind='11', required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -224,7 +222,7 @@ class Account(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'s': {'_account.sessions': []}}),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec()
             ]
           ),

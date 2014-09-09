@@ -22,8 +22,8 @@ class CountryUpdateWrite(orm.BaseModel):
     production_environment = self.cfg.get('prod_env', False)
     if not update_file_path:
       raise orm.TerminateAction()
-    Country = context.models['15']
-    CountrySubdivision = context.models['16']
+    Country = context.models['12']
+    CountrySubdivision = context.models['13']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')

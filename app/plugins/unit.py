@@ -22,7 +22,7 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
       raise orm.TerminateAction()
-    Unit = context.models['19']
+    Unit = context.models['17']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
@@ -97,7 +97,7 @@ class UnitUpdateWrite(orm.BaseModel):
     update_file_path = self.cfg.get('file', None)
     if not update_file_path:
       raise orm.TerminateAction()
-    Unit = context.models['19']
+    Unit = context.models['17']
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')

@@ -30,7 +30,7 @@ cloudstorage.set_default_retry_params(default_retry_params)
 
 class Role(orm.BaseExpando):
   
-  _kind = 66
+  _kind = 6
   
   # feature proposition (though it should create overhead due to the required drilldown process!)
   # parent_record = orm.SuperKeyProperty('1', kind='Role', indexed=False)
@@ -48,12 +48,12 @@ class Role(orm.BaseExpando):
 
 class GlobalRole(Role):
   
-  _kind = 67
+  _kind = 7
 
 
 class Image(orm.BaseExpando):
   
-  _kind = 69
+  _kind = 8
   
   image = orm.SuperBlobKeyProperty('1', required=True, indexed=False)
   content_type = orm.SuperStringProperty('2', required=True, indexed=False)

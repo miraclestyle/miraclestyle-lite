@@ -5,10 +5,10 @@ Created on Jan 9, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+# @todo Perhaps split this file in two: country.py and address.py?
 from app import orm, settings
-from app.models.base import *
-from app.plugins.base import *
-from app.plugins.location import *
+from app.models import *
+from app.plugins import *
 
 
 def get_location(location):
@@ -30,7 +30,7 @@ def get_location(location):
 
 class Country(orm.BaseModel):
   
-  _kind = 15
+  _kind = 12
   
   _use_record_engine = False
   _use_cache = True
@@ -42,24 +42,24 @@ class Country(orm.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('15', [orm.Action.build_key('15', 'update')], True, 'user._root_admin or user._is_taskqueue'),
-      orm.ActionPermission('15', [orm.Action.build_key('15', 'search')], True, 'not user._is_guest'),
-      orm.FieldPermission('15', ['code', 'name', 'active'], False, True, 'True'),
-      orm.FieldPermission('15', ['code', 'name', 'active'], True, True,
-                          'user._root_admin or user._is_taskqueue')
+      orm.ActionPermission('12', [orm.Action.build_key('12', 'update')], True, 'account._root_admin or account._is_taskqueue'),
+      orm.ActionPermission('12', [orm.Action.build_key('12', 'search')], True, 'not account._is_guest'),
+      orm.FieldPermission('12', ['code', 'name', 'active'], False, True, 'True'),
+      orm.FieldPermission('12', ['code', 'name', 'active'], True, True,
+                          'account._root_admin or account._is_taskqueue')
       ]
     )
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('15', 'update'),
+      key=orm.Action.build_key('12', 'update'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
             CountryUpdateWrite(cfg={'file': settings.LOCATION_DATA_FILE,
                                     'prod_env': settings.DEVELOPMENT_SERVER})
@@ -68,13 +68,13 @@ class Country(orm.BaseModel):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('15', 'search'),
+      key=orm.Action.build_key('12', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
             'search_by_keys': True,
-            'search_arguments': {'kind': '15', 'options': {'limit': 1000}},
+            'search_arguments': {'kind': '12', 'options': {'limit': 1000}},
             'filters': {'active': orm.SuperBooleanProperty(choices=[True])},
             'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]}]
@@ -86,10 +86,10 @@ class Country(orm.BaseModel):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Search(),
-            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
                            'output.more': '_more'}})
@@ -102,13 +102,13 @@ class Country(orm.BaseModel):
 
 class CountrySubdivision(orm.BaseModel):
   
-  _kind = 16
+  _kind = 13
   
   _use_record_engine = False
   _use_cache = True
   _use_memcache = True
   
-  parent_record = orm.SuperKeyProperty('1', kind='16', indexed=False)
+  parent_record = orm.SuperKeyProperty('1', kind='13', indexed=False)
   code = orm.SuperStringProperty('2', required=True, indexed=False)
   name = orm.SuperStringProperty('3', required=True)
   complete_name = orm.SuperTextProperty('4', required=True)
@@ -117,23 +117,23 @@ class CountrySubdivision(orm.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('16', [orm.Action.build_key('16', 'search')], True, 'not user._is_guest'),
-      orm.FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], False, True, 'True'),
-      orm.FieldPermission('16', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], True, True,
-                          'user._root_admin or user._is_taskqueue')
+      orm.ActionPermission('13', [orm.Action.build_key('13', 'search')], True, 'not account._is_guest'),
+      orm.FieldPermission('13', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], False, True, 'True'),
+      orm.FieldPermission('13', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], True, True,
+                          'account._root_admin or account._is_taskqueue')
       ]
     )
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('16', 'search'),
+      key=orm.Action.build_key('13', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
-            'ancestor_kind': '15',
+            'ancestor_kind': '12',
             'search_by_keys': True,
-            'search_arguments': {'kind': '16', 'options': {'limit': settings.SEARCH_PAGE}},
+            'search_arguments': {'kind': '13', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'name': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()]),
                         'active': orm.SuperBooleanProperty(choices=[True])},
             'indexes': [{'filters': [('active', ['=='])],
@@ -154,10 +154,10 @@ class CountrySubdivision(orm.BaseModel):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Search(),
-            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
                            'output.more': '_more'}})
@@ -168,9 +168,38 @@ class CountrySubdivision(orm.BaseModel):
     ]
 
 
+class Address(orm.BaseExpando):
+  
+  _kind = 14
+  
+  _use_rule_engine = False
+  
+  internal_id = orm.SuperStringProperty('1', required=True, indexed=False)  # md5 hash => <timestamp>-<random_str>-<name>-<city>-<postal code>-<street>-<default_shipping>-<default_billing>
+  name = orm.SuperStringProperty('2', required=True, indexed=False)
+  country = orm.SuperKeyProperty('3', kind='12', required=True, indexed=False)
+  city = orm.SuperStringProperty('4', required=True, indexed=False)
+  postal_code = orm.SuperStringProperty('5', required=True, indexed=False)
+  street = orm.SuperStringProperty('6', required=True, indexed=False)
+  default_shipping = orm.SuperBooleanProperty('7', required=True, default=True, indexed=False)
+  default_billing = orm.SuperBooleanProperty('8', required=True, default=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'region': orm.SuperKeyProperty('9', kind='13'),
+    'email': orm.SuperStringProperty('10'),
+    'telephone': orm.SuperStringProperty('11')
+    }
+  
+  _virtual_fields = {
+    '_country': orm.SuperReferenceStructuredProperty('12', autoload=True, target_field='country'),
+    '_region': orm.SuperReferenceStructuredProperty('13', autoload=True, target_field='region')
+  }
+
+
 class Location(orm.BaseExpando):
   
-  _kind = 68
+  _kind = 15
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   country = orm.SuperStringProperty('2', required=True, indexed=False)

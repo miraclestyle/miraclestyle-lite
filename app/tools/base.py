@@ -25,7 +25,7 @@ def rule_prepare(entities, strict, **kwargs):
     if entity and isinstance(entity, orm.Model):
       global_permissions = []
       local_permissions = []
-      if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '67':
+      if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '7':
         global_permissions = entity._global_role.permissions
       entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
 

@@ -6,62 +6,31 @@ Created on May 18, 2014
 '''
 
 from app import orm, settings
-from app.models import auth
-from app.models.base import *
-from app.plugins.base import *
-from app.plugins.buyer import *
+from app.models import *
+from app.plugins import *
 
 
-class Address(orm.BaseExpando):
+class Buyer(orm.BaseExpando):
   
-  _kind = 9
+  _kind = 19
   
-  _use_rule_engine = False
-  
-  internal_id = orm.SuperStringProperty('1', required=True, indexed=False)  # md5 hash => <timestamp>-<random_str>-<name>-<city>-<postal code>-<street>-<default_shipping>-<default_billing>
-  name = orm.SuperStringProperty('2', required=True, indexed=False)
-  country = orm.SuperKeyProperty('3', kind='15', required=True, indexed=False)
-  city = orm.SuperStringProperty('4', required=True, indexed=False)
-  postal_code = orm.SuperStringProperty('5', required=True, indexed=False)
-  street = orm.SuperStringProperty('6', required=True, indexed=False)
-  default_shipping = orm.SuperBooleanProperty('7', required=True, default=True, indexed=False)
-  default_billing = orm.SuperBooleanProperty('8', required=True, default=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'region': orm.SuperKeyProperty('9', kind='16'),
-    'email': orm.SuperStringProperty('10'),
-    'telephone': orm.SuperStringProperty('11')
-    }
+  addresses = orm.SuperLocalStructuredProperty('14', '1', repeated=True)  # @todo It used to be Address. Is this ok!?
   
   _virtual_fields = {
-    '_country': orm.SuperReferenceStructuredProperty('15', autoload=True, target_field='country'),
-    '_region': orm.SuperReferenceStructuredProperty('16', autoload=True, target_field='region')
-  }
-
-
-class Buyer(orm.BaseModel):
-  
-  _kind = 77
-  
-  addresses = orm.SuperLocalStructuredProperty(Address, '1', repeated=True)
-  
-  _virtual_fields = {
-    '_records': orm.SuperRecordProperty('77')
+    '_records': orm.SuperRecordProperty('19')
     }
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('77', [orm.Action.build_key('77', 'update'),
-                                  orm.Action.build_key('77', 'read')], True, 'entity._original.key_parent == account.key and not account._is_guest'),
-      orm.FieldPermission('77', ['addresses', '_records'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
+      orm.ActionPermission('19', [orm.Action.build_key('19', 'update'),
+                                  orm.Action.build_key('19', 'read')], True, 'entity._original.key_parent == account.key and not account._is_guest'),
+      orm.FieldPermission('19', ['addresses', '_records'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
       ]
     )
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('77', 'update'),
+      key=orm.Action.build_key('19', 'update'),
       arguments={
         'account': orm.SuperKeyProperty(kind='6', required=True),
         'addresses': orm.SuperLocalStructuredProperty(Address, repeated=True),
@@ -74,7 +43,7 @@ class Buyer(orm.BaseModel):
             Read(),
             Set(cfg={'d': {'_buyer.addresses': 'input.addresses'}}),
             BuyerUpdateSet(),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec()
             ]
           ),
@@ -88,7 +57,7 @@ class Buyer(orm.BaseModel):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('77', 'read'),
+      key=orm.Action.build_key('19', 'read'),
       arguments={
         'account': orm.SuperKeyProperty(kind='6', required=True),
         'read_arguments': orm.SuperJsonProperty()
@@ -98,7 +67,7 @@ class Buyer(orm.BaseModel):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_buyer'}})
             ]

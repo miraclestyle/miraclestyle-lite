@@ -74,7 +74,7 @@ GOOGLE_OAUTH2 = {
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
    'redirect_uri' : '%s/login/google' % HOST,
    'type' : 1,
-   'userinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
+   'accountinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
 
 FACEBOOK_OAUTH2 = {
@@ -85,7 +85,7 @@ FACEBOOK_OAUTH2 = {
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
    'redirect_uri' : '%s/login/facebook' % HOST,
    'type' : 2,
-   'userinfo' : 'https://graph.facebook.com/me',
+   'accountinfo' : 'https://graph.facebook.com/me',
 }
 
 LOGIN_METHODS = {

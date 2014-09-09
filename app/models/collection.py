@@ -6,41 +6,39 @@ Created on May 18, 2014
 '''
 
 from app import orm, settings
-from app.models import auth
-from app.models.base import *
-from app.plugins.base import *
-from app.plugins.buyer import *
+from app.models import *
+from app.plugins import *
 
 
-class Collection(orm.BaseModel):
+class Collection(orm.BaseExpando):
   
-  _kind = 10
+  _kind = 18
   
   notify = orm.SuperBooleanProperty('1', required=True, default=False)
-  accounts = orm.SuperKeyProperty('2', kind='6', repeated=True)
+  accounts = orm.SuperKeyProperty('2', kind='11', repeated=True)  # @todo Or we can go straight to Seller model here, and use it's keys?
   
   _virtual_fields = {
-    '_records': orm.SuperRecordProperty('10'),
-    '_domains': orm.SuperReferenceStructuredProperty('6', autoload=False,
-                                                     callback=lambda self: orm.get_multi_async([domain_key for domain_key in self.domains]),
+    '_records': orm.SuperRecordProperty('18'),
+    '_sellers': orm.SuperReferenceStructuredProperty('11', autoload=False,
+                                                     callback=lambda self: orm.get_multi_async([orm.Key(account_key._id_str, parent=account_key) for account_key in self.accounts]),
                                                      format_callback=lambda self, entities: orm.get_async_results(entities))
     }
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('10', [orm.Action.build_key('10', 'update'),
-                                  orm.Action.build_key('10', 'read')], True, 'entity._original.key_parent == account.key and not account._is_guest'),
-      orm.FieldPermission('10', ['notify', 'domains', '_records', '_domains.name', '_domains.logo'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
+      orm.ActionPermission('18', [orm.Action.build_key('18', 'update'),
+                                  orm.Action.build_key('18', 'read')], True, 'entity._original.key_parent == account.key and not account._is_guest'),
+      orm.FieldPermission('18', ['notify', 'accounts', '_records', '_sellers.name', '_sellers.logo'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
       ]
     )
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('10', 'update'),
+      key=orm.Action.build_key('18', 'update'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='6', required=True),
+        'account': orm.SuperKeyProperty(kind='11', required=True),
         'notify': orm.SuperBooleanProperty(default=True),
-        'accounts': orm.SuperKeyProperty(kind='6', repeated=True),
+        'accounts': orm.SuperKeyProperty(kind='11', repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -48,8 +46,8 @@ class Collection(orm.BaseModel):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'_collection.notify': 'input.notify', '_collection.domains': 'input.domains'}}),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            Set(cfg={'d': {'_collection.notify': 'input.notify', '_collection.accounts': 'input.accounts'}}),
+            RulePrepare(),
             RuleExec()
             ]
           ),
@@ -63,9 +61,9 @@ class Collection(orm.BaseModel):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('10', 'read'),
+      key=orm.Action.build_key('18', 'read'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='6', required=True),
+        'account': orm.SuperKeyProperty(kind='11', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -73,7 +71,7 @@ class Collection(orm.BaseModel):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_account_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_collection'}})
             ]

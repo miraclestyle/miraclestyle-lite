@@ -71,7 +71,7 @@ class AccountLoginWrite(orm.BaseModel):
   
   def run(self, context):
     def new_session(entity):
-      AccountSession = context.models['8']
+      AccountSession = context.models['9']
       session_ids = [session.session_id for session in entity.sessions.value]
       while True:
         session_id = hashlib.md5(random_chars(30)).hexdigest()
@@ -82,8 +82,8 @@ class AccountLoginWrite(orm.BaseModel):
       return session
     
     if hasattr(context, '_identity_id') and context._identity_id is not None:
-      Account = context.models['6']
-      AccountIdentity = context.models['7']
+      Account = context.models['11']
+      AccountIdentity = context.models['10']
       entity = context._account
       if entity._is_guest:
         entity = context.model()
