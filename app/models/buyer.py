@@ -16,6 +16,8 @@ class Buyer(orm.BaseExpando):
   
   addresses = orm.SuperLocalStructuredProperty(Address, '1', repeated=True)
   
+  _default_indexed = False
+  
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('19')
     }

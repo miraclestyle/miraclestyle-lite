@@ -17,6 +17,8 @@ class Collection(orm.BaseExpando):
   notify = orm.SuperBooleanProperty('1', required=True, default=False)
   accounts = orm.SuperKeyProperty('2', kind='11', repeated=True)  # @todo Or we can go straight to Seller model here, and use it's keys?
   
+  _default_indexed = False
+  
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('18'),
     '_sellers': orm.SuperReferenceStructuredProperty('11', autoload=False,
