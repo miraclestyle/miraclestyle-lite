@@ -19,11 +19,11 @@ class CronConfigProcessCatalogs(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     limit = self.cfg.get('page', 10)
-    Domain = context.models['6']
+    Account = context.models['11']  # @todo Not sure if this is ok!? Perhaps we shoud target Seller?
     cursor = None
     if context._cronconfig.data.get('more'):
       cursor = Cursor(urlsafe=context._cronconfig.data.get('cursor'))
-    entities, cursor, more = Domain.query().order(Domain.created).fetch_page(limit, start_cursor=cursor, keys_only=True)
+    entities, cursor, more = Account.query().order(Account.created).fetch_page(limit, start_cursor=cursor, keys_only=True)
     if cursor:
       cursor = cursor.urlsafe()
     context._cronconfig.data['cursor'] = cursor
@@ -31,5 +31,5 @@ class CronConfigProcessCatalogs(orm.BaseModel):
     for key in entities:
       data = {'action_id': 'cron',
               'action_model': '35',
-              'domain': key.urlsafe()}
+              'account': key.urlsafe()}
       context._callbacks.append(('callback', data))

@@ -35,9 +35,9 @@ class CronConfig(orm.BaseModel):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
-            CronConfigProcessCatalogs(cfg={'page': settings.DOMAINS_PER_CRON}),
+            CronConfigProcessCatalogs(cfg={'page': settings.ACCOUNTS_PER_CRON}),
             Write(),
             CallbackExec()
             ]
