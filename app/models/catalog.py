@@ -13,7 +13,7 @@ from app.plugins.base import *
 from app.plugins.marketing import *
 
 
-class ProductCategory(orm.BaseModel):
+class CatalogProductCategory(orm.BaseModel):
   
   _kind = 17
   
@@ -90,7 +90,7 @@ class ProductCategory(orm.BaseModel):
     ]
 
 
-class ProductContent(orm.BaseModel):
+class CatalogProductContent(orm.BaseModel):
   
   _kind = 43
   
@@ -100,7 +100,7 @@ class ProductContent(orm.BaseModel):
   body = orm.SuperTextProperty('2', required=True)
 
 
-class ProductVariant(orm.BaseModel):
+class CatalogProductVariant(orm.BaseModel):
   
   _kind = 42
   
@@ -112,7 +112,7 @@ class ProductVariant(orm.BaseModel):
   allow_custom_value = orm.SuperBooleanProperty('4', required=True, indexed=False, default=False)
 
 
-class ProductInstance(orm.BaseExpando):
+class CatalogProductInstance(orm.BaseExpando):
   
   _kind = 39
   
@@ -152,7 +152,7 @@ class ProductInstance(orm.BaseExpando):
     self.key = self.prepare_key({'variant_signature': self.variant_signature}, **kwargs)
 
 
-class Product(orm.BaseExpando):
+class CatalogProduct(orm.BaseExpando):
   
   _kind = 38
   

@@ -13,22 +13,13 @@ from app.tools.base import *
 from app.util import *
 
 
-def primary_contact_validator(prop, value):
-  domain_user = value.get()
-  role_ids = [role.id() for role in domain_user.roles]
-  if 'admin' in role_ids:
-    return value
-  else:
-    raise orm.PropertyError('invalid_domain_user')
-
-
 class OAuth2Error(Exception):
   
   def __init__(self, error):
     self.message = {'oauth2_error': error}
 
 
-class UserLoginInit(orm.BaseModel):
+class AccountLoginInit(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -36,11 +27,11 @@ class UserLoginInit(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     login_methods = self.cfg.get('methods', {})
-    context._user = context.model.current_user()
-    context.user = context.model.current_user()
-    kwargs = {'user': context.user, 'action': context.action}
-    rule_prepare(context._user, True, False, **kwargs)
-    rule_exec(context._user, context.action)
+    context._account = context.model.current_account()
+    context.account = context.model.current_account()
+    kwargs = {'account': context.account, 'action': context.action}
+    rule_prepare(context._account, True, False, **kwargs)
+    rule_exec(context._account, context.action)
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
@@ -59,24 +50,24 @@ class UserLoginInit(orm.BaseModel):
       client.get_token(code)
       if not client.access_token:
         raise OAuth2Error('failed_access_token')
-      userinfo = oauth2_cfg['userinfo']
-      info = client.resource_request(url=userinfo)
+      accountinfo = oauth2_cfg['accountinfo']
+      info = client.resource_request(url=accountinfo)
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)
         context._email = info['email']
-        user = context.model.query(context.model.identities.identity == context._identity_id).get()
-        if not user:
-          user = context.model.query(context.model.emails == context._email).get()
-        if user:
-          context._user = user
-          context.user = user
-    kwargs = {'user': context.user, 'action': context.action}
-    rule_prepare(context._user, True, False, **kwargs)
-    rule_exec(context._user, context.action)
+        account = context.model.query(context.model.identities.identity == context._identity_id).get()
+        if not account:
+          account = context.model.query(context.model.emails == context._email).get()
+        if account:
+          context._account = account
+          context.account = account
+    kwargs = {'account': context.account, 'action': context.action}
+    rule_prepare(context._account, True, False, **kwargs)
+    rule_exec(context._account, context.action)
 
 
-class UserLoginWrite(orm.BaseModel):
+class AccountLoginWrite(orm.BaseModel):
   
   def run(self, context):
     def new_session(entity):
@@ -91,9 +82,9 @@ class UserLoginWrite(orm.BaseModel):
       return session
     
     if hasattr(context, '_identity_id') and context._identity_id is not None:
-      User = context.models['0']
+      Account = context.models['0']
       Identity = context.models['64']
-      entity = context._user
+      entity = context._account
       if entity._is_guest:
         entity = context.model()
         entity.emails = [context._email]
@@ -120,28 +111,28 @@ class UserLoginWrite(orm.BaseModel):
           entity.identities = [Identity(identity=context._identity_id, email=context._email, primary=False)]
         session = new_session(entity)
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
-      context.model.set_current_user(entity, session)
-      context._user = entity
-      context.user = entity
+      context.model.set_current_account(entity, session)
+      context._account = entity
+      context.account = entity
       context._session = session
-    context.output['entity'] = context._user
-    if not context._user._is_guest:
-      context.output['authorization_code'] = '%s|%s' % (context._user.key.urlsafe(), context._session.session_id)
+    context.output['entity'] = context._account
+    if not context._account._is_guest:
+      context.output['authorization_code'] = '%s|%s' % (context._account.key.urlsafe(), context._session.session_id)
 
 
-class UserLogoutOutput(orm.BaseModel):
+class AccountLogoutOutput(orm.BaseModel):
   
   def run(self, context):
-    context._user.set_current_user(None, None)
-    context.output['entity'] = context._user.current_user()
+    context._account.set_current_account(None, None)
+    context.output['entity'] = context._account.current_account()
 
 
-class UserUpdateSet(orm.BaseModel):
+class AccountUpdateSet(orm.BaseModel):
   
   def run(self, context):
     primary_email = context.input.get('primary_email')
     disassociate = context.input.get('disassociate')
-    for identity in context._user.identities.value:
+    for identity in context._account.identities.value:
       if disassociate:
         if identity.identity in disassociate:
           identity.associated = False
@@ -152,34 +143,3 @@ class UserUpdateSet(orm.BaseModel):
         if identity.email == primary_email:
           identity.primary = True
           identity.associated = True
-
-
-class UserReadDomains():
-  
-  def run(self, context):
-    # @todo We could go with this strategy perhaps!?
-    # entity = context.user
-    entity_key = context.input.get('key')
-    entity = entity_key.get()
-    entity.read()
-    kwargs = {'user': context.user, 'action': context.action}
-    rule_prepare(entity, True, False, **kwargs)
-    rule_exec(entity, context.action)
-    domains = []
-    domain_users = []
-    if entity.domains and len(entity.domains):
-      domains, domain_users = orm.get_multi_combined_clean(entity.domains, [orm.Key('8', entity.key_id_str, namespace=domain._urlsafe) for domain in entity.domains])
-      rule_prepare(domains, False, False, **kwargs)
-      rule_prepare(domain_users, False, False, **kwargs)
-    context.output['domains'] = domains
-    context.output['domain_users'] = domain_users
-
-
-class DomainCreateWrite(orm.BaseModel):
-  
-  def run(self, context):
-    config_input = context.input.copy()
-    Configuration = context.models['57']
-    config = Configuration(parent=context.user.key, configuration_input=config_input, setup='setup_domain', state='active')
-    config.put()
-    context._config = config

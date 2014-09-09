@@ -9,12 +9,16 @@ import json
 
 from google.appengine.api import taskqueue
 from google.appengine.ext import blobstore
+from google.appengine.api import mail
+from google.appengine.api import urlfetch
+
+from jinja2.sandbox import SandboxedEnvironment
 
 from app import orm
 from app.util import *
 
 
-def rule_prepare(entities, skip_user_roles, strict, **kwargs):
+def rule_prepare(entities, skip_account_roles, strict, **kwargs):
   entities = normalize(entities)
   callbacks = []
   for entity in entities:
@@ -23,14 +27,14 @@ def rule_prepare(entities, skip_user_roles, strict, **kwargs):
       local_permissions = []
       if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '67':
         global_permissions = entity._global_role.permissions
-      if not skip_user_roles:
-        user = kwargs.get('user')
-        if user and not user._is_guest:
-          domain_user_key = orm.Key('8', user.key_id_str, namespace=entity.key_namespace)
-          domain_user = domain_user_key.get()
+      if not skip_account_roles:
+        account = kwargs.get('account')
+        if account and not account._is_guest:
+          domain_account_key = orm.Key('8', account.key_id_str, namespace=entity.key_namespace)
+          domain_account = domain_account_key.get()
           clean_roles = False
-          if domain_user and domain_user.state == 'accepted':
-            roles = orm.get_multi(domain_user.roles)
+          if domain_account and domain_account.state == 'accepted':
+            roles = orm.get_multi(domain_account.roles)
             for role in roles:
               if role is None:
                 clean_roles = True
@@ -39,12 +43,12 @@ def rule_prepare(entities, skip_user_roles, strict, **kwargs):
             if clean_roles:
               data = {'action_model': '8',
                       'action_key': 'clean_roles',
-                      'key': domain_user.key.urlsafe()}
+                      'key': domain_account.key.urlsafe()}
               callbacks.append(('callback', data))
       entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
   callbacks = list(set(callbacks))
   for callback in callbacks:
-    callback[1]['caller_user'] = kwargs.get('user').key_urlsafe
+    callback[1]['caller_account'] = kwargs.get('account').key_urlsafe
     callback[1]['caller_action'] = kwargs.get('action').key_urlsafe
   callback_exec('/task/io_engine_run', callbacks)  # @todo This has to be optimized!
 
@@ -78,3 +82,28 @@ def callback_exec(url, callbacks):
 
 def blob_create_upload_url(upload_url, gs_bucket_name):
   return blobstore.create_upload_url(upload_url, gs_bucket_name=gs_bucket_name)
+
+
+sandboxed_jinja = SandboxedEnvironment()
+
+def render_template(template_as_string, values={}):
+  from_string_template = sandboxed_jinja.from_string(template_as_string)
+  return from_string_template.render(values)
+
+
+# @todo We have to consider http://sendgrid.com/partner/google
+def mail_send(**kwargs):
+  message_sender = kwargs.get('sender', None)
+  if not message_sender:
+    raise orm.TerminateAction()
+  message = mail.EmailMessage()
+  message.sender = message_sender
+  message.bcc = kwargs['recipient']
+  message.subject = render_template(kwargs['subject'], kwargs)
+  message.body = render_template(kwargs['body'], kwargs) # We can add html argument in addition to body if we want to send html version!
+  message.check_initialized()
+  message.send()
+
+
+def http_send(**kwargs):
+  urlfetch.fetch(kwargs['recipient'], json.dumps(kwargs), method=urlfetch.POST)

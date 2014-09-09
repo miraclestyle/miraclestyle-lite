@@ -12,11 +12,11 @@ from app import orm
 from app.util import *
 
 
-class AddressesUpdateSet(orm.BaseModel):
+class BuyerUpdateSet(orm.BaseModel):
   
   def run(self, context):
-    original_addresses = context._addresses._original.addresses.value
-    addresses = context._addresses.addresses.value
+    original_addresses = context._buyer._original.addresses.value
+    addresses = context._buyer.addresses.value
     if addresses:
       default_billing = 0
       default_shipping = 0

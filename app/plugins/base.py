@@ -16,15 +16,15 @@ class Context(orm.BaseModel):
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
-    context.user = context.models['0'].current_user()
-    caller_user_key = context.input.get('caller_user')
-    if context.user._is_taskqueue:
-      if caller_user_key:
-        caller_user = caller_user_key.get()
-        if caller_user:
-          context.user = caller_user
+    context.account = context.models['0'].current_account()
+    caller_account_key = context.input.get('caller_account')
+    if context.account._is_taskqueue:
+      if caller_account_key:
+        caller_account = caller_account_key.get()
+        if caller_account:
+          context.account = caller_account
       else:
-        context.user = context.models['0'].get_system_user()
+        context.account = context.models['0'].get_system_account()
     context.namespace = None
     context.domain = None
     domain_key = context.input.get('domain')
@@ -111,7 +111,7 @@ class Write(orm.BaseModel):
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, orm.Model):
-      record_arguments = {'agent': context.user.key, 'action': context.action.key}
+      record_arguments = {'agent': context.account.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = get_attr(context, value)
@@ -132,7 +132,7 @@ class Delete(orm.BaseModel):
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = get_attr(context, entity_path)
     if entity and isinstance(entity, orm.Model):
-      record_arguments = {'agent': context.user.key, 'action': context.action.key}
+      record_arguments = {'agent': context.account.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = get_attr(context, value)
@@ -190,16 +190,16 @@ class RulePrepare(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    skip_user_roles = self.cfg.get('skip_user_roles', False)
+    skip_account_roles = self.cfg.get('skip_account_roles', False)
     strict = self.cfg.get('strict', False)
     static_kwargs = self.cfg.get('s', {})
     dynamic_kwargs = self.cfg.get('d', {})
-    kwargs = {'user': context.user, 'action': context.action}
+    kwargs = {'account': context.account, 'action': context.action}
     kwargs.update(static_kwargs)
     for key, value in dynamic_kwargs.iteritems():
       kwargs[key] = get_attr(context, value)
     entities = get_attr(context, entity_path)
-    rule_prepare(entities, skip_user_roles, strict, **kwargs)
+    rule_prepare(entities, skip_account_roles, strict, **kwargs)
 
 
 class RuleExec(orm.BaseModel):
@@ -255,19 +255,6 @@ class Search(orm.BaseModel):
       context._more = result[2]
 
 
-class CallbackNotify(orm.BaseModel):
-  
-  _kind = 96
-  
-  def run(self, context):
-    static_data = {}
-    entity = get_attr(context, '_' + context.model.__name__.lower())
-    static_data.update({'caller_entity': entity.key_urlsafe,
-                        'action_id': 'initiate',
-                        'action_model': '61'})
-    context._callbacks.append(('notify', static_data))
-
-
 class CallbackExec(orm.BaseModel):
   
   _kind = 97
@@ -284,8 +271,8 @@ class CallbackExec(orm.BaseModel):
         static_data[key] = get_attr(context, value)
       context._callbacks.append((queue_name, static_data))
     for callback in context._callbacks:
-      if callback[1].get('caller_user') is None:
-        callback[1]['caller_user'] = context.user.key_urlsafe
+      if callback[1].get('caller_account') is None:
+        callback[1]['caller_account'] = context.account.key_urlsafe
       if callback[1].get('caller_action') is None:
         callback[1]['caller_action'] = context.action.key_urlsafe
     callback_exec('/task/io_engine_run', context._callbacks)
@@ -309,3 +296,25 @@ class BlobURL(orm.BaseModel):
       context._blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
       #raise orm.TerminateAction()
 
+
+class Notify(orm.BaseModel):
+  
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    method = self.cfg.get('method', 'mail')
+    condition = self.cfg.get('condition', True)
+    static_values = self.cfg.get('s', {})
+    dynamic_values = self.cfg.get('d', {})
+    entity = get_attr(context, '_' + context.model.__name__.lower())
+    values = {'account': context.account.key, 'action': context.action.key, 'entity': entity}
+    values.update(static_values)
+    for key, value in dynamic_values.iteritems():
+      values[key] = get_attr(context, value)
+    if safe_eval(condition, values):
+      if method == 'mail':
+        mail_send(**values)
+      elif method == 'http':
+        http_send(**values)
