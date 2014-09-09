@@ -45,7 +45,7 @@ class Account(orm.BaseExpando):
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   identities = orm.SuperStructuredProperty(AccountIdentity, '3', repeated=True)  # Soft limit 100 instances.
   emails = orm.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances.
-  state = orm.SuperStringProperty('5', required=True, choices=['active', 'suspended'])  # @todo Shall we disable indexing here?
+  state = orm.SuperStringProperty('5', required=True, choices=['active', 'suspended', 'su_suspended'])  # @todo Not sure what to do here? Shall we disable indexing here?
   sessions = orm.SuperLocalStructuredProperty(AccountSession, '6', repeated=True)  # Soft limit 100 instances.
   
   _default_indexed = False
@@ -62,7 +62,7 @@ class Account(orm.BaseExpando):
                            'entity._is_guest or entity._original.state == "active"'),
       orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
                                   orm.Action.build_key('11', 'update'),
-                                  orm.Action.build_key('11', 'logout')], True, 'not entity._is_guest and account.key == entity._original.key'),
+                                  orm.Action.build_key('11', 'logout')], True, 'not account._is_guest and account.key == entity._original.key'),
       orm.FieldPermission('11', ['created', 'updated', 'state'], False, True,
                           'not account._is_guest and account.key == entity._original.key'),
       orm.FieldPermission('11', ['identities', 'emails', 'sessions', '_primary_email'], True, True,

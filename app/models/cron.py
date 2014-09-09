@@ -22,7 +22,7 @@ class CronConfig(orm.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('83', [orm.Action.build_key('83', 'process_catalogs')], True, 'user._is_cron')
+      orm.ActionPermission('83', [orm.Action.build_key('83', 'process_catalogs')], True, 'account._is_cron')
       ]
     )
   

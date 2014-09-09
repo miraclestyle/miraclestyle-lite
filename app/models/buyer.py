@@ -14,7 +14,7 @@ class Buyer(orm.BaseExpando):
   
   _kind = 19
   
-  addresses = orm.SuperLocalStructuredProperty('14', '1', repeated=True)  # @todo It used to be Address. Is this ok!?
+  addresses = orm.SuperLocalStructuredProperty(Address, '1', repeated=True)
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('19')

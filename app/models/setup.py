@@ -31,7 +31,7 @@ class Configuration(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('57', [orm.Action.build_key('57', 'install'),
-                                  orm.Action.build_key('57', 'cron_install')], True, 'user._is_taskqueue')
+                                  orm.Action.build_key('57', 'cron_install')], True, 'account._is_taskqueue')
       ]
     )
   
