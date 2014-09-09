@@ -113,8 +113,8 @@ class DomainSetup(Setup):
     config_input = self.config.next_operation_input
     domain_key = config_input.get('domain_key')
     namespace = domain_key.urlsafe()
-    ActionPermission = self.context.models['79']
-    FieldPermission = self.context.models['80']
+    ActionPermission = self.context.models['4']
+    FieldPermission = self.context.models['5']
     DomainRole = self.context.models['60']
     permissions = []
     objects = ['6', '60', '8', '62', '61', '35', '38', '39', '17', '15', '16', '19', '49', '47']
@@ -304,7 +304,7 @@ class DomainSetup(Setup):
     # this two need to be ordered Dictionaries because using unordered dict will cause
     # weird behaviour on user interface (e.g. on each refresh different order of properties
     entity.entry_fields = {'company_address': orm.SuperLocalStructuredProperty('68', '7', required=True),
-                           'party': orm.SuperKeyProperty('8', kind='0', required=True, indexed=False),  # @todo buyer_reference ??
+                           'party': orm.SuperKeyProperty('8', kind='6', required=True, indexed=False),  # @todo buyer_reference ??
                            'billing_address_reference': orm.SuperKeyProperty('9', kind='9', required=True, indexed=False),
                            'shipping_address_reference': orm.SuperKeyProperty('10', kind='9', required=True, indexed=False),
                            'billing_address': orm.SuperLocalStructuredProperty('68', '11', required=True),
@@ -439,8 +439,8 @@ class DomainSetup(Setup):
     
     def message_recievers(entity, user):
       primary_contact = entity.primary_contact.get()
-      user = orm.Key('0', int(primary_contact.key_id_str)).get()
-      return [user._primary_email]
+      account = orm.Key('6', int(primary_contact.key_id_str)).get()
+      return [account._primary_email]
     
     CustomTemplate = self.context.models['59']
     custom_notify = CustomTemplate(outlet='send_mail',

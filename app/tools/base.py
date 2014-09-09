@@ -18,7 +18,7 @@ from app import orm
 from app.util import *
 
 
-def rule_prepare(entities, skip_account_roles, strict, **kwargs):
+def rule_prepare(entities, strict, **kwargs):
   entities = normalize(entities)
   callbacks = []
   for entity in entities:
@@ -27,30 +27,7 @@ def rule_prepare(entities, skip_account_roles, strict, **kwargs):
       local_permissions = []
       if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '67':
         global_permissions = entity._global_role.permissions
-      if not skip_account_roles:
-        account = kwargs.get('account')
-        if account and not account._is_guest:
-          domain_account_key = orm.Key('8', account.key_id_str, namespace=entity.key_namespace)
-          domain_account = domain_account_key.get()
-          clean_roles = False
-          if domain_account and domain_account.state == 'accepted':
-            roles = orm.get_multi(domain_account.roles)
-            for role in roles:
-              if role is None:
-                clean_roles = True
-              elif role.active:
-                local_permissions.extend(role.permissions)
-            if clean_roles:
-              data = {'action_model': '8',
-                      'action_key': 'clean_roles',
-                      'key': domain_account.key.urlsafe()}
-              callbacks.append(('callback', data))
       entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
-  callbacks = list(set(callbacks))
-  for callback in callbacks:
-    callback[1]['caller_account'] = kwargs.get('account').key_urlsafe
-    callback[1]['caller_action'] = kwargs.get('action').key_urlsafe
-  callback_exec('/task/io_engine_run', callbacks)  # @todo This has to be optimized!
 
 
 def rule_exec(entity, action):
@@ -85,6 +62,7 @@ def blob_create_upload_url(upload_url, gs_bucket_name):
 
 
 sandboxed_jinja = SandboxedEnvironment()
+
 
 def render_template(template_as_string, values={}):
   from_string_template = sandboxed_jinja.from_string(template_as_string)

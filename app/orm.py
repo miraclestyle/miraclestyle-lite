@@ -545,7 +545,7 @@ class _BaseModel(object):
       try:
         action_key = Key(urlsafe=action)
       except:
-        action_key = Key(cls.get_kind(), 'action', '56', action)
+        action_key = Key(cls.get_kind(), 'action', '1', action)
     class_actions = cls.get_actions()
     for class_action in class_actions:
       if action_key == class_action.key:
@@ -2607,7 +2607,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
   
   def __init__(self, *args, **kwargs):
     '''So basically:
-    argument: SuperMultiLocalStructuredProperty(('52' or ModelItself, '21' or ModelItself))
+    argument: SuperMultiLocalStructuredProperty(('3' or ModelItself, '21' or ModelItself))
     will allow instancing of both 51 and 21 that is provided from the input.
     This property should not be used for datastore. Its specifically used for arguments.
     Currently we do not have the code that would allow this to be saved in datastore:
@@ -3652,39 +3652,6 @@ class SuperPluginStorageProperty(SuperPickleProperty):
 #########################################
 
 
-class Action(BaseExpando):
-  
-  _kind = 56
-  
-  name = SuperStringProperty('1', required=True)
-  arguments = SuperPickleProperty('2', required=True, default={}, compressed=False)
-  active = SuperBooleanProperty('3', required=True, default=True)
-  
-  _default_indexed = False
-  
-  def __init__(self, *args, **kwargs):
-    self._plugin_groups = kwargs.pop('_plugin_groups', None)
-    super(Action, self).__init__(*args, **kwargs)
-  
-  @classmethod
-  def build_key(cls, kind, action_id):
-    return Key(kind, 'action', cls._get_kind(), action_id)
-
-
-class PluginGroup(BaseExpando):
-  
-  _kind = 52
-  
-  name = SuperStringProperty('1', required=True)
-  subscriptions = SuperKeyProperty('2', kind='56', repeated=True)
-  active = SuperBooleanProperty('3', required=True, default=True)
-  sequence = SuperIntegerProperty('4', required=True)  # @todo Not sure if we are gonna need this?
-  transactional = SuperBooleanProperty('5', required=True, default=False, indexed=False)
-  plugins = SuperPickleProperty('6', required=True, default=[], compressed=False)
-  
-  _default_indexed = False
-
-
 class Record(BaseExpando):
   '''
   The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
@@ -3700,15 +3667,15 @@ class Record(BaseExpando):
   allowed mutations to class(cls) scope.
 
   '''
-  _kind = 5
+  _kind = 0
   
   _use_record_engine = False
   _use_rule_engine = False
   
   # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
   logged = SuperDateTimeProperty('l', auto_now_add=True)
-  agent = SuperKeyProperty('u', kind='0', required=True)
-  action = SuperKeyProperty('a', kind='56', required=True)
+  agent = SuperKeyProperty('u', kind='6', required=True)
+  action = SuperKeyProperty('a', kind='1', required=True)
   
   _default_indexed = False
   
@@ -3820,6 +3787,39 @@ class Record(BaseExpando):
     return self
 
 
+class Action(BaseExpando):
+  
+  _kind = 1
+  
+  name = SuperStringProperty('1', required=True)
+  arguments = SuperPickleProperty('2', required=True, default={}, compressed=False)
+  active = SuperBooleanProperty('3', required=True, default=True)
+  
+  _default_indexed = False
+  
+  def __init__(self, *args, **kwargs):
+    self._plugin_groups = kwargs.pop('_plugin_groups', None)
+    super(Action, self).__init__(*args, **kwargs)
+  
+  @classmethod
+  def build_key(cls, kind, action_id):
+    return Key(kind, 'action', cls._get_kind(), action_id)
+
+
+class PluginGroup(BaseExpando):
+  
+  _kind = 2
+  
+  name = SuperStringProperty('1', required=True)
+  subscriptions = SuperKeyProperty('2', kind='1', repeated=True)
+  active = SuperBooleanProperty('3', required=True, default=True)
+  sequence = SuperIntegerProperty('4', required=True)  # @todo Not sure if we are gonna need this?
+  transactional = SuperBooleanProperty('5', required=True, default=False, indexed=False)
+  plugins = SuperPickleProperty('6', required=True, default=[], compressed=False)
+  
+  _default_indexed = False
+
+
 class Permission(BasePolyExpando):
   '''Base class for all permissions.
   If the futuer deems scaling to be a problem, possible solutions could be to:
@@ -3830,17 +3830,17 @@ class Permission(BasePolyExpando):
   c) Some other similar pattern.
   
   '''
-  _kind = 78
+  _kind = 3
   
   _default_indexed = False
 
 
 class ActionPermission(Permission):
   
-  _kind = 79
+  _kind = 4
   
   model = SuperStringProperty('1', required=True, indexed=False)
-  actions = SuperVirtualKeyProperty('2', kind='56', repeated=True, indexed=False)
+  actions = SuperVirtualKeyProperty('2', kind='1', repeated=True, indexed=False)
   executable = SuperBooleanProperty('3', required=False, default=None, indexed=False)
   condition = SuperStringProperty('4', required=True, indexed=False)
   
@@ -3865,7 +3865,7 @@ class ActionPermission(Permission):
 
 class FieldPermission(Permission):
   
-  _kind = 80
+  _kind = 5
   
   model = SuperStringProperty('1', required=True, indexed=False)
   fields = SuperStringProperty('2', repeated=True, indexed=False)

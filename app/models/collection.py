@@ -17,7 +17,7 @@ class Collection(orm.BaseModel):
   _kind = 10
   
   notify = orm.SuperBooleanProperty('1', required=True, default=False)
-  domains = orm.SuperKeyProperty('2', kind='6', repeated=True)
+  accounts = orm.SuperKeyProperty('2', kind='6', repeated=True)
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('10'),
@@ -38,9 +38,9 @@ class Collection(orm.BaseModel):
     orm.Action(
       key=orm.Action.build_key('10', 'update'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='0', required=True),
+        'account': orm.SuperKeyProperty(kind='6', required=True),
         'notify': orm.SuperBooleanProperty(default=True),
-        'domains': orm.SuperKeyProperty(kind='6', repeated=True),
+        'accounts': orm.SuperKeyProperty(kind='6', repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -65,7 +65,7 @@ class Collection(orm.BaseModel):
     orm.Action(
       key=orm.Action.build_key('10', 'read'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='0', required=True),
+        'account': orm.SuperKeyProperty(kind='6', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[

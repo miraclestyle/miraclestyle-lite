@@ -16,7 +16,7 @@ class Context(orm.BaseModel):
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
-    context.account = context.models['0'].current_account()
+    context.account = context.models['6'].current_account()
     caller_account_key = context.input.get('caller_account')
     if context.account._is_taskqueue:
       if caller_account_key:
@@ -24,7 +24,7 @@ class Context(orm.BaseModel):
         if caller_account:
           context.account = caller_account
       else:
-        context.account = context.models['0'].get_system_account()
+        context.account = context.models['6'].get_system_account()
     context.namespace = None
     context.domain = None
     domain_key = context.input.get('domain')
@@ -190,7 +190,6 @@ class RulePrepare(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    skip_account_roles = self.cfg.get('skip_account_roles', False)
     strict = self.cfg.get('strict', False)
     static_kwargs = self.cfg.get('s', {})
     dynamic_kwargs = self.cfg.get('d', {})
@@ -199,7 +198,7 @@ class RulePrepare(orm.BaseModel):
     for key, value in dynamic_kwargs.iteritems():
       kwargs[key] = get_attr(context, value)
     entities = get_attr(context, entity_path)
-    rule_prepare(entities, skip_account_roles, strict, **kwargs)
+    rule_prepare(entities, strict, **kwargs)
 
 
 class RuleExec(orm.BaseModel):
