@@ -5,7 +5,6 @@ Created on Jun 14, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-# @todo Namespacing should be removed from these plugins perhaps!
 from app import orm
 from app.tools.base import *
 from app.util import *
@@ -28,10 +27,6 @@ class Context(orm.BaseModel):
         context.account = context.models['11'].get_system_account()
     context.namespace = None
     context.domain = None
-    domain_key = context.input.get('domain')
-    if domain_key is not None:
-      context.domain = domain_key.get()
-      context.namespace = context.domain.key_namespace
     context._callbacks = []  # @todo For now this stays here!
 
 
@@ -227,8 +222,14 @@ class Search(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
+    static_arguments = self.cfg.get('s', {})
+    dynamic_arguments = self.cfg.get('d', {})
     search_arguments = context.input.get('search')
-    search_arguments['namespace'] = context.namespace
+    overide_arguments = {}
+    overide_arguments.update(static_arguments)
+    for key, value in dynamic_arguments.iteritems():
+      overide_arguments[key] = get_attr(context, value)
+    override_dict(search_arguments, overide_arguments)
     result = context.model.search(search_arguments)
     if search_arguments.get('keys'):
       context._entities = result

@@ -91,16 +91,15 @@ class CatalogCronPublish(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     limit = self.cfg.get('page', 10)
-    Catalog = context.models['35']
+    Catalog = context.models['31']
     catalogs = []
-    if context.domain.state == 'active':
+    if context.domain.state == 'active':  # @todo To fix this!
       catalogs = Catalog.query(Catalog.state == 'locked',
-                               Catalog.publish_date <= datetime.datetime.now(),
-                               namespace=context.namespace).fetch(limit=limit)
+                               Catalog.publish_date <= datetime.datetime.now()).fetch(limit=limit)
     for catalog in catalogs:
       if catalog._is_eligible:
         data = {'action_id': 'publish',
-                'action_model': '35',
+                'action_model': '31',
                 'message': 'Published by Cron.',
                 'key': catalog.key.urlsafe()}
         context._callbacks.append(('callback', data))
@@ -114,17 +113,15 @@ class CatalogCronDiscontinue(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     limit = self.cfg.get('page', 10)
-    Catalog = context.models['35']
-    if context.domain.state == 'active':
+    Catalog = context.models['31']
+    if context.domain.state == 'active':  # @todo To fix this!
       catalogs = Catalog.query(Catalog.state == 'published',
-                               Catalog.discontinue_date <= datetime.datetime.now(),
-                               namespace=context.namespace).fetch(limit=limit)
+                               Catalog.discontinue_date <= datetime.datetime.now()).fetch(limit=limit)
     else:
-      catalogs = Catalog.query(Catalog.state == 'published',
-                               namespace=context.namespace).fetch(limit=limit)
+      catalogs = Catalog.query(Catalog.state == 'published').fetch(limit=limit)
     for catalog in catalogs:
       data = {'action_id': 'discontinue',
-              'action_model': '35',
+              'action_model': '31',
               'message': 'Expired',
               'key': catalog.key.urlsafe()}
       context._callbacks.append(('callback', data))
@@ -140,24 +137,21 @@ class CatalogCronDelete(orm.BaseModel):
     limit = self.cfg.get('page', 10)
     catalog_unpublished_life = self.cfg.get('unpublished_life', 7)
     catalog_discontinued_life = self.cfg.get('discontinued_life', 180)
-    Catalog = context.models['35']
+    Catalog = context.models['31']
     catalogs = []
     locked_catalogs = []
-    if context.domain.state != 'active':
-      locked_catalogs = Catalog.query(Catalog.state == 'locked',
-                                      namespace=context.namespace).fetch(limit=limit)
+    if context.domain.state != 'active':  # @todo To fix this!
+      locked_catalogs = Catalog.query(Catalog.state == 'locked').fetch(limit=limit)
     unpublished_catalogs = Catalog.query(Catalog.state == 'unpublished',
-                                         Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=catalog_unpublished_life)),
-                                         namespace=context.namespace).fetch(limit=limit)
+                                         Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=catalog_unpublished_life))).fetch(limit=limit)
     discontinued_catalogs = Catalog.query(Catalog.state == 'discontinued',
-                                          Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life)),
-                                          namespace=context.namespace).fetch(limit=limit)
+                                          Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life))).fetch(limit=limit)
     catalogs.extend(locked_catalogs)
     catalogs.extend(unpublished_catalogs)
     catalogs.extend(discontinued_catalogs)
     for catalog in catalogs:
       data = {'action_id': 'delete',
-              'action_model': '35',
+              'action_model': '31',
               'key': catalog.key.urlsafe()}
       context._callbacks.append(('callback', data))
 
@@ -171,12 +165,12 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
       self.cfg = {}
     documents = []
     index_name = self.cfg.get('index', None)
-    catalog_fields = {'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'namespace_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+    catalog_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
+                      'parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       'cover.value.serving_url': orm.SuperStringProperty(search_document_field_name='cover')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
     product_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
-                      'namespace_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'namespace_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+                      'key_parent.key_parent.entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
+                      'key_parent.key_parent.entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       '_product_category.value.parent_record': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category_parent_record'),
                       '_product_category.value.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
                       '_product_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}

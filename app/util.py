@@ -210,6 +210,21 @@ def merge_dicts(a, b):
   return a
 
 
+def override_dict(a, b):
+  for key in b:
+    if key in a:
+      if isinstance(a[key], dict) and isinstance(b[key], dict):
+        override_dict(a[key], b[key])
+      elif a[key] == b[key]:
+        pass
+      else:
+        # in this segment we encounter that a[key] is not equal to b[key] which we do not want, roll it back
+        a[key] = b[key]
+    else:
+      a[key] = b[key]
+  return a
+
+
 def make_complete_name(entity, name_property, parent_property=None, separator=None):
   '''Returns a string build by joining individual string values,
   extracted from the same property traced in a chain of interrelated entities.
