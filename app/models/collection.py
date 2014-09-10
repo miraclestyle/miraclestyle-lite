@@ -15,14 +15,14 @@ class Collection(orm.BaseExpando):
   _kind = 18
   
   notify = orm.SuperBooleanProperty('1', required=True, default=False)
-  accounts = orm.SuperKeyProperty('2', kind='11', repeated=True)  # @todo Or we can go straight to Seller model here, and use it's keys?
+  sellers = orm.SuperKeyProperty('2', kind='23', repeated=True)
   
   _default_indexed = False
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('18'),
     '_sellers': orm.SuperReferenceStructuredProperty('11', autoload=False,
-                                                     callback=lambda self: orm.get_multi_async([orm.Key(account_key._id_str, parent=account_key) for account_key in self.accounts]),
+                                                     callback=lambda self: orm.get_multi_async(self.sellers),
                                                      format_callback=lambda self, entities: orm.get_async_results(entities))
     }
   
@@ -30,7 +30,7 @@ class Collection(orm.BaseExpando):
     permissions=[
       orm.ActionPermission('18', [orm.Action.build_key('18', 'update'),
                                   orm.Action.build_key('18', 'read')], True, 'entity._original.key_parent == account.key and not account._is_guest'),
-      orm.FieldPermission('18', ['notify', 'accounts', '_records', '_sellers.name', '_sellers.logo'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
+      orm.FieldPermission('18', ['notify', 'sellers', '_records', '_sellers.name', '_sellers.logo'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
       ]
     )
   
@@ -40,7 +40,7 @@ class Collection(orm.BaseExpando):
       arguments={
         'account': orm.SuperKeyProperty(kind='11', required=True),
         'notify': orm.SuperBooleanProperty(default=True),
-        'accounts': orm.SuperKeyProperty(kind='11', repeated=True),
+        'sellers': orm.SuperKeyProperty(kind='23', repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[

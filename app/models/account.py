@@ -234,6 +234,24 @@ class Account(orm.BaseExpando):
             ]
           )
         ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'blob_upload_url'),
+      arguments={
+        'upload_url': orm.SuperStringProperty(required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            BlobURL(cfg={'bucket': settings.BUCKET_PATH}),
+            Set(cfg={'d': {'output.upload_url': '_blob_url'}})
+            ]
+          )
+        ]
       )
     ]
   

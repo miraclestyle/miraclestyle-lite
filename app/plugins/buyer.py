@@ -5,9 +5,6 @@ Created on May 13, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import time
-import hashlib
-
 from app import orm
 from app.util import *
 

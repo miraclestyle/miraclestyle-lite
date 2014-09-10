@@ -25,8 +25,10 @@ class Buyer(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('19', [orm.Action.build_key('19', 'update'),
-                                  orm.Action.build_key('19', 'read')], True, 'entity._original.key_parent == account.key and not account._is_guest'),
-      orm.FieldPermission('19', ['addresses', '_records'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
+                                  orm.Action.build_key('19', 'read')], True,
+                           'not account._is_guest and entity._original.key_parent == account.key'),
+      orm.FieldPermission('19', ['addresses', '_records'], True, True,
+                          'not account._is_guest and entity._original.key_parent == account.key')
       ]
     )
   

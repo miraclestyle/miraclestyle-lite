@@ -288,7 +288,7 @@ class BlobURL(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     gs_bucket = self.cfg.get('bucket', None)
-    sufix = self.cfg.get('sufix', '/' + context.model.__name__.lower())
+    sufix = self.cfg.get('sufix', '/' + context.account.key_urlsafe)
     upload_url = context.input.get('upload_url')
     if upload_url and gs_bucket:
       gs_bucket_name = gs_bucket + sufix
