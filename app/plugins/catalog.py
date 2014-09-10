@@ -142,7 +142,7 @@ class CatalogCronDelete(orm.BaseModel):
     locked_catalogs = []
     if context.domain.state != 'active':  # @todo To fix this!
       locked_catalogs = Catalog.query(Catalog.state == 'locked').fetch(limit=limit)
-    unpublished_catalogs = Catalog.query(Catalog.state == 'unpublished',
+    unpublished_catalogs = Catalog.query(Catalog.state == 'draft',
                                          Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=catalog_unpublished_life))).fetch(limit=limit)
     discontinued_catalogs = Catalog.query(Catalog.state == 'discontinued',
                                           Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life))).fetch(limit=limit)

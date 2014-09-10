@@ -802,7 +802,7 @@ class Catalog(orm.BaseExpando):
           transactional=True,
           plugins=[
             Duplicate(),
-            Set(cfg={'s': {'_catalog.state': 'unpublished'}, 'rm': ['_catalog.created']}),
+            Set(cfg={'s': {'_catalog.state': 'draft'}, 'rm': ['_catalog.created']}),
             Write()
             ]
           )
