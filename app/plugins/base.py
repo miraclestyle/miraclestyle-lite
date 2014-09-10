@@ -5,6 +5,7 @@ Created on Jun 14, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+# @todo Namespacing should be removed from these plugins perhaps!
 from app import orm
 from app.tools.base import *
 from app.util import *
@@ -16,7 +17,7 @@ class Context(orm.BaseModel):
   
   def run(self, context):
     # @todo Following lines are temporary, until we decide where and how to distribute them!
-    context.account = context.models['6'].current_account()
+    context.account = context.models['11'].current_account()
     caller_account_key = context.input.get('caller_account')
     if context.account._is_taskqueue:
       if caller_account_key:
@@ -24,7 +25,7 @@ class Context(orm.BaseModel):
         if caller_account:
           context.account = caller_account
       else:
-        context.account = context.models['6'].get_system_account()
+        context.account = context.models['11'].get_system_account()
     context.namespace = None
     context.domain = None
     domain_key = context.input.get('domain')

@@ -5,7 +5,9 @@ Created on Aug 30, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from app import orm, util, settings
+from app import orm, settings
+from app.models import *
+from app.plugins import *
 
 
 class OrderLineTax(orm.BaseModel):

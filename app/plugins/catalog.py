@@ -16,7 +16,7 @@ from app.tools.base import *
 from app.util import *
 
 
-class ProductCategoryUpdateWrite(orm.BaseModel):
+class CatalogProductCategoryUpdateWrite(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -28,7 +28,7 @@ class ProductCategoryUpdateWrite(orm.BaseModel):
     production_environment = self.cfg.get('prod_env', False)
     if not update_file_path:
       raise orm.TerminateAction()
-    Category = context.models['17']
+    Category = context.models['24']
     data = []
     with file(update_file_path) as f:
       for line in f:

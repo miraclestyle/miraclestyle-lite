@@ -7,15 +7,15 @@ Created on May 6, 2014
 
 import datetime
 
-from app import orm, util, settings
-from app.models.base import *
-from app.plugins.base import *
-from app.plugins.marketing import *
+from app import orm, settings
+from app.models import *
+from app.plugins import *
+from app.util import *
 
 
 class CatalogProductCategory(orm.BaseModel):
   
-  _kind = 17
+  _kind = 24
   
   _use_record_engine = False
   
@@ -26,39 +26,39 @@ class CatalogProductCategory(orm.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('17', [orm.Action.build_key('17', 'update')], True, 'user._root_admin or user._is_taskqueue'),
-      orm.ActionPermission('17', [orm.Action.build_key('17', 'search')], True, 'not user._is_guest'),
-      orm.FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
-      orm.FieldPermission('17', ['parent_record', 'name', 'complete_name', 'state'], True, True,
+      orm.ActionPermission('24', [orm.Action.build_key('24', 'update')], True, 'account._root_admin or user._is_taskqueue'),
+      orm.ActionPermission('24', [orm.Action.build_key('24', 'search')], True, 'not user._is_guest'),
+      orm.FieldPermission('24', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
+      orm.FieldPermission('24', ['parent_record', 'name', 'complete_name', 'state'], True, True,
                           'user._root_admin or user._is_taskqueue')
       ]
     )
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('17', 'update'),
+      key=orm.Action.build_key('24', 'update'),
       arguments={},
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
-            ProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE,
-                                            'prod_env': settings.DEVELOPMENT_SERVER})
+            CatalogProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE,
+                                                   'prod_env': settings.DEVELOPMENT_SERVER})
             ]
           )
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('17', 'search'),  # @todo Search is very inaccurate when using 'contains' filter. so we will have to use here document search i think.
+      key=orm.Action.build_key('24', 'search'),  # @todo Search is very inaccurate when using 'contains' filter. so we will have to use here document search i think.
       arguments={  # @todo Add default filter to list active ones.
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
             'search_by_keys': True,
-            'search_arguments': {'kind': '17', 'options': {'limit': settings.SEARCH_PAGE}},
+            'search_arguments': {'kind': '24', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(choices=['indexable'])},
             'indexes': [{'orders': [('name', ['asc', 'desc'])]},
@@ -76,10 +76,10 @@ class CatalogProductCategory(orm.BaseModel):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'skip_user_roles': True}),
+            RulePrepare(),
             RuleExec(),
             Search(),
-            RulePrepare(cfg={'path': '_entities', 'skip_user_roles': True}),
+            RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
                            'output.more': '_more'}})
@@ -92,7 +92,7 @@ class CatalogProductCategory(orm.BaseModel):
 
 class CatalogProductContent(orm.BaseModel):
   
-  _kind = 43
+  _kind = 25
   
   _use_rule_engine = False
   
@@ -102,7 +102,7 @@ class CatalogProductContent(orm.BaseModel):
 
 class CatalogProductVariant(orm.BaseModel):
   
-  _kind = 42
+  _kind = 26
   
   _use_rule_engine = False
   
@@ -114,7 +114,7 @@ class CatalogProductVariant(orm.BaseModel):
 
 class CatalogProductInstance(orm.BaseExpando):
   
-  _kind = 39
+  _kind = 27
   
   _use_rule_engine = False
   
@@ -125,20 +125,19 @@ class CatalogProductInstance(orm.BaseExpando):
   _expando_fields = {
     'description': orm.SuperTextProperty('2'),
     'unit_price': orm.SuperDecimalProperty('3'),
-    'availability': orm.SuperStringProperty('4', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock']),
+    'availability': orm.SuperStringProperty('4', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder']),
     'code': orm.SuperStringProperty('5'),
     'weight': orm.SuperDecimalProperty('6'),
-    'weight_uom': orm.SuperKeyProperty('7', kind='19'),
+    'weight_uom': orm.SuperKeyProperty('7', kind='17'),
     'volume': orm.SuperDecimalProperty('8'),
-    'volume_uom': orm.SuperKeyProperty('9', kind='19'),
+    'volume_uom': orm.SuperKeyProperty('9', kind='17'),
     'images': SuperImageLocalStructuredProperty(Image, '10', repeated=True),
-    'contents': orm.SuperLocalStructuredProperty(ProductContent, '11', repeated=True),
-    'low_stock_quantity': orm.SuperDecimalProperty('12', default='0.00')
+    'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '11', repeated=True)
     }
   
   _virtual_fields = {
-    '_weight_uom': orm.SuperReferenceStructuredProperty('19', target_field='weight_uom'),
-    '_volume_uom': orm.SuperReferenceStructuredProperty('19', target_field='volume_uom')
+    '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
+    '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom')
     }
   
   @classmethod
@@ -154,14 +153,14 @@ class CatalogProductInstance(orm.BaseExpando):
 
 class CatalogProduct(orm.BaseExpando):
   
-  _kind = 38
+  _kind = 28
   
   _use_rule_engine = False
   
-  product_category = orm.SuperKeyProperty('1', kind='17', required=True, searchable=True)
+  product_category = orm.SuperKeyProperty('1', kind='24', required=True, searchable=True)
   name = orm.SuperStringProperty('2', required=True, searchable=True)
   description = orm.SuperTextProperty('3', required=True, searchable=True)  # Soft limit 64kb.
-  product_uom = orm.SuperKeyProperty('4', kind='19', required=True, indexed=False)
+  product_uom = orm.SuperKeyProperty('4', kind='17', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
   availability = orm.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock'])
   code = orm.SuperStringProperty('7', required=True, indexed=False, searchable=True)
@@ -170,20 +169,19 @@ class CatalogProduct(orm.BaseExpando):
   
   _expando_fields = {
     'weight': orm.SuperDecimalProperty('8'),
-    'weight_uom': orm.SuperKeyProperty('9', kind='19'),
+    'weight_uom': orm.SuperKeyProperty('9', kind='17'),
     'volume': orm.SuperDecimalProperty('10'),
-    'volume_uom': orm.SuperKeyProperty('11', kind='19'),
+    'volume_uom': orm.SuperKeyProperty('11', kind='17'),
     'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True),
-    'contents': orm.SuperLocalStructuredProperty(ProductContent, '13', repeated=True),
-    'variants': orm.SuperLocalStructuredProperty(ProductVariant, '14', repeated=True),
-    'low_stock_quantity': orm.SuperDecimalProperty('15', default='0.00')  # Notify store manager when quantity drops below X quantity.
+    'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True),
+    'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '14', repeated=True)
     }
   
   _virtual_fields = {
-    '_instances': orm.SuperRemoteStructuredProperty(ProductInstance, repeated=True),
-    '_product_category': orm.SuperReferenceStructuredProperty(ProductCategory, target_field='product_category'),
-    '_weight_uom': orm.SuperReferenceStructuredProperty('19', target_field='weight_uom'),
-    '_volume_uom': orm.SuperReferenceStructuredProperty('19', target_field='volume_uom')
+    '_instances': orm.SuperRemoteStructuredProperty(CatalogProductInstance, repeated=True),
+    '_product_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='product_category'),
+    '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
+    '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom')
     }
 
 
@@ -215,8 +213,8 @@ class CatalogImage(Image):
     self.set_key(key_id, parent=kwds.get('parent'))
     if key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
-      sequence = mem.temp_get(key, util.Nonexistent)
-      if sequence is util.Nonexistent:
+      sequence = mem.temp_get(key, Nonexistent)
+      if sequence is Nonexistent:
         entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
         if not entity:
           sequence = 0
