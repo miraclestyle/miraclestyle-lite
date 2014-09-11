@@ -258,8 +258,7 @@ class Catalog(orm.BaseExpando):
       orm.ActionPermission('31', [orm.Action.build_key('31', 'prepare')], True, 'not account._is_guest'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'create'),
                                   orm.Action.build_key('31', 'read'),
-                                  orm.Action.build_key('31', 'search'),
-                                  orm.Action.build_key('31', 'log_message')], True,
+                                  orm.Action.build_key('31', 'search')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'read')], True,
                            'entity._original.state == "published" or entity._original.state == "discontinued"'),
@@ -559,8 +558,7 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('31', 'publish'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='31', required=True),
-        'message': orm.SuperTextProperty(required=True)
+        'key': orm.SuperKeyProperty(kind='31', required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -575,7 +573,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'dra': {'message': 'input.message'}}),
+            Write(),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackExec(cfg=[('callback',
@@ -588,8 +586,7 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('31', 'discontinue'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='31', required=True),
-        'message': orm.SuperTextProperty(required=True)
+        'key': orm.SuperKeyProperty(kind='31', required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -604,7 +601,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'dra': {'message': 'input.message'}}),
+            Write(),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackExec(cfg=[('callback',
@@ -660,31 +657,6 @@ class Catalog(orm.BaseExpando):
             CallbackExec(cfg=[('callback',
                                {'action_model': '31'},
                                {'action_id': 'input.index_state', 'key': '_catalog.key_urlsafe'})])  # @todo What happens if input.index_state is not supplied (e.g. None)?
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('31', 'log_message'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='31', required=True),
-        'message': orm.SuperTextProperty(required=True),
-        'note': orm.SuperTextProperty()  # @todo Not sure if this is needed??
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
-            Set(cfg={'d': {'output.entity': '_catalog'}})
             ]
           )
         ]

@@ -35,6 +35,7 @@ class AccountIdentity(orm.BaseModel):
   primary = orm.SuperBooleanProperty('4', required=True, default=True)
 
 
+# @todo We need to trigger account_discontinue on catalogs during account suspension!
 class Account(orm.BaseExpando):
   
   _kind = 11
