@@ -519,7 +519,6 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('31', 'search'),
       arguments={
-        'seller': orm.SuperKeyProperty(kind='23', required=True),
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
           cfg={
@@ -546,7 +545,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'d': {'ancestor': 'input.seller'}}),
+            Search(cfg={'d': {'ancestor': 'account.key'}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
