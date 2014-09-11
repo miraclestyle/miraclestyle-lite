@@ -69,11 +69,11 @@ class Seller(orm.BaseExpando):
       # @todo We will se if read permission is required by the public audience!
       orm.ActionPermission('23', [orm.Action.build_key('23', 'create'),
                                   orm.Action.build_key('23', 'update')], True,
-                           'not account._is_guest and entity._original.key_parent == account.key'),
+                           'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
                            'not account._is_guest and entity._original.parent_entity._original.state == "active"'),
       orm.FieldPermission('22', ['name', 'logo', 'address', '_content', '_plugin_group', '_records'], True, True,
-                          'not account._is_guest and entity._original.key_parent == account.key'),
+                          'not account._is_guest and entity._original.key_root == account.key'),
       orm.FieldPermission('22', ['name', 'logo', 'address'], False, True,
                           'not account._is_guest and entity._original.parent_entity._original.state == "active"')
       ]

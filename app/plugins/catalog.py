@@ -83,7 +83,8 @@ class CatalogProcessCoverSet(orm.BaseModel):
       context._catalog.cover._state = 'deleted'
 
 
-class CatalogCronPublish(orm.BaseModel):
+# @todo Wee need all published catalogs here, no matter how many of them!
+class CatalogDiscontinue(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -92,17 +93,16 @@ class CatalogCronPublish(orm.BaseModel):
       self.cfg = {}
     limit = self.cfg.get('page', 10)
     Catalog = context.models['31']
-    catalogs = []
-    if context.domain.state == 'active':  # @todo To fix this!
-      catalogs = Catalog.query(Catalog.state == 'locked',
-                               Catalog.publish_date <= datetime.datetime.now()).fetch(limit=limit)
+    account_key = context.input.get('account')
+    account = account_key.get()
+    if account is not None:
+      catalogs = Catalog.query(Catalog.state == 'published', ancestor=account.key).fetch(limit=limit)
     for catalog in catalogs:
-      if catalog._is_eligible:
-        data = {'action_id': 'publish',
-                'action_model': '31',
-                'message': 'Published by Cron.',
-                'key': catalog.key.urlsafe()}
-        context._callbacks.append(('callback', data))
+      data = {'action_id': 'discontinue',
+              'action_model': '31',
+              'message': 'Expired',
+              'key': catalog.key.urlsafe()}
+      context._callbacks.append(('callback', data))
 
 
 class CatalogCronDiscontinue(orm.BaseModel):
@@ -114,11 +114,8 @@ class CatalogCronDiscontinue(orm.BaseModel):
       self.cfg = {}
     limit = self.cfg.get('page', 10)
     Catalog = context.models['31']
-    if context.domain.state == 'active':  # @todo To fix this!
-      catalogs = Catalog.query(Catalog.state == 'published',
-                               Catalog.discontinue_date <= datetime.datetime.now()).fetch(limit=limit)
-    else:
-      catalogs = Catalog.query(Catalog.state == 'published').fetch(limit=limit)
+    catalogs = Catalog.query(Catalog.state == 'published',
+                             Catalog.discontinue_date <= datetime.datetime.now()).fetch(limit=limit)
     for catalog in catalogs:
       data = {'action_id': 'discontinue',
               'action_model': '31',
@@ -139,14 +136,10 @@ class CatalogCronDelete(orm.BaseModel):
     catalog_discontinued_life = self.cfg.get('discontinued_life', 180)
     Catalog = context.models['31']
     catalogs = []
-    locked_catalogs = []
-    if context.domain.state != 'active':  # @todo To fix this!
-      locked_catalogs = Catalog.query(Catalog.state == 'locked').fetch(limit=limit)
     unpublished_catalogs = Catalog.query(Catalog.state == 'draft',
                                          Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=catalog_unpublished_life))).fetch(limit=limit)
     discontinued_catalogs = Catalog.query(Catalog.state == 'discontinued',
                                           Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life))).fetch(limit=limit)
-    catalogs.extend(locked_catalogs)
     catalogs.extend(unpublished_catalogs)
     catalogs.extend(discontinued_catalogs)
     for catalog in catalogs:

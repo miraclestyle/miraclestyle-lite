@@ -26,9 +26,9 @@ class Buyer(orm.BaseExpando):
     permissions=[
       orm.ActionPermission('19', [orm.Action.build_key('19', 'update'),
                                   orm.Action.build_key('19', 'read')], True,
-                           'not account._is_guest and entity._original.key_parent == account.key'),
+                           'not account._is_guest and entity._original.key_root == account.key'),
       orm.FieldPermission('19', ['addresses', '_records'], True, True,
-                          'not account._is_guest and entity._original.key_parent == account.key')
+                          'not account._is_guest and entity._original.key_root == account.key')
       ]
     )
   

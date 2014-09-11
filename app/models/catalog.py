@@ -234,7 +234,7 @@ class Catalog(orm.BaseExpando):
   publish_date = orm.SuperDateTimeProperty('4', required=True, searchable=True)
   discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)
   state = orm.SuperStringProperty('6', required=True, default='draft',
-                                  choices=['draft', 'locked', 'published', 'discontinued'], searchable=True)
+                                  choices=['draft', 'published', 'discontinued'], searchable=True)
   
   _default_indexed = False
   
@@ -267,16 +267,16 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'catalog_upload_images'),
                                   orm.Action.build_key('31', 'product_upload_images'),
                                   orm.Action.build_key('31', 'product_instance_upload_images'),
-                                  orm.Action.build_key('31', 'lock'),
                                   orm.Action.build_key('31', 'product_duplicate')], True,
                            'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "draft"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue'),
                                   orm.Action.build_key('31', 'catalog_duplicate')], True,
                            'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "published"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'publish')], True,
-                           'account._is_taskqueue and entity._original.state != "published" and entity._is_eligible'),
+                           'account._is_taskqueue and entity._original.state != "published"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue')], True,
                            'account._is_taskqueue and entity._original.state != "discontinued"'),
+      orm.ActionPermission('31', [orm.Action.build_key('31', 'account_discontinue')], True, 'account._root_admin'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'sudo')], True, 'account._root_admin'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'catalog_process_duplicate'),
                                   orm.Action.build_key('31', 'product_process_duplicate'),
@@ -292,7 +292,7 @@ class Catalog(orm.BaseExpando):
                                  'cover', '_images', '_products', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "draft"'),
       orm.FieldPermission('31', ['state'], True, True,
-                          '(action.key_id_str == "create" and entity.state == "draft") or (action.key_id_str == "lock" and entity.state == "locked") or (action.key_id_str == "publish" and entity.state == "published") or (action.key_id_str == "discontinue" and entity.state == "discontinued") or (action.key_id_str == "sudo" and (entity.state == "published" or entity.state == "discontinued"))'),
+                          '(action.key_id_str == "create" and entity.state == "draft") or (action.key_id_str == "publish" and entity.state == "published") or (action.key_id_str == "discontinue" and entity.state == "discontinued") or (action.key_id_str == "sudo" and entity.state != "draft")'),
       orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',
                                  'state', 'cover', '_images', '_products'], False, True,
                           'entity._original.state == "published" or entity._original.state == "discontinued"'),
@@ -557,31 +557,6 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('31', 'lock'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='31', required=True)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            Set(cfg={'s': {'_catalog.state': 'locked'}}),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_catalog'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
       key=orm.Action.build_key('31', 'publish'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
@@ -635,6 +610,24 @@ class Catalog(orm.BaseExpando):
             CallbackExec(cfg=[('callback',
                                {'action_id': 'unindex', 'action_model': '31'},
                                {'key': '_catalog.key_urlsafe'})])
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('31', 'account_discontinue'),
+      arguments={
+        'account': orm.SuperKeyProperty(kind='11', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            CatalogDiscontinue(cfg={'page': 100}),
+            CallbackExec()
             ]
           )
         ]
@@ -754,9 +747,8 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            CatalogCronPublish(cfg={'page': 10}),
-            CatalogCronDiscontinue(cfg={'page': 10}),
-            CatalogCronDelete(cfg={'page': 10,
+            CatalogCronDiscontinue(cfg={'page': 100}),
+            CatalogCronDelete(cfg={'page': 100,
                                    'unpublished_life': settings.CATALOG_UNPUBLISHED_LIFE,
                                    'discontinued_life': settings.CATALOG_DISCONTINUED_LIFE}),
             CallbackExec()

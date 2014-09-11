@@ -29,8 +29,10 @@ class Collection(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('18', [orm.Action.build_key('18', 'update'),
-                                  orm.Action.build_key('18', 'read')], True, 'entity._original.key_parent == account.key and not account._is_guest'),
-      orm.FieldPermission('18', ['notify', 'sellers', '_records', '_sellers.name', '_sellers.logo'], True, True, 'entity._original.key_parent == account.key and not account._is_guest')
+                                  orm.Action.build_key('18', 'read')], True,
+                           'not account._is_guest and entity._original.key_root == account.key'),
+      orm.FieldPermission('18', ['notify', 'sellers', '_records', '_sellers.name', '_sellers.logo'], True, True,
+                          'not account._is_guest and entity._original.key_root == account.key')
       ]
     )
   
