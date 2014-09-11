@@ -899,11 +899,6 @@ class Catalog(orm.BaseExpando):
             tag.product = Product.build_key(duplicated_entity.duplicate_key_id(tag.product), parent=duplicated_entity.key, namespace=duplicated_entity.key.namespace())
     return duplicated_entity
   
-  @property
-  def _is_eligible(self):
-    # @todo Here we implement the logic to validate if catalog publisher has funds to support catalog publishing!
-    return True
-  
   @classmethod
   def prepare_key(cls, input, **kwargs):
     seller_key = input.get('seller')
