@@ -52,7 +52,7 @@ class Order(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  name = orm.SuperStringProperty('3', required=True)
+  name = orm.SuperStringProperty('3', required=True)  # @todo Not sure if we need this, or how to use it to construct some unique order name?
   state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'processing', 'completed', 'canceled'])
   date = orm.SuperDateTimeProperty('5', required=True)
   seller_reference = orm.SuperKeyProperty('6', kind='23', required=True)
@@ -90,6 +90,7 @@ class Order(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('34', 'add_to_cart'),
       arguments={
+        'buyer': orm.SuperKeyProperty(kind='19', required=True),
         'seller': orm.SuperKeyProperty(kind='23', required=True),
         'product': orm.SuperKeyProperty(kind='28', required=True),
         'variant_signature': orm.SuperJsonProperty()
@@ -99,9 +100,16 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             CartInit(),
-            PluginAgregator(),
-            Read(),
             Set(cfg={'d': {'_collection.notify': 'input.notify', '_collection.accounts': 'input.accounts'}}),
+            #PluginAgregator('Payment Services, Address Exclusions, Taxes, Carriers...'),
+            #PayPalPayment(currency=Unit.build_key('usd'),
+                          #reciever_email='paypal_email@example.com',
+                          #business='paypal_email@example.com'),
+            AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+            AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+            ProductToOrderLine(),
+            OrderLineFormat(),
+            OrderFormat(),
             RulePrepare(),
             RuleExec()
             ]
@@ -137,23 +145,6 @@ class Order(orm.BaseExpando):
 
 
 # from setup.py #
-
-    
-    entity._use_rule_engine = False
-    entity.write()
-    entity._transaction_actions = [
-      Action(
-        key=Action.build_key('add_to_cart', parent=entity.key),
-        name='Add to Cart',
-        active=True,
-        arguments={
-          'seller': orm.SuperKeyProperty(kind='6', required=True),
-          'product': orm.SuperKeyProperty(kind='38', required=True),
-          'variant_signature': orm.SuperJsonProperty()
-          }
-        )
-      # Other actions: add_to_cart, update, checkout, cancel, pay, timeout, complete, message
-      ]
     entity._transaction_plugin_groups = [
       PluginGroup(
         name='Entry Init',

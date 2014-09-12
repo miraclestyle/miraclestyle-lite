@@ -23,69 +23,43 @@ class PluginError(Exception):
 
 
 # This is system plugin, which means end user can not use it!
-class CartInit(orm.BaseModel):
+class OrderInit(orm.BaseModel):
   
   _kind = 99
   
   _use_rule_engine = False
   
   def run(self, context):
-    Group = context.models['48']
-    Entry = context.models['50']
-    entry_fields = context.model.get_fields()
-    entry = Entry.query(entry_fields['journal'] == context.model.journal,
-                        entry_fields['party'] == context.user.key,
-                        entry_fields['state'].IN(['cart', 'checkout', 'processing']),
-                        namespace=context.model.journal._namespace).get()  # we will need composite index for this
-    if entry is None:
-      context._group = Group(namespace=context.model.journal._namespace)
-      entry = Entry(namespace=context.model.journal._namespace, journal=context.model.journal)
-      # entry.company_address = # Source of company address required!
-      entry.state = 'cart'
-      entry.date = datetime.datetime.now()
-      entry.party = context.user.key
+    Order = context.models['34']
+    order = Order.query(Order.seller_reference == context.input.get('seller'),
+                        Order.state.IN(['cart', 'checkout', 'processing']),
+                        ancestor=context.input.get('buyer')).get()  # we will need composite index for this
+    if order is None:
+      order = Order(parent=context.input.get('buyer'))
+      order.state = 'cart'
+      order.date = datetime.datetime.now()
+      order.seller_reference = context.input.get('seller')
+      # order.company_address = # Source of company address required!
     else:
-      entry.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
-      context._group = entry.parent_entity
-    context._group.insert_entry(entry)
-    if entry.state != 'cart':
-      raise PluginError('entry_not_in_cart_state')
+      order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
+    context._order = order
+    if order.state != 'cart':
+      raise PluginError('order_not_in_cart_state')
 
 
 # This is system plugin, which means end user can not use it!
-class LinesInit(orm.BaseModel):
-  
-  _kind = 100
-  
-  _use_rule_engine = False
-  
-  def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
-    if len(entry._lines) == 0:
-      Category = context.models['47']
-      Line = context.models['51']
-      receivable_line = Line(sequence=0, uom=copy.deepcopy(entry.currency), description='Accounts Receivable',
-                             debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
-                             categories=[Category.build_key('1102', namespace=context.model.journal._namespace)])  # Debtors (1102) account.
-      tax_line = Line(sequence=1, uom=copy.deepcopy(entry.currency), description='Sales Tax',
-                      debit=format_value('0', entry.currency), credit=format_value('0', entry.currency),
-                      categories=[Category.build_key('121', namespace=context.model.journal._namespace)])  # Tax Received (121) account.
-      entry._lines = [receivable_line, tax_line]
-
-
-# This is system plugin, which means end user can not use it!
-class ProductToLine(orm.BaseModel):
+class ProductToOrderLine(orm.BaseModel):
   
   _kind = 101
   
   _use_rule_engine = False
   
   def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
+    order = context._order
     product_key = context.input.get('product')
     variant_signature = context.input.get('variant_signature')
     line_exists = False
-    for line in entry._lines:
+    for line in order._lines:
       if hasattr(line, 'product_reference') and line.product_reference == product_key \
       and line.product_variant_signature == variant_signature:
         line._state = 'modified'  # @todo Not sure if this is ok!?
@@ -93,22 +67,19 @@ class ProductToLine(orm.BaseModel):
         line_exists = True
         break
     if not line_exists:
-      ProductInstance = context.models['39']
-      Category = context.models['47']
-      Line = context.models['51']
+      ProductInstance = context.models['27']
+      Line = context.models['33']
       product = product_key.get()
       product.read({'_product_category': {}})  # more fields probably need to be specified
       product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
       product_instance = product_instance_key.get()
       new_line = Line(journal=context.model.journal)  # i generally dont like this
-      new_line.sequence = entry._lines[-1].sequence + 1
-      new_line.categories = [Category.build_key('200', namespace=context.model.journal._namespace)]  # Product Sales (200) account.
-      new_line.uom = copy.deepcopy(entry.currency)
+      new_line.sequence = order._lines[-1].sequence + 1
+      new_line.description = product.name
       new_line.product_reference = product_key
       new_line.product_variant_signature = variant_signature
       new_line.product_category_complete_name = product._product_category.complete_name
       new_line.product_category_reference = product.product_category
-      new_line.description = product.name
       new_line.code = product.code
       new_line.unit_price = product.unit_price
       new_line.product_uom = product.product_uom.get().get_uom()
@@ -131,80 +102,41 @@ class ProductToLine(orm.BaseModel):
         if hasattr(product_instance, 'volume'):
           new_line._volume = product_instance.volume
           new_line._volume_uom = product_instance.volume_uom
-      entry._lines.append(new_line)
+      order._lines.append(new_line)
 
 
 # This is system plugin, which means end user can not use it!
-# @todo Not sure if need this plugin, since we have field level rule engine, which would be capable of controling which field can be edited!?
-class UpdateProductLine(orm.BaseModel):
-  
-  _kind = 102
-  
-  _use_rule_engine = False
-  
-  def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
-    delete_lines = []
-    # @todo It is likely that here we will receive whole lines in input, not just 'quantity' or whatever, so we have to figure how to do formating on values that are set on prop.
-    # @answer point is that something will have to do the computations bellow
-    quantity = context.input.get('quantity')
-    discount = context.input.get('discount')
-    for i, line in enumerate(entry._lines):
-      if hasattr(line, 'product_reference'):
-        if quantity is not None:
-          if quantity[i] <= 0:
-            line._state = 'deleted'
-          else:
-            line.quantity = format_value(quantity[i], line.product_uom)
-        if discount is not None:
-          line.discount = format_value(discount[i], uom.UOM(digits=4))
-
-
-# This is system plugin, which means end user can not use it!
-class EntryFieldAutoUpdate(orm.BaseModel):
-  
-  _kind = 103
-  
-  _use_rule_engine = False
-  
-  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    static_values = self.cfg.get('s', {})
-    dynamic_values = self.cfg.get('d', {})
-    remove_values = self.cfg.get('rm', [])
-    entry = context._group.get_entry(context.model.journal)
-    for key, value in static_values.iteritems():
-      set_attr(entry, key, value)
-    for key, value in dynamic_values.iteritems():
-      set_value = get_attr(context, value, Nonexistent)
-      if set_value is not Nonexistent:
-        set_attr(entry, key, set_value)
-    for key in remove_values:
-      del_attr(entry, key)
-
-
-# This is system plugin, which means end user can not use it!
-class ProductSubtotalCalculate(orm.BaseModel):
+class OrderLineFormat(orm.BaseModel):
   
   _kind = 104
   
   _use_rule_engine = False
   
   def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
-    for line in entry._lines:
+    order = context._order
+    for line in order._lines:
       if hasattr(line, 'product_reference'):
-        line.subtotal = format_value((line.unit_price * line.quantity), line.uom)
-        line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), line.uom)
-        line.debit = format_value('0', line.uom)
-        line.credit = format_value(line.discount_subtotal, line.uom)
+        line.discount = format_value(line.discount, uom.UOM(digits=4))
+        if line.quantity <= Decimal('0'):
+          line._state = 'deleted'
+        else:
+          line.quantity = format_value(line.quantity, line.product_uom)
+        line.subtotal = format_value((line.unit_price * line.quantity), order.currency)
+        line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), order.currency)
+        line.total = format_value(line.discount_subtotal, order.currency)
+        tax_subtotal = format_value('0', order.currency)
+        for tax in line.taxes:
+          if (tax.formula[0] == 'percent'):
+            tax_amount = format_value(tax.formula[1], order.currency) * format_value('0.01', order.currency)  # or "/ DecTools.form('100')"
+            tax_subtotal += line.total * tax_amount
+          elif (tax.formula[0] == 'amount'):
+            tax_amount = format_value(tax.formula[1], order.currency)
+            tax_subtotal += tax_amount
+        line.tax_subtotal = tax_subtotal
 
 
 # This is system plugin, which means end user can not use it!
-class OrderTotalCalculate(orm.BaseModel):
+class OrderFormat(orm.BaseModel):
   
   _kind = 105
   
@@ -212,18 +144,18 @@ class OrderTotalCalculate(orm.BaseModel):
   
   # @todo We need receivable calcualtior as well!
   def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
-    untaxed_amount = format_value('0', entry.currency)
-    tax_amount = format_value('0', entry.currency)
-    total_amount = format_value('0', entry.currency)
-    for line in entry._lines:
+    order = context._order
+    untaxed_amount = format_value('0', order.currency)
+    tax_amount = format_value('0', order.currency)
+    total_amount = format_value('0', order.currency)
+    for line in order._lines:
       if hasattr(line, 'product_reference'):
         untaxed_amount += line.subtotal
         tax_amount += line.tax_subtotal
         total_amount += line.subtotal + line.tax_subtotal
-    entry.untaxed_amount = format_value(untaxed_amount, entry.currency)
-    entry.tax_amount = format_value(tax_amount, entry.currency)
-    entry.total_amount = format_value(total_amount, entry.currency)
+    order.untaxed_amount = format_value(untaxed_amount, order.currency)
+    order.tax_amount = format_value(tax_amount, order.currency)
+    order.total_amount = format_value(total_amount, order.currency)
 
 
 # Not a plugin!
@@ -251,7 +183,7 @@ class AddressRule(orm.BaseModel):
   locations = orm.SuperLocalStructuredProperty(Location, '3', repeated=True, indexed=False)
   
   def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
+    order = context._order
     valid_addresses = collections.OrderedDict()
     default_address = None
     address_reference_key = '%s_address_reference' % self.address_type
@@ -259,8 +191,8 @@ class AddressRule(orm.BaseModel):
     addresses_key = '%s_addresses' % self.address_type
     default_address_key = 'default_%s' % self.address_type
     input_address_reference = context.input.get(address_reference_key)
-    entry_address_reference = getattr(entry, address_reference_key, None)
-    buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
+    order_address_reference = getattr(order, address_reference_key, None)
+    buyer_addresses = order.key_parent.get()
     if buyer_addresses is None:
       raise PluginError('no_address')
     for buyer_address in buyer_addresses.addresses:
@@ -275,11 +207,11 @@ class AddressRule(orm.BaseModel):
       default_address = valid_addresses.values()[0]
     if input_address_reference in valid_addresses:
       default_address = valid_addresses[input_address_reference]
-    elif entry_address_reference in valid_addresses:
-      default_address = valid_addresses[entry_address_reference]
+    elif order_address_reference in valid_addresses:
+      default_address = valid_addresses[order_address_reference]
     if default_address:
-      setattr(entry, address_reference_key, default_address.key)
-      setattr(entry, address_key, location.get_location(default_address))
+      setattr(order, address_reference_key, default_address.key)
+      setattr(order, address_key, location.get_location(default_address))
       context.output[default_address_key] = default_address
     else:
       raise PluginError('no_address_found')
@@ -328,11 +260,11 @@ class PayPalPayment(orm.BaseModel):
   business = orm.SuperStringProperty('3', required=True, indexed=False)
   
   def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
+    order = context._order
     # In context of add_to_cart action runner does the following:
-    entry.currency = self.currency.get().get_uom()
-    entry.paypal_reciever_email = self.reciever_email
-    entry.paypal_business = self.business
+    order.currency = self.currency.get().get_uom()
+    order.paypal_reciever_email = self.reciever_email
+    order.paypal_business = self.business
 
 
 # This plugin is incomplete!
@@ -354,9 +286,9 @@ class Tax(orm.BaseModel):
   product_categories = orm.SuperKeyProperty('8', kind='17', repeated=True, indexed=False)
   
   def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
-    allowed = self.validate_tax(entry)
-    for line in entry._lines:
+    order = context._order
+    allowed = self.validate_tax(order)
+    for line in order._lines:
       for tax in line.taxes:
         if tax.key == self.key:
           tax._state = 'deleted'
@@ -366,23 +298,24 @@ class Tax(orm.BaseModel):
           tax_exists = False
           for tax in line.taxes:
             if tax.key == self.key:
+              tax._state = 'modified'
               tax.name = self.name
               tax.code = self.code
               tax.formula = self.formula
               tax_exists = True
               break
           if not tax_exists:
-            line.taxes.append(order.LineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
+            line.taxes.append(order.OrderLineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
   
-  def validate_tax(self, entry):
+  def validate_tax(self, order):
     address = None
     address_reference_key = '%s_address_reference' % self.address_type
-    entry_address_reference = getattr(entry, address_reference_key, None)
-    if entry_address_reference is None:  # @todo Is this ok??
+    order_address_reference = getattr(order, address_reference_key, None)
+    if order_address_reference is None:  # @todo Is this ok??
       return False
-    buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
+    buyer_addresses = order.key_parent.get()
     for buyer_address in buyer_addresses.addresses:
-      if buyer_address.key == entry_address_reference:
+      if buyer_address.key == order_address_reference:
         address = buyer_address
         break
     if address is None:  # @todo IS this ok??
@@ -412,52 +345,19 @@ class Tax(orm.BaseModel):
           break
     # @todo This block need changes!
     if allowed:
-      # If tax is configured for carriers then check if the entry references carrier on which the tax applies.
+      # If tax is configured for carriers then check if the order references carrier on which the tax applies.
       if self.carriers:
         allowed = False
-        if entry.carrier_reference and self.carrieres.count(entry.carrier_reference):
+        if order.carrier_reference and self.carrieres.count(order.carrier_reference):
           allowed = True
-      # If tax is configured for product categories, then check if the entry contains a line which has product category to which the tax applies.
+      # If tax is configured for product categories, then check if the order contains a line which has product category to which the tax applies.
       elif self.product_categories:
         allowed = False
-        for line in entry._lines:
+        for line in order._lines:
           if self.product_categories.count(line.product_category):
             allowed = True
             break
     return allowed
-
-
-# This is system plugin, which means end user can not use it!
-class TaxSubtotalCalculate(orm.BaseModel):
-  
-  _kind = 110
-  
-  _use_rule_engine = False
-  
-  def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
-    Category = context.models['47']
-    Line = context.models['51']
-    tax_category_key = Category.build_key('121', namespace=context.model.journal._namespace)  # Tax Received (121) account.
-    tax_line = False
-    tax_total = format_value('0', entry.currency)
-    for line in entry._lines:
-      if tax_category_key in line.categories:
-        tax_line = line
-      tax_subtotal = format_value('0', line.uom)
-      for tax_key, tax in line.taxes.items():
-        if (tax.formula[0] == 'percent'):
-          tax_amount = format_value(tax.formula[1], line.uom) * format_value('0.01', line.uom)  # or "/ DecTools.form('100')"
-          tax_subtotal += line.credit * tax_amount
-          tax_total += line.credit * tax_amount
-        elif (tax.formula[0] == 'amount'):
-          tax_amount = format_value(tax.formula[1], line.uom)
-          tax_subtotal += tax_amount
-          tax_total += tax_amount
-      line.tax_subtotal = tax_subtotal
-    if tax_line:  # @todo Or we can loop entry._lines again and do the math!
-      tax_line.debit = format_value('0', tax_line.uom)
-      tax_line.credit = tax_total
 
 
 # Not a plugin!
@@ -599,32 +499,6 @@ class Carrier(orm.BaseModel):
           break
     return allowed
 
-
-# @todo This will be eventually improved.
-# This is system plugin, which means end user can not use it!
-class TransactionWrite(orm.BaseModel):
-  
-  _kind = 114
-  
-  def run(self, context):
-    context._group.write()
-    for entry in context._group._entries:
-      entry.set_key(None, parent=context._group.key)
-    orm.write_multi(context._group._entries)
-
-
-# This is system plugin, which means end user can not use it!
-class CallbackNotify(orm.BaseModel):
-  
-  _kind = 115
-  
-  def run(self, context):
-    static_data = {}
-    entry = context._group.get_entry(context.model.journal)
-    static_data.update({'caller_entity': entry.key_urlsafe,
-                        'action_id': 'initiate',
-                        'action_model': '61'})
-    context._callbacks.append(('notify', static_data))
 
 # OLD CODE #
 
