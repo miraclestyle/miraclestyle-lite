@@ -86,7 +86,9 @@ class Order(orm.BaseExpando):
     )
   
   _actions = [
-    # Other actions: add_to_cart, update, checkout, cancel, pay, timeout, complete, message
+    # @todo Two of the search actions should be merged if possible! However, they have different forced contrains!
+    # buyer_search has to be constrained buy ancestor query, ancestor being buyer.
+    # seller_search has to be constrained by query filter, with filter Order.seller_reference being seller.
     orm.Action(
       key=orm.Action.build_key('34', 'add_to_cart'),
       arguments={
@@ -100,7 +102,6 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             CartInit(),
-            Set(cfg={'d': {'_collection.notify': 'input.notify', '_collection.accounts': 'input.accounts'}}),
             #PluginAgregator('Payment Services, Address Exclusions, Taxes, Carriers...'),
             #PayPalPayment(currency=Unit.build_key('usd'),
                           #reciever_email='paypal_email@example.com',
@@ -118,15 +119,15 @@ class Order(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
-            Set(cfg={'d': {'output.entity': '_collection'}})
+            Set(cfg={'d': {'output.entity': '_order'}})
             ]
           )
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('18', 'read'),
+      key=orm.Action.build_key('34', 'read'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='11', required=True),
+        'key': orm.SuperKeyProperty(kind='34', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -136,7 +137,289 @@ class Order(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Set(cfg={'d': {'output.entity': '_collection'}})
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      )
+    orm.Action(
+      # @todo This action was derived from read. It uses buyer and seller keys as input, instead of key to perform entity read.
+      # @todo We need this action in order for buyer to see order from catalog view! Perhaps to figure out other appropriate name??
+      key=orm.Action.build_key('34', 'view_order'),
+      arguments={
+        'buyer': orm.SuperKeyProperty(kind='19', required=True),
+        'seller': orm.SuperKeyProperty(kind='23', required=True),
+        'read_arguments': orm.SuperJsonProperty()  # @todo This action has to be evaluated!
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            CartInit(),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'update'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True),
+        # @todo Add remaining arguments.
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            CartInit(),
+            Set(cfg={'d': {'_order.': 'input.', '_order.': 'input.'}}),
+            #PluginAgregator('Payment Services, Address Exclusions, Taxes, Carriers...'),
+            #PayPalPayment(currency=Unit.build_key('usd'),
+                          #reciever_email='paypal_email@example.com',
+                          #business='paypal_email@example.com'),
+            AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+            AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+            ProductToOrderLine(),
+            OrderLineFormat(),
+            OrderFormat(),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'buyer_search'),
+      arguments={
+        'search': orm.SuperSearchProperty(
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('created', ['asc', 'desc'])]},
+                        {'orders': [('updated', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
+            }
+          )
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Search(cfg={'d': {'ancestor': 'account.key'}}),
+            RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'seller_search'),
+      arguments={
+        'search': orm.SuperSearchProperty(
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
+          cfg={
+            'search_by_keys': True,
+            'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'name': orm.SuperStringProperty(),
+                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
+            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+                        {'orders': [('created', ['asc', 'desc'])]},
+                        {'orders': [('updated', ['asc', 'desc'])]},
+                        {'filters': [('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
+                         'orders': [('name', ['asc', 'desc'])]}]
+            }
+          )
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Search(cfg={'d': {'ancestor': 'account.key'}}),
+            RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'checkout'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.state': 'checkout'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'cancel'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.state': 'canceled'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'pay'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.state': 'processing'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'timeout'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.state': 'checkout'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'complete'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.state': 'completed'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'log_message'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True),
+        'message': orm.SuperTextProperty(required=True),
+        'note': orm.SuperTextProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
+            Set(cfg={'d': {'output.entity': '_order'}})
             ]
           )
         ]
