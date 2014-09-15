@@ -222,7 +222,7 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(),
+            RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
             # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
             Search(cfg={'s': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}}}),
