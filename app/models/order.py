@@ -106,7 +106,7 @@ class Order(orm.BaseExpando):
             AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             ProductToOrderLine(),
-            PluginExec(),  # ('Payment Services, Address Exclusions, Taxes, Carriers...'),
+            PluginExec(),  # @todo We will see if this plugin will need some cfg flexibility!
             OrderLineFormat(),
             OrderFormat(),
             RulePrepare(),
@@ -141,9 +141,7 @@ class Order(orm.BaseExpando):
         ]
       )
     orm.Action(
-      # @todo This action was derived from read. It uses buyer and seller keys as input, instead of key to perform entity read.
-      # @todo We need this action in order for buyer to see order from catalog view! Perhaps to figure out other appropriate name??
-      key=orm.Action.build_key('34', 'view_order'),
+      key=orm.Action.build_key('34', 'view_order'),  # @todo Perhaps to figure out other appropriate name??
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
         'seller': orm.SuperKeyProperty(kind='23', required=True),
@@ -181,7 +179,7 @@ class Order(orm.BaseExpando):
             PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business=''), # @todo For now we setup default currency for the order.
             AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-            PluginExec(),  # PluginAgregator('Payment Services, Address Exclusions, Taxes, Carriers...'),
+            PluginExec(),  # @todo We will see if this plugin will need some cfg flexibility!
             OrderLineFormat(),
             OrderFormat(),
             RulePrepare(),
@@ -198,7 +196,7 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'buyer_search'),
+      key=orm.Action.build_key('34', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
@@ -226,47 +224,8 @@ class Order(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'s': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
-                        'd': {'ancestor': 'account.key'}}),
-            RulePrepare(cfg={'path': '_entities'}),
-            Set(cfg={'d': {'output.entities': '_entities',
-                           'output.cursor': '_cursor',
-                           'output.more': '_more'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('34', 'seller_search'),
-      arguments={
-        'search': orm.SuperSearchProperty(
-          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
-          cfg={
-            'ancestor_kind': '11',
-            'search_by_keys': True,
-            'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
-            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
-                        {'orders': [('created', ['asc', 'desc'])]},
-                        {'orders': [('updated', ['asc', 'desc'])]},
-                        {'filters': [('name', ['==', 'contains', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]}]
-            }
-          )
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Search(cfg={'s': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
-                        'd': {'ancestor': 'account.key'}}),
+            # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
+            Search(cfg={'s': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -426,89 +385,3 @@ class Order(orm.BaseExpando):
         ]
       )
     ]
-
-
-# from setup.py #
-    entity._transaction_plugin_groups = [
-      PluginGroup(
-        name='Entry Init',
-        active=True,
-        sequence=0,
-        transactional=False,
-        subscriptions=[
-          Action.build_key('add_to_cart', parent=entity.key)
-          ],
-        plugins=[
-          CartInit()
-          ]
-        ),
-      PluginGroup(
-        name='Payment Services Configuration',
-        active=True,
-        sequence=1,
-        transactional=False,
-        subscriptions=[
-          Action.build_key('add_to_cart', parent=entity.key)
-          ],
-        plugins=[
-          PayPalPayment(currency=Unit.build_key('usd'),
-                        reciever_email='paypal_email@example.com',
-                        business='paypal_email@example.com')
-          ]
-        ),
-      PluginGroup(
-        name='Entry Lines Init',
-        active=True,
-        sequence=2,
-        transactional=False,
-        subscriptions=[
-          Action.build_key('add_to_cart', parent=entity.key)
-          ],
-        plugins=[
-          LinesInit()
-          ]
-        ),
-      PluginGroup(
-        name='Address Exclusions, Taxes, Carriers...',
-        active=True,
-        sequence=3,
-        transactional=False,
-        subscriptions=[
-          Action.build_key('add_to_cart', parent=entity.key)
-          ],
-        plugins=[
-          ]
-        ),
-      PluginGroup(
-        name='Calculating Algorithms',
-        active=True,
-        sequence=4,
-        transactional=False,
-        subscriptions=[
-          Action.build_key('add_to_cart', parent=entity.key)
-          ],
-        plugins=[
-          AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-          AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-          ProductToLine(),
-          ProductSubtotalCalculate(),
-          TaxSubtotalCalculate(),
-          OrderTotalCalculate()
-          ]
-        ),
-      PluginGroup(
-        name='Commit Transaction Plugins',
-        active=True,
-        sequence=5,
-        transactional=True,
-        subscriptions=[
-          Action.build_key('add_to_cart', parent=entity.key)
-          ],
-        plugins=[
-          RulePrepare(cfg={'path': '_group._entries'}),
-          TransactionWrite(),
-          CallbackNotify(),
-          CallbackExec()
-          ]
-        ),
-      ]

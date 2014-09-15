@@ -256,9 +256,10 @@ class Catalog(orm.BaseExpando):
     permissions=[
       orm.ActionPermission('31', [orm.Action.build_key('31', 'prepare')], True, 'not account._is_guest'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'create'),
-                                  orm.Action.build_key('31', 'read'),
-                                  orm.Action.build_key('31', 'search')], True,
+                                  orm.Action.build_key('31', 'read')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
+      orm.ActionPermission('31', [orm.Action.build_key('31', 'search')], True,
+                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key and input["search"]["ancestor"] == account.key)'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'read')], True,
                            'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'update'),
@@ -542,10 +543,10 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(),
+            RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
-            Search(cfg={'s': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
-                        'd': {'ancestor': 'account.key'}}),
+            # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
+            Search(cfg={'s': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
