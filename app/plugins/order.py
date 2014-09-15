@@ -47,6 +47,23 @@ class OrderInit(orm.BaseModel):
       raise PluginError('order_not_in_cart_state')
 
 
+class PluginExec(orm.BaseModel):
+  
+  _kind = xx
+  
+  _use_rule_engine = False
+  
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    order = context._order
+    plugin_container = orm.Key('22', order.seller_reference._id_str, parent=order.seller_reference).get()
+    for plugin in plugin_container.plugins:
+      plugin.run(context)
+
+
 # This is system plugin, which means end user can not use it!
 class ProductToOrderLine(orm.BaseModel):
   

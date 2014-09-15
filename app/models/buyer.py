@@ -83,4 +83,4 @@ class Buyer(orm.BaseExpando):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     account_key = input.get('account')
-    return cls.build_key(account_key._id_str, parent=account_key)
+    return cls.build_key('buyer', parent=account_key)

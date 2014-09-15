@@ -222,7 +222,14 @@ class CatalogSearch(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     index_name = self.cfg.get('index', None)
+    static_arguments = self.cfg.get('s', {})
+    dynamic_arguments = self.cfg.get('d', {})
     search_arguments = context.input.get('search')
+    overide_arguments = {}
+    overide_arguments.update(static_arguments)
+    for key, value in dynamic_arguments.iteritems():
+      overide_arguments[key] = get_attr(context, value)
+    override_dict(search_arguments, overide_arguments)
     query = search_arguments['property'].build_search_query(search_arguments)
     index = search.Index(name=index_name)
     result = index.search(query)

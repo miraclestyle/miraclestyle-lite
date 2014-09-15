@@ -156,7 +156,6 @@ class Account(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
           cfg={
-            'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'emails': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty()},
             'indexes': [{'orders': [('emails', ['asc', 'desc'])]},
@@ -176,7 +175,7 @@ class Account(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(),
+            Search(cfg={'s': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

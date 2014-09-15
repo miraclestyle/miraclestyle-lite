@@ -101,14 +101,12 @@ class Order(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            CartInit(),
-            #PluginAgregator('Payment Services, Address Exclusions, Taxes, Carriers...'),
-            #PayPalPayment(currency=Unit.build_key('usd'),
-                          #reciever_email='paypal_email@example.com',
-                          #business='paypal_email@example.com'),
+            OrderInit(),
+            PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business=''), # @todo For now we setup default currency for the order.
             AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             ProductToOrderLine(),
+            PluginExec(),  # ('Payment Services, Address Exclusions, Taxes, Carriers...'),
             OrderLineFormat(),
             OrderFormat(),
             RulePrepare(),
@@ -155,7 +153,7 @@ class Order(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            CartInit(),
+            OrderInit(),
             RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_order'}})
@@ -167,22 +165,23 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'update'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        # @todo Add remaining arguments.
+        'billing_address_reference': orm.SuperKeyProperty(kind='14'),
+        'shipping_address_reference': orm.SuperKeyProperty(kind='14'),
+        '_lines': orm.SuperLocalStructuredProperty(OrderLine, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
-            CartInit(),
-            Set(cfg={'d': {'_order.': 'input.', '_order.': 'input.'}}),
-            #PluginAgregator('Payment Services, Address Exclusions, Taxes, Carriers...'),
-            #PayPalPayment(currency=Unit.build_key('usd'),
-                          #reciever_email='paypal_email@example.com',
-                          #business='paypal_email@example.com'),
+            Read(),
+            Set(cfg={'d': {'_order.billing_address_reference': 'input.billing_address_reference',
+                           '_order.shipping_address_reference': 'input.shipping_address_reference',
+                           '_order._lines': 'input._lines'}}),
+            PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business=''), # @todo For now we setup default currency for the order.
             AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-            ProductToOrderLine(),
+            PluginExec(),  # PluginAgregator('Payment Services, Address Exclusions, Taxes, Carriers...'),
             OrderLineFormat(),
             OrderFormat(),
             RulePrepare(),
@@ -204,8 +203,8 @@ class Order(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
           cfg={
+            'ancestor_kind': '11',
             'search_by_keys': True,
-            'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
             'indexes': [{'orders': [('name', ['asc', 'desc'])]},
@@ -227,7 +226,8 @@ class Order(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'d': {'ancestor': 'account.key'}}),
+            Search(cfg={'s': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
+                        'd': {'ancestor': 'account.key'}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -242,8 +242,8 @@ class Order(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
           cfg={
+            'ancestor_kind': '11',
             'search_by_keys': True,
-            'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
             'indexes': [{'orders': [('name', ['asc', 'desc'])]},
@@ -265,7 +265,8 @@ class Order(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'d': {'ancestor': 'account.key'}}),
+            Search(cfg={'s': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
+                        'd': {'ancestor': 'account.key'}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

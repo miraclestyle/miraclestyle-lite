@@ -41,6 +41,11 @@ class SellerPluginContainer(orm.BaseModel):
   _use_rule_engine = False
   
   plugins = orm.SuperPluginStorageProperty(('0',), '1', required=True, default=[], compressed=False)
+  
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
+    seller_key = input.get('seller')
+    return cls.build_key(seller_key._id_str, parent=seller_key)
 
 
 class Seller(orm.BaseExpando):
@@ -171,4 +176,4 @@ class Seller(orm.BaseExpando):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     account_key = input.get('account')
-    return cls.build_key(account_key._id_str, parent=account_key)
+    return cls.build_key('seller', parent=account_key)

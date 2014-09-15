@@ -74,7 +74,6 @@ class Country(orm.BaseModel):
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
             'search_by_keys': True,
-            'search_arguments': {'kind': '12', 'options': {'limit': 1000}},
             'filters': {'active': orm.SuperBooleanProperty(choices=[True])},
             'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]}]
@@ -88,7 +87,7 @@ class Country(orm.BaseModel):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(),
+            Search(cfg={'s': {'kind': '12', 'options': {'limit': 1000}}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -133,7 +132,6 @@ class CountrySubdivision(orm.BaseModel):
           cfg={
             'ancestor_kind': '12',
             'search_by_keys': True,
-            'search_arguments': {'kind': '13', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'name': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()]),
                         'active': orm.SuperBooleanProperty(choices=[True])},
             'indexes': [{'filters': [('active', ['=='])],
@@ -156,7 +154,7 @@ class CountrySubdivision(orm.BaseModel):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(),
+            Search(cfg={'s': {'kind': '13', 'options': {'limit': settings.SEARCH_PAGE}}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
