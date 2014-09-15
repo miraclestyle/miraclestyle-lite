@@ -43,8 +43,6 @@ class OrderInit(orm.BaseModel):
     else:
       order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
     context._order = order
-    if order.state != 'cart':
-      raise PluginError('order_not_in_cart_state')
 
 
 class PluginExec(orm.BaseModel):
@@ -74,6 +72,8 @@ class ProductToOrderLine(orm.BaseModel):
   def run(self, context):
     order = context._order
     product_key = context.input.get('product')
+    if order.state != 'cart':
+      raise PluginError('order_not_in_cart_state')
     variant_signature = context.input.get('variant_signature')
     line_exists = False
     for line in order._lines:
@@ -133,6 +133,8 @@ class OrderLineFormat(orm.BaseModel):
     order = context._order
     for line in order._lines:
       if hasattr(line, 'product_reference'):
+        if order.seller_reference._root != line.product_reference._root:
+          raise PluginError('product_does_not_bellong_to_seller')
         line.discount = format_value(line.discount, uom.UOM(digits=4))
         if line.quantity <= Decimal('0'):
           line._state = 'deleted'

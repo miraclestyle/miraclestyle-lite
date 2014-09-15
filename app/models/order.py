@@ -77,10 +77,30 @@ class Order(orm.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'update'),
-                                  orm.Action.build_key('34', 'read')], True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart')], True,
+                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
-      orm.FieldPermission('34', ['notify', 'sellers', '_records', '_sellers.name', '_sellers.logo'], True, True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'read'),
+                                  orm.Action.build_key('34', 'log_message')], True,
+                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key or entity._original.seller_reference._root == account.key))'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
+                           'not account._is_guest and ((entity._original.key_root == account.key and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key and entity._original.state == "checkout"))'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
+                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key and input["search"]["ancestor"] == account.key) or (not account._is_guest and entity._original.seller_reference._root == account.key and input["search"]["filters"][0]["operator"] == "==" and input["search"]["filters"][0]["value"]._root == account.key)'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
+                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "cart"'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel'),
+                                  orm.Action.build_key('34', 'pay')], True,
+                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "checkout"'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'timeout'),
+                                  orm.Action.build_key('34', 'complete')], True,
+                           'account._is_taskqueue and entity._original.state == "processing"'),
+      # @todo Implement field permissions!
+      orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference', 'seller_address',
+                                 'billing_address_reference', 'shipping_address_reference', 'billing_address',
+                                 'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
+                                 'paypal_reciever_email', 'paypal_business', '_lines', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key')
       ]
     )
@@ -123,24 +143,6 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'read'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True),
-        'read_arguments': orm.SuperJsonProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': '_order'}})
-            ]
-          )
-        ]
-      )
-    orm.Action(
       key=orm.Action.build_key('34', 'view_order'),  # @todo Perhaps to figure out other appropriate name??
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
@@ -159,6 +161,24 @@ class Order(orm.BaseExpando):
           )
         ]
       ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'read'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True),
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      )
     orm.Action(
       key=orm.Action.build_key('34', 'update'),
       arguments={
