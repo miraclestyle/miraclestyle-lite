@@ -1845,21 +1845,29 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         self._property_value = []
   
   def pre_update(self):
-    if self._property._updateable:
-      if self.has_value():
-        if self._property._repeated:
-          delete_entities = []
-          for entity in self._property_value:
-            if entity._state == 'deleted':
-              delete_entities.append(entity)
-          for delete_entity in delete_entities:
-            self._property_value.remove(delete_entity)
-        else:
-          # We must mutate on the entity itself.
-          if self._property_value._state == 'deleted':
-            self._property_value = None  # Comply with expando and virtual fields.
-        setattr(self._entity, self.property_name, self._property_value)
-  
+    if self.has_value():
+      if self._property._repeated:
+        delete_entities = []
+        if not self._property._updateable:
+          originals = dict((ent.key.urlsafe(), ent) for ent in getattr(self._entity._original, self.property_name, []))
+        for entity in self._property_value:
+          if (entity._state == 'deleted' and self._property._deleteable) \
+            or (not self._property._addable and entity.key.urlsafe() not in originals):
+            # if the property is deleted and deleteable
+            # or if property is not addable and it does not exist in originals, remove it.
+            delete_entities.append(entity)
+        for delete_entity in delete_entities:
+          self._property_value.remove(delete_entity)
+        if not self._property._updateable: # if the property is not updatable we must revert all data to original
+          for i,ent in enumerate(self._property_value):
+            urlsafe = ent.key.urlsafe()
+            if urlsafe in originals:
+              self._property_value[i] = copy.deepcopy(originals[urlsafe])
+      else:
+        # We must mutate on the entity itself.
+        if self._property_value._state == 'deleted' and self._property._deleteable:
+          self._property_value = None  # Comply with expando and virtual fields.
+      setattr(self._entity, self.property_name, self._property_value)
   def delete(self):
     if self._property._deleteable:
       self.read()
@@ -1971,9 +1979,11 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         self._property_value.set_key(key_id, parent=self._entity.key)
     else:
       self._property_value.prepare(parent=self._entity.key)
-    if self._property_value._state == 'deleted':
+    if self._property_value._state == 'deleted' and self._property._deleteable:
       self._property_value.key.delete()
-    else:
+    elif self._property._updateable or (not getattr(self._entity._original, self.property_name, None) \
+                                         and self._property._addable):
+      # put only if the property is updateable, or if its not set and its addable, do the put.
       self._property_value.put()
   
   def _post_update_repeated(self):
@@ -1985,10 +1995,21 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
           entity.set_key(key_id, parent=self._entity.key)
       else:
         entity.prepare(parent=self._entity.key)
-      if entity._state == 'deleted':
+      if entity._state == 'deleted' and self._property._deleteable:
         delete_entities.append(entity)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
+    if not self._property._updateable:
+      originals = dict((entity.key.urlsafe(), entity) for entity in getattr(self._entity._original, self.property_name, []))
+    for i,entity in enumerate(self._property_value):
+      is_new = entity.key not in originals
+      if not self._property._addable and is_new:
+        # if property does not allow new values remove it from put queue
+        self._property_value.remove(entity)
+      elif not self._property._updateable and not is_new:
+        # if updates are not permitted, then always revert to original value
+        # note that if addable is true, then user will be in able to add new items no matter what
+        self._property_value[i] = copy.deepcopy(originals[entity.key.urlsafe()])
     delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
   
@@ -2286,6 +2307,7 @@ class _BaseStructuredProperty(_BaseProperty):
   '''
   _readable = True
   _updateable = True
+  _addable = True
   _deleteable = True
   _autoload = True
   _format_callback = None
@@ -2297,6 +2319,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._updateable = kwargs.pop('updateable', self._updateable)
     self._deleteable = kwargs.pop('deleteable', self._deleteable)
     self._autoload = kwargs.pop('autoload', self._autoload)
+    self._addable = kwargs.pop('addable', self._addable)
     self._format_callback = kwargs.pop('format_callback', self._format_callback)
     self._read_arguments = kwargs.pop('read_arguments', {})
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
