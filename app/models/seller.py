@@ -34,6 +34,34 @@ class SellerContent(orm.BaseModel):
     return cls.build_key(seller_key._id_str, parent=seller_key)
 
 
+class SellerFeedbackStats(orm.BaseModel):
+  
+  _kind = 35
+  
+  _use_record_engine = False
+  _use_rule_engine = False
+  
+  date = orm.SuperDateTimeProperty('1', required=True)
+  positive_count = orm.SuperIntegerProperty('2', required=True)
+  neutral_count = orm.SuperIntegerProperty('3', required=True)
+  negative_count = orm.SuperIntegerProperty('4', required=True)
+
+
+class SellerFeedback(orm.BaseModel):
+  
+  _kind = 36
+  
+  _use_record_engine = False
+  _use_rule_engine = False
+  
+  feedbacks = orm.SuperLocalStructuredProperty(SellerFeedbackStats, '1', repeated=True)
+  
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
+    seller_key = input.get('seller')
+    return cls.build_key(seller_key._id_str, parent=seller_key)
+
+
 class SellerPluginContainer(orm.BaseModel):
   
   _kind = 22
@@ -65,6 +93,7 @@ class Seller(orm.BaseExpando):
   
   _virtual_fields = {
     '_content': SuperRemoteStructuredProperty(SellerContent),
+    '_feedback': SuperRemoteStructuredProperty(SellerFeedback),
     '_plugin_group': SuperRemoteStructuredProperty(SellerPluginContainer),
     '_records': orm.SuperRecordProperty('23')
     }
@@ -77,9 +106,11 @@ class Seller(orm.BaseExpando):
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
                            'not account._is_guest and entity._original.parent_entity._original.state == "active"'),
+      orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue'),
       orm.FieldPermission('22', ['name', 'logo', 'address', '_content', '_plugin_group', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key'),
-      orm.FieldPermission('22', ['name', 'logo', 'address'], False, True,
+      orm.FieldPermission('22', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),
+      orm.FieldPermission('22', ['name', 'logo', 'address', '_feedback'], False, True,
                           'not account._is_guest and entity._original.parent_entity._original.state == "active"')
       ]
     )
@@ -167,6 +198,28 @@ class Seller(orm.BaseExpando):
           plugins=[
             Write(),
             Set(cfg={'d': {'output.entity': '_seller'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('23', 'cron'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            SellerCronGenerateFeedbackStats(cfg={'interval': settings.SELLER_CRON}),
+            Set(cfg={'d': {'_seller._feedback': '_inside._feedback'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write()
             ]
           )
         ]

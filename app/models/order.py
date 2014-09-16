@@ -383,8 +383,7 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'log_message'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        'message': orm.SuperTextProperty(required=True),
-        'note': orm.SuperTextProperty()
+        'message': orm.SuperTextProperty(required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -398,7 +397,7 @@ class Order(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
+            Write(cfg={'dra': {'message': 'input.message'}}),
             Set(cfg={'d': {'output.entity': '_order'}})
             ]
           )

@@ -199,7 +199,7 @@ class Account(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'_account.state': 'input.state'}, 's': {'_account.sessions': []}}),
+            Set(cfg={'s': {'_account.sessions': []}, 'd': {'_account.state': 'input.state'}}),
             RulePrepare(),
             RuleExec(),
             ]

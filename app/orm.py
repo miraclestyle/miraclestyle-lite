@@ -3216,8 +3216,6 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def value_format(self, values):
     values = super(SuperSearchProperty, self).value_format(values)
-    override = self._cfg.get('search_arguments', {})
-    util.override_dict(values, override)
     self._clean_format(values)
     self._kind_format(values)
     self._ancestor_format(values)
