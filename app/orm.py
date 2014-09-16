@@ -1877,6 +1877,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         if self._property_value._state == 'deleted' and self._property._deleteable:
           self._property_value = None  # Comply with expando and virtual fields.
       setattr(self._entity, self.property_name, self._property_value)
+      
   def delete(self):
     if self._property._deleteable:
       self.read()
@@ -2560,6 +2561,7 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
   _value_class = ReferenceStructuredPropertyValue
   _updateable = False
   _deleteable = False
+  _addable = False
   
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
