@@ -3672,7 +3672,7 @@ class Record(BaseExpando):
   
   # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
   logged = SuperDateTimeProperty('l', auto_now_add=True)
-  agent = SuperKeyProperty('u', kind='6', required=True)
+  agent = SuperKeyProperty('u', kind='11', required=True)
   action = SuperKeyProperty('a', kind='1', required=True)
   
   _default_indexed = False

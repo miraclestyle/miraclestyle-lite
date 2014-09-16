@@ -207,8 +207,9 @@ class Account(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'dra': {'message': 'input.message', 'note': 'input.note'}}),
-            Set(cfg={'d': {'output.entity': '_account'}}),
+            Write(),
+            Set(cfg={'d': {'output.entity': '_account'}})
+            # Notify plugin to capture message and note!
             ]
           )
         ]

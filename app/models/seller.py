@@ -211,7 +211,7 @@ class Seller(orm.BaseExpando):
             Context(),
             Read(),
             SellerCronGenerateFeedbackStats(cfg={'interval': settings.SELLER_CRON}),
-            Set(cfg={'d': {'_seller._feedback': '_inside._feedback'}}),
+            #Set(cfg={'d': {'_seller._feedback': '_inside._feedback'}}),
             RulePrepare(),
             RuleExec()
             ]
