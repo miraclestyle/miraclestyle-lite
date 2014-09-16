@@ -46,6 +46,17 @@ class OrderLine(orm.BaseExpando):
   _default_indexed = False
 
 
+class OrderMessage(orm.BaseExpando):
+  
+  _kind = 35
+  
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  agent = SuperKeyProperty('2', kind='11', required=True, indexed=False)
+  body = orm.SuperTextProperty('3', required=True, indexed=False)
+  
+  _default_indexed = False
+
+
 class Order(orm.BaseExpando):
   
   _kind = 34
@@ -67,11 +78,14 @@ class Order(orm.BaseExpando):
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
   paypal_reciever_email = orm.SuperStringProperty('16', required=True, indexed=False)
   paypal_business = orm.SuperStringProperty('17', required=True, indexed=False)
+  feedback = orm.SuperStringProperty('18', required=True, default='', choices=['Positive', 'Neutral', 'Negative'])
+  feedback_adjustment = orm.SuperStringProperty('19', required=True, default='', choices=['revision', 'reported'])
   
   _default_indexed = False
   
   _virtual_fields = {
     '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True),
+    '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, updateable=False, deleteable=False),
     '_records': orm.SuperRecordProperty('34')
     }
   
@@ -383,13 +397,14 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'log_message'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        'message': orm.SuperTextProperty(required=True)
+        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
+            Set(cfg={'d': {'_order._messages': 'input._messages'}})
             RulePrepare(),
             RuleExec()
             ]
@@ -397,7 +412,7 @@ class Order(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'dra': {'message': 'input.message'}}),
+            Write(),
             Set(cfg={'d': {'output.entity': '_order'}})
             ]
           )

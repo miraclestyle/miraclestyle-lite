@@ -28,15 +28,6 @@ cloudstorage.set_default_retry_params(default_retry_params)
 ##########################################
 
 
-class Feed(orm.BaseExpando):  # @todo Not sure how to call this general purpose object that now acts as attachment to other objects as colaboration system?
-  
-  _kind = xx
-  
-  comment = orm.SuperTextProperty('1', required=True)
-  
-  _default_indexed = False
-
-
 class Role(orm.BaseExpando):
   
   _kind = 6

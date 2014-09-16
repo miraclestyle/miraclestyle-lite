@@ -36,7 +36,7 @@ class SellerContent(orm.BaseModel):
 
 class SellerFeedbackStats(orm.BaseModel):
   
-  _kind = 35
+  _kind = 36
   
   _use_record_engine = False
   _use_rule_engine = False
@@ -49,7 +49,7 @@ class SellerFeedbackStats(orm.BaseModel):
 
 class SellerFeedback(orm.BaseModel):
   
-  _kind = 36
+  _kind = 37
   
   _use_record_engine = False
   _use_rule_engine = False
@@ -105,13 +105,13 @@ class Seller(orm.BaseExpando):
                                   orm.Action.build_key('23', 'update')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
-                           'not account._is_guest and entity._original.parent_entity._original.state == "active"'),
+                           'not account._is_guest and entity._original.root_entity._original.state == "active"'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue'),
       orm.FieldPermission('22', ['name', 'logo', 'address', '_content', '_plugin_group', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key'),
       orm.FieldPermission('22', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),
       orm.FieldPermission('22', ['name', 'logo', 'address', '_feedback'], False, True,
-                          'not account._is_guest and entity._original.parent_entity._original.state == "active"')
+                          'not account._is_guest and entity._original.root_entity._original.state == "active"')
       ]
     )
   
@@ -211,7 +211,7 @@ class Seller(orm.BaseExpando):
             Context(),
             Read(),
             SellerCronGenerateFeedbackStats(cfg={'interval': settings.SELLER_CRON}),
-            Set(cfg={'d': {'_seller._feedback': '_inside._feedback'}}),
+            #Set(cfg={'d': {'_seller._feedback': '_inside._feedback'}}),
             RulePrepare(),
             RuleExec()
             ]

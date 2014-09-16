@@ -838,8 +838,17 @@ class _BaseModel(object):
   def parent_entity(self):
     if self.key is None:
       return None
-    if self.key.parent():
-      return self.key.parent().get()
+    if self.key_parent:
+      return self.key_parent.get()
+    else:
+      return None
+  
+  @property
+  def root_entity(self):
+    if self.key is None:
+      return None
+    if self.key_root:
+      return self.key_root.get()
     else:
       return None
   
@@ -3695,7 +3704,7 @@ class Record(BaseExpando):
   
   # Letters for field aliases are provided in order to avoid conflict with logged object fields, and alow scaling!
   logged = SuperDateTimeProperty('l', auto_now_add=True)
-  agent = SuperKeyProperty('u', kind='6', required=True)
+  agent = SuperKeyProperty('u', kind='11', required=True)
   action = SuperKeyProperty('a', kind='1', required=True)
   
   _default_indexed = False
