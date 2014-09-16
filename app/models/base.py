@@ -40,10 +40,6 @@ class Role(orm.BaseExpando):
   permissions = orm.SuperPickleProperty('3', required=True, default=[], compressed=False) # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
   
   _default_indexed = False
-  
-  def run(self, context):
-    for permission in self.permissions:
-      permission.run(self, context)
 
 
 class GlobalRole(Role):
