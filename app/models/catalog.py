@@ -654,7 +654,14 @@ class Catalog(orm.BaseExpando):
             Write(),  # 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
-            # Notify plugin to capture message and note!
+            # @todo Finish Notify plugins!
+            Notify(cfg={'condition': 'entity.state == "discontinued"',
+                        'd': {'recipient': 'entity.root_entity._primary_email',
+                              'subject': 'Catalog Discontinued by Admin.',
+                              'body': 'input.message'}}),
+            Notify(cfg={'d': {'recipient': 'account._primary_email',
+                              'subject': 'Admin Note',
+                              'body': 'input.note'}}),
             CallbackExec(cfg=[('callback',
                                {'action_model': '31'},
                                {'action_id': 'input.index_state', 'key': '_catalog.key_urlsafe'})])  # @todo What happens if input.index_state is not supplied (e.g. None)?

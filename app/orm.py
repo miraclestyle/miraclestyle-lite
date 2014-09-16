@@ -838,8 +838,17 @@ class _BaseModel(object):
   def parent_entity(self):
     if self.key is None:
       return None
-    if self.key.parent():
-      return self.key.parent().get()
+    if self.key_parent:
+      return self.key_parent.get()
+    else:
+      return None
+  
+  @property
+  def root_entity(self):
+    if self.key is None:
+      return None
+    if self.key_root:
+      return self.key_root.get()
     else:
       return None
   

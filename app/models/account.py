@@ -208,8 +208,15 @@ class Account(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
-            Set(cfg={'d': {'output.entity': '_account'}})
-            # Notify plugin to capture message and note!
+            Set(cfg={'d': {'output.entity': '_account'}}),
+            # @todo Finish Notify plugins!
+            Notify(cfg={'condition': 'entity.state == "suspended"',
+                        'd': {'recipient': 'entity._primary_email',
+                              'subject': 'Account Suspended.',
+                              'body': 'input.message'}}),
+            Notify(cfg={'d': {'recipient': 'account._primary_email',
+                              'subject': 'Admin Note',
+                              'body': 'input.note'}})
             ]
           )
         ]

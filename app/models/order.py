@@ -78,6 +78,8 @@ class Order(orm.BaseExpando):
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
   paypal_reciever_email = orm.SuperStringProperty('16', required=True, indexed=False)
   paypal_business = orm.SuperStringProperty('17', required=True, indexed=False)
+  feedback = orm.SuperStringProperty('18', required=True, default='', choices=['Positive', 'Neutral', 'Negative'])
+  feedback_adjustment = orm.SuperStringProperty('19', required=True, default='', choices=['revision', 'reported'])
   
   _default_indexed = False
   
