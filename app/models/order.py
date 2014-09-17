@@ -139,13 +139,46 @@ class Order(orm.BaseExpando):
                            'account._root_admin and entity._original.state == "completed" \
                            and entity._is_feedback_allowed' ),
       # @todo Implement field permissions!
-      
       orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference', 'seller_address',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                  'feedback', 'feedback_adjustment', 'payment_status', 'paypal_reciever_email',
-                                 'paypal_business', '_lines', '_messages', '_records'], True, True,
-                          'not account._is_guest and entity._original.key_root == account.key')
+                                 'paypal_business', '_lines', '_messages', '_records'], False, True,
+                          'account._is_taskqueue or account._root_admin or (not account._is_guest \
+                          and (entity._original.key_root == account.key \
+                          or entity._original.seller_reference._root == account.key))'),
+      orm.FieldPermission('34', ['name', 'date', 'seller_reference', 'seller_address',
+                                 'billing_address_reference', 'shipping_address_reference', 'billing_address',
+                                 'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
+                                 'payment_status', 'paypal_reciever_email', 'paypal_business',
+                                 '_lines', '_messages', '_records'], True, True,
+                          'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "cart" and action.key_id_str == "add_to_cart"'),
+      orm.FieldPermission('34', ['state'], True, True,
+                          '(action.key_id_str == "add_to_cart" and entity.state == "cart") \
+                          or ((action.key_id_str == "checkout" or action.key_id_str == "timeout") and entity.state == "checkout") \
+                          or (action.key_id_str == "cancel" and entity.state == "canceled") \
+                          or (action.key_id_str == "pay" and entity.state == "processing") \
+                          or (action.key_id_str == "complete" and entity.state == "completed")'),
+      orm.FieldPermission('34', ['_messages'], True, True,
+                          'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
+                           or entity._original.seller_reference._root == account.key))'),
+      orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference', '_lines'], True, True,
+                          'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "cart" and action.key_id_str == "update"'),
+      orm.FieldPermission('34', ['_lines.sequence', '_lines.description', '_lines.product_reference',
+                                 '_lines.product_variant_signature', '_lines.product_category_complete_name',
+                                 '_lines.product_category_reference', '_lines.code', '_lines.unit_price',
+                                 '_lines.product_uom', '_lines.discount', '_lines.taxes'], False, None,
+                          'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "cart" and action.key_id_str == "update"'),
+      orm.FieldPermission('34', ['_lines.discount', '_lines.subtotal',
+                                 '_lines.discount_subtotal', '_lines.total'], True, True,
+                          'not account._is_guest and entity._original.seller_reference._root == account.key \
+                          and entity._original.state == "checkout" and action.key_id_str == "update"'),
+      orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
+                          '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
+                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")')
       ]
     )
   
@@ -427,7 +460,8 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'leave_feedback'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative'])
+        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative']),
+        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -435,7 +469,8 @@ class Order(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': None},
-                     'd': {'_order.feedback': 'input.feedback'}}),
+                     'd': {'_order.feedback': 'input.feedback',
+                           '_order._messages': 'input._messages'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -453,14 +488,16 @@ class Order(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('34', 'review_feedback'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True)
+        'key': orm.SuperKeyProperty(kind='34', required=True),
+        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_order.feedback_adjustment': 'revision'}}),
+            Set(cfg={'s': {'_order.feedback_adjustment': 'revision'},
+                     'd': {'_order._messages': 'input._messages'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -478,14 +515,16 @@ class Order(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('34', 'report_feedback'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True)
+        'key': orm.SuperKeyProperty(kind='34', required=True),
+        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_order.feedback_adjustment': 'reported'}}),
+            Set(cfg={'s': {'_order.feedback_adjustment': 'reported'},
+                     'd': {'_order._messages': 'input._messages'}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -504,7 +543,8 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'sudo_feedback'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative'])
+        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative']),
+        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -512,7 +552,8 @@ class Order(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': 'sudo'},
-                     'd': {'_order.feedback': 'input.feedback'}}),
+                     'd': {'_order.feedback': 'input.feedback',
+                           '_order._messages': 'input._messages'}}),
             RulePrepare(),
             RuleExec()
             ]
