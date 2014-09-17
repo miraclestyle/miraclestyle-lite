@@ -145,7 +145,7 @@ class Account(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
-            Set(cfg={'d': {'output.entity': '_account'}}),
+            Set(cfg={'d': {'output.entity': '_account'}})
             ]
           )
         ]
@@ -201,7 +201,7 @@ class Account(orm.BaseExpando):
             Read(),
             Set(cfg={'s': {'_account.sessions': []}, 'd': {'_account.state': 'input.state'}}),
             RulePrepare(),
-            RuleExec(),
+            RuleExec()
             ]
           ),
         orm.PluginGroup(

@@ -26,7 +26,8 @@ class CatalogProductCategory(orm.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('24', [orm.Action.build_key('24', 'update')], True, 'account._root_admin or account._is_taskqueue'),
+      orm.ActionPermission('24', [orm.Action.build_key('24', 'update')], True,
+                           'account._root_admin or account._is_taskqueue'),
       orm.ActionPermission('24', [orm.Action.build_key('24', 'search')], True, 'not account._is_guest'),
       orm.FieldPermission('24', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
       orm.FieldPermission('24', ['parent_record', 'name', 'complete_name', 'state'], True, True,
@@ -259,7 +260,8 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'read')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'search')], True,
-                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key and input["search"]["ancestor"] == account.key)'),
+                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key \
+                           and input["search"]["ancestor"] == account.key)'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'read')], True,
                            'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'update'),
@@ -267,10 +269,12 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'product_upload_images'),
                                   orm.Action.build_key('31', 'product_instance_upload_images'),
                                   orm.Action.build_key('31', 'product_duplicate')], True,
-                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "draft"'),
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "draft"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue'),
                                   orm.Action.build_key('31', 'catalog_duplicate')], True,
-                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "published"'),
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "published"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'publish')], True,
                            'account._is_taskqueue and entity._original.state != "published"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue')], True,
@@ -286,12 +290,17 @@ class Catalog(orm.BaseExpando):
       orm.ActionPermission('31', [orm.Action.build_key('31', 'public_search')], True, 'True'),
       orm.FieldPermission('31', ['created', 'updated', 'name', 'publish_date', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images', '_products', '_records'], False, True,
-                          'account._is_taskqueue or account._root_admin or (not account._is_guest and entity._original.key_root == account.key)'),
+                          'account._is_taskqueue or account._root_admin or (not account._is_guest \
+                          and entity._original.key_root == account.key)'),
       orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',
                                  'cover', '_images', '_products', '_records'], True, True,
-                          'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "draft"'),
+                          'not account._is_guest and entity._original.key_root == account.key \
+                          and entity._original.state == "draft"'),
       orm.FieldPermission('31', ['state'], True, True,
-                          '(action.key_id_str == "create" and entity.state == "draft") or (action.key_id_str == "publish" and entity.state == "published") or (action.key_id_str == "discontinue" and entity.state == "discontinued") or (action.key_id_str == "sudo" and entity.state != "draft")'),
+                          '(action.key_id_str == "create" and entity.state == "draft") \
+                          or (action.key_id_str == "publish" and entity.state == "published") \
+                          or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
+                          or (action.key_id_str == "sudo" and entity.state != "draft")'),
       orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',
                                  'state', 'cover', '_images', '_products'], False, True,
                           'entity._original.state == "published" or entity._original.state == "discontinued"'),
@@ -302,7 +311,8 @@ class Catalog(orm.BaseExpando):
                                  '_products.images.gs_object_name', '_products.images.serving_url', '_products.images.proportion',
                                  '_products._instances.images.image', '_products._instances.images.content_type', '_products._instances.images.size',
                                  '_products._instances.images.gs_object_name', '_products._instances.images.serving_url', '_products._instances.images.proportion'], False, None,
-                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", "product_instance_upload_images", "catalog_process_duplicate", "product_process_duplicate"])'),
+                          '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", \
+                          "product_instance_upload_images", "catalog_process_duplicate", "product_process_duplicate"])'),
       orm.FieldPermission('31', ['created', 'updated', 'name', 'publish_date', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images', '_products'], True, True,
                           '(action.key_id_str in ["catalog_process_duplicate", "product_process_duplicate"])')
@@ -688,7 +698,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'sra': {'log_entity': False}}),  # @todo Perhaps entity should be logged in order to refresh updated field? - 'd': {'message': 'tmp.message'}
+            Write(cfg={'sra': {'log_entity': False}})  # @todo Perhaps entity should be logged in order to refresh updated field? - 'd': {'message': 'tmp.message'}
             ]
           )
         ]
@@ -712,7 +722,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(cfg={'sra': {'log_entity': False}}),  # @todo Perhaps entity should be logged in order to refresh updated field? - 'd': {'message': 'tmp.message'}
+            Write(cfg={'sra': {'log_entity': False}})  # @todo Perhaps entity should be logged in order to refresh updated field? - 'd': {'message': 'tmp.message'}
             ]
           )
         ]

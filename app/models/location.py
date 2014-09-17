@@ -42,7 +42,8 @@ class Country(orm.BaseModel):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('12', [orm.Action.build_key('12', 'update')], True, 'account._root_admin or account._is_taskqueue'),
+      orm.ActionPermission('12', [orm.Action.build_key('12', 'update')], True,
+                           'account._root_admin or account._is_taskqueue'),
       orm.ActionPermission('12', [orm.Action.build_key('12', 'search')], True, 'not account._is_guest'),
       orm.FieldPermission('12', ['code', 'name', 'active'], False, True, 'True'),
       orm.FieldPermission('12', ['code', 'name', 'active'], True, True,

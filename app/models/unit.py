@@ -81,16 +81,19 @@ class Unit(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('17', [orm.Action.build_key('17', 'update_currency'),
-                                  orm.Action.build_key('17', 'update_unit')], True, 'account._root_admin or account._is_taskqueue'),
+                                  orm.Action.build_key('17', 'update_unit')], True,
+                           'account._root_admin or account._is_taskqueue'),
       orm.ActionPermission('17', [orm.Action.build_key('17', 'search')], True, 'not account._is_guest'),
-      orm.FieldPermission('17', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
-                                 'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
-                                 'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
-                                 'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], False, True, 'True'),
-      orm.FieldPermission('17', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active', 'code', 'numeric_code',
-                                 'grouping', 'decimal_separator', 'thousands_separator', 'positive_sign_position',
-                                 'negative_sign_position', 'positive_sign', 'positive_currency_symbol_precedes',
-                                 'negative_currency_symbol_precedes', 'positive_separate_by_space', 'negative_separate_by_space'], True, True,
+      orm.FieldPermission('17', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding',
+                                 'digits', 'active', 'code', 'numeric_code', 'grouping', 'decimal_separator',
+                                 'thousands_separator', 'positive_sign_position', 'negative_sign_position',
+                                 'positive_sign', 'positive_currency_symbol_precedes', 'negative_currency_symbol_precedes',
+                                 'positive_separate_by_space', 'negative_separate_by_space'], False, True, 'True'),
+      orm.FieldPermission('17', ['measurement', 'name', 'symbol', 'rate', 'factor', 'rounding', 'digits', 'active',
+                                 'code', 'numeric_code', 'grouping', 'decimal_separator', 'thousands_separator',
+                                 'positive_sign_position', 'negative_sign_position', 'positive_sign',
+                                 'positive_currency_symbol_precedes', 'negative_currency_symbol_precedes',
+                                 'positive_separate_by_space', 'negative_separate_by_space'], True, True,
                           'account._root_admin or account._is_taskqueue')
       ]
     )

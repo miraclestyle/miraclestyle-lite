@@ -76,10 +76,11 @@ class Order(orm.BaseExpando):
   untaxed_amount = orm.SuperDecimalProperty('13', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
-  paypal_reciever_email = orm.SuperStringProperty('16', required=True, indexed=False)
-  paypal_business = orm.SuperStringProperty('17', required=True, indexed=False)
-  feedback = orm.SuperStringProperty('18', required=True, default='', choices=['Positive', 'Neutral', 'Negative'])
-  feedback_adjustment = orm.SuperStringProperty('19', required=True, default='', choices=['revision', 'reported'])
+  feedback = orm.SuperStringProperty('16', choices=['positive', 'neutral', 'negative'])
+  feedback_adjustment = orm.SuperStringProperty('17', choices=['revision', 'reported', 'sudo'])
+  payment_status = orm.SuperStringProperty('18', required=True, indexed=False)  # @todo Not sure if these paypal props should be ousted to some PaymentInfo model
+  paypal_reciever_email = orm.SuperStringProperty('19', required=True, indexed=False)
+  paypal_business = orm.SuperStringProperty('20', required=True, indexed=False)
   
   _default_indexed = False
   
@@ -92,29 +93,58 @@ class Order(orm.BaseExpando):
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart')], True,
-                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
       orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'read'),
                                   orm.Action.build_key('34', 'log_message')], True,
-                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key or entity._original.seller_reference._root == account.key))'),
+                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
+                           or entity._original.seller_reference._root == account.key))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
-                           'not account._is_guest and ((entity._original.key_root == account.key and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key and entity._original.state == "checkout"))'),
+                           'not account._is_guest and ((entity._original.key_root == account.key \
+                           and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key \
+                           and entity._original.state == "checkout"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
-                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key and input["search"]["ancestor"] == account.key) or (not account._is_guest and entity._original.seller_reference._root == account.key and input["search"]["filters"][0]["operator"] == "==" and input["search"]["filters"][0]["value"]._root == account.key)'),
+                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key \
+                           and input["search"]["ancestor"] == account.key) or (not account._is_guest \
+                           and entity._original.seller_reference._root == account.key \
+                           and input["search"]["filters"][0]["operator"] == "==" \
+                           and input["search"]["filters"][0]["value"]._root == account.key)'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
-                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "cart"'),
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "cart"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel'),
                                   orm.Action.build_key('34', 'pay')], True,
-                           'not account._is_guest and entity._original.key_root == account.key and entity._original.state == "checkout"'),
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "checkout"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'timeout'),
                                   orm.Action.build_key('34', 'complete')], True,
                            'account._is_taskqueue and entity._original.state == "processing"'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'leave_feedback')], True,
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "completed" and entity._is_feedback_allowed \
+                           and (entity._original.feedback is None or (entity._original.feedback is not None \
+                           and entity._original.feedback_adjustment == "revision"))'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'review_feedback')], True,
+                           'not account._is_guest and entity._original.seller_reference._root == account.key \
+                           and entity._original.state == "completed" and entity._is_feedback_allowed \
+                           and entity._original.feedback == "negative" and entity._original.feedback_adjustment is None'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'report_feedback')], True,
+                           'not account._is_guest and entity._original.seller_reference._root == account.key \
+                           and entity._original.state == "completed" \
+                           and entity._is_feedback_allowed and entity._original.feedback == "negative" \
+                           and entity._original.feedback_adjustment not in ["reported", "sudo"]' ),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'sudo_feedback')], True,
+                           'account._root_admin and entity._original.state == "completed" \
+                           and entity._is_feedback_allowed' ),
       # @todo Implement field permissions!
+      
       orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference', 'seller_address',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
-                                 'paypal_reciever_email', 'paypal_business', '_lines', '_records'], True, True,
+                                 'feedback', 'feedback_adjustment', 'payment_status', 'paypal_reciever_email',
+                                 'paypal_business', '_lines', '_messages', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key')
       ]
     )
@@ -394,6 +424,110 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
+      key=orm.Action.build_key('34', 'leave_feedback'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True),
+        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative'])
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.feedback_adjustment': None},
+                     'd': {'_order.feedback': 'input.feedback'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'review_feedback'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.feedback_adjustment': 'revision'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'report_feedback'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.feedback_adjustment': 'reported'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'sudo_feedback'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True),
+        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative'])
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'s': {'_order.feedback_adjustment': 'sudo'},
+                     'd': {'_order.feedback': 'input.feedback'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            RulePrepare(),
+            Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
       key=orm.Action.build_key('34', 'log_message'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
@@ -404,7 +538,7 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'_order._messages': 'input._messages'}})
+            Set(cfg={'d': {'_order._messages': 'input._messages'}}),
             RulePrepare(),
             RuleExec()
             ]
