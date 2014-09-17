@@ -210,8 +210,7 @@ class Seller(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            SellerCronGenerateFeedbackStats(cfg={'interval': settings.SELLER_CRON}),
-            #Set(cfg={'d': {'_seller._feedback': '_inside._feedback'}}),
+            SellerCronGenerateFeedbackStats(cfg={}),
             RulePrepare(),
             RuleExec()
             ]
