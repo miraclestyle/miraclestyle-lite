@@ -1,154 +1,20 @@
 indexes:
-- kind: "5"
+# Record
+- kind: '0'
   ancestor: yes
   properties:
-  - name: "l"
+  - name: l
     direction: desc
-     
-- kind: "62"
-  properties:
-  - name: "3"
-  - name: "4"
-  - name: "2"
 
-- kind: "0"
+# Country    
+- kind: '12'
   properties:
-  - name: "4"
-  - name: "1"
-    direction: desc
-    
-- kind: "0"
-  properties:
-  - name: "4"
-  - name: "1"
+  - name: '3'
+  - name: '2'
 
-- kind: "6"
-  properties:
-  - name: "3"
-  - name: "1"
-  
-- kind: "8"
-  properties:
-  - name: "3"
-  - name: "1"
-    direction: desc
-    
-- kind: "8"
-  properties:
-  - name: "3"
-  - name: "1"
-
-- kind: "62"
-  properties:
-  - name: "3"
-  - name: "2"
-
-- kind: "62"
-  properties:
-  - name: "3"
-  - name: "2"
-    direction: desc
-    
-- kind: "62"
-  properties:
-  - name: "3"
-  - name: "1"
-    direction: desc
-  
-- kind: "62"
-  properties:
-  - name: "3"
-  - name: "1"
-  
-- kind: "16"
-  properties:
-  - name: "6"
-  - name: "3"
-
-- kind: "16"
+# CountrySubdivision  
+- kind: '13'
   ancestor: yes
   properties:
-  - name: "6"
-  - name: "3"
-  
-- kind: "16"
-  ancestor: yes
-  properties:
-  - name: "3"
-  
-- kind: "60"
-  properties:
-  - name: "2"
-  - name: "1"
-  
-- kind: "17"
-  properties:
-  - name: "4"
-  - name: "2"
-  
-- kind: "15"
-  properties:
-  - name: "3"
-  - name: "2"
-
-- kind: "35"
-  properties:
-  - name: "6"
-  - name: "4"
-  
-- kind: "35"
-  properties:
-  - name: "6"
-  - name: "5"
- 
-- kind: "35"
-  properties:
-  - name: "6"
-  - name: "2"
-  
-- kind: "38"
-  ancestor: yes
-  properties:
-  - name: "2"
-  
-- kind: "35"
-  properties:
-  - name: "6"
-  - name: "1"
-
-- kind: "19"
-  properties:
-  - name: "8"
-  - name: "1"
-
-- kind: "19"
-  properties:
-  - name: "8"
-  - name: "2"
-  
-- kind: "19"
-  properties:
-  - name: "1"
-  - name: "2"
-
-- kind: "19"
-  properties:
-  - name: "1"
-  - name: "8"
-  - name: "2"
-  
-- kind: "36"
-  ancestor: yes
-  properties:
-  - name: "7"
-    direction: desc
- 
-- kind: "36"
-  ancestor: yes
-  properties:
-  - name: "7"
-
-- kind: "47"
-  properties:
-  - name: "6"
-  - name: "4"
+  - name: '6'
+  - name: '3'

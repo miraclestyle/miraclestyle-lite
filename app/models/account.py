@@ -68,9 +68,10 @@ class Account(orm.BaseExpando):
                            'entity._is_guest or entity._original.state == "active"'),
       orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
                                   orm.Action.build_key('11', 'update'),
-                                  orm.Action.build_key('11', 'logout'),
-                                  orm.Action.build_key('11', 'blob_upload_url')], True,
+                                  orm.Action.build_key('11', 'logout')], True,
                            'not account._is_guest and account.key == entity._original.key'),
+      orm.ActionPermission('11', [orm.Action.build_key('11', 'blob_upload_url')], True, # it just needs true when the user is not guest
+                           'not account._is_guest'),
       orm.FieldPermission('11', ['created', 'updated', 'state'], False, True,
                           'not account._is_guest and account.key == entity._original.key'),
       orm.FieldPermission('11', ['identities', 'emails', 'sessions', '_primary_email'], True, True,
@@ -161,6 +162,7 @@ class Account(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
           cfg={
+            'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'emails': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty()},
             'indexes': [{'orders': [('emails', ['asc', 'desc'])]},
@@ -180,7 +182,7 @@ class Account(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'s': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}}}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

@@ -76,7 +76,7 @@ class SellerPluginContainer(orm.BaseModel):
   
   _use_rule_engine = False
   
-  plugins = orm.SuperPluginStorageProperty(('0',), '1', required=True, default=[], compressed=False)
+  plugins = orm.SuperPluginStorageProperty(('11',), '1', required=True, default=[], compressed=False)
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
@@ -110,64 +110,31 @@ class Seller(orm.BaseExpando):
     permissions=[
       # @todo We will se if read permission is required by the public audience!
       orm.ActionPermission('23', [orm.Action.build_key('23', 'create'),
-                                  orm.Action.build_key('23', 'update')], True,
+                                  orm.Action.build_key('23', 'update'),
+                                  orm.Action.build_key('23', 'prepare')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
                            'not account._is_guest and entity._original.root_entity._original.state == "active"'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue'),
-      orm.FieldPermission('22', ['name', 'logo', 'address', '_content', '_plugin_group', '_records'], True, True,
+      orm.FieldPermission('23', ['name', 'logo', 'address', '_content', '_plugin_group', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key'),
-      orm.FieldPermission('22', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),
-      orm.FieldPermission('22', ['name', 'logo', 'address', '_feedback'], False, True,
+      orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),
+      orm.FieldPermission('23', ['name', 'logo', 'address', '_feedback'], False, True,
                           'not account._is_guest and entity._original.root_entity._original.state == "active"')
       ]
     )
   
   _actions = [
     orm.Action(
-      key=orm.Action.build_key('23', 'create'),
-      arguments={
-        # 'account': orm.SuperKeyProperty(kind='11', required=True), @see action create
-        'name': orm.SuperStringProperty(required=True),
-        'logo': SuperImageLocalStructuredProperty(Image, required=True,
-                                                  process_config={'measure': False, 'transform': True,
-                                                                  'width': 240, 'height': 100,
-                                                                  'crop_to_fit': True}),
-        'address': orm.SuperLocalStructuredProperty(Address)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Set(cfg={'d': {'account.key': 'input.account'}}), # suggested behaviour
-            Read(),
-            Set(cfg={'d': {'_seller.name': 'input.name',
-                           '_seller.logo': 'input.logo',
-                           '_seller.address': 'input.address'}}),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            Set(cfg={'d': {'output.entity': '_seller'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
       key=orm.Action.build_key('23', 'read'),
       arguments={
-        #'key': orm.SuperKeyProperty(kind='23', required=True),
+        'account': orm.SuperKeyProperty(kind='11', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
-            Set(cfg={'d': {'account.key': 'input.account'}}), # suggested behaviour
             Read(),
             RulePrepare(),
             RuleExec(),
@@ -179,7 +146,7 @@ class Seller(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('23', 'update'),
       arguments={
-        #'key': orm.SuperKeyProperty(kind='23', required=True),
+        'account': orm.SuperKeyProperty(kind='11', required=True),
         'name': orm.SuperStringProperty(required=True),
         'logo': SuperImageLocalStructuredProperty(Image, process_config={'measure': False, 'transform': True,
                                                                          'width': 240, 'height': 100,
@@ -193,13 +160,16 @@ class Seller(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Set(cfg={'d': {'account.key': 'input.account'}}), # suggested behaviour
             Read(),
             Set(cfg={'d': {'_seller.name': 'input.name',
                            '_seller.logo': 'input.logo',
                            '_seller.address': 'input.address',
                            '_seller._content': 'input._content',
-                           '_seller._plugin_group': 'input._plugin_group'}}),
+                           '_seller._plugin_group.value.plugins': 'input._plugin_group.plugins'}}), 
+                           # this is was a bug, we cannot do direct sets on property values because previous value will be lost
+                           # in this case setting seller._plugin_group with input._plugin_group, the sellers plugin group current value
+                           # would be completely lost (overriden) in this process, see 
+                           # we must set values indirectly to perform correct sets
             RulePrepare(),
             RuleExec()
             ]

@@ -59,70 +59,84 @@
   		<a ng-click="toggleMainMenu()" class="logo-link" href="javascript:;"><h1 id="logo">Miraclestyle</h1></a>
   	</div>
   	<div style="display:none;" id="main-menu">
-  		<div ng-show="!nav.menu" class="menu-inner">
-  			<div ng-show="current_user._root_admin" ng-include="logic_template('nav/search_form.html')"></div>
+  		<div class="menu-inner">
+  			<div ng-show="current_account._root_admin" ng-include="logic_template('misc/search_form.html')"></div>
 	  		<h1 class="fieldset">Account</h1>
-	  		<ul ng-show="!current_user._is_guest" class="menu">
-	  		    <li><button type="button" class="button block" ng-click="manageAccount()">Manage</button></li>
+	  		<ul ng-show="!current_account._is_guest" class="menu clearfix">
+	  		    <li><button type="button" class="button block" ng-click="manageAccount()">Settings</button></li>
 	  		    <li><button type="button" class="button block" ng-click="doLogout()">Logout</button></li>
 	  		</ul>
 	  		
-	  		<div ng-show="!current_user._is_guest">
-		  		<h1 class="fieldset">Buyer Tools</h1>
-		  		<ul ng-show="!current_user._is_guest" class="menu">
-		  		    <li><button type="button" class="button block" ng-click="manageBuyer()">My Addresses</button></li>
-		  		    <li><button type="button" class="button block" ng-click="manageCollection()">My Collection</button></li>
+	  		<div ng-show="!current_account._is_guest">
+		  		<h1 class="fieldset">Buy</h1>
+		  		<ul ng-show="!current_account._is_guest" class="menu clearfix">
+		  		    <li><button type="button" class="button block" ng-click="manageCollection()">My Collections</button></li>
+		  		    <li><button type="button" class="button block" ng-click="toggleMainMenu(1)" class="button block" ui-sref="buy-shopping-carts">My Shopping Carts</button></li>
+		  		    <li><button type="button" class="button block" ng-click="toggleMainMenu(1)" class="button block" ui-sref="buy-orders">My Orders</button></li>
+		  		    <li><button type="button" class="button block" ng-click="manageBuyer()">Settings</button></li>
 		  		</ul>
 	  		</div>
 	  		
-	  		<ul ng-show="current_user._is_guest" class="menu">
+	  		<ul ng-show="current_account._is_guest" class="menu clearfix">
 	  		    <li><button type="button" busy class="button block" ng-click="doLogin()">Login</button></li>
 	  		</ul>
 	  		
-	  		<div ng-show="!current_user._is_guest">
-	  			<h1 class="fieldset">Selling Tools</h1>
-	  			<ul class="menu">
-	  		   		 <li><button type="button" ng-click="toggleMainMenu(1)" class="button block" ui-sref="apps">Enterprise Apps</button></li>
+	  		<div ng-show="!current_account._is_guest">
+	  			<h1 class="fieldset">Sell</h1>
+	  			<ul class="menu clearfix">
+	  		   	   <li><button type="button"
+	  		   	            ng-click="toggleMainMenu(1)" 
+	  		   	            class="button block" ui-sref="sell-catalogs">Catalogs</button></li>
+	  		   	    <li><button type="button"
+                            ng-click="toggleMainMenu(1)" 
+                            class="button block" ui-sref="sell-shopping-carts">Shopping Carts</button></li>
+                    <li><button type="button"
+                            ng-click="toggleMainMenu(1)" 
+                            class="button block" ui-sref="sell-orders">Orders</button></li>
+                     <li><button type="button"
+                            ng-click="manageSeller()" 
+                            class="button block">Settings</button></li>
 	  			</ul>
 	  		</div>
 	  		
-	        <div ng-show="current_user._root_admin">
+	  		
+	  		
+	        <div ng-show="current_account._root_admin">
 	        	
 	  			<h1 class="fieldset">Administration</h1>
-	  			<ul class="menu">
+	  			<ul class="menu clearfix">
 	  		   		 <li ng-repeat="(kind_key, kind) in ADMIN_KINDS"><button type="button" ng-click="toggleMainMenu(1)"
 		  		    		    ui-sref="admin_search({query: JSON.stringify({}), kind : kind_key})" 
 		  		    		    ui-sref-active="active" class="button block" ng-bind="kind"></button></li>
 	  			</ul>
 	  		</div>
+	  		
+	  		<div ng-show="!current_account._is_guest">
+                <h1 class="fieldset">Support</h1>
+                <ul class="menu clearfix">
+                   <li><button type="button"
+                            ng-click="toggleMainMenu(1)" 
+                            class="button block" ui-sref="about">About</button></li>
+                    <li><button type="button"
+                            ng-click="beginTour()" 
+                            class="button block">Tour</button></li>
+                    <li><button type="button"
+                            ng-click="toggleMainMenu(1)" 
+                            class="button block" ui-sref="terms">Privacy &amp; Terms</button></li>
+                    <li><button type="button"
+                            ng-click="toggleMainMenu(1)" 
+                            class="button block" ui-sref="terms">Copyright &amp; Trademark</button></li>
+                     <li><button type="button"
+                            ng-click="toggleMainMenu(1)" 
+                            class="button block" ui-sref="support">Support</button></li>
+                </ul>
+            </div>
+            
+            <br />
 	  		 
   		</div>
   		
-  		
-  		<div ng-show="nav.menu" class="menu-inner">
-  			
-  		     
-  			<div ng-repeat="menu_item in nav.menu">
-  			  
-	  			<div ng-if="menu_item.search_form">
-	  				<h1 ng-bind="menu_item.name" class="fieldset"></h1>
-	  				<div ng-include="logic_template('nav/search_form.html')"></div>
-	  			</div>
-	  			
-	  			<div ng-if="!menu_item.search_form">
-	  			<h1 ng-bind="menu_item.name" class="fieldset"></h1>
-		  		<ul class="menu">
-		  		    <li ng-repeat="menu_filter in menu_item.filters">
-		  		    	<button type="button" ng-click="toggleMainMenu(1)"
-		  		    		    ui-sref="app_view_search({app_id : nav.domain.key, query: JSON.stringify(menu_filter.query), kind : menu_filter.model})" 
-		  		    		    ui-sref-active="active" class="button block" ng-bind="menu_filter.name"></button>
-		  		    </li>
-		  		</ul>
-		  		</div>
-		  		 
-		  		
-	  		</div>
-  		</div>
+ 
   		
   	</div>
 	{% block content %}

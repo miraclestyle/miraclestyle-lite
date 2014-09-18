@@ -63,6 +63,7 @@ class CatalogProductCategory(orm.BaseModel):
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
+            'search_arguments': {'kind': '24', 'options': {'limit': settings.SEARCH_PAGE}},
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(choices=['indexable'])},
@@ -83,7 +84,7 @@ class CatalogProductCategory(orm.BaseModel):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'s': {'kind': '24', 'options': {'limit': settings.SEARCH_PAGE}}}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -537,6 +538,7 @@ class Catalog(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
           cfg={
+            'search_arguments': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '11',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
@@ -561,7 +563,7 @@ class Catalog(orm.BaseExpando):
             RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
             # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
-            Search(cfg={'s': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}}}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -848,6 +850,7 @@ class Catalog(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'kind': '31', 'orders': [{'field': 'created', 'operator': 'desc'}]},
           cfg={
+            'search_arguments': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
             'use_search_engine': True,
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
@@ -872,8 +875,7 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            CatalogSearch(cfg={'index': settings.CATALOG_INDEX,
-                               's': {'options': {'limit': settings.SEARCH_PAGE}}}),
+            CatalogSearch(cfg={'index': settings.CATALOG_INDEX}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.total_matches': '_total_matches',
                            'output.entities_count': '_entities_count',

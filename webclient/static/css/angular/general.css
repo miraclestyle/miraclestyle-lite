@@ -114,6 +114,8 @@ a:visited
 {
   display: block;
   margin-bottom: 5px;
+  margin-right: 10px;
+  float:left;
 }
 
 a.block, .block, .button.block
@@ -123,9 +125,15 @@ a.block, .block, .button.block
 
 #main-menu .button 
 {
+  
+  
+}
+
+#main-menu .menu .button {
+  width: 240px;
+  height: 100px;
   padding-top: 14px;
   padding-bottom: 14px;
-  width:100%;
 }
 
 .load-more {width:100%;}

@@ -585,7 +585,6 @@ class _BaseModel(object):
     
     '''
     dic = {}
-    dic['__name__'] = cls.__name__ # this can be useful
     dic['_actions'] = getattr(cls, '_actions', [])
     dic.update(cls.get_fields())
     return dic
@@ -1358,8 +1357,6 @@ class _BaseModel(object):
       raise ValueError('Expected instance of Document, got %s' % document)
   
   def generate_unique_key(self):
-    #print self.__class__.__name__, self.key # debug
-    #raise Exception('a')
     random_uuid4 = str(uuid.uuid4())
     if self.key:
       self.key = self.build_key(random_uuid4, parent=self.key.parent(), namespace=self.key.namespace())
@@ -2375,18 +2372,19 @@ class _BaseStructuredProperty(_BaseProperty):
           if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
             val.generate_unique_key()
     elif not self._repeated:
-      generate = False
-      if value_instance.has_value():
-        current_values = value_instance.value
-        if current_values and current_values.key: # ensure that we will always have a key
-          value.key = current_values.key
-        elif not value.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+      if current_values:
+        generate = False
+        if value_instance.has_value():
+          current_values = value_instance.value
+          if current_values and current_values.key: # ensure that we will always have a key
+            value.key = current_values.key
+          elif not value.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+            generate = True
+          current_values = value
+        elif not current_values.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
           generate = True
-        current_values = value
-      elif not current_values.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
-        generate = True
-      if generate and current_values:
-        current_values.generate_unique_key()
+        if generate and current_values:
+          current_values.generate_unique_key()
     value_instance.set(current_values)
     return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
   
@@ -2863,11 +2861,15 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
       if value is util.Nonexistent:
         return value
       out = []
-      assert isinstance(value, list) == True
       if self._repeated:
         for v in value:
           for key_path in v:
-            key = Key(*key_path)
+            kwds = {}
+            try:
+              kwds = key_path[1]
+            except IndexError:
+              pass
+            key = Key(*key_path[0], **kwds)
             if self._kind and key.kind() != self._kind:
               raise PropertyError('invalid_kind')
             out.append(key)
@@ -2876,7 +2878,11 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
             if entity is None:
               raise PropertyError('not_found_%s' % out[i].urlsafe())
       else:
-        out = Key(*value)
+        try:
+          kwds = value[1]
+        except IndexError:
+          pass
+        out = Key(*value[0], **kwds)
         if self._kind and out.kind() != self._kind:
           raise PropertyError('invalid_kind')
         entity = out.get()
@@ -3184,6 +3190,8 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def value_format(self, values):
     values = super(SuperSearchProperty, self).value_format(values)
+    override = self._cfg.get('search_arguments', {})
+    util.override_dict(values, override)
     self._clean_format(values)
     self._kind_format(values)
     self._ancestor_format(values)
@@ -3523,24 +3531,13 @@ class SuperPluginStorageProperty(SuperPickleProperty):
   
   def _set_value(self, entity, value):
     # __set__
-    current_values = self._get_value(entity)
-    if not current_values:
-      current_values = []
-    if value:
-      for val in value:
-        if val.key:
-          for i,current_value in enumerate(current_values):
-            if current_value.key == val.key:
-              current_values[i] = val
-              break
-        else:
-          if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
-            val.generate_unique_key() # for new values always generate new keys
-          current_values.append(val)
-      def sorting_function(val):
-        return val._sequence
-      current_values = sorted(current_values, key=sorting_function)
-    return super(SuperPluginStorageProperty, self)._set_value(entity, current_values)
+    # plugin storage needs just to generate key if its non existant, it cannot behave like local struct and remote struct
+    # because generally its not in its nature to behave like that
+    # its just pickling of data with validation.
+    for val in value:
+      if not val.key:
+        val.generate_unique_key()
+    return super(SuperPluginStorageProperty, self)._set_value(entity, value)
   
   def value_format(self, value):
     value = self._property_value_format(value)

@@ -308,6 +308,7 @@ class Order(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
           cfg={
+            'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '11',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
@@ -332,7 +333,7 @@ class Order(orm.BaseExpando):
             RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
             # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
-            Search(cfg={'s': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}}}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

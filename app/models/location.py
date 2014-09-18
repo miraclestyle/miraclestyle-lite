@@ -79,6 +79,7 @@ class Country(orm.BaseModel):
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
+            'search_arguments': {'kind': '12', 'options': {'limit': 1000}},
             'search_by_keys': True,
             'filters': {'active': orm.SuperBooleanProperty(choices=[True])},
             'indexes': [{'filters': [('active', ['=='])],
@@ -93,7 +94,7 @@ class Country(orm.BaseModel):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'s': {'kind': '12', 'options': {'limit': 1000}}}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -136,6 +137,7 @@ class CountrySubdivision(orm.BaseModel):
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
+            'search_arguments': {'kind': '13', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '12',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()]),
@@ -160,7 +162,7 @@ class CountrySubdivision(orm.BaseModel):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'s': {'kind': '13', 'options': {'limit': settings.SEARCH_PAGE}}}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -178,21 +180,20 @@ class Address(orm.BaseExpando):
   
   _use_rule_engine = False
   
-  internal_id = orm.SuperStringProperty('1', required=True, indexed=False)  # md5 hash => <timestamp>-<random_str>-<name>-<city>-<postal code>-<street>-<default_shipping>-<default_billing>
-  name = orm.SuperStringProperty('2', required=True, indexed=False)
-  country = orm.SuperKeyProperty('3', kind='12', required=True, indexed=False)
-  city = orm.SuperStringProperty('4', required=True, indexed=False)
-  postal_code = orm.SuperStringProperty('5', required=True, indexed=False)
-  street = orm.SuperStringProperty('6', required=True, indexed=False)
-  default_shipping = orm.SuperBooleanProperty('7', required=True, default=True, indexed=False)
-  default_billing = orm.SuperBooleanProperty('8', required=True, default=True, indexed=False)
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  country = orm.SuperKeyProperty('2', kind='12', required=True, indexed=False)
+  city = orm.SuperStringProperty('3', required=True, indexed=False)
+  postal_code = orm.SuperStringProperty('4', required=True, indexed=False)
+  street = orm.SuperStringProperty('5', required=True, indexed=False)
+  default_shipping = orm.SuperBooleanProperty('6', required=True, default=True, indexed=False)
+  default_billing = orm.SuperBooleanProperty('7', required=True, default=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'region': orm.SuperKeyProperty('9', kind='13'),
-    'email': orm.SuperStringProperty('10'),
-    'telephone': orm.SuperStringProperty('11')
+    'region': orm.SuperKeyProperty('8', kind='13'),
+    'email': orm.SuperStringProperty('9'),
+    'telephone': orm.SuperStringProperty('10')
     }
   
   _virtual_fields = {

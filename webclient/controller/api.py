@@ -72,7 +72,7 @@ class Install(handler.Angular):
   
   def respond(self):
     out = []
-    for model, action in [('15', 'update'), ('17', 'update'), ('19', 'update_unit'), ('19', 'update_currency')]:
+    for model, action in [('12', 'update'), ('24', 'update'), ('17', 'update_unit'), ('17', 'update_currency')]:
       out.append(io.Engine.run({'action_model' : model, 'action_id' : action}))
     return out
     

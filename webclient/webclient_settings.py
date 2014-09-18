@@ -36,13 +36,9 @@ ANGULAR_MODULES = ['underscore',
 
 ANGULAR_COMPONENTS = ['home',
                       'account',
-                      'app',
-                      'nav',
-                      'rule',
-                      'notify',
+                      'seller',
                       'catalog',
                       'buyer',
-                      'transaction',
                       'admin',
                       ]
 

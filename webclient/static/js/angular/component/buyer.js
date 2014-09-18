@@ -86,11 +86,11 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
     	};
   
         return {
-            update: function (user, complete)
+            update: function (account, complete)
             {
             	var that = this;
             	
-            	var entity = {'user' : user['key']};
+            	var entity = {'account' : account['key']};
              
                 return EntityEditor.update({
                 	 'kind' : '19',
@@ -98,12 +98,12 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			      		  this.history.args.user = entity['user'];
+			      		  this.history.args.account = entity['account'];
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('buyer/addresses.html'),
                 	 'args' : {
-                	 	'user' : entity['user'],
+                	 	'account' : entity['account'],
                 	 }
                 });
             }
@@ -116,11 +116,11 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
     function ($rootScope, EntityEditor) {
     	  
        return {
-            update: function (user, complete)
+            update: function (account, complete)
             {
             	var that = this;
             	
-            	var entity = {'user' : user['key']};
+            	var entity = {'account' : account['key']};
             	var scope = {
             		
             		'removeApp' : function (app)
@@ -136,12 +136,12 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                 	 'scope' : scope,
                 	 'handle' : function (data)
 			         {
-			      		  this.history.args.user = entity['user'];
+			      		  this.history.args.account = entity['account'];
 			         },
                 	 'complete' : complete,
                 	 'templateUrl' : logic_template('buyer/collection_manage.html'),
                 	 'args' : {
-                	 	'user' : entity['user'],
+                	 	'account' : entity['account'],
                 	 }
                 });
             }

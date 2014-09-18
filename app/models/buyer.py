@@ -42,7 +42,7 @@ class Buyer(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('19', 'update'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='6', required=True),
+        'account': orm.SuperKeyProperty(kind='11', required=True),
         'addresses': orm.SuperLocalStructuredProperty(Address, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
@@ -69,7 +69,7 @@ class Buyer(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('19', 'read'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='6', required=True),
+        'account': orm.SuperKeyProperty(kind='11', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[

@@ -138,6 +138,7 @@ class Unit(orm.BaseExpando):
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
+            'search_arguments': {'kind': '17', 'options': {'limit': 1000}},
             'search_by_keys': True,
             'filters': {'measurement': orm.SuperStringProperty(),
                         'active': orm.SuperBooleanProperty(choices=[True])},
@@ -155,7 +156,7 @@ class Unit(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
-            Search(cfg={'s': {'kind': '17', 'options': {'limit': 1000}}}),
+            Search(),
             UnitRemoveCurrencies(),  # @todo This will be probably be removed!!
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',

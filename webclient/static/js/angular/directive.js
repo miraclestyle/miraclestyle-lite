@@ -174,6 +174,34 @@ MainApp
 		}
 	};
 }])
+.directive('serializeOnClick', ['Endpoint', '$rootScope', function (Endpoint, $rootScope) {
+    return {
+        link : function (scope, element, attrs)
+        {
+            var click = function () {
+                
+                var that = $(this);
+                
+                var form = that.parents('form:first');
+                
+                var name = (attrs.serializeOnClick || 'entity');
+                 
+                scope.json_body = JSON.stringify(scope[name]);
+                //form.find('[name="__body__"]').val(JSON.stringify(scope[name]));
+           
+                form.submit();
+                
+                return false;
+            };
+           
+            $(element).on('click', click);
+            
+            scope.$on('$destroy', function () {
+                $(element).off('click', click);
+            });
+        }
+    };
+}])
 .directive('uploadOnSelect', ['Endpoint', '$rootScope', function (Endpoint, $rootScope) {
 	return {
 		link : function (scope, element, attrs)

@@ -1110,7 +1110,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    				var scope = element.scope();
    				var country = element.data('country');
    				 
-   				if (country.length)
+   				if (country && country.length)
    				{
    					var country_id = scope.$eval(country);
    					
@@ -1148,7 +1148,9 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    		    cache : v,
    		});
 	});
- 
+	
+	
+    $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
     $rootScope.current_account = current_account;
     $rootScope.$state = $state;
     $rootScope.ui_template = ui_template;
