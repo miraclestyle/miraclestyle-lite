@@ -585,6 +585,7 @@ class _BaseModel(object):
     
     '''
     dic = {}
+    dic['__name__'] = cls.__name__ # this can be useful
     dic['_actions'] = getattr(cls, '_actions', [])
     dic.update(cls.get_fields())
     return dic

@@ -13,7 +13,9 @@ import copy
 from app import orm
 from app.tools.base import *
 from app.util import *
-from app.models import location, uom, transaction, order  # rule, log
+
+from app.models.location import *
+from app.models.unit import *
 
 
 class PluginError(Exception):
@@ -47,7 +49,7 @@ class OrderInit(orm.BaseModel):
 
 class PluginExec(orm.BaseModel):
   
-  _kind = xx
+  _kind = 114
   
   _use_rule_engine = False
   
@@ -101,7 +103,7 @@ class ProductToOrderLine(orm.BaseModel):
       new_line.unit_price = product.unit_price
       new_line.product_uom = product.product_uom.get().get_uom()
       new_line.quantity = format_value('1', new_line.product_uom)
-      new_line.discount = format_value('0', uom.UOM(digits=4))
+      new_line.discount = format_value('0', UOM(digits=4))
       if hasattr(product, 'weight'):
         new_line._weight = product.weight  # @todo Perhaps we might need to build these fields during certain actions, and not only while adding new lines (to ensure thir life accros carrier plugins)!
         new_line._weight_uom = product.weight_uom
@@ -135,7 +137,7 @@ class OrderLineFormat(orm.BaseModel):
       if hasattr(line, 'product_reference'):
         if order.seller_reference._root != line.product_reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
-        line.discount = format_value(line.discount, uom.UOM(digits=4))
+        line.discount = format_value(line.discount, UOM(digits=4))
         if line.quantity <= Decimal('0'):
           line._state = 'deleted'
         else:
@@ -230,7 +232,7 @@ class AddressRule(orm.BaseModel):
       default_address = valid_addresses[order_address_reference]
     if default_address:
       setattr(order, address_reference_key, default_address.key)
-      setattr(order, address_key, location.get_location(default_address))
+      setattr(order, address_key, get_location(default_address))
       context.output[default_address_key] = default_address
     else:
       raise PluginError('no_address_found')
@@ -274,7 +276,7 @@ class PayPalPayment(orm.BaseModel):
   # PayPal Shipping: Do not prompt for an address
   # PayPal Shipping: Prompt for an address, and require one
   
-  currency = orm.SuperKeyProperty('1', kind=uom.Unit, required=True, indexed=False)
+  currency = orm.SuperKeyProperty('1', kind=Unit, required=True, indexed=False)
   reciever_email = orm.SuperStringProperty('2', required=True, indexed=False)
   business = orm.SuperStringProperty('3', required=True, indexed=False)
   
@@ -428,8 +430,8 @@ class Carrier(orm.BaseModel):
                                        'id': self.key.urlsafe()})
   
   def calculate_lines(self, valid_lines, entry):
-    weight_uom = uom.Unit.build_key('kilogram').get()
-    volume_uom = uom.Unit.build_key('cubic_meter').get()
+    weight_uom = Unit.build_key('kilogram').get()
+    volume_uom = Unit.build_key('cubic_meter').get()
     weight = format_value('0', weight_uom)
     volume = format_value('0', volume_uom)
     for line in entry._lines:
@@ -456,7 +458,8 @@ class Carrier(orm.BaseModel):
   def format_value(self, value):
     def run_format(match):
       matches = match.groups()
-      return 'Decimal("%s")' % format_value(matches[0], uom.get_uom(ndb.Key(urlsafe=matches[1])))  # @todo To correct!
+      unit = orm.Key(urlsafe=matches[1]).get()
+      return 'Decimal("%s")' % format_value(matches[0], unit.get_uom(unit))  # @todo To correct!
       # this regex needs more work
     value = re.sub('\((.*)\,(.*)\)', run_format, value)
     return value
@@ -505,9 +508,9 @@ class Carrier(orm.BaseModel):
       volume = format_value('0', volume_uom)
       for line in entry._lines:
         line_weight = line._weight[0]
-        line_weight_uom = uom.get_uom(ndb.Key(urlsafe=line._weight[1]))  # @todo To correct!
+        line_weight_uom = uom.get_uom(orm.Key(urlsafe=line._weight[1]))  # @todo To correct!
         line_volume = line._volume[0]
-        line_volume_uom = uom.get_uom(ndb.Key(urlsafe=line._volume[1]))  # @todo To correct!
+        line_volume_uom = uom.get_uom(orm.Key(urlsafe=line._volume[1]))  # @todo To correct!
         weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
         volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
       for rule in carrier_line.rules:
@@ -528,11 +531,11 @@ class PayPalInit(orm.BaseModel):
   
   def run(self, journal, context):
     
-    ipns = log.Record.query(ndb.GenericProperty('ipn_txn_id') == context.input['txn_id']).fetch()
+    ipns = log.Record.query(orm.GenericProperty('ipn_txn_id') == context.input['txn_id']).fetch()
     if len(ipns):
       for ipn in ipns:
         if (ipn.payment_status == context.input['payment_status']):
-          raise PluginValidationError('duplicate_entry')
+          raise orm.PluginValidationError('duplicate_entry')
       entry = ipns[0].parent_entity
       if context.input['custom']:
          if (entry.key.urlsafe() == context.input['custom']):
@@ -542,23 +545,23 @@ class PayPalInit(orm.BaseModel):
             context.log.entities.append((entry, kwds))
             
          else:
-            raise PluginValidationError('invalid_ipn')
+            raise orm.PluginValidationError('invalid_ipn')
       else:
-        raise PluginValidationError('invalid_ipn')
+        raise orm.PluginValidationError('invalid_ipn')
       
     else:    
       
       if not context.input['custom']:
-        raise PluginValidationError('invalid_ipn')
+        raise orm.PluginValidationError('invalid_ipn')
       else:
         try:
-          entry_key = ndb.Key(urlsafe=context.input['custom']) 
+          entry_key = orm.Key(urlsafe=context.input['custom']) 
           entry = entry_key.get()
         except Exception as e:
-          raise PluginValidationError('invalid_ipn')
+          raise orm.PluginValidationError('invalid_ipn')
         
     if not entry:
-      raise PluginValidationError('invalid_ipn')
+      raise orm.PluginValidationError('invalid_ipn')
     
     kwds = {'log_entity' : False}
     kwds.update(dict([('ipn_%s' % key, value) for key,value in context.input.items()])) # prefix
@@ -570,7 +573,7 @@ class PayPalInit(orm.BaseModel):
     context.transaction.entities[journal.key.id()] = entry
     
     if not self.validate_entry(entry, context):
-       raise PluginValidationError('fraud_check')
+       raise orm.PluginValidationError('fraud_check')
      
     if (entry.paypal_payment_status == context.input['payment_status']):
         return None

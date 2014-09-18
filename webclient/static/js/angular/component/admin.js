@@ -1,14 +1,10 @@
 ADMIN_SEARCH_KIND_CONFIG = {
-    '0': {
-    	'title' : 'Users',
+    '11': {
+    	'title' : 'Accounts',
     	'service' : 'Account',
     	'templateUrl' : logic_template('admin/users.html'),
     },
-   '6': {
-    	'title' : 'Domains',
-    	'service' : 'App',
-    	'templateUrl' : logic_template('admin/apps.html'),
-    },
+ 
     'default': {
     	'title' : 'No data specified for this kind',
     	'add_new' : 'N/A',

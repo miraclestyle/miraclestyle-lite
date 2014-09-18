@@ -97,35 +97,6 @@ KINDS.get = function (kind_id)
    return data;
 };
 
-FRIENDLY_KIND_NAMES = {
-    "60": "DomainRole", 
-    "61": "Template", 
-    "62": "Widget", 
-    "24": "SupportRequest", 
-    "46": "CompanyContent", 
-    "44": "Company", 
-    "42": "Variant", 
-    "43": "Content", 
-    "40": "InventoryLog", 
-    "41": "InventoryAdjustment", 
-    "0": "User", 
-    "5": "Record", 
-    "6": "Domain", 
-    "9": "Address", 
-    "8": "DomainUser", 
-    "10": "Collection", 
-    "39": "Instance", 
-    "38": "Template", 
-    "14": "Content", 
-    "17": "ProductCategory", 
-    "57": "Configuration", 
-    "56": "Action", 
-    "36": "CatalogImage", 
-    "35": "Catalog", 
-    "34": "CatalogPricetag",
-    "47": "Transaction Category",
-    "49": "Transaction Journal",
-};
 
 function always_object(obj)
 {

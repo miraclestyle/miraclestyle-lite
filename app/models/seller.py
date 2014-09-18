@@ -6,8 +6,16 @@ Created on Jan 6, 2014
 '''
 
 from app import orm, settings
-from app.models import *
-from app.plugins import *
+
+from app.models.base import *
+from app.plugins.base import *
+
+from app.models.location import *
+from app.plugins.seller import *
+
+
+__all__ = ['SellerContentDocument', 'SellerContent', 'SellerFeedbackStats', 'SellerFeedback', 
+           'SellerPluginContainer', 'Seller']
 
 
 class SellerContentDocument(orm.BaseModel):
@@ -92,9 +100,9 @@ class Seller(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_content': SuperRemoteStructuredProperty(SellerContent),
-    '_feedback': SuperRemoteStructuredProperty(SellerFeedback),
-    '_plugin_group': SuperRemoteStructuredProperty(SellerPluginContainer),
+    '_content': orm.SuperRemoteStructuredProperty(SellerContent),
+    '_feedback': orm.SuperRemoteStructuredProperty(SellerFeedback),
+    '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
     '_records': orm.SuperRecordProperty('23')
     }
   
@@ -119,7 +127,7 @@ class Seller(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('23', 'create'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='11', required=True),
+        # 'account': orm.SuperKeyProperty(kind='11', required=True), @see action create
         'name': orm.SuperStringProperty(required=True),
         'logo': SuperImageLocalStructuredProperty(Image, required=True,
                                                   process_config={'measure': False, 'transform': True,
@@ -131,6 +139,7 @@ class Seller(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
+            Set(cfg={'d': {'account.key': 'input.account'}}), # suggested behaviour
             Read(),
             Set(cfg={'d': {'_seller.name': 'input.name',
                            '_seller.logo': 'input.logo',
@@ -151,13 +160,14 @@ class Seller(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('23', 'read'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='23', required=True),
+        #'key': orm.SuperKeyProperty(kind='23', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
+            Set(cfg={'d': {'account.key': 'input.account'}}), # suggested behaviour
             Read(),
             RulePrepare(),
             RuleExec(),
@@ -169,7 +179,7 @@ class Seller(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('23', 'update'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='23', required=True),
+        #'key': orm.SuperKeyProperty(kind='23', required=True),
         'name': orm.SuperStringProperty(required=True),
         'logo': SuperImageLocalStructuredProperty(Image, process_config={'measure': False, 'transform': True,
                                                                          'width': 240, 'height': 100,
@@ -183,6 +193,7 @@ class Seller(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
+            Set(cfg={'d': {'account.key': 'input.account'}}), # suggested behaviour
             Read(),
             Set(cfg={'d': {'_seller.name': 'input.name',
                            '_seller.logo': 'input.logo',

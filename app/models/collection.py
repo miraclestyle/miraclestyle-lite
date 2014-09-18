@@ -6,8 +6,12 @@ Created on May 18, 2014
 '''
 
 from app import orm, settings
-from app.models import *
-from app.plugins import *
+
+from app.models.base import *
+from app.plugins.base import *
+
+
+__all__ = ['Collection']
 
 
 class Collection(orm.BaseExpando):

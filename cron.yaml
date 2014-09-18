@@ -1,4 +1,4 @@
-cron:
-- description: Domain catalog processing
-  url: /cron/process_catalogs
-  schedule: every 3 mins
+#cron:
+#- description: Domain catalog processing
+#  url: /cron/process_catalogs
+#  schedule: every 3 mins

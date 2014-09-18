@@ -2,7 +2,7 @@
 
 <input type="hidden" name="key" value="{{entity.key}}" />	
 <input type="hidden" name="action_id" value="update" />
-<input type="hidden" name="action_model" value="6" />
+<input type="hidden" name="action_model" value="22" />
 
 <div scroll-end class="modal-body scrollable">
 <div class="modal-body-inner">
@@ -28,16 +28,7 @@
 			 </div>
 		</div>
 	</div>
-	
-	
-	<div class="form-control">
-		<label class="form-label">Status</label>
-		<div class="form-input">
-			<div class="form-text">
-				 {{entity.state}}
-			</div>
-		</div>
-	</div>
+ 
 	
 	</div>
 	
@@ -52,18 +43,7 @@
 			</div>
 		</div>
 	</div>
-	 
-	<div class="form-control">
-		<label class="form-label">Primary Contact</label>
-		<div class="form-input">
-			<input 
-			       name="primary_contact" 
-			       ng-required="rule.input[action].primary_contact.required" 
-			       ui-select2="select2_domain_user"
-			       ng-model="entity.primary_contact"
-			       data-placeholder="Select a domain user" />
-		</div>
-	</div>	 
+ 
 	
 	<div class="form-control">
 		<label class="form-label">Logo</label>
@@ -97,17 +77,6 @@
 
 <div class="modal-footer">
 	
-	<button busy ng-click="sudo()" type="button" class="button" ng-show="rule.action.sudo.executable">
-		Administer
-	</button>
-	
-	<button busy ng-click="suspend()" type="button" class="button" ng-show="rule.action.suspend.executable">
-		Suspend
-	</button>
-	
-	<button busy ng-click="activate()" type="button" class="button" ng-show="rule.action.activate.executable">
-		Activate
-	</button>
  
 	<button type="submit" ng-disabled="!container.main.$valid || $isUploading" ng-show="rule.action.update.executable" busy class="button">
 		Save

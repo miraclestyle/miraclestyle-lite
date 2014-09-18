@@ -7,8 +7,13 @@ Created on Jan 9, 2014
 
 # @todo Perhaps split this file in two: country.py and address.py?
 from app import orm, settings
-from app.models import *
-from app.plugins import *
+from app.models.base import *
+from app.plugins.base import *
+
+from app.plugins.location import *
+
+
+__all__ = ['Country', 'CountrySubdivision', 'Address', 'Location', 'get_location']
 
 
 def get_location(location):

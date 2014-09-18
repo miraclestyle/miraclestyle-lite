@@ -40,7 +40,6 @@ class Context():
     self.model = None
     self.models = None
     self.action = None
-    # @todo Perhaps here we should put also self.user and retreave current session user?
   
   def error(self, key, value):
     if 'errors' not in self.output:
@@ -111,8 +110,8 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
-    from app.models import auth, base, notify, setup, rule, nav, buyer, cron, location, setup, uom, marketing, transaction, order
-    from app.plugins import auth, base, buyer, cron, location, marketing, nav, notify, order, rule, setup, transaction, uom
+    from app.models import *
+    from app.plugins import *
     
     for model_kind, model in orm.Model._kind_map.iteritems():
       if hasattr(model, 'get_fields'):
@@ -135,12 +134,8 @@ class Engine:
   @classmethod
   def get_model(cls, context, input):
     model_key = input.get('action_model')
-    action_model_schema = input.get('action_model_schema')
     model = orm.Model._kind_map.get(model_key)
-    if action_model_schema is None:
-      context.model = model
-    else:
-      context.model = model(_model_schema=action_model_schema, namespace=input.get('domain'))
+    context.model = model
     if not context.model:
       raise InvalidModel(model_key)
   

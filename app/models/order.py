@@ -6,8 +6,18 @@ Created on Aug 30, 2014
 '''
 
 from app import orm, settings
-from app.models import *
-from app.plugins import *
+
+from app.models.base import *
+from app.plugins.base import *
+
+from app.models.buyer import *
+from app.models.location import *
+from app.models.unit import *
+from app.plugins.order import *
+
+
+
+__all__ = ['OrderLineTax', 'OrderLine', 'OrderMessage', 'Order']
 
 
 class OrderLineTax(orm.BaseModel):
@@ -51,7 +61,7 @@ class OrderMessage(orm.BaseExpando):
   _kind = 35
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
-  agent = SuperKeyProperty('2', kind='11', required=True, indexed=False)
+  agent = orm.SuperKeyProperty('2', kind='11', required=True, indexed=False)
   body = orm.SuperTextProperty('3', required=True, indexed=False)
   
   _default_indexed = False
@@ -255,7 +265,7 @@ class Order(orm.BaseExpando):
             ]
           )
         ]
-      )
+      ),
     orm.Action(
       key=orm.Action.build_key('34', 'update'),
       arguments={

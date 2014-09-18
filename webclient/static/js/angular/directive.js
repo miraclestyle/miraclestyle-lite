@@ -151,8 +151,8 @@ MainApp
 				if (!that.val()) return false;
 		 
 				var options = resolve_defaults({
-					'kind' : scope.entity.kind,
-					'action' : 'prepare',
+					'kind' : '11',
+					'action' : 'blob_upload_url',
 					'args' : {},
 				}, scope.$eval(attrs.createUploadUrlOnSelect));
 			 
@@ -191,7 +191,7 @@ MainApp
 				}
 				var options = scope.$eval(attrs.uploadOnSelect);
 				  
-				Endpoint.post(options['action'], options['kind'], angular.extend({'upload_url' : Endpoint.url}, options['args'])).success(function (data) {
+				Endpoint.post('blob_upload_url', '11', angular.extend({'upload_url' : Endpoint.url}, options['args'])).success(function (data) {
 	        	 	form.attr('action', data.upload_url).trigger('submit');
 	            });
             

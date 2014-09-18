@@ -6,8 +6,14 @@ Created on May 18, 2014
 '''
 
 from app import orm, settings
-from app.models import *
-from app.plugins import *
+
+from app.models.base import *
+from app.plugins.base import *
+
+from app.models.location import *
+from app.plugins.buyer import *
+
+__all__ = ['Buyer']
 
 
 class Buyer(orm.BaseExpando):

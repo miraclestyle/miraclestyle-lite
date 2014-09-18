@@ -7,10 +7,15 @@ Created on May 6, 2014
 
 import datetime
 
-from app import orm, settings
-from app.models import *
-from app.plugins import *
+from app import orm, settings, mem
+from app.models.base import *
+from app.plugins.base import *
+from app.plugins.catalog import *
 from app.util import *
+
+
+__all__ = ['CatalogProductCategory', 'CatalogProductContent', 'CatalogProductVariant', 'CatalogProductInstance',
+           'CatalogProduct', 'CatalogPricetag', 'CatalogImage', 'Catalog']
 
 
 class CatalogProductCategory(orm.BaseModel):
@@ -886,10 +891,10 @@ class Catalog(orm.BaseExpando):
       for image in duplicated_entity._images.value:
         if image.pricetags.value:
           for tag in image.pricetags.value:
-            tag.product = Product.build_key(duplicated_entity.duplicate_key_id(tag.product), parent=duplicated_entity.key, namespace=duplicated_entity.key.namespace())
+            tag.product = CatalogProduct.build_key(duplicated_entity.duplicate_key_id(tag.product), parent=duplicated_entity.key, namespace=duplicated_entity.key.namespace())
     return duplicated_entity
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
     seller_key = input.get('seller')
-    return cls.build_key(None, parent=account_key)
+    return cls.build_key(None, parent=seller_key)

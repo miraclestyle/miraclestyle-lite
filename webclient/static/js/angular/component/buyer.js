@@ -93,7 +93,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
             	var entity = {'user' : user['key']};
              
                 return EntityEditor.update({
-                	 'kind' : '77',
+                	 'kind' : '19',
                 	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)
@@ -125,13 +125,13 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
             		
             		'removeApp' : function (app)
             		{
-            			 this.entity.domains.remove(app.key);
-            			 this.entity._domains.remove(app);
+            			 this.entity.sellers.remove(app.key);
+            			 this.entity._sellers.remove(app);
             		}
             	};
              
                 return EntityEditor.update({
-                	 'kind' : '10',
+                	 'kind' : '18',
                 	 'entity' : entity,
                 	 'scope' : scope,
                 	 'handle' : function (data)
@@ -153,12 +153,12 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
   
 	$rootScope.manageBuyer = function ()
 	{
-		BuyerAddress.update($rootScope.current_user);
+		BuyerAddress.update($rootScope.current_account);
 	};
 	
 	$rootScope.manageCollection = function ()
 	{
-		BuyerCollection.update($rootScope.current_user);
+		BuyerCollection.update($rootScope.current_account);
 	};
  
 	 

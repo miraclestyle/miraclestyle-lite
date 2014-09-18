@@ -87,6 +87,7 @@ class AccountLoginWrite(orm.BaseModel):
       entity = context._account
       if entity._is_guest:
         entity = context.model()
+        entity.read()
         entity.emails = [context._email]
         entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=True)]
         entity.state = 'active'

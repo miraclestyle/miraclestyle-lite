@@ -50,13 +50,13 @@ MainApp
     
     $scope.catalogs = [];
     
-    Endpoint.post('public_search', '35', {'search' : {'filters' : [], 'kind' : '35', 'orders' : [{"field": 'created',"operator": 'desc'}]}}).success(function (data) {
+    Endpoint.post('public_search', '31', {'search' : {'filters' : [], 'kind' : '31', 'orders' : [{"field": 'created',"operator": 'desc'}]}}).success(function (data) {
     	$scope.catalogs = data.entities;
     });
      
     $scope.viewCatalog = function (catalog)
     {
-        Endpoint.post('read', '35', {
+        Endpoint.post('read', '31', {
             'key' : catalog.key,
             'read_arguments' : {
                 '_images' : {},
@@ -72,7 +72,7 @@ MainApp
                                      
                                     $scope.viewProduct = function(pricetag)
                                     { 
-                                        Endpoint.post('read', '35', {
+                                        Endpoint.post('read', '31', {
                                             'key' : catalog.key,
                                             'read_arguments' : {
                                                 '_products' : {

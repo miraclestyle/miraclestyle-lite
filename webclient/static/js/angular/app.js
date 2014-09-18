@@ -1090,20 +1090,20 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 .run(['$rootScope', '$state', 'Title', 'Select2Options', function ($rootScope, $state, Title, Select2Options) {
     
     $rootScope.ADMIN_KINDS = {
-    	'0' : 'Users',
-    	'6' : 'Apps',
+    	'11' : 'Users',
+ 
     }; 
     
     var active_filter = [{'value' : true, 'operator':'==', 'field' : 'active'}];
    	$rootScope.nowJsTimestamp = new Date().getTime();
    	$rootScope.commonSelect2Options = {
    		'country' : Select2Options.factory({
-   			kind : '15',
+   			kind : '12',
    			cache : 'country',
    			filters : active_filter,
    		}),
    		'region' : Select2Options.factory({
-   			kind : '16',
+   			kind : '13',
    			filters : active_filter,
    		    args_callback : function(element, args, term, page)
    			{
@@ -1123,42 +1123,15 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    				}
    			}
    		}),
-   		'role' : Select2Options.factory({
-   			kind : '60',
-   			filters : active_filter,
-   			args_callback : function (element, args, term, page)
-   			{
-   				args['domain'] = $rootScope.nav.domain.key;
-   			}
-   		}),
-   		
-   		'transaction_category' : Select2Options.factory({
-            kind : '47',
-            filters : [],
-            order_by : 'created',
-            order_dir : 'asc',
-            args_callback : function (element, args, term, page)
-            {
-                args['domain'] = $rootScope.nav.domain.key;
-            }
-        }),
-   		
-   		'domain_user' : Select2Options.factory({
-   			kind : '8',
-   			args_callback : function (element, args, term, page)
-            {
-                args['domain'] = $rootScope.nav.domain.key;
-            }
-   	    }),
-   
+  
    		'units' : Select2Options.factory({
-   			kind : '19',
+   			kind : '17',
    			cache : 'units',
    			filters: active_filter,
    		}),
    		
    		'product_category' : Select2Options.factory({
-   			kind : '17',
+   			kind : '24',
    			filters : [{'value' : 'indexable', 'operator':'==', 'field' : 'state'}],
    			label : 'complete_name',
    		}),
@@ -1175,9 +1148,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
    		    cache : v,
    		});
 	});
-   	
-    $rootScope.FRIENDLY_KIND_NAMES = FRIENDLY_KIND_NAMES;
-    $rootScope.current_user = current_user;
+ 
+    $rootScope.current_account = current_account;
     $rootScope.$state = $state;
     $rootScope.ui_template = ui_template;
     $rootScope.logic_template = logic_template;

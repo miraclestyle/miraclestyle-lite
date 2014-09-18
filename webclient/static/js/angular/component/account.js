@@ -8,10 +8,10 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
  
  	if (initdata['entity'])
 	{
-		 $rootScope.current_user = initdata['entity'];
+		 $rootScope.current_account = initdata['entity'];
 	}
 		
-	if ($rootScope.current_user._is_guest)
+	if ($rootScope.current_account._is_guest)
 	{
 		Account.ask_login(function () {
 			$location.path('/');
@@ -151,9 +151,9 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		
 		logout : function (on_logout)
 		{
-			Endpoint.post('logout', '0')
+			Endpoint.post('logout', '11')
 		     .success(function (data) {
-				 $rootScope.current_user = data.entity;
+				 $rootScope.current_account = data.entity;
 				 
 				 if (angular.isFunction(on_logout))
 				 on_logout();
@@ -164,7 +164,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		
 		sudo_search : function (args, config)
         {
-        	return Endpoint.post('sudo_search', '0', args, config);
+        	return Endpoint.post('sudo_search', '11', args, config);
         },
 		ask_login : function (on_close)
 		{
@@ -232,7 +232,6 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 								      	  $scope.rule = $parentScope.rule;
 								      	  $scope.log = {
 								      	  	'message' : '',
-								      	  	'note' : '',
 								      	  	'state' : $parentScope.entity['state'],
 								      	  	'key' : $parentScope.entity['key'],
 								      	  };
@@ -240,7 +239,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 									  	  $scope.save = function ()
 									  	  {
 									  	  	 
-									  	  	Endpoint.post('sudo', '0', $scope.log)
+									  	  	Endpoint.post('sudo', '11', $scope.log)
 										     .success(function (data) {
  
 										     	update($parentScope.entity, entity, data['entity']);
@@ -297,7 +296,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 					  	  	  	   
 					  	  	  });
 					  	  	
-					  	  	Endpoint.post('update', '0', {
+					  	  	Endpoint.post('update', '11', {
 					  	  		'primary_email' : $scope.entity['primary_email'],
 					  	  		'disassociate' : disassociated,
 					  	  		'key' : $scope.entity['key'],
@@ -317,7 +316,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		  
 			  };
 			
-			Endpoint.post('read', '0', {'key' : entity['key']}).success(handle);
+			Endpoint.post('read', '11', {'key' : entity['key']}).success(handle);
   
 	}
 	
@@ -329,10 +328,9 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 	 
 	$rootScope.manageAccount = function ()
 	{
-  		 Account.update($rootScope.current_user);
+  		 Account.update($rootScope.current_account);
 	};
- 
-	 
+  
     $rootScope.doLogin = function ()
 	{
 		Account.ask_login(function () {
@@ -341,8 +339,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 	};
 	
 	$rootScope.doLogout = function ()
-	{
-		
+	{ 
 	   Account.logout(function () {
 			$location.path('/');
 		});

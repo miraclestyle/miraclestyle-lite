@@ -107,7 +107,7 @@ MainApp
 
         function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm, $timeout) {
 
-            var kind = '35';
+            var kind = '31';
             
  
             var make_scope = function ()
@@ -187,7 +187,7 @@ MainApp
                        'action' : 'prepare',
                        'kind' : kind,
 			           'args' : {
-			              'domain' : $parentScope.entity.namespace,
+			              'seller' : $parentScope.entity.parent.key,
 			           }
 			        };
  
@@ -894,19 +894,19 @@ MainApp
              
             return {
 
-                create: function (domain_key, complete) {
+                create: function (seller_key, complete) {
                     return EntityEditor.create({
                         'kind': kind,
                         'entity': {},
                         'scope': make_scope(),
                         'close': false,
                         'handle': function (data) {
-                        	this.entity.domain = this.entity.namespace;
+                        	this.entity.seller = this.entity.parent.key;
                             this.uploadConfig = {
                                    'action' : 'prepare',
                                    'kind' : kind,
                                    'args' : {
-                                      'domain' : this.entity.namespace,
+                                      'seller' : this.entity.parent.key,
                                    }
                                 };
                                  
@@ -915,7 +915,7 @@ MainApp
                         'options_after_update': make_update_scope(),
                         'templateUrl': logic_template('catalog/manage.html'),
                         'args': {
-                            'domain': domain_key,
+                            'seller': seller_key,
                             'read_arguments' : read_arguments,
                         }
                     });

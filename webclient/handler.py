@@ -184,7 +184,7 @@ class Base(webapp2.RequestHandler):
   
   '''General-purpose handler from which all other handlers must derrive from.'''
   
-  autoload_current_user = True
+  autoload_current_account = True
   
   def __init__(self, *args, **kwargs):
     super(Base, self).__init__(*args, **kwargs)
@@ -244,8 +244,8 @@ class Base(webapp2.RequestHandler):
     return self.render_response(tpl, **self.template)
    
   def before(self):
-    from app.models.auth import User
-    self.template['current_user'] = User.current_user()
+    from app.models.account import Account
+    self.template['current_account'] = Account.current_account()
    
   def after(self):
     """
@@ -267,13 +267,13 @@ class Base(webapp2.RequestHandler):
   def dispatch(self):
     csrf = None
     csrf_cookie_value = self.request.cookies.get(webclient_settings.COOKIE_CSRF_KEY)
-    if self.autoload_current_user:
-      from app.models.auth import User
-      User.set_current_user_from_auth_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
-      current_user = User.current_user()
-      current_user.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
-      current_user.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
-      csrf = current_user._csrf
+    if self.autoload_current_account:
+      from app.models.account import Account
+      Account.set_current_account_from_auth_code(self.request.cookies.get(webclient_settings.COOKIE_USER_KEY))
+      current_account = Account.current_account()
+      current_account.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
+      current_account.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
+      csrf = current_account._csrf
     if not csrf_cookie_value:
      if csrf == None:
        csrf = util.random_chars(32)
@@ -299,6 +299,8 @@ class Angular(Base):
   
   '''Angular subclass of base handler'''  
   
+  base_template = 'angular/index.html'
+  
   def get(self, *args, **kwargs):
     data = self.respond(*args, **kwargs)
     if data:
@@ -310,8 +312,7 @@ class Angular(Base):
        self.data = data
   
   def after(self):
-    force_ajax = self.request.get('force_ajax') # @todo for tests
-    if (self.request.headers.get('X-Requested-With', '').lower() ==  'xmlhttprequest') or force_ajax:
+    if (self.request.headers.get('X-Requested-With', '').lower() ==  'xmlhttprequest'):
        if not self.data:
           self.data = {}
           if self.response.status == 200:
@@ -320,8 +321,7 @@ class Angular(Base):
        return
     else:
       # always return the index.html rendering as init
-      self.template['initdata'] = self.data
-      self.render('angular/index.html')
+      self.render(self.base_template)
  
  
 class AngularBlank(Angular):
