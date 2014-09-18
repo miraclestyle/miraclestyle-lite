@@ -20,14 +20,12 @@ from app.util import *
 
 def rule_prepare(entities, strict, **kwargs):
   entities = normalize(entities)
-  callbacks = []
   for entity in entities:
     if entity and isinstance(entity, orm.Model):
-      global_permissions = []
-      local_permissions = []
+      permissions = []
       if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '7':
-        global_permissions = entity._global_role.permissions
-      entity.rule_prepare(global_permissions, local_permissions, strict, **kwargs)
+        permissions.extend(entity._global_role.permissions)
+      entity.rule_prepare(permissions, strict, **kwargs)
 
 
 def rule_exec(entity, action):

@@ -1048,88 +1048,21 @@ class _BaseModel(object):
           else:
             permissions[key] = False
         else:
-          permissions[key] = None
+          permissions[key] = False
           if not root and not len(value):
             permissions[key] = parent_permissions[key]
   
-  @classmethod
-  def _rule_override_local_permissions(cls, global_permissions, local_permissions):
-    for key, value in local_permissions.iteritems():
-      if isinstance(value, dict):
-        cls._rule_override_local_permissions(global_permissions[key], local_permissions[key])  # global_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
-      else:
-        if key in global_permissions:
-          gp_value = global_permissions[key]
-          if gp_value is not None and gp_value != value:
-            local_permissions[key] = gp_value
-        if local_permissions[key] is None:
-          local_permissions[key] = False
-  
-  @classmethod
-  def _rule_complement_local_permissions(cls, global_permissions, local_permissions):
-    for key, value in global_permissions.iteritems():
-      if isinstance(value, dict):
-        cls._rule_complement_local_permissions(global_permissions[key], local_permissions[key])  # local_permissions[key] will fail in case global and local permissions are (for some reason) out of sync!
-      else:
-        if key not in local_permissions:
-          local_permissions[key] = value
-  
-  @classmethod
-  def _rule_compile_global_permissions(cls, global_permissions):
-    for key, value in global_permissions.iteritems():
-      if isinstance(value, dict):
-        cls._rule_compile_global_permissions(global_permissions[key])
-      else:
-        if value is None:
-          value = False
-        global_permissions[key] = value
-  
-  @classmethod
-  def _rule_compile(cls, global_permissions, local_permissions, strict):
-    cls._rule_decide(global_permissions, strict)
-    # If local permissions are present, process them.
-    if local_permissions:
-      cls._rule_decide(local_permissions, strict)
-      # Iterate over local permissions, and override them with the global permissions.
-      cls._rule_override_local_permissions(global_permissions, local_permissions)
-      # Make sure that global permissions are always present.
-      cls._rule_complement_local_permissions(global_permissions, local_permissions)
-      permissions = local_permissions
-    # Otherwise just process global permissions.
-    else:
-      cls._rule_compile_global_permissions(global_permissions)
-      permissions = global_permissions
-    return permissions
-  
-  def rule_prepare(self, global_permissions, local_permissions=None, strict=False, **kwargs):
+  def rule_prepare(self, permissions, strict=False, **kwargs):
     '''This method generates permissions situation for the entity object,
     at the time of execution.
     
     '''
-    if local_permissions is None:
-      local_permissions = []
     self._rule_reset(self)
-    for global_permission in global_permissions:
-      if isinstance(global_permission, Permission):
-        global_permission.run(self, **kwargs)
-    # Copy generated entity permissions to separate dictionary.
-    global_action_permissions = self._action_permissions.copy()
-    global_field_permissions = self._field_permissions.copy()
-    # Reset permissions structures.
-    self._rule_reset(self)
-    local_action_permissions = {}
-    local_field_permissions = {}
-    if len(local_permissions):
-      for local_permission in local_permissions:
-        if isinstance(local_permission, Permission):
-          local_permission.run(self, **kwargs)
-      # Copy generated entity permissions to separate dictionary.
-      local_action_permissions = self._action_permissions.copy()
-      local_field_permissions = self._field_permissions.copy()
-      # Reset permissions structures.
-      self._rule_reset(self)
-    self._action_permissions = self._rule_compile(global_action_permissions, local_action_permissions, strict)
-    self._field_permissions = self._rule_compile(global_field_permissions, local_field_permissions, strict)
+    for permission in permissions:
+      if isinstance(permission, Permission):
+        permission.run(self, **kwargs)
+    self._rule_decide(self._action_permissions, strict)
+    self._rule_decide(self._field_permissions, strict)
     self.add_output('_action_permissions')
     self.add_output('_field_permissions')
   
