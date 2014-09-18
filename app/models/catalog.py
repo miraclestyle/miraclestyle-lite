@@ -162,7 +162,7 @@ class CatalogProduct(orm.BaseExpando):
   description = orm.SuperTextProperty('3', required=True, searchable=True)  # Soft limit 64kb.
   product_uom = orm.SuperKeyProperty('4', kind='17', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
-  availability = orm.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder', 'auto manage inventory - available for order', 'auto manage inventory - out of stock'])
+  availability = orm.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder'])
   code = orm.SuperStringProperty('7', required=True, indexed=False, searchable=True)
   
   _default_indexed = False

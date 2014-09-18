@@ -137,7 +137,7 @@ class Order(orm.BaseExpando):
                            and entity._original.feedback_adjustment not in ["reported", "sudo"]' ),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'sudo_feedback')], True,
                            'account._root_admin and entity._original.state == "completed" \
-                           and entity._is_feedback_allowed' ),
+                           and entity._is_feedback_allowed'),
       # @todo Implement field permissions!
       orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference', 'seller_address',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
