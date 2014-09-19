@@ -9,6 +9,11 @@ MainApp.config(['$stateProvider',
             url: '/login/:provider',
             controller: 'LoginPage',
           })
+          .state('sell-catalogs', {
+            url: '/sell/catalogs',
+            controller: 'SellCatalogs',
+            templateUrl: logic_template('catalog/list.html'),
+          })
           .state('admin_search', {
             url: '/admin/search/:kind/:query',
             templateUrl: function (stateParams) {

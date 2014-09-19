@@ -60,6 +60,7 @@ class AccountLoginInit(orm.BaseModel):
         if not account:
           account = context.model.query(context.model.emails == context._email).get()
         if account:
+          account.read()
           context._account = account
           context.account = account
     kwargs = {'account': context.account, 'action': context.action}

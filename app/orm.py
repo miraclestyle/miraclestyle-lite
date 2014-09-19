@@ -894,10 +894,9 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    # @todo This is the problem with catalog dates...
-    if (field_value is None and isinstance(field, SuperDateTimeProperty)) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
+    if (field_value is None and not field.can_be_none) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
       return
-    if (field_key in permissions):  # @todo How this affects the outcome?? @answer it means that the rule engine will only run on fields that have specification in permissions.
+    if (field_key in permissions):
       # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
       if not hasattr(field, 'is_structured') or not field.is_structured:
         if not permissions[field_key]['writable']:
@@ -1225,7 +1224,9 @@ class _BaseModel(object):
     So for duplicating Catalog, appendix would be located on new_catalog._duplicate_appendix.
     
     '''
-    new_entity = copy.deepcopy(self) # deep copy will copy all static properties
+    # here we cannot use copy.deepcopy on the entity anymore because that creates inconsistency when copying structured properties
+    # they get read initially, and then they get again set which causes sets of duplicated data
+    new_entity = copy.deepcopy(self)
     new_entity._use_rule_engine = False # we skip the rule engine here because if we dont
     new_entity._parent = self._parent
     the_id = new_entity.duplicate_key_id()
@@ -1247,13 +1248,25 @@ class _BaseModel(object):
   
   def make_original(self):
     '''This function will make a copy of the current state of the entity
-    and put it into _original field. Again note that only get_fields() and key will be copied.
+    and put it into _original field. Again note that only get_fields() key, _state will be copied.
     
     '''
     if self._use_rule_engine:
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
+      # recursevely specify original for all locally structured properties.
+      # this is because we have huge depency on _original, so we need to have it at its children as well
+      def scan(value, field_key, field, original):
+        if isinstance(value, PropertyValue) and value.has_value():
+          scan(value.value, field_key, field, original.value)
+        elif isinstance(value, list):
+          for i, val in enumerate(value):
+            scan(val, field_key, field, original[i])
+        elif value is not None and isinstance(value, Model):
+          value._original = original
+      for field_key, field in self.get_fields().iteritems():
+        scan(getattr(self, field_key, None), field_key, field, getattr(self._original, field_key, None))
   
   def get_search_document(self, fields=None):
     '''Returns search document representation of the entity, based on property configurations.
@@ -1663,6 +1676,9 @@ class StructuredPropertyValue(PropertyValue):
   def set(self, property_value):
     '''We always verify that the property_value is instance
     of the model that is specified in the property configuration.
+    
+    Set will always iterate the property_value to individually set values on existing set of values, or 
+    append new value if its new. This is to solve problem with seting stuctured value
     '''
     if property_value is not None:
       property_value_copy = property_value
@@ -1671,6 +1687,44 @@ class StructuredPropertyValue(PropertyValue):
       for property_value_item in property_value_copy:
         if not isinstance(property_value_item, self._property.get_modelclass()):
           raise PropertyError('Expected %r, got %r' % (self._property.get_modelclass(), property_value_item))
+      if not self._property._repeated:
+        if self.has_value() and self._property_value is not None:
+          for field_key, field in self._property_value.get_fields().iteritems():
+            # this is to support proper setting of data for existing instances
+            # e.g. setattr(entity._images, _images) to properly do sets for values of _images
+            value = getattr(property_value, field_key, None)
+            if isinstance(value, PropertyValue):
+              value = value.value
+            if value is None and not field.can_be_none:
+              continue
+            self._property_value._state = property_value._state
+            setattr(self._property_value, field_key, value)
+        else:
+          self._property_value = property_value
+      else:
+        if self.has_value() and self._property_value is not None:
+          existing = dict((ent.key.urlsafe(), ent) for ent in self._property_value)
+          new_list = []
+          for ent in property_value:
+            # this is to support proper setting of data for existing instances
+            exists = ent.key
+            if exists is not None:
+              exists = existing.get(ent.key.urlsafe())
+            if exists is not None:
+              fields = exists.get_fields().iteritems()
+              for field_key, field in fields:
+                value = getattr(ent, field_key, None)
+                if isinstance(value, PropertyValue):
+                  value = value.value
+                # this is because None cannot be set when there's auto_now, auto_now add  
+                if value is None and isinstance(field, SuperDateTimeProperty) and ((field._auto_now or field._auto_now_add) and field._required):
+                  continue
+                exists._state = ent._state
+                setattr(exists, field_key, value)
+              new_list.append(exists)
+            else:
+              new_list.append(ent)
+            property_value = new_list
     self._property_value = property_value
     self._set_parent()
   
@@ -1736,15 +1790,15 @@ class StructuredPropertyValue(PropertyValue):
       return self.value
   
   def add(self, entities):
-    '''Primarly used to extend the values of the property, or override change it if its used on non repeated property.
+    '''Primarly used to extend values list of the property, or override change it if its used on non repeated property.
     '''
     if self._property._repeated:
       if not self.has_value():
         self._property_value = []
       # @todo this is local's structure problem, because when appending new data, that does not mean anything to
-      # local structured properties, since their logic for setting data is completely different, because it relies on 
+      # local structured properties, since their logic for setting data is completely different, it relies on 
       # _sequence for ordering and keys for editing what it needs.
-      # as for catalogImage that is solved trough prepare_key which builds last_sequence from query.
+      # as for remotely structured data, that is solved trough prepare_key which builds sequence on its own.
       last_sequence = 0
       if self._property_value:
         last_sequence = self._property_value[-1]._sequence + 1
@@ -1758,6 +1812,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   
   @property
   def value(self):
+    # overrides base value to solve unwrapping problem that appears when entity is about to be saved to datastore
+    # _BaseValue is used to wrap data by ndb
     if self.has_value():
       wrapped = False
       if self._property._repeated:
@@ -1788,6 +1844,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     if self.has_value():
       if self._property._repeated:
         delete_entities = []
+        originals = {}
         if not self._property._updateable:
           originals = dict((ent.key.urlsafe(), ent) for ent in getattr(self._entity._original, self.property_name, []))
         for entity in self._property_value:
@@ -1807,7 +1864,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         # We must mutate on the entity itself.
         if self._property_value._state == 'deleted' and self._property._deleteable:
           self._property_value = None  # Comply with expando and virtual fields.
-      setattr(self._entity, self.property_name, self._property_value)
+      self._property._set_value(self._entity, self._property_value, True) # we override default behaviour because if we dont,
+      # the code above is useless, see _set_value in local structured
       
   def delete(self):
     if self._property._deleteable:
@@ -1826,7 +1884,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         entities.append(entity.duplicate())
     else:
       entities = self._property_value.duplicate()
-    setattr(self._entity, self.property_name, entities)
+    self._property._set_value(self._entity, entities, True) # this is because using other method would cause duplicate results via duplicate process.
+    self._property_value = entities
     self._set_parent()
 
 
@@ -1940,8 +1999,11 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         delete_entities.append(entity)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
-    if not self._property._updateable:
-      originals = dict((entity.key.urlsafe(), entity) for entity in getattr(self._entity._original, self.property_name, []))
+    originals = {}
+    if hasattr(self._entity, '_original'):
+      original = getattr(self._entity._original, self.property_name, [])
+      if original.value is not None:
+        originals = dict((entity.key.urlsafe(), entity) for entity in original.value)
     for i,entity in enumerate(self._property_value):
       is_new = entity.key not in originals
       if not self._property._addable and is_new:
@@ -2126,6 +2188,10 @@ class _BaseProperty(object):
     self._searchable = kwargs.pop('searchable', self._searchable)
     self._search_document_field_name = kwargs.pop('search_document_field_name', self._search_document_field_name)
     super(_BaseProperty, self).__init__(*args, **kwargs)
+   
+  @property 
+  def can_be_none(self): # checks if the property can be set to None
+    return True
   
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
@@ -2341,8 +2407,10 @@ class _BaseStructuredProperty(_BaseProperty):
         out = None
     return out
   
-  def _set_value(self, entity, value):
+  def _set_value(self, entity, value, override=False):
     # __set__
+    if override:
+      return super(_BaseStructuredProperty, self)._set_value(entity, value)
     value_instance = self._get_value(entity)
     current_values = value
     if self._repeated:
@@ -2368,6 +2436,8 @@ class _BaseStructuredProperty(_BaseProperty):
             return val._sequence
           current_values = sorted(current_values, key=sorting_function)
       else:
+        if current_values is None:
+          current_values = []
         for val in current_values:
           if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
             val.generate_unique_key()
@@ -2638,6 +2708,13 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
 
 
 class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
+ 
+  @property
+  def can_be_none(self):
+    field = self
+    if ((field._auto_now or field._auto_now_add) and field._required):
+      return False
+    return True
   
   def value_format(self, value):
     value = self._property_value_format(value)

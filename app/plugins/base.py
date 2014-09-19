@@ -189,7 +189,7 @@ class RulePrepare(orm.BaseModel):
     strict = self.cfg.get('strict', False)
     static_kwargs = self.cfg.get('s', {})
     dynamic_kwargs = self.cfg.get('d', {})
-    kwargs = {'account': context.account, 'action': context.action}
+    kwargs = {'account': context.account, 'action': context.action, 'input': context.input}
     kwargs.update(static_kwargs)
     for key, value in dynamic_kwargs.iteritems():
       kwargs[key] = get_attr(context, value)

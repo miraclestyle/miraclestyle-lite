@@ -24,7 +24,7 @@ class CatalogProductCategory(orm.BaseModel):
   
   _use_record_engine = False
   
-  parent_record = orm.SuperKeyProperty('1', kind='17', indexed=False)
+  parent_record = orm.SuperKeyProperty('1', kind='24', indexed=False)
   name = orm.SuperStringProperty('2', required=True)
   complete_name = orm.SuperTextProperty('3', required=True)
   state = orm.SuperStringProperty('4', required=True, default='indexable')
@@ -266,8 +266,8 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'read')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'search')], True,
-                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key \
-                           and input["search"]["ancestor"] == account.key)'),
+                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key)) \
+                           or (action.key_id == "search" and input["search"]["ancestor"]._root == account.key)'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'read')], True,
                            'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'update'),
@@ -539,11 +539,14 @@ class Catalog(orm.BaseExpando):
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
           cfg={
             'search_arguments': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
-            'ancestor_kind': '11',
+            'ancestor_kind': '23',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
-            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
+            'indexes': [{'ancestor': True, 'orders': [('name', ['asc', 'desc'])]},
+                        {'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
+                        {'ancestor': True, 'orders': [('updated', ['asc', 'desc'])]},
+                        {'orders': [('name', ['asc', 'desc'])]},
                         {'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('updated', ['asc', 'desc'])]},
                         {'filters': [('name', ['==', 'contains', '!='])],
@@ -801,7 +804,6 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'product_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        'product': orm.SuperKeyProperty(kind='38', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -814,7 +816,7 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'product_process_duplicate', 'action_model': '31'},
-                               {'key': '_catalog.key_urlsafe', 'product': 'input.product._urlsafe', 'read_arguments': 'input.read_arguments'})])
+                               {'key': '_catalog.key_urlsafe', 'read_arguments': 'input.read_arguments'})])
             ]
           )
         ]

@@ -72,7 +72,10 @@ class Install(handler.Angular):
   
   def respond(self):
     out = []
+    only = self.request.get('only', '').split(',')
     for model, action in [('12', 'update'), ('24', 'update'), ('17', 'update_unit'), ('17', 'update_currency')]:
+      if only and model not in only:
+        continue
       out.append(io.Engine.run({'action_model' : model, 'action_id' : action}))
     return out
     

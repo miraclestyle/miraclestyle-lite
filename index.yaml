@@ -18,3 +18,40 @@ indexes:
   properties:
   - name: '6'
   - name: '3'
+
+# CatalogImage  
+- kind: '30'
+  ancestor: yes
+  properties:
+  - name: '7'
+
+# Catalog Image  
+- kind: '30'
+  ancestor: yes
+  properties:
+  - name: '7'
+    direction: desc
+
+# Catalog
+- kind: '31'
+  ancestor: yes
+  properties:
+  - name: '1'
+
+# CatalogProductCategory
+- kind: '24'
+  properties:
+  - name: '4'
+  - name: '2'
+
+# Unit
+- kind: '17'
+  properties:
+  - name: '8'
+  - name: '2'
+  
+- kind: '17'
+  properties:
+  - name: '1'
+  - name: '8'
+  - name: '2'

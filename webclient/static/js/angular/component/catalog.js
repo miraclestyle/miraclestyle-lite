@@ -1,5 +1,53 @@
 MainApp
-    .directive('catalogPricetagPosition', function ($timeout) { // directives that are not used anywhere else other than this context are defined in their own context
+.controller('SellCatalogs', ['$scope', 'Title', 'Endpoint', '$modal', 'EntityEditor', 'Catalog', 'RuleEngine',
+    function ($scope, Title, Endpoint, $modal, EntityEditor, Catalog, RuleEngine) {
+        
+    Title.set('Sell - Catalogs');
+    
+    $scope.catalogs = [];
+     
+    Endpoint.post('read', '23', {
+        'account': current_account.key,
+    }).success(function (data) {
+         
+         Endpoint.post('search', '31', {
+             'search' : {
+                  'filters': [],
+                  'ancestor': data.entity.key,
+                  'orders': [{'field': 'created', 'operator': 'asc'}],
+             },
+         }).success(function (data) {
+              $scope.catalogs = data.entities; 
+         });
+         
+         
+         $scope.create = function ()
+        {
+            Catalog.create(data.entity.key, function (entity) {
+                if (!_.findWhere($scope.catalogs, {'key': entity.key}))
+                {
+                    entity.rule = RuleEngine.factory(entity);
+                    $scope.catalogs.push(entity);
+                }
+                
+            });
+        };
+        
+        $scope.manage = function (catalog)
+        {
+            Catalog.update(catalog, function (entity) {
+                var existing = _.findWhere($scope.catalogs, {'key': entity.key});
+                update(existing, entity);
+            });
+        };
+         
+    });
+    
+    
+    
+    
+}])
+.directive('catalogPricetagPosition', function ($timeout) { // directives that are not used anywhere else other than this context are defined in their own context
         return {
             priority: -513,
             link: function (scope, element, attr) {
@@ -859,7 +907,6 @@ MainApp
                                          dd['_products']['config'] = {'keys' : [that.child.key]};
                                          Endpoint.post('product_duplicate', that.entity.kind, {
                                              key : that.entity.key,
-                                             product : that.child.key,
                                              read_arguments : dd,
                                          }).success(function (data) {
                                             if (data['entity'])
@@ -873,7 +920,7 @@ MainApp
                                                             
                                                         }catch(e) {}
                                                         
-                                                    }, 1500);
+                                                    }, 5000);
                                                 
                                             }
                                         });
@@ -892,9 +939,11 @@ MainApp
                '_images' : {},
             };
              
+             
             return {
 
                 create: function (seller_key, complete) {
+                 
                     return EntityEditor.create({
                         'kind': kind,
                         'entity': {},

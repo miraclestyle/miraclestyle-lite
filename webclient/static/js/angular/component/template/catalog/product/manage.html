@@ -1,7 +1,7 @@
 <form action="{{form_info.action}}" ng-upload="completed(content)" name="container.main">
 	
 <input type="hidden" name="action_id" value="product_upload_images" />
-<input type="hidden" name="action_model" value="35" />
+<input type="hidden" name="action_model" value="31" />
 <input type="hidden" name="key" value="{{child.parent.key}}" />
 <input type="hidden" name="product" value="{{child.key}}" />
 <input type="hidden" name="read_arguments" value="{&quot;_products&quot; : {&quot;config&quot; : {&quot;keys&quot; : [&quot;{{child.key}}&quot;]}}}" />
@@ -166,18 +166,7 @@
 			</div>
 		</div>
 		</div>
-		
-		<div class="form-control">
-		<label class="form-label">Low stock quantity</label>
-		<div class="form-input">
-			<div class="form-text">
-			   <input name="low_stock_quantity" 
-				 		ng-required="rule.input[action]._products.modelclass.low_stock_quantity.required"
-				 	    class="text-input" type="text" ng-model="child.low_stock_quantity"
-				 	    ng-disabled="!rule.field._products.low_stock_quantity.writable" />
-			</div>
-		</div>
-		</div>
+ 
 		
 		<div ng-show="child.id">
 			<h2 class="fieldset with-button">

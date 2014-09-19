@@ -67,7 +67,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
     # @todo before setting new cover we have to delete previous cover
-    catalog_images = context._catalog._images.value
+    catalog_images = sorted(context._catalog._images.value, key=lambda x: x.sequence)
     catalog_cover = context._catalog.cover.value
     if catalog_images and len(catalog_images):
       if catalog_cover:
@@ -164,7 +164,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     product_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
                       'root_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
                       'root_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
-                      '_product_category.value.parent_record': orm.SuperKeyProperty(kind='17', search_document_field_name='product_category_parent_record'),
+                      '_product_category.value.parent_record': orm.SuperKeyProperty(kind='24', search_document_field_name='product_category_parent_record'),
                       '_product_category.value.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
                       '_product_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
     context._catalog._images.read({'config': {'cursor': -1}})

@@ -1142,7 +1142,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	
 	angular.forEach(measurements, function (v) {
 		$rootScope.commonSelect2Options[v.toLowerCase()] = Select2Options.factory({
-   			kind : '19',
+   			kind : '17',
    			filters : [{'value' : true, 'operator':'==', 'field' : 'active'},
    					   {'value' : v, 'operator':'==', 'field' : 'measurement'}],
    		    cache : v,
