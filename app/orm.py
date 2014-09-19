@@ -1224,8 +1224,6 @@ class _BaseModel(object):
     So for duplicating Catalog, appendix would be located on new_catalog._duplicate_appendix.
     
     '''
-    # here we cannot use copy.deepcopy on the entity anymore because that creates inconsistency when copying structured properties
-    # they get read initially, and then they get again set which causes sets of duplicated data
     new_entity = copy.deepcopy(self)
     new_entity._use_rule_engine = False # we skip the rule engine here because if we dont
     new_entity._parent = self._parent
