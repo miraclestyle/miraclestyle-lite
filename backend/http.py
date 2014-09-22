@@ -86,7 +86,10 @@ class BaseRequestHandler(webapp2.RequestHandler):
     except:
       special_data = self.request.get(special)
       if special_data:
-        dicts = json.loads(special_data)
+        try:
+          dicts = json.loads(special_data)
+        except:
+          dicts = {}
       else:
         dicts = {}
     newparams = {}
