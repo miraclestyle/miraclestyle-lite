@@ -8,6 +8,7 @@ ACTIVE_CONTROLLERS = ('account', 'catalog', 'tests', 'ui')
 
 ROUTES = []
 
+DEBUG = True
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 

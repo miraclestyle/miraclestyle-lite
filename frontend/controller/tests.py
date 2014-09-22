@@ -6,15 +6,14 @@ Created on Jul 8, 2014
 '''
 import inspect
 
-
 from google.appengine.ext.ndb import metadata
 from google.appengine.api import search, datastore
 from google.appengine.ext import blobstore
 
 from backend import orm, http, io, util, mem
-from frontend import frontend_settings
+from frontend import handler, frontend_settings
   
-class BaseTestHandler(http.BaseRequestHandler):
+class BaseTestHandler(handler.Base):
    
   autoload_current_account = False
   

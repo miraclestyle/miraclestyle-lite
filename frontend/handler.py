@@ -48,6 +48,7 @@ register_filter('to_json', http.json_output)
 register_global({'static_dir': _static_dir, 
                  'frontend_settings': frontend_settings})
  
+ 
 def get_wsgi_config():
     
   '''Config for wsgi instance. Prepares all variables and routes for webapp2 WSGI constructor'''
@@ -95,7 +96,7 @@ def get_wsgi_config():
    
 class Base(http.BaseRequestHandler):
   
-  '''General-purpose handler from which all other handlers must derrive from.'''
+  '''General-purpose handler from which all other frontend handlers must derrive from.'''
  
   def __init__(self, *args, **kwargs):
     super(Base, self).__init__(*args, **kwargs)
@@ -165,5 +166,3 @@ class AngularBlank(Angular):
   
   def respond(self, *args, **kwargs):
     pass
-  
-  
