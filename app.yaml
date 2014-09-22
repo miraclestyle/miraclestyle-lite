@@ -7,13 +7,13 @@ threadsafe: true
 
 handlers:
 
-- url: /webclient/static
-  static_dir: webclient/static
+- url: /frontend/static
+  static_dir: frontend/static
 #  expiration: "364d 5h" # its not ready for cache yet
 
 - url: /favicon\.ico
   static_files: static/favicon.ico
-  upload: webclient/static/favicon.ico
+  upload: frontend/static/favicon.ico
   expiration: "364d 5h"
 
 - url: /robots\.txt
@@ -22,7 +22,7 @@ handlers:
   expiration: "364d 5h"
 
 - url: /.*
-  script: webclient.wsgi.app
+  script: frontend.wsgi.app
 
 
 libraries:
@@ -38,5 +38,4 @@ libraries:
 
 
 builtins:
-
 - appstats: on

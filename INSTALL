@@ -1,7 +1,32 @@
 For complete installation of the app, login as admin and run this path:
 
-/install
+/backend/install
 
 ## Note, it will only create 100 records for locations and product categories if the application is not in development mode.
 
 if install cannot be completed in single request, you can run it over taskqueue.
+
+App is segmented in this way:
+
+# default module
+http://miraclestyle.appspot.com
+
+# backend module
+http://backend.miraclestyle.appspot.com
+
+Also, accessing path
+http://miraclestyle.appspot.com/backend/*
+
+Will point internally to the http://backend.miraclestyle.appspot.com module configuration.
+
+This is called routing, and it is implemented to avoid having different subdomain for api calls.
+
+Endpoint path is:
+
+/backend/endpoint
+
+live server:
+http://miraclestyle.appspot.com/backend/endpoint
+
+direct access to module subdomian:
+http://backend.miraclestyle.appspot.com/backend/endpoint

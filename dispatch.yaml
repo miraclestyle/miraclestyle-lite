@@ -1,0 +1,9 @@
+application: universal-trail-608
+
+dispatch:
+  - url: '*/backend/*'
+    module: backend
+  # Default module serves the typical web resources and all static resources.
+  # Default module serves simple hostname request.  
+  - url: '*/*'
+    module: default

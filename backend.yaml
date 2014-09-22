@@ -1,0 +1,24 @@
+application: universal-trail-608
+module: backend
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+instance_class: B8
+manual_scaling:
+  instances: 5
+  
+libraries:
+
+- name: webapp2
+  version: latest
+
+- name: jinja2
+  version: latest
+
+- name: PIL
+  version: latest
+  
+handlers:
+- url: /.*
+  script: backend.http.app
