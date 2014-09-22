@@ -11,9 +11,10 @@ from google.appengine.api import search, datastore
 from google.appengine.ext import blobstore
 
 from backend import orm, http, io, util, mem
-from frontend import handler, frontend_settings
+from frontend import frontend_settings
+from frontend.handler import base
   
-class BaseTestHandler(handler.Base):
+class BaseTestHandler(base.Handler):
    
   autoload_current_account = False
   

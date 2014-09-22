@@ -4,10 +4,11 @@ Created on Feb 5, 2014
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-from backend import io, http
+from backend import io
 from frontend import frontend_settings
+from frontend.handler import base
 
-class ModelInfo(http.BaseRequestHandler):
+class ModelInfo(base.Handler):
   
   def respond(self):
     # beside the content type include the cache headers in the future
@@ -22,7 +23,7 @@ class ModelInfo(http.BaseRequestHandler):
         except:
           pass
     script = u"KINDS = {}; \n"
-    script += u'KINDS.info = %s;' % http.json_output(send)
+    script += u'KINDS.info = %s;' % self.json_output(send)
     self.response.write(script)
       
       

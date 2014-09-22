@@ -72,7 +72,7 @@ class BaseRequestHandler(webapp2.RequestHandler):
   '''General-purpose handler from which all other handlers must derrive from.'''
   
   autoload_current_account = True
-  autovalidate_csrf = False
+  autovalidate_csrf = False # generally all requests for authenticated users should be carrying _csrf
   
   def __init__(self, *args, **kwargs):
     super(BaseRequestHandler, self).__init__(*args, **kwargs)
@@ -107,13 +107,17 @@ class BaseRequestHandler(webapp2.RequestHandler):
       newparams[param_key] = value
     dicts.update(newparams)
     return dicts
+  
+  def json_output(self, s, **kwargs):
+    ''' Wrapper for json output for self usage to avoid imports from backend http '''
+    return json_output(s, **kwargs)
    
   def send_json(self, data):
-    ''' sends `data` to json format, accepts anything json compatible '''
+    ''' sends `data` to be serialized in json format, and sets content type application/json utf8'''
     ent = 'application/json;charset=utf-8'
     if self.response.headers.get('Content-Type') != ent:
        self.response.headers['Content-Type'] = ent
-    self.response.write(json_output(data))
+    self.response.write(self.json_output(data))
    
   def before(self):
     """
@@ -138,6 +142,8 @@ class BaseRequestHandler(webapp2.RequestHandler):
     self.response.write('<h1>404 Not found</h1>')
     
   def load_current_account(self):
+    ''' Loads current user from the local thread and sets it as self.current_account for easier handler access to it.
+      Along with that, also sets if the request came from taskqueue or cron, based on app engine headers.'''
     if self.current_account is None and self.autoload_current_account:
       from backend.models.account import Account
       Account.set_current_account_from_auth_code(self.request.cookies.get(COOKIE_USER_KEY))
@@ -148,12 +154,13 @@ class BaseRequestHandler(webapp2.RequestHandler):
       
   def load_csrf(self):
     if self.current_csrf is None and self.autoload_current_account:
-      csrf_cookie_value = self.request.get(CSRF_KEY)
+      input = self.get_input()
+      csrf_cookie_value = input.get(CSRF_KEY)
       self.current_csrf = csrf_cookie_value
   
   def validate_csrf(self):
     if self.autoload_current_account and self.autovalidate_csrf:
-      if self.current_account._csrf != self.current_csrf:
+      if not self.current_account._is_guest and (self.current_account._csrf != self.current_csrf):
         self.abort(403)
   
   @orm.toplevel
@@ -200,7 +207,9 @@ class Install(BaseRequestHandler):
     self.send_json(out)
     
 
-# We expose only paths that the "backend" module will serve.  
+# We expose only paths that the "backend" module will serve. Note the prefix /backend/*
+# @todo WSGI application instance should not be here though, it should follow similar pattern like in frontend.
+# although, this is far too simple (we do not expect many http handlers in the future) for fragmentation
 app = webapp2.WSGIApplication((('/backend/endpoint', Endpoint),
                                ('/backend/task/io_engine_run', IOEngineRun),
                                ('/backend/install', Install)), debug=settings.DEBUG)

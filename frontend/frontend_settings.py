@@ -4,9 +4,11 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-ACTIVE_CONTROLLERS = ('account', 'catalog', 'tests', 'ui')
+ACTIVE_CONTROLLERS = ('home', 'account', 'catalog', 'tests', 'ui')
 
 ROUTES = []
+JINJA_GLOBALS = {}
+JINJA_FILTERS = {}
 
 DEBUG = True
 TEMPLATE_CACHE = 0

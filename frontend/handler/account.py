@@ -7,9 +7,10 @@ Created on Oct 14, 2013
 import hashlib
 
 from backend import io, util
-from frontend import handler, frontend_settings
+from frontend import frontend_settings
+from frontend.handler import base
  
-class Login(handler.Angular):
+class Login(base.Angular):
   
   def respond(self, provider=None):
     if provider is None:
@@ -26,7 +27,7 @@ class Login(handler.Angular):
     return output
   
  
-class Logout(handler.Angular):
+class Logout(base.Angular):
     
   def respond(self):
     data = self.get_input()
