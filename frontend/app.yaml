@@ -22,7 +22,7 @@ handlers:
   expiration: "364d 5h"
 
 - url: /.*
-  script: frontend.http.app
+  script: http.app
 
 
 libraries:

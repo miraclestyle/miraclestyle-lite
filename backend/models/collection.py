@@ -5,10 +5,10 @@ Created on May 18, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from backend import orm, settings
+import orm, settings
 
-from backend.models.base import *
-from backend.plugins.base import *
+from models.base import *
+from plugins.base import *
 
 
 __all__ = ['Collection']

@@ -7,8 +7,8 @@ Created on May 13, 2014
 
 from xml.etree import ElementTree
 
-from backend import orm
-from backend.util import *
+import orm
+from util import *
 
 
 class CountryUpdateWrite(orm.BaseModel):

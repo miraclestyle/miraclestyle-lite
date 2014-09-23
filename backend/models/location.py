@@ -6,11 +6,11 @@ Created on Jan 9, 2014
 '''
 
 # @todo Perhaps split this file in two: country.py and address.py?
-from backend import orm, settings
-from backend.models.base import *
-from backend.plugins.base import *
+import orm, settings
+from models.base import *
+from plugins.base import *
 
-from backend.plugins.location import *
+from plugins.location import *
 
 
 __all__ = ['Country', 'CountrySubdivision', 'Address', 'Location', 'get_location']

@@ -6,12 +6,13 @@ Created on May 6, 2014
 '''
 
 import datetime
+import json
 
-from backend import orm, settings, mem
-from backend.models.base import *
-from backend.plugins.base import *
-from backend.plugins.catalog import *
-from backend.util import *
+import orm, settings, mem
+from models.base import *
+from plugins.base import *
+from plugins.catalog import *
+from util import *
 
 
 __all__ = ['CatalogProductCategory', 'CatalogProductContent', 'CatalogProductVariant', 'CatalogProductInstance',

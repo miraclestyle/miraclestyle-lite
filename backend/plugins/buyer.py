@@ -5,8 +5,8 @@ Created on May 13, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from backend import orm
-from backend.util import *
+import orm
+from util import *
 
 
 class BuyerUpdateSet(orm.BaseModel):

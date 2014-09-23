@@ -11,7 +11,7 @@ import inspect
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
-from backend import orm, util, settings, mem
+import orm, util, settings, mem
 
 
 class InputError(Exception):
@@ -110,8 +110,8 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
-    from backend.models import account, base, buyer, catalog, collection, location, order, seller, unit
-    from backend.plugins import account, base, buyer, catalog, location, order, seller, unit
+    from models import account, base, buyer, catalog, collection, location, order, seller, unit
+    from plugins import account, base, buyer, catalog, location, order, seller, unit
     
     for model_kind, model in orm.Model._kind_map.iteritems():
       if hasattr(model, 'get_fields'):

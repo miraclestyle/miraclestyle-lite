@@ -22,4 +22,4 @@ libraries:
 
 handlers:
 - url: /.*
-  script: backend.http.app
+  script: http.app

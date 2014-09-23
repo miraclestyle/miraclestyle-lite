@@ -13,8 +13,8 @@ from google.appengine.ext import blobstore
 from google.appengine.api import images, urlfetch
 from google.appengine.datastore.datastore_query import Cursor
 
-from backend import orm, mem, settings
-from backend.util import *
+import orm, mem, settings
+from util import *
 
 
 __all__ = ['Role', 'GlobalRole', 'Image', 'LocalStructuredImagePropertyValue', 'RemoteStructuredImagePropertyValue',

@@ -14,8 +14,8 @@ from google.appengine.api import urlfetch
 
 from jinja2.sandbox import SandboxedEnvironment
 
-from backend import orm
-from backend.util import *
+import orm
+from util import *
 
 
 def rule_prepare(entities, strict, **kwargs):

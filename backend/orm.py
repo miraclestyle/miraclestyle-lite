@@ -23,7 +23,7 @@ from google.appengine.ext.ndb.model import _BaseValue
 from google.appengine.ext import blobstore
 from google.appengine.api import search, datastore_errors
 
-from backend import mem, util, settings
+import mem, util, settings
 
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.

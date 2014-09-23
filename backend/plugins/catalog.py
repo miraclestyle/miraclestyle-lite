@@ -11,9 +11,9 @@ import copy
 
 from google.appengine.api import search
 
-from backend import orm
-from backend.tools.base import *
-from backend.util import *
+import orm
+from tools.base import *
+from util import *
 
 
 class CatalogProductCategoryUpdateWrite(orm.BaseModel):

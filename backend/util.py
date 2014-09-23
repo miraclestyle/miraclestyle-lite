@@ -15,7 +15,7 @@ import re
 
 from decimal import Decimal, ROUND_HALF_EVEN
 
-from backend import settings
+import settings
 
 # @todo __all__ is needed for everything that gets wildcard imported
 

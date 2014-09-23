@@ -4,28 +4,66 @@ Created on Jul 15, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import json
 import webapp2
 from webapp2_extras import jinja2
 
-from backend import http
-from frontend import frontend_settings
+import settings
 
 def _static_dir(file_path):
   return '/frontend/static/%s' % file_path
  
+settings.JINJA_GLOBALS.update({'static_dir': _static_dir, 
+                               'settings': settings})
 
-frontend_settings.JINJA_FILTERS['to_json'] = http.json_output
-frontend_settings.JINJA_GLOBALS.update({'static_dir': _static_dir, 
-                                        'frontend_settings': frontend_settings})
-
-class Handler(http.BaseRequestHandler):
+class RequestHandler(webapp2.RequestHandler):
   
   '''General-purpose handler from which all other frontend handlers must derrive from.'''
  
   def __init__(self, *args, **kwargs):
-    super(Handler, self).__init__(*args, **kwargs)
+    super(RequestHandler, self).__init__(*args, **kwargs)
     self.data = {}
     self.template = {}
+  
+  def send_json(self, data):
+    ''' sends `data` to be serialized in json format, and sets content type application/json utf8'''
+    ent = 'application/json;charset=utf-8'
+    if self.response.headers.get('Content-Type') != ent:
+       self.response.headers['Content-Type'] = ent
+    self.response.write(json.dumps(data))
+  
+  def before(self):
+    '''
+    This function is fired just before the handler logic is executed
+    '''
+    pass
+  
+  def after(self):
+    '''
+    This function is fired just after the handler is executed
+    '''
+    pass
+  
+  def get(self, *args, **kwargs):
+    return self.respond(*args, **kwargs)
+  
+  def post(self, *args, **kwargs):
+    return self.respond(*args, **kwargs)
+  
+  def respond(self, *args, **kwargs):
+    self.abort(404)
+    self.response.write('<h1>404 Not found</h1>')
+        
+  def dispatch(self):
+    self.load_current_account()
+    self.load_csrf()
+    self.validate_csrf()
+    try:
+      self.before()
+      super(RequestHandler, self).dispatch()
+      self.after()
+    finally:
+      pass
   
   @webapp2.cached_property
   def jinja2(self):
@@ -42,12 +80,8 @@ class Handler(http.BaseRequestHandler):
        data = {}
     self.template.update(data)
     return self.render_response(tpl, **self.template)
-   
-  def before(self):
-    self.template['current_account'] = self.current_account
- 
          
-class Blank(Handler):
+class Blank(RequestHandler):
   
   '''Blank response base class'''
   
@@ -55,7 +89,7 @@ class Blank(Handler):
     pass
   
   
-class Angular(Handler):
+class Angular(RequestHandler):
   
   '''Angular subclass of base handler'''  
   

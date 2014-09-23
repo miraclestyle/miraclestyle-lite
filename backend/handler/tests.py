@@ -10,11 +10,12 @@ from google.appengine.ext.ndb import metadata
 from google.appengine.api import search, datastore
 from google.appengine.ext import blobstore
 
-from backend import orm, http, io, util, mem
-from frontend import frontend_settings
-from frontend.handler import base
+import orm, http, io, util, mem
+import settings
+
+from handler import base
   
-class BaseTestHandler(base.Handler):
+class BaseTestHandler(base.RequestHandler):
    
   autoload_current_account = False
   
@@ -22,7 +23,7 @@ class BaseTestHandler(base.Handler):
     self.response.headers['Content-Type'] = 'text/plain;charset=utf8;'
   
   def out_json(self, s):
-    self.out(http.json_output(s))
+    self.out(self.json_output(s))
   
   def out(self, s, a=0, before=True):
     sp = "\n"
@@ -159,4 +160,4 @@ class Reset(BaseTestHandler):
  
 for k,o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):
-    frontend_settings.ROUTES.append(('/Tests/%s' % o.__name__, o))
+    settings.HTTP_ROUTES.append(('/api/tests/%s' % o.__name__, o))

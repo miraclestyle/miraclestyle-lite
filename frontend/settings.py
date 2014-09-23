@@ -4,7 +4,10 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
-ACTIVE_CONTROLLERS = ('home', 'account', 'catalog', 'tests', 'ui')
+ACTIVE_HANDLERS = ('mapping',)
+
+API_ENDPOINT = '/api/endpoint'
+API_MODEL_META = '/api/model_meta'
 
 ROUTES = []
 JINJA_GLOBALS = {}

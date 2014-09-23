@@ -5,12 +5,12 @@ Created on Jan 1, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from backend import orm, settings
+import orm, settings
 
-from backend.models.base import *
-from backend.plugins.base import *
+from models.base import *
+from plugins.base import *
 
-from backend.plugins.unit import *
+from plugins.unit import *
 
 
 class UOM(orm.BaseExpando):  # @todo Rename it!

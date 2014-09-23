@@ -5,15 +5,15 @@ Created on Aug 30, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from backend import orm, settings
+import orm, settings
 
-from backend.models.base import *
-from backend.plugins.base import *
+from models.base import *
+from plugins.base import *
 
-from backend.models.buyer import *
-from backend.models.location import *
-from backend.models.unit import *
-from backend.plugins.order import *
+from models.buyer import *
+from models.location import *
+from models.unit import *
+from plugins.order import *
 
 
 

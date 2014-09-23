@@ -10,12 +10,12 @@ import collections
 import re
 import copy
 
-from backend import orm
-from backend.tools.base import *
-from backend.util import *
+import orm
+from tools.base import *
+from util import *
 
-from backend.models.location import *
-from backend.models.unit import *
+from models.location import *
+from models.unit import *
 
 
 class PluginError(Exception):

@@ -12,21 +12,21 @@ App is segmented in this way:
 http://miraclestyle.appspot.com
 
 # backend module
-http://backend.miraclestyle.appspot.com
+http://backend-dot-miraclestyle.appspot.com
 
 Also, accessing path
 http://miraclestyle.appspot.com/backend/*
 
-Will point internally to the http://backend.miraclestyle.appspot.com module configuration.
+Will point internally to the http://backend-dot-miraclestyle.appspot.com module configuration.
 
 This is called routing, and it is implemented to avoid having different subdomain for api calls.
 
 Endpoint path is:
 
-/backend/endpoint
+/api/endpoint
 
 live server:
-http://miraclestyle.appspot.com/backend/endpoint
+http://miraclestyle.appspot.com/api/endpoint
 
 direct access to module subdomian:
-http://backend.miraclestyle.appspot.com/backend/endpoint
+http://backend-dot-miraclestyle.appspot.com/api/endpoint

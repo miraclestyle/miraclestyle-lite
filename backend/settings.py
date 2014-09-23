@@ -7,8 +7,7 @@ Created on Jul 8, 2013
 
 import os
 
-
-""" APP settings file. """
+''' Settings file for backend module '''
 
 APPDIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,6 +19,11 @@ DO_LOGS = True
 
 NOTIFY_EMAIL = 'notify-noreply@miraclestyle.com'  # Password: xZa9hv8nbWyzk67boq4Q0
 
+# HTTP only configurations
+HTTP_ROUTES = []
+HTTP_CSRF_KEY = '_csrf'
+HTTP_COOKIE_USER_KEY = 'auth'
+HTTP_ACTIVE_HANDLERS = ('endpoint', 'install', 'meta', 'task')
 
 # Task queue settings.
 OUTLET_TEMPLATES_PER_TASK = 10

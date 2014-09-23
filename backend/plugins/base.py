@@ -5,9 +5,9 @@ Created on Jun 14, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from backend import orm
-from backend.tools.base import *
-from backend.util import *
+import orm
+from tools.base import *
+from util import *
 
 
 class Context(orm.BaseModel):
@@ -278,7 +278,7 @@ class CallbackExec(orm.BaseModel):
         callback[1]['caller_account'] = context.account.key_urlsafe
       if callback[1].get('caller_action') is None:
         callback[1]['caller_action'] = context.action.key_urlsafe
-    callback_exec('/backend/task/io_engine_run', context._callbacks)
+    callback_exec('/api/task/io_engine_run', context._callbacks)
     context._callbacks = []
 
 

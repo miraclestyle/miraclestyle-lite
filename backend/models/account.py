@@ -8,11 +8,11 @@ Created on Jan 6, 2014
 import hashlib
 import os
 
-from backend import orm, mem, settings
+import orm, mem, settings
 
-from backend.models.base import *
-from backend.plugins.base import *
-from backend.plugins.account import *
+from models.base import *
+from plugins.base import *
+from plugins.account import *
 
 
 __all__ = ['AccountSession', 'AccountIdentity', 'Account']

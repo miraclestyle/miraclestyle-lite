@@ -7,10 +7,10 @@ Created on Apr 15, 2014
 
 import hashlib
 
-from backend import orm
-from backend.tools import oauth2
-from backend.tools.base import *
-from backend.util import *
+import orm
+from tools import oauth2
+from tools.base import *
+from util import *
 
 
 class OAuth2Error(Exception):
