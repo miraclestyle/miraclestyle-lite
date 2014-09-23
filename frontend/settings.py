@@ -4,10 +4,24 @@ Created on Oct 10, 2013
 
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
+import os
+
+DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
+
 ACTIVE_HANDLERS = ('mapping',)
 
-API_ENDPOINT = '/api/endpoint'
-API_MODEL_META = '/api/model_meta'
+
+def __discover_host():
+  http = 'http://'
+  if os.environ.get('HTTPS') == 'on':
+    http = 'https://'
+  return '%s%s' % (http, os.environ.get('HTTP_HOST'))
+ 
+HOST = __discover_host()
+
+# api path configs
+API_ENDPOINT = HOST + '/api/endpoint'
+API_MODEL_META = HOST + '/api/model_meta'
 
 ROUTES = []
 JINJA_GLOBALS = {}

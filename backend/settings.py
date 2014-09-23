@@ -19,12 +19,6 @@ DO_LOGS = True
 
 NOTIFY_EMAIL = 'notify-noreply@miraclestyle.com'  # Password: xZa9hv8nbWyzk67boq4Q0
 
-# HTTP only configurations
-HTTP_ROUTES = []
-HTTP_CSRF_KEY = '_csrf'
-HTTP_COOKIE_USER_KEY = 'auth'
-HTTP_ACTIVE_HANDLERS = ('endpoint', 'install', 'meta', 'task')
-
 # Task queue settings.
 OUTLET_TEMPLATES_PER_TASK = 10
 RECIPIENTS_PER_TASK = 50
@@ -54,7 +48,7 @@ def __discover_host():
   http = 'http://'
   if os.environ.get('HTTPS') == 'on':
     http = 'https://'
-  return '%s%s' % (http, os.environ.get('HTTP_HOST'))
+  return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
  
 HOST = __discover_host()
 
@@ -76,7 +70,7 @@ GOOGLE_OAUTH2 = {
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : '%s/login/google' % HOST,
+   'redirect_uri' : '%s/api/login/google' % HOST,
    'type' : 1,
    'accountinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
@@ -87,7 +81,7 @@ FACEBOOK_OAUTH2 = {
    'scope'        : ",".join(['email']),
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : '%s/login/facebook' % HOST,
+   'redirect_uri' : '%s/api/login/facebook' % HOST,
    'type' : 2,
    'accountinfo' : 'https://graph.facebook.com/me',
 }

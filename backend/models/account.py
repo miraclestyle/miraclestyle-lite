@@ -66,6 +66,8 @@ class Account(orm.BaseExpando):
     permissions=[
       orm.ActionPermission('11', orm.Action.build_key('11', 'login'), True,
                            'entity._is_guest or entity._original.state == "active"'),
+      orm.ActionPermission('11', orm.Action.build_key('11', 'current_account'), True,
+                           'True'),
       orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
                                   orm.Action.build_key('11', 'update'),
                                   orm.Action.build_key('11', 'logout')], True,
@@ -107,6 +109,23 @@ class Account(orm.BaseExpando):
           transactional=True,
           plugins=[
             AccountLoginWrite()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'current_account'),
+      arguments={
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(cfg={'source': 'account.key'}),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_account'}})
             ]
           )
         ]
@@ -238,7 +257,7 @@ class Account(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_account.sessions': []}}),
+            Set(cfg={'rm': ['_account.sessions']}),
             RulePrepare(),
             RuleExec()
             ]

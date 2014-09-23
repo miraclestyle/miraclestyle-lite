@@ -18,7 +18,7 @@ TEMPLATE_LOADER = FileSystemLoader(TEMPLATE_DIRS)
 settings.JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : settings.ROUTES, 'settings' : settings})
 
 for a in settings.ACTIVE_HANDLERS:
-  importlib.import_module('frontend.handler.%s' % a)
+  importlib.import_module('handler.%s' % a)
     
 settings.ROUTES[:] = map(lambda args: webapp2.Route(*args), settings.ROUTES)
    

@@ -422,7 +422,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 	
 	var cache = $cacheFactory('endpoint_cache');
 	 
-	var endpoint_url = '/backend/endpoint';
+	var endpoint_url = '/api/endpoint';
 	
 	var _compile = function(action, model, data, config)
 	{

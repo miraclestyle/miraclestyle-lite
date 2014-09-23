@@ -8,6 +8,12 @@
     
     <meta name="fragment" content="!" />
     
+    <script>
+        current_account = {{current_account|to_json|safe}};
+        KINDS = {};
+        KINDS.info = {{current_model_meta|to_json|safe}};
+    </script>
+    
     <link rel="stylesheet" type="text/css" href="{{static_dir('fonts/sawasdee/stylesheet.css')}}"/>
     <link rel="stylesheet" type="text/css" href="{{static_dir('js/lib/jquery/select2/select2.css')}}" />
     <link rel="stylesheet" type="text/css" href="{{static_dir('css/angular/style.css')}}"/>

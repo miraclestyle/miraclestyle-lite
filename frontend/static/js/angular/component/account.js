@@ -5,12 +5,7 @@ login_methods = {
 
 MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account', 
 	function ($scope, $rootScope, $location, Account) {
- 
- 	if (initdata['entity'])
-	{
-		 $rootScope.current_account = initdata['entity'];
-	}
-		
+  
 	if ($rootScope.current_account._is_guest)
 	{
 		Account.ask_login(function () {
@@ -151,9 +146,10 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 		
 		logout : function (on_logout)
 		{
-			Endpoint.post('logout', '11')
+			Endpoint.post('logout', '11', {'key': $rootScope.current_account.key})
 		     .success(function (data) {
-				 $rootScope.current_account = data.entity;
+			 
+				 update($rootScope.current_account, data.entity);
 				 
 				 if (angular.isFunction(on_logout))
 				 on_logout();
@@ -194,7 +190,7 @@ MainApp.controller('LoginPage', ['$scope', '$rootScope', '$location', 'Account',
 				 
 			  };
 			
-			$http.get('/login/google').success(handle);			
+			$http.get('/api/login').success(handle);			
 		},
 		update : function (entity)
 	    {

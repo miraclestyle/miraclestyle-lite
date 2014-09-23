@@ -8,7 +8,23 @@ import json
 import webapp2
 from webapp2_extras import jinja2
 
-import settings
+from google.appengine.api import urlfetch
+
+import settings, api
+
+class JSONEncoder(json.JSONEncoder):
+
+  def iterencode(self, o, _one_shot=False):
+    chunks = super(JSONEncoder, self).iterencode(o, _one_shot)
+    for chunk in chunks:
+      chunk = chunk.replace('&', '\\u0026')
+      chunk = chunk.replace('<', '\\u003c')
+      chunk = chunk.replace('>', '\\u003e')
+      yield chunk
+      
+def to_json(s, **kwds):
+  kwds['cls'] = JSONEncoder
+  return json.dumps(s, **kwds)
 
 def _static_dir(file_path):
   return '/frontend/static/%s' % file_path
@@ -16,7 +32,12 @@ def _static_dir(file_path):
 settings.JINJA_GLOBALS.update({'static_dir': _static_dir, 
                                'settings': settings})
 
+settings.JINJA_FILTERS.update({'to_json': to_json})
+
 class RequestHandler(webapp2.RequestHandler):
+  
+  autoload_current_account = True
+  autoload_model_meta = True
   
   '''General-purpose handler from which all other frontend handlers must derrive from.'''
  
@@ -24,6 +45,8 @@ class RequestHandler(webapp2.RequestHandler):
     super(RequestHandler, self).__init__(*args, **kwargs)
     self.data = {}
     self.template = {}
+    self.current_account = None
+    self.current_model_meta = None
   
   def send_json(self, data):
     ''' sends `data` to be serialized in json format, and sets content type application/json utf8'''
@@ -53,11 +76,20 @@ class RequestHandler(webapp2.RequestHandler):
   def respond(self, *args, **kwargs):
     self.abort(404)
     self.response.write('<h1>404 Not found</h1>')
-        
+    
+  def autoloads(self):
+    ''' Loads current user from backend '''
+    if self.current_account is None and self.autoload_current_account:
+      self.current_account = api.endpoint(payload={'action_id': 'current_account', 'action_model': '11'},
+                                          headers=self.request.headers)
+      self.template['current_account'] = self.current_account['entity']
+      
+    if self.current_model_meta is None and self.autoload_model_meta:
+      self.current_model_meta = api.model_meta()
+      self.template['current_model_meta'] = self.current_model_meta
+      
   def dispatch(self):
-    self.load_current_account()
-    self.load_csrf()
-    self.validate_csrf()
+    self.autoloads()
     try:
       self.before()
       super(RequestHandler, self).dispatch()
@@ -80,6 +112,7 @@ class RequestHandler(webapp2.RequestHandler):
        data = {}
     self.template.update(data)
     return self.render_response(tpl, **self.template)
+ 
          
 class Blank(RequestHandler):
   
