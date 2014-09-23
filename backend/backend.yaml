@@ -5,9 +5,10 @@ runtime: python27
 api_version: 1
 threadsafe: true
 instance_class: B1
-manual_scaling:
-  instances: 1
-  
+basic_scaling:
+  max_instances: 1
+  idle_timeout: 10m
+
 libraries:
 
 - name: webapp2
@@ -18,7 +19,7 @@ libraries:
 
 - name: PIL
   version: latest
-  
+
 handlers:
 - url: /.*
   script: backend.http.app
