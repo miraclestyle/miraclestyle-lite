@@ -111,10 +111,9 @@ class _ImagePropertyValue(object):
     def async(entity):
       gs_object_name = entity.gs_object_name
       try:
-        gs_object_name = entity.parse_duplicate_appendix(gs_object_name)
-      except IndexError:
-        pass
-      new_gs_object_name = '%s_duplicate_%s' % (gs_object_name, entity.duplicate_appendix)
+        new_gs_object_name = entity.increment_duplicated_id(gs_object_name)
+      except (IndexError, ValueError):
+        new_gs_object_name = '%s_duplicate_%s' % (gs_object_name, 1)
       readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
       writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=entity.content_type)
       # Less consuming memory write, can be only used when using brute force copy.

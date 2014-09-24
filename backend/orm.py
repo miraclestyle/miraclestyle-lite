@@ -308,7 +308,6 @@ class _BaseModel(object):
   _default_pre_get_hook
   _default_pre_put_hook
   _delete_custom_indexes
-  _duplicate_appendix
   _entity_key
   _equivalent
   _fake_property
@@ -387,7 +386,6 @@ class _BaseModel(object):
   delete
   delete_search_document
   duplicate
-  duplicate_appendix
   duplicate_key_id
   generate_unique_key
   get_actions
@@ -417,7 +415,6 @@ class _BaseModel(object):
   make_original
   namespace_entity
   parent_entity
-  parse_duplicate_appendix
   populate
   put
   put_async
@@ -465,8 +462,7 @@ class _BaseModel(object):
   _parent = None
   _write_custom_indexes = None
   _delete_custom_indexes = None
-  _duplicate_appendix = None  # Used to memorize appendix that was used to duplicate this entity. It exists only in duplication runtime.
-  
+ 
   def __init__(self, *args, **kwargs):
     _deepcopied = '_deepcopy' in kwargs
     if _deepcopied:
@@ -1143,23 +1139,9 @@ class _BaseModel(object):
       self.unindex_search_documents()
   
   @classmethod
-  def parse_duplicate_appendix(cls, value):
-    # parses value that might contain appendix. throws error if not.
-    # @todo this might have to be revised, problem with it that if the custom key is named
-    # 24194912412_duplicate_2481412481284_14912941294 it will detect it as a duplicated thing.
-    # result will be that the _duplicate_2481412481284_14912941294 will be stripped and a new appendix will be generated
-    # 24194912412_<new appendix>
-    # but i think this is not big concern since this logic is only employed when we duplicate things, in which case
-    # we do not need to keep the original key.
-    results = re.findall(r'(.*)_duplicate_.*', value)
-    return results[0]
-  
-  @property
-  def duplicate_appendix(self):
-    ent = self._root
-    if ent._duplicate_appendix is None:
-      ent._duplicate_appendix = str(uuid.uuid4())
-    return ent._duplicate_appendix
+  def increment_duplicated_id(cls, value):
+    results = re.findall(r'(.*)_duplicate_(.*)', value)
+    return '%s_duplicate_%s' % (results[0], long(results[1])+1)
   
   def duplicate_key_id(self, key=None):
     '''If key is provided, it will use its id for construction'''
@@ -1168,10 +1150,10 @@ class _BaseModel(object):
     else:
       the_id = key._id_str
     try:
-      the_id = self.parse_duplicate_appendix(the_id)
-    except IndexError:
-      pass
-    return '%s_duplicate_%s' % (the_id, self.duplicate_appendix)
+      the_id = self.increment_duplicated_id(the_id)
+    except (IndexError, ValueError):
+      the_id = '%s_duplicate_%s' % (the_id, 1)
+    return the_id
   
   def duplicate(self):
     '''Duplicate this entity.
@@ -1214,15 +1196,6 @@ class _BaseModel(object):
     multi and single entity will be resolved by only retrieving keys and sending them to
     multiple tasks that could duplicate them in paralel.
     That fragmentation could be achieved via existing cron infrastructure or by implementing something with setup engine.
-    @todo Referenced entity keys pose a problem when doing duplicates. E.g.
-    ProductCopy = Product.duplicate
-    CatalogPricetagCopy = CatalogPricetag.duplicate
-    CatalogPricetagCopy
-     ->product = Product # old product key stays
-     ...
-    This was solved with making unique duplicate key appendixes + logic that changes those keys implicitly.
-    The duplicate appendix is only generated once per root entity duplicated.
-    So for duplicating Catalog, appendix would be located on new_catalog._duplicate_appendix.
     
     '''
     new_entity = copy.deepcopy(self)

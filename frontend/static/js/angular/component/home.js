@@ -26,7 +26,13 @@ MainApp
 					marginLeft : r,
 				});
 				
-				wrapper.find('.grid-item').width(calc[0]).height(calc[0]*1.5);
+				var item = wrapper.find('.grid-item');
+				wrapper.find('.grid-item').each(function () {
+				    var catalog = $(this).scope().catalog;
+				    item.width(calc[0]).height(calc[0]/(parseInt(catalog.cover.proportion)));
+				});
+				
+				
 			 	
 			 };
 			 

@@ -1,5 +1,5 @@
 <div class="grid-wrapper">
-	<div ng-repeat="catalog in catalogs"  homepage-grid class="grid-item frontpage">
+	<div data-proportion="{{catalog.cover.proportion}}" ng-repeat="catalog in catalogs"  homepage-grid class="grid-item frontpage">
 		<a ng-click="viewCatalog(catalog)" class="inner" href="#">
 			<img ng-src="{{catalog.cover}}=s360">
 		</a>

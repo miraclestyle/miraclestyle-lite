@@ -4,9 +4,9 @@
 </h1>
 <div load-on-window-scroll-end>
     <div class="grid-wrapper">
-        <div ng-repeat="catalog in catalogs"  homepage-grid class="grid-item frontpage">
+        <div data-proportion="{{catalog.cover.proportion}}" ng-repeat="catalog in catalogs"  homepage-grid class="grid-item frontpage">
             <a style="cursor:pointer;" ng-click="manage(catalog)" class="inner">
-                <img ng-src="{{catalog.cover}}=s360">
+                <img ng-src="{{catalog.cover.serving_url}}=s360">
             </a>
         </div>
     </div>
