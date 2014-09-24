@@ -11,7 +11,7 @@ from models.base import *
 from plugins.base import *
 
 from models.buyer import *
-from models.location import *
+from models.location import * # We have collision of names here, class `Location` appears in plugins.order
 from models.unit import *
 from plugins.order import *
 
@@ -40,7 +40,7 @@ class OrderLine(orm.BaseExpando):
   sequence = orm.SuperIntegerProperty('1', required=True)
   description = orm.SuperTextProperty('2', required=True)
   product_reference = orm.SuperKeyProperty('3', kind='28', required=True, indexed=False)
-  product_variant_signature = orm.SuperJsonProperty('4', required=True)
+  product_variant_signature = orm.SuperJsonProperty('4', required=False) # @todo product_variant_signature cannot always be required !
   product_category_complete_name = orm.SuperTextProperty('5', required=True)
   product_category_reference = orm.SuperKeyProperty('6', kind='24', required=True, indexed=False)
   code = orm.SuperStringProperty('7', required=True, indexed=False)
@@ -52,6 +52,8 @@ class OrderLine(orm.BaseExpando):
   subtotal = orm.SuperDecimalProperty('13', required=True, indexed=False)
   discount_subtotal = orm.SuperDecimalProperty('14', required=True, indexed=False)
   total = orm.SuperDecimalProperty('15', required=True, indexed=False)
+  # @todo this was missing
+  tax_subtotal = orm.SuperDecimalProperty('16', required=True, indexed=False)
   
   _default_indexed = False
 
@@ -77,18 +79,19 @@ class Order(orm.BaseExpando):
   state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'processing', 'completed', 'canceled'])
   date = orm.SuperDateTimeProperty('5', required=True)
   seller_reference = orm.SuperKeyProperty('6', kind='23', required=True)
-  seller_address = orm.SuperLocalStructuredProperty(Address, '7', required=True)
+  seller_address = orm.SuperLocalStructuredProperty('15', '7', required=False) # @todo SELLER ADDRESS required SET TO FALSE for testing purposes for now!!!
   billing_address_reference = orm.SuperKeyProperty('8', kind='14', required=True, indexed=False)
   shipping_address_reference = orm.SuperKeyProperty('9', kind='14', required=True, indexed=False)
-  billing_address = orm.SuperLocalStructuredProperty(Address, '10', required=True)
-  shipping_address = orm.SuperLocalStructuredProperty(Address, '11', required=True)
+  billing_address = orm.SuperLocalStructuredProperty('15', '10', required=True)
+  shipping_address = orm.SuperLocalStructuredProperty('15', '11', required=True)
   currency = orm.SuperLocalStructuredProperty(UOM, '12', required=True)  # @todo Or Unit (or _kind, 16 stands for UOM model, 17 for Unit)!?
   untaxed_amount = orm.SuperDecimalProperty('13', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
   feedback = orm.SuperStringProperty('16', choices=['positive', 'neutral', 'negative'])
   feedback_adjustment = orm.SuperStringProperty('17', choices=['revision', 'reported', 'sudo'])
-  payment_status = orm.SuperStringProperty('18', required=True, indexed=False)  # @todo Not sure if these paypal props should be ousted to some PaymentInfo model
+  # @todo this payment_status cannot be required since we cannot set it before the payment is done.
+  payment_status = orm.SuperStringProperty('18', required=False, indexed=False)  # @todo Not sure if these paypal props should be ousted to some PaymentInfo model
   paypal_reciever_email = orm.SuperStringProperty('19', required=True, indexed=False)
   paypal_business = orm.SuperStringProperty('20', required=True, indexed=False)
   
@@ -137,11 +140,11 @@ class Order(orm.BaseExpando):
                            and (entity._original.feedback is None or (entity._original.feedback is not None \
                            and entity._original.feedback_adjustment == "revision"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'review_feedback')], True,
-                           'not account._is_guest and entity._original.seller_reference._root == account.key \
+                           'not account._is_guest and entity._original.seller_reference and entity._original.seller_reference._root == account.key \
                            and entity._original.state == "completed" and entity._is_feedback_allowed \
                            and entity._original.feedback == "negative" and entity._original.feedback_adjustment is None'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'report_feedback')], True,
-                           'not account._is_guest and entity._original.seller_reference._root == account.key \
+                           'not account._is_guest and entity._original.seller_reference and entity._original.seller_reference._root == account.key \
                            and entity._original.state == "completed" \
                            and entity._is_feedback_allowed and entity._original.feedback == "negative" \
                            and entity._original.feedback_adjustment not in ["reported", "sudo"]' ),
@@ -156,7 +159,7 @@ class Order(orm.BaseExpando):
                                  'paypal_business', '_lines', '_messages', '_records'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and (entity._original.key_root == account.key \
-                          or entity._original.seller_reference._root == account.key))'),
+                          or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
       orm.FieldPermission('34', ['name', 'date', 'seller_reference', 'seller_address',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
@@ -184,7 +187,7 @@ class Order(orm.BaseExpando):
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['_lines.discount', '_lines.subtotal',
                                  '_lines.discount_subtotal', '_lines.total'], True, True,
-                          'not account._is_guest and entity._original.seller_reference._root == account.key \
+                          'not account._is_guest and entity._original.seller_reference and entity._original.seller_reference._root == account.key \
                           and entity._original.state == "checkout" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
@@ -200,7 +203,7 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'add_to_cart'),
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
-        'seller': orm.SuperKeyProperty(kind='23', required=True),
+        'seller': orm.SuperKeyProperty(kind='23', required=True), # @todo not sure if we need this here since the product carries entire ancestor path.
         'product': orm.SuperKeyProperty(kind='28', required=True),
         'variant_signature': orm.SuperJsonProperty()
         },

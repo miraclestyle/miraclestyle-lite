@@ -22,21 +22,23 @@ class UOM(orm.BaseExpando):  # @todo Rename it!
   measurement = orm.SuperStringProperty('1', required=True, indexed=False)
   name = orm.SuperStringProperty('2', required=True, indexed=False)
   symbol = orm.SuperStringProperty('3', required=True, indexed=False)
-  rate = orm.SuperDecimalProperty('4', required=True, indexed=False)
-  factor = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  # @todo rate and factor cannot be always required, see unit for reference
+  rate = orm.SuperDecimalProperty('4', required=False, indexed=False)
+  factor = orm.SuperDecimalProperty('5', required=False, indexed=False)
   rounding = orm.SuperDecimalProperty('6', required=True, indexed=False)
   digits = orm.SuperIntegerProperty('7', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'code': orm.SuperStringProperty('8', required=True),
+    # @todo not always all expando properties can be required
+    'code': orm.SuperStringProperty('8', required=False),
     'numeric_code': orm.SuperStringProperty('9'),
     'grouping': orm.SuperIntegerProperty('10', repeated=True),
-    'decimal_separator': orm.SuperStringProperty('11', required=True),
+    'decimal_separator': orm.SuperStringProperty('11', required=False),
     'thousands_separator': orm.SuperStringProperty('12'),
-    'positive_sign_position': orm.SuperIntegerProperty('13', required=True),
-    'negative_sign_position': orm.SuperIntegerProperty('14', required=True),
+    'positive_sign_position': orm.SuperIntegerProperty('13', required=False),
+    'negative_sign_position': orm.SuperIntegerProperty('14', required=False),
     'positive_sign': orm.SuperStringProperty('15'),
     'negative_sign': orm.SuperStringProperty('16'),
     'positive_currency_symbol_precedes': orm.SuperBooleanProperty('17', default=True),
@@ -175,6 +177,9 @@ class Unit(orm.BaseExpando):
     '''
     new_uom = UOM()
     uom_fields = UOM.get_fields()
+    new_uom.set_key(self.key.id(), parent=self.key.parent())
     for field_key, field in uom_fields.iteritems():
-      setattr(new_uom, field_key, getattr(self, field_key))
+      value = getattr(self, field_key)
+      if value is not None:
+        setattr(new_uom, field_key, value)
     return new_uom

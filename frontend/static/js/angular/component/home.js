@@ -73,6 +73,7 @@ MainApp
                                 templateUrl: logic_template('home/view_catalog.html'),
                                 controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
                                     
+                                    var $parentScope = $scope;
                                     $scope.entity = data.entity;
                                     $scope.rule = RuleEngine.factory(data.entity);
                                      
@@ -104,6 +105,7 @@ MainApp
                                                     $scope.rule = RuleEngine.factory(data.entity);
                                                     $scope.entity = data.entity;
                                                     $scope.child = _.findWhere($scope.entity._products, {key : pricetag.product});
+                                                    $scope.current_variant = null;
                                                     
                                                     $scope.original_child = angular.copy($scope.child);
                                                     
@@ -112,6 +114,25 @@ MainApp
                                                     angular.forEach($scope.child.variants, function (v) {
                                                         $scope.variant_combo[v.name] = null;
                                                     });
+                                                    
+                                                    $scope.addToCart = function ()
+                                                    {
+                                                        Endpoint.post('read', '19', {
+                                                            'account': current_account.key
+                                                        }).success(function (buyer) {
+                                                            
+                                                            Endpoint.post('add_to_cart', '34', {
+                                                                'buyer': buyer.entity.key,
+                                                                'seller': $parentScope.entity.parent.key,
+                                                                'product': $scope.child.key,
+                                                                'variant_signature': $scope.current_variant,
+                                                            }).success(function (data) {
+                                                                console.log(data);
+                                                            });
+                                                            
+                                                            
+                                                        });
+                                                    };
                                                     
                                                     $scope.changeProductView = function ()
                                                     {
@@ -125,6 +146,7 @@ MainApp
                                                         angular.forEach($scope.child._instances, function (instance) {
                                                             if (JSON.stringify(instance.variant_signature) == JSON.stringify(packer))
                                                             {
+                                                                $scope.current_variant = packer;
                                                                 angular.forEach(instance, function (v, k) {
                                                                    if (typeof v != undefined)
                                                                    {

@@ -37,11 +37,10 @@ class OrderInit(orm.BaseModel):
                         Order.state.IN(['cart', 'checkout', 'processing']),
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this
     if order is None:
-      order = Order(parent=context.input.get('buyer'))
+      order = Order(parent=context.input.get('buyer'), name='Default Order Name') # we need name
       order.state = 'cart'
       order.date = datetime.datetime.now()
       order.seller_reference = context.input.get('seller')
-      # order.company_address = # Source of company address required!
     else:
       order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
     context._order = order
@@ -60,8 +59,12 @@ class PluginExec(orm.BaseModel):
       self.cfg = {}
     order = context._order
     plugin_container = orm.Key('22', order.seller_reference._id_str, parent=order.seller_reference).get()
-    for plugin in plugin_container.plugins:
-      plugin.run(context)
+    seller = order.seller_reference.get()
+    seller.read({'_plugin_group': {}})
+    plugin_container = seller._plugin_group.value
+    if plugin_container:
+      for plugin in seller._plugin_group.value.plugins:
+        plugin.run(context)
 
 
 # This is system plugin, which means end user can not use it!
@@ -78,13 +81,14 @@ class ProductToOrderLine(orm.BaseModel):
       raise PluginError('order_not_in_cart_state')
     variant_signature = context.input.get('variant_signature')
     line_exists = False
-    for line in order._lines:
-      if hasattr(line, 'product_reference') and line.product_reference == product_key \
-      and line.product_variant_signature == variant_signature:
-        line._state = 'modified'  # @todo Not sure if this is ok!?
-        line.quantity = line.quantity + format_value('1', line.product_uom)
-        line_exists = True
-        break
+    if order._lines.value:
+      for line in order._lines.value:
+        if hasattr(line, 'product_reference') and line.product_reference == product_key \
+        and line.product_variant_signature == variant_signature:
+          line._state = 'modified'  # @todo Not sure if this is ok!?
+          line.quantity = line.quantity + format_value('1', line.product_uom)
+          line_exists = True
+          break
     if not line_exists:
       ProductInstance = context.models['27']
       Line = context.models['33']
@@ -92,17 +96,19 @@ class ProductToOrderLine(orm.BaseModel):
       product.read({'_product_category': {}})  # more fields probably need to be specified
       product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
       product_instance = product_instance_key.get()
-      new_line = Line(journal=context.model.journal)  # i generally dont like this
-      new_line.sequence = order._lines[-1].sequence + 1
+      new_line = Line()
+      new_line.sequence = 0
+      if order._lines.value:
+        new_line.sequence = order._lines[-1].sequence + 1
       new_line.description = product.name
       new_line.product_reference = product_key
       new_line.product_variant_signature = variant_signature
-      new_line.product_category_complete_name = product._product_category.complete_name
+      new_line.product_category_complete_name = product._product_category.value.complete_name
       new_line.product_category_reference = product.product_category
       new_line.code = product.code
       new_line.unit_price = product.unit_price
       new_line.product_uom = product.product_uom.get().get_uom()
-      new_line.quantity = format_value('1', new_line.product_uom)
+      new_line.quantity = format_value('1', new_line.product_uom.value)
       new_line.discount = format_value('0', UOM(digits=4))
       if hasattr(product, 'weight'):
         new_line._weight = product.weight  # @todo Perhaps we might need to build these fields during certain actions, and not only while adding new lines (to ensure thir life accros carrier plugins)!
@@ -121,7 +127,7 @@ class ProductToOrderLine(orm.BaseModel):
         if hasattr(product_instance, 'volume'):
           new_line._volume = product_instance.volume
           new_line._volume_uom = product_instance.volume_uom
-      order._lines.append(new_line)
+      order._lines = [new_line]
 
 
 # This is system plugin, which means end user can not use it!
@@ -133,7 +139,7 @@ class OrderLineFormat(orm.BaseModel):
   
   def run(self, context):
     order = context._order
-    for line in order._lines:
+    for line in order._lines.value:
       if hasattr(line, 'product_reference'):
         if order.seller_reference._root != line.product_reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
@@ -141,18 +147,19 @@ class OrderLineFormat(orm.BaseModel):
         if line.quantity <= Decimal('0'):
           line._state = 'deleted'
         else:
-          line.quantity = format_value(line.quantity, line.product_uom)
-        line.subtotal = format_value((line.unit_price * line.quantity), order.currency)
-        line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), order.currency)
-        line.total = format_value(line.discount_subtotal, order.currency)
-        tax_subtotal = format_value('0', order.currency)
-        for tax in line.taxes:
-          if (tax.formula[0] == 'percent'):
-            tax_amount = format_value(tax.formula[1], order.currency) * format_value('0.01', order.currency)  # or "/ DecTools.form('100')"
-            tax_subtotal += line.total * tax_amount
-          elif (tax.formula[0] == 'amount'):
-            tax_amount = format_value(tax.formula[1], order.currency)
-            tax_subtotal += tax_amount
+          line.quantity = format_value(line.quantity, line.product_uom.value)
+        line.subtotal = format_value((line.unit_price * line.quantity), order.currency.value)
+        line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), order.currency.value)
+        line.total = format_value(line.discount_subtotal, order.currency.value)
+        tax_subtotal = format_value('0', order.currency.value)
+        if line.taxes.value:
+          for tax in line.taxes.value:
+            if (tax.formula[0] == 'percent'):
+              tax_amount = format_value(tax.formula[1], order.currency.value) * format_value('0.01', order.currency.value)  # or "/ DecTools.form('100')"
+              tax_subtotal += line.total * tax_amount
+            elif (tax.formula[0] == 'amount'):
+              tax_amount = format_value(tax.formula[1], order.currency.value)
+              tax_subtotal += tax_amount
         line.tax_subtotal = tax_subtotal
 
 
@@ -166,21 +173,21 @@ class OrderFormat(orm.BaseModel):
   # @todo We need receivable calcualtior as well!
   def run(self, context):
     order = context._order
-    untaxed_amount = format_value('0', order.currency)
-    tax_amount = format_value('0', order.currency)
-    total_amount = format_value('0', order.currency)
-    for line in order._lines:
+    untaxed_amount = format_value('0', order.currency.value)
+    tax_amount = format_value('0', order.currency.value)
+    total_amount = format_value('0', order.currency.value)
+    for line in order._lines.value:
       if hasattr(line, 'product_reference'):
-        untaxed_amount += line.subtotal
-        tax_amount += line.tax_subtotal
-        total_amount += line.subtotal + line.tax_subtotal
-    order.untaxed_amount = format_value(untaxed_amount, order.currency)
-    order.tax_amount = format_value(tax_amount, order.currency)
-    order.total_amount = format_value(total_amount, order.currency)
+        untaxed_amount = untaxed_amount + line.subtotal
+        tax_amount = tax_amount + line.tax_subtotal
+        total_amount = total_amount+ (line.subtotal + line.tax_subtotal) # we cannot use += for decimal its not supported
+    order.untaxed_amount = format_value(untaxed_amount, order.currency.value)
+    order.tax_amount = format_value(tax_amount, order.currency.value)
+    order.total_amount = format_value(total_amount, order.currency.value)
 
 
 # Not a plugin!
-class Location(orm.BaseModel):
+class Location(orm.BaseModel): # @todo this should be renamed to avoid collsion of names in location.py
   
   _kind = 106
   
@@ -214,11 +221,12 @@ class AddressRule(orm.BaseModel):
     input_address_reference = context.input.get(address_reference_key)
     order_address_reference = getattr(order, address_reference_key, None)
     buyer_addresses = order.key_parent.get()
+    buyer_addresses.read({'addresses': {}})
     if buyer_addresses is None:
       raise PluginError('no_address')
-    for buyer_address in buyer_addresses.addresses:
+    for buyer_address in buyer_addresses.addresses.value:
       if self.validate_address(buyer_address):
-        valid_addresses[buyer_address.key] = buyer_address
+        valid_addresses[buyer_address.key.urlsafe()] = buyer_address
         if getattr(buyer_address, default_address_key):
           default_address = buyer_address
     if not len(valid_addresses):
@@ -244,7 +252,8 @@ class AddressRule(orm.BaseModel):
     else:
       # Shipping everywhere except at the following locations.
       allowed = True
-    for loc in self.locations:
+    self.read()
+    for loc in self.locations.value:
       if not (loc.region and loc.postal_code_from and loc.postal_code_to):
         if (address.country == loc.country):
           allowed = self.exclusion

@@ -621,6 +621,7 @@ class _BaseModel(object):
   def _post_put_hook(self, future):
     entity = self
     entity.record()
+    print entity.key, future
     for field_key, field in entity.get_fields().iteritems():
       value = getattr(entity, field_key, None)
       if isinstance(value, PropertyValue) and hasattr(value, 'post_update'):

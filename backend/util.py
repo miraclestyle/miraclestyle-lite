@@ -355,6 +355,6 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
   if not isinstance(value, Decimal):
     value = Decimal(value)
   if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
-    raise Exception('no_digits_in_uom')
+    raise Exception('no_digits_in_uom, got %s' % uom)
   places = Decimal(10) ** -uom.digits
   return (value).quantize(places, rounding=rounding)
