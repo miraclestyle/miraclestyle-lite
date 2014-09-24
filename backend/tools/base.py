@@ -48,7 +48,7 @@ def callback_exec(url, callbacks):
         if data:
           if queue_name not in queues:
             queues[queue_name] = []
-          queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data)))
+          queues[queue_name].append(taskqueue.Task(url=url, payload=json.dumps(data), target='backend'))
   if len(queues):
     for queue_name, tasks in queues.iteritems():
       queue = taskqueue.Queue(name=queue_name)

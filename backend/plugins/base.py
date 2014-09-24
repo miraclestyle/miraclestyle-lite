@@ -25,8 +25,6 @@ class Context(orm.BaseModel):
           context.account = caller_account
       else:
         context.account = context.models['11'].get_system_account()
-    context.namespace = None
-    context.domain = None
     context._callbacks = []  # @todo For now this stays here!
 
 

@@ -722,11 +722,13 @@ class _BaseModel(object):
     new_entity = model(_deepcopy=True)
     new_entity.key = copy.deepcopy(self.key)
     new_entity._state = self._state
-    for field in self.get_fields():
-      if hasattr(self, field):
-        value = getattr(self, field, None)
+    for field_key in self.get_fields():
+      if hasattr(self, field_key):
+        value = getattr(self, field_key, None)
         is_property_value_type = isinstance(value, PropertyValue)
         if is_property_value_type:
+          if not value.has_value():
+            continue # if there's no value to copy skip it
           value = value.value
         if isinstance(value, Future) or (isinstance(value, list) and len(value) and isinstance(value[0], Future)):
           continue
@@ -734,13 +736,12 @@ class _BaseModel(object):
           until second read was implied to it. we could solve this by implementing flags on properties that should not 
           be copied.
           '''
-        else:
-          value = copy.deepcopy(value)
-          if is_property_value_type:
-            new_entity_value = getattr(new_entity, field)
-            new_entity_value.set(value)
+        value = copy.deepcopy(value)
+        if is_property_value_type:
+          new_entity_value = getattr(new_entity, field_key)
+          new_entity_value.set(value)
         try:
-          setattr(new_entity, field, value)
+          setattr(new_entity, field_key, value)
         except ComputedPropertyError as e:
           pass  # This is intentional
         except Exception as e:
@@ -1230,11 +1231,11 @@ class _BaseModel(object):
     the_id = new_entity.duplicate_key_id()
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
-    for field_key, field in new_entity.get_fields().iteritems():
-      if hasattr(field, 'is_structured') and field.is_structured:
+    for field_key in new_entity.get_fields():
+      if hasattr(self, field_key):
         value = getattr(new_entity, field_key, None)
-        if value:
-           value.duplicate() # call duplicate for every structured field
+        if isinstance(value, PropertyValue):
+          value.duplicate() # call duplicate for every structured field
     if new_entity.key:
       # '%s_duplicate_%s' % (self.key_id, time.time())
       new_entity.set_key(the_id, parent=self.key_parent, namespace=self.key_namespace)
@@ -1827,11 +1828,11 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   
   def _read(self, read_arguments):
     property_value = self._property._get_user_value(self._entity)
-    property_value_copy = property_value
-    if property_value_copy is not None:
+    property_value_as_list = property_value
+    if property_value_as_list is not None:
       if not self._property._repeated:
-        property_value_copy = [property_value_copy]
-      for i, value in enumerate(property_value_copy):
+        property_value_as_list = [property_value_as_list]
+      for i, value in enumerate(property_value_as_list):
         value._sequence = i
       self._property_value = property_value
     else:
@@ -1875,17 +1876,17 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         value._state = 'deleted'
   
   def duplicate(self):
-    self.read()
+    values = self.read()
     if self._property._repeated:
       entities = []
-      for entity in self._property_value:
+      for entity in values:
         entities.append(entity.duplicate())
     else:
-      entities = self._property_value.duplicate()
-    self._property._set_value(self._entity, entities, True) # this is because using other method would cause duplicate results via duplicate process.
+      entities = values.duplicate()
     self._property_value = entities
     self._set_parent()
-
+    self._property._set_value(self._entity, entities, True) # this is because using other method would cause duplicate results via duplicate process.
+    return self._property_value
 
 class RemoteStructuredPropertyValue(StructuredPropertyValue):
   
@@ -2051,6 +2052,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   
   def _duplicate_single(self):
     self.read()
+    self._property_value.read()
     self._property_value = self._property_value.duplicate()
   
   def _duplicate_repeated(self):
@@ -2061,6 +2063,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     _entities = self._property.get_modelclass().query(ancestor=self._entity.key).fetch()
     if len(_entities):
       for entity in _entities:
+        entity.read()
         self._set_parent(entity)
         entities.append(entity.duplicate())
     self._property_value = entities
@@ -2460,7 +2463,6 @@ class _BaseStructuredProperty(_BaseProperty):
     # __delete__
     value_instance = self._get_value(entity)
     value_instance.delete()
-    return super(_BaseStructuredProperty, self)._delete_value(entity)
   
   def _get_value(self, entity):
     # __get__

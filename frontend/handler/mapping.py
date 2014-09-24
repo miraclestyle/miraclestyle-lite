@@ -20,31 +20,13 @@ if settings.DEVELOPMENT_SERVER:
   
   from google.appengine.api import urlfetch
   
-  class ResolveBackendProxy(base.RequestHandler):
-    
-    autoload_current_account = False
-    autoload_model_meta = False
-    
-    def respond(self, *args, **kwargs):
-      if self.request.method == 'POST':
-        method = urlfetch.POST
-      else:
-        method = urlfetch.GET
-      data = self.request.body
-      if not data:
-        data = self.request.params
-      kwargs = {'payload': data, 'method': method, 'url': '%s%s' % (self.request.host_url, urllib.unquote_plus(self.request.get('__path'))), 'headers': self.request.headers}
-      result = urlfetch.fetch(**kwargs)
-      self.response.write(result.content)
-  
-  
   class BackendProxy(base.RequestHandler):
     
     autoload_current_account = False
     autoload_model_meta = False
     
     def respond(self, *args, **kwargs):
-      full_path = '%s/resolve_proxy?__path=%s' % (self.request.host_url, urllib.quote_plus(self.request.path))
+      full_path = self.request.url.replace('/api/', '/api/proxy/')
       if self.request.method == 'POST':
         method = urlfetch.POST
       else:
@@ -56,12 +38,4 @@ if settings.DEVELOPMENT_SERVER:
       result = urlfetch.fetch(**kwargs)
       self.response.write(result.content)
       
-    
-  settings.ROUTES.extend((('/resolve_proxy', ResolveBackendProxy),
-                          ('/api/endpoint', BackendProxy),
-                          ('/api/model_meta', BackendProxy),
-                          ('/api/task/io_engine_run', BackendProxy),
-                          ('/api/install', BackendProxy),
-                          ('/api/login', BackendProxy, 'login'),
-                          ('/api/login/<provider>', BackendProxy, 'login_provider'),
-                          ('/api/logout', BackendProxy, 'logout')))
+  settings.ROUTES.append((r'/api/<:.*>', BackendProxy))

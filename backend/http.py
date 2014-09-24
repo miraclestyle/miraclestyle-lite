@@ -202,7 +202,9 @@ class Install(RequestHandler):
   
   def respond(self):
     out = []
-    only = self.request.get('only', '').split(',')
+    only = self.request.get('only')
+    if only:
+      only = only.split(',')
     for model, action in [('12', 'update'), ('24', 'update'), ('17', 'update_unit'), ('17', 'update_currency')]:
       if only and model not in only:
         continue
@@ -347,9 +349,26 @@ class Reset(BaseTestHandler):
     blobstore.delete(blobstore.BlobInfo.all().fetch(keys_only=True))
     mem.flush_all()
     
+
+class TestDuplication(BaseTestHandler):
+  
+  def respond(self):
+    iom.Engine.init()
+    a = orm.Key(urlsafe='ahdkZXZ-dW5pdmVyc2FsLXRyYWlsLTYwOHIsCxICMTEYgICAgICAgAoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgPilCww').get()
+    a.read()
+    b = a.duplicate()
+    self.send_json(['original', a, 'copy', b])
+
+    
 for k,o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):
     ROUTES.append(('/api/tests/%s' % o.__name__, o))
+
+# due development server bug, make additional routing with proxy prefix
+if settings.DEVELOPMENT_SERVER:
+  for route in list(ROUTES):
+    proxy_route = (route[0].replace('/api/', '/api/proxy/'), route[1])
+    ROUTES.append(proxy_route)
 
 ROUTES[:] = map(lambda args: webapp2.Route(*args), ROUTES)
 

@@ -159,11 +159,11 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     documents = []
     index_name = self.cfg.get('index', None)
     catalog_fields = {'root_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'root_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+                      'parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       'cover.value.serving_url': orm.SuperStringProperty(search_document_field_name='cover')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
     product_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
-                      'root_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'root_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+                      'parent_entity.parent_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
+                      'parent_entity.parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       '_product_category.value.parent_record': orm.SuperKeyProperty(kind='24', search_document_field_name='product_category_parent_record'),
                       '_product_category.value.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
                       '_product_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}

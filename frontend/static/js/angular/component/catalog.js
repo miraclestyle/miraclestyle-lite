@@ -637,6 +637,7 @@ MainApp
                    
                                          if (new_content)
                                          {
+                                            if (!$parentScope.child.contents) $parentScope.child.contents = [];
                                             $parentScope.child.contents.push($scope.content);
                                          }
                                          else
@@ -680,6 +681,7 @@ MainApp
                                           
                                          if (new_variant)
                                          {
+                                            if (!$parentScope.child.variants) $parentScope.child.variants = [];
                                             $parentScope.child.variants.push(this.variant);
                                          }
                                          else
