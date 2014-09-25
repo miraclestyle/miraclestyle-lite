@@ -2,12 +2,13 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
 
     function ($rootScope, Endpoint, EntityEditor, Title, $modal, Confirm) {
     	
-    	var scope = {
-    	
-        	'_manageAddress' : function (address, entity)
-        	{
-        		var $parentScope = this;
-        		var modalInstance = $modal.open({
+    	function make_scope() {
+    	    return {
+        
+            '_manageAddress' : function (address, entity)
+            {
+                var $parentScope = this;
+                var modalInstance = $modal.open({
                         templateUrl: logic_template('buyer/address_manage.html'),
                         controller: function ($scope, $modalInstance, RuleEngine) {
  
@@ -21,16 +22,16 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                
                                  if (new_address)
                                  {
-                                 	if (!entity.addresses)
-                                 	{
-                                 		entity.addresses = [];
-                                 	}
-                                 	 
-                                 	entity.addresses.push($scope.entity);
+                                    if (!entity.addresses)
+                                    {
+                                        entity.addresses = [];
+                                    }
+                                     
+                                    entity.addresses.push($scope.entity);
                                  }
                                  else
                                  {
-                                 	update(address, $scope.entity);
+                                    update(address, $scope.entity);
                                  }
                                  
                                  $parentScope._onAddressUpdate(address);
@@ -44,46 +45,48 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
 
                         }
                     });
-        	},
-    	 	'addAddress' : function ()
-    	 	{
-    	 		this._manageAddress(false, this.entity);
-    	 	},
-    	 	'editAddress' : function (address)
-    	 	{
-    	 		this._manageAddress(address, this.entity);
-    	 	},
-    	 	'removeAddress' : function (address)
-    	 	{
-    	 		address._state = 'deleted';
-  			      
-    	 	},
-    	 	
-    	 	'_onAddressUpdate' : function (updated_address)
-    	 	{
-    	 		angular.forEach(this.entity.addresses, function (address) {
-    	 			if (updated_address.default_billing || updated_address.default_shipping)
-    	 			{
-    	 				if (updated_address != address)
-    	 				{
-    	 					
-    	 					if (updated_address.default_billing)
-    	 					{
-    	 						address.default_billing = false;
-    	 					}
-    	 					
-    	 					if (updated_address.default_shipping)
-    	 					{
-    	 						address.default_shipping = false;
-    	 					}
-    	 				}
-    	 				 
-    	 			}
-    	 			
-    	 		});
-    	 	},
-    	 
-    	};
+            },
+            'addAddress' : function ()
+            {
+                this._manageAddress(false, this.entity);
+            },
+            'editAddress' : function (address)
+            {
+                this._manageAddress(address, this.entity);
+            },
+            'removeAddress' : function (address)
+            {
+                address._state = 'deleted';
+                  
+            },
+            
+            '_onAddressUpdate' : function (updated_address)
+            {
+                angular.forEach(this.entity.addresses, function (address) {
+                    if (updated_address.default_billing || updated_address.default_shipping)
+                    {
+                        if (updated_address != address)
+                        {
+                            
+                            if (updated_address.default_billing)
+                            {
+                                address.default_billing = false;
+                            }
+                            
+                            if (updated_address.default_shipping)
+                            {
+                                address.default_shipping = false;
+                            }
+                        }
+                         
+                    }
+                    
+                });
+            },
+         
+        };
+        
+    	}
   
         return {
             update: function (account, complete)
@@ -95,7 +98,7 @@ MainApp.factory('BuyerAddress', ['$rootScope', 'Endpoint', 'EntityEditor', 'Titl
                 return EntityEditor.update({
                 	 'kind' : '19',
                 	 'entity' : entity,
-                	 'scope' : scope,
+                	 'scope' : make_scope(),
                 	 'handle' : function (data)
 			         {
 			      		  this.history.args.account = entity['account'];

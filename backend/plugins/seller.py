@@ -15,6 +15,8 @@ import orm
 from tools.base import *
 from util import *
 
+__all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats']
+
 # @todo This plugin is pseudo coded, and needs to be rewritten!
 class SellerCronGenerateFeedbackStats(orm.BaseModel):
   
@@ -42,3 +44,25 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
                                                                    positive_count=positive_count,
                                                                    neutral_count=neutral_count,
                                                                    negative_count=negative_count))
+
+class SellerSetupDefaults(orm.BaseModel):
+  
+  def run(self, context):
+    SellerPluginContainer = context.models['22']
+    AddressRule = context.models['107']
+    PayPalPayment = context.models['108']
+    Unit = context.models['17']
+    seller = context._seller
+    plugin_group = seller._plugin_group
+    plugin_group.read()
+    plugin_group = plugin_group.value
+    if not plugin_group or not plugin_group.plugins: # now user wont be in able to delete config, he will always have these defaults
+      plugins = [AddressRule(exclusion=False, address_type='billing'),
+                 AddressRule(exclusion=False, address_type='shipping'),
+                 PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business='')
+                ]
+      if not plugin_group:
+        plugin_group = SellerPluginContainer(plugins=plugins)
+      else:
+        plugin_group.plugins = plugins
+      seller._plugin_group = plugin_group

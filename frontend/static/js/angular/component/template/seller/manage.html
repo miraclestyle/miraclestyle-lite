@@ -45,6 +45,136 @@
 		
 	</div>
 	</div>
+
+
+        
+    <div is-open="accordions.addresses" accordion-group heading="Adresses">
+         <div class="form-control">
+            <label class="form-label">Name</label>
+            <div class="form-input">
+                <div class="form-text">
+                     <input name="address_name" 
+                            ng-required="rule.input.update.addresses.modelclass.name.required"
+                            class="text-input" type="text" ng-model="entity.address.name"
+                            ng-disabled="!rule.field.address.name.writable" />
+                </div>
+            </div>
+         </div>
+         
+         <div class="form-control">
+            <label class="form-label">E-mail</label>
+            <div class="form-input">
+                <div class="form-text">
+                     <input name="address_email" 
+                            ng-required="rule.input.update.addresses.modelclass.email.required"
+                            class="text-input" type="text" ng-model="entity.address.email"
+                            ng-disabled="!rule.field.address.email.writable" />
+                </div>
+            </div>
+         </div>
+         
+         <div class="form-control">
+            <label class="form-label">Phone</label>
+            <div class="form-input">
+                <div class="form-text">
+                     <input name="address_telephone" 
+                            ng-required="rule.input.update.addresses.modelclass.telephone.required"
+                            class="text-input" type="text" ng-model="entity.address.telephone"
+                            ng-disabled="!rule.field.address.telephone.writable" />
+                </div>
+            </div>
+         </div>
+        
+         <div class="form-control">
+            <label class="form-label">Country</label>
+            <div class="form-input">
+                <input type="text" name="address_country" 
+                        ng-required="rule.input.update.addresses.modelclass.country.required"
+                        ng-disabled="!rule.field.address.country.writable"
+                        ui-select2="commonSelect2Options.country"
+                        ng-model="entity.address.country" data-placeholder="Select a country" />
+            </div>
+         </div>
+         
+        <div class="form-control">
+            <label class="form-label">State / Region</label>
+            <div class="form-input">
+                <input type="text" name="address_region" 
+                        ng-required="rule.input.update.addresses.modelclass.region.required"
+                        ng-disabled="!rule.field.address.region.writable"
+                        ui-select2="commonSelect2Options.region"
+                        data-country="entity.address.country"
+                        ng-model="entity.address.region" data-placeholder="Select a region" />
+            </div>
+         </div>
+        
+        <div class="form-control">
+            <label class="form-label">City</label>
+            <div class="form-input">
+                <div class="form-text">
+                     <input name="address_city" 
+                            ng-required="rule.input.update.addresses.modelclass.city.required"
+                            class="text-input" type="text" ng-model="entity.address.city"
+                            ng-disabled="!rule.field.address.city.writable" />
+                </div>
+            </div>
+         </div>
+        
+        <div class="form-control">
+            <label class="form-label">Postal Code</label>
+            <div class="form-input">
+                <div class="form-text">
+                     <input name="address_postal_code" 
+                            ng-required="rule.input.update.addresses.modelclass.postal_code.required"
+                            class="text-input" type="text" ng-model="entity.address.postal_code"
+                            ng-disabled="!rule.field.address.postal_code.writable" />
+                </div>
+            </div>
+         </div>
+         
+        <div class="form-control">
+            <label class="form-label">Street</label>
+            <div class="form-input">
+                <div class="form-text">
+                     <input name="address_street" 
+                            ng-required="rule.input.update.addresses.modelclass.street.required"
+                            class="text-input" type="text" ng-model="entity.address.street"
+                            ng-disabled="!rule.field.address.street.writable" />
+                </div>
+            </div>
+         </div>
+    </div>
+    
+    
+        
+    <div is-open="accordions.contents" accordion-group heading="Contents">
+            <h2 class="fieldset with-button">
+                <span class="fieldset-text">Contents</span>
+                <span class="fieldset-button">
+                    <button ng-show="rule.field._content.documents.writable" ng-click="manageContent()" type="button" class="button">Add Content</button>
+                </span>
+            </h2>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="content in entity._content.documents track by $index" ng-hide="content._state == 'deleted'">
+                        <td>{{content.title}}</td>
+                        <td>
+                            <span ng-show="rule.field._content.documents.writable">
+                                <button type="button" ng-click="removeContent(content)" class="button">Remove</button>
+                                <button type="button" ng-click="manageContent(content)" class="button">Edit</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+    </div>
 	
 	<div is-open="accordions.plugin_groups" accordion-group heading="Configuration">
     
@@ -80,6 +210,11 @@
         </div>
       
     </div>
+    
+    
+
+    
+    
     </div>
 	
 	  

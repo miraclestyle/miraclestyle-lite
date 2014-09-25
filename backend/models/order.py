@@ -28,7 +28,7 @@ class OrderLineTax(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   code = orm.SuperStringProperty('2', required=True, indexed=False)
-  formula = orm.SuperPickleProperty('3', required=True, indexed=False)
+  formula = orm.SuperPickleProperty('3', required=True, indexed=False) # this is pickle, and it stores ['percentage', value] for now.
 
 
 class OrderLine(orm.BaseExpando):
@@ -45,14 +45,14 @@ class OrderLine(orm.BaseExpando):
   product_category_reference = orm.SuperKeyProperty('6', kind='24', required=True, indexed=False)
   code = orm.SuperStringProperty('7', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('8', required=True, indexed=False)
-  product_uom = orm.SuperLocalStructuredProperty(UOM, '9', required=True)  # @todo Or Unit (or _kind, 16 stands for UOM model, 17 for Unit)!?
+  product_uom = orm.SuperLocalStructuredProperty(Unit, '9', required=True)  # @todo Or Unit (or _kind, 16 stands for UOM model, 17 for Unit)!?
   quantity = orm.SuperDecimalProperty('10', required=True, indexed=False)
   discount = orm.SuperDecimalProperty('11', required=True, indexed=False)
   taxes = orm.SuperLocalStructuredProperty(OrderLineTax, '12', repeated=True)
   subtotal = orm.SuperDecimalProperty('13', required=True, indexed=False)
   discount_subtotal = orm.SuperDecimalProperty('14', required=True, indexed=False)
   total = orm.SuperDecimalProperty('15', required=True, indexed=False)
-  # @todo this was missing
+  # @todo this was missing, not sure if we need this here?
   tax_subtotal = orm.SuperDecimalProperty('16', required=True, indexed=False)
   
   _default_indexed = False
@@ -75,16 +75,16 @@ class Order(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  name = orm.SuperStringProperty('3', required=True)  # @todo Not sure if we need this, or how to use it to construct some unique order name?
+  name = orm.SuperStringProperty('3', required=True)  # @todo Not sure if we need this, or how to use it to construct some unique order name? # possible usage of sharding if we want for example SAJ-<incremented id of order> or just use key.id() ?
   state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'processing', 'completed', 'canceled'])
   date = orm.SuperDateTimeProperty('5', required=True)
   seller_reference = orm.SuperKeyProperty('6', kind='23', required=True)
-  seller_address = orm.SuperLocalStructuredProperty('15', '7', required=False) # @todo SELLER ADDRESS required SET TO FALSE for testing purposes for now!!!
+  seller_address = orm.SuperLocalStructuredProperty('15', '7', required=True)
   billing_address_reference = orm.SuperKeyProperty('8', kind='14', required=True, indexed=False)
   shipping_address_reference = orm.SuperKeyProperty('9', kind='14', required=True, indexed=False)
   billing_address = orm.SuperLocalStructuredProperty('15', '10', required=True)
   shipping_address = orm.SuperLocalStructuredProperty('15', '11', required=True)
-  currency = orm.SuperLocalStructuredProperty(UOM, '12', required=True)  # @todo Or Unit (or _kind, 16 stands for UOM model, 17 for Unit)!?
+  currency = orm.SuperLocalStructuredProperty(Unit, '12', required=True)  # @todo Or Unit (or _kind, 16 stands for UOM model, 17 for Unit)!?
   untaxed_amount = orm.SuperDecimalProperty('13', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
@@ -203,7 +203,6 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'add_to_cart'),
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
-        'seller': orm.SuperKeyProperty(kind='23', required=True), # @todo not sure if we need this here since the product carries entire ancestor path.
         'product': orm.SuperKeyProperty(kind='28', required=True),
         'variant_signature': orm.SuperJsonProperty()
         },

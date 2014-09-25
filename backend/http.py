@@ -355,8 +355,8 @@ class TestDuplication(BaseTestHandler):
   def respond(self):
     iom.Engine.init()
     a = orm.Key(urlsafe='ahdkZXZ-dW5pdmVyc2FsLXRyYWlsLTYwOHIsCxICMTEYgICAgICAgAoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgPilCww').get()
-    a.read()
-    b = a.duplicate()
+    a.read({'_images': {}})
+    b = None
     self.send_json(['original', a, 'copy', b])
 
     

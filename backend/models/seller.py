@@ -76,7 +76,7 @@ class SellerPluginContainer(orm.BaseModel):
   
   _use_rule_engine = False
   
-  plugins = orm.SuperPluginStorageProperty(('11',), '1', required=True, default=[], compressed=False)
+  plugins = orm.SuperPluginStorageProperty(('107', '108'), '1', required=True, default=[], compressed=False)
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
@@ -165,11 +165,8 @@ class Seller(orm.BaseExpando):
                            '_seller.logo': 'input.logo',
                            '_seller.address': 'input.address',
                            '_seller._content': 'input._content',
-                           '_seller._plugin_group.value.plugins': 'input._plugin_group.plugins'}}), 
-                           # this is was a bug, we cannot do direct sets on property values because previous value will be lost
-                           # in this case setting seller._plugin_group with input._plugin_group, the sellers plugin group current value
-                           # would be completely lost (overriden) in this process, see 
-                           # we must set values indirectly to perform correct sets
+                           '_seller._plugin_group': 'input._plugin_group'}}),
+            SellerSetupDefaults(),
             RulePrepare(),
             RuleExec()
             ]

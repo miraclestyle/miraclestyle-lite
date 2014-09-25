@@ -621,7 +621,6 @@ class _BaseModel(object):
   def _post_put_hook(self, future):
     entity = self
     entity.record()
-    print entity.key, future
     for field_key, field in entity.get_fields().iteritems():
       value = getattr(entity, field_key, None)
       if isinstance(value, PropertyValue) and hasattr(value, 'post_update'):
@@ -1111,13 +1110,7 @@ class _BaseModel(object):
         if hasattr(field, 'is_structured') and field.is_structured:
           value = getattr(self, field_key)
           value.read_async(field_read_arguments)
-          # I don't think these should be keyword arguments because read_arguments is a dictionary that will get
-          # passed around as it goes from funciton to funciton, so in that case it may be better not to use keyword arguments,
-          # since this just 1 argument approach is perhaps faster.
           futures.append((value, field_read_arguments)) # we have to pack them all for .read()
-        elif isinstance(field, SuperReferenceProperty) and field._autoload is False:
-          value = field._get_value(self, internal=True)
-          value.read_async() # for super-reference we always just call read_async() we do not pack it for future.get_result()
     for future, field_read_arguments in futures:
       future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
@@ -1142,7 +1135,7 @@ class _BaseModel(object):
   @classmethod
   def increment_duplicated_id(cls, value):
     results = re.findall(r'(.*)_duplicate_(.*)', value)
-    return '%s_duplicate_%s' % (results[0], long(results[1])+1)
+    return '%s_duplicate_%s' % (results[0], str(uuid.uuid4()))
   
   def duplicate_key_id(self, key=None):
     '''If key is provided, it will use its id for construction'''
@@ -1229,7 +1222,7 @@ class _BaseModel(object):
       original = copy.deepcopy(self)
       self._original = original
       # recursevely specify original for all locally structured properties.
-      # this is because we have huge depency on _original, so we need to have it at its children as well
+      # this is because we have huge depency on _original, so we need to have it on its children as well
       def scan(value, field_key, field, original):
         if isinstance(value, PropertyValue) and value.has_value():
           scan(value.value, field_key, field, original.value)
@@ -1676,7 +1669,7 @@ class StructuredPropertyValue(PropertyValue):
           self._property_value = property_value
       else:
         if self.has_value() and self._property_value is not None:
-          existing = dict((ent.key.urlsafe(), ent) for ent in self._property_value)
+          existing = dict((ent.key.urlsafe(), ent) for ent in self._property_value if ent.key)
           new_list = []
           for ent in property_value:
             # this is to support proper setting of data for existing instances
@@ -2027,7 +2020,9 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   def _duplicate_single(self):
     self.read()
     self._property_value.read()
-    self._property_value = self._property_value.duplicate()
+    duplicated = self._property_value.duplicate()
+    duplicated.set_key(self._entity.key_id_str, parent=self._entity.key)
+    self._property_value = duplicated
   
   def _duplicate_repeated(self):
     '''Fetch ALL entities that belong to this entity.
@@ -3705,20 +3700,11 @@ class Record(BaseExpando):
     }
   
   def _retrieve_agent_name(self, value):
-    # We have to involve Domain User here, although ndb should be unavare of external models!
-    if value.key.kind() == '8':
-      return value.name
-    else:
-      return value._primary_email
+    return value._primary_email
   
   def _retreive_agent(self):
     # We have to involve Domain User here, although ndb should be unavare of external models!
-    entity = self
-    if entity.key_namespace and entity.agent.id() != 'system':
-      domain_user_key = Key('8', str(entity.agent.id()), namespace=entity.key_namespace)
-      return domain_user_key.get_async()
-    else:
-      return entity.agent.get_async()
+    return self.agent.get_async()
   
   def _retrieve_action(self):
     entity = self

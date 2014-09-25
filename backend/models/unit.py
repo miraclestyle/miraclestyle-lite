@@ -13,41 +13,6 @@ from plugins.base import *
 from plugins.unit import *
 
 
-class UOM(orm.BaseExpando):  # @todo Rename it!
-  
-  _kind = 16
-  
-  _use_rule_engine = False
-  
-  measurement = orm.SuperStringProperty('1', required=True, indexed=False)
-  name = orm.SuperStringProperty('2', required=True, indexed=False)
-  symbol = orm.SuperStringProperty('3', required=True, indexed=False)
-  # @todo rate and factor cannot be always required, see unit for reference
-  rate = orm.SuperDecimalProperty('4', required=False, indexed=False)
-  factor = orm.SuperDecimalProperty('5', required=False, indexed=False)
-  rounding = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  digits = orm.SuperIntegerProperty('7', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    # @todo not always all expando properties can be required
-    'code': orm.SuperStringProperty('8', required=False),
-    'numeric_code': orm.SuperStringProperty('9'),
-    'grouping': orm.SuperIntegerProperty('10', repeated=True),
-    'decimal_separator': orm.SuperStringProperty('11', required=False),
-    'thousands_separator': orm.SuperStringProperty('12'),
-    'positive_sign_position': orm.SuperIntegerProperty('13', required=False),
-    'negative_sign_position': orm.SuperIntegerProperty('14', required=False),
-    'positive_sign': orm.SuperStringProperty('15'),
-    'negative_sign': orm.SuperStringProperty('16'),
-    'positive_currency_symbol_precedes': orm.SuperBooleanProperty('17', default=True),
-    'negative_currency_symbol_precedes': orm.SuperBooleanProperty('18', default=True),
-    'positive_separate_by_space': orm.SuperBooleanProperty('19', default=True),
-    'negative_separate_by_space': orm.SuperBooleanProperty('20', default=True)
-    }
-
-
 class Unit(orm.BaseExpando):
   
   _kind = 17
@@ -169,17 +134,3 @@ class Unit(orm.BaseExpando):
         ]
       )
     ]
-  
-  # @todo Do we make this a property named _uom or something similar ?
-  def get_uom(self):
-    '''This is because using unit_key.get() does not guarantee fresh new instance of unit
-    that can be referenced as a entity, thats why we always create new instance of UOM.
-    '''
-    new_uom = UOM()
-    uom_fields = UOM.get_fields()
-    new_uom.set_key(self.key.id(), parent=self.key.parent())
-    for field_key, field in uom_fields.iteritems():
-      value = getattr(self, field_key)
-      if value is not None:
-        setattr(new_uom, field_key, value)
-    return new_uom

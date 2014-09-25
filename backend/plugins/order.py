@@ -33,14 +33,23 @@ class OrderInit(orm.BaseModel):
   
   def run(self, context):
     Order = context.models['34']
-    order = Order.query(Order.seller_reference == context.input.get('seller'),
+    seller_key = context.input.get('seller')
+    if not seller_key:
+      product = context.input.get('product')
+      if not product:
+        raise PluginError('seller_missing')
+      seller_key = product.parent().parent() # go 2 levels up, account->seller->catalog->product
+    order = Order.query(Order.seller_reference == seller_key,
                         Order.state.IN(['cart', 'checkout', 'processing']),
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this
     if order is None:
-      order = Order(parent=context.input.get('buyer'), name='Default Order Name') # we need name
+      order = Order(parent=context.input.get('buyer'), name='Default Order Name') # we need a name for this
       order.state = 'cart'
       order.date = datetime.datetime.now()
-      order.seller_reference = context.input.get('seller')
+      order.seller_reference = seller_key
+      seller = seller_key.get()
+      seller.read() # read locals
+      order.seller_address = get_location(seller.address.value)
     else:
       order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
     context._order = order
@@ -57,13 +66,15 @@ class PluginExec(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
+    plugin_kinds = self.cfg.get('kinds') # this is the flexibility we need, just to specify which plugin kinds to execute
     order = context._order
-    plugin_container = orm.Key('22', order.seller_reference._id_str, parent=order.seller_reference).get()
     seller = order.seller_reference.get()
-    seller.read({'_plugin_group': {}})
+    seller.read({'_plugin_group': {'plugins': {}}}) # read plugin container
     plugin_container = seller._plugin_group.value
     if plugin_container:
       for plugin in seller._plugin_group.value.plugins:
+        if plugin_kinds is not None and plugin.get_kind() not in plugin_kinds:
+          continue
         plugin.run(context)
 
 
@@ -85,8 +96,8 @@ class ProductToOrderLine(orm.BaseModel):
       for line in order._lines.value:
         if hasattr(line, 'product_reference') and line.product_reference == product_key \
         and line.product_variant_signature == variant_signature:
-          line._state = 'modified'  # @todo Not sure if this is ok!?
-          line.quantity = line.quantity + format_value('1', line.product_uom)
+          line._state = 'modified'
+          line.quantity = line.quantity + format_value('1', line.product_uom.value)
           line_exists = True
           break
     if not line_exists:
@@ -99,7 +110,7 @@ class ProductToOrderLine(orm.BaseModel):
       new_line = Line()
       new_line.sequence = 0
       if order._lines.value:
-        new_line.sequence = order._lines[-1].sequence + 1
+        new_line.sequence = order._lines.value[-1].sequence + 1
       new_line.description = product.name
       new_line.product_reference = product_key
       new_line.product_variant_signature = variant_signature
@@ -107,9 +118,9 @@ class ProductToOrderLine(orm.BaseModel):
       new_line.product_category_reference = product.product_category
       new_line.code = product.code
       new_line.unit_price = product.unit_price
-      new_line.product_uom = product.product_uom.get().get_uom()
+      new_line.product_uom = copy.deepcopy(product.product_uom.get())
       new_line.quantity = format_value('1', new_line.product_uom.value)
-      new_line.discount = format_value('0', UOM(digits=4))
+      new_line.discount = format_value('0', Unit(digits=4))
       if hasattr(product, 'weight'):
         new_line._weight = product.weight  # @todo Perhaps we might need to build these fields during certain actions, and not only while adding new lines (to ensure thir life accros carrier plugins)!
         new_line._weight_uom = product.weight_uom
@@ -127,7 +138,11 @@ class ProductToOrderLine(orm.BaseModel):
         if hasattr(product_instance, 'volume'):
           new_line._volume = product_instance.volume
           new_line._volume_uom = product_instance.volume_uom
-      order._lines = [new_line]
+      lines = order._lines.value
+      if lines is None:
+        lines = []
+      lines.append(new_line)
+      order._lines = lines
 
 
 # This is system plugin, which means end user can not use it!
@@ -143,7 +158,7 @@ class OrderLineFormat(orm.BaseModel):
       if hasattr(line, 'product_reference'):
         if order.seller_reference._root != line.product_reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
-        line.discount = format_value(line.discount, UOM(digits=4))
+        line.discount = format_value(line.discount, Unit(digits=4))
         if line.quantity <= Decimal('0'):
           line._state = 'deleted'
         else:
@@ -156,10 +171,10 @@ class OrderLineFormat(orm.BaseModel):
           for tax in line.taxes.value:
             if (tax.formula[0] == 'percent'):
               tax_amount = format_value(tax.formula[1], order.currency.value) * format_value('0.01', order.currency.value)  # or "/ DecTools.form('100')"
-              tax_subtotal += line.total * tax_amount
+              tax_subtotal = tax_subtotal + (line.total * tax_amount)
             elif (tax.formula[0] == 'amount'):
               tax_amount = format_value(tax.formula[1], order.currency.value)
-              tax_subtotal += tax_amount
+              tax_subtotal = tax_subtotal + tax_amount
         line.tax_subtotal = tax_subtotal
 
 
@@ -180,14 +195,14 @@ class OrderFormat(orm.BaseModel):
       if hasattr(line, 'product_reference'):
         untaxed_amount = untaxed_amount + line.subtotal
         tax_amount = tax_amount + line.tax_subtotal
-        total_amount = total_amount+ (line.subtotal + line.tax_subtotal) # we cannot use += for decimal its not supported
+        total_amount = total_amount + (line.subtotal + line.tax_subtotal) # we cannot use += for decimal its not supported
     order.untaxed_amount = format_value(untaxed_amount, order.currency.value)
     order.tax_amount = format_value(tax_amount, order.currency.value)
     order.total_amount = format_value(total_amount, order.currency.value)
 
 
 # Not a plugin!
-class Location(orm.BaseModel): # @todo this should be renamed to avoid collsion of names in location.py
+class AddressRuleLocation(orm.BaseModel):
   
   _kind = 106
   
@@ -211,6 +226,7 @@ class AddressRule(orm.BaseModel):
   locations = orm.SuperLocalStructuredProperty(Location, '3', repeated=True, indexed=False)
   
   def run(self, context):
+    self.read() # read locals
     order = context._order
     valid_addresses = collections.OrderedDict()
     default_address = None
@@ -221,7 +237,7 @@ class AddressRule(orm.BaseModel):
     input_address_reference = context.input.get(address_reference_key)
     order_address_reference = getattr(order, address_reference_key, None)
     buyer_addresses = order.key_parent.get()
-    buyer_addresses.read({'addresses': {}})
+    buyer_addresses.read() # read locals
     if buyer_addresses is None:
       raise PluginError('no_address')
     for buyer_address in buyer_addresses.addresses.value:
@@ -246,13 +262,24 @@ class AddressRule(orm.BaseModel):
       raise PluginError('no_address_found')
   
   def validate_address(self, address):
+    '''
+    @todo few problems with postal_code_from and postal_code_to
+    Postal code cant always be a number unless its like that in countries.
+    
+    postal_code_from and postal_code_to must be converted into int, because strings cant be compared 
+    to achive logical result other than native string's comparing logic:
+    
+    native strings compare method:
+    __cmp__(self, other)
+      return len(self) > len(other)
+      
+    '''
     if self.exclusion:
       # Shipping only at the following locations.
       allowed = False
     else:
       # Shipping everywhere except at the following locations.
       allowed = True
-    self.read()
     for loc in self.locations.value:
       if not (loc.region and loc.postal_code_from and loc.postal_code_to):
         if (address.country == loc.country):
@@ -292,7 +319,7 @@ class PayPalPayment(orm.BaseModel):
   def run(self, context):
     order = context._order
     # In context of add_to_cart action runner does the following:
-    order.currency = self.currency.get().get_uom()
+    order.currency = copy.deepcopy(self.currency.get())
     order.paypal_reciever_email = self.reciever_email
     order.paypal_business = self.business
 
@@ -316,17 +343,23 @@ class Tax(orm.BaseModel):
   product_categories = orm.SuperKeyProperty('8', kind='17', repeated=True, indexed=False)
   
   def run(self, context):
+    self.read() # read locals
     order = context._order
     allowed = self.validate_tax(order)
-    for line in order._lines:
-      for tax in line.taxes:
+    for line in order._lines.value:
+      taxes = line.taxes.value
+      if not taxes:
+        taxes = []
+      for tax in taxes:
         if tax.key == self.key:
           tax._state = 'deleted'
       if (self.carriers and self.carriers.count(line.carrier_reference)) \
       or (self.product_categories and self.product_categories.count(line.product_category)):  # @todo Have to check if all lines have carrier_reference property??
         if allowed:
           tax_exists = False
-          for tax in line.taxes:
+          for tax in taxes:
+            if tax._state == 'deleted':
+              continue
             if tax.key == self.key:
               tax._state = 'modified'
               tax.name = self.name
@@ -335,20 +368,21 @@ class Tax(orm.BaseModel):
               tax_exists = True
               break
           if not tax_exists:
-            line.taxes.append(order.OrderLineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
+            taxes.append(order.OrderLineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
+            line.taxes = taxes
   
   def validate_tax(self, order):
     address = None
     address_reference_key = '%s_address_reference' % self.address_type
     order_address_reference = getattr(order, address_reference_key, None)
-    if order_address_reference is None:  # @todo Is this ok??
+    if order_address_reference is None:
       return False
     buyer_addresses = order.key_parent.get()
-    for buyer_address in buyer_addresses.addresses:
+    for buyer_address in buyer_addresses.addresses.value:
       if buyer_address.key == order_address_reference:
         address = buyer_address
         break
-    if address is None:  # @todo IS this ok??
+    if address is None:
       return False
     if self.exclusion:
       # Apply only at the following locations.
@@ -356,7 +390,7 @@ class Tax(orm.BaseModel):
     else:
       # Apply everywhere except at the following locations.
       allowed = True
-    for loc in self.locations:
+    for loc in self.locations.value:
       if not (loc.region and loc.postal_code_from and loc.postal_code_to):
         if (address.country == loc.country):
           allowed = self.exclusion
@@ -373,17 +407,16 @@ class Tax(orm.BaseModel):
         if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
           allowed = self.exclusion
           break
-    # @todo This block need changes!
     if allowed:
       # If tax is configured for carriers then check if the order references carrier on which the tax applies.
-      if self.carriers:
+      if self.carriers.value:
         allowed = False
-        if order.carrier_reference and self.carrieres.count(order.carrier_reference):
+        if order.carrier_reference and order.carrier_reference.urlsafe() in [carrier.key.urlsafe() for carrier in self.carrieres.value]:
           allowed = True
       # If tax is configured for product categories, then check if the order contains a line which has product category to which the tax applies.
       elif self.product_categories:
         allowed = False
-        for line in order._lines:
+        for line in order._lines.value:
           if self.product_categories.count(line.product_category):
             allowed = True
             break
@@ -426,36 +459,37 @@ class Carrier(orm.BaseModel):
   lines = orm.SuperLocalStructuredProperty(CarrierLine, '2', repeated=True)
   
   def run(self, context):
-    entry = context._group.get_entry(context.model.journal)
+    self.read() # read locals
+    order = context._order
     valid_lines = []
-    for carrier_line in self.lines:
-      if self.validate_line(carrier_line, entry):
+    for carrier_line in self.lines.value:
+      if self.validate_line(carrier_line, order):
         valid_lines.append(carrier_line)
-    carrier_price = self.calculate_lines(valid_lines, entry)
+    carrier_price = self.calculate_lines(valid_lines, order)
     if 'carriers' not in context.output:
       context.output['carriers'] = []
     context.output['carriers'].append({'name': self.name,
                                        'price': carrier_price,
                                        'id': self.key.urlsafe()})
   
-  def calculate_lines(self, valid_lines, entry):
+  def calculate_lines(self, valid_lines, order):
     weight_uom = Unit.build_key('kilogram').get()
     volume_uom = Unit.build_key('cubic_meter').get()
     weight = format_value('0', weight_uom)
     volume = format_value('0', volume_uom)
-    for line in entry._lines:
+    for line in order._lines.value:
       line_weight = line._weight
       line_weight_uom = line._weight_uom.get()
       line_volume = line._volume
       line_volume_uom = line._volume_uom.get()
-      weight += convert_value(line_weight, line_weight_uom, weight_uom)
-      volume += convert_value(line_volume, line_volume_uom, volume_uom)
+      weight = weight + convert_value(line_weight, line_weight_uom, weight_uom)
+      volume = volume + convert_value(line_volume, line_volume_uom, volume_uom)
       carrier_prices = []
       for carrier_line in valid_lines:
         line_prices = []
-        for rule in carrier_line.rules:
+        for rule in carrier_line.rules.value:
           condition = rule.condition
-          condition = self.format_value(condition)  # @todo this regex needs to go out of here
+          condition = self.format_value(condition)
           price = rule.price
           if safe_eval(condition, {'weight': weight, 'volume': volume, 'price': price}):
             price = self.format_value(price)
@@ -465,25 +499,40 @@ class Carrier(orm.BaseModel):
       return min(carrier_prices)  # Return the lowest price possible of all lines!
   
   def format_value(self, value):
+    '''
+    Examples
+    print format_value('unit(100, kilogram)')
+    >>>Decimal("100")
+    print format_value('unit(100.000,       meter)')
+    >>>Decimal("100.000")
+    print format_value('unit(143,kilogram)')
+    >>>Decimal("143")
+    
+    We use unit() as fake function expression in order to avoid collisions between
+     tuples that wont contain actual value, unit pairs.
+     
+    Here we use id of the unit instead of the urlsafe, because urlsafe is not very friendly for usage.
+    '''
     def run_format(match):
       matches = match.groups()
-      unit = orm.Key(urlsafe=matches[1]).get()
-      return 'Decimal("%s")' % format_value(matches[0], unit.get_uom(unit))  # @todo To correct!
-      # this regex needs more work
-    value = re.sub('\((.*)\,(.*)\)', run_format, value)
+      unit_id = str(matches[1])
+      unit = Unit.build_key(unit_id).get()
+      amount = str(matches[0])
+      return 'Decimal("%s")' % format_value(amount, unit)
+    value = re.sub('unit\((.*)\,\s*(.*)\)', run_format, value)
     return value
   
   def validate_line(self, carrier_line, entry):
     address = None
     entry_address_reference = getattr(entry, 'shipping_address_reference', None)
-    if entry_address_reference is None:  # @todo Is this ok??
+    if entry_address_reference is None:
       return False
     buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
     for buyer_address in buyer_addresses.addresses:
       if buyer_address.internal_id == entry_address_reference:
         address = buyer_address
         break
-    if address is None:  # @todo IS this ok??
+    if address is None:
       return False
     if carrier_line.exclusion:
       # Apply only at the following locations.
@@ -511,17 +560,17 @@ class Carrier(orm.BaseModel):
     if allowed:
       allowed = False
       price = entry.amount_total
-      weight_uom = uom.get_uom(uom.Unit.build_key('kg', parent=uom.Measurement.build_key('metric')))  # @todo To correct!
-      volume_uom = uom.get_uom(uom.Unit.build_key('m3', parent=uom.Measurement.build_key('metric')))  # @todo To correct!
+      weight_uom = Unit.build_key('kilogram').get()
+      volume_uom = Unit.build_key('cubic_meter').get()
       weight = format_value('0', weight_uom)
       volume = format_value('0', volume_uom)
-      for line in entry._lines:
-        line_weight = line._weight[0]
-        line_weight_uom = uom.get_uom(orm.Key(urlsafe=line._weight[1]))  # @todo To correct!
-        line_volume = line._volume[0]
-        line_volume_uom = uom.get_uom(orm.Key(urlsafe=line._volume[1]))  # @todo To correct!
-        weight += uom.convert_value(line_weight, line_weight_uom, weight_uom)
-        volume += uom.convert_value(line_volume, line_volume_uom, volume_uom)
+      for line in entry._lines.value:
+        line_weight = line._weight
+        line_weight_uom = line_weight.get()
+        line_volume = line._volume
+        line_volume_uom = line_volume.get()
+        weight = weight + convert_value(line_weight, line_weight_uom, weight_uom)
+        volume = volume + convert_value(line_volume, line_volume_uom, volume_uom)
       for rule in carrier_line.rules:
         condition = rule.condition
         condition = self.format_value(condition)

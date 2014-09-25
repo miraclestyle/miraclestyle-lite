@@ -106,6 +106,7 @@ MainApp
                                                     $scope.entity = data.entity;
                                                     $scope.child = _.findWhere($scope.entity._products, {key : pricetag.product});
                                                     $scope.current_variant = null;
+                                                    $scope.product_key = $scope.child.key;
                                                     
                                                     $scope.original_child = angular.copy($scope.child);
                                                     
@@ -123,8 +124,7 @@ MainApp
                                                             
                                                             Endpoint.post('add_to_cart', '34', {
                                                                 'buyer': buyer.entity.key,
-                                                                'seller': $parentScope.entity.parent.key,
-                                                                'product': $scope.child.key,
+                                                                'product': $scope.product_key,
                                                                 'variant_signature': $scope.current_variant,
                                                             }).success(function (data) {
                                                                 console.log(data);
