@@ -1133,9 +1133,14 @@ class _BaseModel(object):
       self.unindex_search_documents()
   
   @classmethod
-  def increment_duplicated_id(cls, value):
-    results = re.findall(r'(.*)_duplicate_(.*)', value)
-    return '%s_duplicate_%s' % (results[0], str(uuid.uuid4()))
+  def generate_duplicated_string(cls, value):
+    results = re.match(r'(.*)_duplicate_(.*)', value)
+    duplicate = '%s_duplicate_%s'
+    uid = str(uuid.uuid4())
+    if not results:
+      return duplicate % (value, uid)
+    results = results.groups()
+    return duplicate % (results[0], uid)
   
   def duplicate_key_id(self, key=None):
     '''If key is provided, it will use its id for construction'''
@@ -1143,10 +1148,7 @@ class _BaseModel(object):
       the_id = self.key_id_str
     else:
       the_id = key._id_str
-    try:
-      the_id = self.increment_duplicated_id(the_id)
-    except (IndexError, ValueError):
-      the_id = '%s_duplicate_%s' % (the_id, 1)
+    the_id = self.generate_duplicated_string(the_id)
     return the_id
   
   def duplicate(self):
