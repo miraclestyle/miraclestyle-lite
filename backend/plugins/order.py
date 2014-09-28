@@ -208,11 +208,13 @@ class AddressRuleLocation(orm.BaseModel):
   
   _use_rule_engine = False
   
-  country = orm.SuperKeyProperty('1', kind='15', required=True, indexed=False)
-  region = orm.SuperKeyProperty('2', kind='16', indexed=False)
-  postal_code_from = orm.SuperStringProperty('3', indexed=False)
-  postal_code_to = orm.SuperStringProperty('4', indexed=False)
-  city = orm.SuperStringProperty('5', indexed=False)
+  name = orm.SuperStringProperty('1', required=True)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  country = orm.SuperKeyProperty('3', kind='15', required=True, indexed=False)
+  region = orm.SuperKeyProperty('4', kind='16', indexed=False)
+  postal_code_from = orm.SuperStringProperty('5', indexed=False)
+  postal_code_to = orm.SuperStringProperty('6', indexed=False)
+  city = orm.SuperStringProperty('7', indexed=False)
 
 
 class AddressRule(orm.BaseModel):
@@ -223,7 +225,7 @@ class AddressRule(orm.BaseModel):
   
   exclusion = orm.SuperBooleanProperty('1', required=True, default=False, indexed=False)
   address_type = orm.SuperStringProperty('2', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  locations = orm.SuperLocalStructuredProperty(Location, '3', repeated=True, indexed=False)
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '3', repeated=True, indexed=False)
   
   def run(self, context):
     self.read() # read locals
@@ -332,15 +334,16 @@ class Tax(orm.BaseModel):
   _use_rule_engine = False
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
-  code = orm.SuperStringProperty('2', required=True, indexed=False)  # @todo Not sure if we need this!
-  formula = orm.SuperPickleProperty('3', required=True, indexed=False)  # @todo Formula has to be defined as touple (type, amount) (e.g. ('%', 15))! Or we can make it something different!
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  code = orm.SuperStringProperty('3', required=True, indexed=False)  # @todo Not sure if we need this!
+  formula = orm.SuperPickleProperty('4', required=True, indexed=False)  # @todo Formula has to be defined as touple (type, amount) (e.g. ('%', 15))! Or we can make it something different!
   # formula needs to be pickle property, because we completely need to avoid using regex
   # or we can use custom property for it, even better.
-  exclusion = orm.SuperBooleanProperty('4', required=True, default=False, indexed=False)
-  address_type = orm.SuperStringProperty('5', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  locations = orm.SuperLocalStructuredProperty(Location, '6', repeated=True)
-  carriers = orm.SuperKeyProperty('7', repeated=True, indexed=False)  # this is now possible since struct props have keys and can be identified.
-  product_categories = orm.SuperKeyProperty('8', kind='17', repeated=True, indexed=False)
+  exclusion = orm.SuperBooleanProperty('5', required=True, default=False, indexed=False)
+  address_type = orm.SuperStringProperty('6', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '7', repeated=True) # @todo AddressRuleLocation or what?
+  carriers = orm.SuperKeyProperty('8', kind='113', repeated=True, indexed=False)  # this is now possible since struct props have keys and can be identified.
+  product_categories = orm.SuperKeyProperty('9', kind='24', repeated=True, indexed=False)
   
   def run(self, context):
     self.read() # read locals

@@ -76,7 +76,7 @@ class SellerPluginContainer(orm.BaseModel):
   
   _use_rule_engine = False
   
-  plugins = orm.SuperPluginStorageProperty(('107', '108'), '1', required=True, default=[], compressed=False)
+  plugins = orm.SuperPluginStorageProperty(('107', '108', '109', '113'), '1', required=True, default=[], compressed=False)
   
   @classmethod
   def prepare_key(cls, input, **kwargs):

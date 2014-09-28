@@ -142,5 +142,10 @@
 	{% block content %}
 	<div class="content" ui-view></div>
 	{% endblock %}
+	
+	<div class="adb-lookup" ng-controller="DBLookup">
+	    <button class="button" ng-click="getForm()">Lookup...</button>
+	</div>
+	
   </body> 
 </html>

@@ -1357,4 +1357,261 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		    Title.reset();
 		});
   
+}]).controller('DBLookup', ['$scope', 'Endpoint', '$modal', function (scope, Endpoint, $modal) {
+    
+    scope.getForm = function ()
+    {
+          var modalInstance = $modal.open({
+              templateUrl: logic_template('misc/db_lookup.html'),
+              controller: function ($scope, $modalInstance, RuleEngine) {
+                   
+                $scope.results = [];
+                $scope.results2 = [];
+                $scope.result = null;
+                $scope.stuff = {'result2': null};
+                
+                $scope.cancel = function ()
+                {
+                    $modalInstance.dismiss();
+                };
+                
+                $scope.setResult = function ()
+                {
+                 
+                    $scope.result = $scope.results[$scope.stuff.result2];  
+                };
+                
+                
+                $scope.dblookup = {
+                    'kind' : null,
+                    'hide' : false,
+                    'filters' : {},
+                    'indexes' : [],
+                    'index_id' : null,
+                    'resetFilters' : function ()
+                    {
+                        this.send.filters = [];
+                        this.send.orders = [];
+                    },
+                    'changeKindUI' : function ()
+                    {
+                        this.changeKind();
+                        this.setSearch(this.kind, undefined);  
+                    },
+                    'changeKind' : function ()
+                    {
+                     
+                        var kindinfo = KINDS.get(this.kind);
+                        if (kindinfo)
+                        {
+                            var search_argument = null;
+                            
+                            try
+                            {
+                                search_argument = kindinfo.mapped_actions['search']['arguments']['search']; 
+                                
+                                this.default_send = search_argument['default'];
+                            }
+                            catch(e){}
+                            
+                            if (!search_argument)
+                            {
+                                this.hide = true;
+                                search_argument = {};
+                            }
+                            else
+                            {
+                                this.hide = false;
+                            }
+                            
+                            var cfg = search_argument['cfg'];
+                            this.send.kind = this.kind;
+                            this.filters = cfg['filters'] || {};
+                            this.indexes = cfg['indexes'] || [];
+                            this.index_id = null;
+                         
+                        }
+                        
+                    },
+                    'changeOrderBy' : function (e) {
+                        e.field = this.indexes[this.index_id].orders[e._index][0];
+                    },
+                    'makeFilters' : function ()
+                    {
+                        var that = this;
+                        
+                        that.send.filters = [];
+                        that.send.orders = [];
+               
+                        var indx = that.indexes[that.index_id];
+              
+                        angular.forEach(indx.filters, function (filter, i) {
+                                that.send.filters.push({
+                                    'field' : filter[0],
+                                    'operator' : filter[1][0],
+                                    'value' : '',
+                                    '_index' : i,
+                                });
+                            });
+               
+                        angular.forEach(indx.orders, function (order, i) {
+                                that.send.orders.push({
+                                    'field' : order[0],
+                                    'operator' : order[1][0],
+                                    '_index' : i,
+                                });
+                        });
+               
+                    },
+                    'discoverIndexID' : function ()
+                    {
+                      
+                        var that = this;
+                        var filters = this.send['filters'];
+                        var orders = this.send['orders'];
+                 
+                            angular.forEach(this.indexes, function (index, index_id) {
+                               
+                                var got_filters = true;
+                                
+                                if (index.filters)
+                                {
+                                    got_filters = false;
+                                    if (filters && filters.length)
+                                    {
+                                        angular.forEach(index.filters, function (filter) {
+                                               var gets = _.findWhere(filters, {'field' : filter[0]});
+                                               if (gets && $.inArray(gets['operator'], filter[1]) !== -1)
+                                               {
+                                                   got_filters = true;
+                                                   that.index_id = index_id;
+                                               }
+                                         });
+                                    }
+                                    
+                                }
+                                 
+                                  
+                                 angular.forEach(index.orders, function (order, oi) {
+                               
+                                       var gets = _.findWhere(orders, {'field' : order[0]});
+                          
+                                       if (got_filters && gets && $.inArray(gets['operator'], order[1]) !== -1)
+                                       {
+                                           that.index_id = index_id;
+                                           gets._index = oi;
+                                       }
+                                 });
+                                 
+                            });
+                       
+                    },
+                    'setSearch' : function (kind, search)
+                    {
+                         
+                        if (kind == undefined || kind == null)
+                        {
+                            this.hide = true;
+                            return;
+                            
+                        }
+                        
+                        if (this.kind != kind)
+                        {
+                            this.kind = kind;
+                            this.changeKind();
+                            this.resetFilters();
+                            
+                        }
+                        
+                        var kindinfo = KINDS.get(this.kind);
+                        if (kindinfo)
+                        {
+                            var search_argument = null;
+                            
+                            try
+                            {
+                                search_argument = kindinfo.mapped_actions['search']['arguments']['search']; 
+                             
+                            }
+                            catch(e){}
+                            
+                            if (search_argument)
+                            {
+                                
+                                if (search == undefined && search_argument['default'])
+                                {
+                                    this.send = search_argument['default'];
+                                }
+                                else if (search)
+                                {
+                                    this.send = search;
+                                }
+                                
+                                this.discoverIndexID();
+                            }
+                             
+                       }else
+                       {
+                        this.hide = true;
+                       }
+                         
+                    },
+                    'doSearch' : function ()
+                    {
+                        angular.forEach(this.send.filters, function (vv, k) {
+                           var v = vv.value;
+                           if (v == 'true')
+                           {
+                               vv.value = true;
+                           } 
+                           else if (v == 'false')
+                           {
+                               vv.value = false;
+                           }
+                        });
+                        
+                        Endpoint.post('search', this.kind, {
+                            'search': this.send,
+                        }).success(function (data) {
+                            
+                            $scope.results = data.entities;
+                            $scope.results2 = [];
+                        
+                            angular.forEach($scope.results, function (vv) {
+                                var vs = '';
+                                 
+                                angular.forEach(['name', 'email', 'title', '_primary_email'], function (v) {
+                                    if (v in vv)
+                                    {
+                                        vs = vv[v];
+                                    }
+                                });
+                                 
+                                $scope.results2.push(vs);
+                            });
+                            
+                            
+                            
+                        });
+                            
+                     },
+                    'submitSearch' : function ()
+                    {
+                  
+                         this.doSearch();
+                    },
+                    'send' : {
+                        'filters' : [],
+                        'orders' : [],
+                    }, 
+                };
+          
+        
+            }
+          });
+    };
+    
+    
+    
 }]);

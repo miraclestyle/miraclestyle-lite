@@ -62,4 +62,4 @@ ANGULAR_COMPONENTS = [
     'admin',
     ]
 
-JQUERY_PLUGINS = ['select2/select2']
+JQUERY_PLUGINS = ['select2/select2', 'FlexiJsonEditor-master/jquery.jsoneditor']

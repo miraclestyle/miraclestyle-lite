@@ -17,15 +17,20 @@
     </div>
   
     <div ng-show="plugin.kind != null" class="form-control">
+        <label class="form-label"></label>
+        <div class="form-input">
+        <div spit-field="{'model': 'plugin', 'fields': 'fields', 'is_new': 'is_new'}">
+                         
+        </div>
+        </div>
          
-        <div ng-repeat="(field_name, field_config) in fields">
+        <!--
+           <div ng-repeat="(field_name, field_config) in fields">
               
              <div class="form-control">
                 <label class="form-label">{{field_name}}</label>
                 <div class="form-input">
-                     <div>
-                         <input name="cfg_{{field_name}}" class="text-input" type="text" ng-model="plugin[field_name]" />
-                     </div>
+                     
                      <div class="field-config">
                          {{field_config}}
                      </div>
@@ -33,7 +38,8 @@
             </div>
              
         </div>
-        
+         
+        -->
     </div>
       
 </div>

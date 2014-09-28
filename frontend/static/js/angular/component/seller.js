@@ -70,6 +70,8 @@ MainApp.factory('Seller', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
                                 
                                 var new_content = plg ? false : true;
                                 
+                                $scope.is_new = new_content;
+                                
                                 var info = KINDS.get(plugins_container);
                                 
                                 $scope.kinds = info.fields['plugins']['kinds'];
@@ -172,7 +174,225 @@ MainApp.factory('Seller', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
         };
 
     }
-]).run(['$rootScope', 'Seller', 'Endpoint',
+]).directive('spitField', ['$rootScope', '$compile',
+  function ($rootScope, $compile) {
+      
+    function compile_attrs(data)
+    {
+        var compiled = [];
+        angular.forEach(data, function (v, k) {
+           compiled.push('"'+ k +'"="'+v+'"'); 
+        });
+        return compiled.join(" ");
+    }
+    
+    return {
+        replace: true,
+        link : function (scope, element, attrs)
+        { 
+            var config = scope.$eval(attrs.spitField);
+             
+            var fields = scope[config.fields];
+         
+            var data = scope[config.model];
+            
+            function update_inner_scope()
+            {
+                fields = scope[config.fields];
+                  
+                data = scope[config.model];
+                 
+                angular.forEach(fields, function (c, k) {
+                  
+                    if (c.modelclass)
+                    { 
+                        if (!data[k])
+                        {
+                            if (c.repeated)
+                            {
+                                data[k] = [];
+                            }
+                            else
+                            {
+                                data[k] = {};
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (c.repeated)
+                        {
+                            if (!data[k])
+                            {
+                                data[k] = [];
+                            }
+                        }
+                    }
+                    
+                });
+                
+                 
+            }
+            
+            scope.$watch(
+              // This function returns the value being watched. It is called for each turn of the $digest loop
+              function() { return scope[config.fields]; },
+              function(newValue, oldValue) {
+                if ( newValue !== oldValue ) {
+ 
+                   var fs = scope[config.fields];
+                   angular.forEach(data, function (v, k) {
+                       if (!fs[k] && k != 'kind')
+                       {
+                           delete data[k];
+                       }
+                   });
+                   
+                   angular.forEach(fs, function (v, k) {
+                       if (!data[k])
+                       {
+                           data[k] = v['default'];
+                       }
+                   });
+                   
+                   update_inner_scope();
+                   
+                   $(element).addClass('json-editor').jsonEditor(data, {change: function (data) {
+                        update(scope[config.model], data);
+                        scope.$apply();
+                    }});
+                }
+              }
+            );
+            
+            update_inner_scope();
+    
+            $(element).addClass('json-editor').jsonEditor(data, {change: function (data) {
+                    update(scope[config.model], data);
+                    scope.$apply();
+                    
+                }})
+                .on('jsoneditor.finalAdd', function (event, opt, json, root, path) {
+                         
+                }).on('jsoneditor.afterAdd', function afterAdd(event, opt, json, root, path) {
+                         
+                        var spath = path.split('.');
+                        var find = fields;
+              
+                        if (spath.length > 1)
+                        {
+                            angular.forEach(spath, function (v) {
+                                
+                                var thing = v;
+                   
+                                if (isNaN(parseInt(thing)))
+                                { 
+                                    
+                                    if (!find[thing])
+                                    {
+                                        if (find.modelclass)
+                                        {
+                                            find = find.modelclass;
+                                        }
+                                        
+                                    }
+                                    
+                                    find = find[thing];
+                               
+                                    
+                                }
+                                 
+                                
+                            });
+                           
+                        }
+                        else if (spath.length > 0)
+                        {
+                            find = fields[path];
+                        }
+            
+                        
+                        function modelclassprocess(path, find, json)
+                        {
+                        
+                            if (find)
+                            {
+                                if (!find.modelclass)
+                                {
+                                    if (find.repeated)
+                                    {
+                                        if ((json.length-1) < 0)
+                                        {
+                                            json.push(d);
+                                        }
+                                        else
+                                        {
+                                            json[json.length-1] = find['default'];
+                                        }
+                                        
+                                    }
+                                    else
+                                    {
+                                        json[path] = find['default'];
+                                    }
+                                }
+                                else
+                                { 
+                                    var d = {};
+                                    
+                                    angular.forEach(find.modelclass, function (v, k) {
+                                        var zz = v['default'];
+                                        if (v.modelclass)
+                                        {
+                                            if (v.repeated)
+                                            {
+                                                zz = [];
+                                            }
+                                            else
+                                            {
+                                                zz = {};
+                                            }
+                                        }
+                                         
+                                        d[k] = zz;
+                                        
+                                        if (v.modelclass)
+                                        {
+                                            //modelclassprocess(path + '.' + k, v, d[k]);
+                                        }
+                                    });
+                                    
+                                    if (find.repeated)
+                                    {
+                                        if ((json.length-1) < 0)
+                                        {
+                                            json.push(d);
+                                        }
+                                        else
+                                        {
+                                            json[json.length-1] = d;
+                                        }
+                                        
+                                    }
+                                    else
+                                    {
+                                        json[path] = d;
+                                    }
+                                    
+                                }
+                            
+                            
+                           }
+                        }
+                        
+                        modelclassprocess(path, find, json);
+                        
+                        
+                });
+        }
+    };
+}])
+.run(['$rootScope', 'Seller', 'Endpoint',
     function ($rootScope, Seller, Endpoint) {
   
     $rootScope.manageSeller = function ()
