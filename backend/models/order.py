@@ -98,6 +98,7 @@ class Order(orm.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
+    # @todo seller virtual field
     '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True),
     '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, updateable=False, deleteable=False),
     '_records': orm.SuperRecordProperty('34')
