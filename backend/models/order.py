@@ -28,7 +28,8 @@ class OrderLineTax(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   code = orm.SuperStringProperty('2', required=True, indexed=False)
-  formula = orm.SuperPickleProperty('3', required=True, indexed=False) # this is pickle, and it stores ['percentage', value] for now.
+  tax_type = orm.SuperStringProperty('3', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)  # @todo Can we omit 'tax_' prefix!?
+  tax_amount = orm.SuperDecimalProperty('4', required=True, indexed=False)  # @todo Can we omit 'tax_' prefix!?
 
 
 class OrderLine(orm.BaseExpando):

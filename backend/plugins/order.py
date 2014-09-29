@@ -169,11 +169,11 @@ class OrderLineFormat(orm.BaseModel):
         tax_subtotal = format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
-            if (tax.formula[0] == 'percent'):
-              tax_amount = format_value(tax.formula[1], order.currency.value) * format_value('0.01', order.currency.value)  # or "/ DecTools.form('100')"
+            if (tax.tax_type == 'percent'):
+              tax_amount = format_value(tax.tax_amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.total * tax_amount)
-            elif (tax.formula[0] == 'amount'):
-              tax_amount = format_value(tax.formula[1], order.currency.value)
+            elif (tax.tax_type == 'fixed'):
+              tax_amount = format_value(tax.tax_amount, order.currency.value)
               tax_subtotal = tax_subtotal + tax_amount
         line.tax_subtotal = tax_subtotal
 
@@ -336,14 +336,13 @@ class Tax(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   code = orm.SuperStringProperty('3', required=True, indexed=False)  # @todo Not sure if we need this!
-  formula = orm.SuperPickleProperty('4', required=True, indexed=False)  # @todo Formula has to be defined as touple (type, amount) (e.g. ('%', 15))! Or we can make it something different!
-  # formula needs to be pickle property, because we completely need to avoid using regex
-  # or we can use custom property for it, even better.
-  exclusion = orm.SuperBooleanProperty('5', required=True, default=False, indexed=False)
-  address_type = orm.SuperStringProperty('6', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '7', repeated=True) # @todo AddressRuleLocation or what?
-  carriers = orm.SuperKeyProperty('8', kind='113', repeated=True, indexed=False)  # this is now possible since struct props have keys and can be identified.
-  product_categories = orm.SuperKeyProperty('9', kind='24', repeated=True, indexed=False)
+  tax_type = orm.SuperStringProperty('4', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)  # @todo Can we omit 'tax_' prefix!?
+  tax_amount = orm.SuperDecimalProperty('5', required=True, indexed=False)  # @todo Can we omit 'tax_' prefix!?
+  exclusion = orm.SuperBooleanProperty('6', required=True, default=False, indexed=False)
+  address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '8', repeated=True)  # @todo AddressRuleLocation or what?
+  carriers = orm.SuperKeyProperty('9', kind='113', repeated=True, indexed=False)  # this is now possible since struct props have keys and can be identified.
+  product_categories = orm.SuperKeyProperty('10', kind='24', repeated=True, indexed=False)
   
   def run(self, context):
     self.read() # read locals
@@ -367,11 +366,12 @@ class Tax(orm.BaseModel):
               tax._state = 'modified'
               tax.name = self.name
               tax.code = self.code
-              tax.formula = self.formula
+              tax.tax_type = self.tax_type
+              tax.tax_amount = self.tax_amount
               tax_exists = True
               break
           if not tax_exists:
-            taxes.append(order.OrderLineTax(key=self.key, name=self.name, code=self.code, formula=self.formula))
+            taxes.append(order.OrderLineTax(key=self.key, name=self.name, code=self.code, tax_type=self.tax_type, tax_amount=self.tax_amount))
             line.taxes = taxes
   
   def validate_tax(self, order):
@@ -433,8 +433,12 @@ class CarrierLineRule(orm.BaseModel):
   
   _use_rule_engine = False
   
-  condition = orm.SuperStringProperty('1', required=True, indexed=False)
-  price = orm.SuperStringProperty('2', required=True, indexed=False)
+  condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=['weight', 'volume', 'weight*volume', 'price', 'quantity'], indexed=False)
+  condition_operator = orm.SuperStringProperty('2', required=True, default='=', choices=['=', '>', '<', '>=', '<='], indexed=False)
+  condition_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
+  price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=['fixed', 'variable'], indexed=False)
+  price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=['weight', 'volume', 'weight*volume', 'price', 'quantity'], indexed=False)
+  price_value = orm.SuperDecimalProperty('5', required=True, indexed=False)
 
 
 # Not a plugin!
