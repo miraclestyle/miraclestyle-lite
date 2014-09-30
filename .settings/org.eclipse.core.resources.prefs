@@ -12,6 +12,7 @@ encoding//app/plugins/notify.py=utf-8
 encoding//app/plugins/rule.py=utf-8
 encoding//app/plugins/uom.py=utf-8
 encoding//backend/http.py=utf-8
+encoding//backend/iom.py=utf-8
 encoding//backend/mem.py=utf-8
 encoding//backend/models/account.py=utf-8
 encoding//backend/models/base.py=utf-8

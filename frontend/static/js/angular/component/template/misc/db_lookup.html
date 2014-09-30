@@ -1,24 +1,29 @@
-
+<form name="container.main" ng-submit="dblookup.submitSearch()">
 <div scroll-end="save" class="modal-body scrollable">
 <div class="modal-body-inner">
-<form name="container.main" ng-submit="dblookup.submitSearch()">
-    <h3>Datastore Lookup</h3>
+
+   
  
-    <div ng-show="results.length">
-        <div>
-            <label class="block">Results</label>
+    <div>
+        
+        <div class="form-control">
+            
+            <label class="form-label">Results ({{results.length}})</label>
+            <div class="form-input">
+                
             <select ng-change="setResult()" ui-select2="{allowClear: true}" ng-model="stuff.result2">
                 <option></option>
                 <option ng-repeat="result in results2 track by $index" value="{{$index}}">{{result}}</option>
             </select>
+            </div>
              <br />
            
         </div>
         
-        <div ng-show="result">
+        <div class="form-control" ng-show="result">
             <br />
-            <label class="block">Result</label>
-            <div>
+            <label class="form-label">Result</label>
+            <div class="form-input">
                 <pre style="font-size: 12px;line-height: 1em;">
                     {{result|json}}
                 </pre>
@@ -28,8 +33,8 @@
    </div>
         
 <div class="form-control">
-    <label class="block">Kind</label>
-    <div class="block">
+    <label class="form-label">Kind</label>
+    <div class="form-input">
         <select ng-change="dblookup.changeKindUI()" name="search_kind" ng-required="true" ui-select2 ng-model="dblookup.kind" data-placeholder="Select kind to search">
                 <option></option>
                 <option ng-repeat="(kind_key, kind) in FRIENDLY_KIND_NAMES" value="{{kind_key}}">{{kind}}</option>
@@ -39,8 +44,8 @@
     
 <div ng-show="dblookup.kind != null" class="form-control">    
  
-        <label class="block">Search Options</label>
-        <div class="block">
+        <label class="form-label">Search Options</label>
+        <div class="form-input">
             <select ng-change="dblookup.makeFilters()" name="search_index_type" ng-required="true" ui-select2 ng-model="dblookup.index_id" data-placeholder="Select index">
                     <option></option>
                     <option ng-repeat="ind in dblookup.indexes track by $index" value="{{$index}}">{{ind|show_friendly_index_name}}</option>
@@ -51,8 +56,8 @@
 
 
 <div ng-show="dblookup.index_id != null && dblookup.send.filters.length" class="form-control">
-    <label class="block">Filters</label>
-    <div class="block">
+    <label class="form-label">Filters</label>
+    <div class="form-input">
          <table class="table2">
             <tbody>
                 
@@ -84,14 +89,14 @@
 <div ng-show="dblookup.index_id != null">
     
     <div ng-repeat="order in dblookup.send.orders track by $index">
-    <div class="block">
-        <label class="block">Order by</label>
-        <div class="block">{{order.field}}</div>
+    <div class="form-control">
+        <label class="form-label">Order by</label>
+        <div class="form-input">{{order.field}}</div>
     </div>
     
     <div ng-show="order._index != null" class="form-control">
-        <label class="block">Direction</label>
-        <div class="block">
+        <label class="form-label">Direction</label>
+        <div class="form-input">
             <select name="search_order_by_dir" ng-required="dblookup.index_id != null && order._index != null" ui-select2 ng-model="order.operator" data-placeholder="Select direction">
                  <option></option>
                   <option ng-repeat="op in dblookup.indexes[dblookup.index_id].orders[order._index][1] track by $index" value="{{op}}">{{op}}</option>
@@ -106,21 +111,22 @@
 
 
 <div class="block">
-    <label class="block"></label>
+    <label class="form-label"></label>
     <div class="form-input">
         <button class="button block" type="submit">Search</button>
     </div>
 </div>
  
-</form>
+
 </div>
 
 
+
+</div>
 <div class="modal-footer">
- 
- 
+  
     <button type="button" class="button" ng-click="cancel()">
         Close
     </button>
 </div>
-</div>
+</form>

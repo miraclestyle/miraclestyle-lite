@@ -2119,7 +2119,6 @@ class ReferencePropertyValue(PropertyValue):
       if self._property._kind != None and field.kind() != self._property._kind:
         raise PropertyError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
       self._property_value = field.get_async()
-    return self.value
   
   def read_async(self):
     if not self.has_value():
@@ -2780,7 +2779,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(value)
-    return search.TextField(name=self.search_document_field_name, value=value)
+    return search.TextField(name=self.search_document_field_name, value=str(value))
 
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
@@ -3576,6 +3575,13 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       self._kinds = (args[0],)
     args = args[1:]
     super(SuperPluginStorageProperty, self).__init__(*args, **kwargs)
+    
+  def _get_value(self, entity):
+    values = super(SuperPluginStorageProperty, self)._get_value(entity)
+    if values:
+      for val in values:
+        val.read()
+    return values
   
   def _set_value(self, entity, value):
     # __set__

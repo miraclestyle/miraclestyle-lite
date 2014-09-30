@@ -59,6 +59,8 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
             grouping = eval(grouping.text)
           else:
             grouping = []
+          if digits is None:
+            digits = 3
           new_uom.update({
             'measurement': 'Currency',
             'name': new_uom_data['name'].text,
@@ -120,6 +122,8 @@ class UnitUpdateWrite(orm.BaseModel):
             rounding = Decimal(eval(rounding.attrib.get('eval')))
           if digits != None:
             digits = long(eval(digits.attrib.get('eval')))
+          if digits is None:
+            digits = 3
           new_uom.update({'name': new_uom_data['name'].text,
                           'active': True,
                           'symbol': new_uom_data['symbol'].text,

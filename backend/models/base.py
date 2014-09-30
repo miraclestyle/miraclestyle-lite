@@ -344,9 +344,13 @@ class _BaseImageProperty(_BaseBlobProperty):
       # - failed to create gs key / blobstore failed for some reason;
       # - failed to create get_serving_url / serving url service failed for some reason;
       # - failed to write to cloudstorage / cloudstorage failed for some reason.
-      readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
-      blob = readonly_blob.read()
-      readonly_blob.close()
+      if settings.DEVELOPMENT_SERVER:
+        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.HOST, gs_object_name[3:]))
+        blob = blob.content
+      else:
+        readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
+        blob = readonly_blob.read()
+        readonly_blob.close()
       image = images.Image(image_data=blob)
       if config.get('transform'):
         image.resize(config.get('width'),

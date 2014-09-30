@@ -28,8 +28,8 @@ class OrderLineTax(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   code = orm.SuperStringProperty('2', required=True, indexed=False)
-  tax_type = orm.SuperStringProperty('3', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)  # @todo Can we omit 'tax_' prefix!?
-  tax_amount = orm.SuperDecimalProperty('4', required=True, indexed=False)  # @todo Can we omit 'tax_' prefix!?
+  type = orm.SuperStringProperty('3', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
+  amount = orm.SuperDecimalProperty('4', required=True, indexed=False)
 
 
 class OrderLine(orm.BaseExpando):
@@ -46,7 +46,7 @@ class OrderLine(orm.BaseExpando):
   product_category_reference = orm.SuperKeyProperty('6', kind='24', required=True, indexed=False)
   code = orm.SuperStringProperty('7', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('8', required=True, indexed=False)
-  product_uom = orm.SuperLocalStructuredProperty(Unit, '9', required=True)  # @todo Or Unit (or _kind, 16 stands for UOM model, 17 for Unit)!?
+  product_uom = orm.SuperLocalStructuredProperty(Unit, '9', required=True)
   quantity = orm.SuperDecimalProperty('10', required=True, indexed=False)
   discount = orm.SuperDecimalProperty('11', required=True, indexed=False)
   taxes = orm.SuperLocalStructuredProperty(OrderLineTax, '12', repeated=True)
@@ -57,7 +57,7 @@ class OrderLine(orm.BaseExpando):
   tax_subtotal = orm.SuperDecimalProperty('16', required=True, indexed=False)
   
   _default_indexed = False
-
+  
 
 class OrderMessage(orm.BaseExpando):
   
@@ -85,7 +85,7 @@ class Order(orm.BaseExpando):
   shipping_address_reference = orm.SuperKeyProperty('9', kind='14', required=True, indexed=False)
   billing_address = orm.SuperLocalStructuredProperty('15', '10', required=True)
   shipping_address = orm.SuperLocalStructuredProperty('15', '11', required=True)
-  currency = orm.SuperLocalStructuredProperty(Unit, '12', required=True)  # @todo Or Unit (or _kind, 16 stands for UOM model, 17 for Unit)!?
+  currency = orm.SuperLocalStructuredProperty(Unit, '12', required=True)
   untaxed_amount = orm.SuperDecimalProperty('13', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
@@ -99,7 +99,7 @@ class Order(orm.BaseExpando):
   _default_indexed = False
   
   _virtual_fields = {
-    # @todo seller virtual field
+    '_seller': orm.SuperReferenceStructuredProperty('23', target_field='seller_reference', autoload=True),
     '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True),
     '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, updateable=False, deleteable=False),
     '_records': orm.SuperRecordProperty('34')
@@ -217,6 +217,7 @@ class Order(orm.BaseExpando):
             AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             ProductToOrderLine(),
+            ProductSpecs(),
             PluginExec(),  # @todo We will see if this plugin will need some cfg flexibility!
             OrderLineFormat(),
             OrderFormat(),
@@ -290,6 +291,7 @@ class Order(orm.BaseExpando):
             PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business=''), # @todo For now we setup default currency for the order.
             AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
+            ProductSpecs(),
             PluginExec(),  # @todo We will see if this plugin will need some cfg flexibility!
             OrderLineFormat(),
             OrderFormat(),

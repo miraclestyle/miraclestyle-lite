@@ -121,28 +121,49 @@ class ProductToOrderLine(orm.BaseModel):
       new_line.product_uom = copy.deepcopy(product.product_uom.get())
       new_line.quantity = format_value('1', new_line.product_uom.value)
       new_line.discount = format_value('0', Unit(digits=4))
-      if hasattr(product, 'weight'):
-        new_line._weight = product.weight  # @todo Perhaps we might need to build these fields during certain actions, and not only while adding new lines (to ensure thir life accros carrier plugins)!
-        new_line._weight_uom = product.weight_uom
-      if hasattr(product, 'volume'):
-        new_line._volume = product.volume
-        new_line._volume_uom = product.volume_uom
       if product_instance is not None:
         if hasattr(product_instance, 'unit_price'):
           new_line.unit_price = product_instance.unit_price
         if hasattr(product_instance, 'code'):
           new_line.code = product_instance.code
-        if hasattr(product_instance, 'weight'):
-          new_line._weight = product_instance.weight
-          new_line._weight_uom = product_instance.weight_uom
-        if hasattr(product_instance, 'volume'):
-          new_line._volume = product_instance.volume
-          new_line._volume_uom = product_instance.volume_uom
       lines = order._lines.value
       if lines is None:
         lines = []
       lines.append(new_line)
       order._lines = lines
+      
+
+class ProductSpecs(orm.BaseModel):
+  
+  _kind = 115
+  
+  _use_rule_engine = False
+  
+  def run(self, context):
+    ProductInstance = context.models['27']
+    order = context._order
+    for line in order._lines.value:
+      line._weight = None
+      line._weight_uom = None
+      line._volume = None
+      line._volume_uom = None
+      product = line.product_reference.get()
+      if hasattr(product, 'weight'):
+        line._weight = product.weight
+        line._weight_uom = product.weight_uom.get()
+      if hasattr(product, 'volume'):
+        line._volume = product.volume
+        line._volume_uom = product.volume_uom.get()
+      if line.product_variant_signature:
+        product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
+        product_instance = product_instance_key.get()
+        if product_instance is not None:
+          if hasattr(product_instance, 'weight'):
+            line._weight = product_instance.weight
+            line._weight_uom = product_instance.weight_uom.get()
+          if hasattr(product_instance, 'volume'):
+            line._volume = product_instance.volume
+            line._volume_uom = product_instance.volume_uom.get()
 
 
 # This is system plugin, which means end user can not use it!
@@ -169,10 +190,10 @@ class OrderLineFormat(orm.BaseModel):
         tax_subtotal = format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
-            if (tax.tax_type == 'percent'):
+            if (tax.type == 'percent'):
               tax_amount = format_value(tax.tax_amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.total * tax_amount)
-            elif (tax.tax_type == 'fixed'):
+            elif (tax.type == 'fixed'):
               tax_amount = format_value(tax.tax_amount, order.currency.value)
               tax_subtotal = tax_subtotal + tax_amount
         line.tax_subtotal = tax_subtotal
@@ -336,12 +357,12 @@ class Tax(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   code = orm.SuperStringProperty('3', required=True, indexed=False)  # @todo Not sure if we need this!
-  tax_type = orm.SuperStringProperty('4', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)  # @todo Can we omit 'tax_' prefix!?
-  tax_amount = orm.SuperDecimalProperty('5', required=True, indexed=False)  # @todo Can we omit 'tax_' prefix!?
+  type = orm.SuperStringProperty('4', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
+  amount = orm.SuperDecimalProperty('5', required=True, indexed=False)
   exclusion = orm.SuperBooleanProperty('6', required=True, default=False, indexed=False)
   address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
   locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '8', repeated=True)  # @todo AddressRuleLocation or what?
-  carriers = orm.SuperKeyProperty('9', kind='113', repeated=True, indexed=False)  # this is now possible since struct props have keys and can be identified.
+  carriers = orm.SuperKeyProperty('9', kind='113', repeated=True, indexed=False)
   product_categories = orm.SuperKeyProperty('10', kind='24', repeated=True, indexed=False)
   
   def run(self, context):
@@ -366,8 +387,8 @@ class Tax(orm.BaseModel):
               tax._state = 'modified'
               tax.name = self.name
               tax.code = self.code
-              tax.tax_type = self.tax_type
-              tax.tax_amount = self.tax_amount
+              tax.type = self.type
+              tax.amount = self.amount
               tax_exists = True
               break
           if not tax_exists:
@@ -381,6 +402,7 @@ class Tax(orm.BaseModel):
     if order_address_reference is None:
       return False
     buyer_addresses = order.key_parent.get()
+    buyer_addresses.read()
     for buyer_address in buyer_addresses.addresses.value:
       if buyer_address.key == order_address_reference:
         address = buyer_address
@@ -412,7 +434,7 @@ class Tax(orm.BaseModel):
           break
     if allowed:
       # If tax is configured for carriers then check if the order references carrier on which the tax applies.
-      if self.carriers.value:
+      if self.carriers:
         allowed = False
         if order.carrier_reference and order.carrier_reference.urlsafe() in [carrier.key.urlsafe() for carrier in self.carrieres.value]:
           allowed = True
@@ -439,6 +461,18 @@ class CarrierLineRule(orm.BaseModel):
   price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=['fixed', 'variable'], indexed=False)
   price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=['weight', 'volume', 'weight*volume', 'price', 'quantity'], indexed=False)
   price_value = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  
+  def make_condition(self):
+    condition = '%s %s condition_value' % (self.condition_type, self.condition_operator)
+    return condition
+  
+  def make_price_calculator(self):
+    price_calculator = ''
+    if self.price_type == 'fixed':
+      price_calculator = 'price'
+    if self.price_type == 'variable':
+      price_calculator = '%s * price' % self.price_operator
+    return price_calculator
 
 
 # Not a plugin!
@@ -467,17 +501,20 @@ class Carrier(orm.BaseModel):
   
   def run(self, context):
     self.read() # read locals
+    ProductInstance = context.models['27']
     order = context._order
     valid_lines = []
     for carrier_line in self.lines.value:
       if self.validate_line(carrier_line, order):
         valid_lines.append(carrier_line)
-    carrier_price = self.calculate_lines(valid_lines, order)
-    if 'carriers' not in context.output:
-      context.output['carriers'] = []
-    context.output['carriers'].append({'name': self.name,
-                                       'price': carrier_price,
-                                       'id': self.key.urlsafe()})
+    if len(valid_lines):
+      carrier_price = self.calculate_lines(valid_lines, order)
+      if 'carriers' not in context.output:
+        context.output['carriers'] = []
+      context.output['carriers'].append({'name': self.name,
+                                         'price': carrier_price,
+                                         'key': self.key.urlsafe()})
+ 
   
   def calculate_lines(self, valid_lines, order):
     weight_uom = Unit.build_key('kilogram').get()
@@ -485,60 +522,41 @@ class Carrier(orm.BaseModel):
     weight = format_value('0', weight_uom)
     volume = format_value('0', volume_uom)
     for line in order._lines.value:
+      product = line.product_reference.get()
       line_weight = line._weight
-      line_weight_uom = line._weight_uom.get()
+      line_weight_uom = line._weight_uom
       line_volume = line._volume
-      line_volume_uom = line._volume_uom.get()
+      line_volume_uom = line._volume_uom
       weight = weight + convert_value(line_weight, line_weight_uom, weight_uom)
       volume = volume + convert_value(line_volume, line_volume_uom, volume_uom)
       carrier_prices = []
       for carrier_line in valid_lines:
         line_prices = []
-        for rule in carrier_line.rules.value:
-          condition = rule.condition
-          condition = self.format_value(condition)
-          price = rule.price
-          if safe_eval(condition, {'weight': weight, 'volume': volume, 'price': price}):
-            price = self.format_value(price)
-            price = safe_eval(price, {'weight': weight, 'volume': volume, 'price': price})
-            line_prices.append(price)
+        rules = carrier_line.rules.value
+        if rules:
+          for rule in carrier_line.rules.value:
+            condition = rule.make_condition()
+            price = rule.price_value
+            if safe_eval(condition, {'weight': weight, 'condition_value': rule.condition_value, 'volume': volume, 'price': price}):
+              price_calculation = rule.make_price_calculator()
+              price = safe_eval(price_calculation, {'weight': weight, 'volume': volume, 'price': price})
+              line_prices.append(price)
         carrier_prices.append(min(line_prices))
       return min(carrier_prices)  # Return the lowest price possible of all lines!
-  
-  def format_value(self, value):
-    '''
-    Examples
-    print format_value('unit(100, kilogram)')
-    >>>Decimal("100")
-    print format_value('unit(100.000,       meter)')
-    >>>Decimal("100.000")
-    print format_value('unit(143,kilogram)')
-    >>>Decimal("143")
     
-    We use unit() as fake function expression in order to avoid collisions between
-     tuples that wont contain actual value, unit pairs.
-     
-    Here we use id of the unit instead of the urlsafe, because urlsafe is not very friendly for usage.
-    '''
-    def run_format(match):
-      matches = match.groups()
-      unit_id = str(matches[1])
-      unit = Unit.build_key(unit_id).get()
-      amount = str(matches[0])
-      return 'Decimal("%s")' % format_value(amount, unit)
-    value = re.sub('unit\((.*)\,\s*(.*)\)', run_format, value)
-    return value
   
-  def validate_line(self, carrier_line, entry):
+  def validate_line(self, carrier_line, order):
     address = None
-    entry_address_reference = getattr(entry, 'shipping_address_reference', None)
-    if entry_address_reference is None:
+    order_address_reference = getattr(order, 'shipping_address_reference', None)
+    if order_address_reference is None:
       return False
-    buyer_addresses = orm.Key('77', entry.partner._id_str, parent=entry.partner).get()
-    for buyer_address in buyer_addresses.addresses:
-      if buyer_address.internal_id == entry_address_reference:
-        address = buyer_address
-        break
+    buyer_addresses = order.parent_entity
+    if buyer_addresses:
+      buyer_addresses.read()
+      for buyer_address in buyer_addresses.addresses.value:
+        if buyer_address.key == order_address_reference:
+          address = buyer_address
+          break
     if address is None:
       return False
     if carrier_line.exclusion:
@@ -547,7 +565,7 @@ class Carrier(orm.BaseModel):
     else:
       # Apply everywhere except at the following locations.
       allowed = True
-    for loc in carrier_line.locations:
+    for loc in carrier_line.locations.value:
       if not (loc.region and loc.postal_code_from and loc.postal_code_to):
         if (address.country == loc.country):
           allowed = carrier_line.exclusion
@@ -566,22 +584,21 @@ class Carrier(orm.BaseModel):
           break
     if allowed:
       allowed = False
-      price = entry.amount_total
+      price = order.total_amount
       weight_uom = Unit.build_key('kilogram').get()
       volume_uom = Unit.build_key('cubic_meter').get()
       weight = format_value('0', weight_uom)
       volume = format_value('0', volume_uom)
-      for line in entry._lines.value:
+      for line in order._lines.value:
         line_weight = line._weight
-        line_weight_uom = line_weight.get()
+        line_weight_uom = line._weight_uom
         line_volume = line._volume
-        line_volume_uom = line_volume.get()
+        line_volume_uom = line._volume_uom
         weight = weight + convert_value(line_weight, line_weight_uom, weight_uom)
         volume = volume + convert_value(line_volume, line_volume_uom, volume_uom)
-      for rule in carrier_line.rules:
-        condition = rule.condition
-        condition = self.format_value(condition)
-        if safe_eval(condition, {'weight': weight, 'volume': volume, 'price': price}):
+      for rule in carrier_line.rules.value:
+        condition = rule.make_condition()
+        if safe_eval(condition, {'weight': weight, 'condition_value': rule.condition_value, 'volume': volume, 'price': price}):
           allowed = True
           break
     return allowed
