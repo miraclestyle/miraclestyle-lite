@@ -231,8 +231,8 @@ class AddressRuleLocation(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  country = orm.SuperKeyProperty('3', kind='15', required=True, indexed=False)
-  region = orm.SuperKeyProperty('4', kind='16', indexed=False)
+  country = orm.SuperKeyProperty('3', kind='12', required=True, indexed=False)
+  region = orm.SuperKeyProperty('4', kind='13', indexed=False)
   postal_code_from = orm.SuperStringProperty('5', indexed=False)
   postal_code_to = orm.SuperStringProperty('6', indexed=False)
   city = orm.SuperStringProperty('7', indexed=False)
@@ -361,7 +361,7 @@ class Tax(orm.BaseModel):
   amount = orm.SuperDecimalProperty('5', required=True, indexed=False)
   exclusion = orm.SuperBooleanProperty('6', required=True, default=False, indexed=False)
   address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '8', repeated=True)  # @todo AddressRuleLocation or what?
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '8', repeated=True)  # @todo should AddressRuleLocation go here or Location?
   carriers = orm.SuperKeyProperty('9', kind='113', repeated=True, indexed=False)
   product_categories = orm.SuperKeyProperty('10', kind='24', repeated=True, indexed=False)
   
@@ -485,7 +485,7 @@ class CarrierLine(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
-  locations = orm.SuperLocalStructuredProperty(Location, '4', repeated=True)
+  locations = orm.SuperLocalStructuredProperty(Location, '4', repeated=True) # @todo should AddressRuleLocation go here or Location?
   rules = orm.SuperLocalStructuredProperty(CarrierLineRule, '5', repeated=True)
 
 
@@ -522,7 +522,6 @@ class Carrier(orm.BaseModel):
     weight = format_value('0', weight_uom)
     volume = format_value('0', volume_uom)
     for line in order._lines.value:
-      product = line.product_reference.get()
       line_weight = line._weight
       line_weight_uom = line._weight_uom
       line_volume = line._volume
