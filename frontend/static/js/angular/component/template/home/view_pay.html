@@ -1,0 +1,109 @@
+<form name="container.main" action="{{paypal_webscr}}">
+<div scroll-end="save" class="modal-body scrollable">
+<div class="modal-body-inner">
+ 
+
+        
+<div class="shoppingcart">
+    
+ 
+<input type="hidden" name="cmd" value="_cart" />
+<input type="hidden" name="upload" value="1" />
+<input type="hidden" name="charset" value="utf-8" />
+    
+<input type="hidden" name="invoice" value="{{order.name}}" />
+
+<input type="hidden" name="no_shipping" value="0">
+
+<input type='hidden' name='business' value='{{order._payment_method.business}}' />
+<input type='hidden' name='return' value='{{return_path}}' />
+<input type='hidden' name='cancel_return' value='{{return_path}}' />
+<input type='hidden' name='notify_url' value='{{notify_url}}' />
+<input type='hidden' name='rm' value='1' />
+<input type='hidden' name='currency_code' value='{{order.currency.code}}' />
+<input type="hidden" name="custom" value="{{order.key}}" />
+ 
+
+<input type="hidden" name="address_override" value="1" />  
+ 
+<input type='hidden' name='first_name' value='{{order.shipping_address.name}}' />
+  
+<input type='hidden' name='address1' value='{{order.shipping_address.street_address}}' />
+
+<input ng-if="order.shipping_address.shipping_address2" type='hidden' name='address2' value='{{order.shipping_address.street_address2}}' />
+
+<input type='hidden' name='city' value='{{order.shipping_address.city}}' />
+
+<input type='hidden' name='state' value='{{order.shipping_address.state.name}}' />
+
+ 
+<input ng-if="order.shipping_address.postal_code" type='hidden' name='zip' value='{{order.shipping_address.postal_code}}' />
+ 
+<input type="hidden" name="country" value="{{order.shipping_address.country.code}}" />
+<input type='hidden' name='email' value='{{order.shipping_address.email}}' />
+ 
+<input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
+
+<div class="tabbed shopping-cart dialog-content-top" id="shoppingCart">
+ 
+            <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                      
+                          <th class="center">Quantity</th>
+                          <th class="center">Unit of Measure</th>
+                          <th class="center">Taxes</th>
+                          <th class="center">Unit Price</th>
+                          <th class="center">Discount (%)</th>
+                          <th class="center">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                       
+                        <tr ng-reppeat="line in order._lines">
+                          <td class="vmiddle">
+                               
+                               {{line.name}} {{line.description}}
+                              
+                              <input type="hidden" value="{{cp.title}}" name="item_name_{{forloop.counter}}" />
+                              <input type="hidden" value="{% if cp.the_product.pk %}{{cp.the_product.pk}}{% else %}N/A{% endif %}" name="item_number_{{forloop.counter}}" />
+                              <input type="hidden" value="{{cp.quantity}}" name="quantity_{{forloop.counter}}" />
+                              <input type="hidden" value="{{cp.price}}" name="amount_{{forloop.counter}}" />
+                              <input type="hidden" value="{{cp.discount}}" name="discount_rate_{{forloop.counter}}" />
+                        
+                          </td>
+                
+                          <td class="center">
+                              {{line.quantity}}
+                          </td>
+                          
+                          <td class="center">{{line.product_uom|json}}</td> 
+                       
+                          <td class="center">{{line.taxes|json}}</td>
+                          <td class="center">{{line.unit_price}}</td>
+                           
+                          <td class="center">{{line.discount}}</td>
+                          <td class="center">{{line.subtotal}}</td>
+                        </tr>
+               
+                      
+                      </tbody>
+       </table>
+
+</div>
+       <div class="clearfix"></div>
+</div>
+
+</div>
+
+
+
+</div>
+<div class="modal-footer">
+  
+    <button type="button" class="button" ng-click="cancel()">
+        Close
+    </button>
+</div>
+</form>

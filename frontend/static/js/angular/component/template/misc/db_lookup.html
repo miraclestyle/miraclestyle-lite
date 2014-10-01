@@ -33,7 +33,7 @@
    </div>
         
 <div class="form-control">
-    <label class="form-label">Kind</label>
+    <label class="form-label">Kind <span ng-show="dblookup.kind != null">({{dblookup.kind}})</span></label>
     <div class="form-input">
         <select ng-change="dblookup.changeKindUI()" name="search_kind" ng-required="true" ui-select2 ng-model="dblookup.kind" data-placeholder="Select kind to search">
                 <option></option>

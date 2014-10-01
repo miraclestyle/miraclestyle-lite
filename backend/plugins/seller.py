@@ -52,6 +52,7 @@ class SellerSetupDefaults(orm.BaseModel):
     AddressRule = context.models['107']
     PayPalPayment = context.models['108']
     Unit = context.models['17']
+    OrderCurrency = context.models['117']
     seller = context._seller
     plugin_group = seller._plugin_group
     plugin_group.read()
@@ -59,7 +60,8 @@ class SellerSetupDefaults(orm.BaseModel):
     if not plugin_group or not plugin_group.plugins: # now user wont be in able to delete config, he will always have these defaults
       plugins = [AddressRule(exclusion=False, address_type='billing'),
                  AddressRule(exclusion=False, address_type='shipping'),
-                 PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business='')
+                 OrderCurrency(currency=Unit.build_key('usd')),
+                 PayPalPayment(reciever_email='your paypal e-mail', business='your paypal merchant id or e-mail')
                 ]
       if not plugin_group:
         plugin_group = SellerPluginContainer(plugins=plugins)

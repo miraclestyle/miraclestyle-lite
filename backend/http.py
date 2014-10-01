@@ -221,7 +221,7 @@ class IOEngineRun(RequestHandler):
     util.log('End IOEngineRun execute')
   
 
-class Login(RequestHandler):
+class AccountLogin(RequestHandler):
   
   def respond(self, provider=None):
     if provider is None:
@@ -238,7 +238,7 @@ class Login(RequestHandler):
       self.redirect('/') # @todo there is no other way to signal back to user what he needs to do next other than just redirect him to /
     self.send_json(output)
  
-class Logout(RequestHandler):
+class AccountLogout(RequestHandler):
     
   def respond(self):
     data = self.get_input()
@@ -250,14 +250,28 @@ class Logout(RequestHandler):
     self.response.delete_cookie('auth')
     self.redirect('/') # @todo there is no other way to signal back to user what he needs to do next other than just redirect him to /
             
+            
+class OrderComplete(RequestHandler):
+  
+  def respond(self, order_key):
+    params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
+              'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
+    data = {'action_model': '34', 'key': order_key, 'action_key': 'complete', 'request': {},
+            'read_arguments': {'_lines': {'config': {'limit': -1}}}}
+    for param in params:
+      data['request'][param] = getattr(self.request, param)
+    output = iom.Engine.run(data)
+    return output      
+            
     
 ROUTES = [('/api/endpoint', Endpoint),
           ('/api/model_meta', ModelMeta),
           ('/api/task/io_engine_run', IOEngineRun),
           ('/api/install', Install),
-          ('/api/login', Login, 'login'),
-          ('/api/login/<provider>', Login, 'login_provider'),
-          ('/api/logout', Logout, 'logout')]
+          ('/api/account/login', AccountLogin),
+          ('/api/account/login/<provider>', AccountLogin),
+          ('/api/account/logout', AccountLogout),
+          ('/api/order/complete/<order_key>', OrderComplete)] # this will be the path on which all orders are marked complete
 
 
 # Test Handlers

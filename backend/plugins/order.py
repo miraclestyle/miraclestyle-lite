@@ -40,7 +40,7 @@ class OrderInit(orm.BaseModel):
         raise PluginError('seller_missing')
       seller_key = product.parent().parent() # go 2 levels up, account->seller->catalog->product
     order = Order.query(Order.seller_reference == seller_key,
-                        Order.state.IN(['cart', 'checkout', 'processing']),
+                        Order.state.IN(['cart', 'checkout']),
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this
     if order is None:
       order = Order(parent=context.input.get('buyer'), name='Default Order Name') # we need a name for this
@@ -142,28 +142,40 @@ class ProductSpecs(orm.BaseModel):
   def run(self, context):
     ProductInstance = context.models['27']
     order = context._order
+    weight_uom = Unit.build_key('kilogram').get()
+    volume_uom = Unit.build_key('cubic_meter').get()
+    unit_uom = Unit.build_key('unit').get()
+    total_weight = format_value('0', weight_uom)
+    total_volume = format_value('0', volume_uom)
+    total_quantity = format_value('0', unit_uom)
     for line in order._lines.value:
       line._weight = None
       line._weight_uom = None
       line._volume = None
       line._volume_uom = None
-      product = line.product_reference.get()
-      if hasattr(product, 'weight'):
-        line._weight = product.weight
-        line._weight_uom = product.weight_uom.get()
-      if hasattr(product, 'volume'):
-        line._volume = product.volume
-        line._volume_uom = product.volume_uom.get()
-      if line.product_variant_signature:
-        product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
-        product_instance = product_instance_key.get()
-        if product_instance is not None:
-          if hasattr(product_instance, 'weight'):
-            line._weight = product_instance.weight
-            line._weight_uom = product_instance.weight_uom.get()
-          if hasattr(product_instance, 'volume'):
-            line._volume = product_instance.volume
-            line._volume_uom = product_instance.volume_uom.get()
+      if hasattr(line, 'product_reference'):
+        product = line.product_reference.get()
+        if product:
+          line._weight = product.weight
+          line._weight_uom = product.weight_uom.get()
+          line._volume = product.volume
+          line._volume_uom = product.volume_uom.get()
+          if line.product_variant_signature:
+            product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
+            product_instance = product_instance_key.get()
+            if product_instance is not None:
+              if hasattr(product_instance, 'weight'):
+                line._weight = product_instance.weight
+                line._weight_uom = product_instance.weight_uom.get()
+              if hasattr(product_instance, 'volume'):
+                line._volume = product_instance.volume
+                line._volume_uom = product_instance.volume_uom.get()
+          total_weight = total_weight + convert_value(line._weight, line._weight_uom, weight_uom)
+          total_volume = total_volume + convert_value(line._volume, line._volume_uom, volume_uom)
+          total_quantity = total_quantity + convert_value(line.quantity, line.product_uom.value, unit_uom)
+    order._total_weight = total_weight
+    order._total_volume = total_volume
+    order._total_quantity = total_quantity
 
 
 # This is system plugin, which means end user can not use it!
@@ -191,10 +203,10 @@ class OrderLineFormat(orm.BaseModel):
         if line.taxes.value:
           for tax in line.taxes.value:
             if (tax.type == 'percent'):
-              tax_amount = format_value(tax.tax_amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
+              tax_amount = format_value(tax.amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.total * tax_amount)
             elif (tax.type == 'fixed'):
-              tax_amount = format_value(tax.tax_amount, order.currency.value)
+              tax_amount = format_value(tax.amount, order.currency.value)
               tax_subtotal = tax_subtotal + tax_amount
         line.tax_subtotal = tax_subtotal
 
@@ -321,12 +333,11 @@ class AddressRule(orm.BaseModel):
           allowed = self.exclusion
           break
     return allowed
-
-
-# This plugin is incomplete!
-class PayPalPayment(orm.BaseModel):
   
-  _kind = 108
+
+class OrderCurrency(orm.BaseModel):
+  
+  _kind = 117
   
   _use_rule_engine = False
   
@@ -336,18 +347,170 @@ class PayPalPayment(orm.BaseModel):
   # PayPal Shipping: Prompt for an address, and require one
   
   currency = orm.SuperKeyProperty('1', kind=Unit, required=True, indexed=False)
-  reciever_email = orm.SuperStringProperty('2', required=True, indexed=False)
-  business = orm.SuperStringProperty('3', required=True, indexed=False)
   
   def run(self, context):
     order = context._order
     # In context of add_to_cart action runner does the following:
     order.currency = copy.deepcopy(self.currency.get())
-    order.paypal_reciever_email = self.reciever_email
-    order.paypal_business = self.business
+    
+class PaymentMethod(orm.BaseModel):
+  
+  def _get_name(self):
+    return self.__class__.__name__
+  
+  def _get_system_name(self):
+    return self.__class__.__name__.lower()
+  
+  def run(self, context):
+    if 'payment_methods' not in context.output:
+      context.output['payment_methods'] = []  
+    context.output['payment_methods'].append({'key': self.key,
+                                              'system_name': self._get_system_name(),
+                                              'name': self._get_name()})
+
 
 
 # This plugin is incomplete!
+class PayPalPayment(PaymentMethod):
+  
+  _kind = 108
+  
+  _use_rule_engine = False
+  
+  # This plugin will be subscribed to many actions, among which is add_to_cart as well.
+  # PayPal Shipping: Prompt for an address, but do not require one,
+  # PayPal Shipping: Do not prompt for an address
+  # PayPal Shipping: Prompt for an address, and require one
+  reciever_email = orm.SuperStringProperty('1', required=True, indexed=False)
+  business = orm.SuperStringProperty('2', required=True, indexed=False)
+  
+  def _get_name(self):
+    return 'Paypal'
+  
+  def _get_system_name(self):
+    return 'paypal'
+  
+  def run(self, context):
+    super(PayPalPayment, self).run(context)
+    # CURRENTLY WE ONLY SUPPORT PAYPAL, SO IT IS AUTOMATICALLY SET EITHERWAY
+    context._order.payment_method = self.key
+    
+  def complete(self, context):
+    
+    if settings.PAYPAL_SANDBOX:
+      url = settings.PAYPAL_WEBSCR_SANDBOX
+    else:
+      url = settings.PAYPAL_WEBSCR
+    
+    request = context.input['request']
+    ipn = request['params']
+    # validate if the request came from ipn
+    result = urlfetch.fetch(url=url,
+                            payload='cmd=_notify-validate&%s' % request['body'],
+                            method=urlfetch.POST,
+                            headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection' : 'Close'})
+    if result.content != 'VERIFIED':
+      raise PluginError('invalid_ipn_message') # log somehow
+    
+    order = context._order
+    shipping_address = order.shipping_address.value
+    order_currency = order.currency.value
+    
+    # ipn alias
+    ipn_payment_status = ipn['payment_status']
+    
+    # only verified ipn messages are to be saved
+    OrderPaymentInfo = context.models['116']
+    ipns = OrderPaymentInfo.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
+    for ipn in ipns:
+      if (ipn.payment_status == ipn_payment_status):
+        raise PluginError('duplicate_entry') # ipns that come in with same payment_status are to be rejected
+        # by the way, we cannot raise exceptions cause that will cause status code other than 200 and cause that the same
+        # ipn will be called again until it reaches 200 status response code
+        # ipn will retry for x amount of times till it gives up
+    payment_info = OrderPaymentInfo(ipn_txn_id=ipn['txn_id'], payment_status=ipn_payment_status, ipn=request['body'])
+    payment_info.put()
+    
+    # begin ipn message validation
+    mismatches = []
+
+    if ipn['custom'] != order.key.urlsafe(): # if the order id is not valid
+      mismatches.append('invalid_order_id')
+    
+    if (self.receiver_email != ipn['receiver_email']):
+      mismatches.append('receiver_email')
+    if (self.business != ipn['business']):
+      mismatches.append('business_email')
+    if (order_currency.code != ipn['mc_currency']):
+      mismatches.append('mc_currency')
+    if (order.total_amount != format_value(ipn['mc_gross'], order_currency)):
+      mismatches.append('mc_gross')
+    if (order.tax_amount != format_value(ipn['tax'], order_currency)):
+      mismatches.append('tax')
+    if (order.name != ipn['invoice']): # entry.reference bi mozda mogao da bude user.key.id-entry.key.id ili mozda entry.key.id ?
+      mismatches.append('invoice')
+    if (shipping_address.country != ipn['address_country']):
+      mismatches.append('address_country')    
+    if (shipping_address.country_code != ipn['address_country_code']):
+      mismatches.append('address_country_code')
+    if (shipping_address.city != ipn['address_city']):
+      mismatches.append('address_city')
+    if (shipping_address.name != ipn['address_name']):
+      mismatches.append('address_name')
+    
+    state = shipping_address.region # po defaultu sve ostale drzave koriste name? ili i one isto kod?
+    if shipping_address.country_code == 'US': # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
+      state = shipping_address.region_code
+       
+    if (state != ipn['address_state']):
+      mismatches.append('address_state')
+    if (shipping_address.street != ipn['address_street']): 
+      # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
+      # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
+      # Primer: u'address_street': [u'1 Edi St\r\nApartment 7'], gde je vrednost Street Address 
+      # od kupca bilo "Edi St", a vrednost Street Address (Optional) "Apartment 7".
+      mismatches.append('address_street')
+    if (shipping_address.postal_code != ipn['address_zip']):
+      mismatches.append('address_zip')
+        
+    for line in order._lines.value:
+      if (line.code != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
+        mismatches.append('item_number%s' % str(line.sequence))
+      if (line.description != ipn['item_name%s' % str(line.sequence)]):
+        mismatches.append('item_name%s' % str(line.sequence))
+      if (line.quantity != format_value(ipn['quantity%s' % str(line.sequence)], line.product_uom)):
+        mismatches.append('quantity%s' % str(line.sequence))
+      if ((line.subtotal + line.tax_subtotal) != format_value(ipn['mc_gross%s' % str(line.sequence)], order_currency)):
+        mismatches.append('mc_gross%s' % str(line.sequence))
+    # Ukoliko je doslo do fail-ova u poredjenjima
+    # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
+    if not mismatches:
+      if order.payment_status == ipn_payment_status:
+        # @todo also log?
+        return None # nothing to do since the payment status is exactly the same
+      else:
+        update_paypal_payment_status = False
+        if order.payment_status == 'Pending' or order.payment_status == None: # send update command ONLY if the payment_status is pending or it wasnt set (e.g. new order)
+          if ipn_payment_status == 'Completed' or ipn_payment_status == 'Denied':
+            update_paypal_payment_status = True
+        elif order.payment_status == 'Completed':
+          if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
+            update_paypal_payment_status = True
+        if update_paypal_payment_status:
+            # ovo se verovatno treba jos doterati..
+            if order.state == 'checkout' and ipn_payment_status == 'Completed':
+              order.state = 'completed'
+              order.payment_status = ipn_payment_status
+            elif order.state == 'checkout' and ipn_payment_status == 'Denied': # ovo cemo jos da razmotrimo
+              order.state = 'canceled'
+              order.payment_status = ipn_payment_status
+            elif order.state == 'completed':
+              order.payment_status = ipn_payment_status
+    else:
+      # log that there were missmatches, where we should log that?
+      log('Found mismatches %s with ipn %s for order: %s' % (mismatches, ipn, order.key))
+    
+
 class Tax(orm.BaseModel):
   
   _kind = 109
@@ -361,12 +524,13 @@ class Tax(orm.BaseModel):
   amount = orm.SuperDecimalProperty('5', required=True, indexed=False)
   exclusion = orm.SuperBooleanProperty('6', required=True, default=False, indexed=False)
   address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '8', repeated=True)  # @todo should AddressRuleLocation go here or Location?
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '8', repeated=True)
   carriers = orm.SuperKeyProperty('9', kind='113', repeated=True, indexed=False)
   product_categories = orm.SuperKeyProperty('10', kind='24', repeated=True, indexed=False)
   
   def run(self, context):
     self.read() # read locals
+    OrderLineTax = context.models['32']
     order = context._order
     allowed = self.validate_tax(order)
     for line in order._lines.value:
@@ -374,16 +538,15 @@ class Tax(orm.BaseModel):
       if not taxes:
         taxes = []
       for tax in taxes:
-        if tax.key == self.key:
+        if tax.key_id_str == self.key_id_str:
           tax._state = 'deleted'
-      if (self.carriers and self.carriers.count(line.carrier_reference)) \
-      or (self.product_categories and self.product_categories.count(line.product_category)):  # @todo Have to check if all lines have carrier_reference property??
+      if ((self.carriers and self.carriers.count(line.carrier_reference)) \
+      or (self.product_categories and self.product_categories.count(line.product_category))) \
+      or (not self.carriers and not self.product_categories and self.locations.value): # if user did not specify any carriers and product categories, but did locations
         if allowed:
           tax_exists = False
           for tax in taxes:
-            if tax._state == 'deleted':
-              continue
-            if tax.key == self.key:
+            if tax.key_id_str == self.key_id_str:
               tax._state = 'modified'
               tax.name = self.name
               tax.code = self.code
@@ -392,8 +555,8 @@ class Tax(orm.BaseModel):
               tax_exists = True
               break
           if not tax_exists:
-            taxes.append(order.OrderLineTax(key=self.key, name=self.name, code=self.code, tax_type=self.tax_type, tax_amount=self.tax_amount))
-            line.taxes = taxes
+            taxes.append(OrderLineTax(id=self.key_id_str, name=self.name, code=self.code, type=self.type, amount=self.amount))
+          line.taxes = taxes
   
   def validate_tax(self, order):
     address = None
@@ -456,11 +619,11 @@ class CarrierLineRule(orm.BaseModel):
   _use_rule_engine = False
   
   condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=['weight', 'volume', 'weight*volume', 'price', 'quantity'], indexed=False)
-  condition_operator = orm.SuperStringProperty('2', required=True, default='=', choices=['=', '>', '<', '>=', '<='], indexed=False)
+  condition_operator = orm.SuperStringProperty('2', required=True, default='=', choices=['==', '>', '<', '>=', '<='], indexed=False)
   condition_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
   price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=['fixed', 'variable'], indexed=False)
   price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=['weight', 'volume', 'weight*volume', 'price', 'quantity'], indexed=False)
-  price_value = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  price_value = orm.SuperDecimalProperty('6', required=True, indexed=False)
   
   def make_condition(self):
     condition = '%s %s condition_value' % (self.condition_type, self.condition_operator)
@@ -469,9 +632,9 @@ class CarrierLineRule(orm.BaseModel):
   def make_price_calculator(self):
     price_calculator = ''
     if self.price_type == 'fixed':
-      price_calculator = 'price'
+      price_calculator = 'price_value'
     if self.price_type == 'variable':
-      price_calculator = '%s * price' % self.price_operator
+      price_calculator = '%s * price_value' % self.price_operator
     return price_calculator
 
 
@@ -485,11 +648,10 @@ class CarrierLine(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
-  locations = orm.SuperLocalStructuredProperty(Location, '4', repeated=True) # @todo should AddressRuleLocation go here or Location?
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '4', repeated=True)
   rules = orm.SuperLocalStructuredProperty(CarrierLineRule, '5', repeated=True)
 
 
-# This plugin is incomplete!
 class Carrier(orm.BaseModel):
   
   _kind = 113
@@ -517,17 +679,7 @@ class Carrier(orm.BaseModel):
  
   
   def calculate_lines(self, valid_lines, order):
-    weight_uom = Unit.build_key('kilogram').get()
-    volume_uom = Unit.build_key('cubic_meter').get()
-    weight = format_value('0', weight_uom)
-    volume = format_value('0', volume_uom)
     for line in order._lines.value:
-      line_weight = line._weight
-      line_weight_uom = line._weight_uom
-      line_volume = line._volume
-      line_volume_uom = line._volume_uom
-      weight = weight + convert_value(line_weight, line_weight_uom, weight_uom)
-      volume = volume + convert_value(line_volume, line_volume_uom, volume_uom)
       carrier_prices = []
       for carrier_line in valid_lines:
         line_prices = []
@@ -535,10 +687,22 @@ class Carrier(orm.BaseModel):
         if rules:
           for rule in carrier_line.rules.value:
             condition = rule.make_condition()
-            price = rule.price_value
-            if safe_eval(condition, {'weight': weight, 'condition_value': rule.condition_value, 'volume': volume, 'price': price}):
+            condition_data = {
+              'condition_value': rule.condition_value,
+              'weight': order._total_weight,
+              'volume': order._total_volume,
+              'price': order.total_amount,
+              'quantity': order._total_quantity,
+            }
+            if safe_eval(condition, condition_data):
               price_calculation = rule.make_price_calculator()
-              price = safe_eval(price_calculation, {'weight': weight, 'volume': volume, 'price': price})
+              price_data = {
+                'weight': line._weight,
+                'volume': line._volume,
+                'quantity': line.quantity,
+                'price_value': rule.price_value,
+              }
+              price = safe_eval(price_calculation, price_data)
               line_prices.append(price)
         carrier_prices.append(min(line_prices))
       return min(carrier_prices)  # Return the lowest price possible of all lines!
@@ -583,161 +747,29 @@ class Carrier(orm.BaseModel):
           break
     if allowed:
       allowed = False
-      price = order.total_amount
-      weight_uom = Unit.build_key('kilogram').get()
-      volume_uom = Unit.build_key('cubic_meter').get()
-      weight = format_value('0', weight_uom)
-      volume = format_value('0', volume_uom)
-      for line in order._lines.value:
-        line_weight = line._weight
-        line_weight_uom = line._weight_uom
-        line_volume = line._volume
-        line_volume_uom = line._volume_uom
-        weight = weight + convert_value(line_weight, line_weight_uom, weight_uom)
-        volume = volume + convert_value(line_volume, line_volume_uom, volume_uom)
       for rule in carrier_line.rules.value:
         condition = rule.make_condition()
-        if safe_eval(condition, {'weight': weight, 'condition_value': rule.condition_value, 'volume': volume, 'price': price}):
+        condition_data = {
+          'condition_value': rule.condition_value,
+          'weight': order._total_weight,
+          'volume': order._total_volume,
+          'price': order.total_amount,
+          'quantity': order._total_quantity,
+        }
+        if safe_eval(condition, condition_data):
           allowed = True
           break
     return allowed
-
-
-# OLD CODE #
-
-
-class PayPalInit(orm.BaseModel):
-  
-  # user plugin, saved in datastore
-  
-  def run(self, journal, context):
-    
-    ipns = log.Record.query(orm.GenericProperty('ipn_txn_id') == context.input['txn_id']).fetch()
-    if len(ipns):
-      for ipn in ipns:
-        if (ipn.payment_status == context.input['payment_status']):
-          raise orm.PluginValidationError('duplicate_entry')
-      entry = ipns[0].parent_entity
-      if context.input['custom']:
-         if (entry.key.urlsafe() == context.input['custom']):
-           
-            kwds = {'log_entity' : False}
-            kwds.update(dict([('ipn_%s' % key, value) for key,value in context.input.items()])) # prefix
-            context.log.entities.append((entry, kwds))
-            
-         else:
-            raise orm.PluginValidationError('invalid_ipn')
-      else:
-        raise orm.PluginValidationError('invalid_ipn')
-      
-    else:    
-      
-      if not context.input['custom']:
-        raise orm.PluginValidationError('invalid_ipn')
-      else:
-        try:
-          entry_key = orm.Key(urlsafe=context.input['custom']) 
-          entry = entry_key.get()
-        except Exception as e:
-          raise orm.PluginValidationError('invalid_ipn')
-        
-    if not entry:
-      raise orm.PluginValidationError('invalid_ipn')
-    
-    kwds = {'log_entity' : False}
-    kwds.update(dict([('ipn_%s' % key, value) for key,value in context.input.items()])) # prefix
-    context.log.entities.append((entry, kwds))
-    
-    if not context.transaction.group:
-       context.transaction.group = entry.parent_entity
-       
-    context.transaction.entities[journal.key.id()] = entry
-    
-    if not self.validate_entry(entry, context):
-       raise orm.PluginValidationError('fraud_check')
-     
-    if (entry.paypal_payment_status == context.input['payment_status']):
-        return None
-      
-    update_paypal_payment_status = False  
-      
-    if (entry.paypal_payment_status == 'Pending'):
-        if (context.input['payment_status'] == 'Completed' or context.input == 'Denied'):
-            update_paypal_payment_status = True
-    elif (entry.paypal_payment_status == 'Completed'):
-        if (context.input['payment_status'] == 'Refunded' or context.input['payment_status'] == 'Reversed'):
-            update_paypal_payment_status = True
-            
-    if (update_paypal_payment_status):
-        # ovo se verovatno treba jos doterati..
-        if (entry.state == 'processing' and context.input['payment_status'] == 'Completed'):
-            entry.state = 'completed'
-            entry.paypal_payment_status = context.input['payment_status']
-            context.log.entities.append((entry,))
-        elif (entry.state == 'processing' and context.input['payment_status'] == 'Denied'): # ovo cemo jos da razmotrimo
-            entry.state = 'canceled'
-            entry.paypal_payment_status = context.input['payment_status']
-            context.log.entities.append((entry,))
-        elif (entry.state == 'completed'):
-            entry.paypal_payment_status = context.input['payment_status']
-            context.log.entities.append((entry,))
-    
-  def validate_entry(self, entry, context):
-      
-      mismatches = []
-      ipn = context.input
-      shipping_address = entry.shipping_address
  
-      if (entry.paypal_receiver_email != ipn['receiver_email']):
-          mismatches.append('receiver_email')
-      if (entry.paypal_business != ipn['business']):
-          mismatches.append('business_email')
-      if (entry.currency.code != ipn['mc_currency']):
-          mismatches.append('mc_currency')
-      if (entry.total_amount != uom.format_value(ipn['mc_gross'], entry.currency)):
-          mismatches.append('mc_gross')
-      if (entry.tax_amount != uom.format_value(ipn['tax'], entry.currency)):
-          mismatches.append('tax')
-          
-      if (entry.name != ipn['invoice']): # entry.reference bi mozda mogao da bude user.key.id-entry.key.id ili mozda entry.key.id ?
-          mismatches.append('invoice')
-      
-      if (shipping_address.country != ipn['address_country']):
-          mismatches.append('address_country')    
-      if (shipping_address.country_code != ipn['address_country_code']):
-          mismatches.append('address_country_code')
-      if (shipping_address.city != ipn['address_city']):
-          mismatches.append('address_city')
-      if (shipping_address.name != ipn['address_name']):
-          mismatches.append('address_name')
-      
-      state = shipping_address.region # po defaultu sve ostale drzave koriste name? ili i one isto kod?
-      if shipping_address.country_code == 'US': # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
-         state = shipping_address.region_code
-         
-      if (state != ipn['address_state']):
-          mismatches.append('address_state')
-      if (shipping_address.street != ipn['address_street']): 
-          # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
-          # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
-          # Primer: u'address_street': [u'1 Edi St\r\nApartment 7'], gde je vrednost Street Address 
-          # od kupca bilo "Edi St", a vrednost Street Address (Optional) "Apartment 7".
-          mismatches.append('address_street')
-      if (shipping_address.postal_code != ipn['address_zip']):
-          mismatches.append('address_zip')
-          
-      for line in entry._lines:
-          if (line.code != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
-              mismatches.append('item_number%s' % str(line.sequence))
-          if (line.description != ipn['item_name%s' % str(line.sequence)]):
-              mismatches.append('item_name%s' % str(line.sequence))
-          if (line.quantity != uom.format_value(ipn['quantity%s' % str(line.sequence)], line.product_uom)):
-              mismatches.append('quantity%s' % str(line.sequence))
-          if ((line.subtotal + line.tax_subtotal) != uom.format_value(ipn['mc_gross%s' % str(line.sequence)], entry.currency)):
-              mismatches.append('mc_gross%s' % str(line.sequence))
-      # Ukoliko je doslo do fail-ova u poredjenjima
-      # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
-      if not mismatches:
-         return True
-      else:
-         return False
+ 
+class OrderProcessPayment(orm.BaseModel):
+  
+  _kind = 118
+  
+  def run(self, context):
+    order = context._order
+    payment_plugin = order._payment_method
+    if not payment_plugin:
+      raise PluginError('no_payment_method_supplied') # @todo generally payment method should always be present
+    # payment_plugin => Instance of PaypalPayment for example.
+    payment_plugin.complete(context) # @todo maybe change this?

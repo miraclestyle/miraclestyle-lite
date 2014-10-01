@@ -67,7 +67,14 @@ class OrderMessage(orm.BaseExpando):
   agent = orm.SuperKeyProperty('2', kind='11', required=True, indexed=False)
   body = orm.SuperTextProperty('3', required=True, indexed=False)
   
-  _default_indexed = False
+  _default_indexed = False  
+  
+  
+class OrderPaymentInfo(orm.BaseExpando):
+  
+  _kind = 116
+  
+  _default_indexed = True
 
 
 class Order(orm.BaseExpando):
@@ -77,7 +84,7 @@ class Order(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   name = orm.SuperStringProperty('3', required=True)  # @todo Not sure if we need this, or how to use it to construct some unique order name? # possible usage of sharding if we want for example SAJ-<incremented id of order> or just use key.id() ?
-  state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'processing', 'completed', 'canceled'])
+  state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'completed', 'canceled'])
   date = orm.SuperDateTimeProperty('5', required=True)
   seller_reference = orm.SuperKeyProperty('6', kind='23', required=True)
   seller_address = orm.SuperLocalStructuredProperty('15', '7', required=True)
@@ -91,18 +98,29 @@ class Order(orm.BaseExpando):
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
   feedback = orm.SuperStringProperty('16', choices=['positive', 'neutral', 'negative'])
   feedback_adjustment = orm.SuperStringProperty('17', choices=['revision', 'reported', 'sudo'])
-  # @todo this payment_status cannot be required since we cannot set it before the payment is done.
-  payment_status = orm.SuperStringProperty('18', required=False, indexed=False)  # @todo Not sure if these paypal props should be ousted to some PaymentInfo model
-  paypal_reciever_email = orm.SuperStringProperty('19', required=True, indexed=False)
-  paypal_business = orm.SuperStringProperty('20', required=True, indexed=False)
+  payment_method = orm.SuperKeyProperty('18', required=False, indexed=False)
+  payment_status = orm.SuperStringProperty('19', required=False, indexed=False)
   
   _default_indexed = False
   
+  def _get_payment_status(self):
+    self._seller.read()
+    if self._seller:
+      self._seller._plugin_container.read()
+      for plugin in self._seller._plugin_container.plugins:
+        if plugin.key == self.payment_method:
+          return plugin
+          # values of the payment method must be controlled for public
+          # because we do not have permission system for remoteStructuredProperty (for multiple kinds)
+    return None
+  
   _virtual_fields = {
     '_seller': orm.SuperReferenceStructuredProperty('23', target_field='seller_reference', autoload=True),
-    '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True),
+    '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True, read_arguments={'config': {'order': {'field': 'sequence',
+                                                                                       'direction': 'asc'}}}),
     '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, updateable=False, deleteable=False),
-    '_records': orm.SuperRecordProperty('34')
+    '_records': orm.SuperRecordProperty('34'),
+    '_payment_status': orm.SuperReferenceProperty(callback=_get_payment_status, format_callback=lambda self: self, autoload=False),
     }
   
   _global_role = GlobalRole(
@@ -117,7 +135,7 @@ class Order(orm.BaseExpando):
                            'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
                            or entity._original.seller_reference._root == account.key))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
-                           'not account._is_guest and ((entity._original.key_root == account.key \
+                           'not action.key_id_str == "search" and not account._is_guest and ((entity._original.key_root == account.key \
                            and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key \
                            and entity._original.state == "checkout"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
@@ -129,13 +147,11 @@ class Order(orm.BaseExpando):
       orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel'),
-                                  orm.Action.build_key('34', 'pay')], True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "checkout"'),
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'timeout'),
-                                  orm.Action.build_key('34', 'complete')], True,
-                           'account._is_taskqueue and entity._original.state == "processing"'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'complete')], True,
+                           'entity._original.state == "checkout"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'leave_feedback')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "completed" and entity._is_feedback_allowed \
@@ -157,23 +173,20 @@ class Order(orm.BaseExpando):
       orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference', 'seller_address',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
-                                 'feedback', 'feedback_adjustment', 'payment_status', 'paypal_reciever_email',
-                                 'paypal_business', '_lines', '_messages', '_records'], False, True,
+                                 'feedback', 'feedback_adjustment', 'payment_method', '_lines', '_messages', '_records', '_seller'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and (entity._original.key_root == account.key \
                           or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
       orm.FieldPermission('34', ['name', 'date', 'seller_reference', 'seller_address',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
-                                 'payment_status', 'paypal_reciever_email', 'paypal_business',
-                                 '_lines', '_messages', '_records'], True, True,
+                                 'payment_method', '_lines', '_messages', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "add_to_cart"'),
       orm.FieldPermission('34', ['state'], True, True,
                           '(action.key_id_str == "add_to_cart" and entity.state == "cart") \
-                          or ((action.key_id_str == "checkout" or action.key_id_str == "timeout") and entity.state == "checkout") \
+                          or ((action.key_id_str == "checkout") and entity.state == "checkout") \
                           or (action.key_id_str == "cancel" and entity.state == "canceled") \
-                          or (action.key_id_str == "pay" and entity.state == "processing") \
                           or (action.key_id_str == "complete" and entity.state == "completed")'),
       orm.FieldPermission('34', ['_messages'], True, True,
                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
@@ -213,12 +226,9 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             OrderInit(),
-            PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business=''), # @todo For now we setup default currency for the order.
-            AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-            AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             ProductToOrderLine(),
             ProductSpecs(),
-            PluginExec(),  # @todo We will see if this plugin will need some cfg flexibility!
+            PluginExec(),
             OrderLineFormat(),
             OrderFormat(),
             RulePrepare(),
@@ -275,8 +285,9 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'update'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        'billing_address_reference': orm.SuperKeyProperty(kind='14'),
-        'shipping_address_reference': orm.SuperKeyProperty(kind='14'),
+        'payment_method': orm.SuperVirtualKeyProperty(),
+        'billing_address_reference': orm.SuperVirtualKeyProperty(kind='14'),
+        'shipping_address_reference': orm.SuperVirtualKeyProperty(kind='14'),
         '_lines': orm.SuperLocalStructuredProperty(OrderLine, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
@@ -287,12 +298,10 @@ class Order(orm.BaseExpando):
             Read(),
             Set(cfg={'d': {'_order.billing_address_reference': 'input.billing_address_reference',
                            '_order.shipping_address_reference': 'input.shipping_address_reference',
+                           '_order.payment_method': 'input.payment_method',
                            '_order._lines': 'input._lines'}}),
-            PayPalPayment(currency=Unit.build_key('usd'), reciever_email='', business=''), # @todo For now we setup default currency for the order.
-            AddressRule(exclusion=False, address_type='billing'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
-            AddressRule(exclusion=False, address_type='shipping'),  # @todo For now we setup default address rules for both, billing & shipping addresses.
             ProductSpecs(),
-            PluginExec(),  # @todo We will see if this plugin will need some cfg flexibility!
+            PluginExec(),
             OrderLineFormat(),
             OrderFormat(),
             RulePrepare(),
@@ -338,8 +347,7 @@ class Order(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
-            # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
-            Search(),
+            Search(cfg={'d': {'ancestor': 'account.key'}}),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -399,66 +407,16 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'pay'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            Set(cfg={'s': {'_order.state': 'processing'}}),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_order'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('34', 'timeout'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            Set(cfg={'s': {'_order.state': 'checkout'}}),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_order'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
       key=orm.Action.build_key('34', 'complete'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True)
+        'request': orm.SuperPickleProperty(),
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_order.state': 'completed'}}),
+            OrderProcessPayment(),
             RulePrepare(),
             RuleExec()
             ]

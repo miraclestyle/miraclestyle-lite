@@ -70,7 +70,7 @@ GOOGLE_OAUTH2 = {
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : '%s/api/login/google' % HOST,
+   'redirect_uri' : '%s/api/account/login/google' % HOST,
    'type' : 1,
    'accountinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
@@ -81,7 +81,7 @@ FACEBOOK_OAUTH2 = {
    'scope'        : ",".join(['email']),
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : '%s/api/login/facebook' % HOST,
+   'redirect_uri' : '%s/api/account/login/facebook' % HOST,
    'type' : 2,
    'accountinfo' : 'https://graph.facebook.com/me',
 }
@@ -90,3 +90,7 @@ LOGIN_METHODS = {
     'google': {'oauth2': GOOGLE_OAUTH2},
     'facebook': {'oauth2': FACEBOOK_OAUTH2},
 }
+
+PAYPAL_WEBSCR_SANDBOX = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
+PAYPAL_WEBSCR = 'https://www.paypal.com/cgi-bin/webscr'
+PAYPAL_SANDBOX = True

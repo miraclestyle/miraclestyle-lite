@@ -2772,9 +2772,16 @@ class SuperStringProperty(_BaseProperty, StringProperty):
     if value is util.Nonexistent:
       return value
     if self._repeated:
-      return [unicode(v) for v in value]
+      values = []
+      for v in value:
+        if v is not None:
+          v = unicode(v)
+        values.append(v)
+      return values
     else:
-      return unicode(value)
+      if value is not None:
+        value = unicode(value)
+      return value
   
   def get_search_document_field(self, value):
     if self._repeated:

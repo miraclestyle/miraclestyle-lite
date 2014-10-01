@@ -1244,6 +1244,8 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
     	    var that = this;
     	    var filters = this.send['filters'];
     	    var orders = this.send['orders'];
+    	    
+    	    console.log(filters, orders);
      
     	        angular.forEach(this.indexes, function (index, index_id) {
     	           
@@ -1357,7 +1359,105 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
 		    Title.reset();
 		});
   
-}]).controller('DBLookup', ['$scope', 'Endpoint', '$modal', function (scope, Endpoint, $modal) {
+}])
+.controller('ActionSender', ['$scope', 'Endpoint', '$modal', function (scope, Endpoint, $modal) {
+     
+    scope.getForm = function ()
+    {
+          var modalInstance = $modal.open({
+              templateUrl: logic_template('misc/action_sender.html'),
+              controller: function ($scope, $modalInstance, RuleEngine) {
+                   
+                $scope.fields = {};
+                $scope.is_new = true;
+                $scope.args = {};
+                $scope.actions = {};
+                $scope.action = null;
+                $scope.current_action = null;
+                $scope.result = null;
+                $scope.transformer = {'text': null};
+                
+                $scope.$watch('transformer.text', function (newv, oldv) {
+                 
+                    
+                    if (newv !== oldv)
+                    {
+                        try
+                        {
+                            var data = JSON.parse(newv);
+                            $scope.args = data;
+                        }catch(e)
+                        {
+                            
+                        }
+                        
+                        
+                    }
+                
+                    
+                });
+                
+                
+                
+                $scope.cancel = function ()
+                {
+                    $modalInstance.dismiss();
+                };
+                
+                $scope.sender = {
+                    'action': null,
+                    'submit': function()
+                    {
+                          Endpoint.post($scope.current_action.id, this.kind, $scope.args).success(function (data) {
+                             $scope.result = data; 
+                           
+                          });
+                    },
+                    'kind': null,
+                    'changeAction': function ()
+                    {
+                        $scope.current_action = $scope.actions[this.action];
+                        var out = {}; 
+                        angular.forEach($scope.current_action.arguments, function (v, k) {
+                            $scope.args[k] = v['default'];
+                            out[k] = v;
+                        });
+                        
+                        $scope.fields = out;
+                        
+                        $scope.result = null;
+                         
+                        
+                    },
+                    'clear': function()
+                    {
+                       $scope.result = null;  
+                    },
+                    'changeKind' : function ()
+                    {
+                     
+                        var kindinfo = KINDS.get(this.kind);
+                        if (kindinfo)
+                        {
+                             $scope.actions = kindinfo.mapped_actions;
+                        }
+                        
+                        $scope.result = null;
+                        
+                    },
+                    
+                    
+                };
+                
+                
+        
+            }
+          });
+    };
+    
+    
+}])
+.controller('DBLookup', ['$scope', 'Endpoint', '$modal', function (scope, Endpoint, $modal) {
     
     scope.getForm = function ()
     {
@@ -1446,6 +1546,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                         var indx = that.indexes[that.index_id];
               
                         angular.forEach(indx.filters, function (filter, i) {
+                    
                                 that.send.filters.push({
                                     'field' : filter[0],
                                     'operator' : filter[1][0],
@@ -1465,7 +1566,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                     },
                     'discoverIndexID' : function ()
                     {
-                      
+                     
                         var that = this;
                         var filters = this.send['filters'];
                         var orders = this.send['orders'];
@@ -1504,6 +1605,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                  });
                                  
                             });
+                         
                        
                     },
                     'setSearch' : function (kind, search)
@@ -1536,6 +1638,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                             }
                             catch(e){}
                             
+               
                             if (search_argument)
                             {
                                 
@@ -1547,7 +1650,7 @@ var MainApp = angular.module('MainApp', ['ui.router', 'ngBusy', 'ngSanitize', 'n
                                 {
                                     this.send = search;
                                 }
-                                
+                           
                                 this.discoverIndexID();
                             }
                              

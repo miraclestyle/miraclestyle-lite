@@ -143,8 +143,10 @@
 	<div class="content" ui-view></div>
 	{% endblock %}
 	
-	<div class="adb-lookup" ng-controller="DBLookup">
-	    <button class="button" ng-click="getForm()">Lookup...</button>
+	<div class="adb-lookup">
+	    <span ng-controller="DBLookup"><button class="button" ng-click="getForm()">Lookup...</button></span>
+	    
+	    <span ng-controller="ActionSender"><button class="button" ng-click="getForm()">Action Sender...</button></span>
 	</div>
 	
   </body> 

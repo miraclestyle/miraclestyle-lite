@@ -238,6 +238,7 @@ MainApp.factory('Seller', ['$rootScope', 'Endpoint', 'EntityEditor', 'Title', '$
               // This function returns the value being watched. It is called for each turn of the $digest loop
               function() { return scope[config.fields]; },
               function(newValue, oldValue) {
+       
                 if ( newValue !== oldValue ) {
  
                    var fs = scope[config.fields];

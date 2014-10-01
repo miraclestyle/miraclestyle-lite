@@ -55,3 +55,9 @@ indexes:
   - name: '1'
   - name: '8'
   - name: '2'
+
+# Order  
+- kind: '34'
+  ancestor: yes
+  properties:
+  - name: '1'
