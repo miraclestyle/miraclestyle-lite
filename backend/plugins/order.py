@@ -108,7 +108,7 @@ class ProductToOrderLine(orm.BaseModel):
       product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
       product_instance = product_instance_key.get()
       new_line = Line()
-      new_line.sequence = 0
+      new_line.sequence = 1
       if order._lines.value:
         new_line.sequence = order._lines.value[-1].sequence + 1
       new_line.description = product.name
@@ -421,23 +421,27 @@ class PayPalPayment(PaymentMethod):
     
     # only verified ipn messages are to be saved
     OrderPaymentInfo = context.models['116']
-    ipns = OrderPaymentInfo.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
-    for ipn in ipns:
-      if (ipn.payment_status == ipn_payment_status):
+    order_payment_infos = OrderPaymentInfo.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
+    for order_payment_info in order_payment_infos:
+      if (order_payment_info.payment_status == ipn_payment_status):
         raise PluginError('duplicate_entry') # ipns that come in with same payment_status are to be rejected
         # by the way, we cannot raise exceptions cause that will cause status code other than 200 and cause that the same
         # ipn will be called again until it reaches 200 status response code
         # ipn will retry for x amount of times till it gives up
-    payment_info = OrderPaymentInfo(ipn_txn_id=ipn['txn_id'], payment_status=ipn_payment_status, ipn=request['body'])
+        # so we might as well use `return` statement to exit silently
+    payment_info = OrderPaymentInfo(ipn_txn_id=ipn['txn_id'], payment_status=ipn_payment_status)
+    payment_info._clone_properties() # this is a hack, because we put all properties indexed = True
+    payment_info._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
+    payment_info._properties['ipn']._set_value(payment_info, request['body'])
     payment_info.put()
     
     # begin ipn message validation
     mismatches = []
-
+ 
     if ipn['custom'] != order.key.urlsafe(): # if the order id is not valid
       mismatches.append('invalid_order_id')
     
-    if (self.receiver_email != ipn['receiver_email']):
+    if (self.reciever_email != ipn['receiver_email']):
       mismatches.append('receiver_email')
     if (self.business != ipn['business']):
       mismatches.append('business_email')
@@ -447,7 +451,7 @@ class PayPalPayment(PaymentMethod):
       mismatches.append('mc_gross')
     if (order.tax_amount != format_value(ipn['tax'], order_currency)):
       mismatches.append('tax')
-    if (order.name != ipn['invoice']): # entry.reference bi mozda mogao da bude user.key.id-entry.key.id ili mozda entry.key.id ?
+    if (order.key.urlsafe() != ipn['invoice']): # @todo we do not use order.name here anymore, but we could after we decide on how to uniquely build it
       mismatches.append('invoice')
     if (shipping_address.country != ipn['address_country']):
       mismatches.append('address_country')    
@@ -458,12 +462,9 @@ class PayPalPayment(PaymentMethod):
     if (shipping_address.name != ipn['address_name']):
       mismatches.append('address_name')
     
-    state = shipping_address.region # po defaultu sve ostale drzave koriste name? ili i one isto kod?
-    if shipping_address.country_code == 'US': # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
-      state = shipping_address.region_code
-       
-    if (state != ipn['address_state']):
+    if shipping_address.country_code == 'US' and shipping_address.country_code != ipn['address_state']: # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
       mismatches.append('address_state')
+
     if (shipping_address.street != ipn['address_street']): 
       # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
       # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
@@ -474,14 +475,16 @@ class PayPalPayment(PaymentMethod):
       mismatches.append('address_zip')
         
     for line in order._lines.value:
-      if (line.code != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
+      log('Order sequence %s' % line.sequence)
+      # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
+      if (str(line.sequence) != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
         mismatches.append('item_number%s' % str(line.sequence))
       if (line.description != ipn['item_name%s' % str(line.sequence)]):
         mismatches.append('item_name%s' % str(line.sequence))
-      if (line.quantity != format_value(ipn['quantity%s' % str(line.sequence)], line.product_uom)):
+      if (line.quantity != format_value(ipn['quantity%s' % str(line.sequence)], line.product_uom.value)):
         mismatches.append('quantity%s' % str(line.sequence))
-      if ((line.subtotal + line.tax_subtotal) != format_value(ipn['mc_gross%s' % str(line.sequence)], order_currency)):
-        mismatches.append('mc_gross%s' % str(line.sequence))
+      if ((line.subtotal + line.tax_subtotal) != format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
+        mismatches.append('mc_gross_%s' % str(line.sequence))
     # Ukoliko je doslo do fail-ova u poredjenjima
     # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
     if not mismatches:
@@ -509,6 +512,8 @@ class PayPalPayment(PaymentMethod):
     else:
       # log that there were missmatches, where we should log that?
       log('Found mismatches %s with ipn %s for order: %s' % (mismatches, ipn, order.key))
+    log('Set Order state %s' % order.state)
+    log('Set Order payment_status %s' % order.payment_status)
     
 
 class Tax(orm.BaseModel):
@@ -768,6 +773,7 @@ class OrderProcessPayment(orm.BaseModel):
   
   def run(self, context):
     order = context._order
+    order.read({'_lines': {'config': {'limit': -1}}, '_payment_method': {}})
     payment_plugin = order._payment_method
     if not payment_plugin:
       raise PluginError('no_payment_method_supplied') # @todo generally payment method should always be present

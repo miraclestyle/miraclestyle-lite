@@ -51,6 +51,41 @@ MainApp
 		}
 	};
 }])
+.directive('formlistener', ['$rootScope', '$timeout',
+  function ($rootScope, $timeout) {
+      
+      return {
+          link: function (scope, element)
+          { 
+              function fn() {
+             
+                  $(element).find('input').each(function () {
+                      scope.theform[$(this).attr('name')] = $(this).val();
+                  });
+              }
+              
+              
+              
+              
+              scope.$watch(function () {
+                  return scope.order;
+              }, function () {
+                  $timeout(fn);
+                  
+                  console.log('bar');
+                  
+                 
+              });
+              
+               
+               
+              
+              
+      
+             
+          }
+      };
+}])
 .controller('HomePage', ['$scope', 'Title', 'Endpoint', '$modal', 'EntityEditor',
     function ($scope, Title, Endpoint, $modal, EntityEditor) {
     
@@ -107,6 +142,7 @@ MainApp
                                                     $scope.child = _.findWhere($scope.entity._products, {key : pricetag.product});
                                                     $scope.current_variant = null;
                                                     $scope.product_key = $scope.child.key;
+                   
                                                     
                                                     $scope.original_child = angular.copy($scope.child);
                                                     
@@ -115,6 +151,76 @@ MainApp
                                                     angular.forEach($scope.child.variants, function (v) {
                                                         $scope.variant_combo[v.name] = null;
                                                     });
+                                                    
+                                                    $scope.pay = function ()
+                                                    { 
+                                                         Endpoint.post('read', '19', {
+                                                            'account': current_account.key
+                                                        }).success(function (buyer) {
+                                                            
+                                                             Endpoint.post('view_order', '34', {
+                                                                buyer: buyer.entity.key,
+                                                                seller: $scope.entity.parent.key,
+                                                             }).success(function (data) {
+                                                             
+                                                                  $modal.open({
+                                                                    templateUrl: logic_template('home/view_pay.html'),
+                                                                    controller: function ($scope, $modalInstance, RuleEngine, $timeout) {
+                                                                        
+                                                                         $scope.order = data.entity;
+                                                                         $scope.theform = {};
+                                                                         
+                                                                        
+                                                                         
+                                                                         $scope.update = function ()
+                                                                         {
+                                                                           Endpoint.post('update', '34', {
+                                                                               'key': $scope.order.key,
+                                                                               'payment_method': $scope.order.payment_method,
+                                                                               'billing_address_reference': $scope.order.billing_address_reference,
+                                                                               'shipping_address_reference': $scope.order.shipping_address_reference,
+                                                                               '_lines': $scope.order._lines,                    
+                                                                                'read_arguments': {
+                                                                                  '_lines': {'config': {'limit': -1}},
+                                                                                  '_payment_method': {},
+                                                                                }
+                                                                             }).success(function (data) {
+                                                                                 update($scope.order, data.entity);
+                                                                                 $scope.$broadcast('order_update');
+                                                                             });
+                                                                         };
+                                                                        
+                                                                         $scope.checkout = function ()
+                                                                         {
+                                                                             if ($scope.order.state != 'checkout')
+                                                                             {
+                                                                                 Endpoint.post('checkout', '34', {
+                                                                                     key: $scope.order.key
+                                                                                 }).success(function (data) {
+                                                                                     $scope.order.state = data.entity.state;
+                                                                                 });
+                                                                             }  
+                                                                         };
+                                                                    
+                                                                    
+                                                                         $scope.cancel = function () {
+                                                                                $modalInstance.dismiss();
+                                                                         };
+                                                                         
+                                                                         $scope.notify_url = fullpath('api/order/complete/' + $scope.order.key);
+                                                                         $scope.complete_path = fullpath('payment_completed/' + $scope.order.key);
+                                                                         $scope.cancel_path = fullpath('payment_canceled/' + $scope.order.key);
+                                                                        
+                                                                    }
+                                                                  });
+                                                                  
+                                                                  
+                                                             });
+                                                            
+                                                            
+                                                        });
+                                                         
+                                                    };
                                                     
                                                     $scope.addToCart = function ()
                                                     {

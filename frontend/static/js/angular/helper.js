@@ -357,3 +357,8 @@ FRIENDLY_KIND_NAMES = {
     "113": "Carrier",
     "114": "PluginExec"
 };
+
+function fullpath(path)
+{
+    return location.protocol + '//' + location.host + '/' + path;
+}

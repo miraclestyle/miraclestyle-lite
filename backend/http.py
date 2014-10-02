@@ -256,7 +256,7 @@ class OrderComplete(RequestHandler):
   def respond(self, order_key):
     params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
               'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
-    data = {'action_model': '34', 'key': order_key, 'action_key': 'complete', 'request': {},
+    data = {'action_model': '34', 'key': order_key, 'action_id': 'complete', 'request': {},
             'read_arguments': {'_lines': {'config': {'limit': -1}}}}
     for param in params:
       data['request'][param] = getattr(self.request, param)

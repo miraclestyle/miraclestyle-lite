@@ -103,13 +103,14 @@ class Order(orm.BaseExpando):
   
   _default_indexed = False
   
-  def _get_payment_status(self):
+  def _get_payment_method(self): # @todo this is not very good, should be more async
     self._seller.read()
-    if self._seller:
-      self._seller._plugin_container.read()
-      for plugin in self._seller._plugin_container.plugins:
-        if plugin.key == self.payment_method:
-          return plugin
+    if self._seller.value:
+      self._seller.value._plugin_group.read()
+      if self._seller.value._plugin_group.value:
+        for plugin in self._seller.value._plugin_group.value.plugins:
+          if plugin.key == self.payment_method:
+            return plugin
           # values of the payment method must be controlled for public
           # because we do not have permission system for remoteStructuredProperty (for multiple kinds)
     return None
@@ -120,7 +121,7 @@ class Order(orm.BaseExpando):
                                                                                        'direction': 'asc'}}}),
     '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, updateable=False, deleteable=False),
     '_records': orm.SuperRecordProperty('34'),
-    '_payment_status': orm.SuperReferenceProperty(callback=_get_payment_status, format_callback=lambda self: self, autoload=False),
+    '_payment_method': orm.SuperReferenceProperty(callback=_get_payment_method, format_callback=lambda self: self),
     }
   
   _global_role = GlobalRole(
@@ -173,7 +174,7 @@ class Order(orm.BaseExpando):
       orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference', 'seller_address',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
-                                 'feedback', 'feedback_adjustment', 'payment_method', '_lines', '_messages', '_records', '_seller'], False, True,
+                                 'feedback', 'feedback_adjustment', 'payment_method', '_lines', '_messages', '_payment_method', '_records', '_seller'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and (entity._original.key_root == account.key \
                           or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
@@ -188,10 +189,12 @@ class Order(orm.BaseExpando):
                           or ((action.key_id_str == "checkout") and entity.state == "checkout") \
                           or (action.key_id_str == "cancel" and entity.state == "canceled") \
                           or (action.key_id_str == "complete" and entity.state == "completed")'),
+      orm.FieldPermission('34', ['payment_status'], True, True, '(action.key_id_str == "complete")'), # writable when in complete action mode
       orm.FieldPermission('34', ['_messages'], True, True,
                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
                            or entity._original.seller_reference._root == account.key))'),
-      orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference', '_lines'], True, True,
+      orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference', '_lines',
+                                 'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['_lines.sequence', '_lines.description', '_lines.product_reference',
@@ -201,7 +204,8 @@ class Order(orm.BaseExpando):
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['_lines.discount', '_lines.subtotal',
-                                 '_lines.discount_subtotal', '_lines.total'], True, True,
+                                 '_lines.discount_subtotal', '_lines.total', 
+                                 'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.seller_reference and entity._original.seller_reference._root == account.key \
                           and entity._original.state == "checkout" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
@@ -409,6 +413,7 @@ class Order(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('34', 'complete'),
       arguments={
+        'key': orm.SuperKeyProperty(kind='34', required=True),
         'request': orm.SuperPickleProperty(),
         },
       _plugin_groups=[
