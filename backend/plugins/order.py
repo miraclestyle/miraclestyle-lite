@@ -779,3 +779,13 @@ class OrderProcessPayment(orm.BaseModel):
       raise PluginError('no_payment_method_supplied') # @todo generally payment method should always be present
     # payment_plugin => Instance of PaypalPayment for example.
     payment_plugin.complete(context) # @todo maybe change this?
+    
+    
+class SetMessage(orm.BaseModel):
+  
+  _kind = 119
+  
+  def run(self, context):
+    OrderMessage = context.models['35']
+    # this could be extended to allow params
+    context._order._messages = [OrderMessage(agent=context.account.key, body=context.input['message'])]

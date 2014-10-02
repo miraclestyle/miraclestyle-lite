@@ -44,6 +44,9 @@ CATALOG_DISCONTINUED_LIFE = 1  # @todo This will be something like 120-180 days
 CATALOG_INDEX = 'catalogs'
 CATALOG_DOCUMENTS_PER_INDEX = 200
 
+# How many days does user have to leave feedback
+FEEDBACK_ALLOWED_DAYS = 7
+
 def __discover_host():
   http = 'http://'
   if os.environ.get('HTTPS') == 'on':

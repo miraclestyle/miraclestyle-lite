@@ -67,3 +67,9 @@ indexes:
   ancestor: yes
   properties:
   - name: '1'
+
+# OrderMessage  
+- kind: '35'
+  ancestor: yes
+  properties:
+  - name: '1'

@@ -4,7 +4,7 @@ Created on Aug 30, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
+import datetime
 import orm, settings
 
 from models.base import *
@@ -119,7 +119,9 @@ class Order(orm.BaseExpando):
     '_seller': orm.SuperReferenceStructuredProperty('23', target_field='seller_reference', autoload=True),
     '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True, read_arguments={'config': {'order': {'field': 'sequence',
                                                                                        'direction': 'asc'}}}),
-    '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, updateable=False, deleteable=False),
+    '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, addable=True, updateable=False, deleteable=False,
+                                                   read_arguments={'config': {'order': {'field': 'created',
+                                                                                       'direction': 'asc'}}}),
     '_records': orm.SuperRecordProperty('34'),
     '_payment_method': orm.SuperReferenceProperty(callback=_get_payment_method, format_callback=lambda self: self),
     }
@@ -441,7 +443,7 @@ class Order(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
         'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative']),
-        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
+        'message': orm.SuperTextProperty(required=True) # @todo max length?
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -449,8 +451,8 @@ class Order(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': None},
-                     'd': {'_order.feedback': 'input.feedback',
-                           '_order._messages': 'input._messages'}}),
+                     'd': {'_order.feedback': 'input.feedback'}}),
+            SetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -469,15 +471,15 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'review_feedback'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
+        'message': orm.SuperTextProperty(required=True) # @todo max length?
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_order.feedback_adjustment': 'revision'},
-                     'd': {'_order._messages': 'input._messages'}}),
+            Set(cfg={'s': {'_order.feedback_adjustment': 'revision'}}),
+            SetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -496,15 +498,15 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'report_feedback'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
-        },
+        'message': orm.SuperTextProperty(required=True) # @todo max length?
+      },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_order.feedback_adjustment': 'reported'},
-                     'd': {'_order._messages': 'input._messages'}}),
+            Set(cfg={'s': {'_order.feedback_adjustment': 'reported'}}),
+            SetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -524,16 +526,16 @@ class Order(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
         'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative']),
-        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, required=True)  # @todo How do we make this input required when it comes in as repeated!??
-        },
+        'message': orm.SuperTextProperty(required=True) # @todo max length?
+      },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': 'sudo'},
-                     'd': {'_order.feedback': 'input.feedback',
-                           '_order._messages': 'input._messages'}}),
+                     'd': {'_order.feedback': 'input.feedback'}}),
+            SetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -552,14 +554,14 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'log_message'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        '_messages': orm.SuperLocalStructuredProperty(OrderMessage, repeated=True)
+        'message': orm.SuperTextProperty(required=True) # @todo max length?
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'d': {'_order._messages': 'input._messages'}}),
+            SetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -574,3 +576,8 @@ class Order(orm.BaseExpando):
         ]
       )
     ]
+  
+  @property
+  def _is_feedback_allowed(self):
+    # if the order.date is not older than x days
+    return self.date > (datetime.datetime.now() - datetime.timedelta(days=settings.FEEDBACK_ALLOWED_DAYS))

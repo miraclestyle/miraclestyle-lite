@@ -1985,14 +1985,13 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     put_multi(self._property_value)
   
   def post_update(self):
-    if self._property._updateable:
-      if self.has_value():
-        if not self._property._repeated:
-          self._post_update_single()
-        else:
-          self._post_update_repeated()
+    if self.has_value():
+      if not self._property._repeated:
+        self._post_update_single()
       else:
-        pass
+        self._post_update_repeated()
+    else:
+      pass
   
   def _delete_single(self):
     self.read()
