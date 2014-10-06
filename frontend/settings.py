@@ -15,7 +15,7 @@ def __discover_host():
   http = 'http://'
   if os.environ.get('HTTPS') == 'on':
     http = 'https://'
-  return '%s%s' % (http, os.environ.get('HTTP_HOST'))
+  return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
  
 HOST = __discover_host()
 
