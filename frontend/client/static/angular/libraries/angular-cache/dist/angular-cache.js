@@ -1074,7 +1074,7 @@ module.exports = function put(key, value) {
   if (this.$$disabled || value === null || value === undefined) {
     return;
   }
-  if (value && value.then) {
+  if (value && value.then && false) {
     value.then(function (v) {
       if (angular.isObject(v) && 'status' in v && 'data' in v) {
         _this.put(key, [v.status, v.data, v.headers(), v.statusText]);

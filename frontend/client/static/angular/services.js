@@ -141,7 +141,7 @@ function($http, DSCacheFactory, $cacheFactory, GLOBAL_CONFIG, Helpers) {
                 cache : true
             });
         },
-        meta: function() {
+        model_meta: function() {
             return $http.get(GLOBAL_CONFIG.api_model_meta_path, {
                 cache : true
             });
@@ -150,28 +150,29 @@ function($http, DSCacheFactory, $cacheFactory, GLOBAL_CONFIG, Helpers) {
 }])
 .factory('localStoragePolyfill', [function () {
     var in_memory = {}; // in memory cache for non-serizible jsons
-    function prepare(val)
+    var nothing = '____undefined____';
+    function prepare(key, val)
     {
-        if (val && angular.isFunction(val.then))
-        {
+        if (val && val.value && angular.isFunction(val.value.then))
+        { 
             in_memory[key] = val;
-            return undefined;
+            return nothing;
         }
         
         return angular.toJson(val);
     }
+    
     return {
         getItem: function (key) {
             var out = localStorage.getItem(key);
-            if (out !== undefined)
+            if (out !== nothing)
             {
                 return out;
             }
-            
             return in_memory[key];
         },
         setItem: function (key, value) {
-            value = prepare(value);
+            value = prepare(key, value);
             return localStorage.setItem(key, value);
         },
         removeItem: function (key) {
@@ -240,7 +241,7 @@ function(Endpoint) {
         return data;
     };
 
-    return Endpoint.meta().then(function(response) {
+    return Endpoint.model_meta().then(function(response) {
         Kinds.info = response.output;
         return Kinds;
     });
@@ -248,7 +249,7 @@ function(Endpoint) {
 }]).run(['Endpoint', 'Kinds',
 function(Endpoint, Kinds) {
  
-    Endpoint.meta();
+    Endpoint.model_meta();
     Endpoint.current_account();
   
 }]);
