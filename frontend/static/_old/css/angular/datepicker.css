@@ -1,0 +1,36 @@
+.datepicker-dropdown
+{
+	position: absolute;
+	background: white;
+	border: 1px solid #BBBBBB;
+	-webkit-box-shadow: 1px 1px 3px #BBBBBB;
+	box-shadow: 1px 1px 3px #BBBBBB;
+
+	padding: 10px;
+	list-style: none;
+	z-index: 10;
+	
+	margin-top:0px;
+	
+	float: left;
+ 
+	background-clip: padding-box;
+}
+
+.datepicker-dropdown li
+{
+	display:block;
+}
+
+
+.datepicker-dropdown table
+{
+	max-width: 100%;
+}
+
+.datepicker-dropdown table tr td
+{
+	min-width:70px;
+}
+
+

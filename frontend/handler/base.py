@@ -32,7 +32,7 @@ def _static_dir(file_path):
 settings.JINJA_GLOBALS.update({'static_dir': _static_dir, 
                                'settings': settings})
 
-settings.JINJA_FILTERS.update({'to_json': to_json})
+settings.JINJA_FILTERS.update({'to_json': to_json, 'static_dir': _static_dir})
 
 class RequestHandler(webapp2.RequestHandler):
   

@@ -1,0 +1,161 @@
+.button
+{
+  border: 1px solid #BBBBBB;
+  background-color: #FFFFFF;
+  padding: 5px 20px;
+  outline: none;
+  text-align: center;
+  vertical-align: middle;
+  line-height:1.5em;
+  text-decoration: none;
+  cursor:pointer;
+  display: inline-block;
+  -webkit-box-shadow: 1px 1px 3px #BBBBBB;
+  box-shadow: 1px 1px 3px #BBBBBB;
+  font-size:14px;
+}
+ 
+.button:focus
+{
+  border: 1px solid #333333;
+  background-color: #FFFFFF;
+}
+
+.button:hover, .button.active, li.active .button, .button-active
+{
+  border: 1px solid #333333;
+  background-color: #FAFAFA;
+  /**box-shadow: 1px 1px 3px #333333;**/
+}
+
+.text-input
+{
+  border: 1px solid #BBBBBB;
+  background-color: #FFFFFF;
+  outline: none;
+  padding: 5px;
+  font-size:14px;
+  display: block;
+  width: 100%;
+}
+
+.text-textarea
+{
+	min-height:60px;
+}
+
+.text-input:focus
+{
+  border: 1px solid #333333;
+}
+
+.form-control
+{
+	margin-bottom:10px;
+}
+
+.form-control:after
+{
+	clear:both;
+	content: " ";
+	display: table;
+}
+
+.form-label
+{
+	float:left;
+	text-align:right;
+	width: 16.666666666666664%;
+	position: relative;
+	min-height: 1px;
+	padding-left: 15px;
+	padding-right: 15px;
+	padding-top:7px;
+}
+
+.form-input
+{
+	float:left;
+	position: relative;
+	width:83.33333333333334%;
+	min-height: 1px;
+	padding-left: 15px;
+	/*padding-right: 15px;*/
+}
+
+.form-text
+{
+	padding-top:5px;
+}
+
+.fieldset
+{
+	border-bottom:1px solid #BBBBBB;
+	padding-bottom:5px;
+}
+
+
+.fieldset-text
+{
+	float:left;
+}
+
+.fieldset-button
+{
+	float:right;
+}
+
+.fieldset:after {
+	
+	clear:both;
+ 
+}
+
+.fieldset:before,
+.fieldset:after
+{
+  display: table;
+  content: " ";
+}
+
+.fieldset.with-button
+{
+	line-height: 1em;
+}
+
+/* validation colors */
+
+.ng-invalid-required
+{
+	border-color:red; /* this for now*/
+}
+
+.fake-button {
+	position: relative;
+	overflow: hidden;
+ 
+}
+.fake-button input.upload {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin: 0;
+	padding: 0;
+	font-size: 20px;
+	cursor: pointer;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+
+
+.button-block
+{
+	width: 100%;
+	display:block;
+}
+
+.button-sm
+{
+	font-size:13px;
+	padding:3px 7px;
+}

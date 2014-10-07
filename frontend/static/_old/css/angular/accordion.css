@@ -1,0 +1,92 @@
+.panel
+{
+  margin-bottom: 20px;
+}
+
+.panel-heading
+{
+  
+}
+
+.panel-body
+{
+  padding: 15px;
+}
+
+.panel-heading > .dropdown .dropdown-toggle
+{
+  color: inherit;
+}
+
+.panel-title
+{
+  margin-top: 0;
+  margin-bottom: 0;
+  color: inherit;
+}
+ 
+.panel-title > a {
+ color: inherit;
+ display: block;
+ padding: 15px 15px;
+}
+
+.panel-group .panel
+{
+  margin-bottom: 0;
+  /*overflow: hidden;*/
+  border: 1px solid #BBBBBB;
+  -webkit-box-shadow: 1px 1px 3px #BBBBBB;
+  box-shadow: 1px 1px 3px #BBBBBB;
+}
+.panel-scroller
+{
+	max-height:200px;
+	overflow-y:auto;
+	overflow-x:hidden;
+}
+.panel-is-not-open:hover
+{
+  border: 1px solid #333333;
+}
+
+.panel-is-not-open .panel-title > a:hover
+{
+  background-color: #FAFAFA;
+}
+
+.panel-is-open .panel-title > a
+{
+  border-bottom: 1px solid #BBBBBB;
+}
+
+.panel-is-open .panel-title > a
+{
+  border-: 1px solid #333333;
+}
+
+.panel-group .panel + .panel
+{
+  margin-top: 5px;
+}
+
+.panel-group .panel-heading
+{
+  border-bottom: 0;
+}
+
+.panel-group .panel-footer
+{
+  border-top: 0;
+}
+
+.accordion-toggle
+{
+  cursor: pointer;
+}
+
+.panel-default > .panel-heading
+{
+  color: #333333;
+  background-color: #FFFFFF;
+}

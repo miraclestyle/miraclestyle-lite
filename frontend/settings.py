@@ -31,35 +31,24 @@ DEBUG = True
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
-# ui based configurations
-ANGULAR_MODULES = [
-    'underscore',
-    'router',
-    'ngStorage',
-    'ngUpload',
-    'ngAnimate',
-    'ngCookies',
-    'ngSanitize',
-    'ngTouch',
-    'transition',
-    'collapse',
-    'accordion',
-    'modal',
-    'select2',
-    'busy',
-    'position',
-    'datepicker',
-    'sortable',
-    'ngDragDrop',
-    ]
+# Configurations for user interface
+JS_PATHS = [
+  'libraries/jquery/dist/jquery.js',
+  'libraries/jquery-ui/jquery-ui.js',
+  'libraries/underscore/underscore.js',
+  'libraries/angular/angular.js',
+  'libraries/angular-ui-sortable/sortable.js',
+  'libraries/angular-ui-utils/ui-utils.js',
+  'libraries/angular-bootstrap/ui-bootstrap.js',
+  'libraries/angular-bootstrap/ui-bootstrap-tpls.js',
+  'libraries/angular-ui-router/release/angular-ui-router.js',
+  'libraries/angular-messages/angular-messages.js',
+  'libraries/angular-cookie/angular-cookie.js',
+  'libraries/angular-touch/angular-touch.js',
+  'libraries/angular-cache/dist/angular-cache.min.js',
+  'libraries/angular-ui-select/dist/select.js'
+]
 
-ANGULAR_COMPONENTS = [
-    'home',
-    'account',
-    'seller',
-    'catalog',
-    'buyer',
-    'admin',
-    ]
+CSS_PATHS = ['libraries/angular-ui-select/select.css', 'css/style.css']
 
-JQUERY_PLUGINS = ['select2/select2', 'FlexiJsonEditor-master/jquery.jsoneditor']
+ANGULAR_ACTIVE_COMPONENTS = ['account']

@@ -2,92 +2,64 @@
 <html ng-app="MainApp">
   <head>
     <title ng-bind="pageTitle"></title>
-    
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<base href="/" />
-    
+    <base href="/" />
     <meta name="fragment" content="!" />
-    
-    <script>
-        current_account = {{current_account|to_json|safe}};
-        KINDS = {};
-        KINDS.info = {{current_model_meta|to_json|safe}};
-    </script>
-    
-    <link rel="stylesheet" type="text/css" href="{{static_dir('fonts/sawasdee/stylesheet.css')}}"/>
-    <link rel="stylesheet" type="text/css" href="{{static_dir('js/lib/jquery/select2/select2.css')}}" />
-    <link rel="stylesheet" type="text/css" href="{{static_dir('css/angular/style.css')}}"/>
- 
-    <!-- jquery -->
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
- 	<!-- end jquery -->
- 	
- 	<!-- begin jquery plugins -->
- 	{% for module in settings.JQUERY_PLUGINS %}
- 	<script type="text/javascript" src="{{static_dir('js/lib/jquery/%s.js' % module)}}"></script>
- 	{% endfor %}
- 	<!-- end -->
- 
-    <!-- angular -->
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script>
-    <!-- end angular -->
-    
-    <!-- angular modules -->
-    {% for module in settings.ANGULAR_MODULES %}
-    <script type="text/javascript" src="{{static_dir('js/lib/angular/%s.js' % module)}}"></script>
+    {% for style in settings.CSS_PATHS %}
+    <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}"/>
     {% endfor %}
-    <!-- end angular modules -->
  
-    
-    <script type="text/javascript" src="{{static_dir('js/angular/helper.js')}}"></script>
-    
-    <script type="text/javascript" src="{{static_dir('js/angular/app.js')}}"></script>
-    <script type="text/javascript" src="{{static_dir('js/angular/directive.js')}}"></script>
-    <script type="text/javascript" src="{{static_dir('js/angular/filter.js')}}"></script>
-    
- 	{% for module in settings.ANGULAR_COMPONENTS %}
-    <script type="text/javascript" src="{{static_dir('js/angular/component/%s.js' % module)}}"></script>
+    {% for js in settings.JS_PATHS %}
+    <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>
     {% endfor %}
     
-    <script type="text/javascript" src="{{static_dir('js/angular/routes.js')}}"></script>
+    <!-- angular globals -->
+    {% for g in ['app', 'services', 'controllers', 'directives', 'filters'] %}
+    <script type="text/javascript" src="{{static_dir('%s.js' % g)}}"></script>
+    {% endfor %}
+  
+    {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
+    <script type="text/javascript" src="{{static_dir('components/%s.js' % module)}}"></script>
+    {% endfor %}
+    
+    <script type="text/javascript" src="{{static_dir('routes.js')}}"></script>
     
 
   </head>
   <body>
-  	<div id="top-bar">
-  		<a ng-click="toggleMainMenu()" class="logo-link" href="javascript:;"><h1 id="logo">Miraclestyle</h1></a>
-  	</div>
-  	<div style="display:none;" id="main-menu">
-  		<div class="menu-inner">
-  			<div ng-show="current_account._root_admin" ng-include="logic_template('misc/search_form.html')"></div>
-	  		<h1 class="fieldset">Account</h1>
-	  		<ul ng-show="!current_account._is_guest" class="menu clearfix">
-	  		    <li><button type="button" class="button block" ng-click="manageAccount()">Settings</button></li>
-	  		    <li><button type="button" class="button block" ng-click="doLogout()">Logout</button></li>
-	  		</ul>
-	  		
-	  		<div ng-show="!current_account._is_guest">
-		  		<h1 class="fieldset">Buy</h1>
-		  		<ul ng-show="!current_account._is_guest" class="menu clearfix">
-		  		    <li><button type="button" class="button block" ng-click="manageCollection()">My Collections</button></li>
-		  		    <li><button type="button" class="button block" ng-click="toggleMainMenu(1)" class="button block" ui-sref="buy-shopping-carts">My Shopping Carts</button></li>
-		  		    <li><button type="button" class="button block" ng-click="toggleMainMenu(1)" class="button block" ui-sref="buy-orders">My Orders</button></li>
-		  		    <li><button type="button" class="button block" ng-click="manageBuyer()">Settings</button></li>
-		  		</ul>
-	  		</div>
-	  		
-	  		<ul ng-show="current_account._is_guest" class="menu clearfix">
-	  		    <li><button type="button" busy class="button block" ng-click="doLogin()">Login</button></li>
-	  		</ul>
-	  		
-	  		<div ng-show="!current_account._is_guest">
-	  			<h1 class="fieldset">Sell</h1>
-	  			<ul class="menu clearfix">
-	  		   	   <li><button type="button"
-	  		   	            ng-click="toggleMainMenu(1)" 
-	  		   	            class="button block" ui-sref="sell-catalogs">Catalogs</button></li>
-	  		   	    <li><button type="button"
+    <div id="top-bar">
+        <a ng-click="toggleMainMenu()" class="logo-link" href="javascript:;"><h1 id="logo">Miraclestyle</h1></a>
+    </div>
+    <div style="display:none;" id="main-menu">
+        <div class="menu-inner">
+            <div ng-show="current_account._root_admin" ng-include="logic_template('misc/search_form.html')"></div>
+            <h1 class="fieldset">Account</h1>
+            <ul ng-show="!current_account._is_guest" class="menu clearfix">
+                <li><button type="button" class="button block" ng-click="manageAccount()">Settings</button></li>
+                <li><button type="button" class="button block" ng-click="doLogout()">Logout</button></li>
+            </ul>
+            
+            <div ng-show="!current_account._is_guest">
+                <h1 class="fieldset">Buy</h1>
+                <ul ng-show="!current_account._is_guest" class="menu clearfix">
+                    <li><button type="button" class="button block" ng-click="manageCollection()">My Collections</button></li>
+                    <li><button type="button" class="button block" ng-click="toggleMainMenu(1)" class="button block" ui-sref="buy-shopping-carts">My Shopping Carts</button></li>
+                    <li><button type="button" class="button block" ng-click="toggleMainMenu(1)" class="button block" ui-sref="buy-orders">My Orders</button></li>
+                    <li><button type="button" class="button block" ng-click="manageBuyer()">Settings</button></li>
+                </ul>
+            </div>
+            
+            <ul ng-show="current_account._is_guest" class="menu clearfix">
+                <li><button type="button" busy class="button block" ng-click="doLogin()">Login</button></li>
+            </ul>
+            
+            <div ng-show="!current_account._is_guest">
+                <h1 class="fieldset">Sell</h1>
+                <ul class="menu clearfix">
+                   <li><button type="button"
+                            ng-click="toggleMainMenu(1)" 
+                            class="button block" ui-sref="sell-catalogs">Catalogs</button></li>
+                    <li><button type="button"
                             ng-click="toggleMainMenu(1)" 
                             class="button block" ui-sref="sell-shopping-carts">Shopping Carts</button></li>
                     <li><button type="button"
@@ -96,22 +68,22 @@
                      <li><button type="button"
                             ng-click="manageSeller()" 
                             class="button block">Settings</button></li>
-	  			</ul>
-	  		</div>
-	  		
-	  		
-	  		
-	        <div ng-show="current_account._root_admin">
-	        	
-	  			<h1 class="fieldset">Administration</h1>
-	  			<ul class="menu clearfix">
-	  		   		 <li ng-repeat="(kind_key, kind) in ADMIN_KINDS"><button type="button" ng-click="toggleMainMenu(1)"
-		  		    		    ui-sref="admin_search({query: JSON.stringify({}), kind : kind_key})" 
-		  		    		    ui-sref-active="active" class="button block" ng-bind="kind"></button></li>
-	  			</ul>
-	  		</div>
-	  		
-	  		<div ng-show="!current_account._is_guest">
+                </ul>
+            </div>
+            
+            
+            
+            <div ng-show="current_account._root_admin">
+                
+                <h1 class="fieldset">Administration</h1>
+                <ul class="menu clearfix">
+                     <li ng-repeat="(kind_key, kind) in ADMIN_KINDS"><button type="button" ng-click="toggleMainMenu(1)"
+                                ui-sref="admin_search({query: JSON.stringify({}), kind : kind_key})" 
+                                ui-sref-active="active" class="button block" ng-bind="kind"></button></li>
+                </ul>
+            </div>
+            
+            <div ng-show="!current_account._is_guest">
                 <h1 class="fieldset">Support</h1>
                 <ul class="menu clearfix">
                    <li><button type="button"
@@ -133,21 +105,11 @@
             </div>
             
             <br />
-	  		 
-  		</div>
-  		
+             
+        </div>
+         
+    </div>
  
-  		
-  	</div>
-	{% block content %}
-	<div class="content" ui-view></div>
-	{% endblock %}
-	
-	<div class="adb-lookup">
-	    <span ng-controller="DBLookup"><button class="button" ng-click="getForm()">Lookup...</button></span>
-	    
-	    <span ng-controller="ActionSender"><button class="button" ng-click="getForm()">Action Sender...</button></span>
-	</div>
-	
+    <div class="content" ui-view></div>
   </body> 
 </html>
