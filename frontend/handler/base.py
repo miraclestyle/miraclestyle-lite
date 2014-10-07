@@ -5,6 +5,7 @@ Created on Jul 15, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import json
+import os
 import webapp2
 from webapp2_extras import jinja2
 
@@ -27,26 +28,25 @@ def to_json(s, **kwds):
   return json.dumps(s, **kwds)
 
 def _static_dir(file_path):
-  return '/frontend/static/%s' % file_path
+  return '%s/client/static/%s' % (settings.HOST, file_path)
+
+def _angular_include_template(path):
+  return open(os.path.join(settings.ROOT_DIR, 'templates/angular/parts', path)).read()
  
 settings.JINJA_GLOBALS.update({'static_dir': _static_dir, 
-                               'settings': settings})
+                               'settings': settings,
+                               'len': len,
+                               'angular_include_template': _angular_include_template})
 
 settings.JINJA_FILTERS.update({'to_json': to_json, 'static_dir': _static_dir})
 
 class RequestHandler(webapp2.RequestHandler):
-  
-  autoload_current_account = True
-  autoload_model_meta = True
-  
   '''General-purpose handler from which all other frontend handlers must derrive from.'''
  
   def __init__(self, *args, **kwargs):
     super(RequestHandler, self).__init__(*args, **kwargs)
     self.data = {}
     self.template = {}
-    self.current_account = None
-    self.current_model_meta = None
   
   def send_json(self, data):
     ''' sends `data` to be serialized in json format, and sets content type application/json utf8'''
@@ -76,20 +76,8 @@ class RequestHandler(webapp2.RequestHandler):
   def respond(self, *args, **kwargs):
     self.abort(404)
     self.response.write('<h1>404 Not found</h1>')
-    
-  def autoloads(self):
-    ''' Loads current user from backend '''
-    if self.current_account is None and self.autoload_current_account:
-      self.current_account = api.endpoint(payload={'action_id': 'current_account', 'action_model': '11'},
-                                          headers=self.request.headers)
-      self.template['current_account'] = self.current_account['entity']
-      
-    if self.current_model_meta is None and self.autoload_model_meta:
-      self.current_model_meta = api.model_meta()
-      self.template['current_model_meta'] = self.current_model_meta
       
   def dispatch(self):
-    self.autoloads()
     try:
       self.before()
       super(RequestHandler, self).dispatch()

@@ -12,7 +12,7 @@ import settings
 from jinja2 import FileSystemLoader
 
 
-TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'template'),)
+TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
 TEMPLATE_LOADER = FileSystemLoader(TEMPLATE_DIRS)  
  
 settings.JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : settings.ROUTES, 'settings' : settings})

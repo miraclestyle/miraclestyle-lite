@@ -6,9 +6,11 @@ Created on Oct 10, 2013
 '''
 import os
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
-ACTIVE_HANDLERS = ('mapping',)
+ACTIVE_HANDLERS = ('mapping', 'builder')
 
 
 def __discover_host():
@@ -31,8 +33,8 @@ DEBUG = True
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
-# Configurations for user interface
-JS_PATHS = [
+# Angular only configurations for user interface
+ANGULAR_JS_PATHS = (
   'libraries/jquery/dist/jquery.js',
   'libraries/jquery-ui/jquery-ui.js',
   'libraries/underscore/underscore.js',
@@ -45,10 +47,51 @@ JS_PATHS = [
   'libraries/angular-messages/angular-messages.js',
   'libraries/angular-cookie/angular-cookie.js',
   'libraries/angular-touch/angular-touch.js',
-  'libraries/angular-cache/dist/angular-cache.min.js',
-  'libraries/angular-ui-select/dist/select.js'
-]
+  'libraries/angular-cache/dist/angular-cache.js',
+  'libraries/angular-ui-select/dist/select.js',
+  'libraries/angular-bootstrap-datetimepicker/src/js/datetimepicker.js'
+)
 
-CSS_PATHS = ['libraries/angular-ui-select/select.css', 'css/style.css']
+ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 'libraries/angular-ui-select/dist/select.css',
+                     'libraries/angular-bootstrap-datetimepicker/src/css/datetimepicker.css',
+                     'css/style.css')
 
-ANGULAR_ACTIVE_COMPONENTS = ['account']
+ANGULAR_ACTIVE_COMPONENTS = ('home', 'account')
+
+# ('Alias', 'Full path to the template in the app')
+ANGULAR_TEMPLATES = (
+  ('home/index.html',),
+  ('template/datetimepicker/datetimepicker.html',
+   'libraries/angular-bootstrap/datetimepicker/datetimepicker.html'),
+  ('template/accordion/accordion-group.html',
+   'libraries/angular-bootstrap/accordion/accordion-group.html'),
+  ('template/accordion/accordion.html',
+   'libraries/angular-bootstrap/accordion/accordion.html'),
+  ('template/datepicker/datepicker.html',
+   'libraries/angular-bootstrap/datepicker/datepicker.html'),
+  ('template/datepicker/day.html',
+   'libraries/angular-bootstrap/datepicker/day.html'),
+  ('template/datepicker/month.html',
+   'libraries/angular-bootstrap/datepicker/month.html'),
+  ('template/datepicker/popup.html',
+   'libraries/angular-bootstrap/datepicker/popup.html'),
+  ('template/datepicker/year.html',
+   'libraries/angular-bootstrap/datepicker/year.html'),
+  ('template/modal/backdrop.html',
+   'libraries/angular-bootstrap/modal/backdrop.html'),
+  ('template/modal/window.html',
+   'libraries/angular-bootstrap/modal/window.html'),
+  ('template/popover/popover.html',
+   'libraries/angular-bootstrap/popover/popover.html'),
+  ('template/progressbar/progress.html',
+   'libraries/angular-bootstrap/progressbar/progress.html'),
+  ('template/progressbar/progressbar.html',
+   'libraries/angular-bootstrap/progressbar/progressbar.html'),
+  ('template/timepicker/timepicker.html',
+   'libraries/angular-bootstrap/timepicker/timepicker.html'),
+  ('template/tooltip/tooltip-html-unsafe-popup.html',
+   'libraries/angular-bootstrap/tooltip/tooltip-html-unsafe-popup.html'
+   ),
+  ('template/tooltip/tooltip-popup.html',
+   'libraries/angular-bootstrap/tooltip/tooltip-popup.html'),
+)

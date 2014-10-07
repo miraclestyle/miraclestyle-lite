@@ -9,7 +9,7 @@ import os
 
 ''' Settings file for backend module '''
 
-APPDIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
 
@@ -55,7 +55,7 @@ def __discover_host():
  
 HOST = __discover_host()
 
-ETC_DATA_DIR = os.path.join(APPDIR, 'etc', 'data')
+ETC_DATA_DIR = os.path.join(ROOT_DIR, 'etc', 'data')
 
 UOM_DATA_FILE = os.path.join(ETC_DATA_DIR, 'uom.xml')
 LOCATION_DATA_FILE = os.path.join(ETC_DATA_DIR, 'location.xml')

@@ -1,0 +1,128 @@
+{# 
+
+This file is only used to act as a compiler of html for the client. It has 0 backend logic to it.
+
+It will perform linking static files and writing down all templates inside a file.
+
+This was done for easier maintenance.
+
+#}
+<!DOCTYPE html>
+<html ng-app="app">
+  <head>
+    <title ng-bind="pageTitle"></title>
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <base href="/" />
+    <meta name="fragment" content="!" />
+    {% for style in settings.ANGULAR_CSS_PATHS %}
+    <link rel="stylesheet" type="text/css" href="{{static_dir('angular/%s' % style)}}"/>
+    {% endfor %}
+ 
+    {% for js in settings.ANGULAR_JS_PATHS %}
+    <script type="text/javascript" src="{{static_dir('angular/%s' % js)}}"></script>
+    {% endfor %}
+    
+    <!-- angular globals -->
+    {% for g in ['app', 'services', 'directives', 'filters', 'controllers'] %}
+    <script type="text/javascript" src="{{static_dir('angular/%s.js' % g)}}"></script>
+    {% endfor %}
+  
+    {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
+    <script type="text/javascript" src="{{static_dir('angular/components/%s.js' % module)}}"></script>
+    {% endfor %}
+    
+    <script type="text/javascript" src="{{static_dir('angular/routes.js')}}"></script>
+    
+
+  </head>
+  <body>
+    <div id="top-bar">
+        <a main-menu-toggler class="logo-link" href="javascript:;"><h1 id="logo">Miraclestyle</h1></a>
+    </div>
+    <div style="display:none;" id="main-menu">
+        <div class="menu-inner">
+            <div ng-show="current_account._root_admin" ng-include="misc/search_form.html"></div>
+            <h1 class="fieldset">Account</h1>
+            <ul ng-show="!current_account._is_guest" class="menu clearfix">
+                <li><button type="button" class="button block" ng-click="manageAccount()">Settings</button></li>
+                <li><button type="button" class="button block" ng-click="logoutAccount()">Logout</button></li>
+            </ul>
+            
+            <div ng-show="!current_account._is_guest">
+                <h1 class="fieldset">Buy</h1>
+                <ul ng-show="!current_account._is_guest" class="menu clearfix">
+                    <li><button type="button" class="button block" ng-click="manageCollection()">My Collections</button></li>
+                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref="buy-shopping-carts">My Shopping Carts</button></li>
+                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref="buy-orders">My Orders</button></li>
+                    <li><button type="button" class="button block" ng-click="manageBuyer()">Settings</button></li>
+                </ul>
+            </div>
+            
+            <ul ng-show="current_account._is_guest" class="menu clearfix">
+                <li><button type="button" busy class="button block" ng-click="loginAccount()">Login</button></li>
+            </ul>
+            
+            <div ng-show="!current_account._is_guest">
+                <h1 class="fieldset">Sell</h1>
+                <ul class="menu clearfix">
+                   <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="sell-catalogs">Catalogs</button></li>
+                    <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="sell-shopping-carts">Shopping Carts</button></li>
+                    <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="sell-orders">Orders</button></li>
+                     <li><button type="button"
+                            main-menu-toggler
+                            class="button block">Settings</button></li>
+                </ul>
+            </div>
+             
+            <div ng-show="current_account._root_admin">
+                
+                <h1 class="fieldset">Administration</h1>
+                <ul class="menu clearfix">
+                     <li ng-repeat="(kind_key, kind) in GLOBAL_CONFIG.admin_kinds">
+                         <button type="button" main-menu-toggler
+                                ui-sref="admin_search({query: JSON.stringify({}), kind : kind_key})" 
+                                ui-sref-active="active" class="button block" ng-bind="kind"></button></li>
+                </ul>
+            </div>
+            
+            <div ng-show="!current_account._is_guest">
+                <h1 class="fieldset">Support</h1>
+                <ul class="menu clearfix">
+                   <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="about">About</button></li>
+                    <li><button type="button"
+                            ng-click="beginTour()" 
+                            class="button block">Tour</button></li>
+                    <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="terms">Privacy &amp; Terms</button></li>
+                    <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="trademark">Copyright &amp; Trademark</button></li>
+                     <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="support">Support</button></li>
+                </ul>
+            </div>
+            
+            <br />
+             
+        </div>
+         
+    </div>
+    <div class="content" ui-view></div>
+    {# 
+        Compile all templates based on the settings.py
+    #}
+    {% for tpl in settings.ANGULAR_TEMPLATES %}
+    <script id="{{tpl[0]}}" type="{% if len(tpl) > 2 %}{{tpl[2]}}{% else %}text/ng-template{% endif %}">{% if not len(tpl) > 1 %}{{angular_include_template(tpl[0])|safe}}{% else %}{{angular_include_template(tpl[1])|safe}}{% endif %}</script>
+    {% endfor %}
+  </body> 
+</html>

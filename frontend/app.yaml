@@ -7,7 +7,7 @@ threadsafe: true
 
 handlers:
 
-- url: /frontend/static
+- url: /client/static
   static_dir: client/static
 #  expiration: "364d 5h" # its not ready for cache yet
 

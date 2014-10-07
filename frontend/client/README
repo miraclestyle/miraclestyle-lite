@@ -1,0 +1,8 @@
+The folder structure follows:
+
+client/
+  static/ - used for serving all files in it to the client
+   angular/ - used for angular only client
+  config/
+   angular/ - used for angular only out of static folder
+    index.html - contents compiled by the builder
