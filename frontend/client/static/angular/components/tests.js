@@ -1,14 +1,70 @@
-'use strict';
+angular.module('app').controller('Tests', ['$scope', '$modal',
+function($scope, $modal) {
+  $scope.oneAtATime = true;
+  $scope.isopen = true;
 
-var app = angular.module('demo', ['ngSanitize', 'ui.select']);
+  $scope.groups = [{
+    title : "Dynamic Group Header - 1",
+    content : "Dynamic Group Body - 1",
+    isOpen : true,
+  }, {
+    title : "Dynamic Group Header - 2",
+    content : "Dynamic Group Body - 2"
+  }, {
+    title : "Dynamic Group Header - 3",
+    content : "Dynamic Group Body - 3"
+  }];
 
-/**
- * AngularJS default filter with the following expression:
- * "person in people | filter: {name: $select.search, age: $select.search}"
- * performs a AND between 'name: $select.search' and 'age: $select.search'.
- * We want to perform a OR.
- */
-app.filter('propsFilter', function() {
+  $scope.items = ['Item 1', 'Item 2', 'Item 3'];
+
+  $scope.addItem = function() {
+    var newItemNo = $scope.items.length + 1;
+    $scope.items.push('Item ' + newItemNo);
+  };
+
+  $scope.items = ['item1', 'item2', 'item3'];
+
+  $scope.open = function() {
+
+    var modalInstance = $modal.open({
+      templateUrl : 'myModalContent.html',
+      controller : function($scope, $modalInstance, items) {
+
+        $scope.items = items;
+        $scope.selected = {
+          item : $scope.items[0]
+        };
+
+        $scope.ok = function() {
+          $modalInstance.close($scope.selected.item);
+        };
+
+        $scope.cancel = function() {
+          $modalInstance.dismiss('cancel');
+        };
+      },
+      resolve : {
+        items : function() {
+          return $scope.items;
+        }
+      }
+    });
+
+    modalInstance.result.then(function(selectedItem) {
+      $scope.selected = selectedItem;
+    }, function() {
+      $log.info('Modal dismissed at: ' + new Date());
+    });
+  };
+
+  $scope.list_of_string = ['tag1', 'tag2'];
+  $scope.select2Options = {
+    'multiple' : true,
+    'simple_tags' : true,
+    'tags' : ['tag1', 'tag2', 'tag3', 'tag4'] // Can be empty list.
+  };
+
+}]).filter('propsFilter', function() {
   return function(items, props) {
     var out = [];
 
@@ -37,9 +93,7 @@ app.filter('propsFilter', function() {
 
     return out;
   };
-});
-
-app.controller('DemoCtrl', function($scope, $http, $timeout) {
+}).controller('DemoCtrl', function($scope, $http, $timeout) {
   $scope.disabled = undefined;
   $scope.searchEnabled = undefined;
 

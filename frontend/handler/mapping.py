@@ -13,6 +13,7 @@ settings.ROUTES.extend(((r'/', base.AngularBlank),
                        (r'/sell/catalogs', base.AngularBlank),
                        (r'/login', base.AngularBlank),
                        (r'/login/<provider>', base.AngularBlank),
+                       (r'/tests/<what>', base.AngularBlank),
                        (r'/admin/search/<kind>/<filter>', base.AngularBlank)))
 
 # due development server bug, proxy the endpoint api to the real module

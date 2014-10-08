@@ -41,6 +41,7 @@ ANGULAR_JS_PATHS = (
   'libraries/angular/angular.js',
   'libraries/angular-ui-sortable/sortable.js',
   'libraries/angular-ui-utils/ui-utils.js',
+  'libraries/angular-sanitize/angular-sanitize.js',
   'libraries/angular-bootstrap/ui-bootstrap.js',
   'libraries/angular-bootstrap/ui-bootstrap-tpls.js',
   'libraries/angular-ui-router/release/angular-ui-router.js',
@@ -52,15 +53,20 @@ ANGULAR_JS_PATHS = (
   'libraries/angular-bootstrap-datetimepicker/src/js/datetimepicker.js'
 )
 
-ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 'libraries/angular-ui-select/dist/select.css',
+ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 
+                     'libraries/angular-ui-select/dist/select.css',
+                     'libraries/angular-ui-select/dist/select2.css',
                      'libraries/angular-bootstrap-datetimepicker/src/css/datetimepicker.css',
                      'css/style.css')
 
-ANGULAR_ACTIVE_COMPONENTS = ('home', 'account')
+ANGULAR_ACTIVE_COMPONENTS = ('home', 'account', 'tests')
 
 # ('Alias', 'Full path to the template in the app')
 ANGULAR_TEMPLATES = (
+  # core
   ('home/index.html',),
+  ('tests/html.html',),
+  # angular ui
   ('template/datetimepicker/datetimepicker.html',
    'libraries/angular-bootstrap/datetimepicker/datetimepicker.html'),
   ('template/accordion/accordion-group.html',
@@ -94,4 +100,31 @@ ANGULAR_TEMPLATES = (
    ),
   ('template/tooltip/tooltip-popup.html',
    'libraries/angular-bootstrap/tooltip/tooltip-popup.html'),
+  # select2
+  ('bootstrap/choices.tpl.html',
+   'libraries/angular-ui-select/bootstrap/choices.tpl.html'),
+  ('bootstrap/match-multiple.tpl.html',
+   'libraries/angular-ui-select/bootstrap/match-multiple.tpl.html'),
+  ('bootstrap/match.tpl.html',
+   'libraries/angular-ui-select/bootstrap/match.tpl.html'),
+  ('bootstrap/select-multiple.tpl.html',
+   'libraries/angular-ui-select/bootstrap/select-multiple.tpl.html'),
+  ('bootstrap/select.tpl.html',
+   'libraries/angular-ui-select/bootstrap/select.tpl.html'),
+  ('select2/choices.tpl.html',
+   'libraries/angular-ui-select/select2/choices.tpl.html'),
+  ('select2/match-multiple.tpl.html',
+   'libraries/angular-ui-select/select2/match-multiple.tpl.html'),
+  ('select2/match.tpl.html',
+   'libraries/angular-ui-select/select2/match.tpl.html'),
+  ('select2/select-multiple.tpl.html',
+   'libraries/angular-ui-select/select2/select-multiple.tpl.html'),
+  ('select2/select.tpl.html',
+   'libraries/angular-ui-select/select2/select.tpl.html'),
+  ('selectize/choices.tpl.html',
+   'libraries/angular-ui-select/selectize/choices.tpl.html'),
+  ('selectize/match.tpl.html',
+   'libraries/angular-ui-select/selectize/match.tpl.html'),
+  ('selectize/select.tpl.html',
+   'libraries/angular-ui-select/selectize/select.tpl.html'),
 )

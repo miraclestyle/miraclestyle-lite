@@ -1,60 +1,60 @@
-app.config(['$stateProvider',
+angular.module('app').config(['$stateProvider',
 function($stateProvider) {
+  
+  'use strict';
+  
+  var default_resolves = {
+    current_account : ['Endpoint', '$rootScope',
+    function(Endpoint, $rootScope) {
+      Endpoint.current_account().then(function(response) {
+        var account = response.data;
+        $rootScope.current_account = account;
+        return account;
+      });
 
-    var default_resolves = {
-        current_account : ['Endpoint', '$rootScope',
-        function(Endpoint, $rootScope) {
+    }]
+  };
 
-            Endpoint.current_account().then(function(response) {
-      
-                var account = response.data;
-                $rootScope.current_account = account;
-                return account;
-            });
+  $stateProvider.state('home', {
+    url : '/',
+    templateUrl : 'home/index.html',
+    controller : 'HomePage',
+    resolve: default_resolves
+  }).state('login', {
+    url : '/login/:provider',
+    controller : 'LoginPage'
+  }).state('sell-catalogs', {
+    url : '/sell/catalogs',
+    controller : 'SellCatalogs',
+    templateUrl : 'catalog/list.html',
+    resolve : default_resolves
+  })
+  .state('tests', {
+    url : '/tests/:what',
+    controller : 'Tests',
+    templateUrl : function (stateParams) {
+      return 'tests/' + stateParams.what + '.html';
+    },
+    resolve : default_resolves
+  })
+  .state('admin_search', {
+    url : '/admin/search/:kind/:query',
+    templateUrl : function(stateParams) {
 
-        }],
-        kinds : ['Endpoint', '$rootScope',
-        function(Endpoint, $rootScope) {
+      var defaults = 'admin/search.html',
+          config;
 
-      
-            return Endpoint.meta().then(function(response) {
-                
-                var kinds = response.data;
-                $rootScope.kinds = kinds;
-                return kinds;
-            });
-        }]
+      if (stateParams.kind !== undefined) {
+        config = ADMIN_SEARCH_KIND_CONFIG[stateParams.kind];
+        if (config && config.templateUrl) {
+          defaults = config.templateUrl;
+        }
+      }
 
-    };
+      return defaults;
+    },
+    controller : 'AdminSearch',
+    resolve : default_resolves
+  });
 
-    $stateProvider.state('home', {
-        url : '/',
-        templateUrl : 'home/index.html',
-        controller : 'HomePage'
-    }).state('login', {
-        url : '/login/:provider',
-        controller : 'LoginPage',
-    }).state('sell-catalogs', {
-        url : '/sell/catalogs',
-        controller : 'SellCatalogs',
-        templateUrl : 'catalog/list.html',
-    }).state('admin_search', {
-        url : '/admin/search/:kind/:query',
-        templateUrl : function(stateParams) {
-
-            var defaults = 'admin/search.html';
-
-            if (stateParams['kind'] != undefined) {
-                var config = ADMIN_SEARCH_KIND_CONFIG[stateParams['kind']];
-                if (config && config['templateUrl']) {
-                    defaults = config['templateUrl'];
-                }
-            }
-
-            return defaults;
-        },
-        controller : 'AdminSearch',
-        resolve : {}
-    });
-
-}]); 
+}]);

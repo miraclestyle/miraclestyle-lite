@@ -1,0 +1,7 @@
+<span class="ui-select-match">
+  <li ng-click="$select.removeChoice($index)" class="ui-select-match-item select2-search-choice" ng-repeat="$item in $select.selected" 
+      ng-class="{'select2-search-choice-focus':$select.activeMatchIndex === $index}">
+      <span uis-transclude-append></span>
+      
+  </li>
+</span>
