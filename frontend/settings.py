@@ -66,6 +66,10 @@ ANGULAR_TEMPLATES = (
   # core
   ('home/index.html',),
   ('tests/html.html',),
+  ('form/builder.html',),
+  ('underscore/form/string.html',),
+  ('underscore/form/select.html',),
+  ('underscore/form/select_async.html',),
   # angular ui
   ('template/datetimepicker/datetimepicker.html',
    'libraries/angular-bootstrap/datetimepicker/datetimepicker.html'),

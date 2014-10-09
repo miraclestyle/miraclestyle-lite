@@ -168,7 +168,7 @@ function() {
       return localStorage.setItem(key, value);
     },
     removeItem : function(key) {
-      if ( key in in_memory) {
+      if (in_memory[key] !== undefined) {
         delete in_memory[key];
       }
       return localStorage.removeItem(key);
@@ -182,7 +182,17 @@ function($http, DSCacheFactory, localStoragePolyfill) {
     storageImpl : localStoragePolyfill
   });
 
-}]).factory('Kinds', ['Endpoint',
+}])
+.factory('GeneralLocalCache', ['DSCacheFactory', 'localStoragePolyfill',
+function(DSCacheFactory, localStoragePolyfill) {
+
+  return DSCacheFactory('generalCache', {
+    storageMode : 'localStorage',
+    storageImpl : localStoragePolyfill
+  });
+
+}])
+.factory('Kinds', ['Endpoint',
 function(Endpoint) {
 
   var Kinds = {};
@@ -191,12 +201,15 @@ function(Endpoint) {
 
     var info = this.get(kind);
     if (info === undefined)
+    {
       return undefined;
-    var actions = info['actions'], friendly_action_name;
+    }
+      
+    var actions = info.actions, friendly_action_name;
 
     angular.forEach(actions, function(action) {
-      if (action['key'] === action_key) {
-        friendly_action_name = action['id'];
+      if (action.key === action_key) {
+        friendly_action_name = action.id;
       }
     });
 
@@ -204,36 +217,53 @@ function(Endpoint) {
   };
 
   Kinds.get = function(kind_id) {
-
-    var kind = this.info[kind_id];
-    if (kind == undefined)
+ 
+    var kind = this.info[kind_id], fields = {}, actions = {};
+    if (kind === undefined)
+    {
       return undefined;
-    var fields = {};
+    }
+      
 
     angular.forEach(kind, function(value, key) {
-      if (key != '_actions') {
+      if (key !== '_actions') {
         fields[key] = value;
       }
     });
-
-    var actions = {};
-
-    angular.forEach(kind['_actions'], function(action) {
+ 
+    angular.forEach(kind._actions, function(action) {
       actions[action.id] = action;
     });
 
     var data = {
-      'actions' : kind['_actions'],
+      'actions' : kind._actions,
       'mapped_actions' : actions,
       'fields' : fields
     };
-
+ 
     return data;
   };
 
   return Endpoint.model_meta().then(function(response) {
-    Kinds.info = response.output;
+    Kinds.info = response.data;
     return Kinds;
   });
 
+}]).factory('UnderscoreTemplate', [function () {
+ 
+  return {
+    get : function (path, typecheck)
+    {
+       if (typecheck)
+       {
+         typecheck = '[type="text/underscore-template"]';
+       }
+       else
+       {
+         typecheck = '';
+       }
+       var contents = $('script[id="' + path + '"]' + typecheck).text();
+       return contents;
+    }
+  };
 }]);

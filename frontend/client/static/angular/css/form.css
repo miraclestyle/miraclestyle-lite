@@ -125,7 +125,7 @@
 
 /* validation colors */
 
-.ng-invalid-required
+.ng-invalid-required, .ng-invalid
 {
 	border-color:red; /* this for now*/
 }

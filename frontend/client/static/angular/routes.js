@@ -1,8 +1,6 @@
 angular.module('app').config(['$stateProvider',
 function($stateProvider) {
-  
-  'use strict';
-  
+ 
   var default_resolves = {
     current_account : ['Endpoint', '$rootScope',
     function(Endpoint, $rootScope) {
@@ -10,6 +8,16 @@ function($stateProvider) {
         var account = response.data;
         $rootScope.current_account = account;
         return account;
+      });
+
+    }],
+    
+    kinds : ['Endpoint', '$rootScope',
+    function(Endpoint, $rootScope) {
+      Endpoint.model_meta().then(function(response) {
+        var kinds = response.data;
+        $rootScope.kinds = kinds;
+        return kinds;
       });
 
     }]

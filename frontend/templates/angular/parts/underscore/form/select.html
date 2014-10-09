@@ -1,0 +1,24 @@
+<div class="form-control">
+    <label class="form-label">
+      <%= config.compiled.label %>
+    </label>
+    <div class="form-input">
+      <div class="form-text">
+       <ui-select name="config.name" placeholder="Select..." theme="select2" 
+          <%= config.compiled.attrs %> <% if (config.field.repeated) { %>multiple<% } %>>
+          <ui-select-match placeholder="Select...">
+          <% if (config.field.repeated) { %>
+            {{$item}}
+          <% } else { %>
+            {{$select.selected}}
+          <% } %>
+          </ui-select-match>
+          <ui-select-choices repeat="choice in config.field.choices | filter:$select.search">
+            {{choice}}
+          </ui-select-choices>
+        </ui-select>
+  
+        
+      </div>
+    </div>
+</div>

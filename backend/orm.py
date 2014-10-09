@@ -2871,6 +2871,11 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       except:
         value = str(value)
       return search.AtomField(name=self.search_document_field_name, value=value)
+    
+  def get_meta(self):
+    dic = super(SuperKeyProperty, self).get_meta()
+    dic['kind'] = self._kind
+    return dic
 
 
 class SuperVirtualKeyProperty(SuperKeyProperty):
