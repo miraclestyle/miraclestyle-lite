@@ -7,15 +7,17 @@
          
          <ui-select
              theme="select2"
-             reset-search-input="false"
              <%= config.compiled.attrs %>
-             <% if (config.field.repeated) { %>multiple<% } %>
-             >
-          <ui-select-match placeholder="Select...">{{config.specifics.view(<% if (config.field.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
+             <% if (config.field.repeated) { %>multiple<% } %>>
+             
+          <ui-select-match placeholder="Select...">{{config.specifics.view(<% if (config.field.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
           <ui-select-choices
-                   repeat="entity.key as entity in config.specifics.entities track by $index <% if (config.specifics.propsFilter) { %> | propsFilter: <%- config.specifics.propsFilter %> <% } %>"
+                   repeat="entity.key as entity in config.specifics.entities <% if (config.specifics.propsFilter) { %> | propsFilter: <%- config.specifics.propsFilter %> <% } %>"
+                   <% if (config.specifics.search) { %>
                    refresh="config.specifics.search($select.search)"
-                   refresh-delay="200">
+                   refresh-delay="200"
+                   <% } %>>
+                   
             <div ng-bind-html="config.specifics.view(entity) | highlight: $select.search"></div>
           </ui-select-choices>
         </ui-select>

@@ -1,0 +1,35 @@
+<div class="structured-field">
+  <h2 class="fieldset with-button">
+  <span class="fieldset-text"><%= config.compiled.label %></span>
+  <span class="fieldset-button">
+    <button ng-disabled="<%= config.writable %>" type="button" class="button" ng-click="add()">
+      {{config.specifics.add_text}}
+    </button>
+  </span>
+</h2>
+<% if (config.field.repeated) { %>
+    <table class="table">
+          <thead>
+            <tr> 
+              <th ng-repeat="field in config.specifics.fields">{{field.label}}</th>
+              <th></th>
+              <!-- what else to put here? -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="val in values track by $index" ng-hide="val._state == 'deleted'">
+              <td ng-repeat="field in config.specifics.fields">
+                {{config.specifics.show(val, field.key)}}
+              </td>
+  
+              <td>
+                <button ng-show="config.specifics.removeable" ng-click="remove(val)" type="button" class="button">Remove</button>
+                <button ng-click="manage(val)" type="button" class="button">Edit</button>
+              </td>
+            </tr>
+          </tbody>
+    </table>
+    <% } else { %>
+      Singular
+    <% } %>
+</div>

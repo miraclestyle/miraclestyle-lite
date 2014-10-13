@@ -1,5 +1,4 @@
-angular.module('app')
-.factory('Helpers', [
+angular.module('app').factory('Helpers', [
 function() {
 
   return {
@@ -42,9 +41,9 @@ function() {
       return options;
     }
   };
-}]).factory('Endpoint', ['$http', 'DSCacheFactory', '$cacheFactory', 'GLOBAL_CONFIG', 'Helpers',
+}]).factory('Endpoint', ['$http', 'DSCacheFactory', '$cacheFactory', 'GLOBAL_CONFIG', 'Helpers', '$rootScope',
 
-function($http, DSCacheFactory, $cacheFactory, GLOBAL_CONFIG, Helpers) {
+function($http, DSCacheFactory, $cacheFactory, GLOBAL_CONFIG, Helpers, $rootScope) {
 
   var cache = DSCacheFactory('endpoint_local_storage', {
     storageMode : 'localStorage'
@@ -133,11 +132,15 @@ function($http, DSCacheFactory, $cacheFactory, GLOBAL_CONFIG, Helpers) {
     current_account : function() {
       return this.get('current_account', '11', {}, {
         cache : true
+      }).then(function(response) {
+        angular.module('app').value('current_account', response.data.entity);
       });
     },
     model_meta : function() {
       return $http.get(GLOBAL_CONFIG.api_model_meta_path, {
         cache : true
+      }).then(function(response) {
+         angular.module('app').value('model_info', response.data);
       });
     }
   };
@@ -182,8 +185,7 @@ function($http, DSCacheFactory, localStoragePolyfill) {
     storageImpl : localStoragePolyfill
   });
 
-}])
-.factory('GeneralLocalCache', ['DSCacheFactory', 'localStoragePolyfill',
+}]).factory('GeneralLocalCache', ['DSCacheFactory', 'localStoragePolyfill',
 function(DSCacheFactory, localStoragePolyfill) {
 
   return DSCacheFactory('generalCache', {
@@ -191,20 +193,23 @@ function(DSCacheFactory, localStoragePolyfill) {
     storageImpl : localStoragePolyfill
   });
 
-}])
-.factory('Kinds', ['Endpoint',
-function(Endpoint) {
+}]).factory('ModelMeta', ['model_info',
+function(model_info) {
 
-  var Kinds = {};
+  // ModelMeta singleton
+  var ModelMeta = {};
 
-  Kinds.friendly_action_name = function(kind, action_key) {
+  ModelMeta.info = function() {
+    return model_info;
+  };
+
+  ModelMeta.friendly_action_name = function(kind, action_key) {
 
     var info = this.get(kind);
-    if (info === undefined)
-    {
+    if (info === undefined) {
       return undefined;
     }
-      
+
     var actions = info.actions, friendly_action_name;
 
     angular.forEach(actions, function(action) {
@@ -216,21 +221,19 @@ function(Endpoint) {
     return friendly_action_name;
   };
 
-  Kinds.get = function(kind_id) {
- 
-    var kind = this.info[kind_id], fields = {}, actions = {};
-    if (kind === undefined)
-    {
+  ModelMeta.get = function(kind_id) {
+
+    var kind = this.info()[kind_id], fields = {}, actions = {};
+    if (kind === undefined) {
       return undefined;
     }
-      
 
     angular.forEach(kind, function(value, key) {
       if (key !== '_actions') {
         fields[key] = value;
       }
     });
- 
+
     angular.forEach(kind._actions, function(action) {
       actions[action.id] = action;
     });
@@ -240,30 +243,24 @@ function(Endpoint) {
       'mapped_actions' : actions,
       'fields' : fields
     };
- 
+
     return data;
   };
 
-  return Endpoint.model_meta().then(function(response) {
-    Kinds.info = response.data;
-    return Kinds;
-  });
+  return ModelMeta;
 
-}]).factory('UnderscoreTemplate', [function () {
- 
+}]).factory('UnderscoreTemplate', [
+function() {
+
   return {
-    get : function (path, typecheck)
-    {
-       if (typecheck)
-       {
-         typecheck = '[type="text/underscore-template"]';
-       }
-       else
-       {
-         typecheck = '';
-       }
-       var contents = $('script[id="' + path + '"]' + typecheck).text();
-       return contents;
+    get : function(path, typecheck) {
+      if (typecheck) {
+        typecheck = '[type="text/underscore-template"]';
+      } else {
+        typecheck = '';
+      }
+      var contents = $('script[id="' + path + '"]' + typecheck).text();
+      return contents;
     }
   };
 }]);

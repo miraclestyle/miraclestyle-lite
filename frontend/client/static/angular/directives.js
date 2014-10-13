@@ -41,8 +41,8 @@ function($rootScope) {
 
     }
   };
-}]).directive('formBuilder', ['$compile', 'UnderscoreTemplate', 'Kinds',
-function($compile, UnderscoreTemplate, Kinds) {
+}]).directive('formBuilder', ['$compile', 'UnderscoreTemplate', 'ModelMeta',
+function($compile, UnderscoreTemplate, ModelMeta) {
   /**
    * Main builder. It will construct a form based on a list of configuration params:
    * [
@@ -53,18 +53,6 @@ function($compile, UnderscoreTemplate, Kinds) {
    * }
    * ]
    *
-   *
-   * Possible types of an input so far:
-   String
-   Number
-   Select
-   AutoCompleteSelect
-   AutoCompleteRemoteSelect
-   Structured
-   DateTime
-   Text
-   Bool
-   File
    */
 
   return {
@@ -73,8 +61,8 @@ function($compile, UnderscoreTemplate, Kinds) {
       $scope.configurations = $scope.$eval($attrs.formBuilder);
     }
   };
-}]).directive('formInput', ['$compile', 'UnderscoreTemplate', 'Endpoint', 'Kinds', 'GeneralLocalCache',
-function($compile, UnderscoreTemplate, Endpoint, Kinds, GeneralLocalCache) {
+}]).directive('formInput', ['$compile', 'UnderscoreTemplate', 'Endpoint', 'ModelMeta', 'GeneralLocalCache',
+function($compile, UnderscoreTemplate, Endpoint, ModelMeta, GeneralLocalCache) {
 
   var internal_config = {
     search : {
@@ -108,18 +96,31 @@ function($compile, UnderscoreTemplate, Endpoint, Kinds, GeneralLocalCache) {
       return 'string';
     },
     'SuperFloatProperty' : function(config) {
+      
+      if (config.field.choices) {
+        return 'select';
+      }
+      
       if (config.attrs.type === undefined) {
         config.attrs.type = 'number';
       }
       return types.SuperStringProperty(config);
     },
     'SuperIntegerProperty' : function(config) {
+      
+      if (config.field.choices) {
+        return 'select';
+      }
+      
       if (config.attrs.type === undefined) {
         config.attrs.type = 'number';
       }
       return types.SuperStringProperty(config);
     },
     'SuperDecimalProperty' : function(config) {
+      if (config.field.choices) {
+        return 'select';
+      }
       return types.SuperFloatProperty(config);
     },
     'SuperKeyProperty' : function(config) {
@@ -139,64 +140,96 @@ function($compile, UnderscoreTemplate, Endpoint, Kinds, GeneralLocalCache) {
           return fn(result);
         };
       }
+    
 
       if (!config.specifics.search) {
-        config.specifics.search = function(term) {
 
-          Kinds.then(function(kinds) {
-            var kindinfo = kinds.get(config.field.kind), cache_hit, cache_key = 'search_results_' + config.field.kind, args, fn, should_cache = false, params = {}, action_search = kindinfo.mapped_actions.search;
-            if (action_search !== undefined) {
-              if (internal_config.search.cache_results[config.field.kind]) {
-                should_cache = true;
-              }
+        var kindinfo = ModelMeta.get(config.field.kind), cache_hit, cache_key = 'search_results_' + config.field.kind, 
+            should_cache = false, search_command, action_search = kindinfo.mapped_actions.search, skip_search_command = false;
 
-              if (config.specifics.entities === undefined) {
-                config.specifics.entities = [];
-              }
-              args = {};
-              params = action_search['arguments'].search['default'];
-              fn = internal_config.search.queryfilter[config.field.kind];
-              if (angular.isFunction(fn)) {
-                args = fn(config, action_search.search);
-              }
-              else
-              {
-                args = {
-                  search : params
-                };
-              }
-              
-              if (should_cache)
-              {
-                cache_hit = GeneralLocalCache.get(cache_key);
-                if (cache_hit !== undefined)
-                {
-                    config.specifics.entities = angular.fromJson(cache_hit);
-                    return;
-                }
-               
-              }
-              
-              Endpoint.post('search', config.field.kind, args, {
-                cache : should_cache
-              }).success(function(response) {
-                config.specifics.entities = response.entities;
-                if (should_cache)
-                {
-                    console.log(GeneralLocalCache);
-                    GeneralLocalCache.put(cache_key, angular.toJson(config.specifics.entities));
-                }
-              });
-              
-            } else {
-              console.error('No search action found in kind: ' + config.field.kind);
+        if (action_search !== undefined) {
+          if (internal_config.search.cache_results[config.field.kind]) {
+            should_cache = true;
+          }
+
+          if (config.specifics.entities === undefined) {
+            config.specifics.entities = [];
+          }
+        
+          if (should_cache) { // @todo rework auto-cache mechanism
+            cache_hit = GeneralLocalCache.get(cache_key);
+            if (cache_hit !== undefined) {
+              config.specifics.entities = angular.fromJson(cache_hit);
+              skip_search_command = true;
             }
+          }
 
-          });
+          search_command = function (term)
+          { 
+            var params = action_search['arguments'].search['default'],
+                fn = internal_config.search.queryfilter[config.field.kind],
+                args = {};
+            if (angular.isFunction(fn)) {
+              args = fn(term, config, action_search.search);
+            } else {
+              args = {
+                search : params
+              };
+            }
+            Endpoint.post('search', config.field.kind, args, {
+              cache : should_cache
+            }).success(function(response) {
+              config.specifics.entities = response.entities;
+              if (should_cache) {
+                GeneralLocalCache.put(cache_key, angular.toJson(config.specifics.entities));
+              }
+            });
+          };
+          
+          if (!skip_search_command)
+          {
+             search_command();
+          }
+         
 
-        };
+        } else {
+          console.error('No search action found in kind: ' + config.field.kind);
+        }
+        
+        if (!should_cache)
+        {
+          config.specifics.search = function(term) {
+            search_command(term);
+          };
+        }
+        
       }
+ 
       return 'select_async';
+    },
+    
+    'SuperLocalStructuredProperty' : function (config)
+    {
+      var defaults = {
+        fields : $.map(Object.keys(config.field.modelclass), function (item) {
+            return {'key': item, 'label' : item};
+        }),
+        add_new_text : 'Add',
+        add_text : '{{config.specifics.add_new_text}}',
+        show : function (val, field)
+        {
+            return val[field];
+        }
+      };
+      
+      angular.forEach(defaults, function (value, key) {
+        if (config.specifics[key] === undefined)
+        {
+          config.specifics[key] = value;
+        }
+      });
+  
+      return 'structured';
     }
   }, utils = {
     attrs : function(config) {
@@ -205,7 +238,7 @@ function($compile, UnderscoreTemplate, Endpoint, Kinds, GeneralLocalCache) {
       angular.extend(defaults, extra);
 
       angular.forEach(defaults, function(value, key) {
-        attrs.push(key + (value ? '="' + value + '"' : ''));
+        attrs.push(key + ( value ? '="' + value + '"' : ''));
       });
 
       return attrs.join(' ');
@@ -259,16 +292,18 @@ function($compile, UnderscoreTemplate, Endpoint, Kinds, GeneralLocalCache) {
       }
 
       if (type) {
-
+      
+        var tpl = type(config);
+        
         config.compiled = {
           attrs : utils.attrs(config),
           label : utils.label(config)
         };
-
-        var template = _.template(UnderscoreTemplate.get('underscore/form/' + type(config) + '.html'))({
+         
+        var template = _.template(UnderscoreTemplate.get('underscore/form/' + tpl + '.html'))({
           config : config
         });
-
+     
         scope.config = config;
 
         element.html($compile(template)(scope));

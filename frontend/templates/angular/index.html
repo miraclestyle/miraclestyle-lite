@@ -8,7 +8,7 @@ This was done for easier maintenance.
 
 #}
 <!DOCTYPE html>
-<html ng-app="app">
+<html>
   <head>
     <title ng-bind="pageTitle"></title>
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -23,7 +23,7 @@ This was done for easier maintenance.
     {% endfor %}
     
     <!-- angular globals -->
-    {% for g in ['app', 'services', 'directives', 'filters', 'controllers'] %}
+    {% for g in settings.ANGULAR_GLOBAL_JS_PATHS %}
     <script type="text/javascript" src="{{static_dir('angular/%s.js' % g)}}"></script>
     {% endfor %}
   

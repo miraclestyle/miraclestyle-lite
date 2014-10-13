@@ -53,6 +53,8 @@ ANGULAR_JS_PATHS = (
   'libraries/angular-bootstrap-datetimepicker/src/js/datetimepicker.js'
 )
 
+ANGULAR_GLOBAL_JS_PATHS = ['app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
+
 ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 
                      'libraries/angular-ui-select/dist/select.css',
                      'libraries/angular-ui-select/dist/select2.css',
