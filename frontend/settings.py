@@ -72,7 +72,11 @@ ANGULAR_TEMPLATES = (
   ('underscore/form/string.html',),
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
-  # angular ui
+  ('underscore/form/structured.html',),
+  ('underscore/form/modal/structured.html',),
+  ('underscore/form/boolean.html',),
+  
+  # angular libraries
   ('template/datetimepicker/datetimepicker.html',
    'libraries/angular-bootstrap/datetimepicker/datetimepicker.html'),
   ('template/accordion/accordion-group.html',

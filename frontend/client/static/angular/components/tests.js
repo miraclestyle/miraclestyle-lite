@@ -1,11 +1,28 @@
-angular.module('app').controller('Tests', ['$scope', '$modal', 'ModelMeta',
-function($scope, $modal, ModelMeta) {
+angular.module('app').controller('TestsCtrl', function($scope, $modal, ModelMeta, $q) {
   $scope.oneAtATime = true;
   $scope.isopen = true;
 
   $scope.entity = {
-    'country_multiple' : []
+    'country_multiple' : [],
+    'locations' : []
   };
+  
+  var deffer = $q.defer();
+ 
+  var promise = deffer.promise;
+  promise.then(function(a) {
+    console.log(1);
+  });
+ 
+  promise.then(function (a) {
+    console.log(2);
+  });
+  promise.then(function (a) {
+    console.log(3);
+  });
+  
+  
+   
 
   $scope.formBuilder = [{
     field : {
@@ -160,144 +177,8 @@ function($scope, $modal, ModelMeta) {
 
   },
   {
-    field : {
-      "updateable": true, 
-      "search_document_field_name": null, 
-      "max_size": null, 
-      "autoload": true, 
-      "indexed": false, 
-      "choices": null, 
-      "searchable": null, 
-      "repeated": true, 
-      "value_class": "LocalStructuredPropertyValue", 
-      "modelclass": {
-        "region": {
-          "search_document_field_name": null, 
-          "max_size": null, 
-          "indexed": false, 
-          "choices": null, 
-          "searchable": null, 
-          "repeated": false, 
-          "name": "4", 
-          "verbose_name": null, 
-          "type": "SuperKeyProperty", 
-          "is_structured": false, 
-          "code_name": "region", 
-          "required": false, 
-          "kind": "13", 
-          "default": null
-        }, 
-        "name": {
-          "search_document_field_name": null, 
-          "max_size": null, 
-          "indexed": true, 
-          "choices": null, 
-          "searchable": null, 
-          "repeated": false, 
-          "name": "1", 
-          "verbose_name": null, 
-          "type": "SuperStringProperty", 
-          "is_structured": false, 
-          "compressed": false, 
-          "code_name": "name", 
-          "required": true, 
-          "default": null
-        }, 
-        "postal_code_from": {
-          "search_document_field_name": null, 
-          "max_size": null, 
-          "indexed": false, 
-          "choices": null, 
-          "searchable": null, 
-          "repeated": false, 
-          "name": "5", 
-          "verbose_name": null, 
-          "type": "SuperStringProperty", 
-          "is_structured": false, 
-          "compressed": false, 
-          "code_name": "postal_code_from", 
-          "required": false, 
-          "default": null
-        }, 
-        "postal_code_to": {
-          "search_document_field_name": null, 
-          "max_size": null, 
-          "indexed": false, 
-          "choices": null, 
-          "searchable": null, 
-          "repeated": false, 
-          "name": "6", 
-          "verbose_name": null, 
-          "type": "SuperStringProperty", 
-          "is_structured": false, 
-          "compressed": false, 
-          "code_name": "postal_code_to", 
-          "required": false, 
-          "default": null
-        }, 
-        "active": {
-          "search_document_field_name": null, 
-          "max_size": null, 
-          "indexed": true, 
-          "choices": null, 
-          "searchable": null, 
-          "repeated": false, 
-          "name": "2", 
-          "verbose_name": null, 
-          "type": "SuperBooleanProperty", 
-          "is_structured": false, 
-          "code_name": "active", 
-          "required": true, 
-          "default": true
-        }, 
-        "country": {
-          "search_document_field_name": null, 
-          "max_size": null, 
-          "indexed": false, 
-          "choices": null, 
-          "searchable": null, 
-          "repeated": false, 
-          "name": "3", 
-          "verbose_name": null, 
-          "type": "SuperKeyProperty", 
-          "is_structured": false, 
-          "code_name": "country", 
-          "required": true, 
-          "kind": "12", 
-          "default": null
-        }, 
-        "city": {
-          "search_document_field_name": null, 
-          "max_size": null, 
-          "indexed": false, 
-          "choices": null, 
-          "searchable": null, 
-          "repeated": false, 
-          "name": "7", 
-          "verbose_name": null, 
-          "type": "SuperStringProperty", 
-          "is_structured": false, 
-          "compressed": false, 
-          "code_name": "city", 
-          "required": false, 
-          "default": null
-        }
-      }, 
-      "modelclass_kind": "106", 
-      "readable": true, 
-      "name": "3", 
-      "verbose_name": null, 
-      "type": "SuperLocalStructuredProperty", 
-      "read_arguments": {}, 
-      "is_structured": true, 
-      "compressed": false, 
-      "deleteable": true, 
-      "code_name": "locations", 
-      "required": false, 
-      "default": null
-    },
-    
-    name : "location"
+    field : ModelMeta.get('31').fields._products,
+    name : "catalog_products"
   }];
 
   $scope.groups = [{
@@ -361,7 +242,7 @@ function($scope, $modal, ModelMeta) {
     'tags' : ['tag1', 'tag2', 'tag3', 'tag4'] // Can be empty list.
   };
 
-}]).filter('propsFilter', function() {
+}).filter('propsFilter', function() {
   return function(items, props) {
     var out = [];
 

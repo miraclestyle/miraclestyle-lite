@@ -1,1 +1,2 @@
 // global controllers
+'use strict';

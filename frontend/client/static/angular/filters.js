@@ -1,4 +1,5 @@
 // global filters
+'use strict';
 angular.module('app').filter('propsFilter', function() {
   return function(items, props) {
     var out = [];

@@ -1,22 +1,21 @@
-angular.module('app').config(['$stateProvider',
-function($stateProvider) {
- 
-
+'use strict';
+angular.module('app').config(function($stateProvider) {
+  
   $stateProvider.state('home', {
     url : '/',
     templateUrl : 'home/index.html',
-    controller : 'HomePage'
+    controller : 'HomePageCtrl'
   }).state('login', {
     url : '/login/:provider',
-    controller : 'LoginPage'
+    controller : 'LoginPageCtrl'
   }).state('sell-catalogs', {
     url : '/sell/catalogs',
-    controller : 'SellCatalogs',
+    controller : 'SellCatalogsCtrl',
     templateUrl : 'catalog/list.html'
   })
   .state('tests', {
     url : '/tests/:what',
-    controller : 'Tests',
+    controller : 'TestsCtrl',
     templateUrl : function (stateParams) {
       return 'tests/' + stateParams.what + '.html';
     }
@@ -37,7 +36,7 @@ function($stateProvider) {
 
       return defaults;
     },
-    controller : 'AdminSearch'
+    controller : 'AdminSearchCtrl'
   });
 
-}]);
+});

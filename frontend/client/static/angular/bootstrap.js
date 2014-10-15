@@ -1,4 +1,5 @@
 /* Bootstrap file, it will try to load current account and model data and then bootstrap the application. */
+'use strict';
 angular.element(document).ready(function () {
    var injector = angular.injector(['app']),
        Endpoint = injector.get('Endpoint'),

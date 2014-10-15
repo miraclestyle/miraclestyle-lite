@@ -1,5 +1,6 @@
 // bootstrap file, introduces global App or MainApp
 /*global angular, window, console, jQuery, $, document*/
+'use strict';
 (function() {
 
   if (!window.console) {
@@ -23,8 +24,7 @@
   };
 
   angular.module('app', GLOBAL_CONFIG.angular_modules)// we can avoid a global if we build modules for each feature
-  .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(['$httpProvider', '$locationProvider',
-  function($httpProvider, $locationProvider) {
+  .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function($httpProvider, $locationProvider) {
 
     $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -32,6 +32,6 @@
 
     $locationProvider.html5Mode(true);
 
-  }]);
+  });
 
 })();
