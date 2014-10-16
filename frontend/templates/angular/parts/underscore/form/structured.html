@@ -1,30 +1,30 @@
 <div class="structured-field">
   <h2 class="fieldset with-button">
-  <span class="fieldset-text"><%= config.compiled.label %></span>
+  <span class="fieldset-text"><%= config.ui.compiled.label %></span>
   <span class="fieldset-button">
-    <button ng-disabled="!<%= config.writable %>" type="button" class="button" ng-click="config.specifics.manage()">
-      <%=config.specifics.add_text %>
+    <button ng-disabled="!<%= config.ui.writable %>" type="button" class="button" ng-click="config.ui.specifics.manage()">
+      <%=config.ui.specifics.add_text %>
     </button>
   </span>
 </h2>
-<% if (config.field.repeated) { %>
+<% if (config.repeated) { %>
     <table class="table">
           <thead>
             <tr> 
-              <th ng-repeat="field in config.specifics.fields">{{field.label}}</th>
+              <th ng-repeat="field in config.ui.specifics.fields">{{field.label}}</th>
               <th></th>
               <!-- what else to put here? -->
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="entity in config.specifics.entities track by $index" ng-hide="entity._state == 'deleted'">
-              <td ng-repeat="field in config.specifics.fields">
-                {{config.specifics.show(entity, field.key)}}
+            <tr ng-repeat="entity in config.ui.specifics.entities track by $index" ng-hide="entity._state == 'deleted'">
+              <td ng-repeat="field in config.ui.specifics.fields">
+                {{config.ui.specifics.show(entity, field.key)}}
               </td>
   
               <td>
-                <button ng-show="<%= config.writable %>" ng-click="config.specifics.remove(entity)" type="button" class="button">Remove</button>
-                <button ng-show="<%= config.writable %>" ng-click="config.specifics.manage(entity)" type="button" class="button">Edit</button>
+                <button ng-show="<%= config.ui.writable %>" ng-click="config.ui.specifics.remove(entity)" type="button" class="button">Remove</button>
+                <button ng-show="<%= config.ui.writable %>" ng-click="config.ui.specifics.manage(entity)" type="button" class="button">Edit</button>
               </td>
             </tr>
           </tbody>

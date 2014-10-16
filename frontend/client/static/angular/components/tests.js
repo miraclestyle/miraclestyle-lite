@@ -4,7 +4,7 @@ angular.module('app').controller('TestsCtrl', function($scope, $modal, ModelMeta
 
   $scope.entity = {
     'country_multiple' : [],
-    'locations' : []
+    'contents' : []
   };
   
   var deffer = $q.defer();
@@ -21,165 +21,31 @@ angular.module('app').controller('TestsCtrl', function($scope, $modal, ModelMeta
     console.log(3);
   });
   
-  
+  var sample = ModelMeta.get('31').mapped_actions.update.arguments;
+  var f = function (sample) {
+     angular.forEach(sample, function (field, field_key) {
+          field.code_name = field_key;
+          if (field.modelclass)
+          {
+            f(field.modelclass);
+          }
+     });
    
-
-  $scope.formBuilder = [{
-    field : {
-      "search_document_field_name" : null,
-      "is_structured" : false,
-      "max_size" : null,
-      "required" : false,
-      "verbose_name" : null,
-      "default" : null,
-      "indexed" : true,
-      "searchable" : null,
-      "compressed" : false,
-      "repeated" : false,
-      "code_name" : null,
-      "choices" : null,
-      "type" : "SuperStringProperty",
-      "name" : null
-    },
-    name : 'primary_email'
-
-  }, {
-    field : {
-      "search_document_field_name" : null,
-      "is_structured" : false,
-      "max_size" : null,
-      "required" : false,
-      "verbose_name" : null,
-      "default" : null,
-      "indexed" : true,
-      "searchable" : null,
-      "compressed" : false,
-      "repeated" : false,
-      "code_name" : null,
-      "choices" : ['bar', 'far', 'zar'],
-      "type" : "SuperStringProperty",
-      "name" : null
-    },
-    name : 'choices'
-
-  }, {
-    field : {
-      "search_document_field_name" : null,
-      "is_structured" : false,
-      "max_size" : null,
-      "required" : false,
-      "verbose_name" : null,
-      "default" : null,
-      "indexed" : true,
-      "searchable" : null,
-      "compressed" : false,
-      "repeated" : true,
-      "code_name" : null,
-      "choices" : ['bar', 'far', 'zar'],
-      "type" : "SuperStringProperty",
-      "name" : null
-    },
-    name : 'choices_multiple'
-
-  }, {
-    field : {
-      "code_name" : "country",
-      "search_document_field_name" : null,
-      "type" : "SuperKeyProperty",
-      "is_structured" : false,
-      "repeated" : false,
-      "verbose_name" : null,
-      "max_size" : null,
-      "indexed" : false,
-      "choices" : null,
-      "name" : "2",
-      "required" : true,
-      "default" : null,
-      "searchable" : null,
-      "kind" : "12"
-    },
-    name : 'country'
-
-  }, {
-    field : {
-      "code_name" : "country",
-      "search_document_field_name" : null,
-      "type" : "SuperKeyProperty",
-      "is_structured" : false,
-      "repeated" : true,
-      "verbose_name" : null,
-      "max_size" : null,
-      "indexed" : false,
-      "choices" : null,
-      "name" : "2",
-      "required" : true,
-      "default" : null,
-      "searchable" : null,
-      "kind" : "12"
-    },
-    name : 'country_multiple'
-
-  },
-  {
-    field : {
-      
-          "search_document_field_name": null, 
-          "type": "SuperIntegerProperty", 
-          "is_structured": false, 
-          "repeated": false, 
-          "verbose_name": null,
-          "max_size": null, 
-          "indexed": true, 
-          "choices": null, 
-          "name": "11", 
-          "required": false, 
-          "default": null, 
-          "searchable": null
-    },
-    name : 'int'
-
-  },
-  {
-    field : {
-     
-          "search_document_field_name": null, 
-          "type": "SuperFloatProperty", 
-          "is_structured": false, 
-          "repeated": false, 
-          "verbose_name": null,
-          "max_size": null, 
-          "indexed": true, 
-          "choices": null, 
-          "required": false, 
-          "default": null, 
-          "searchable": null
-    },
-    name : 'float'
-
-  },
-  {
-    field : {
-     
-          "search_document_field_name": null, 
-          "type": "SuperDecimalProperty", 
-          "is_structured": false, 
-          "repeated": false, 
-          "verbose_name": null,
-          "max_size": null, 
-          "indexed": true, 
-          "choices": null, 
-          "name": "11", 
-          "required": false, 
-          "default": null, 
-          "searchable": null
-    },
-    name : 'decimal'
-
-  },
-  {
-    field : ModelMeta.get('31').fields._products,
-    name : "catalog_products"
-  }];
+  };
+  
+  f(sample)
+ 
+  
+  sample._products.modelclass.contents.modelclass._other_contents = angular.copy(sample._products.modelclass.contents);
+  sample._products.modelclass.contents.modelclass._other_contents.code_name = '_other_contents';
+  
+  sample.read_arguments.required = true;
+  
+  
+  var fields = [sample.read_arguments, sample.name, sample.publish_date, sample.discontinue_date,
+   sample._products.modelclass.contents, sample._products.modelclass.images];
+ 
+  $scope.formBuilder = fields;
 
   $scope.groups = [{
     title : "Dynamic Group Header - 1",
@@ -242,35 +108,6 @@ angular.module('app').controller('TestsCtrl', function($scope, $modal, ModelMeta
     'tags' : ['tag1', 'tag2', 'tag3', 'tag4'] // Can be empty list.
   };
 
-}).filter('propsFilter', function() {
-  return function(items, props) {
-    var out = [];
-
-    if (angular.isArray(items)) {
-      items.forEach(function(item) {
-        var itemMatches = false;
-
-        var keys = Object.keys(props);
-        for (var i = 0; i < keys.length; i++) {
-          var prop = keys[i];
-          var text = props[prop].toLowerCase();
-          if (item[prop].toString().toLowerCase().indexOf(text) !== -1) {
-            itemMatches = true;
-            break;
-          }
-        }
-
-        if (itemMatches) {
-          out.push(item);
-        }
-      });
-    } else {
-      // Let the output be the input untouched
-      out = items;
-    }
-
-    return out;
-  };
 }).controller('DemoCtrl', function($scope, $http, $timeout) {
   $scope.disabled = undefined;
   $scope.searchEnabled = undefined;

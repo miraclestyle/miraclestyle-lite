@@ -1,6 +1,8 @@
 /*global angular, window, console, jQuery, $, document*/
 'use strict';
-angular.module('app').directive('mainMenuToggler', function($rootScope) {
+angular.module('app').config(function(datepickerConfig) {
+  datepickerConfig.showWeeks = false;
+}).directive('mainMenuToggler', function($rootScope) {
 
   return {
     link : function(scope, element) {
@@ -41,73 +43,178 @@ angular.module('app').directive('mainMenuToggler', function($rootScope) {
 
     }
   };
-})
-.directive('toggle', function() {
-    return {
-        scope: {
-            ngModel: '='
-        },
-        link: function(scope, element, attrs, controller) {
-          
-          var toggle = attrs.toggle;
-          if (!toggle) toggle = 'Yes/No';
-          var splits = toggle.split('/');
- 
-          var init = function ()
-          {
-            if (scope.ngModel)
-            {
-              element.text(splits[0]);
-            }
-            else
-            {
-              element.text(splits[1]);
-            }
-          };
-          
-          init();
-          
-           var handler = function() {
-                scope.$apply(function() {
-                    scope.ngModel = !scope.ngModel;
-                    init();
-                });
-            };
-            
-            element.bind('click', handler);
-            
-            scope.$on('$destroy', function () {
-              element.off('click', handler);
-            });
+}).directive('toggle', function() {
+  return {
+    scope : {
+      ngModel : '='
+    },
+    link : function(scope, element, attrs, controller) {
+
+      var toggle = attrs.toggle;
+      if (!toggle)
+        toggle = 'Yes/No';
+      var splits = toggle.split('/');
+
+      var init = function() {
+        if (scope.ngModel) {
+          element.text(splits[0]);
+        } else {
+          element.text(splits[1]);
         }
-    };
+      };
+
+      init();
+
+      var handler = function() {
+        scope.$apply(function() {
+          scope.ngModel = !scope.ngModel;
+          init();
+        });
+      };
+
+      element.bind('click', handler);
+
+      scope.$on('$destroy', function() {
+        element.off('click', handler);
+      });
+    }
+  };
+}).directive('jsonOnly', function() {
+  return {
+    require : 'ngModel',
+    link : function(scope, element, attrs, ctrl) {
+      var worker = function(value, what) {
+        
+        var test = false;
+     
+        try {
+          value = angular[what](value);
+          test = true;
+
+        } catch(e) { }
+
+        ctrl.$setValidity('jsonOnly', test);
+  
+        return value;
+      };
+      var parser = function(value) {
+         return worker(value, 'fromJson');
+      };
+      var formatter = function(value) {
+         return worker(value, 'toJson');
+      };
+      
+      ctrl.$parsers.push(parser);
+      ctrl.$formatters.push(formatter);
+    }
+  };
 })
-.directive('formBuilder', function($compile, UnderscoreTemplate, ModelMeta) {
+.directive('repeatedText', function() {
+  return {
+    require : 'ngModel',
+    link : function(scope, element, attrs, ctrl) {
+      
+      var worker = function(value, what) {
+        
+        var test = false;
+     
+        try {
+          if (what == 'list')
+          {
+            value = value.match(/[^\r\n]+/g);
+          }
+          test = true;
+
+        } catch(e) { }
+
+        ctrl.$setValidity('repeatedText', test);
+  
+        return value;
+      };
+      var parser = function(value) {
+         return worker(value, 'list');
+      };
+      var formatter = function(value) {
+         return worker(value, 'str');
+      };
+    
+      ctrl.$parsers.push(parser);
+      ctrl.$formatters.push(formatter);
+    }
+  };
+})
+.directive('uploadOnSelect', function(Endpoint, $rootScope) {
+  return {
+    restrict: 'A',
+    require: '^form',
+    link : function(scope, element, attrs, ctrl) {
+      
+      var that = element, form = that.parents('form:first');
+        
+      if (!form.length) {
+        console.error('Directive upload-on-select demands explicit <form> tag in \
+         order to perform regular html form submission');
+        return false;
+      }
+      
+      var change = function() {
+ 
+        if (!that.val())
+          return false;
+  
+        var options = scope.$eval(attrs.uploadOnSelect);
+        
+        if (ctrl.$valid)
+        {
+          Endpoint.post('blob_upload_url', '11', {
+            'upload_url' : Endpoint.url
+          }).then(function(response) {
+                form.attr('action', response.data.upload_url).trigger('submit');
+               // triggers angular ng-upload
+          });
+        
+        }
+          
+      };
+
+      $(element).on('change', change);
+
+      scope.$on('$destroy', function() {
+        $(element).off('change', change);
+      });
+      
+      scope.$on('ngUploadComplete', function ($event, content) {
+         form.attr('action', Endpoint.url);
+      });
+    }
+  };
+}).directive('formBuilder', function($compile, UnderscoreTemplate, ModelMeta) {
   /**
    * Main builder. It will construct a form based on a list of configuration params:
    * [
    * {
-   *    'type' : instance of property from backend,
-   *    'model' : 'optional, e.g. "name",
-   *    ...
+   *    ... field data
+   *
+   *    ui : {... user defined dictionary }
    * }
    * ]
    *
    */
 
   return {
+    restrict: 'A',
+    require : '^form',
     templateUrl : 'form/builder.html',
     controller : function($scope, $element, $attrs) {
       $scope.configurations = $scope.$eval($attrs.formBuilder);
     }
   };
-}).directive('formInput',
-function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Helpers) {
+}).directive('formInput', function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Helpers) {
 
   var inflector = $filter('inflector'), internal_config = {
     search : {
       cache_results : {
-        '12' : true
+        'default' : true
       },
       propsFilter_results : {
         'default' : '{name: $select.search}',
@@ -128,41 +235,49 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
   }, types = {
     'SuperStringProperty' : function(info) {
       var config = info.config;
-      if (config.attrs.type === undefined) {
-        config.attrs.type = 'text';
+      if (config.ui.attrs.type === undefined) {
+        config.ui.attrs.type = 'text';
       }
-      if (config.field.choices) {
+      
+      if (config.choices) {
         return 'select';
       }
+      
+      if (info.config.repeated)
+      {
+        info.config.ui.attrs['repeated-text'] = '';
+        return 'text';
+      }
+      
       return 'string';
     },
     'SuperFloatProperty' : function(info) {
       var config = info.config;
 
-      if (config.field.choices) {
+      if (config.choices) {
         return 'select';
       }
 
-      if (config.attrs.type === undefined) {
-        config.attrs.type = 'number';
+      if (config.ui.attrs.type === undefined) {
+        config.ui.attrs.type = 'number';
       }
       return types.SuperStringProperty(info);
     },
     'SuperIntegerProperty' : function(info) {
       var config = info.config;
 
-      if (config.field.choices) {
+      if (config.choices) {
         return 'select';
       }
 
-      if (config.attrs.type === undefined) {
-        config.attrs.type = 'number';
+      if (config.ui.attrs.type === undefined) {
+        config.ui.attrs.type = 'number';
       }
       return types.SuperStringProperty(info);
     },
     'SuperDecimalProperty' : function(info) {
       var config = info.config;
-      if (config.field.choices) {
+      if (config.choices) {
         return 'select';
       }
       return types.SuperFloatProperty(info);
@@ -173,15 +288,15 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
     },
     'SuperKeyProperty' : function(info) {
       var config = info.config;
-      var propsFilter = internal_config.search.propsFilter_results[config.field.kind];
+      var propsFilter = internal_config.search.propsFilter_results[config.kind];
       if (!propsFilter) {
         propsFilter = internal_config.search.propsFilter_results['default'];
       }
-      config.specifics.propsFilter = propsFilter;
+      config.ui.specifics.propsFilter = propsFilter;
 
-      if (!config.specifics.view) {
-        config.specifics.view = function(result) {
-          var fn = internal_config.search.view[config.field.kind];
+      if (!config.ui.specifics.view) {
+        config.ui.specifics.view = function(result) {
+          var fn = internal_config.search.view[config.kind];
           if (!fn) {
             fn = internal_config.search.view['default'];
           }
@@ -190,20 +305,22 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
         };
       }
 
-      if (!config.specifics.search) {
+      if (!config.ui.specifics.search) {
 
-        var kindinfo = ModelMeta.get(config.field.kind), cache_hit, cache_key = 'search_results_' + config.field.kind,
-            should_cache = false, search_command, 
-            action_search = kindinfo.mapped_actions.search, skip_search_command = false;
+        var kindinfo = ModelMeta.get(config.kind), cache_hit, cache_key = 'search_results_' + config.kind, should_cache = false, search_command, action_search = kindinfo.mapped_actions.search, skip_search_command = false;
 
         if (action_search !== undefined) {
-          if (internal_config.search.cache_results[config.field.kind]) {
+          var cache_option = internal_config.search.cache_results[config.kind];
+          if (cache_option !== undefined) {
             should_cache = cache_key;
           }
+          else
+          {
+            should_cache = internal_config.search_cache_results['default'];
+          }
 
-        
           search_command = function(term) {
-            var params = action_search['arguments'].search['default'], fn = internal_config.search.queryfilter[config.field.kind], args = {};
+            var params = action_search['arguments'].search['default'], fn = internal_config.search.queryfilter[config.kind], args = {};
             if (angular.isFunction(fn)) {
               args = fn(term, config, action_search.search);
             } else {
@@ -211,23 +328,23 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
                 search : params
               };
             }
-            Endpoint.post('search', config.field.kind, args, {
+            Endpoint.post('search', config.kind, args, {
               cache : should_cache
             }).then(function(response) {
-              config.specifics.entities = response.data.entities;
+              config.ui.specifics.entities = response.data.entities;
             });
           };
 
-          if (config.specifics.entities === undefined) {
+          if (config.ui.specifics.entities === undefined) {
             search_command();
           }
 
         } else {
-          console.error('No search action found in kind: ' + config.field.kind);
+          console.error('No search action found in kind: ' + config.kind);
         }
 
         if (should_cache === false) {
-          config.specifics.search = function(term) {
+          config.ui.specifics.search = function(term) {
             search_command(term);
           };
         }
@@ -236,110 +353,115 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
 
       return 'select_async';
     },
-    
-    'SuperStructuredProperty' : function(info)
-    {
-       return types.SuperLocalStructuredProperty(info);
-    },
+
     'SuperLocalStructuredProperty' : function(info) {
       var config = info.config;
       var defaults = {
-        fields : $.map(Object.keys(config.field.modelclass), function(item) {
+        fields : $.map(Object.keys(config.modelclass), function(item) {
 
           return {
             'key' : item,
             'generated' : true,
             'label' : inflector(item, 'humanize')
           };
-          
+
         }),
         add_new_text : 'Add',
-        add_text : '{{config.specifics.add_new_text}}',
+        add_text : '{{config.ui.specifics.add_new_text}}',
         show : function(val, field) {
           return val[field];
         },
-        remove : function (entity)
-        {
+        remove : function(entity) {
           entity._state = 'deleted';
         },
-        manage : function (entity)
-        {
+        manage : function(entity) {
           $modal.open({
             template : UnderscoreTemplate.get('underscore/form/modal/structured.html')({
               config : config
             }),
-            controller : function ($scope, $modalInstance, Entity)
-            {
-                var is_new = false, parentEntity;
-                
-                $scope.config = config;
-                if (!entity) 
-                {
-                  entity = {kind : config.field.modelclass_kind};
-                  Entity.normalize(entity);
-                  is_new = true;
+            controller : function($scope, $modalInstance, Entity) {
+              var is_new = false, parentEntity;
+
+              $scope.config = config;
+              if (!entity) {
+                entity = {
+                  kind : config.modelclass_kind
+                };
+                Entity.normalize(entity, config.modelclass);
+                is_new = true;
+              }
+
+              $scope.entity = angular.copy(entity);
+              $scope.parentEntity = config.ui.specifics.entities;
+
+              $scope.cancel = function() {
+                $modalInstance.dismiss('cancel');
+              };
+
+              $scope.save = function() {
+
+                if (config.repeated) {
+                  if (is_new) {
+                    $scope.parentEntity.push($scope.entity);
+                  } else {
+                    Helpers.update(entity, $scope.entity);
+                  }
+
                 }
-                console.log(entity);
-                $scope.entity = angular.copy(entity);
-                $scope.parentEntity = config.specifics.entities;
-                 
-                $scope.cancel = function ()
-                {
-                    $modalInstance.dismiss('cancel');
-                };
-                
-                $scope.save = function ()
-                {
-                    
-                   if (config.field.repeated)
-                   {
-                     if (is_new)
-                     {
-                        $scope.parentEntity.push($scope.entity);
-                     }
-                     else
-                     {
-                        Helpers.update(entity, $scope.entity);
-                     }
-                  
-                     
-                   }
-                 
-                   $scope.cancel();
-                };
-                
+
+                $scope.cancel();
+              };
+
             }
           });
         }
       };
-      
+
       defaults.formBuilder = [];
-      angular.forEach(defaults.fields, function (field) {
-        defaults.formBuilder.push({
-          field : config.field.modelclass[field.key],
-          name : field.key,
-          label : field.label
-        });
+      angular.forEach(defaults.fields, function(field) {
+        defaults.formBuilder.push(config.modelclass[field.key]);
       });
-      
-      config.specifics.entities = info.scope.$eval(config.model);
- 
-       
+
+      config.ui.specifics.entities = info.scope.$eval(config.ui.model);
+
       angular.forEach(defaults, function(value, key) {
-        if (config.specifics[key] === undefined) {
-          config.specifics[key] = value;
+        if (config.ui.specifics[key] === undefined) {
+          config.ui.specifics[key] = value;
         }
       });
 
       return 'structured';
     },
-    'SuperRemoteStructuredProperty' : function(info)
-    {
+    'SuperStructuredProperty' : function(info) {
       return types.SuperLocalStructuredProperty(info);
+    },
+    'SuperRemoteStructuredProperty' : function(info) {
+      // remote structured is missing here... @todo
+      return types.SuperLocalStructuredProperty(info);
+    },
+    'SuperImageLocalStructuredProperty' : function(info) {
+      info.scope.$on('ngUploadComplete', function ($event, content) {
+         console.log(content);
+      });
+      return 'image';
+    },
+    'SuperTextProperty' : function(info) {
+      if (info.config.repeated)
+      {
+        info.config.ui.attrs['repeated-text'] = '';
+      }
+      return 'text';
+    },
+    'SuperJsonProperty' : function(info) {
+      info.config.ui.attrs['json-only'] = '';
+      return types.SuperTextProperty(info);
+    },
+    'SuperDateTimeProperty' : function(info) {
+      return 'datetime';
     }
   }, utils = {
     attrs : function(config) {
-      var defaults = this.default_attrs(config), extra = this.extra_attrs(config), attrs = [];
+      var defaults = utils.default_attrs(config), extra = utils.extra_attrs(config), attrs = [];
 
       angular.extend(defaults, extra);
 
@@ -351,63 +473,67 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
     },
     default_attrs : function(config) {
       var attrs = {};
-      if (config.field.max_size) {
-        attrs['ng-maxlength'] = 'config.field.max_size';
+      if (config.max_size) {
+        attrs['ng-maxlength'] = 'config.max_size';
       }
 
-      if (config.pattern !== undefined) {
+      if (config.ui.pattern !== undefined) {
         attrs['ng-pattern'] = config.pattern;
       }
 
-      attrs['ng-required'] = 'config.field.required';
-      attrs['ng-model'] = config.model;
+      attrs['ng-required'] = 'config.required';
+      attrs['ng-model'] = config.ui.model;
 
-      if (config.writable) {
-        attrs['ng-disabled'] = '!' + config.writable;
+      if (config.ui.writable) {
+        attrs['ng-disabled'] = '!' + config.ui.writable;
       }
 
       return attrs;
     },
     extra_attrs : function(config) {
-      return config.attrs;
+      return config.ui.attrs;
     },
     label : function(config) {
-      var use = '{{config.label}}';
+      var use = '{{config.ui.label}}';
       if (config.label === undefined) {
-        use = '{{config.auto_label|inflector:humanize}}';
+        use = '{{config.ui.auto_label|inflector:humanize}}';
       }
       return use;
     }
   };
 
   return {
-    link : function(scope, element, attrs) {
+    restrict: 'A',
+    require : '^form',
+    link : function(scope, element, attrs, ctrl) {
+     
+      var supplied_config = scope.$eval(attrs.formInput), name = (supplied_config.code_name !== undefined ? supplied_config.code_name : (supplied_config.ui ? supplied_config.ui.name : undefined));
 
-      var supplied_config = scope.$eval(attrs.formInput),
-          name = (supplied_config.name !== undefined ? supplied_config.name : supplied_config.field.code_name);
-      if (name === undefined)
-      {
-        console.error('Your field config', supplied_config, 'has no `name` defined.');
+      if (!name) {
+        console.error('Your field config', supplied_config, 'has no name defined defined.');
         return;
-      }    
+      }
       var config = {
-        model : 'entity.' + name,
-        auto_label : name,
-        form : 'main',
-        specifics : {},
-        name : name,
-        writable : 'true',
-        attrs : {}
-      }, type = types[supplied_config.field.type];
+        ui : {
+          model : 'entity.' + name,
+          auto_label : name,
+          specifics : {},
+          name : name,
+          writable : 'true',
+          attrs : {}
+        }
+      }, type = types[supplied_config.type];
 
-      angular.extend(config, supplied_config);
+      $.extend(true, config, supplied_config);
+      // recursive set
 
+      // auto rule engine
       if (scope.entity !== undefined && scope.entity.ui !== undefined && scope.entity.ui.rule !== undefined) {
-        config.writable = 'entity.ui.rule.field[\' ' + config.name + ' \'].writable';
+        config.ui.writable = 'entity.ui.rule.field[\' ' + config.name + ' \'].writable';
       }
 
       if (type) {
-
+        // reference main locals to type builder
         var tpl = type({
           config : config,
           element : element,
@@ -415,7 +541,8 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
           attrs : attrs
         });
 
-        config.compiled = {
+        // compiled variables for the template
+        config.ui.compiled = {
           attrs : utils.attrs(config),
           label : utils.label(config)
         };
@@ -426,9 +553,13 @@ function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Hel
 
         scope.config = config;
 
-        element.html($compile(template)(scope));
+        element.html(template);
+ 
+        $compile(element.contents())(scope);
+        
+       
       } else {
-        console.error('Field type: ' + config.field.type + ' is not supported');
+        console.error('Field type: ' + config.type + ' is not supported');
       }
 
     }

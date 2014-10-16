@@ -18,7 +18,7 @@
   // this config file will expand
   GLOBAL_CONFIG = {
     'host' : host,
-    'angular_modules' : ['ui.router', 'ui.select', 'ui.bootstrap', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
+    'angular_modules' : ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload', 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
     'api_model_meta_path' : host + '/api/model_meta',
     'api_endpoint_path' : host + '/api/endpoint'
   };

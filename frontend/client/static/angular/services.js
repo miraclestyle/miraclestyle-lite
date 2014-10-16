@@ -242,14 +242,14 @@ angular.module('app').factory('Helpers', function() {
   return ModelMeta;
 
 }).factory('RuleEngine', function(ModelMeta) {
- 
+
   var RuleEngine = {
     run : function(entity) {
       var actions = {}, inputs = {}, kind_info = ModelMeta.get(entity.kind);
       var rule_action_permissions = entity._action_permissions;
-      if (rule_action_permissions === undefined)
-      {
-        return undefined; // if the permissions are not present, there is no rule engine here...
+      if (rule_action_permissions === undefined) {
+        return undefined;
+        // if the permissions are not present, there is no rule engine here...
       }
       var rule_field_permissions = entity._field_permissions, rule_actions = kind_info.actions, config = {
         action : actions,
@@ -287,21 +287,28 @@ angular.module('app').factory('Helpers', function() {
   return RuleEngine;
 }).factory('Entity', function(ModelMeta, RuleEngine) {
   // Service used for entity based operations
-  var Entity = {
+  var dont_send = ['_field_permissions', '_action_permissions', 'ui'], Entity = {
     normalizeMultiple : function(entities) {
       angular.forEach(entities, function(entity, i) {
         entities[i] = Entity.normalize(entity);
       });
     },
-    normalize : function(entity) {
+    normalize : function(entity, fields, parent, subentity_field_key) {
       var info = ModelMeta.get(entity.kind);
+      if (fields !== undefined) {
+        info.fields = fields;
+      }
+
       angular.forEach(info.fields, function(field, field_key) {
-        var defaults = field['default'],
-            value = entity[field_key];
+        var defaults = field['default'], value = entity[field_key];
+        if (field.type == 'SuperDateTimeProperty' && !defaults) {
+          defaults = new Date();
+
+        }
         if (field.repeated && !angular.isArray(defaults)) {
           defaults = [];
         }
-         
+
         if ((value === undefined || value == null)) {
           if ((defaults !== null && defaults !== undefined)) {
             entity[field_key] = defaults;
@@ -310,17 +317,32 @@ angular.module('app').factory('Helpers', function() {
         } else {
           if (field.is_structured) {
             angular.forEach((field.repeated ? value : [value]), function(subentity) {
-              Entity.normalize(subentity);
+              Entity.normalize(subentity, field.modelclass, entity, field_key);
             });
           }
         }
-        entity.ui = {}; /// ui must be now reserved keyword in datastore
-        entity.ui.rule = RuleEngine.run(entity); // rule engine must present
-        // more stuff, rule engine etc
-        entity.ui.toJSON = function() {
-          return entity; // we must strip away uneeded properties here
+
+        entity.toJSON = function() {
+          var copy = {};
+          angular.forEach(this, function(value, key) {
+            if ($.inArray(key, dont_send) === -1) {
+              copy[key] = value;
+            }
+          });
+          return copy;
         };
- 
+
+        entity.ui = {};
+        entity.ui.parent = parent;
+        /// ui must be now reserved keyword in datastore and we use it for making ui related functions
+        if (parent == undefined)
+        {
+          entity.ui.rule = RuleEngine.run(entity);
+        }
+        else if (parent.ui.rule)
+        {
+          entity.ui.rule = parent.ui.rule[subentity_field_key];
+        }
 
       });
     }

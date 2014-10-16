@@ -1,24 +1,25 @@
 <div class="form-control">
     <label class="form-label">
-      <%= config.compiled.label %>
+      <%= config.ui.compiled.label %>
     </label>
     <div class="form-input">
       <div class="form-text">
          
          <ui-select
              theme="select2"
-             <%= config.compiled.attrs %>
-             <% if (config.field.repeated) { %>multiple<% } %>>
+             name="<%= config.ui.name %>" 
+             <%= config.ui.compiled.attrs %>
+             <% if (config.repeated) { %>multiple<% } %>>
              
-          <ui-select-match placeholder="Select...">{{config.specifics.view(<% if (config.field.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
+          <ui-select-match placeholder="Select...">{{config.ui.specifics.view(<% if (config.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
           <ui-select-choices
-                   repeat="entity.key as entity in config.specifics.entities <% if (config.specifics.propsFilter) { %> | propsFilter: <%- config.specifics.propsFilter %> <% } %>"
-                   <% if (config.specifics.search) { %>
-                   refresh="config.specifics.search($select.search)"
+                   repeat="entity.key as entity in config.ui.specifics.entities <% if (config.ui.specifics.propsFilter) { %> | propsFilter: <%- config.ui.specifics.propsFilter %> <% } %>"
+                   <% if (config.ui.specifics.search) { %>
+                   refresh="config.ui.specifics.search($select.search)"
                    refresh-delay="200"
                    <% } %>>
                    
-            <div ng-bind-html="config.specifics.view(entity) | highlight: $select.search"></div>
+            <div ng-bind-html="config.ui.specifics.view(entity) | highlight: $select.search"></div>
           </ui-select-choices>
         </ui-select>
       

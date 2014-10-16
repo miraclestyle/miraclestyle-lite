@@ -1,36 +1,35 @@
-.datepicker-dropdown
-{
-	position: absolute;
-	background: white;
-	border: 1px solid #BBBBBB;
-	-webkit-box-shadow: 1px 1px 3px #BBBBBB;
-	box-shadow: 1px 1px 3px #BBBBBB;
-
-	padding: 10px;
-	list-style: none;
-	z-index: 10;
-	
-	margin-top:0px;
-	
-	float: left;
- 
-	background-clip: padding-box;
+.datetimepicker-wrapper .dropdown-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #BBBBBB;
+  -webkit-box-shadow: 1px 1px 3px #BBBBBB;
+  box-shadow: 1px 1px 3px #BBBBBB;
+  padding: 10px;
+  list-style: none;
+  z-index: 10;
+  margin-top: 0px;
+  float: left;
+  background-clip: padding-box;
 }
 
-.datepicker-dropdown li
-{
-	display:block;
+.datetimepicker-wrapper .dropdown-menu li {
+  display: block;
 }
 
-
-.datepicker-dropdown table
-{
-	max-width: 100%;
+.datetimepicker-wrapper .dropdown-menu table {
+  max-width: 100%;
 }
 
-.datepicker-dropdown table tr td
-{
-	min-width:70px;
+.datetimepicker-wrapper .dropdown-menu table tr td {
+  min-width: 45px;
 }
 
+.datetimepicker-wrapper .button-bar
+{
+  padding-top:10px;
+}
 
+.datetimepicker-wrapper table thead th
+{
+  padding-bottom:10px;
+}

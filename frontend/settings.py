@@ -50,7 +50,9 @@ ANGULAR_JS_PATHS = (
   'libraries/angular-touch/angular-touch.js',
   'libraries/angular-cache/dist/angular-cache.js',
   'libraries/angular-ui-select/dist/select.js',
-  'libraries/angular-bootstrap-datetimepicker/src/js/datetimepicker.js'
+  'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker.js',
+  'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js',
+  'libraries/ngUpload/ng-upload.js'
 )
 
 ANGULAR_GLOBAL_JS_PATHS = ['app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
@@ -58,7 +60,7 @@ ANGULAR_GLOBAL_JS_PATHS = ['app', 'services', 'directives', 'filters', 'controll
 ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 
                      'libraries/angular-ui-select/dist/select.css',
                      'libraries/angular-ui-select/dist/select2.css',
-                     'libraries/angular-bootstrap-datetimepicker/src/css/datetimepicker.css',
+                     'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
                      'css/style.css')
 
 ANGULAR_ACTIVE_COMPONENTS = ('home', 'account', 'tests')
@@ -75,10 +77,11 @@ ANGULAR_TEMPLATES = (
   ('underscore/form/structured.html',),
   ('underscore/form/modal/structured.html',),
   ('underscore/form/boolean.html',),
-  
-  # angular libraries
-  ('template/datetimepicker/datetimepicker.html',
-   'libraries/angular-bootstrap/datetimepicker/datetimepicker.html'),
+  ('underscore/form/datetime.html',),
+  ('underscore/form/text.html',),
+  ('underscore/form/image.html',),
+ 
+                     
   ('template/accordion/accordion-group.html',
    'libraries/angular-bootstrap/accordion/accordion-group.html'),
   ('template/accordion/accordion.html',
