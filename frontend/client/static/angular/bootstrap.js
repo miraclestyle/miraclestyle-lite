@@ -2,9 +2,9 @@
 'use strict';
 angular.element(document).ready(function () {
    var injector = angular.injector(['app']),
-       Endpoint = injector.get('Endpoint'),
+       endpoint = injector.get('endpoint'),
        $q = injector.get('$q'),
-       depencies = [Endpoint.model_meta(), Endpoint.current_account()];
+       depencies = [endpoint.model_meta(), endpoint.current_account()];
        
        $q.all(depencies).then(function () {
            angular.bootstrap(document, ['app']);

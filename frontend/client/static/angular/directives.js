@@ -143,7 +143,7 @@ angular.module('app').config(function(datepickerConfig) {
     }
   };
 })
-.directive('uploadOnSelect', function(Endpoint, $rootScope) {
+.directive('uploadOnSelect', function(endpoint, $rootScope) {
   return {
     restrict: 'A',
     require: '^form',
@@ -157,6 +157,13 @@ angular.module('app').config(function(datepickerConfig) {
         return false;
       }
       
+      var click = function ()
+      {
+          // stop the click if the form is invalid and schedule it for when the
+          // submission is complete to start the file dialog
+          // ...
+      };
+      
       var change = function() {
  
         if (!that.val())
@@ -166,8 +173,8 @@ angular.module('app').config(function(datepickerConfig) {
         
         if (ctrl.$valid)
         {
-          Endpoint.post('blob_upload_url', '11', {
-            'upload_url' : Endpoint.url
+          endpoint.post('blob_upload_url', '11', {
+            'upload_url' : endpoint.url
           }).then(function(response) {
                 form.attr('action', response.data.upload_url).trigger('submit');
                // triggers angular ng-upload
@@ -180,15 +187,17 @@ angular.module('app').config(function(datepickerConfig) {
       $(element).on('change', change);
 
       scope.$on('$destroy', function() {
-        $(element).off('change', change);
+        $(element).off('change', change).off('click', click);
+        
       });
       
       scope.$on('ngUploadComplete', function ($event, content) {
-         form.attr('action', Endpoint.url);
+         form.attr('action', endpoint.url);
+         scope.$emit('ngUploadCompleteImageUpload', content);
       });
     }
   };
-}).directive('formBuilder', function($compile, UnderscoreTemplate, ModelMeta) {
+}).directive('formBuilder', function($compile, underscoreTemplate, modelMeta) {
   /**
    * Main builder. It will construct a form based on a list of configuration params:
    * [
@@ -209,7 +218,7 @@ angular.module('app').config(function(datepickerConfig) {
       $scope.configurations = $scope.$eval($attrs.formBuilder);
     }
   };
-}).directive('formInput', function($compile, UnderscoreTemplate, Endpoint, ModelMeta, $filter, $modal, Helpers) {
+}).directive('formInput', function($compile, underscoreTemplate, endpoint, modelMeta, $filter, $modal, helpers, $parse, errorHandling) {
 
   var inflector = $filter('inflector'), internal_config = {
     search : {
@@ -307,7 +316,7 @@ angular.module('app').config(function(datepickerConfig) {
 
       if (!config.ui.specifics.search) {
 
-        var kindinfo = ModelMeta.get(config.kind), cache_hit, cache_key = 'search_results_' + config.kind, should_cache = false, search_command, action_search = kindinfo.mapped_actions.search, skip_search_command = false;
+        var kindinfo = modelMeta.get(config.kind), cache_hit, cache_key = 'search_results_' + config.kind, should_cache = false, search_command, action_search = kindinfo.mapped_actions.search, skip_search_command = false;
 
         if (action_search !== undefined) {
           var cache_option = internal_config.search.cache_results[config.kind];
@@ -328,7 +337,7 @@ angular.module('app').config(function(datepickerConfig) {
                 search : params
               };
             }
-            Endpoint.post('search', config.kind, args, {
+            endpoint.post('search', config.kind, args, {
               cache : should_cache
             }).then(function(response) {
               config.ui.specifics.entities = response.data.entities;
@@ -376,7 +385,7 @@ angular.module('app').config(function(datepickerConfig) {
         },
         manage : function(entity) {
           $modal.open({
-            template : UnderscoreTemplate.get('underscore/form/modal/structured.html')({
+            template : underscoreTemplate.get('underscore/form/modal/structured.html')({
               config : config
             }),
             controller : function($scope, $modalInstance, Entity) {
@@ -387,7 +396,10 @@ angular.module('app').config(function(datepickerConfig) {
                 entity = {
                   kind : config.modelclass_kind
                 };
-                Entity.normalize(entity, config.modelclass);
+                var length = config.ui.specifics.entities.length;
+                Entity.normalize(entity, config.modelclass, 
+                                config.ui.specifics.entity, info.config.ui.name,
+                                 length);
                 is_new = true;
               }
 
@@ -399,12 +411,14 @@ angular.module('app').config(function(datepickerConfig) {
               };
 
               $scope.save = function() {
+                
+                console.log($scope.entity, $scope.entity.ui.root_access());
 
                 if (config.repeated) {
                   if (is_new) {
                     $scope.parentEntity.push($scope.entity);
                   } else {
-                    Helpers.update(entity, $scope.entity);
+                    helpers.update(entity, $scope.entity);
                   }
 
                 }
@@ -423,6 +437,7 @@ angular.module('app').config(function(datepickerConfig) {
       });
 
       config.ui.specifics.entities = info.scope.$eval(config.ui.model);
+      config.ui.specifics.entity = info.scope.$eval(config.ui.parent_model);
 
       angular.forEach(defaults, function(value, key) {
         if (config.ui.specifics[key] === undefined) {
@@ -440,8 +455,23 @@ angular.module('app').config(function(datepickerConfig) {
       return types.SuperLocalStructuredProperty(info);
     },
     'SuperImageLocalStructuredProperty' : function(info) {
-      info.scope.$on('ngUploadComplete', function ($event, content) {
-         console.log(content);
+      info.scope.$on('ngUploadCompleteImageUpload', function ($event, content) {
+         if (!content || content.errors)
+         {
+           errorHandling.modal(content.errors);
+         }
+         else
+         {
+           var path = info.scope.entity.root_access().split('.');
+           path.splice(path.length-1, 1);
+           var getter = $parse(path.join('.')),
+               setter = getter.assign;
+           
+           var list = getter(info.scope.entity.root());
+           var new_entities = getter(content.entity);
+           list.push(new_entities);
+         }
+         
       });
       return 'image';
     },
@@ -516,6 +546,7 @@ angular.module('app').config(function(datepickerConfig) {
       var config = {
         ui : {
           model : 'entity.' + name,
+          parent_model : 'entity',
           auto_label : name,
           specifics : {},
           name : name,
@@ -547,7 +578,7 @@ angular.module('app').config(function(datepickerConfig) {
           label : utils.label(config)
         };
 
-        var template = UnderscoreTemplate.get('underscore/form/' + tpl + '.html')({
+        var template = underscoreTemplate.get('underscore/form/' + tpl + '.html')({
           config : config
         });
 

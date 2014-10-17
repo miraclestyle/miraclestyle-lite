@@ -1,11 +1,13 @@
-angular.module('app').controller('TestsCtrl', function($scope, $modal, ModelMeta, $q) {
+angular.module('app').controller('TestsCtrl', function($scope, $modal, modelMeta, entityUtil, endpoint, errorHandling, $q) {
   $scope.oneAtATime = true;
   $scope.isopen = true;
-
-  $scope.entity = {
+  var entity = {
+    'kind' : '11',
     'country_multiple' : [],
     'contents' : []
   };
+  entityUtil.normalize(entity);
+  $scope.entity = entity;
   
   var deffer = $q.defer();
  
@@ -21,7 +23,14 @@ angular.module('app').controller('TestsCtrl', function($scope, $modal, ModelMeta
     console.log(3);
   });
   
-  var sample = ModelMeta.get('31').mapped_actions.update.arguments;
+  $scope.failure = function ()
+  {
+    endpoint.post('create', '31', {}).then(function (response) {
+      errorHandling.modal(response.data.errors);
+    });
+  }
+  
+  var sample = modelMeta.get('31').mapped_actions.update.arguments;
   var f = function (sample) {
      angular.forEach(sample, function (field, field_key) {
           field.code_name = field_key;

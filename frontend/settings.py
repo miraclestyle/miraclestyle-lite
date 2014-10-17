@@ -55,7 +55,7 @@ ANGULAR_JS_PATHS = (
   'libraries/ngUpload/ng-upload.js'
 )
 
-ANGULAR_GLOBAL_JS_PATHS = ['app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
+ANGULAR_GLOBAL_JS_PATHS = ['overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
 
 ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 
                      'libraries/angular-ui-select/dist/select.css',
@@ -71,6 +71,7 @@ ANGULAR_TEMPLATES = (
   ('home/index.html',),
   ('tests/html.html',),
   ('form/builder.html',),
+  ('misc/modal_errors.html',),
   ('underscore/form/string.html',),
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),

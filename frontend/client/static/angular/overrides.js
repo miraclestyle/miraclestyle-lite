@@ -60,7 +60,7 @@ Array.prototype.compare = function(array) {
   return true;
 };
 
-Array.prototype.extend = function(the_array, other_array) {
+Array.prototype.extend = function(other_array) {
   var that = this;
   angular.forEach(other_array, function(v) {
     that.push(v);
