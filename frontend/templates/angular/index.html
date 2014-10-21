@@ -12,7 +12,6 @@ This was done for easier maintenance.
   <head>
     <title ng-bind="pageTitle"></title>
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <base href="/" />
     <meta name="fragment" content="!" />
     {% for style in settings.ANGULAR_CSS_PATHS %}
     <link rel="stylesheet" type="text/css" href="{{static_dir('angular/%s' % style)}}"/>
@@ -39,27 +38,27 @@ This was done for easier maintenance.
     <div id="top-bar">
         <a main-menu-toggler class="logo-link" href="javascript:;"><h1 id="logo">Miraclestyle</h1></a>
     </div>
-    <div style="display:none;" id="main-menu">
+    <div ng-controller="MainMenuCtrl" style="display:none;" id="main-menu">
         <div class="menu-inner">
             <div ng-show="current_account._root_admin" ng-include="misc/search_form.html"></div>
             <h1 class="fieldset">Account</h1>
-            <ul ng-show="!current_account._is_guest" class="menu clearfix">
-                <li><button type="button" class="button block" ng-click="manageAccount()">Settings</button></li>
-                <li><button type="button" class="button block" ng-click="logoutAccount()">Logout</button></li>
+            <ul ng-controller="AccountManagementCtrl" ng-show="!current_account._is_guest" class="menu clearfix">
+                <li><button type="button" class="button block" ng-click="settings()">Settings</button></li>
+                <li><button type="button" class="button block" ng-click="logout()">Logout</button></li>
             </ul>
             
-            <div ng-show="!current_account._is_guest">
+            <div ng-controller="BuyerManagementCtrl" ng-show="!current_account._is_guest">
                 <h1 class="fieldset">Buy</h1>
                 <ul ng-show="!current_account._is_guest" class="menu clearfix">
                     <li><button type="button" class="button block" ng-click="manageCollection()">My Collections</button></li>
                     <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref="buy-shopping-carts">My Shopping Carts</button></li>
                     <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref="buy-orders">My Orders</button></li>
-                    <li><button type="button" class="button block" ng-click="manageBuyer()">Settings</button></li>
+                    <li><button type="button" class="button block" ng-click="settings()">Settings</button></li>
                 </ul>
             </div>
             
-            <ul ng-show="current_account._is_guest" class="menu clearfix">
-                <li><button type="button" busy class="button block" ng-click="loginAccount()">Login</button></li>
+            <ul ng-controller="LoginLinksCtrl" ng-show="current_account._is_guest" class="menu clearfix">
+                <li><button ng-click="login(1)" type="button" class="button block">Login with Google</button></li>
             </ul>
             
             <div ng-show="!current_account._is_guest">
@@ -80,7 +79,7 @@ This was done for easier maintenance.
                 </ul>
             </div>
              
-            <div ng-show="current_account._root_admin">
+            <div ng-show="current_account._root_admin && GLOBAL_CONFIG.admin_kinds">
                 
                 <h1 class="fieldset">Administration</h1>
                 <ul class="menu clearfix">
@@ -91,7 +90,7 @@ This was done for easier maintenance.
                 </ul>
             </div>
             
-            <div ng-show="!current_account._is_guest">
+            <div>
                 <h1 class="fieldset">Support</h1>
                 <ul class="menu clearfix">
                    <li><button type="button"

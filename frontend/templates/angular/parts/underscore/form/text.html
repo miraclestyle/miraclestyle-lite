@@ -1,12 +1,5 @@
-<div class="form-control">
-    <label class="form-label">
-      <%= config.ui.compiled.label %>
-    </label>
-    <div class="form-input">
-      <div class="form-text">
-         <textarea class="text-input <%= config.ui.attrs['class'] %>"
+<div form-element-wrapper label="<%= config.ui.compiled.label %>">
+  <textarea class="text-input <%= config.ui.attrs['class'] %>"
             name="<%= config.ui.name %>" 
             <%= config.ui.compiled.attrs %> ></textarea>
-      </div>
-    </div>
 </div>

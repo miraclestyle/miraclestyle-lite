@@ -13,7 +13,7 @@
       </h2>
  
       <div ui-sortable="config.ui.specifics.sortableOptions" 
-          ng-model="<%= config.ui.model %>" class="clearfix grid-wrapper">
+          ng-model="<%= config.ui.args %>" class="clearfix grid-wrapper">
         <div ng-repeat="image in config.ui.specifics.entities track by $index"
              ng-hide="image._state == 'deleted'" 
              uploaded-image-grid="config.ui.specifics.gridConfig" 

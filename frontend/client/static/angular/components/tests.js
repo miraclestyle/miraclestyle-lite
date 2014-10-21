@@ -8,6 +8,7 @@ angular.module('app').controller('TestsCtrl', function($scope, $modal, modelMeta
   };
   entityUtil.normalize(entity);
   $scope.entity = entity;
+  $scope.args = angular.copy(entity);
   
   var deffer = $q.defer();
  

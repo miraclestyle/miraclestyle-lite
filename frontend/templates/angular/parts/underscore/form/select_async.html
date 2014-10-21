@@ -1,9 +1,4 @@
-<div class="form-control">
-    <label class="form-label">
-      <%= config.ui.compiled.label %>
-    </label>
-    <div class="form-input">
-      <div class="form-text">
+<div form-element-wrapper label="<%= config.ui.compiled.label %>">
          
          <ui-select
              theme="select2"
@@ -22,9 +17,5 @@
             <div ng-bind-html="config.ui.specifics.view(entity) | highlight: $select.search"></div>
           </ui-select-choices>
         </ui-select>
-      
-  
-        
-      </div>
-    </div>
+ 
 </div>

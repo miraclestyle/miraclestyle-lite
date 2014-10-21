@@ -52,7 +52,8 @@ ANGULAR_JS_PATHS = (
   'libraries/angular-ui-select/dist/select.js',
   'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker.js',
   'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js',
-  'libraries/ngUpload/ng-upload.js'
+  'libraries/ngUpload/ng-upload.js',
+  'libraries/ng-busy/build/angular-busy.js'
 )
 
 ANGULAR_GLOBAL_JS_PATHS = ['overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
@@ -63,7 +64,23 @@ ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css',
                      'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
                      'css/style.css')
 
-ANGULAR_ACTIVE_COMPONENTS = ('home', 'account', 'tests')
+class Structured():
+  
+  def __init__(self, segment, parts=None):
+    self.segment = segment
+  
+  def __str__(self):
+    return self.segment
+
+ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'), Structured('buyer'), 'tests']
+ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
+ANGULAR_ACTIVE_COMPONENTS = []
+for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
+  if isinstance(angular_component, Structured):
+    for entity in ('services', 'filters', 'directives', 'controllers'):
+      ANGULAR_ACTIVE_COMPONENTS.append('%s/%s' % (angular_component, entity))
+  else:
+    ANGULAR_ACTIVE_COMPONENTS.append(angular_component)
 
 # ('Alias', 'Full path to the template in the app')
 ANGULAR_TEMPLATES = (
@@ -72,7 +89,10 @@ ANGULAR_TEMPLATES = (
   ('tests/html.html',),
   ('form/builder.html',),
   ('misc/modal_errors.html',),
-  ('underscore/form/string.html',),
+  ('misc/form_wrapper.html',),
+  ('entity/modal_editor.html',),
+  ('entity/modal_editor_default_body.html',),
+  ('account/settings.html',),
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
   ('underscore/form/structured.html',),
@@ -81,6 +101,7 @@ ANGULAR_TEMPLATES = (
   ('underscore/form/datetime.html',),
   ('underscore/form/text.html',),
   ('underscore/form/image.html',),
+  ('underscore/form/string.html',),
  
                      
   ('template/accordion/accordion-group.html',

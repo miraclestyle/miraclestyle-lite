@@ -1,11 +1,5 @@
-<div class="form-control">
-    <label class="form-label">
-      <%= config.ui.compiled.label %>
-    </label>
-    <div class="form-input">
-      <div class="form-text">
+<div form-element-wrapper label="<%= config.ui.compiled.label %>">
          <input class="text-input <%= config.ui.attrs['class'] %>" 
               name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %> />
-      </div>
-    </div>
 </div>
+

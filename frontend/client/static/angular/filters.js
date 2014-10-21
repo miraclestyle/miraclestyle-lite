@@ -29,4 +29,37 @@ angular.module('app').filter('propsFilter', function() {
 
     return out;
   };
+}).filter('output', function (dateFilter, GLOBAL_CONFIG, modelMeta) {
+  
+  return function (obj, key, args) {
+    
+    var input = obj[key];
+    
+    if (obj['kind'])
+    { 
+      var objinfo = modelMeta.get(obj['kind']);
+      
+      var ttype = objinfo['fields'][key];
+      
+      if (ttype)
+      {
+        if (ttype['type'] == 'SuperDateTimeProperty')
+        {
+          var date = new Date(input);
+          
+          return dateFilter(date, GLOBAL_CONFIG.dateFormat);
+        }
+        // this is more generic approach to structured objects
+        if (input && typeof input === 'object' && input.hasOwnProperty('name'))
+        {
+          return input.name;
+        }
+      }
+      
+    }
+  
+    return input;
+    
+  };
+  
 });

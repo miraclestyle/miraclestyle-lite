@@ -1,67 +1,52 @@
 /*global angular, window, console, jQuery, $, document*/'use strict';
 
-angular.module('app')
-.factory('errorHandling', function ($modal) {
+angular.module('app').factory('errorHandling', function($modal) {
   var translations = {
-    'action_denied' : function (reason)
-    {
+    'action_denied' : function(reason) {
       return 'You do not have permission to perform this action.';
     },
     'invalid_model' : 'You have requested access to resource that does not exist',
     'invalid_action' : 'You have requested access to the action that does not exist',
-    'required' : function (fields) {
-      return 'Some values are missing: ' + fields.join(', '); 
-     },
-    'transaction' : function (reason)
-    {
- 
-      if (reason == 'timeout')
-      {
+    'required' : function(fields) {
+      return 'Some values are missing: ' + fields.join(', ');
+    },
+    'transaction' : function(reason) {
+
+      if (reason == 'timeout') {
         return 'Transaction was not completed due timeout. Please try again.';
-      }
-      else if (reason == 'failed')
-      {
+      } else if (reason == 'failed') {
         return 'Transaction was not completed due failure. Please try again.';
       }
-      
+
     }
-  },
-    errorHandling = {
-    translate : function (k, v)
-    {
+  }, errorHandling = {
+    translate : function(k, v) {
       var possible = translations[k];
-      if (angular.isString(possible))
-      {
+      if (angular.isString(possible)) {
         return possible;
-      }
-      else
-      {
+      } else {
         return possible(v);
       }
     },
-    modal : function (errors)
-    {
+    modal : function(errors) {
       $modal.open({
         templateUrl : 'misc/modal_errors.html',
-        controller : function ($scope, $modalInstance)
-        {
+        controller : function($scope, $modalInstance) {
           $scope.errors = [];
-          angular.forEach(errors, function (error, key) {
+          angular.forEach(errors, function(error, key) {
             $scope.errors.push(errorHandling.translate(key, error));
           });
-          $scope.ok = function ()
-          {
+          $scope.ok = function() {
             $modalInstance.dismiss('ok');
-            
+
           };
         }
       })
     }
   }
-  
+
   return errorHandling;
-})
-.factory('helpers', function() {
+}).factory('helpers', function() {
 
   var helpers = {
     always_object : function(obj) {
@@ -105,9 +90,25 @@ angular.module('app')
   };
 
   return helpers;
-}).factory('endpoint', function($http, generalLocalCache, GLOBAL_CONFIG, helpers, $rootScope, $q) {
-
-  var _compile = function(action, model, data, config) {
+}).factory('endpoint', function($http, generalLocalCache, GLOBAL_CONFIG, helpers, $rootScope, $q, $cacheFactory) {
+  
+  var onlyInMemoryCache = $cacheFactory('endpointOnlyInMemory'),
+    getCache = function (type)
+    {
+       if (type === undefined)
+       {
+         return generalLocalCache;
+       }
+       else if (type === 'memory')
+       {
+         return onlyInMemoryCache;
+       }
+       else 
+       {
+         console.error('Invalid type of cache provided: ' + type);
+       }
+    },
+   _compile = function(action, model, data, config) {
     config = helpers.always_object(config);
     data = helpers.always_object(data);
 
@@ -116,25 +117,40 @@ angular.module('app')
       action_id : action
     }, data), config];
 
-  }, cache_prefix = 'endpoint_';
+  }, cache_prefix = 'endpoint_', cacheRegistry = [];
+  
+  cacheRegistry.push(onlyInMemoryCache);
+  cacheRegistry.push(generalLocalCache);
 
   var endpoint = {
+    // invalidates all caches that we use
     invalidate_cache : function(key) {
-      return generalLocalCache.remove(cache_prefix + key);
+      if (angular.isArray(key)) {
+        angular.forEach(key, function(k) {
+          endpoint.invalidate_cache(k);
+        });
+
+        return true;
+      } else {
+        angular.forEach(cacheRegistry, function (cache) {
+          cache.remove(cahe_prefix + key);
+        });
+      }
+
     },
-    url : GLOBAL_CONFIG.api_endpoint_path,
+    url : GLOBAL_CONFIG.apiEndpointPath,
     cached : function(key, action, model, data, config) {
-      var cache_key = cache_prefix + key, exists = generalLocalCache.get(cache_key), is_promise = exists && angular.isFunction(exists.then);
+      var cacheEngine = getCache(config ? config.cacheType : undefined), cache_key = cache_prefix + key, exists = cacheEngine.get(cache_key), is_promise = exists && angular.isFunction(exists.then);
       if (is_promise) {
         return is_promise;
       } else if (exists === undefined) {
         var promise = endpoint[config.method ? config.method.toLowerCase() : 'post'](action, model, data, config);
         promise.then(function(response) {
-          generalLocalCache.put(cache_key, response);
+          cacheEngine.put(cache_key, response);
         }, function() {
-          generalLocalCache.remove(cache_key);
+          cacheEngine.remove(cache_key);
         });
-        generalLocalCache.put(cache_key, promise);
+        cacheEngine.put(cache_key, promise);
         return promise;
       } else {
         var deffered = $q.defer(), promise = deffered.promise;
@@ -176,7 +192,8 @@ angular.module('app')
     },
     current_account : function() {
       return endpoint.post('current_account', '11', {}, {
-        cache : 'current_account'
+        cache : 'current_account',
+        cacheType : 'memory'
       }).then(function(response) {
 
         angular.module('app').value('current_account', response.data.entity);
@@ -186,7 +203,7 @@ angular.module('app')
     model_meta : function() {
       return endpoint.get(null, null, {}, {
         cache : 'model_meta',
-        url : GLOBAL_CONFIG.api_model_meta_path
+        url : GLOBAL_CONFIG.apiModelMetaPath
       }).then(function(response) {
         angular.module('app').value('model_info', response.data);
       });
@@ -289,6 +306,13 @@ angular.module('app')
 
     angular.forEach(kind._actions, function(action) {
       actions[action.id] = action;
+      angular.forEach(action.arguments, function (arg, key) {
+        if (arg.code_name === null || arg.name === null)
+        {
+          // fixup codename
+          arg.code_name = key;
+        }
+      });
     });
 
     var data = {
@@ -299,6 +323,9 @@ angular.module('app')
 
     return data;
   };
+
+  // expose this to global intentionally, this is used mostly for console debugging @todo remove in production
+  window.modelMeta = modelMeta;
 
   return modelMeta;
 
@@ -348,18 +375,86 @@ angular.module('app')
   return ruleEngine;
 }).factory('entityUtil', function(modelMeta, ruleEngine) {
   // Service used for entity based operations
-  var dont_send = ['_field_permissions', '_action_permissions', 'ui'], entityUtil = {
+  var dont_send = ['_field_permissions', '_action_permissions'], entityUtil = {
     normalizeMultiple : function(entities) {
       angular.forEach(entities, function(entity, i) {
         entities[i] = entityUtil.normalize(entity);
       });
     },
     normalize : function(entity, fields, parent, subentity_field_key, subentity_position) {
+      if (entity.ui && entity.ui.normalized) {
+        return;
+      }
       var info = modelMeta.get(entity.kind);
       if (fields !== undefined) {
         info.fields = fields;
       }
+  
+      entity.toJSON = function() {
+        var copy = {};
+        angular.forEach(this, function(value, key) {
+          if ($.inArray(key, dont_send) === -1) {
+            copy[key] = value;
+          }
+        });
+        if (copy.ui && copy.ui.parent)
+        {
+          delete copy.ui.parent;
+        }
+        
+        return copy;
+      };
 
+      entity.ui = {};
+      entity.ui.normalized = true;
+      entity.ui.access = [];
+      if (subentity_field_key) {
+        entity.ui.access.extend(parent.ui.access);
+        entity.ui.access.push(subentity_field_key);
+        entity.ui.access.push(subentity_position);
+      }
+      entity.ui.parent = parent;
+      entity.ui.root_access = function() {
+
+        return this.access.join('.');
+      };
+      entity.ui.root = function(collect) {
+        var get_parent = this.parent;
+
+        if (get_parent === undefined) {
+          if (collect) {
+            collect.push(entity);
+          }
+          return entity;
+        } else {
+
+          if (collect) {
+            collect.push(entity);
+          }
+
+          while (true) {
+            if (collect) {
+              collect.push(get_parent);
+            }
+
+            var next_parent = get_parent.ui.parent;
+            if (next_parent === undefined) {
+              break;
+            } else {
+              get_parent = next_parent;
+            }
+          }
+
+          return get_parent;
+        }
+      };
+      /// ui must be now reserved keyword in datastore and we use it for making ui related functions
+      if (parent == undefined) {
+        entity.ui.rule = ruleEngine.run(entity);
+      } else if (parent.ui.rule) {
+        entity.ui.rule = parent.ui.rule[subentity_field_key];
+      }
+       
       angular.forEach(info.fields, function(field, field_key) {
         var defaults = field['default'], value = entity[field_key];
         if (field.type == 'SuperDateTimeProperty' && !defaults) {
@@ -382,85 +477,10 @@ angular.module('app')
             });
           }
         }
-        
-        });
-         
-        entity.toJSON = function() {
-          var copy = {};
-          angular.forEach(this, function(value, key) {
-            if ($.inArray(key, dont_send) === -1) {
-              copy[key] = value;
-            }
-          });
-          return copy;
-        };
 
-        entity.ui = {};
-        entity.ui.access = [];
-        if (subentity_field_key)
-        {
-          entity.ui.access.extend(parent.ui.access);
-          entity.ui.access.push(subentity_field_key);
-          entity.ui.access.push(subentity_position);
-        }
-        entity.ui.parent = parent;
-        entity.ui.root_access = function ()
-        {
-     
-            return this.access.join('.');
-        };
-        entity.ui.root = function (collect)
-        {
-          var get_parent = this.parent;
-          
-          if (get_parent === undefined)
-          {
-            if (collect)
-            {
-              collect.push(entity);
-            }
-            return entity;
-          }
-          else
-          {
-            
-            if (collect)
-            {
-                  collect.push(entity);
-            }
-           
-            while(true)
-            {
-              if (collect)
-              {
-                  collect.push(get_parent);
-              }
-                
-              var next_parent = get_parent.ui.parent;
-              if (next_parent === undefined)
-              {
-                break;
-              }
-              else
-              { 
-                get_parent = next_parent;
-              }
-            }
-            
-            return get_parent;
-          }
-        };
-        /// ui must be now reserved keyword in datastore and we use it for making ui related functions
-        if (parent == undefined)
-        {
-          entity.ui.rule = ruleEngine.run(entity);
-        }
-        else if (parent.ui.rule)
-        {
-          entity.ui.rule = parent.ui.rule[subentity_field_key];
-        }
+      });
+      
 
-     
     }
   };
 
@@ -481,4 +501,214 @@ angular.module('app')
       return _.template(contents);
     }
   };
+}).config(['$httpProvider',
+function($httpProvider) {
+
+  $httpProvider.interceptors.push(['$rootScope', '$q', '$injector',
+  function($rootScope, $q, $injector) {
+
+    var handle_error = function(rejection) {
+
+      var data = rejection.data;
+      var errorHandling = $injector.get('errorHandling');
+
+      if (!rejection.config.ignoreErrors) {
+
+        if (rejection.status > 200) {
+          errorHandling.modal(rejection.data.errors);
+          //return $q.reject(rejection);
+        } else {
+          if (data && data.errors) {
+            errorHandling.modal(rejection.data.errors);
+            var reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
+            if (data.errors.action_denied) {
+              reject = true;
+            }
+            if (reject) {
+              return $q.reject(rejection);
+            }
+
+          }
+        }
+
+      }
+      // otherwise, default behaviour
+      return rejection || $q.when(rejection);
+
+    };
+
+    return {
+      response : handle_error,
+      responseError : handle_error
+    };
+  }]);
+
+}]).factory('entityManager', function($modal, endpoint, $q, helpers, entityUtil, errorHandling, modelMeta) {
+
+  var entityManager = {
+    create : function(new_config) {
+
+      var config = {
+        showCancel : true,
+        closeAfterSave : true,
+        action : 'update',
+        excludeFields : [],
+        body : 'entity/modal_editor_default_body.html',
+        scope : {},
+        init : function() {},
+        defaultInit : function() {
+          var cfg = this.config;
+          if (!cfg.fields)
+          {
+            cfg.fields = [];
+            var info = modelMeta.get(this.entity.kind);
+            angular.forEach(info.fields, function (prop, prop_key) {
+              if (!prop.code_name)
+              {
+                prop.name = prop.code_name;
+              }
+              cfg.fields.push(prop);
+            });
+          }
+        },
+        actions : [],
+        defaultActions : [],
+        defaultArgumentLoader : function ()
+        {
+          // by default argument loader will attempt to extract the argument data from the current entity
+          var entityCopy = angular.copy(this.entity), info = modelMeta.get(this.config.kind), args = {};
+          
+          angular.forEach(info.mapped_actions[this.config.action].arguments, function (arg, arg_key) {
+            var val = entityCopy[arg_key];
+            if (val === undefined)
+            {
+              val = arg['default'];
+            }
+            if (val !== undefined)
+            {
+              // arg can never be "undefined"
+              args[arg_key] = val;
+            }
+            
+          });
+          
+          args.ui = this.entity.ui;
+          
+          return args;
+        },
+        argumentLoader : function () {
+          var cfg = this.config;
+          return cfg.defaultArgumentLoader.call(this);
+        }
+      };
+     
+      $.extend(true, config, new_config);
+      
+      if (config.fields === undefined && config.kind !== undefined && config.action !== undefined)
+      {
+        config.fields = [];
+        var kind = config.kind, info = modelMeta.get(kind);
+        angular.forEach(info.mapped_actions[config.action].arguments, function (prop, prop_key) {
+          if ($.inArray(prop_key, config.excludeFields) === -1)
+          {
+            config.fields.push(prop);
+          }
+        });
+        
+        
+      }
+      
+      console.log('entityManagerConfig', config);
+
+      var entityManagerInstance = {
+        read : function(entity, args) {
+          if (args === undefined) {
+            args = {
+              key : entity.key
+            };
+          }
+          var that = this;
+          endpoint.post('read', config.kind, args).then(function(response) {
+            helpers.update(entity, response.data.entity);
+            that.open(response.data.entity);
+          });
+        },
+        prepare : function(entity, args) {
+          var that = this;
+          endpoint.post('prepare', entity.kind, args).then(function(response) {
+            helpers.update(entity, response.data.entity);
+            that.open(response.data.entity);
+          });
+        },
+        open : function(entity) {
+
+          $modal.open({
+            templateUrl : 'entity/modal_editor.html',
+            controller : function($scope, $modalInstance) {
+              entityUtil.normalize(entity);
+              $scope.container = {};
+              $scope.config = config;
+              $scope.entity = entity;
+              $scope.$modalInstance = $modalInstance;
+              // load into scope from config
+              helpers.update($scope, config.scope); 
+              // call config constructor, needed for posible on-spot configurations
+              config.defaultInit.call($scope);
+              config.init.call($scope);
+              
+              $scope.args = config.argumentLoader.call($scope); // argument loader to load arguments for editing
+
+              var defaultActions = config.defaultActions;
+              
+              // inject default actions if there isnt any defined
+              defaultActions.push({
+                name : 'Save',
+                callback : function() {
+                  $scope.save();
+                }
+              });
+
+              if (config.actions.length == 0) {
+                config.actions.extend(defaultActions);
+              }
+
+              angular.forEach(config.actions, function(action, i) {
+                config.actions[i].callback = $.proxy(action.callback, $scope);
+              });
+      
+              $scope.save = function() {
+   
+                var that = this;
+                endpoint.post(config.action, that.entity.kind, that.args).then(function(response) {
+
+                  entityUtil.normalize(response.data.entity);
+                  helpers.update(that.entity, response.data.entity);
+                  
+                  if (config.closeAfterSave) {
+                    that.close();
+                  }
+
+                });
+              };
+
+              $scope.close = function() {
+                $modalInstance.dismiss('close');
+              };
+              
+              console.log('entityManagerScope', $scope);
+
+            }
+          });
+
+          return this;
+        },
+      };
+
+      return entityManagerInstance;
+
+    }
+  };
+
+  return entityManager;
+
 });

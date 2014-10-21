@@ -1,0 +1,35 @@
+  <h2 class="fieldset">General</h2>
+ 
+  <div form-element-wrapper label="ID">
+     <span>{{entity.id}}</span>
+  </div>
+ 
+  <div form-element-wrapper label="Registered">
+     <span>{{entity|output:'created'}}</span>
+  </div>
+ 
+  
+  <div form-element-wrapper label="Status">
+     <span>{{entity.state}}</span>
+  </div>
+  
+  
+  <div form-input="primary_email">
+    
+  </div>
+  
+  <h2 class="fieldset">Providers</h2>
+ 
+  <div class="form-control">
+    
+    <div ng-repeat="ident in entity.identities track by $index" class="form-control">
+      <div form-element-wrapper label="{{ident.identity|displayProvider}}">
+         <button type="button" ng-disabled="!entity.ui.rule.field.identities.writable" class="button" ng-click="disassociate(ident)">
+              <span ng-show="!isAssociated(ident)">Associate</span>
+              <span ng-show="isAssociated(ident)">Disassociate</span>
+         </button>
+      </div>
+   
+    </div>
+     
+  </div>

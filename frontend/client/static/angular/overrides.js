@@ -60,6 +60,13 @@ Array.prototype.compare = function(array) {
   return true;
 };
 
+Array.prototype.prepend = function(other_array) {
+  var that = this;
+  angular.forEach(other_array, function(v) {
+    that.unshift(v);
+  });
+};
+
 Array.prototype.extend = function(other_array) {
   var that = this;
   angular.forEach(other_array, function(v) {

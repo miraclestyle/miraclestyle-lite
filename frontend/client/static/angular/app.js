@@ -17,13 +17,14 @@
   // global configuration for the application
   // this config file will expand
   GLOBAL_CONFIG = {
-    'host' : host,
-    'angular_modules' : ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload', 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
-    'api_model_meta_path' : host + '/api/model_meta',
-    'api_endpoint_path' : host + '/api/endpoint'
+    host : host,
+    angularModules : ['ui.router', 'ui.sortable', 'ui.select', 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
+    apiModelMetaPath : host + '/api/model_meta',
+    apiEndpointPath : host + '/api/endpoint',
+    dateFormat : 'yyyy-MM-dd HH:mm:ss Z'
   };
 
-  angular.module('app', GLOBAL_CONFIG.angular_modules)// we can avoid a global if we build modules for each feature
+  angular.module('app', GLOBAL_CONFIG.angularModules)// we can avoid a global if we build modules for each feature
   .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function($httpProvider, $locationProvider) {
 
     $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
