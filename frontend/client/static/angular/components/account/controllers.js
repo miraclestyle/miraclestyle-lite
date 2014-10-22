@@ -22,10 +22,10 @@ angular.module('app').constant('LOGIN_PROVIDERS', {
 }).controller('AccountManagementCtrl', function($scope, current_account, accountEntity) {
 
   $scope.settings = function() {
-    accountEntity.settings(current_account);
+    accountEntity.settings(current_account.key);
   };
 
   $scope.logout = function() {
-    accountEntity.logout(current_account);
+    accountEntity.logout(current_account.key);
   };
 });

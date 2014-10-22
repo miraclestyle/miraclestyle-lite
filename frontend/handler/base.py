@@ -7,6 +7,7 @@ Created on Jul 15, 2013
 import json
 import os
 import webapp2
+import codecs
 from webapp2_extras import jinja2
 
 from google.appengine.api import urlfetch
@@ -31,7 +32,7 @@ def _static_dir(file_path):
   return '%s/client/static/%s' % (settings.HOST, file_path)
 
 def _angular_include_template(path):
-  return open(os.path.join(settings.ROOT_DIR, 'templates/angular/parts', path)).read()
+  return codecs.open(os.path.join(settings.ROOT_DIR, 'templates/angular/parts', path), 'r', 'utf-8').read()
  
 settings.JINJA_GLOBALS.update({'static_dir': _static_dir, 
                                'settings': settings,

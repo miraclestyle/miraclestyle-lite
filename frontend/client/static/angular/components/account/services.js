@@ -1,30 +1,34 @@
 angular.module('app').factory('accountEntity', 
 function(endpoint, $window, entityManager, modelMeta) {
   var accountEntity = {
-    settings : function (account)
+    settings : function (account_key)
     {
-      var info = modelMeta.get(account.kind);
+      var info = modelMeta.get('11');
       var primary_email = angular.copy(info.mapped_actions.update.arguments.primary_email);
-      primary_email.choices = account.emails;
-      primary_email.ui = {};
-      primary_email.ui.writableName = '_primary_email';
+
       var config = {
         kind : '11',
         body : 'account/settings.html',
-        argumentLoader : function ()
+        argumentLoader : function ($scope)
         {
           var disassociate = [];
-          angular.forEach(this.entity.identities, function (value) {
+          angular.forEach($scope.entity.identities, function (value) {
                    if (!value.associated)
                    {
                        disassociate.push(value.identity);
                    }
               });
           return {
-            primary_email : this.entity._primary_email,
+            primary_email : $scope.entity._primary_email,
             disassociate : disassociate,
-            key: this.entity.key
+            key: $scope.entity.key
           };
+        },
+        init : function ($scope)
+        {
+          $scope.primary_email.choices = $scope.entity.emails;
+          $scope.primary_email.ui = {};
+          $scope.primary_email.ui.writableName = '_primary_email';
         },
         scope : {
           primary_email : primary_email,
@@ -49,10 +53,10 @@ function(endpoint, $window, entityManager, modelMeta) {
       entityManager.create(config).read(account);
       
     },
-    logout : function (account)
+    logout : function (account_key)
     {
       endpoint.post('logout', '11', {
-        key : account.key
+        key : account_key
       }).then(function(response) {
           endpoint.invalidate_cache('current_account');
           $window.location.reload();

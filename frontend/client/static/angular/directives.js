@@ -239,7 +239,7 @@ angular.module('app').config(function(datepickerConfig) {
         onlyListFields : ['name', '_country', '_region', 'address', 'default_billing', 'default_shipping'],
         excludeManageFields : ['_country', '_region'],
         sortManageFields : ['name', 'email', 'phone', 'country', 'region', 'city',
-         'postal', 'street', 'default_shipping', 'default_billing'],
+         'postal_code', 'street', 'default_shipping', 'default_billing'],
         beforeSave : function ($scope, info)
         {
           var promises = [];
@@ -625,7 +625,7 @@ angular.module('app').config(function(datepickerConfig) {
                                  length);
                 is_new = true;
               }
-              
+              $scope.container = {};
               $scope.live_args = entity;
               $scope.args = angular.copy(entity); // entity.addreses.0.address
               $scope.parentArgs = config.ui.specifics.parentArgs; // entity.addresses
@@ -636,6 +636,14 @@ angular.module('app').config(function(datepickerConfig) {
               };
 
               $scope.save = function() {
+                
+                if (!$scope.container.form.$valid)
+                {
+                  errorHandling.modal({
+                    required : ['field']
+                  });
+                  return;
+                }
                 var promise = null;
                 if (angular.isFunction(config.ui.specifics.beforeSave))
                 {
@@ -898,7 +906,8 @@ angular.module('app').config(function(datepickerConfig) {
         var template = underscoreTemplate.get(config.type != 'Custom' ? 'underscore/form/' + tpl + '.html' : config.template)({
           config : config
         });
-
+        
+    
         scope.config = config;
 
         element.html(template);

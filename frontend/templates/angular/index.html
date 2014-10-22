@@ -43,8 +43,9 @@ This was done for easier maintenance.
             <div ng-show="current_account._root_admin" ng-include="misc/search_form.html"></div>
             <h1 class="fieldset">Account</h1>
             <ul ng-controller="AccountManagementCtrl" ng-show="!current_account._is_guest" class="menu clearfix">
-                <li><button type="button" class="button block" ng-click="settings()">Settings</button></li>
                 <li><button type="button" class="button block" ng-click="logout()">Logout</button></li>
+                <li><button type="button" class="button block" ng-click="settings()">Settings</button></li>
+                
             </ul>
             
             <div ng-controller="BuyerManagementCtrl" ng-show="!current_account._is_guest">

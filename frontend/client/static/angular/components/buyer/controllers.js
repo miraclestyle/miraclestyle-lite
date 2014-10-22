@@ -4,7 +4,7 @@ angular.module('app')
  
   $scope.settings = function ()
   {
-    buyerEntity.settings();
+    buyerEntity.settings(current_account.key);
   };
 
 });

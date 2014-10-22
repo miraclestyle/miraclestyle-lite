@@ -1,8 +1,8 @@
 angular.module('app').factory('buyerEntity', 
-function(endpoint, $window, entityManager, modelMeta, current_account) {
+function(endpoint, $window, entityManager, modelMeta) {
   var kind = '19',
    buyerEntity = {
-    settings : function ()
+    settings : function (account_key)
     {
       var config = {
         kind : kind,
@@ -12,13 +12,13 @@ function(endpoint, $window, entityManager, modelMeta, current_account) {
         {
           var cfg = $scope.config,
               args = cfg.defaultArgumentLoader($scope);
-          args.account = current_account.key;
+          args.account = account_key;
           return args;
         }
       };
       
       entityManager.create(config).read({}, {
-        account : current_account.key
+        account : account_key
       });
       
     }
