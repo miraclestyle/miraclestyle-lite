@@ -133,7 +133,7 @@ angular.module('app').factory('errorHandling', function($modal) {
         return true;
       } else {
         angular.forEach(cacheRegistry, function (cache) {
-          cache.remove(cahe_prefix + key);
+          cache.remove(cache_prefix + key);
         });
       }
 
@@ -556,12 +556,12 @@ function($httpProvider) {
         body : 'entity/modal_editor_default_body.html',
         scope : {},
         init : function() {},
-        defaultInit : function() {
-          var cfg = this.config;
+        defaultInit : function($scope) {
+          var cfg = $scope.config;
           if (!cfg.fields)
           {
             cfg.fields = [];
-            var info = modelMeta.get(this.entity.kind);
+            var info = modelMeta.get($scope.entity.kind);
             angular.forEach(info.fields, function (prop, prop_key) {
               if (!prop.code_name)
               {
@@ -573,12 +573,12 @@ function($httpProvider) {
         },
         actions : [],
         defaultActions : [],
-        defaultArgumentLoader : function ()
+        defaultArgumentLoader : function ($scope)
         {
           // by default argument loader will attempt to extract the argument data from the current entity
-          var entityCopy = angular.copy(this.entity), info = modelMeta.get(this.config.kind), args = {};
+          var entityCopy = angular.copy($scope.entity), info = modelMeta.get($scope.config.kind), args = {};
           
-          angular.forEach(info.mapped_actions[this.config.action].arguments, function (arg, arg_key) {
+          angular.forEach(info.mapped_actions[$scope.config.action].arguments, function (arg, arg_key) {
             var val = entityCopy[arg_key];
             if (val === undefined)
             {
@@ -592,13 +592,13 @@ function($httpProvider) {
             
           });
           
-          args.ui = this.entity.ui;
+          args.ui = $scope.entity.ui;
           
           return args;
         },
-        argumentLoader : function () {
-          var cfg = this.config;
-          return cfg.defaultArgumentLoader.call(this);
+        argumentLoader : function ($scope) {
+          var cfg = $scope.config;
+          return cfg.defaultArgumentLoader($scope);
         }
       };
      
@@ -653,10 +653,10 @@ function($httpProvider) {
               // load into scope from config
               helpers.update($scope, config.scope); 
               // call config constructor, needed for posible on-spot configurations
-              config.defaultInit.call($scope);
-              config.init.call($scope);
+              config.defaultInit($scope);
+              config.init($scope);
               
-              $scope.args = config.argumentLoader.call($scope); // argument loader to load arguments for editing
+              $scope.args = config.argumentLoader($scope); // argument loader to load arguments for editing
 
               var defaultActions = config.defaultActions;
               

@@ -8,10 +8,10 @@ function(endpoint, $window, entityManager, modelMeta, current_account) {
         kind : kind,
         action : 'update',
         excludeFields : ['account', 'read_arguments'],
-        argumentLoader : function ()
+        argumentLoader : function ($scope)
         {
-          var cfg = this.config;
-          var args = cfg.defaultArgumentLoader.call(this);
+          var cfg = $scope.config,
+              args = cfg.defaultArgumentLoader($scope);
           args.account = current_account.key;
           return args;
         }

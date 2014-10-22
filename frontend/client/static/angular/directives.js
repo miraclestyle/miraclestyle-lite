@@ -231,13 +231,85 @@ angular.module('app').config(function(datepickerConfig) {
     }
   };
 })
-.directive('formInput', function($compile, underscoreTemplate, endpoint, modelMeta, $filter, $modal, helpers, $parse, errorHandling) {
+.directive('formInput', function($compile, underscoreTemplate, endpoint, modelMeta, $q, $filter, $modal, helpers, $parse, errorHandling) {
 
   var inflector = $filter('inflector'), internalConfig = {
     structured : {
       '14' : {
         onlyListFields : ['name', '_country', '_region', 'address', 'default_billing', 'default_shipping'],
         excludeManageFields : ['_country', '_region'],
+        sortManageFields : ['name', 'email', 'phone', 'country', 'region', 'city',
+         'postal', 'street', 'default_shipping', 'default_billing'],
+        beforeSave : function ($scope, info)
+        {
+          var promises = [];
+          
+          if (info.config.repeated)
+          {
+       
+          var updated_address = $scope.args; 
+          if ((!updated_address._region && updated_address.region) || (updated_address._region && updated_address._region.key !== updated_address.region))
+          {
+            var promise = endpoint.post('search', '13', {
+              search : {
+                keys : [updated_address.region]
+              }
+            });
+            
+            promise.then(function (response) {
+              updated_address._region = response.data.entities[0];
+            });
+            
+            promises.push(promise);
+          }
+          
+          if ((!updated_address._country && updated_address.country) || (updated_address._country && updated_address._country.key !== updated_address.country))
+          {
+            var promise = endpoint.post('search', '12', {
+              search : {
+                keys : [updated_address.country]
+              }
+            });
+            promise.then(function (response) {
+              updated_address._country = response.data.entities[0];
+            });
+            
+            promises.push(promise);
+          }
+          
+          angular.forEach($scope.parentArgs, function (address) {
+                    if (updated_address.default_billing || updated_address.default_shipping)
+                    {
+                        if (updated_address != address)
+                        {
+                            
+                            if (updated_address.default_billing)
+                            {
+                                address.default_billing = false;
+                            }
+                            
+                            if (updated_address.default_shipping)
+                            {
+                                address.default_shipping = false;
+                            }
+                        }
+                         
+                    }
+                    
+                });
+                
+          }
+          
+          if (promises.length)
+          {
+            return $q.all(promises);
+          }
+          else
+          {
+            return false;
+          }
+           
+        }
       }      
     },
     search : {
@@ -522,11 +594,13 @@ angular.module('app').config(function(datepickerConfig) {
         
         listFields = newListFields;
       }
-   
+      var beforeSave = extraConfig.beforeSave, afterSave = extraConfig.afterSave;
       var defaults = {
         listFields : listFields,
         sortedFields : sortedFields,
         manageFields : manageFields,
+        beforeSave : beforeSave,
+        afterSave : afterSave,
         addNewText : 'Add',
         addText : '{{config.ui.specifics.addNewText}}',
         remove : function(entity) {
@@ -551,7 +625,8 @@ angular.module('app').config(function(datepickerConfig) {
                                  length);
                 is_new = true;
               }
-        
+              
+              $scope.live_args = entity;
               $scope.args = angular.copy(entity); // entity.addreses.0.address
               $scope.parentArgs = config.ui.specifics.parentArgs; // entity.addresses
               $scope.entity = config.ui.specifics.args; // entity
@@ -561,17 +636,54 @@ angular.module('app').config(function(datepickerConfig) {
               };
 
               $scope.save = function() {
-  
-
-                if (config.repeated) {
-                  if (is_new) {
-                    $scope.parentArgs.push($scope.args);
-                  } else {
-                    helpers.update(entity, $scope.args);
-                  }
+                var promise = null;
+                if (angular.isFunction(config.ui.specifics.beforeSave))
+                {
+                  promise = config.ui.specifics.beforeSave($scope, info);
                 }
-
-                $scope.cancel();
+                
+                var complete = function ()
+                {
+                  var promise = null;
+                  
+                  if (config.repeated) {
+                    if (is_new) {
+                      $scope.parentArgs.push($scope.args);
+                    } else {
+                      helpers.update(entity, $scope.args);
+                    }
+                  }
+                   
+                  if (angular.isFunction(config.ui.specifics.afterSave))
+                  {
+                    promise = config.ui.specifics.afterSave($scope, info);
+                  }
+                  
+                  if (promise && promise.then)
+                  {
+                    promise.then(function () {
+                      $scope.cancel();
+                    });
+                  }
+                  else
+                  {
+                    $scope.cancel();
+                  }
+   
+                };
+                
+                if (promise && promise.then)
+                {
+                  promise.then(complete);
+                }
+                else
+                {
+                  complete();
+                }
+                 
+                
+                
+                
               };
 
             }

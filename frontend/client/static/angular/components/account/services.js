@@ -55,7 +55,7 @@ function(endpoint, $window, entityManager, modelMeta) {
         key : account.key
       }).then(function(response) {
           endpoint.invalidate_cache('current_account');
-          $window.location.reload(false);
+          $window.location.reload();
       });
     }
   };
