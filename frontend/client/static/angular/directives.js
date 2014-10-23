@@ -144,13 +144,13 @@ angular.module('app').config(function(datepickerConfig) {
     }
   };
 })
-.directive('uploadOnSelect', function(endpoint, $rootScope) {
+.directive('generateUploadUrl', function(endpoint, $rootScope) {
   return {
     restrict: 'A',
     require: '^form',
     link : function(scope, element, attrs, ctrl) {
       
-      var that = element, form = that.parents('form:first');
+      var that = element, form = that.parents('form:first'), autoSubmit = scope.$eval(attrs.generateUploadUrl);
         
       if (!form.length) {
         console.error('Directive upload-on-select demands explicit <form> tag in \
@@ -158,34 +158,44 @@ angular.module('app').config(function(datepickerConfig) {
         return false;
       }
       
-      var click = function ()
+      var click = function (e)
       {
           // stop the click if the form is invalid and schedule it for when the
           // submission is complete to start the file dialog
           // ...
+          
+          if (!ctrl.$valid && autoSubmit)
+          {
+            return e.preventDefault();
+          }
       };
       
       var change = function() {
  
         if (!that.val())
           return false;
-  
-        var options = scope.$eval(attrs.uploadOnSelect);
-        
-        if (ctrl.$valid)
+ 
+        if ((!ctrl.$valid && autoSubmit) || !autoSubmit)
         {
           endpoint.post('blob_upload_url', '11', {
             'upload_url' : endpoint.url
           }).then(function(response) {
-                form.attr('action', response.data.upload_url).trigger('submit');
-               // triggers angular ng-upload
+                form.attr('action', response.data.upload_url);
+                
+                scope.$emit('prepareTheBody');
+                
+                if (autoSubmit)
+                {
+                  form.submit();
+                }
           });
         
         }
           
       };
-
-      $(element).on('change', change);
+   
+      $(element).on('click', click)
+                .on('change', change);
 
       scope.$on('$destroy', function() {
         $(element).off('change', change).off('click', click);
@@ -491,14 +501,13 @@ angular.module('app').config(function(datepickerConfig) {
         }
 
       }
-
       return 'select_async';
     },
 
     SuperLocalStructuredProperty : function(info) {
-      var config = info.config, manageFields = [], sortedFields = [], listFields = [];
+      var config = info.config, manageFields = [], beforeSave, afterSave, sortedFields = [], listFields = [];
       
-      if (!info.config.ui.specifics.sortedFields)
+      if (!config.ui.specifics.sortedFields)
       {
         angular.forEach(config.modelclass, function (prop) {
           sortedFields.push(prop);
@@ -511,10 +520,10 @@ angular.module('app').config(function(datepickerConfig) {
       }
       else
       {
-        sortedFields = info.config.ui.specifics.sortedFields;
+        sortedFields = config.ui.specifics.sortedFields;
       }
       
-      if (!info.config.ui.specifics.listFields)
+      if (!config.ui.specifics.listFields)
       {
   
         angular.forEach(sortedFields, function (item) {
@@ -528,19 +537,19 @@ angular.module('app').config(function(datepickerConfig) {
       }
       else
       {
-        listFields = info.config.ui.specifics.listFields; 
+        listFields = config.ui.specifics.listFields; 
       }
       
-      if (!info.config.ui.specifics.manageFields)
+      if (!config.ui.specifics.manageFields)
       {
         manageFields = sortedFields;
       }
       else
       {
-        manageFields = info.config.ui.specifics.manageFields;
+        manageFields = config.ui.specifics.manageFields;
       }
       
-      var extraConfig = internalConfig.structured[info.config.modelclass_kind];
+      var extraConfig = internalConfig.structured[config.modelclass_kind];
       var newListFields = [];
       
       if (extraConfig && extraConfig.onlyListFields)
@@ -594,7 +603,13 @@ angular.module('app').config(function(datepickerConfig) {
         
         listFields = newListFields;
       }
-      var beforeSave = extraConfig.beforeSave, afterSave = extraConfig.afterSave;
+      
+      if (extraConfig)
+      {
+        beforeSave = extraConfig.beforeSave;
+        afterSave = extraConfig.afterSave;
+      }
+      
       var defaults = {
         listFields : listFields,
         sortedFields : sortedFields,
@@ -602,101 +617,7 @@ angular.module('app').config(function(datepickerConfig) {
         beforeSave : beforeSave,
         afterSave : afterSave,
         addNewText : 'Add',
-        addText : '{{config.ui.specifics.addNewText}}',
-        remove : function(entity) {
-          entity._state = 'deleted';
-        },
-        manage : function(entity) {
-          $modal.open({
-            template : underscoreTemplate.get('underscore/form/modal/structured.html')({
-              config : config
-            }),
-            controller : function($scope, $modalInstance, entityUtil) {
-              var is_new = false;
-
-              $scope.config = config;
-              if (!entity) {
-                entity = {
-                  kind : config.modelclass_kind
-                };
-                var length = config.ui.specifics.parentArgs.length;
-                entityUtil.normalize(entity, config.modelclass, 
-                                config.ui.specifics.entity, info.config.ui.name,
-                                 length);
-                is_new = true;
-              }
-              $scope.container = {};
-              $scope.live_args = entity;
-              $scope.args = angular.copy(entity); // entity.addreses.0.address
-              $scope.parentArgs = config.ui.specifics.parentArgs; // entity.addresses
-              $scope.entity = config.ui.specifics.args; // entity
- 
-              $scope.cancel = function() {
-                $modalInstance.dismiss('cancel');
-              };
-
-              $scope.save = function() {
-                
-                if (!$scope.container.form.$valid)
-                {
-                  errorHandling.modal({
-                    required : ['field']
-                  });
-                  return;
-                }
-                var promise = null;
-                if (angular.isFunction(config.ui.specifics.beforeSave))
-                {
-                  promise = config.ui.specifics.beforeSave($scope, info);
-                }
-                
-                var complete = function ()
-                {
-                  var promise = null;
-                  
-                  if (config.repeated) {
-                    if (is_new) {
-                      $scope.parentArgs.push($scope.args);
-                    } else {
-                      helpers.update(entity, $scope.args);
-                    }
-                  }
-                   
-                  if (angular.isFunction(config.ui.specifics.afterSave))
-                  {
-                    promise = config.ui.specifics.afterSave($scope, info);
-                  }
-                  
-                  if (promise && promise.then)
-                  {
-                    promise.then(function () {
-                      $scope.cancel();
-                    });
-                  }
-                  else
-                  {
-                    $scope.cancel();
-                  }
-   
-                };
-                
-                if (promise && promise.then)
-                {
-                  promise.then(complete);
-                }
-                else
-                {
-                  complete();
-                }
-                 
-                
-                
-                
-              };
-
-            }
-          });
-        }
+        addText : '{{config.ui.specifics.addNewText}}'
       };
       
       if (extraConfig && extraConfig.sortManageFields)
@@ -712,7 +633,12 @@ angular.module('app').config(function(datepickerConfig) {
         
         manageFields = newManageFields;
       }
-
+      
+      config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
+      config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+      
+      console.log(config.ui.specifics.entity, info.config.ui.formName, config.ui.model);
+ 
       defaults.formBuilder = [];
       angular.forEach(manageFields, function(field) {
         if (extraConfig)
@@ -730,20 +656,133 @@ angular.module('app').config(function(datepickerConfig) {
             }
          
         }
+        if (field.ui === undefined) field.ui = {};
+        var copyWritable = angular.copy(config.ui.writable);
+        copyWritable.push(field.code_name);
+        field.ui.formName = copyWritable.join('_');
+        field.ui.writable = copyWritable;
         defaults.formBuilder.push(field);
       });
-      
-      
-
-      config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
-      config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-      
+        
       // merge defaults into the 
       angular.forEach(defaults, function(value, key) {
         if (config.ui.specifics[key] === undefined) {
           config.ui.specifics[key] = value;
         }
       });
+      
+      if (!config.repeated)
+      {
+        config.ui.specifics.SingularCtrl = function ($scope)
+        { 
+          $scope.args = config.ui.specifics.parentArgs;
+        };
+        
+      }
+      else
+      {
+        
+        if (config.ui.specifics.remove === undefined)
+        {
+          config.ui.specifics.remove = function(arg) {
+            arg._state = 'deleted';
+          };
+        }
+        
+        if (config.ui.specifics.manage === undefined)
+        { 
+          
+          config.ui.specifics.manage = function(arg) {
+     
+            $modal.open({
+              template : underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
+                config : config
+              }),
+              controller : function($scope, $modalInstance, entityUtil) {
+                var is_new = false;
+  
+                $scope.config = config;
+                if (!arg) {
+                  arg = {
+                    kind : config.modelclass_kind
+                  };
+                  var length = config.ui.specifics.parentArgs.length;
+                  entityUtil.normalize(arg, config.modelclass, 
+                                  config.ui.specifics.entity, info.config.ui.name,
+                                   length);
+                  is_new = true;
+                }
+                $scope.container = {};
+                $scope.args = angular.copy(arg); // entity.addreses.0.address
+                $scope.parentArgs = config.ui.specifics.parentArgs; // entity.addresses
+                $scope.entity = config.ui.specifics.entity;
+   
+                $scope.cancel = function() {
+                  $modalInstance.dismiss('cancel');
+                };
+  
+                $scope.save = function() {
+                  
+                  if (!$scope.container.form.$valid)
+                  {
+                    errorHandling.modal({
+                      required : ['field']
+                    });
+                    return;
+                  }
+                  var promise = null;
+                  if (angular.isFunction(config.ui.specifics.beforeSave))
+                  {
+                    promise = config.ui.specifics.beforeSave($scope, info);
+                  }
+                  
+                  var complete = function ()
+                  {
+                    var promise = null;
+                    
+                    if (config.repeated) {
+                      if (is_new) {
+                        $scope.parentArgs.push($scope.args);
+                      } else {
+                        helpers.update(arg, $scope.args);
+                      }
+                    }
+                     
+                    if (angular.isFunction(config.ui.specifics.afterSave))
+                    {
+                      promise = config.ui.specifics.afterSave($scope, info);
+                    }
+                    
+                    if (promise && promise.then)
+                    {
+                      promise.then(function () {
+                        $scope.cancel();
+                      });
+                    }
+                    else
+                    {
+                      $scope.cancel();
+                    }
+     
+                  };
+                  
+                  if (promise && promise.then)
+                  {
+                    promise.then(complete);
+                  }
+                  else
+                  {
+                    complete();
+                  }
+                    
+                };
+  
+              }
+            });
+          };
+            
+        }
+      }
     
       return 'structured';
     },
@@ -762,14 +801,20 @@ angular.module('app').config(function(datepickerConfig) {
          }
          else
          {
-           var path = info.scope.entity.root_access().split('.');
-           path.splice(path.length-1, 1);
-           var getter = $parse(path.join('.')),
-               setter = getter.assign;
+           if (info.config.repeated)
+           {
+             
+             var path = info.scope.entity.root_access().split('.');
+             path.splice(path.length-1, 1);
+             var getter = $parse(path.join('.')),
+                 setter = getter.assign;
+             
+             var list = getter(info.scope.entity.root());
+             var new_entities = getter(content.entity);
+             list.push(new_entities);
+             
+           }
            
-           var list = getter(info.scope.entity.root());
-           var new_entities = getter(content.entity);
-           list.push(new_entities);
          }
          
       });
@@ -814,8 +859,18 @@ angular.module('app').config(function(datepickerConfig) {
       attrs['ng-required'] = 'config.required';
       attrs['ng-model'] = config.ui.args;
 
-      if (config.ui.writable) {
+      if (!angular.isArray(config.ui.writable)) {
         attrs['ng-disabled'] = '!' + config.ui.writable;
+      }
+      else
+      {
+        var writableCompiled = config.ui.model + '.ui.rule.field' + $.map(config.ui.writable, function (item) {
+          return "['" + helpers.addslashes(item) + "']";
+        }).join('') + '.writable';
+        
+        attrs['ng-disabled'] = '!' + writableCompiled;
+        
+        config.ui.writableCompiled = writableCompiled;
       }
 
       return attrs;
@@ -835,10 +890,12 @@ angular.module('app').config(function(datepickerConfig) {
   return {
     restrict: 'A',
     require : '^form',
+    scope : true,
+    transclude : true,
     link : function(scope, element, attrs, ctrl) {
-     
+ 
       var supplied_config = scope.$eval(attrs.formInput), name = null, label = null;
-      
+  
       // discover the system name of the property
       if (supplied_config.ui && supplied_config.ui.name !== undefined)
       {
@@ -873,21 +930,14 @@ angular.module('app').config(function(datepickerConfig) {
           autoLabel : label,
           specifics : {}, // used for property specific configurations
           name : name,
-          writable : 'true',
+          formName : name,
+          writable : [name],
           attrs : {}
         }
       };
 
       $.extend(true, config, supplied_config);
-      // recursive set
-      
-      var parent = scope.$eval(config.ui.model);
-
-      // auto rule engine
-      if (parent !== undefined && parent.ui !== undefined && parent.ui.rule !== undefined) {
-        config.ui.writable =  config.ui.model + '.ui.rule.field[\'' + (config.ui.writableName ? config.ui.writableName : config.ui.name) + '\'].writable';
-      }
-
+  
       if (types[supplied_config.type] !== undefined) {
         // reference main locals to type builder
         var tpl = types[supplied_config.type]({
@@ -921,4 +971,54 @@ angular.module('app').config(function(datepickerConfig) {
 
     }
   };
+}).directive('compatibilityMaker', function () {
+  return {
+    restrict : 'A',
+    require : 'ngModel',
+    link : function (scope, element, attrs, ngModelCtrl)
+    { 
+         var fn = function (newval, oldval) {
+           if (newval === true)
+           { 
+             var newval = scope.$eval(attrs.compatibilityMaker),
+                 stringify = JSON.stringify(newval);
+             scope.json_body = stringify;
+           }
+         };
+         
+         scope.$watch('$isUploading', fn);
+         scope.$on('prepareTheBody', function () {
+           fn(true);
+         });
+    }
+  }
+}).directive('displayImage', function () {
+    return {
+      scope : {
+        image : '=displayImage'
+      },
+      link : function (scope, element, attrs)
+      { 
+         var fn = function (nv, ov) {
+           
+           if (nv !== ov)
+           {
+               var load = function ()
+             {
+                $(element).html($(this));
+             };
+             
+             $('<img />').on('load', load).attr('src', scope.image.serving_url);
+           }
+           
+           
+         };
+         
+         scope.$watch('image.serving_url', fn);
+         
+         fn(true, false)
+         
+         
+      }
+    };
 });

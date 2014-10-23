@@ -72,7 +72,7 @@ class Structured():
   def __str__(self):
     return self.segment
 
-ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'), Structured('buyer'), 'tests']
+ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'), Structured('buyer'), Structured('seller'), 'tests']
 ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
 ANGULAR_ACTIVE_COMPONENTS = []
 for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
@@ -92,7 +92,9 @@ ANGULAR_TEMPLATES = (
   ('misc/form_wrapper.html',),
   ('entity/modal_editor.html',),
   ('entity/modal_editor_default_body.html',),
+  ('entity/modal_editor_default_footer.html',),
   ('account/settings.html',),
+  ('seller/settings.html',),
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
   ('underscore/form/structured.html',),

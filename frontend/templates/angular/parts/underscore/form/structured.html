@@ -1,11 +1,13 @@
 <div class="structured-field">
   <h2 class="fieldset with-button">
   <span class="fieldset-text"><%= config.ui.compiled.label %></span>
+  <% if (config.repeated) { %>
   <span class="fieldset-button">
-    <button ng-disabled="!<%= config.ui.writable %>" type="button" class="button" ng-click="config.ui.specifics.manage()">
+    <button ng-disabled="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.manage()">
       <%=config.ui.specifics.addText %>
     </button>
   </span>
+  <% } %>
 </h2>
 <% if (config.repeated) { %>
     <table class="table">
@@ -23,13 +25,15 @@
               </td>
   
               <td>
-                <button ng-show="<%= config.ui.writable %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-                <button ng-show="<%= config.ui.writable %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
+                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
               </td>
             </tr>
           </tbody>
     </table>
     <% } else { %>
-      Singular
+      <div ng-controller="config.ui.specifics.SingularCtrl">
+        <div form-builder="config.ui.specifics.formBuilder"></div>
+      </div>
     <% } %>
 </div>

@@ -8,7 +8,7 @@ function(endpoint, $window, entityManager, modelMeta) {
 
       var config = {
         kind : '11',
-        body : 'account/settings.html',
+        templateBodyUrl : 'account/settings.html',
         argumentLoader : function ($scope)
         {
           var disassociate = [];
@@ -50,7 +50,9 @@ function(endpoint, $window, entityManager, modelMeta) {
         }
       };
       
-      entityManager.create(config).read(account);
+      entityManager.create(config).read({
+        key : account_key
+      });
       
     },
     logout : function (account_key)

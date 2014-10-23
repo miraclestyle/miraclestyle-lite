@@ -2,19 +2,19 @@
          
          <ui-select
              theme="select2"
-             name="<%= config.ui.name %>" 
+             name="<%= config.ui.formName %>" 
              <%= config.ui.compiled.attrs %>
              <% if (config.repeated) { %>multiple<% } %>>
              
           <ui-select-match placeholder="Select...">{{config.ui.specifics.view(<% if (config.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
           <ui-select-choices
-                   repeat="entity.key as entity in config.ui.specifics.entities <% if (config.ui.specifics.propsFilter) { %> | propsFilter: <%- config.ui.specifics.propsFilter %> <% } %>"
+                   repeat="ent.key as ent in config.ui.specifics.entities <% if (config.ui.specifics.propsFilter) { %> | propsFilter: <%- config.ui.specifics.propsFilter %> <% } %>"
                    <% if (config.ui.specifics.search) { %>
                    refresh="config.ui.specifics.search($select.search)"
                    refresh-delay="200"
                    <% } %>>
                    
-            <div ng-bind-html="config.ui.specifics.view(entity) | highlight: $select.search"></div>
+            <div ng-bind-html="config.ui.specifics.view(ent) | highlight: $select.search"></div>
           </ui-select-choices>
         </ui-select>
  

@@ -1703,7 +1703,10 @@ class StructuredPropertyValue(PropertyValue):
     if self.has_value():
       entities = self._property_value
       if not self._property._repeated:
-        entities = [entities]
+        if not entities:
+          entities = []
+        else:
+          entities = [entities]
       futures = []
       for entity in entities:
         for field_key, field in entity.get_fields().iteritems():

@@ -3,10 +3,11 @@
       <h2 class="fieldset with-button">
         <span class="fieldset-text">Images</span>
         <span class="fieldset-button">
-           <div ng-show="<%= config.ui.writable %>" class="button fake-button">
+           <div ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
-               <input ng-disabled="$isUploading" class="upload" name="<%= config.ui.name %>"
-                       multiple upload-on-select="config.ui.specifics.uploadConfig"
+               <input class="upload" name="<%= config.ui.formName %>"
+                       multiple
+                       generate-upload-url="true"
                        type="file" />
            </div>
         </span>
@@ -17,16 +18,25 @@
         <div ng-repeat="image in config.ui.specifics.entities track by $index"
              ng-hide="image._state == 'deleted'" 
              uploaded-image-grid="config.ui.specifics.gridConfig" 
+             ng-model="fails"
              class="image-image grid-item">
           <div class="img spaceout">
             <img ng-src="{{image.serving_url}}=s360" />
           </div>
-          <button ng-show="<%= config.ui.writable %>" type="button" 
+          <button ng-show="<%= config.ui.writableCompiled %>" type="button" 
                   class="button" 
                   ng-click="config.ui.specifics.remove(image)">Remove</button>
         </div>
       </div>
       <% } else { %>
-      
+        
+        <div form-element-wrapper label="<%= config.ui.compiled.label %>">
+          <div><input name="<%= config.ui.formName %>"
+                       generate-upload-url
+                       type="file" /></div>
+                       <br />
+          <div display-image="<%= config.ui.args %>"></div>
+        </div>
+ 
       <% }  %>
 </div>

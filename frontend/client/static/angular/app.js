@@ -18,7 +18,7 @@
   // this config file will expand
   GLOBAL_CONFIG = {
     host : host,
-    angularModules : ['ui.router', 'ui.sortable', 'ui.select', 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
+    angularModules : ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload', 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
     apiModelMetaPath : host + '/api/model_meta',
     apiEndpointPath : host + '/api/endpoint',
     dateFormat : 'yyyy-MM-dd HH:mm:ss Z'

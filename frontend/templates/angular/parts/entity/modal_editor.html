@@ -1,16 +1,13 @@
-<form name="container.form" ng-upload method="post" action="config.action">
+<form name="container.form" ng-upload="complete(content)" method="post" action="{{container.action}}">
+  <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
   <div fit-in-dialog class="modal-body scrollable">
   <div class="modal-body-inner">
-      <div ng-include="config.body"></div>
-
+      <div ng-include="config.templateBodyUrl"></div>
   </div>
   </div>
   
   <div class="modal-footer">
-    <span ng-repeat="action in config.actions">
-      <button ng-click="action.callback()" class="button" busy type="button">{{action.name}}</button>
-    </span>
-    <button ng-show="config.showCancel" busy type="button" class="button" ng-click="close()">Cancel</button>
+   <div ng-include="config.templateFooterUrl"></div>
   </div>
   
 </form>

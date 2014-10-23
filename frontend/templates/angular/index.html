@@ -62,7 +62,7 @@ This was done for easier maintenance.
                 <li><button ng-click="login(1)" type="button" class="button block">Login with Google</button></li>
             </ul>
             
-            <div ng-show="!current_account._is_guest">
+            <div ng-controller="SellerManagementCtrl" ng-show="!current_account._is_guest">
                 <h1 class="fieldset">Sell</h1>
                 <ul class="menu clearfix">
                    <li><button type="button"
@@ -75,8 +75,7 @@ This was done for easier maintenance.
                             main-menu-toggler
                             class="button block" ui-sref="sell-orders">Orders</button></li>
                      <li><button type="button"
-                            main-menu-toggler
-                            class="button block">Settings</button></li>
+                            class="button block" ng-click="settings()">Settings</button></li>
                 </ul>
             </div>
              

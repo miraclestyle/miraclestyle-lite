@@ -1,16 +1,17 @@
 <form name="container.form" ng-submit="save()">
-<div fit-in-dialog class="modal-body scrollable">
-<div class="modal-body-inner">
-<div form-builder="config.ui.specifics.formBuilder"></div>
-</div>
-</div>
+  <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
+  <div fit-in-dialog class="modal-body scrollable">
+    <div class="modal-body-inner">
+    <div form-builder="config.ui.specifics.formBuilder"></div>
+    </div>
+  </div>
 
-<div class="modal-footer">
-  <button class="button">
-    Save
-  </button>
-  <button type="button" class="button" ng-click="cancel()">
-    Cancel
-  </button>
-</div>
+  <div class="modal-footer">
+    <button class="button">
+      Save
+    </button>
+    <button type="button" class="button" ng-click="cancel()">
+      Cancel
+    </button>
+  </div>
 </form>
