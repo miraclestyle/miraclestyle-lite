@@ -178,7 +178,7 @@ angular.module('app').config(function(datepickerConfig) {
         if ((!ctrl.$valid && autoSubmit) || !autoSubmit)
         {
           endpoint.post('blob_upload_url', '11', {
-            'upload_url' : endpoint.url
+            upload_url : endpoint.url
           }).then(function(response) {
                 form.attr('action', response.data.upload_url);
                 
@@ -244,84 +244,6 @@ angular.module('app').config(function(datepickerConfig) {
 .directive('formInput', function($compile, underscoreTemplate, endpoint, modelMeta, $q, $filter, $modal, helpers, $parse, errorHandling) {
 
   var inflector = $filter('inflector'), internalConfig = {
-    structured : {
-      '14' : {
-        onlyListFields : ['name', '_country', '_region', 'address', 'default_billing', 'default_shipping'],
-        excludeManageFields : ['_country', '_region'],
-        sortManageFields : ['name', 'email', 'phone', 'country', 'region', 'city',
-         'postal_code', 'street', 'default_shipping', 'default_billing'],
-        beforeSave : function ($scope, info)
-        {
-          var promises = [];
-          
-          if (info.config.repeated)
-          {
-       
-          var updated_address = $scope.args; 
-          if ((!updated_address._region && updated_address.region) || (updated_address._region && updated_address._region.key !== updated_address.region))
-          {
-            var promise = endpoint.post('search', '13', {
-              search : {
-                keys : [updated_address.region]
-              }
-            });
-            
-            promise.then(function (response) {
-              updated_address._region = response.data.entities[0];
-            });
-            
-            promises.push(promise);
-          }
-          
-          if ((!updated_address._country && updated_address.country) || (updated_address._country && updated_address._country.key !== updated_address.country))
-          {
-            var promise = endpoint.post('search', '12', {
-              search : {
-                keys : [updated_address.country]
-              }
-            });
-            promise.then(function (response) {
-              updated_address._country = response.data.entities[0];
-            });
-            
-            promises.push(promise);
-          }
-          
-          angular.forEach($scope.parentArgs, function (address) {
-                    if (updated_address.default_billing || updated_address.default_shipping)
-                    {
-                        if (updated_address != address)
-                        {
-                            
-                            if (updated_address.default_billing)
-                            {
-                                address.default_billing = false;
-                            }
-                            
-                            if (updated_address.default_shipping)
-                            {
-                                address.default_shipping = false;
-                            }
-                        }
-                         
-                    }
-                    
-                });
-                
-          }
-          
-          if (promises.length)
-          {
-            return $q.all(promises);
-          }
-          else
-          {
-            return false;
-          }
-           
-        }
-      }      
-    },
     search : {
       cache_results : {
         'default' : true,
@@ -446,7 +368,7 @@ angular.module('app').config(function(datepickerConfig) {
 
       if (!config.ui.specifics.search) {
 
-        var kindinfo = modelMeta.get(config.kind), cache_hit, cache_key = 'search_results_' + config.kind, should_cache = false, search_command, action_search = kindinfo.mapped_actions.search, skip_search_command = false;
+        var action_search = modelMeta.getActionArguments(config.kind, 'search'), cache_hit, cache_key = 'search_results_' + config.kind, should_cache = false, search_command, skip_search_command = false;
 
         if (action_search !== undefined) {
           var cache_option = internalConfig.search.cache_results[config.kind];
@@ -467,7 +389,7 @@ angular.module('app').config(function(datepickerConfig) {
           }
    
           search_command = function(term) {
-            var params = action_search['arguments'].search['default'], fn = internalConfig.search.queryfilter[config.kind], args = {};
+            var params = action_search.search['default'], fn = internalConfig.search.queryfilter[config.kind], args = {};
             if (angular.isFunction(fn)) {
               args = fn(term, info, action_search);
             } else {
@@ -505,170 +427,80 @@ angular.module('app').config(function(datepickerConfig) {
     },
 
     SuperLocalStructuredProperty : function(info) {
-      var config = info.config, manageFields = [], beforeSave, afterSave, sortedFields = [], listFields = [];
-      
-      if (!config.ui.specifics.sortedFields)
-      {
-        angular.forEach(config.modelclass, function (prop) {
-          sortedFields.push(prop);
-        });
-        
-        sortedFields.sort(function (a, b) {
-          return parseInt(a.name) - parseInt(b.name);
-        });
-        
-      }
-      else
-      {
-        sortedFields = config.ui.specifics.sortedFields;
-      }
-      
-      if (!config.ui.specifics.listFields)
-      {
-  
-        angular.forEach(sortedFields, function (item) {
-          listFields.push({
-              key : item.code_name,
-              generated : true,
-              label : (item.ui && item.ui.label ? item.ui.label : inflector(item.code_name, 'humanize'))
-            });
-        });
-        
-      }
-      else
-      {
-        listFields = config.ui.specifics.listFields; 
-      }
-      
-      if (!config.ui.specifics.manageFields)
-      {
-        manageFields = sortedFields;
-      }
-      else
-      {
-        manageFields = config.ui.specifics.manageFields;
-      }
-      
-      var extraConfig = internalConfig.structured[config.modelclass_kind];
-      var newListFields = [];
-      
-      if (extraConfig && extraConfig.onlyListFields)
-      { 
-         angular.forEach(extraConfig.onlyListFields, function (field) {
-       
-             var item = _.findWhere(listFields, {key : field});
-             
-             if (item)
-             {
-               newListFields.push(item);
-             }
-              
-        });
-        
-        listFields = newListFields;
-        
-      }
-      else
-      {
-        
-        angular.forEach(listFields, function (item, i) {
-          if (extraConfig)
-          { 
-             if (extraConfig.excludeListFields && $.inArray(item.key, extraConfig.excludeListFields) !== -1)
-             {
-               return;
-             }
+      var config = info.config, fields = [], beforeSave, modelFields, defaultFields, noSpecifics, afterSave, listFields = [];
      
+      beforeSave = config.ui.specifics.beforeSave;
+      afterSave = config.ui.specifics.afterSave;
+      noSpecifics = !angular.isDefined(config.ui.specifics);
+      modelFields = modelMeta.getModelFields(config.modelclass_kind);
+      
+      defaultFields = _.toArray(modelFields);
+      defaultFields = defaultFields.sort(function (prev, next) {
+        return parseInt(prev.name) - parseInt(next.name);
+      });
+      
+      if (noSpecifics || !config.ui.specifics.fields)
+      { 
+        config.ui.specifics.fields = defaultFields;
+      }
+      
+      if (noSpecifics || !config.ui.specifics.listFields)
+      {
+     
+        angular.forEach(defaultFields, function (field) {
+          if (!noSpecifics && (config.ui.specifics.excludeListFields && $.inArray(field.code_name, config.ui.specifics.excludeListFields) !== -1))
+          {
+            return;
           }
           
-          newListFields.push(item);
-           
+          listFields.push({
+              key : field.code_name,
+              generated : true,
+              label : (field.ui && field.ui.label ? field.ui.label : inflector(field.code_name, 'humanize'))
+            });
         });
-        
-        listFields = newListFields;
+  
+        if (!noSpecifics && angular.isDefined(config.ui.specifics.onlyListFields))
+        {
+            var newListFields = [];
+            angular.forEach(config.ui.specifics.onlyListFields, function (key) {
+              var find = _.findWhere(listFields, {key : key});
+              if (find)
+              {
+                newListFields.push(find);
+              }
+            });
+            
+            listFields = newListFields;
+        }
         
       }
-      
-      
-      if (extraConfig && extraConfig.sortListFields)
-      {
-        var newListFields = [];
-        angular.forEach(extraConfig.sortListFields, function (field) {
-          var item = _.findWhere(listFields, {key : field});
-          if (item)
-          {
-            newListFields.push(item);
-          }
-        });
-        
-        listFields = newListFields;
-      }
-      
-      if (extraConfig)
-      {
-        beforeSave = extraConfig.beforeSave;
-        afterSave = extraConfig.afterSave;
-      }
-      
+ 
       var defaults = {
         listFields : listFields,
-        sortedFields : sortedFields,
-        manageFields : manageFields,
-        beforeSave : beforeSave,
-        afterSave : afterSave,
+        fields : fields,
         addNewText : 'Add',
         addText : '{{config.ui.specifics.addNewText}}'
       };
-      
-      if (extraConfig && extraConfig.sortManageFields)
-      {
-        var newManageFields = [];
-        angular.forEach(extraConfig.sortManageFields, function (field) {
-          var item = _.findWhere(manageFields, {code_name : field});
-          if (item)
-          {
-            newManageFields.push(item);
-          }
-        });
-        
-        manageFields = newManageFields;
-      }
-      
-      config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
-      config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-      
-      console.log(config.ui.specifics.entity, info.config.ui.formName, config.ui.model);
- 
-      defaults.formBuilder = [];
-      angular.forEach(manageFields, function(field) {
-        if (extraConfig)
-        {
-          if (extraConfig.excludeManageFields
-            && $.inArray(field.code_name, extraConfig.excludeManageFields) !== -1)
-            {
-              return;
-            }
-            
-          if (extraConfig.onlyManageFields
-            && $.inArray(field.code_name, extraConfig.onlyManageFields) === -1)
-            {
-               return;
-            }
-         
-        }
-        if (field.ui === undefined) field.ui = {};
-        var copyWritable = angular.copy(config.ui.writable);
-        copyWritable.push(field.code_name);
-        field.ui.formName = copyWritable.join('_');
-        field.ui.writable = copyWritable;
-        defaults.formBuilder.push(field);
-      });
-        
+  
       // merge defaults into the 
       angular.forEach(defaults, function(value, key) {
         if (config.ui.specifics[key] === undefined) {
           config.ui.specifics[key] = value;
         }
+      });
+      
+      config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
+      config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+ 
+      
+      config.ui.specifics.formBuilder = [];
+      angular.forEach(config.ui.specifics.fields, function(field) {
+        var copyWritable = angular.copy(config.ui.writable);
+        copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
+        field.ui.formName = copyWritable.join('_');
+        field.ui.writable = copyWritable;
+        config.ui.specifics.formBuilder.push(field);
       });
       
       if (!config.repeated)
@@ -690,8 +522,7 @@ angular.module('app').config(function(datepickerConfig) {
         }
         
         if (config.ui.specifics.manage === undefined)
-        { 
-          
+        {  
           config.ui.specifics.manage = function(arg) {
      
             $modal.open({
@@ -708,8 +539,8 @@ angular.module('app').config(function(datepickerConfig) {
                   };
                   var length = config.ui.specifics.parentArgs.length;
                   entityUtil.normalize(arg, config.modelclass, 
-                                  config.ui.specifics.entity, info.config.ui.name,
-                                   length);
+                                  config.ui.specifics.entity, config.code_name,
+                                   length, false);
                   is_new = true;
                 }
                 $scope.container = {};
@@ -894,18 +725,8 @@ angular.module('app').config(function(datepickerConfig) {
     transclude : true,
     link : function(scope, element, attrs, ctrl) {
  
-      var supplied_config = scope.$eval(attrs.formInput), name = null, label = null;
-  
-      // discover the system name of the property
-      if (supplied_config.ui && supplied_config.ui.name !== undefined)
-      {
-        name = supplied_config.ui.name;
-      }
-      else if (supplied_config.code_name !== undefined && supplied_config.code_name !== null)
-      {
-        name = supplied_config.code_name;
-      }
-      
+      var supplied_config = scope.$eval(attrs.formInput), name = supplied_config.code_name, label = null;
+ 
       // use backend defined label if was provided, otherwise the label will be humanized
       if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined)
       {
@@ -937,6 +758,11 @@ angular.module('app').config(function(datepickerConfig) {
       };
 
       $.extend(true, config, supplied_config);
+      
+      if (config.ui.writableName !== undefined)
+      {
+        config.ui.writable = [config.ui.writableName];
+      }
   
       if (types[supplied_config.type] !== undefined) {
         // reference main locals to type builder
@@ -957,6 +783,7 @@ angular.module('app').config(function(datepickerConfig) {
           config : config
         });
         
+ 
     
         scope.config = config;
 
@@ -992,7 +819,37 @@ angular.module('app').config(function(datepickerConfig) {
          });
     }
   }
-}).directive('displayImage', function () {
+})
+.directive('fitInDialog', function () {
+  return {
+    link : function (scope, element, attrs)
+    {
+      var fn = function () {
+ 
+          var modal_dialog = $(element).parents('.modal-dialog:first');
+          
+          var height = $(window).height();
+          
+          height -= parseInt(modal_dialog.css('margin-top')) + parseInt(modal_dialog.css('margin-bottom'));
+          height -= 2;
+          
+          var modal_footer = modal_dialog.find('.modal-footer');
+          
+          if (modal_footer.length)
+             height -= modal_footer.outerHeight()+3;
+          
+          modal_dialog.find('.modal-body.scrollable').height(height);
+  
+      };
+      
+      $(window).bind('resize modal.open', fn);
+      scope.$on('$destroy', function () {
+        $(window).unbind('resize modal.open', fn);
+      });
+    }
+  }
+})
+.directive('displayImage', function () {
     return {
       scope : {
         image : '=displayImage'

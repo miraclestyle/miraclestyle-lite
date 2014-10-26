@@ -2,15 +2,15 @@
 
 angular.module('app').factory('errorHandling', function($modal) {
   var translations = {
-    'action_denied' : function(reason) {
+    action_denied : function(reason) {
       return 'You do not have permission to perform this action.';
     },
-    'invalid_model' : 'You have requested access to resource that does not exist',
-    'invalid_action' : 'You have requested access to the action that does not exist',
-    'required' : function(fields) {
+    invalid_model : 'You have requested access to resource that does not exist',
+    invalid_action : 'You have requested access to the action that does not exist',
+    required : function(fields) {
       return 'Some values are missing: ' + fields.join(', ');
     },
-    'transaction' : function(reason) {
+    transaction : function(reason) {
 
       if (reason == 'timeout') {
         return 'Transaction was not completed due timeout. Please try again.';
@@ -24,9 +24,10 @@ angular.module('app').factory('errorHandling', function($modal) {
       var possible = translations[k];
       if (angular.isString(possible)) {
         return possible;
-      } else {
+      } else if (angular.isFunction(possible)){
         return possible(v);
       }
+      return v;
     },
     modal : function(errors) {
       $modal.open({
@@ -269,9 +270,27 @@ angular.module('app').factory('errorHandling', function($modal) {
 
 }).factory('modelMeta', function(model_info) {
 
-  var modelMeta = {};
+  var modelMeta = {},
+      standardize = function (fields)
+      {
+        angular.forEach(fields, function (field, field_key) {
+          if (field.ui === undefined)
+          {
+            field.ui = {};
+          }
+          if (field.code_name === null)
+          {
+            field.code_name = field_key;
+          }
+          if (field.modelclass !== undefined)
+          {
+            standardize(field.modelclass);
+          }
+        });
+        
+      };
 
-  modelMeta.friendly_action_name = function(kind, action_key) {
+  modelMeta.friendlyActionName = function(kind, action_key) {
 
     var info = this.get(kind);
     if (info === undefined) {
@@ -287,6 +306,34 @@ angular.module('app').factory('errorHandling', function($modal) {
     });
 
     return friendly_action_name;
+  };
+  
+  modelMeta.getModelFields = function (kind_id)
+  {
+    if (!angular.isDefined(kind_id))
+    {
+      console.error('provided kind id is not acceptable, got: ' + kind_id);
+    }
+    var info = this.get(kind_id);
+    if (!angular.isDefined(info))
+    {
+      console.error('could not find meta info for kind ' + kind_id);
+    }
+    var fields = angular.copy(info.fields);
+ 
+    standardize(fields);
+       
+    return fields;
+  };
+  
+  
+  modelMeta.getActionArguments = function (kind_id, action)
+  {
+    var fields = angular.copy(this.get(kind_id).mapped_actions[action]['arguments']);
+ 
+    standardize(fields);
+       
+    return fields;
   };
 
   modelMeta.get = function(kind_id) {
@@ -304,12 +351,6 @@ angular.module('app').factory('errorHandling', function($modal) {
 
     angular.forEach(kind._actions, function(action) {
       actions[action.id] = action;
-      angular.forEach(action.arguments, function(arg, key) {
-        if (arg.code_name === null || arg.name === null) {
-          // fixup codename
-          arg.code_name = key;
-        }
-      });
     });
 
     var data = {
@@ -330,7 +371,7 @@ angular.module('app').factory('errorHandling', function($modal) {
 
   var ruleEngine = {
     run : function(entity) {
-      var actions = {}, inputs = {}, kind_info = modelMeta.get(entity.kind);
+      var actions = {}, inputs = {}, kind_info = modelMeta.getModelFields(entity.kind);
       var rule_action_permissions = entity._action_permissions;
       if (rule_action_permissions === undefined) {
         return undefined;
@@ -356,7 +397,8 @@ angular.module('app').factory('errorHandling', function($modal) {
         }
         config.action[value.id]['executable'] = executable(key);
 
-        angular.forEach(value.arguments, function(argument_value, argument_key) {
+        angular.forEach(value.arguments, function(argument_value) {
+          var argument_key = argument_value.code_name;
           if (!config.input[value.id]) {
             config.input[value.id] = {};
           }
@@ -378,13 +420,13 @@ angular.module('app').factory('errorHandling', function($modal) {
         entities[i] = entityUtil.normalize(entity);
       });
     },
-    normalize : function(entity, fields, parent, subentity_field_key, subentity_position) {
+    normalize : function(entity, fields, parent, subentity_field_key, subentity_position, noui) {
       if (entity.ui && entity.ui.normalized) {
         return;
       }
-      var info = modelMeta.get(entity.kind);
-      if (fields !== undefined) {
-        info.fields = fields;
+ 
+      if (fields === undefined) {
+        fields = modelMeta.getModelFields(entity.kind);
       }
 
       entity.toJSON = function() {
@@ -400,6 +442,10 @@ angular.module('app').factory('errorHandling', function($modal) {
 
         return copy;
       };
+      
+      if (noui === undefined)
+      {
+ 
 
       entity.ui = {};
       entity.ui.normalized = true;
@@ -457,9 +503,12 @@ angular.module('app').factory('errorHandling', function($modal) {
         entity.ui.rule.action = parent.ui.rule.action;
         entity.ui.rule.field = parent.ui.rule.field[subentity_field_key];
       }
+      
+             
+      }
 
-      angular.forEach(info.fields, function(field, field_key) {
-        var defaults = field['default'], value = entity[field_key];
+      angular.forEach(fields, function(field) {
+        var defaults = field['default'], value = entity[field.code_name];
         if (field.type == 'SuperDateTimeProperty' && !defaults) {
           defaults = new Date();
 
@@ -470,13 +519,13 @@ angular.module('app').factory('errorHandling', function($modal) {
 
         if ((value === undefined || value === null)) {
           if ((defaults !== null && defaults !== undefined)) {
-            entity[field_key] = defaults;
+            entity[field.code_name] = defaults;
           }
         }
         if (field.is_structured) {
           if (field.repeated) {
             angular.forEach(value, function(subentity, i) {
-              entityUtil.normalize(subentity, field.modelclass, entity, field_key, i);
+              entityUtil.normalize(subentity, field.modelclass, entity, field.code_name, i);
             });
           } else {
 
@@ -484,10 +533,10 @@ angular.module('app').factory('errorHandling', function($modal) {
                 value = {
                   kind : field.modelclass_kind
                 };
-                entity[field_key] = value;
+                entity[field.code_name] = value;
               }
            
-              entityUtil.normalize(value, field.modelclass, entity, field_key);
+              entityUtil.normalize(value, field.modelclass, entity, field.code_name, undefined, noui);
 
             }
           }
@@ -565,35 +614,22 @@ function($httpProvider) {
         showCancel : true,
         closeAfterSave : false,
         action : 'update',
-        excludeFields : [],
         templateBodyUrl : 'entity/modal_editor_default_body.html',
         templateFooterUrl : 'entity/modal_editor_default_footer.html',
         scope : {},
         init : function() {
         },
         defaultInit : function($scope) {
-          var cfg = $scope.config;
-          if (!cfg.fields) {
-            cfg.fields = [];
-            var info = modelMeta.get($scope.entity.kind);
-            angular.forEach(info.fields, function(prop, prop_key) {
-              cfg.fields.push(prop);
-            });
-          }
-
-          cfg.keyedFields = {};
-          angular.forEach(cfg.fields, function(field) {
-            cfg.keyedFields[field.code_name] = field;
-          });
+          
 
         },
         actions : [],
         defaultActions : [],
         defaultArgumentLoader : function($scope) {
           // by default argument loader will attempt to extract the argument data from the current entity
-          var entityCopy = angular.copy($scope.entity), info = modelMeta.get($scope.config.kind), args = {};
+          var entityCopy = angular.copy($scope.entity), actionArguments = modelMeta.getActionArguments($scope.config.kind, $scope.config.action), args = {};
 
-          angular.forEach(info.mapped_actions[$scope.config.action].arguments, function(arg, arg_key) {
+          angular.forEach(actionArguments, function(arg, arg_key) {
             var val = entityCopy[arg_key];
             if (val === undefined) {
               val = arg['default'];
@@ -615,17 +651,25 @@ function($httpProvider) {
 
       $.extend(true, config, new_config);
 
-      if (config.fields === undefined && config.kind !== undefined && config.action !== undefined) {
+      if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
         config.fields = [];
-        var kind = config.kind, info = modelMeta.get(kind);
-        angular.forEach(info.mapped_actions[config.action].arguments, function(prop, prop_key) {
-          if ($.inArray(prop_key, config.excludeFields) === -1) {
-            config.fields.push(prop);
+        var actionArguments = modelMeta.getActionArguments(config.kind, config.action);
+        
+        angular.forEach(actionArguments, function (field) {
+          if (angular.isDefined(config.excludeFields) && $.inArray(field.code_name, config.excludeFields) !== -1) {
+            return;
           }
+          config.fields.push(field);
         });
 
       }
-
+      
+      config.keyedFields = {};
+      angular.forEach(config.fields, function(field) {
+          config.keyedFields[field.code_name] = field;
+      });
+      
+   
       console.log('entityManager.config', config);
 
       var entityManagerInstance = {

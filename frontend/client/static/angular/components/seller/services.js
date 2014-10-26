@@ -9,9 +9,12 @@ function(endpoint, $window, entityManager, modelMeta) {
    sellerEntity = {
     settings : function (account_key)
     {
+      var fields = modelMeta.getActionArguments(kind, 'update');
+      fields._content.ui.label = false;
       var config = {
         kind : kind,
         action : 'update',
+        fields : fields,
         excludeFields : ['account', 'read_arguments'],
         templateBodyUrl : 'seller/settings.html',
         argumentLoader : function ($scope)

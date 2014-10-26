@@ -1884,6 +1884,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
           if (!element[0].querySelectorAll('[autofocus]').length) {
             element[0].focus();
           }
+          
+          $(window).trigger('modal.open');
         });
 
         scope.close = function (evt) {

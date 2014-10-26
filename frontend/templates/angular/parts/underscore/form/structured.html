@@ -1,5 +1,7 @@
+<% if (config.ui.label !== false) { %>
 <div class="structured-field">
   <h2 class="fieldset with-button">
+
   <span class="fieldset-text"><%= config.ui.compiled.label %></span>
   <% if (config.repeated) { %>
   <span class="fieldset-button">
@@ -9,6 +11,7 @@
   </span>
   <% } %>
 </h2>
+<% } %>
 <% if (config.repeated) { %>
     <table class="table">
           <thead>

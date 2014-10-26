@@ -1,13 +1,14 @@
 angular.module('app').factory('accountEntity', 
 function(endpoint, $window, entityManager, modelMeta) {
+  var kind = '11';
   var accountEntity = {
     settings : function (account_key)
     {
-      var info = modelMeta.get('11');
-      var primary_email = angular.copy(info.mapped_actions.update.arguments.primary_email);
+      var info = modelMeta.getActionArguments(kind, 'update');
+      var primary_email = info.primary_email;
 
       var config = {
-        kind : '11',
+        kind : kind,
         templateBodyUrl : 'account/settings.html',
         argumentLoader : function ($scope)
         {
@@ -57,7 +58,7 @@ function(endpoint, $window, entityManager, modelMeta) {
     },
     logout : function (account_key)
     {
-      endpoint.post('logout', '11', {
+      endpoint.post('logout', kind, {
         key : account_key
       }).then(function(response) {
           endpoint.invalidate_cache('current_account');

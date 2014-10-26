@@ -13,24 +13,7 @@ from plugins.base import *
 from plugins.location import *
 
 
-__all__ = ['Country', 'CountrySubdivision', 'Address', 'Location', 'get_location']
-
-
-def get_location(location):
-  if isinstance(location, orm.Key):
-    location = location.get()
-  location_country = location.country.get()
-  location_region = location.region.get()
-  return Location(name=location.name,
-                  country=location_country.name,
-                  country_code=location_country.code,
-                  region=location_region.name,
-                  region_code=location_region.code,
-                  city=location.city,
-                  postal_code=location.postal_code,
-                  street=location.street,
-                  email=location.email,
-                  telephone=location.telephone)
+__all__ = ['Country', 'CountrySubdivision']
 
 
 class Country(orm.BaseModel):
@@ -172,52 +155,3 @@ class CountrySubdivision(orm.BaseModel):
         ]
       )
     ]
-
-
-class Address(orm.BaseExpando):
-  
-  _kind = 14
-  
-  _use_rule_engine = False
-  
-  name = orm.SuperStringProperty('1', required=True, indexed=False)
-  country = orm.SuperKeyProperty('2', kind='12', required=True, indexed=False)
-  city = orm.SuperStringProperty('3', required=True, indexed=False)
-  postal_code = orm.SuperStringProperty('4', required=True, indexed=False)
-  street = orm.SuperStringProperty('5', required=True, indexed=False)
-  default_shipping = orm.SuperBooleanProperty('6', required=True, default=True, indexed=False)
-  default_billing = orm.SuperBooleanProperty('7', required=True, default=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'region': orm.SuperKeyProperty('8', kind='13'),
-    'email': orm.SuperStringProperty('9'),
-    'telephone': orm.SuperStringProperty('10')
-    }
-  
-  _virtual_fields = {
-    '_country': orm.SuperReferenceStructuredProperty('12', autoload=True, target_field='country'),
-    '_region': orm.SuperReferenceStructuredProperty('13', autoload=True, target_field='region')
-  }
-
-
-class Location(orm.BaseExpando):
-  
-  _kind = 15
-  
-  name = orm.SuperStringProperty('1', required=True, indexed=False)
-  country = orm.SuperStringProperty('2', required=True, indexed=False)
-  country_code = orm.SuperStringProperty('3', required=True, indexed=False)
-  city = orm.SuperStringProperty('4', required=True, indexed=False)
-  postal_code = orm.SuperStringProperty('5', required=True, indexed=False)
-  street = orm.SuperStringProperty('6', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'region': orm.SuperStringProperty('7'),
-    'region_code': orm.SuperStringProperty('8'),
-    'email': orm.SuperStringProperty('9'),
-    'telephone': orm.SuperStringProperty('10')
-    }

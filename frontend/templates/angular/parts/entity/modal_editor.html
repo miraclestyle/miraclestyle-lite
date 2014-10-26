@@ -1,6 +1,7 @@
+<div fit-in-dialog>
 <form name="container.form" ng-upload="complete(content)" method="post" action="{{container.action}}">
   <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
-  <div fit-in-dialog class="modal-body scrollable">
+  <div class="modal-body scrollable">
   <div class="modal-body-inner">
       <div ng-include="config.templateBodyUrl"></div>
   </div>
@@ -11,3 +12,4 @@
   </div>
   
 </form>
+</div>

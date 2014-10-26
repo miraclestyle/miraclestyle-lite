@@ -49,7 +49,7 @@ class OrderInit(orm.BaseModel):
       order.seller_reference = seller_key
       seller = seller_key.get()
       seller.read() # read locals
-      order.seller_address = get_location(seller.address.value)
+      order.seller_address = seller.address.value.get_location()
     else:
       order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
     context._order = order
@@ -291,7 +291,7 @@ class AddressRule(orm.BaseModel):
       default_address = valid_addresses[order_address_reference]
     if default_address:
       setattr(order, address_reference_key, default_address.key)
-      setattr(order, address_key, get_location(default_address))
+      setattr(order, address_key, default_address.get_location())
       context.output[default_address_key] = default_address
     else:
       raise PluginError('no_address_found')

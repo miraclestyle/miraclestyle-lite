@@ -13,14 +13,78 @@ from plugins.base import *
 from models.location import *
 from plugins.buyer import *
 
-__all__ = ['Buyer']
+__all__ = ['Buyer', 'BuyerAddress', 'BuyerLocation']
+
+
+class BuyerLocation(orm.BaseExpando):
+  
+  _kind = 121
+  
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  country = orm.SuperStringProperty('2', required=True, indexed=False)
+  country_code = orm.SuperStringProperty('3', required=True, indexed=False)
+  city = orm.SuperStringProperty('4', required=True, indexed=False)
+  postal_code = orm.SuperStringProperty('5', required=True, indexed=False)
+  street = orm.SuperStringProperty('6', required=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'region': orm.SuperStringProperty('7'),
+    'region_code': orm.SuperStringProperty('8'),
+    'email': orm.SuperStringProperty('9'),
+    'telephone': orm.SuperStringProperty('10')
+    }
+
+
+class BuyerAddress(orm.BaseExpando):
+  
+  _kind = 14
+  
+  _use_rule_engine = False
+  
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  country = orm.SuperKeyProperty('2', kind='12', required=True, indexed=False)
+  city = orm.SuperStringProperty('3', required=True, indexed=False)
+  postal_code = orm.SuperStringProperty('4', required=True, indexed=False)
+  street = orm.SuperStringProperty('5', required=True, indexed=False)
+  default_shipping = orm.SuperBooleanProperty('6', required=True, default=True, indexed=False)
+  default_billing = orm.SuperBooleanProperty('7', required=True, default=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'region': orm.SuperKeyProperty('8', kind='13'),
+    'email': orm.SuperStringProperty('9'),
+    'telephone': orm.SuperStringProperty('10')
+    }
+  
+  _virtual_fields = {
+    '_country': orm.SuperReferenceStructuredProperty('12', autoload=True, target_field='country'),
+    '_region': orm.SuperReferenceStructuredProperty('13', autoload=True, target_field='region')
+  }
+  
+  def get_location(self):
+    location = self
+    location_country = location.country.get()
+    location_region = location.region.get()
+    return BuyerLocation(name=location.name,
+                    country=location_country.name,
+                    country_code=location_country.code,
+                    region=location_region.name,
+                    region_code=location_region.code,
+                    city=location.city,
+                    postal_code=location.postal_code,
+                    street=location.street,
+                    email=location.email,
+                    telephone=location.telephone)
 
 
 class Buyer(orm.BaseExpando):
   
   _kind = 19
   
-  addresses = orm.SuperLocalStructuredProperty(Address, '1', repeated=True)
+  addresses = orm.SuperLocalStructuredProperty(BuyerAddress, '1', repeated=True)
   
   _default_indexed = False
   
@@ -43,7 +107,7 @@ class Buyer(orm.BaseExpando):
       key=orm.Action.build_key('19', 'update'),
       arguments={
         'account': orm.SuperKeyProperty(kind='11', required=True),
-        'addresses': orm.SuperLocalStructuredProperty(Address, repeated=True),
+        'addresses': orm.SuperLocalStructuredProperty(BuyerAddress, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
