@@ -173,7 +173,7 @@ angular.module('app').factory('errorHandling', function($modal) {
         return endpoint.cached(cache_id, action, model, data, compiled[1]);
       }
       angular.extend(defaults, compiled[1]);
-      defaults['data'] = compiled[0];
+      defaults.data = compiled[0];
       return $http(defaults);
     },
     get : function(action, model, data, config) {
@@ -332,7 +332,17 @@ angular.module('app').factory('errorHandling', function($modal) {
   
   modelMeta.getActionArguments = function (kind_id, action)
   {
-    var fields = angular.copy(this.get(kind_id).mapped_actions[action]['arguments']);
+    var info = this.get(kind_id);
+    if (!angular.isDefined(info))
+    {
+      return undefined;
+    }
+    var action = info.mapped_actions[action];
+    if (!angular.isDefined(action))
+    {
+      return undefined;
+    }
+    var fields = angular.copy(action['arguments']);
  
     standardize(fields);
        
@@ -775,4 +785,650 @@ function($httpProvider) {
 
   return entityManager;
 
+}).factory('formInputTypes', function (underscoreTemplate, $timeout, endpoint, modelMeta, $q, $filter, $modal, helpers, $parse, errorHandling) {
+  
+  
+  var inflector = $filter('inflector'), formInputTypes = {
+    Custom : function (info)
+    {
+      if (info.config.init !== undefined)
+      info.config.init(info);
+      
+      return info.config.template;
+    },
+    SuperStringProperty : function(info) {
+      var config = info.config;
+      if (config.ui.attrs.type === undefined) {
+        config.ui.attrs.type = 'text';
+      }
+      
+      if (config.choices) {
+        return 'select';
+      }
+      
+      if (info.config.repeated)
+      {
+        info.config.ui.attrs['repeated-text'] = '';
+        return 'text';
+      }
+      
+      return 'string';
+    },
+    SuperFloatProperty : function(info) {
+      var config = info.config;
+
+      if (config.choices) {
+        return 'select';
+      }
+
+      if (config.ui.attrs.type === undefined) {
+        //config.ui.attrs.type = 'number';
+      }
+      return this.SuperStringProperty(info);
+    },
+    SuperIntegerProperty : function(info) {
+      var config = info.config;
+
+      if (config.choices) {
+        return 'select';
+      }
+      
+      return this.SuperFloatProperty(info);
+    },
+    SuperDecimalProperty : function(info) {
+      var config = info.config;
+      if (config.choices) {
+        return 'select';
+      }
+      return this.SuperFloatProperty(info);
+    },
+    SuperBooleanProperty : function(info) {
+      var config = info.config;
+      return 'boolean';
+    },
+    SuperKeyProperty : function(info) {
+      var config = info.config, internalConfig = info.config.ui.specifics.internalConfig,
+      defaultInternalConfig = {
+            search : {
+              cache_results : {
+                'default' : true,
+                '13' : false
+              },
+              propsFilter_results : {
+                'default' : '{name: $select.search}',
+                '12' : '{name: $select.search, code: $select.search}'
+              },
+              view : {
+                'default' : function(result) {
+                  if (result === undefined) {
+                    return '';
+                  }
+                  return result.name;
+                }
+              },
+              queryfilter : {
+                '13' : function (term, info, search_action)
+                {
+                  var args = info.scope.$eval(info.config.ui.parentArgs);
+                  if ((args && args.country))
+                  {
+                
+                    return {
+                      search : {
+                         ancestor : args.country,
+                         filters : [{
+                           value : true,
+                           field : 'active',
+                           operator : '=='
+                         }],
+                         orders : [{field: 'name', operator: 'asc'}],
+                      }
+                    };
+                  }
+                  
+                  return false;
+                  
+                }
+              }
+            }
+          };
+      
+      if (!angular.isDefined(internalConfig))
+      {
+        info.config.ui.specifics.internalConfig = defaultInternalConfig;
+        internalConfig = defaultInternalConfig;
+      }
+      else
+      {
+        $.extend(true, defaultInternalConfig, internalConfig);
+        internalConfig = defaultInternalConfig;
+        info.config.ui.specifics.internalConfig = internalConfig;
+        
+      }
+      
+      if (config.kind)
+      {
+        
+        var propsFilter = internalConfig.search.propsFilter_results[config.kind];
+        if (!propsFilter) {
+          propsFilter = internalConfig.search.propsFilter_results['default'];
+        }
+        config.ui.specifics.propsFilter = propsFilter;
+        
+      }
+       
+
+      if (!config.ui.specifics.view) {
+        config.ui.specifics.view = function(result) {
+          var fn = internalConfig.search.view[config.kind];
+          if (!fn) {
+            fn = internalConfig.search.view['default'];
+          }
+
+          return fn(result);
+        };
+      }
+
+      if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(config.ui.specifics.entities)) {
+
+        var action_search = modelMeta.getActionArguments(config.kind, 'search'), cache_hit, cache_key = 'search_results_' + config.kind, should_cache = false, search_command, skip_search_command = false;
+
+        if (action_search !== undefined) {
+          var cache_option = internalConfig.search.cache_results[config.kind];
+          if (cache_option !== undefined && cache_option != false) {
+            if (angular.isFunction(cache_option))
+            {
+              cache_key = cache_key + cache_option(info);
+            }
+            should_cache = cache_key;
+          }
+          else if (cache_option != false)
+          {
+            should_cache = internalConfig.search.cache_results['default'];
+            if (should_cache === true)
+            {
+              should_cache = cache_key;
+            }
+          }
+   
+          search_command = function(term) {
+            var params = action_search.search['default'], fn = internalConfig.search.queryfilter[config.kind], args = {};
+            if (angular.isFunction(fn)) {
+              args = fn(term, info, action_search);
+            } else {
+              args = {
+                search : params
+              };
+            }
+            if (args === false)
+            {
+              return false;
+            }
+            endpoint.post('search', config.kind, args, {
+              cache : should_cache
+            }).then(function(response) {
+              config.ui.specifics.entities = response.data.entities;
+            });
+          };
+
+          if (config.ui.specifics.entities === undefined && should_cache !== false) {
+            search_command();
+          }
+          
+            if (should_cache === false) {
+            config.ui.specifics.search = function(term) {
+              search_command(term);
+            };
+          }
+
+        } else {
+          console.error('No search action found in kind: ' + config.kind);
+        }
+   
+      
+
+      }
+      return 'select_async';
+    },
+
+    SuperLocalStructuredProperty : function(info) {
+      var config = info.config, fields = [], beforeSave, modelFields, defaultFields, noSpecifics, afterSave, listFields = [];
+     
+      beforeSave = config.ui.specifics.beforeSave;
+      afterSave = config.ui.specifics.afterSave;
+      noSpecifics = !angular.isDefined(config.ui.specifics);
+      modelFields = modelMeta.getModelFields(config.modelclass_kind);
+      
+      defaultFields = _.toArray(modelFields);
+      defaultFields = defaultFields.sort(helpers.fieldSorter);
+      
+      if (noSpecifics || !config.ui.specifics.fields)
+      { 
+        config.ui.specifics.fields = defaultFields;
+      }
+      
+      if (noSpecifics || !config.ui.specifics.listFields)
+      {
+     
+        angular.forEach(defaultFields, function (field) {
+          if (!noSpecifics && (config.ui.specifics.excludeListFields && $.inArray(field.code_name, config.ui.specifics.excludeListFields) !== -1))
+          {
+            return;
+          }
+          
+          listFields.push({
+              key : field.code_name,
+              generated : true,
+              label : (field.ui && field.ui.label ? field.ui.label : inflector(field.code_name, 'humanize'))
+            });
+        });
+  
+        if (!noSpecifics && angular.isDefined(config.ui.specifics.onlyListFields))
+        {
+            var newListFields = [];
+            angular.forEach(config.ui.specifics.onlyListFields, function (key) {
+              var find = _.findWhere(listFields, {key : key});
+              if (find)
+              {
+                newListFields.push(find);
+              }
+            });
+            
+            listFields = newListFields;
+        }
+        
+      }
+ 
+      var defaults = {
+        listFields : listFields,
+        fields : fields,
+        addNewText : 'Add',
+        addText : '{{config.ui.specifics.addNewText}}'
+      };
+  
+      // merge defaults into the 
+      angular.forEach(defaults, function(value, key) {
+        if (config.ui.specifics[key] === undefined) {
+          config.ui.specifics[key] = value;
+        }
+      });
+      
+      config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
+      config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+ 
+      
+      config.ui.specifics.formBuilder = [];
+      angular.forEach(config.ui.specifics.fields, function(field) {
+        var copyWritable = angular.copy(config.ui.writable);
+        
+        if (angular.isArray(copyWritable))
+        {
+          copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
+        }
+        
+        field.ui.formName = field.ui.formName + '_' + config.ui.formName;
+        field.ui.writable = copyWritable;
+        config.ui.specifics.formBuilder.push(field);
+      });
+      
+      if (!config.repeated)
+      {
+        config.ui.specifics.SingularCtrl = function ($scope)
+        { 
+          $scope.args = config.ui.specifics.parentArgs;
+        };
+        
+      }
+      else
+      {
+        
+        if (config.ui.specifics.remove === undefined)
+        {
+          config.ui.specifics.remove = function(arg) {
+            arg._state = 'deleted';
+          };
+        }
+        
+        if (config.ui.specifics.manage === undefined)
+        {  
+          config.ui.specifics.manage = function(arg) {
+     
+            $modal.open({
+              template : underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
+                config : config
+              }),
+              controller : function($scope, $modalInstance, entityUtil) {
+                var is_new = false;
+  
+                $scope.config = config;
+                if (!arg) {
+                  arg = {
+                    kind : config.modelclass_kind
+                  };
+                  var length = config.ui.specifics.parentArgs.length;
+                  entityUtil.normalize(arg, config.modelclass, 
+                                  config.ui.specifics.entity, config.code_name,
+                                   length, false);
+                  is_new = true;
+                }
+                $scope.container = {};
+                $scope.args = angular.copy(arg); // entity.addreses.0.address
+                $scope.parentArgs = config.ui.specifics.parentArgs; // entity.addresses
+                $scope.entity = config.ui.specifics.entity;
+   
+                $scope.cancel = function() {
+                  $modalInstance.dismiss('cancel');
+                };
+  
+                $scope.save = function() {
+                  
+                  if (!$scope.container.form.$valid)
+                  {
+                    errorHandling.modal({
+                      required : ['field']
+                    });
+                    return;
+                  }
+                  var promise = null;
+                  if (angular.isFunction(config.ui.specifics.beforeSave))
+                  {
+                    promise = config.ui.specifics.beforeSave($scope, info);
+                  }
+                  
+                  var complete = function ()
+                  {
+                    var promise = null;
+                    
+                    if (config.repeated) {
+                      if (is_new) {
+                        $scope.parentArgs.push($scope.args);
+                      } else {
+                        helpers.update(arg, $scope.args);
+                      }
+                    }
+                     
+                    if (angular.isFunction(config.ui.specifics.afterSave))
+                    {
+                      promise = config.ui.specifics.afterSave($scope, info);
+                    }
+                    
+                    if (promise && promise.then)
+                    {
+                      promise.then(function () {
+                        $scope.cancel();
+                      });
+                    }
+                    else
+                    {
+                      $scope.cancel();
+                    }
+     
+                  };
+                  
+                  if (promise && promise.then)
+                  {
+                    promise.then(complete);
+                  }
+                  else
+                  {
+                    complete();
+                  }
+                    
+                };
+  
+              }
+            });
+          };
+            
+        }
+      }
+    
+      return 'structured';
+    },
+    SuperStructuredProperty : function(info) {
+      return this.SuperLocalStructuredProperty(info);
+    },
+    SuperRemoteStructuredProperty : function(info) {
+      // remote structured is missing here... @todo
+      return this.SuperLocalStructuredProperty(info);
+    },
+    SuperImageLocalStructuredProperty : function(info) {
+      info.scope.$on('ngUploadCompleteImageUpload', function ($event, content) {
+         if (!content || content.errors)
+         {
+           errorHandling.modal(content.errors);
+         }
+         else
+         {
+           if (info.config.repeated)
+           {
+             
+             var path = info.scope.entity.root_access().split('.');
+             path.splice(path.length-1, 1);
+             var getter = $parse(path.join('.')),
+                 setter = getter.assign;
+             
+             var list = getter(info.scope.entity.root());
+             var new_entities = getter(content.entity);
+             list.push(new_entities);
+             
+           }
+           
+         }
+         
+      });
+      return 'image';
+    },
+    SuperTextProperty : function(info) {
+      if (info.config.repeated)
+      {
+        info.config.ui.attrs['repeated-text'] = '';
+      }
+      return 'text';
+    },
+    SuperJsonProperty : function(info) {
+      info.config.ui.attrs['json-only'] = '';
+      return this.SuperTextProperty(info);
+    },
+    SuperDateTimeProperty : function(info) {
+      return 'datetime';
+    },
+    SuperPluginStorageProperty : function (info)
+    {
+      var config = info.config,
+      kinds = $.map(config.kinds, function (kind_id) {
+          var name = modelMeta.getModelName(kind_id);
+          return {
+            key : kind_id,
+            name : name
+          };
+       }),
+      defaultSpecifics = {
+        showType : function (kind)
+        {
+          return _.findWhere(kinds, {key : kind}).name;
+        },
+        kind : undefined,
+        selectKinds : {
+          type : 'SuperKeyProperty',
+          ui : {
+            specifics : {
+              entities : kinds
+            },
+            args : 'info.kind',
+            label : 'Configuration',
+            attrs : {
+              'ng-change' : 'setNewArg()'
+            },
+            writable : true
+          },
+          code_name : 'kind'
+        },
+        remove : function(arg) {
+           config.ui.specifics.parentArgs.remove(arg);
+        },
+        manage : function(arg) {
+     
+            $modal.open({
+              template : underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/plugins.html')({
+                config : config
+              }),
+              controller : function($scope, $modalInstance, entityUtil) {
+                var is_new = false;
+                
+                if (!arg)
+                {
+                  arg = {};
+                } 
+                $scope.info = {
+                  build : true
+                };
+                $scope.config = config;
+                $scope.setNewArg = function ()
+                { 
+                  if ($scope.info.kind !== 0 && $scope.args.kind != $scope.info.kind)
+                  {
+                    arg = {
+                      kind : $scope.info.kind
+                    };
+                    var length = config.ui.specifics.parentArgs.length;
+                    entityUtil.normalize(arg, undefined, 
+                                    config.ui.specifics.entity, config.code_name,
+                                     length, false);
+                    is_new = true;
+                    
+                    $scope.args = arg;
+                    $scope.getFormBuilder();
+                    $scope.info.build = false;
+                    
+                     $timeout(function () {
+                       $scope.info.build = true;
+                       $scope.$apply();
+                      }, 300);
+                    
+                  }
+                }
+             
+                $scope.pluginTemplate = 'seller/plugins/default.html';
+                $scope.formBuilder = [];
+                $scope.getFormBuilder = function ()
+                {
+                  $scope.formBuilder = [];
+                  var kind = $scope.info.kind,
+                      settingsFields = config.ui.specifics.fields, fields = modelMeta.getModelFields(kind);
+                  fields = _.toArray(fields);
+                  fields.sort(helpers.fieldSorter);
+                  if (settingsFields)
+                  {
+                    if (settingsFields[kind])
+                    {
+                      fields = settingsFields[kind];
+                    }
+                  }
+                  
+                  angular.forEach(fields, function(field) {
+                    field.ui.formName = 'plugin_' + field.code_name;
+                    field.ui.writable = true;
+                    $scope.formBuilder.push(field);
+                  });
+                };
+                
+                $scope.container = {};
+                $scope.args = angular.copy(arg); // entity.addreses.0.address
+                $scope.parentArgs = config.ui.specifics.parentArgs; // entity.addresses
+                $scope.entity = config.ui.specifics.entity;
+                
+                if ($scope.args && $scope.args.kind)
+                {
+                  $scope.info.kind = $scope.args.kind;
+                  $scope.getFormBuilder();
+             
+                }
+   
+                $scope.cancel = function() {
+                  $modalInstance.dismiss('cancel');
+                };
+  
+                $scope.save = function() {
+                  
+                  if (!$scope.container.form.$valid)
+                  { 
+                    return;
+                  }
+                  var promise = null;
+                  if (angular.isFunction(config.ui.specifics.beforeSave))
+                  {
+                    promise = config.ui.specifics.beforeSave($scope, info);
+                  }
+                  
+                  var complete = function ()
+                  {
+                     var promise = null;
+             
+                     if (is_new) {
+                        $scope.parentArgs.push($scope.args);
+                     } else {
+                        helpers.update(arg, $scope.args);
+                     }
+             
+                    if (angular.isFunction(config.ui.specifics.afterSave))
+                    {
+                      promise = config.ui.specifics.afterSave($scope, info);
+                    }
+                    
+                    if (promise && promise.then)
+                    {
+                      promise.then(function () {
+                        $scope.cancel();
+                      });
+                    }
+                    else
+                    {
+                      $scope.cancel();
+                    }
+     
+                  };
+                  
+                  if (promise && promise.then)
+                  {
+                    promise.then(complete);
+                  }
+                  else
+                  {
+                    complete();
+                  }
+                    
+                };
+  
+              }
+            });
+          }
+      };
+      
+      config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
+      config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+      
+      angular.forEach(defaultSpecifics, function (v, k) {
+        if (config.ui.specifics[k] == undefined)
+        {
+          config.ui.specifics[k] = v;
+        }
+      });
+       
+      return 'plugins';
+    }
+  };
+  
+  return formInputTypes;
+  
+}).factory('outputTypes', function (dateFilter, GLOBAL_CONFIG, modelMeta) {
+  var outputTypes = {
+    SuperDateTimeProperty : function (input, field)
+    {
+       var date = new Date(input);
+       return dateFilter(date, GLOBAL_CONFIG.dateFormat);
+    }
+  };
+  
+  return outputTypes;
 });

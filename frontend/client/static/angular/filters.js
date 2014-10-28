@@ -29,15 +29,9 @@ angular.module('app').filter('propsFilter', function() {
 
     return out;
   };
-}).filter('output', function (dateFilter, GLOBAL_CONFIG, modelMeta) {
+}).filter('output', function (modelMeta, outputTypes) {
   
-  var types = {
-    SuperDateTimeProperty : function (input, field)
-    {
-       var date = new Date(input);
-       return dateFilter(date, GLOBAL_CONFIG.dateFormat);
-    }
-  };
+  var types = outputTypes;
   
   return function (obj, key, args) {
     
