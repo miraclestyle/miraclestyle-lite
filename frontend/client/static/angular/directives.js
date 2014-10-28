@@ -49,7 +49,7 @@ angular.module('app').config(function(datepickerConfig) {
     scope : {
       ngModel : '='
     },
-    link : function(scope, element, attrs, controller) {
+    link : function(scope, element, attrs) {
 
       var toggle = attrs.toggle;
       if (!toggle)
@@ -157,54 +157,32 @@ angular.module('app').config(function(datepickerConfig) {
          order to perform regular html form submission');
         return false;
       }
-      
-      var click = function (e)
-      {
-          // stop the click if the form is invalid and schedule it for when the
-          // submission is complete to start the file dialog
-          // ...
-          
-          if (!ctrl.$valid && autoSubmit)
-          {
-            return e.preventDefault();
-          }
-      };
+  
       
       var change = function() {
  
         if (!that.val())
-          return false;
- 
-        if ((!ctrl.$valid && autoSubmit) || !autoSubmit)
         {
-          endpoint.post('blob_upload_url', '11', {
+          return false;
+        } 
+        
+        endpoint.post('blob_upload_url', '11', {
             upload_url : endpoint.url
           }).then(function(response) {
-                form.attr('action', response.data.upload_url);
-                
-                scope.$emit('prepareTheBody');
-                
-                if (autoSubmit)
-                {
-                  form.submit();
-                }
+             form.attr('action', response.data.upload_url);
           });
-        
-        }
           
       };
    
-      $(element).on('click', click)
-                .on('change', change);
+      $(element).on('change', change);
 
       scope.$on('$destroy', function() {
-        $(element).off('change', change).off('click', click);
-        
+        $(element).off('change', change);
       });
       
       scope.$on('ngUploadComplete', function ($event, content) {
          form.attr('action', endpoint.url);
-         scope.$emit('ngUploadCompleteImageUpload', content);
+         that.val('');
       });
     }
   };
@@ -241,52 +219,9 @@ angular.module('app').config(function(datepickerConfig) {
     }
   };
 })
-.directive('formInput', function($compile, underscoreTemplate, endpoint, modelMeta, $q, $filter, $modal, helpers, $parse, errorHandling) {
+.directive('formInput', function($compile, underscoreTemplate, $timeout, endpoint, modelMeta, $q, $filter, $modal, helpers, $parse, errorHandling) {
 
-  var inflector = $filter('inflector'), internalConfig = {
-    search : {
-      cache_results : {
-        'default' : true,
-        '13' : false
-      },
-      propsFilter_results : {
-        'default' : '{name: $select.search}',
-        '12' : '{name: $select.search, code: $select.search}'
-      },
-      view : {
-        'default' : function(result) {
-          if (result === undefined) {
-            return '';
-          }
-          return result.name;
-        }
-      },
-      queryfilter : {
-        '13' : function (term, info, search_action)
-        {
-          var args = info.scope.$eval(info.config.ui.parentArgs);
-          if ((args && args.country))
-          {
-        
-            return {
-              search : {
-                 ancestor : args.country,
-                 filters : [{
-                   value : true,
-                   field : 'active',
-                   operator : '=='
-                 }],
-                 orders : [{field: 'name', operator: 'asc'}],
-              }
-            };
-          }
-          
-          return false;
-          
-        }
-      }
-    }
-  }, types = {
+  var inflector = $filter('inflector'), types = {
     Custom : function (info)
     {
       if (info.config.init !== undefined)
@@ -348,12 +283,76 @@ angular.module('app').config(function(datepickerConfig) {
       return 'boolean';
     },
     SuperKeyProperty : function(info) {
-      var config = info.config;
-      var propsFilter = internalConfig.search.propsFilter_results[config.kind];
-      if (!propsFilter) {
-        propsFilter = internalConfig.search.propsFilter_results['default'];
+      var config = info.config, internalConfig = info.config.ui.specifics.internalConfig,
+      defaultInternalConfig = {
+            search : {
+              cache_results : {
+                'default' : true,
+                '13' : false
+              },
+              propsFilter_results : {
+                'default' : '{name: $select.search}',
+                '12' : '{name: $select.search, code: $select.search}'
+              },
+              view : {
+                'default' : function(result) {
+                  if (result === undefined) {
+                    return '';
+                  }
+                  return result.name;
+                }
+              },
+              queryfilter : {
+                '13' : function (term, info, search_action)
+                {
+                  var args = info.scope.$eval(info.config.ui.parentArgs);
+                  if ((args && args.country))
+                  {
+                
+                    return {
+                      search : {
+                         ancestor : args.country,
+                         filters : [{
+                           value : true,
+                           field : 'active',
+                           operator : '=='
+                         }],
+                         orders : [{field: 'name', operator: 'asc'}],
+                      }
+                    };
+                  }
+                  
+                  return false;
+                  
+                }
+              }
+            }
+          };
+      
+      if (!angular.isDefined(internalConfig))
+      {
+        info.config.ui.specifics.internalConfig = defaultInternalConfig;
+        internalConfig = defaultInternalConfig;
       }
-      config.ui.specifics.propsFilter = propsFilter;
+      else
+      {
+        $.extend(true, defaultInternalConfig, internalConfig);
+        internalConfig = defaultInternalConfig;
+        info.config.ui.specifics.internalConfig = internalConfig;
+        
+      }
+      
+      if (config.kind)
+      {
+        
+        var propsFilter = internalConfig.search.propsFilter_results[config.kind];
+        if (!propsFilter) {
+          propsFilter = internalConfig.search.propsFilter_results['default'];
+        }
+        config.ui.specifics.propsFilter = propsFilter;
+        
+      }
+       
 
       if (!config.ui.specifics.view) {
         config.ui.specifics.view = function(result) {
@@ -366,7 +365,7 @@ angular.module('app').config(function(datepickerConfig) {
         };
       }
 
-      if (!config.ui.specifics.search) {
+      if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(config.ui.specifics.entities)) {
 
         var action_search = modelMeta.getActionArguments(config.kind, 'search'), cache_hit, cache_key = 'search_results_' + config.kind, should_cache = false, search_command, skip_search_command = false;
 
@@ -435,9 +434,7 @@ angular.module('app').config(function(datepickerConfig) {
       modelFields = modelMeta.getModelFields(config.modelclass_kind);
       
       defaultFields = _.toArray(modelFields);
-      defaultFields = defaultFields.sort(function (prev, next) {
-        return parseInt(prev.name) - parseInt(next.name);
-      });
+      defaultFields = defaultFields.sort(helpers.fieldSorter);
       
       if (noSpecifics || !config.ui.specifics.fields)
       { 
@@ -497,8 +494,13 @@ angular.module('app').config(function(datepickerConfig) {
       config.ui.specifics.formBuilder = [];
       angular.forEach(config.ui.specifics.fields, function(field) {
         var copyWritable = angular.copy(config.ui.writable);
-        copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
-        field.ui.formName = copyWritable.join('_');
+        
+        if (angular.isArray(copyWritable))
+        {
+          copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
+        }
+        
+        field.ui.formName = field.ui.formName + '_' + config.ui.formName;
         field.ui.writable = copyWritable;
         config.ui.specifics.formBuilder.push(field);
       });
@@ -664,6 +666,190 @@ angular.module('app').config(function(datepickerConfig) {
     },
     SuperDateTimeProperty : function(info) {
       return 'datetime';
+    },
+    SuperPluginStorageProperty : function (info)
+    {
+      var config = info.config,
+      kinds = $.map(config.kinds, function (kind_id) {
+          var name = modelMeta.getModelName(kind_id);
+          return {
+            key : kind_id,
+            name : name
+          };
+       }),
+      defaultSpecifics = {
+        showType : function (kind)
+        {
+          return _.findWhere(kinds, {key : kind}).name;
+        },
+        kind : undefined,
+        selectKinds : {
+          type : 'SuperKeyProperty',
+          ui : {
+            specifics : {
+              entities : kinds
+            },
+            args : 'info.kind',
+            label : 'Configuration',
+            attrs : {
+              'ng-change' : 'setNewArg()'
+            },
+            writable : true
+          },
+          code_name : 'kind'
+        },
+        remove : function(arg) {
+           config.ui.specifics.parentArgs.remove(arg);
+        },
+        manage : function(arg) {
+     
+            $modal.open({
+              template : underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/plugins.html')({
+                config : config
+              }),
+              controller : function($scope, $modalInstance, entityUtil) {
+                var is_new = false;
+                
+                if (!arg)
+                {
+                  arg = {};
+                } 
+                $scope.info = {
+                  build : true
+                };
+                $scope.config = config;
+                $scope.setNewArg = function ()
+                { 
+                  if ($scope.info.kind !== 0 && $scope.args.kind != $scope.info.kind)
+                  {
+                    arg = {
+                      kind : $scope.info.kind
+                    };
+                    var length = config.ui.specifics.parentArgs.length;
+                    entityUtil.normalize(arg, undefined, 
+                                    config.ui.specifics.entity, config.code_name,
+                                     length, false);
+                    is_new = true;
+                    
+                    $scope.args = arg;
+                    $scope.getFormBuilder();
+                    $scope.info.build = false;
+                    
+                     $timeout(function () {
+                       $scope.info.build = true;
+                       $scope.$apply();
+                      }, 300);
+                    
+                  }
+                }
+             
+                $scope.pluginTemplate = 'seller/plugins/default.html';
+                $scope.formBuilder = [];
+                $scope.getFormBuilder = function ()
+                {
+                  $scope.formBuilder = [];
+                  var kind = $scope.info.kind,
+                      settingsFields = config.ui.specifics.fields, fields = modelMeta.getModelFields(kind);
+                  fields = _.toArray(fields);
+                  fields.sort(helpers.fieldSorter);
+                  if (settingsFields)
+                  {
+                    if (settingsFields[kind])
+                    {
+                      fields = settingsFields[kind];
+                    }
+                  }
+                  
+                  angular.forEach(fields, function(field) {
+                    field.ui.formName = 'plugin_' + field.code_name;
+                    field.ui.writable = true;
+                    $scope.formBuilder.push(field);
+                  });
+                };
+                
+                $scope.container = {};
+                $scope.args = angular.copy(arg); // entity.addreses.0.address
+                $scope.parentArgs = config.ui.specifics.parentArgs; // entity.addresses
+                $scope.entity = config.ui.specifics.entity;
+                
+                if ($scope.args && $scope.args.kind)
+                {
+                  $scope.info.kind = $scope.args.kind;
+                  $scope.getFormBuilder();
+             
+                }
+   
+                $scope.cancel = function() {
+                  $modalInstance.dismiss('cancel');
+                };
+  
+                $scope.save = function() {
+                  
+                  if (!$scope.container.form.$valid)
+                  { 
+                    return;
+                  }
+                  var promise = null;
+                  if (angular.isFunction(config.ui.specifics.beforeSave))
+                  {
+                    promise = config.ui.specifics.beforeSave($scope, info);
+                  }
+                  
+                  var complete = function ()
+                  {
+                     var promise = null;
+             
+                     if (is_new) {
+                        $scope.parentArgs.push($scope.args);
+                     } else {
+                        helpers.update(arg, $scope.args);
+                     }
+             
+                    if (angular.isFunction(config.ui.specifics.afterSave))
+                    {
+                      promise = config.ui.specifics.afterSave($scope, info);
+                    }
+                    
+                    if (promise && promise.then)
+                    {
+                      promise.then(function () {
+                        $scope.cancel();
+                      });
+                    }
+                    else
+                    {
+                      $scope.cancel();
+                    }
+     
+                  };
+                  
+                  if (promise && promise.then)
+                  {
+                    promise.then(complete);
+                  }
+                  else
+                  {
+                    complete();
+                  }
+                    
+                };
+  
+              }
+            });
+          }
+      };
+      
+      config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
+      config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+      
+      angular.forEach(defaultSpecifics, function (v, k) {
+        if (config.ui.specifics[k] == undefined)
+        {
+          config.ui.specifics[k] = v;
+        }
+      });
+       
+      return 'plugins';
     }
   }, utils = {
     attrs : function(config) {
@@ -692,6 +878,7 @@ angular.module('app').config(function(datepickerConfig) {
 
       if (!angular.isArray(config.ui.writable)) {
         attrs['ng-disabled'] = '!' + config.ui.writable;
+        config.ui.writableCompiled = config.ui.writable;
       }
       else
       {
@@ -711,7 +898,7 @@ angular.module('app').config(function(datepickerConfig) {
     },
     label : function(config) {
       var use = '{{config.ui.label}}';
-      if (config.label === undefined) {
+      if (config.ui.label === undefined) {
         use = '{{config.ui.autoLabel|inflector:humanize}}';
       }
       return use;
@@ -725,78 +912,85 @@ angular.module('app').config(function(datepickerConfig) {
     transclude : true,
     link : function(scope, element, attrs, ctrl) {
  
-      var supplied_config = scope.$eval(attrs.formInput), name = supplied_config.code_name, label = null;
+      var run = function (){
  
-      // use backend defined label if was provided, otherwise the label will be humanized
-      if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined)
-      {
-        label = supplied_config.verbose_name;
-      }
-      else
-      {
-        label = name;
-      }
-      
-      
-      if (!name) {
-        console.error('Your field config', supplied_config, 'has no name defined defined.');
-        return;
-      }
-      
-      var config = {
-        ui : { // root config for entire config, upper structure is ndb property definition
-          args : 'args.' + name,
-          parentArgs : 'args',
-          model : 'entity',
-          autoLabel : label,
-          specifics : {}, // used for property specific configurations
-          name : name,
-          formName : name,
-          writable : [name],
-          attrs : {}
+        var supplied_config = scope.$eval(attrs.formInput), name = supplied_config.code_name, label = null;
+   
+        // use backend defined label if was provided, otherwise the label will be humanized
+        if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined)
+        {
+          label = supplied_config.verbose_name;
         }
-      };
-
-      $.extend(true, config, supplied_config);
-      
-      if (config.ui.writableName !== undefined)
-      {
-        config.ui.writable = [config.ui.writableName];
-      }
-  
-      if (types[supplied_config.type] !== undefined) {
-        // reference main locals to type builder
-        var tpl = types[supplied_config.type]({
-          config : config,
-          element : element,
-          scope : scope,
-          attrs : attrs
-        });
-
-        // compiled variables for the template
-        config.ui.compiled = {
-          attrs : utils.attrs(config),
-          label : utils.label(config)
+        else
+        {
+          label = name;
+        }
+        
+        
+        if (!name) {
+          console.error('Your field config', supplied_config, 'has no name defined defined.');
+          return;
+        }
+        
+        var config = {
+          ui : { // root config for entire config, upper structure is ndb property definition
+            args : 'args.' + name,
+            parentArgs : 'args',
+            model : 'entity',
+            autoLabel : label,
+            specifics : {}, // used for property specific configurations
+            name : name,
+            formName : name,
+            writable : [name],
+            attrs : {}
+          }
         };
-
-        var template = underscoreTemplate.get(config.type != 'Custom' ? 'underscore/form/' + tpl + '.html' : config.template)({
-          config : config
-        });
+   
+        $.extend(true, config, supplied_config);
         
- 
+        if (config.ui.writableName !== undefined && angular.isArray(config.ui.writable))
+        {
+          config.ui.writable = [config.ui.writableName];
+        }
     
-        scope.config = config;
-
-        element.html(template);
- 
-        $compile(element.contents())(scope);
-        
-       
-      } else {
-        console.error('Field type: ' + config.type + ' is not supported yet.');
-      }
+        if (types[supplied_config.type] !== undefined) {
+          // reference main locals to type builder
+          var tpl = types[supplied_config.type]({
+            config : config,
+            element : element,
+            scope : scope,
+            attrs : attrs
+          });
+  
+          // compiled variables for the template
+          config.ui.compiled = {
+            attrs : utils.attrs(config),
+            label : utils.label(config)
+          };
+  
+          var template = underscoreTemplate.get(config.type != 'Custom' ? 'underscore/form/' + tpl + '.html' : config.template)({
+            config : config
+          });
+          
+   
+      
+          scope.config = config;
+  
+          element.html(template);
+   
+          $compile(element.contents())(scope);
+          
+         
+        } else {
+          console.error('Field type: ' + config.type + ' is not supported yet.');
+        }
+      
+      };
+      
+      run();
 
     }
+    
   };
 }).directive('compatibilityMaker', function () {
   return {
@@ -806,17 +1000,15 @@ angular.module('app').config(function(datepickerConfig) {
     { 
          var fn = function (newval, oldval) {
            if (newval === true)
-           { 
+           {
              var newval = scope.$eval(attrs.compatibilityMaker),
-                 stringify = JSON.stringify(newval);
-             scope.json_body = stringify;
+                 stringified = JSON.stringify(newval);
+             scope.json_body = stringified;
            }
          };
          
          scope.$watch('$isUploading', fn);
-         scope.$on('prepareTheBody', function () {
-           fn(true);
-         });
+  
     }
   }
 })

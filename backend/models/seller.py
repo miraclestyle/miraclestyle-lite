@@ -207,7 +207,7 @@ class Seller(orm.BaseExpando):
       arguments={
         'account': orm.SuperKeyProperty(kind='11', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'logo': SuperImageLocalStructuredProperty(Image, process_config={'measure': False, 'transform': True,
+        'logo': SuperImageLocalStructuredProperty(Image, upload=True, process_config={'measure': False, 'transform': True,
                                                                          'width': 240, 'height': 100,
                                                                          'crop_to_fit': True}),
         'address': orm.SuperLocalStructuredProperty(SellerAddress),

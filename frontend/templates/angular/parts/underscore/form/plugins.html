@@ -1,0 +1,36 @@
+ 
+<div class="structured-field">
+  <h2 class="fieldset with-button">
+
+  <span class="fieldset-text">Configurations</span>
+ 
+  <span class="fieldset-button">
+    <button ng-disabled="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.manage()">
+      Add
+    </button>
+  </span>
+ 
+</h2>
+ 
+    <table class="table">
+          <thead>
+            <tr> 
+              <th>Type</th>
+              <th></th>
+              <!-- what else to put here? -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="ent in config.ui.specifics.parentArgs track by $index">
+              <td>
+                {{config.ui.specifics.showType(ent.kind)}}
+              </td>
+              <td>
+                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
+                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+              </td>
+            </tr>
+          </tbody>
+    </table>
+ 
+</div>

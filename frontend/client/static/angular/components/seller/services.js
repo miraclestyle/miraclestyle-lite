@@ -11,6 +11,8 @@ function(endpoint, $window, entityManager, modelMeta) {
     {
       var fields = modelMeta.getActionArguments(kind, 'update');
       fields._content.ui.label = false;
+      fields._plugin_group.ui.label = false;
+ 
       var config = {
         kind : kind,
         action : 'update',

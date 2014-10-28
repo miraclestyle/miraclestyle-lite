@@ -282,6 +282,7 @@ class _BaseImageProperty(_BaseBlobProperty):
   '''
   def __init__(self, *args, **kwargs):
     self._process_config = kwargs.pop('process_config', {})
+    self._upload = kwargs.pop('upload', False)
     super(_BaseImageProperty, self).__init__(*args, **kwargs)
   
   def generate_serving_urls(self, values):
@@ -400,7 +401,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       value = [value]
     out = []
     for i, v in enumerate(value):
-      if isinstance(v, dict):
+      if isinstance(v, dict) and not self._upload:
         out.append(self._structured_property_format(v))
       else:
         if not isinstance(v, cgi.FieldStorage) and not self._required:

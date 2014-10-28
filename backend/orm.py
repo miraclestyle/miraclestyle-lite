@@ -582,6 +582,7 @@ class _BaseModel(object):
     '''
     dic = {}
     dic['_actions'] = getattr(cls, '_actions', [])
+    dic['__name__'] = cls.__name__
     dic.update(cls.get_fields())
     return dic
   

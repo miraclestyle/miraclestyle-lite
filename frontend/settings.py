@@ -95,6 +95,7 @@ ANGULAR_TEMPLATES = (
   ('entity/modal_editor_default_footer.html',),
   ('account/settings.html',),
   ('seller/settings.html',),
+  ('seller/plugins/default.html',),
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
   ('underscore/form/structured.html',),
@@ -104,6 +105,8 @@ ANGULAR_TEMPLATES = (
   ('underscore/form/text.html',),
   ('underscore/form/image.html',),
   ('underscore/form/string.html',),
+  ('underscore/form/plugins.html',),
+  ('underscore/form/modal/plugins.html',),
  
                      
   ('template/accordion/accordion-group.html',

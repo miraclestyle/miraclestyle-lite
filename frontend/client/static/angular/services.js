@@ -50,7 +50,7 @@ angular.module('app').factory('errorHandling', function($modal) {
 }).factory('helpers', function() {
 
   var helpers = {
-    always_object : function(obj) {
+    alwaysObject : function(obj) {
       if (!angular.isObject(obj)) {
         return {};
       }
@@ -83,8 +83,11 @@ angular.module('app').factory('errorHandling', function($modal) {
 
       return objects;
     },
-    resolve_defaults : function(defaults, options) {
-      options = helpers.always_object(options);
+    fieldSorter : function (prev, next) {
+      return parseInt(prev.name) - parseInt(next.name);
+    },
+    resolveDefaults : function(defaults, options) {
+      options = helpers.alwaysObject(options);
 
       angular.forEach(defaults, function(value, key) {
         if (!( key in options)) {
@@ -108,8 +111,8 @@ angular.module('app').factory('errorHandling', function($modal) {
       console.error('Invalid type of cache provided: ' + type);
     }
   }, _compile = function(action, model, data, config) {
-    config = helpers.always_object(config);
-    data = helpers.always_object(data);
+    config = helpers.alwaysObject(config);
+    data = helpers.alwaysObject(data);
 
     return [angular.extend({
       action_model : model,
@@ -335,16 +338,23 @@ angular.module('app').factory('errorHandling', function($modal) {
        
     return fields;
   };
+  
+  modelMeta.getModelName = function (kind_id)
+  {
+    var info = this.get(kind_id);
+    return info.name;
+  };
 
   modelMeta.get = function(kind_id) {
 
     var kind = model_info[kind_id], fields = {}, actions = {};
     if (kind === undefined) {
+      console.error('no info for kind ' + kind_id);
       return undefined;
     }
 
     angular.forEach(kind, function(value, key) {
-      if (key !== '_actions') {
+      if (key !== '_actions' && key !== '__name__') {
         fields[key] = value;
       }
     });
@@ -356,7 +366,8 @@ angular.module('app').factory('errorHandling', function($modal) {
     var data = {
       'actions' : kind._actions,
       'mapped_actions' : actions,
-      'fields' : fields
+      'fields' : fields,
+      'name' : kind.__name__
     };
 
     return data;
@@ -680,8 +691,8 @@ function($httpProvider) {
             };
           }
           var that = this;
-          
           endpoint.post('read', config.kind, args).then(function(response) {
+            entityUtil.normalize(response.data.entity);
             helpers.update(entity, response.data.entity);
             that.open(response.data.entity, args);
           });
@@ -689,6 +700,7 @@ function($httpProvider) {
         prepare : function(entity, args) {
           var that = this;
           endpoint.post('prepare', entity.kind, args).then(function(response) {
+            entityUtil.normalize(response.data.entity);
             helpers.update(entity, response.data.entity);
             that.open(response.data.entity, args);
           });
@@ -714,8 +726,8 @@ function($httpProvider) {
 
               $scope.args = config.argumentLoader($scope);
               // argument loader to load arguments for editing
-              $scope.args['action_id'] = config.action;
-              $scope.args['action_model'] = config.kind;
+              $scope.args.action_id = config.action;
+              $scope.args.action_model = config.kind;
               
               if (args !== undefined)
               {
