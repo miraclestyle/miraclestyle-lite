@@ -1,0 +1,7 @@
+<span ng-if="field.key == 'condition'">
+  {{val.condition_type}} {{val.condition_operator}} {{val.condition_value}}
+</span>
+
+<span ng-if="field.key == 'price'">
+  {{val.price_type}} <span ng-if="val.price_type !== 'fixed'">{{val.price_operator}}</span> {{val.price_value}}
+</span>

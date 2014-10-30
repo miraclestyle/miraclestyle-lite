@@ -1,0 +1,5 @@
+{{val.name}}<br ng-if="notEmpty(val.name)" />
+{{val.street}}<br ng-if="notEmpty(val.street)" />
+{{val.city}} {{val._region.name}} {{val.postal_code}}
+<br ng-if="notEmpty(val.city) || notEmpty(val._region.name) || notEmpty(val.postal_code)" />
+{{val._country.name}}<br ng-if="notEmpty(val._country_name)" />

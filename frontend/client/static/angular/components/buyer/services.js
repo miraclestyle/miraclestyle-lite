@@ -21,8 +21,7 @@ angular.module('app').run(function($window, modelsEditor, modelsMeta, $q, models
             
      
               var updated_address = $scope.args; 
-              if ((!updated_address._region && updated_address.region)
-                   || (updated_address._region && angular.isDefined(updated_address._region.key) && updated_address._region.key !== updated_address.region))
+              if (updated_address.region && (!updated_address._region || (updated_address.region !== updated_address._region.key)))
               {
                 var promise = models['13'].get(updated_address.region);
                 
@@ -37,8 +36,7 @@ angular.module('app').run(function($window, modelsEditor, modelsMeta, $q, models
                 promises.push(promise);
               }
               
-              if ((!updated_address._country && updated_address.country) 
-                    || (updated_address._country && angular.isDefined(updated_address._country.key) && updated_address._country.key !== updated_address.country))
+              if (updated_address.country && (!updated_address._country || (updated_address.country !== updated_address._country.key)))
               {
                 var promise = models['12'].actions.search(undefined, {
                   cache : true

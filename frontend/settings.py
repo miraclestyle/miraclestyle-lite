@@ -95,7 +95,11 @@ ANGULAR_TEMPLATES = (
   ('entity/modal_editor_default_footer.html',),
   ('account/settings.html',),
   ('seller/settings.html',),
-  ('seller/plugins/default.html',),
+  ('seller/plugin/default.html',),
+  ('seller/directive/carrier_line_rule_display.html',),
+  ('seller/directive/address_rule_location_display.html',),
+  ('buyer/directive/buyer_address_display.html',),
+  
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
   ('underscore/form/structured.html',),
