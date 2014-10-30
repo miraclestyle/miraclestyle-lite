@@ -2,12 +2,12 @@
 angular.module('app').constant('LOGIN_PROVIDERS', {
   '1' : 'Google',
   '2' : 'Facebook'
-}).controller('LoginLinksCtrl', function($scope, endpoint, current_account) {
+}).controller('LoginLinksCtrl', function($scope, endpoint, currentAccount, models) {
 
   $scope.authorization_urls = {};
 
-  if (current_account._is_guest) {
-    endpoint.post('login', '11', {
+  if (currentAccount._is_guest) {
+    models['11'].actions.login({
       login_method : 'google'
     }).then(function(response) {
       $scope.authorization_urls = response.data.authorization_urls;
@@ -15,17 +15,17 @@ angular.module('app').constant('LOGIN_PROVIDERS', {
   }
 
   $scope.login = function(type) {
-    endpoint.invalidate_cache('current_account');
+    endpoint.invalidate_cache('currentAccount');
     window.location.href = $scope.authorization_urls[type];
   };
 
-}).controller('AccountManagementCtrl', function($scope, current_account, accountEntity) {
+}).controller('AccountManagementCtrl', function($scope, currentAccount, models) {
 
   $scope.settings = function() {
-    accountEntity.settings(current_account.key);
+    models['11'].settingsModal(currentAccount.key);
   };
 
   $scope.logout = function() {
-    accountEntity.logout(current_account.key);
+    models['11'].logout(currentAccount.key);
   };
 });

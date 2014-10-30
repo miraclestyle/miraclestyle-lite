@@ -4,7 +4,7 @@ angular.element(document).ready(function () {
    var injector = angular.injector(['app']),
        endpoint = injector.get('endpoint'),
        $q = injector.get('$q'),
-       depencies = [endpoint.model_meta(), endpoint.current_account()];
+       depencies = [endpoint.modelsMeta(), endpoint.currentAccount()];
        
        $q.all(depencies).then(function () {
            angular.bootstrap(document, ['app']);

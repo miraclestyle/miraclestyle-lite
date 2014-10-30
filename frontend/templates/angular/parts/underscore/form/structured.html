@@ -23,9 +23,15 @@
           </thead>
           <tbody>
             <tr ng-repeat="ent in config.ui.specifics.parentArgs track by $index" ng-hide="ent._state == 'deleted'">
+              <% if (config.ui.specifics.showListItem) { %>
+                <td ng-repeat="field in config.ui.specifics.listFields">
+                 <span <%=config.ui.specifics.showListItem %>="ent" <%=config.ui.specifics.showListItem %>-field="field"></span>
+               </td>
+              <% } else { %>
               <td ng-repeat="field in config.ui.specifics.listFields">
                 {{ent|output:field.key}}
               </td>
+              <% } %>
   
               <td>
                 <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>

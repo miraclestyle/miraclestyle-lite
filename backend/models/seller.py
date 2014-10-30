@@ -197,6 +197,7 @@ class Seller(orm.BaseExpando):
             Read(),
             RulePrepare(),
             RuleExec(),
+            SellerSetupDefaults(),
             Set(cfg={'d': {'output.entity': '_seller'}})
             ]
           )

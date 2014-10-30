@@ -39,4 +39,6 @@ angular.module('app').config(function($stateProvider) {
     controller : 'AdminSearchCtrl'
   });
 
+}).run(function (models) {
+  models.init();
 });

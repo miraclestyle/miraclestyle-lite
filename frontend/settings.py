@@ -56,7 +56,7 @@ ANGULAR_JS_PATHS = (
   'libraries/ng-busy/build/angular-busy.js'
 )
 
-ANGULAR_GLOBAL_JS_PATHS = ['overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
+ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
 
 ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 
                      'libraries/angular-ui-select/dist/select.css',

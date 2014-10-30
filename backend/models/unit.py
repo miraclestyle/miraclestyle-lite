@@ -124,7 +124,6 @@ class Unit(orm.BaseExpando):
             RulePrepare(),
             RuleExec(),
             Search(),
-            UnitRemoveCurrencies(),  # @todo This will be probably be removed!!
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',

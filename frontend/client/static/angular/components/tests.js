@@ -1,4 +1,4 @@
-angular.module('app').controller('TestsCtrl', function($scope, $modal, modelMeta, entityUtil, endpoint, errorHandling, $q) {
+angular.module('app').controller('TestsCtrl', function($scope, $modal, modelsMeta, modelsUtil, endpoint, errorHandling, $q) {
   $scope.oneAtATime = true;
   $scope.isopen = true;
   var entity = {
@@ -6,7 +6,7 @@ angular.module('app').controller('TestsCtrl', function($scope, $modal, modelMeta
     'country_multiple' : [],
     'contents' : []
   };
-  entityUtil.normalize(entity);
+  modelsUtil.normalize(entity);
   $scope.entity = entity;
   $scope.args = angular.copy(entity);
   
@@ -31,7 +31,7 @@ angular.module('app').controller('TestsCtrl', function($scope, $modal, modelMeta
     });
   }
   
-  var sample = modelMeta.get('31').mapped_actions.update.arguments;
+  var sample = modelsMeta.get('31').mapped_actions.update.arguments;
   var f = function (sample) {
      angular.forEach(sample, function (field, field_key) {
           field.code_name = field_key;

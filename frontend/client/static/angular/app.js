@@ -19,11 +19,11 @@
   GLOBAL_CONFIG = {
     host : host,
     angularModules : ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload', 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
-    apiModelMetaPath : host + '/api/model_meta',
+    apimodelsMetaPath : host + '/api/model_meta',
     apiEndpointPath : host + '/api/endpoint',
     dateFormat : 'yyyy-MM-dd HH:mm:ss Z'
   };
-
+ 
   angular.module('app', GLOBAL_CONFIG.angularModules)// we can avoid a global if we build modules for each feature
   .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function($httpProvider, $locationProvider) {
 
@@ -34,5 +34,6 @@
     $locationProvider.html5Mode(true);
 
   });
+
 
 })();

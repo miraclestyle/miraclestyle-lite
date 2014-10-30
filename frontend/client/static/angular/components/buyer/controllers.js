@@ -1,10 +1,10 @@
 // code for account
 angular.module('app')
-.controller('BuyerManagementCtrl', function($scope, endpoint, current_account, buyerEntity) {
+.controller('BuyerManagementCtrl', function($scope, endpoint, currentAccount, models) {
  
   $scope.settings = function ()
   {
-    buyerEntity.settings(current_account.key);
+    models['19'].settingsModal(currentAccount.key);
   };
 
 });

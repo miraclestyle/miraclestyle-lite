@@ -29,7 +29,7 @@ angular.module('app').filter('propsFilter', function() {
 
     return out;
   };
-}).filter('output', function (modelMeta, outputTypes) {
+}).filter('output', function (modelsMeta, outputTypes) {
   
   var types = outputTypes;
   
@@ -39,7 +39,7 @@ angular.module('app').filter('propsFilter', function() {
     
     if (obj['kind'])
     { 
-      var fields = modelMeta.getModelFields(obj['kind']),
+      var fields = modelsMeta.getModelFields(obj['kind']),
           field = fields[key];
       
       if (angular.isDefined(field))

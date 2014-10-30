@@ -126,7 +126,7 @@ angular.module('app').config(function(datepickerConfig) {
     }
   };
 })
-.directive('repeatedText', function() {
+.directive('repeatedText', function(helpers) {
   return {
     require : 'ngModel',
     link : function(scope, element, attrs, ctrl) {
@@ -138,7 +138,7 @@ angular.module('app').config(function(datepickerConfig) {
         try {
           if (what == 'list')
           {
-            value = value.match(/[^\r\n]+/g);
+            value = helpers.splitLines(value);
           }
           test = true;
 
@@ -202,7 +202,7 @@ angular.module('app').config(function(datepickerConfig) {
       });
     }
   };
-}).directive('formBuilder', function($compile, underscoreTemplate, modelMeta) {
+}).directive('formBuilder', function($compile, underscoreTemplate, modelsMeta) {
   /**
    * Main builder. It will construct a form based on a list of configuration params:
    * [
@@ -453,4 +453,17 @@ angular.module('app').config(function(datepickerConfig) {
          
       }
     };
+}).directive('conditionalOutput', function (helpers, $compile) {
+  return {
+    scope : {
+      conditionalOutput : '=conditionalOutput',
+      conditionalOutputValue : '=conditionalOutputValue'
+    },
+    link : function (scope, element)
+    {
+      var template = scope.conditionalOutput(scope.conditionalOutputValue);
+      element.html(template);
+      $compile(element.contents())(scope);
+    }
+  };
 });

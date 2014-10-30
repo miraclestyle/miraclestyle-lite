@@ -240,14 +240,17 @@ class AddressRuleLocation(orm.BaseModel):
   _kind = 106
   
   _use_rule_engine = False
+ 
+  country = orm.SuperKeyProperty('1', kind='12', required=True, indexed=False)
+  region = orm.SuperKeyProperty('2', kind='13', indexed=False)
+  postal_code_from = orm.SuperStringProperty('3', indexed=False)
+  postal_code_to = orm.SuperStringProperty('4', indexed=False)
+  city = orm.SuperStringProperty('5', indexed=False)
   
-  name = orm.SuperStringProperty('1', required=True)
-  active = orm.SuperBooleanProperty('2', required=True, default=True)
-  country = orm.SuperKeyProperty('3', kind='12', required=True, indexed=False)
-  region = orm.SuperKeyProperty('4', kind='13', indexed=False)
-  postal_code_from = orm.SuperStringProperty('5', indexed=False)
-  postal_code_to = orm.SuperStringProperty('6', indexed=False)
-  city = orm.SuperStringProperty('7', indexed=False)
+  _virtual_fields = {
+    '_country': orm.SuperReferenceStructuredProperty('12', autoload=True, target_field='country'),
+    '_region': orm.SuperReferenceStructuredProperty('13', autoload=True, target_field='region')
+  }
 
 
 class AddressRule(orm.BaseModel):
@@ -256,11 +259,15 @@ class AddressRule(orm.BaseModel):
   
   _use_rule_engine = False
   
-  exclusion = orm.SuperBooleanProperty('1', required=True, default=False, indexed=False)
-  address_type = orm.SuperStringProperty('2', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '3', repeated=True, indexed=False)
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  exclusion = orm.SuperBooleanProperty('3', required=True, default=False, indexed=False)
+  address_type = orm.SuperStringProperty('4', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '5', repeated=True, indexed=False)
   
   def run(self, context):
+    if not self.active:
+      return # inactive plugin
     self.read() # read locals
     order = context._order
     valid_addresses = collections.OrderedDict()
@@ -345,15 +352,21 @@ class OrderCurrency(orm.BaseModel):
   # PayPal Shipping: Prompt for an address, but do not require one,
   # PayPal Shipping: Do not prompt for an address
   # PayPal Shipping: Prompt for an address, and require one
-  
-  currency = orm.SuperKeyProperty('1', kind=Unit, required=True, indexed=False)
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  currency = orm.SuperKeyProperty('3', kind=Unit, required=True, indexed=False)
   
   def run(self, context):
+    if not self.active:
+      return # inactive currency
     order = context._order
     # In context of add_to_cart action runner does the following:
     order.currency = copy.deepcopy(self.currency.get())
     
 class PaymentMethod(orm.BaseModel):
+  
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
   
   def _get_name(self):
     return self.__class__.__name__
@@ -362,6 +375,8 @@ class PaymentMethod(orm.BaseModel):
     return self.__class__.__name__.lower()
   
   def run(self, context):
+    if not self.active:
+      return # inactive payment
     if 'payment_methods' not in context.output:
       context.output['payment_methods'] = []  
     context.output['payment_methods'].append({'key': self.key,
@@ -381,8 +396,8 @@ class PayPalPayment(PaymentMethod):
   # PayPal Shipping: Prompt for an address, but do not require one,
   # PayPal Shipping: Do not prompt for an address
   # PayPal Shipping: Prompt for an address, and require one
-  reciever_email = orm.SuperStringProperty('1', required=True, indexed=False)
-  business = orm.SuperStringProperty('2', required=True, indexed=False)
+  reciever_email = orm.SuperStringProperty('3', required=True, indexed=False)
+  business = orm.SuperStringProperty('4', required=True, indexed=False)
   
   def _get_name(self):
     return 'Paypal'
@@ -391,6 +406,8 @@ class PayPalPayment(PaymentMethod):
     return 'paypal'
   
   def run(self, context):
+    if not self.active:
+      return
     super(PayPalPayment, self).run(context)
     # CURRENTLY WE ONLY SUPPORT PAYPAL, SO IT IS AUTOMATICALLY SET EITHERWAY
     context._order.payment_method = self.key
@@ -524,16 +541,17 @@ class Tax(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  code = orm.SuperStringProperty('3', required=True, indexed=False)  # @todo Not sure if we need this!
-  type = orm.SuperStringProperty('4', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
-  amount = orm.SuperDecimalProperty('5', required=True, indexed=False)
-  exclusion = orm.SuperBooleanProperty('6', required=True, default=False, indexed=False)
+  type = orm.SuperStringProperty('3', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
+  amount = orm.SuperDecimalProperty('4', required=True, indexed=False)
+  carriers = orm.SuperVirtualKeyProperty('5', kind='113', repeated=True, indexed=False)
+  product_categories = orm.SuperKeyProperty('6', kind='24', repeated=True, indexed=False)
   address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '8', repeated=True)
-  carriers = orm.SuperKeyProperty('9', kind='113', repeated=True, indexed=False)
-  product_categories = orm.SuperKeyProperty('10', kind='24', repeated=True, indexed=False)
+  exclusion = orm.SuperBooleanProperty('8', required=True, default=False, indexed=False)
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '9', repeated=True)
   
   def run(self, context):
+    if not self.active:
+      return # tax is inactive
     self.read() # read locals
     OrderLineTax = context.models['32']
     order = context._order
@@ -664,14 +682,19 @@ class Carrier(orm.BaseModel):
   _use_rule_engine = False
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
-  lines = orm.SuperLocalStructuredProperty(CarrierLine, '2', repeated=True)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  lines = orm.SuperLocalStructuredProperty(CarrierLine, '3', repeated=True)
   
   def run(self, context):
+    if not self.active:
+      return # this is not active carrier
     self.read() # read locals
     ProductInstance = context.models['27']
     order = context._order
     valid_lines = []
     for carrier_line in self.lines.value:
+      if not carrier_line.active:
+        continue # inactive carrier line
       if self.validate_line(carrier_line, order):
         valid_lines.append(carrier_line)
     if len(valid_lines):
