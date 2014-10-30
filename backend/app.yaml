@@ -1,4 +1,4 @@
-application: bubefd
+application: universal-trail-608
 module: backend
 version: 1
 runtime: python27

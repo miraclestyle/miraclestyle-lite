@@ -1,4 +1,4 @@
-application: bubefd
+application: universal-trail-608
 
 dispatch:
   - url: '*/api/*'

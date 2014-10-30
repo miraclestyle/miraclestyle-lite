@@ -35,7 +35,7 @@ RECORDS_PAGE = 10
 SEARCH_PAGE = 10
 
 # Blob cloud storage settings.
-BUCKET_PATH = 'bubefd.appspot.com'
+BUCKET_PATH = 'universal-trail-608.appspot.com'
 
 # Catalog settings.
 CATALOG_PAGE = 10
