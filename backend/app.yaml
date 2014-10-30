@@ -1,4 +1,4 @@
-application: universal-trail-608
+application: bubefd
 module: backend
 version: 1
 runtime: python27
@@ -18,6 +18,9 @@ libraries:
   version: latest
 
 - name: PIL
+  version: latest
+  
+- name: webob
   version: latest
 
 handlers:

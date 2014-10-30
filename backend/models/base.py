@@ -407,6 +407,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         if not isinstance(v, cgi.FieldStorage) and not self._required:
           return Nonexistent  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
         # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
+        log(v)
         file_info = blobstore.parse_file_info(v)
         blob_info = blobstore.parse_blob_info(v)
         meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?

@@ -296,7 +296,6 @@ class BlobURL(orm.BaseModel):
     if upload_url and gs_bucket:
       gs_bucket_name = gs_bucket + sufix
       context._blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
-      #raise orm.TerminateAction()
 
 
 class Notify(orm.BaseModel):

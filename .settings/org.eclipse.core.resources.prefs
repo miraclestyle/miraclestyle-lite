@@ -42,6 +42,7 @@ encoding//documentation/code/performance_tester_io.py=utf-8
 encoding//documentation/code/temp.py=utf-8
 encoding//frontend/api.py=utf-8
 encoding//frontend/handler/base.py=utf-8
+encoding//frontend/handler/builder.py=utf-8
 encoding//frontend/handler/mapping.py=utf-8
 encoding//frontend/http.py=utf-8
 encoding//frontend/settings.py=utf-8

@@ -8,6 +8,7 @@ import webapp2
 import json
 import datetime
 import inspect
+import copy
  
 import orm, mem, iom, settings, util
 
@@ -67,6 +68,7 @@ class RequestHandler(webapp2.RequestHandler):
   '''
   autoload_current_account = True
   autovalidate_csrf = False # generally all requests for authenticated users should be carrying _csrf
+  _input = None
   
   def __init__(self, *args, **kwargs):
     super(RequestHandler, self).__init__(*args, **kwargs)
@@ -74,36 +76,40 @@ class RequestHandler(webapp2.RequestHandler):
     self.current_csrf = None
   
   def get_input(self):
-    special = '__body__'
-    try:
-      dicts = json.loads(self.request.body)
-    except:
+    if self._input is not None:
+      return self._input
+    if self.request.method == 'POST' and not len(self.request.params):
+      dicts = self.request.json_body
+    else:
+      special = '__body__'
       special_data = self.request.get(special)
       if special_data:
         try:
           dicts = json.loads(special_data)
-        except:
+        except Exception as e:
+          util.log('error parsing __body__ %s' % e, 'error')
           dicts = {}
       else:
         dicts = {}
-    newparams = {}
-    for param_key in self.request.params.keys():
-      if param_key == special:
-        continue
-      value = self.request.params.getall(param_key)
-      if len(value) == 1:
-         value = value[0]
-      if param_key in dicts:
-        dictval = dicts.get(param_key)
-        if isinstance(dictval, list):
-          if isinstance(value, list):
-            dictval.extend(value)
-          else:
-            dictval.append(value)
+      newparams = {}
+      for param_key in self.request.params.keys():
+        if param_key == special:
           continue
-      newparams[param_key] = value
-    dicts.update(newparams)
-    return dicts
+        value = self.request.params.getall(param_key)
+        if len(value) == 1:
+           value = value[0]
+        if param_key in dicts:
+          dictval = dicts.get(param_key)
+          if isinstance(dictval, list):
+            if isinstance(value, list):
+              dictval.extend(value)
+            else:
+              dictval.append(value)
+            continue
+        newparams[param_key] = value
+      dicts.update(newparams)
+    self._input = dicts
+    return self._input
   
   def json_output(self, s, **kwargs):
     ''' Wrapper for json output for self usage to avoid imports from backend http '''
@@ -363,15 +369,63 @@ class Reset(BaseTestHandler):
     blobstore.delete(blobstore.BlobInfo.all().fetch(keys_only=True))
     mem.flush_all()
     
+    
+    
+    
+    
+class TestUploadUrl(BaseTestHandler):
+  
+  def _get_upload_content(self, field_storage):
+    import email
+    import email.message
+    import base64
+    """Returns an email.Message holding the values of the file transfer.
+  
+    It decodes the content of the field storage and creates a new email.Message.
+  
+    Args:
+      field_storage: cgi.FieldStorage that represents uploaded blob.
+  
+    Returns:
+      An email.message.Message holding the upload information.
+    """
+    message = email.message.Message()
+    message.add_header(
+        'content-transfer-encoding',
+        field_storage.headers.getheader('Content-Transfer-Encoding', ''))
+    message.set_payload(field_storage.file.read())
+    payload = message.get_payload(decode=True)
+    return email.message_from_string(payload)
 
-class TestDuplication(BaseTestHandler):
   
   def respond(self):
-    iom.Engine.init()
-    a = orm.Key(urlsafe='ahdkZXZ-dW5pdmVyc2FsLXRyYWlsLTYwOHIsCxICMTEYgICAgICAgAoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgPilCww').get()
-    a.read({'_images': {}})
-    b = None
-    self.send_json(['original', a, 'copy', b])
+    from google.appengine.ext import blobstore
+    self.response.write(self.request.params)
+    if self.request.get('z'):
+      f = self.get_input().get('file')
+    else:
+      self.get_input()
+      for param_key in self.request.params.keys():
+        if param_key == 'file':
+          k = param_key
+          f = self.request.params.get(param_key)
+      dd = {}
+      zz = {}
+      zz[k] = f
+      dd.update(zz)
+      f = dd.get('file')
+    #d = blobstore.parse_file_info(f)
+    x = self._get_upload_content(f)
+    self.response.write(x)
+ 
+    if self.request.get('v'):
+      d = blobstore.parse_file_info(f)
+      self.response.write(d.gs_object_name)
+      
+class TestParams(BaseTestHandler):
+  
+  def respond(self):
+    self.response.write(self.request.params.keys())
 
     
 for k,o in globals().items():

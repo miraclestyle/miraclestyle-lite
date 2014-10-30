@@ -1,4 +1,4 @@
-angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEditor, formInputTypes, underscoreTemplate, $modal, helpers, $q) {
+angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEditor, formInputTypes, underscoreTemplate, $modal, helpers, $q, $timeout) {
   
   formInputTypes.SuperPluginStorageProperty = function(info) {
       var config = info.config, kinds = $.map(config.kinds, function(kind_id) {
@@ -13,7 +13,7 @@ angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEdit
       config.ui.specifics.entity = info.scope.$eval(config.ui.model);
     
       info.scope.$watch(config.ui.args, function (neww, old) {
-        console.log(config.ui.args, neww !== old);
+ 
         if (neww !== old)
         {
           config.ui.specifics.parentArgs = neww;
