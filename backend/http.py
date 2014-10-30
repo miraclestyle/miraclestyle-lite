@@ -78,8 +78,9 @@ class RequestHandler(webapp2.RequestHandler):
   def get_input(self):
     if self._input is not None:
       return self._input
-    if self.request.method == 'POST' and not len(self.request.params):
+    if self.request.method == 'POST' and not len(self.request.POST):
       dicts = self.request.json_body
+      dicts.update(self.request.GET)
     else:
       special = '__body__'
       special_data = self.request.get(special)
