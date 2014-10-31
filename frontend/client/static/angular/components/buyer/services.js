@@ -11,10 +11,8 @@ angular.module('app').run(function($window, modelsEditor, modelsMeta, $q, models
               label : 'Address'
             }],
             showListItem : 'buyer-address-display',
-            fields : $.map(['name', 'email', 'telephone', 'country', 'region', 'city',
-             'postal_code', 'street', 'default_shipping', 'default_billing'], function (item) {
-               return fields.addresses.modelclass[item];
-            }),
+            sortFields : ['country', 'region', 'city', 'postal_code', 'street', 'name', 'email', 'telephone',
+              'default_shipping', 'default_billing'],
             beforeSave : function ($scope, info)
             {
               var promises = [];

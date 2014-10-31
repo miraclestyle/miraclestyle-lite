@@ -930,6 +930,17 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                   return result.name;
                 }
               },
+              init : {
+                '13' : function ()
+                {
+                  info.scope.$watch(info.config.ui.parentArgs + '.country', function (neww, old) {
+                    if (neww !== old)
+                    {
+                      config.ui.specifics.search();
+                    }
+                  });
+                }
+              },
               query: {
                 '13': function (term, search_action) {
                   var args = info.scope.$eval(info.config.ui.parentArgs);
@@ -999,6 +1010,11 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
             return fn(result);
           };
         }
+        var init = internalConfig.search.init[config.kind];
+        if (angular.isDefined(init))
+        {
+          init();
+        }
 
         if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(config.ui.specifics.entities)) {
           var defaultInternalSearch = internalConfig.search[config.kind];
@@ -1057,6 +1073,10 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           }
 
         }
+        if (angular.isFunction(config.ui.specifics.entities))
+        {
+          config.ui.specifics.entities = config.ui.specifics.entities();
+        }
         return 'select_async';
       },
 
@@ -1076,6 +1096,15 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
 
         if (noSpecifics || !config.ui.specifics.fields) {
           config.ui.specifics.fields = defaultFields;
+          if (config.ui.specifics.sortFields)
+          {
+            var newSort = [];
+            angular.forEach(config.ui.specifics.sortFields, function (key) {
+              newSort.push(_.findWhere(config.ui.specifics.fields, {code_name : key}));
+            });
+            
+            config.ui.specifics.fields = newSort;
+          }
         }
 
         if (noSpecifics || !config.ui.specifics.listFields) {

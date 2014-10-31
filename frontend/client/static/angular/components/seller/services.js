@@ -34,6 +34,7 @@ angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEdit
          listFields : [{
            label : 'Location'
          }],
+         sortFields : ['country', 'region', 'city', 'postal_code_from', 'postal_code_to'],
          beforeSave : function ($scope, info)
          {
               var promises = [];
@@ -75,9 +76,7 @@ angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEdit
                 
                 promises.push(promise);
               }
-              
-              console.log(promises);
-        
+      
               if (promises.length)
               {
                 return $q.all(promises);
@@ -132,16 +131,24 @@ angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEdit
             carriers : {
               ui : {
                 specifics : {
-                  entities : $.map(config.ui.specifics.parentArgs, function(item) {
-                    if (item.active && item.kind === '113') {
-                      return {
-                        key : item.key,
-                        name : item.name
-                      };
-
-                    }
-
-                  })
+                  entities : function ()
+                  {
+                      if (!config.ui.specifics.parentArgs)
+                      {
+                        return [];
+                      }
+                      
+                      return $.map(config.ui.specifics.parentArgs, function(item) {
+                      if (item.active && item.kind === '113') {
+                        return {
+                          key : item.key,
+                          name : item.name
+                        };
+  
+                      }
+  
+                    });
+                  }
                 }
               }
             },
@@ -335,6 +342,9 @@ angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEdit
          }
         };
         fields._plugin_group.ui.label = false;
+        fields.address.ui.specifics = {
+          sortFields : ['country', 'region', 'city', 'postal_code', 'street', 'email', 'telephone'],
+        };
    
         var config = {
           kind : this.kind,
