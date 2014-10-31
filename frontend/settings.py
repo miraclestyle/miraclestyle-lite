@@ -52,8 +52,7 @@ ANGULAR_JS_PATHS = (
   'libraries/angular-ui-select/dist/select.js',
   'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker.js',
   'libraries/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js',
-  'libraries/ngUpload/ng-upload.js',
-  'libraries/ng-busy/build/angular-busy.js'
+  'libraries/ngUpload/ng-upload.js'
 )
 
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']

@@ -58,8 +58,8 @@ angular.module('ngUpload', [])
       }
     };
   }])
-  .directive('ngUpload', ["$log", "$parse", "$document",
-    function ($log, $parse, $document) {
+  .directive('ngUpload', ["$log", "$parse", "$document", "$rootScope",
+    function ($log, $parse, $document, $rootScope) {
     var iframeID = 1;
     // Utility function to get meta tag with a given name attribute
     function getMetaTagWithName(name) {
@@ -115,6 +115,8 @@ angular.module('ngUpload', [])
           'enctype': 'multipart/form-data',
           'encoding': 'multipart/form-data'
         });
+        
+        var config = {url : element.attr('action')};
 
         var iframe = angular.element(
           '<iframe name="upload-iframe-' + iframeID + '" ' +
@@ -167,6 +169,9 @@ angular.module('ngUpload', [])
             if (loading) loading(scope);
             setLoadingState(true);
           }
+         
+          $rootScope.$broadcast('disableUI', true);
+          
         });
 
         // Finish upload
@@ -201,8 +206,9 @@ angular.module('ngUpload', [])
             fn(scope, { content: content});
           }
           
-          scope.$emit('ngUploadComplete', content);
-          scope.$broadcast('ngUploadComplete', content);
+          $rootScope.$broadcast('disableUI', false);
+          $rootScope.$broadcast('ngUploadComplete', content);
+       
         }
       }
     };

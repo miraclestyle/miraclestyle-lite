@@ -26,13 +26,9 @@
  
   angular.module('app', GLOBAL_CONFIG.angularModules)// we can avoid a global if we build modules for each feature
   .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function($httpProvider, $locationProvider) {
-
     $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
     $locationProvider.hashPrefix('!');
-
     $locationProvider.html5Mode(true);
-
   });
 
 

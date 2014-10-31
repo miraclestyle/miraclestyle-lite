@@ -121,6 +121,13 @@ angular.module('app').run(function($window, modelsConfig, modelsMeta, modelsEdit
               }
             }
           },
+          '107' : {
+            locations : {
+              ui : {
+                specifics : locationSpec
+              }
+            }
+          },
           '109' : {
             carriers : {
               ui : {
