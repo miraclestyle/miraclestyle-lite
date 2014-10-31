@@ -1,10 +1,9 @@
 angular.module('app')
-.controller('MainMenuCtrl', function ($scope, currentAccount) {
+  .controller('MainMenuCtrl', function ($scope, currentAccount) {
     $scope.currentAccount = currentAccount;
-})
-.controller('HomePageCtrl', ['$scope', function ($scope) {
-    $scope.showMenu = function ()
-    {
-       $scope.$emit('show_menu');
+  })
+  .controller('HomePageCtrl', ['$scope', function ($scope) {
+    $scope.showMenu = function () {
+      $scope.$emit('show_menu');
     };
-}]);
+  }]);

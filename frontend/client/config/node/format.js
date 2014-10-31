@@ -19,7 +19,8 @@ var config = {
     "break_chained_methods": false,
     "eval_code": false,
     "unescape_strings": false,
-    "wrap_line_length": 79
+    "wrap_line_length": 79,
+    "good_stuff" : true
 };
 
 var walk = function(dir, done) {
@@ -74,8 +75,16 @@ walk(filePath, function (err, files) {
         if (err) {
             throw err;
         }
-        console.log('----------', file, '----------');
-        console.log(beautify(data, config));
+        console.log('beautify(\'' + file + '\')');
+        var data = beautify(data, config);
+        console.log(data);
+        return;
+        fs.writeFile(file, data, 'utf8', function (err) {
+          if (err !== null) {
+            console.log('could not save ' + file + ', err ' + err);
+          }
+          
+        });
     });
   });
   

@@ -170,8 +170,10 @@ angular.module('app').config(function (datepickerConfig) {
           autoSubmit = scope.$eval(attrs.generateUploadUrl);
 
         if (!form.length) {
-          console.error('Directive upload-on-select demands explicit <form> tag in \
-         order to perform regular html form submission');
+          console.error(
+            'Directive upload-on-select demands explicit <form> tag in \
+         order to perform regular html form submission'
+          );
           return false;
         }
 
@@ -202,7 +204,8 @@ angular.module('app').config(function (datepickerConfig) {
         });
       }
     };
-  }).directive('formBuilder', function ($compile, underscoreTemplate, modelsMeta) {
+  }).directive('formBuilder', function ($compile, underscoreTemplate,
+    modelsMeta) {
     /**
      * Main builder. It will construct a form based on a list of configuration params:
      * [
@@ -235,7 +238,8 @@ angular.module('app').config(function (datepickerConfig) {
       }
     };
   })
-  .directive('formInput', function ($compile, underscoreTemplate, formInputTypes, helpers) {
+  .directive('formInput', function ($compile, underscoreTemplate,
+    formInputTypes, helpers) {
 
     var types = formInputTypes,
       utils = {
@@ -269,9 +273,11 @@ angular.module('app').config(function (datepickerConfig) {
             attrs['ng-disabled'] = '!' + config.ui.writable;
             config.ui.writableCompiled = config.ui.writable;
           } else {
-            var writableCompiled = config.ui.model + '.ui.rule.field' + $.map(config.ui.writable, function (item) {
-              return "['" + helpers.addslashes(item) + "']";
-            }).join('') + '.writable';
+            var writableCompiled = config.ui.model + '.ui.rule.field' + $.map(
+              config.ui.writable,
+              function (item) {
+                return "['" + helpers.addslashes(item) + "']";
+              }).join('') + '.writable';
 
             attrs['ng-disabled'] = '!' + writableCompiled;
 
@@ -306,7 +312,8 @@ angular.module('app').config(function (datepickerConfig) {
             label = null;
 
           // use backend defined label if was provided, otherwise the label will be humanized
-          if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined) {
+          if (supplied_config.verbose_name !== null && supplied_config.verbose_name !==
+            undefined) {
             label = supplied_config.verbose_name;
           } else {
             label = name;
@@ -314,7 +321,8 @@ angular.module('app').config(function (datepickerConfig) {
 
 
           if (!name) {
-            console.error('Your field config', supplied_config, 'has no name defined defined.');
+            console.error('Your field config', supplied_config,
+              'has no name defined defined.');
             return;
           }
 
@@ -334,7 +342,8 @@ angular.module('app').config(function (datepickerConfig) {
 
           $.extend(true, config, supplied_config);
 
-          if (config.ui.writableName !== undefined && angular.isArray(config.ui.writable)) {
+          if (config.ui.writableName !== undefined && angular.isArray(
+              config.ui.writable)) {
             config.ui.writable = [config.ui.writableName];
           }
 
@@ -353,7 +362,9 @@ angular.module('app').config(function (datepickerConfig) {
               label: utils.label(config)
             };
 
-            var template = underscoreTemplate.get(config.type != 'Custom' ? 'underscore/form/' + tpl + '.html' : config.template)({
+            var template = underscoreTemplate.get(config.type !=
+              'Custom' ? 'underscore/form/' + tpl + '.html' : config.template
+            )({
               config: config
             });
 
@@ -362,7 +373,8 @@ angular.module('app').config(function (datepickerConfig) {
             $compile(element.contents())(scope);
 
           } else {
-            console.error('Field type: ' + config.type + ' is not supported yet.');
+            console.error('Field type: ' + config.type +
+              ' is not supported yet.');
           }
 
         };
@@ -402,7 +414,8 @@ angular.module('app').config(function (datepickerConfig) {
 
           var height = $(window).height();
 
-          height -= parseInt(modal_dialog.css('margin-top')) + parseInt(modal_dialog.css('margin-bottom'));
+          height -= parseInt(modal_dialog.css('margin-top')) + parseInt(
+            modal_dialog.css('margin-bottom'));
           height -= 2;
 
           var modal_footer = modal_dialog.find('.modal-footer');
@@ -462,14 +475,13 @@ angular.module('app').config(function (datepickerConfig) {
     return {
       link: function (scope, element) {
         scope.$on('disableUI', function ($event, neww) {
-    
+
           if (neww === true) {
             element.attr('disabled', 'disabled');
-          }
-          else {
+          } else {
             element.removeAttr('disabled');
           }
-          
+
         });
       }
     };

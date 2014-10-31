@@ -1,55 +1,59 @@
 /*global angular, window, console, jQuery, $, document*/
 'use strict';
 
-angular.module('app').value('modelsInfo', {}).factory('errorHandling', function ($modal) {
-  var translations = {
-      action_denied: function (reason) {
-        return 'You do not have permission to perform this action.';
-      },
-      invalid_model: 'You have requested access to resource that does not exist',
-      invalid_action: 'You have requested access to the action that does not exist',
-      required: function (fields) {
-        return 'Some values are missing: ' + fields.join(', ');
-      },
-      transaction: function (reason) {
+angular.module('app').value('modelsInfo', {}).factory('errorHandling',
+  function ($modal) {
+    var translations = {
+        action_denied: function (reason) {
+          return 'You do not have permission to perform this action.';
+        },
+        invalid_model: 'You have requested access to resource that does not exist',
+        invalid_action: 'You have requested access to the action that does not exist',
+        required: function (fields) {
+          return 'Some values are missing: ' + fields.join(', ');
+        },
+        transaction: function (reason) {
 
-        if (reason == 'timeout') {
-          return 'Transaction was not completed due timeout. Please try again.';
-        } else if (reason == 'failed') {
-          return 'Transaction was not completed due failure. Please try again.';
-        }
-
-      }
-    },
-    errorHandling = {
-      translate: function (k, v) {
-        var possible = translations[k];
-        if (angular.isString(possible)) {
-          return possible;
-        } else if (angular.isFunction(possible)) {
-          return possible(v);
-        }
-        return v;
-      },
-      modal: function (errors) {
-        $modal.open({
-          templateUrl: 'misc/modal_errors.html',
-          controller: function ($scope, $modalInstance) {
-            $scope.errors = [];
-            angular.forEach(errors, function (error, key) {
-              $scope.errors.push(errorHandling.translate(key, error));
-            });
-            $scope.ok = function () {
-              $modalInstance.dismiss('ok');
-
-            };
+          if (reason == 'timeout') {
+            return
+              'Transaction was not completed due timeout. Please try again.';
+          } else if (reason == 'failed') {
+            return
+              'Transaction was not completed due failure. Please try again.';
           }
-        })
-      }
-    }
 
-  return errorHandling;
-}).factory('helpers', function () {
+        }
+      },
+      errorHandling = {
+        translate: function (k, v) {
+          var possible = translations[k];
+          if (angular.isString(possible)) {
+            return possible;
+          } else if (angular.isFunction(possible)) {
+            return possible(v);
+          }
+          return v;
+        },
+        modal: function (errors) {
+          $modal.open({
+            templateUrl: 'misc/modal_errors.html',
+            controller: function ($scope, $modalInstance) {
+              $scope.errors = [];
+              angular.forEach(errors, function (error, key) {
+                $scope.errors.push(errorHandling.translate(key,
+                  error));
+              });
+              $scope.ok = function () {
+                $modalInstance.dismiss('ok');
+
+              };
+            }
+          })
+        }
+      }
+
+    return errorHandling;
+  }).factory('helpers', function () {
 
   var helpers = {
     alwaysObject: function (obj) {
@@ -63,7 +67,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
     },
     addslashes: function (str) {
 
-      return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+      return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g,
+        '\\0');
     },
     update: function () {
 
@@ -108,7 +113,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
   };
 
   return helpers;
-}).factory('endpoint', function ($http, generalLocalCache, GLOBAL_CONFIG, helpers, $rootScope, $q, $cacheFactory, $injector) {
+}).factory('endpoint', function ($http, generalLocalCache, GLOBAL_CONFIG,
+  helpers, $rootScope, $q, $cacheFactory, $injector) {
 
   var onlyInMemoryCache = $cacheFactory('endpointOnlyInMemory'),
     getCache = function (type) {
@@ -161,7 +167,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
       if (is_promise) {
         return is_promise;
       } else if (exists === undefined) {
-        var promise = endpoint[config.method ? config.method.toLowerCase() : 'post'](action, model, data, config);
+        var promise = endpoint[config.method ? config.method.toLowerCase() :
+          'post'](action, model, data, config);
         promise.then(function (response) {
           cacheEngine.put(cache_key, response);
         }, function () {
@@ -187,7 +194,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
         var cache_id = compiled[1].cache;
         compiled[1].cache = false;
         // avoid recursion
-        return endpoint.cached(cache_id, action, model, data, compiled[1]);
+        return endpoint.cached(cache_id, action, model, data, compiled[
+          1]);
       }
       angular.extend(defaults, compiled[1]);
       defaults.data = compiled[0];
@@ -217,7 +225,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
         cacheType: 'memory'
       }).then(function (response) {
 
-        angular.module('app').value('currentAccount', response.data.entity);
+        angular.module('app').value('currentAccount', response.data
+          .entity);
 
       });
     },
@@ -242,7 +251,9 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
     memory_only = '___in_memory_only___';
 
   function prepare(key, val) {
-    if (val && ((val.value && angular.isFunction(val.value.then)) || (angular.isObject(val.value) && val.value[memory_only] !== undefined))) {
+    if (val && ((val.value && angular.isFunction(val.value.then)) || (
+        angular.isObject(val.value) && val.value[memory_only] !==
+        undefined))) {
       return nothing;
     }
     return angular.toJson(val);
@@ -251,7 +262,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
   var localStoragePolyfill = {
     getItem: function (key) {
       var out = inMemory.get(key);
-      if (out && angular.isObject(out) && out[memory_only] !== undefined) {
+      if (out && angular.isObject(out) && out[memory_only] !==
+        undefined) {
         out = out[memory_only];
       }
       if (out === undefined) {
@@ -331,7 +343,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
 
   modelsMeta.getModelFields = function (kind_id) {
     if (!angular.isDefined(kind_id)) {
-      console.error('provided kind id is not acceptable, got: ' + kind_id);
+      console.error('provided kind id is not acceptable, got: ' +
+        kind_id);
       return undefined;
     }
     var info = this.get(kind_id);
@@ -367,7 +380,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
     }
     var getAction = info.mapped_actions[action];
     if (!angular.isDefined(getAction)) {
-      console.error('action ' + action + ' not found for kind ' + kind_id)
+      console.error('action ' + action + ' not found for kind ' +
+        kind_id)
       return undefined;
     }
     var fields = angular.copy(getAction['arguments']);
@@ -456,7 +470,9 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           field: rule_field_permissions
         },
         action_permission_translate = function (action_name) {
-          return rule_action_permissions[rule_actions[action_name]['key']];
+          return rule_action_permissions[rule_actions[action_name][
+            'key'
+          ]];
         },
         check_field = function (name, what) {
           return rule_field_permissions[name][what];
@@ -478,7 +494,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           if (!config.input[value.id]) {
             config.input[value.id] = {};
           }
-          config.input[value.id][argument_key] = argument_value;
+          config.input[value.id][argument_key] =
+            argument_value;
         });
 
       });
@@ -497,7 +514,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           entities[i] = modelsUtil.normalize(entity);
         });
       },
-      normalize: function (entity, fields, parent, subentity_field_key, subentity_position, noui) {
+      normalize: function (entity, fields, parent, subentity_field_key,
+        subentity_position, noui) {
         if (entity.ui && entity.ui.normalized) {
           return;
         }
@@ -575,7 +593,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
             entity.ui.rule = {};
             entity.ui.rule.input = parent.ui.rule.input;
             entity.ui.rule.action = parent.ui.rule.action;
-            entity.ui.rule.field = parent.ui.rule.field[subentity_field_key];
+            entity.ui.rule.field = parent.ui.rule.field[
+              subentity_field_key];
           }
 
         }
@@ -599,7 +618,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           if (field.is_structured) {
             if (field.repeated) {
               angular.forEach(value, function (subentity, i) {
-                modelsUtil.normalize(subentity, field.modelclass, entity, field.code_name, i);
+                modelsUtil.normalize(subentity, field.modelclass,
+                  entity, field.code_name, i);
               });
             } else {
 
@@ -610,7 +630,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                 entity[field.code_name] = value;
               }
 
-              modelsUtil.normalize(value, field.modelclass, entity, field.code_name, undefined, noui);
+              modelsUtil.normalize(value, field.modelclass, entity,
+                field.code_name, undefined, noui);
 
             }
           }
@@ -633,7 +654,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
       var find = $('script[id="' + path + '"]' + typecheck),
         contents = find.text();
       if (!find.length) {
-        console.error('underscore ' + typecheck + ' template not found ' + path);
+        console.error('underscore ' + typecheck + ' template not found ' +
+          path);
       }
       return _.template(contents);
     }
@@ -661,7 +683,9 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
             } else {
               if (data && data.errors) {
                 errorHandling.modal(rejection.data.errors);
-                var reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
+                var reject = (rejection.config.rejectOnErrors ===
+                  undefined || rejection.config.rejectOnErrors ===
+                  true);
                 if (data.errors.action_denied) {
                   reject = true;
                 }
@@ -692,7 +716,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
     ]);
 
   }
-]).factory('modelsEditor', function ($modal, endpoint, $q, helpers, modelsUtil, errorHandling, models, modelsMeta, $timeout) {
+]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
+  modelsUtil, errorHandling, models, modelsMeta, $timeout) {
 
   var modelsEditor = {
     create: function (new_config) {
@@ -711,7 +736,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
         defaultArgumentLoader: function ($scope) {
           // by default argument loader will attempt to extract the argument data from the current entity
           var entityCopy = angular.copy($scope.entity),
-            actionArguments = modelsMeta.getActionArguments($scope.config.kind, $scope.config.action),
+            actionArguments = modelsMeta.getActionArguments($scope
+              .config.kind, $scope.config.action),
             args = {};
 
           angular.forEach(actionArguments, function (arg, arg_key) {
@@ -736,12 +762,15 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
 
       $.extend(true, config, new_config);
 
-      if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
+      if (!angular.isDefined(config.fields) && angular.isDefined(
+          config.kind) && angular.isDefined(config.action)) {
         config.fields = [];
-        var actionArguments = modelsMeta.getActionArguments(config.kind, config.action);
+        var actionArguments = modelsMeta.getActionArguments(config.kind,
+          config.action);
 
         angular.forEach(actionArguments, function (field) {
-          if (angular.isDefined(config.excludeFields) && $.inArray(field.code_name, config.excludeFields) !== -1) {
+          if (angular.isDefined(config.excludeFields) && $.inArray(
+              field.code_name, config.excludeFields) !== -1) {
             return;
           }
           config.fields.push(field);
@@ -764,7 +793,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
             };
           }
           var that = this;
-          models[config.kind].actions.read(args).then(function (response) {
+          models[config.kind].actions.read(args).then(function (
+            response) {
             modelsUtil.normalize(response.data.entity);
             helpers.update(entity, response.data.entity);
             that.open(response.data.entity, args);
@@ -772,7 +802,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
         },
         prepare: function (entity, args) {
           var that = this;
-          models[config.kind].actions.prepare(args).then(function (response) {
+          models[config.kind].actions.prepare(args).then(function (
+            response) {
             modelsUtil.normalize(response.data.entity);
             helpers.update(entity, response.data.entity);
             that.open(response.data.entity, args);
@@ -813,7 +844,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                 modelsUtil.normalize(response.entity);
                 helpers.update($scope.entity, response.entity);
 
-                var new_args = config.argumentLoader($scope);
+                var new_args = config.argumentLoader(
+                  $scope);
 
                 helpers.update($scope.args, new_args);
 
@@ -823,7 +855,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                   });
                 }
 
-                console.log('modelsEditor.complete', $scope);
+                console.log('modelsEditor.complete',
+                  $scope);
 
               };
 
@@ -847,7 +880,9 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
 
   return modelsEditor;
 
-}).factory('formInputTypes', function (underscoreTemplate, $timeout, endpoint, modelsMeta, models, $q, $filter, $modal, helpers, $parse, errorHandling) {
+}).factory('formInputTypes', function (underscoreTemplate, $timeout,
+  endpoint, modelsMeta, models, $q, $filter, $modal, helpers, $parse,
+  errorHandling) {
 
   var inflector = $filter('inflector'),
     formInputTypes = {
@@ -930,24 +965,26 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                   return result.name;
                 }
               },
-              init : {
-                '13' : function ()
-                {
-                  info.scope.$watch(info.config.ui.parentArgs + '.country', function (neww, old) {
-                    if (neww !== old)
-                    {
-                      config.ui.specifics.search();
-                    }
-                  });
+              init: {
+                '13': function () {
+                  info.scope.$watch(info.config.ui.parentArgs +
+                    '.country',
+                    function (neww, old) {
+                      if (neww !== old) {
+                        config.ui.specifics.search();
+                      }
+                    });
                 }
               },
               query: {
                 '13': function (term, search_action) {
                   var args = info.scope.$eval(info.config.ui.parentArgs);
                   if ((args && args.country)) {
-                    models['13'].getSubdivisions(args.country).then(function (response) {
-                      config.ui.specifics.entities = response.data.entities;
-                    });
+                    models['13'].getSubdivisions(args.country).then(
+                      function (response) {
+                        config.ui.specifics.entities = response.data
+                          .entities;
+                      });
                   }
 
                 }
@@ -981,7 +1018,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           };
 
         if (!angular.isDefined(internalConfig)) {
-          info.config.ui.specifics.internalConfig = defaultInternalConfig;
+          info.config.ui.specifics.internalConfig =
+            defaultInternalConfig;
           internalConfig = defaultInternalConfig;
         } else {
           $.extend(true, defaultInternalConfig, internalConfig);
@@ -992,9 +1030,11 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
 
         if (config.kind) {
 
-          var propsFilter = internalConfig.search.propsFilter_results[config.kind];
+          var propsFilter = internalConfig.search.propsFilter_results[
+            config.kind];
           if (!propsFilter) {
-            propsFilter = internalConfig.search.propsFilter_results['default'];
+            propsFilter = internalConfig.search.propsFilter_results[
+              'default'];
           }
           config.ui.specifics.propsFilter = propsFilter;
 
@@ -1011,28 +1051,31 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           };
         }
         var init = internalConfig.search.init[config.kind];
-        if (angular.isDefined(init))
-        {
+        if (angular.isDefined(init)) {
           init();
         }
 
-        if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(config.ui.specifics.entities)) {
+        if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(
+            config.ui.specifics.entities)) {
           var defaultInternalSearch = internalConfig.search[config.kind];
           if (defaultInternalSearch !== undefined) {
             config.ui.specifics.search = defaultInternalSearch;
 
           } else {
 
-            var action_search = modelsMeta.getActionArguments(config.kind, 'search'),
+            var action_search = modelsMeta.getActionArguments(config.kind,
+                'search'),
               should_cache = false,
               search_command, skip_search_command = false;
 
             if (action_search !== undefined) {
-              var cache_option = internalConfig.search.cache_results[config.kind];
+              var cache_option = internalConfig.search.cache_results[
+                config.kind];
               if (cache_option !== undefined && cache_option !== false) {
                 should_cache = cache_option;
               } else if (cache_option !== false) {
-                should_cache = internalConfig.search.cache_results['default'];
+                should_cache = internalConfig.search.cache_results[
+                  'default'];
               }
 
               search_command = function (term) {
@@ -1056,7 +1099,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                 });
               };
 
-              if (config.ui.specifics.entities === undefined && should_cache !== false) {
+              if (config.ui.specifics.entities === undefined &&
+                should_cache !== false) {
                 search_command();
               }
 
@@ -1073,8 +1117,7 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           }
 
         }
-        if (angular.isFunction(config.ui.specifics.entities))
-        {
+        if (angular.isFunction(config.ui.specifics.entities)) {
           config.ui.specifics.entities = config.ui.specifics.entities();
         }
         return 'select_async';
@@ -1083,7 +1126,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
       SuperLocalStructuredProperty: function (info) {
         var config = info.config,
           fields = [],
-          beforeSave, modelFields, defaultFields, noSpecifics, afterSave, listFields = [];
+          beforeSave, modelFields, defaultFields, noSpecifics, afterSave,
+          listFields = [];
 
         beforeSave = config.ui.specifics.beforeSave;
         afterSave = config.ui.specifics.afterSave;
@@ -1096,13 +1140,15 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
 
         if (noSpecifics || !config.ui.specifics.fields) {
           config.ui.specifics.fields = defaultFields;
-          if (config.ui.specifics.sortFields)
-          {
+          if (config.ui.specifics.sortFields) {
             var newSort = [];
-            angular.forEach(config.ui.specifics.sortFields, function (key) {
-              newSort.push(_.findWhere(config.ui.specifics.fields, {code_name : key}));
+            angular.forEach(config.ui.specifics.sortFields, function (
+              key) {
+              newSort.push(_.findWhere(config.ui.specifics.fields, {
+                code_name: key
+              }));
             });
-            
+
             config.ui.specifics.fields = newSort;
           }
         }
@@ -1110,20 +1156,24 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
         if (noSpecifics || !config.ui.specifics.listFields) {
 
           angular.forEach(defaultFields, function (field) {
-            if (!noSpecifics && (config.ui.specifics.excludeListFields && $.inArray(field.code_name, config.ui.specifics.excludeListFields) !== -1)) {
+            if (!noSpecifics && (config.ui.specifics.excludeListFields &&
+                $.inArray(field.code_name, config.ui.specifics.excludeListFields) !==
+                -1)) {
               return;
             }
 
             listFields.push({
               key: field.code_name,
               generated: true,
-              label: (field.ui && field.ui.label ? field.ui.label : inflector(field.code_name, 'humanize'))
+              label: (field.ui && field.ui.label ? field.ui.label :
+                inflector(field.code_name, 'humanize'))
             });
           });
 
           if (!noSpecifics && angular.isDefined(config.ui.specifics.onlyListFields)) {
             var newListFields = [];
-            angular.forEach(config.ui.specifics.onlyListFields, function (key) {
+            angular.forEach(config.ui.specifics.onlyListFields, function (
+              key) {
               var find = _.findWhere(listFields, {
                 key: key
               });
@@ -1166,10 +1216,12 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
           var copyWritable = angular.copy(config.ui.writable);
 
           if (angular.isArray(copyWritable)) {
-            copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
+            copyWritable.push((field.ui.writableName ? field.ui.writableName :
+              field.code_name));
           }
 
-          field.ui.formName = config.ui.formName + '_' + (angular.isDefined(field.ui.formName) ? field.ui.formName : field.code_name);
+          field.ui.formName = config.ui.formName + '_' + (angular.isDefined(
+            field.ui.formName) ? field.ui.formName : field.code_name);
           field.ui.writable = copyWritable;
           config.ui.specifics.formBuilder.push(field);
         });
@@ -1191,10 +1243,13 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
             config.ui.specifics.manage = function (arg) {
 
               $modal.open({
-                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
+                template: underscoreTemplate.get(config.ui.specifics
+                  .templateUrl ? config.ui.specifics.templateUrl :
+                  'underscore/form/modal/structured.html')({
                   config: config
                 }),
-                controller: function ($scope, $modalInstance, modelsUtil) {
+                controller: function ($scope, $modalInstance,
+                  modelsUtil) {
                   var is_new = false;
 
                   $scope.config = config;
@@ -1205,7 +1260,9 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                     var length = config.ui.specifics.parentArgs.length;
                     arg._sequence = length;
                     arg.sequence = length;
-                    modelsUtil.normalize(arg, config.modelclass, config.ui.specifics.entity, config.code_name, length, false);
+                    modelsUtil.normalize(arg, config.modelclass,
+                      config.ui.specifics.entity, config.code_name,
+                      length, false);
                     is_new = true;
                   }
                   $scope.container = {};
@@ -1226,8 +1283,10 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                       return;
                     }
                     var promise = null;
-                    if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                      promise = config.ui.specifics.beforeSave($scope, info);
+                    if (angular.isFunction(config.ui.specifics
+                        .beforeSave)) {
+                      promise = config.ui.specifics.beforeSave(
+                        $scope, info);
                     }
 
                     var complete = function () {
@@ -1241,8 +1300,10 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                         }
                       }
 
-                      if (angular.isFunction(config.ui.specifics.afterSave)) {
-                        promise = config.ui.specifics.afterSave($scope, info);
+                      if (angular.isFunction(config.ui.specifics
+                          .afterSave)) {
+                        promise = config.ui.specifics.afterSave(
+                          $scope, info);
                       }
 
                       if (promise && promise.then) {
@@ -1339,15 +1400,19 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
                 }
               });
             } else {
-              console.error('get() relies on actions.search action. use actions.read() instead.');
+              console.error(
+                'get() relies on actions.search action. use actions.read() instead.'
+              );
             }
           }
         };
 
       service.config = config;
-      angular.forEach(modelsMeta.getActions(kind), function (action, action_key) {
+      angular.forEach(modelsMeta.getActions(kind), function (action,
+        action_key) {
         service.actions[action_key] = function (args, overrideConfig) {
-          var defaultArgs = modelsMeta.getDefaultActionArguments(kind, action_key),
+          var defaultArgs = modelsMeta.getDefaultActionArguments(
+              kind, action_key),
             defaults = angular.copy(config);
 
           $.extend(defaultArgs, args);
@@ -1359,16 +1424,20 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling', function 
             }
           }
 
-          if (!angular.isDefined(defaults.cache) && defaults.cache !== false) {
-            return endpoint.post(action_key, kind, defaultArgs, defaults);
+          if (!angular.isDefined(defaults.cache) && defaults.cache !==
+            false) {
+            return endpoint.post(action_key, kind, defaultArgs,
+              defaults);
           } else {
             var cache_key = config.cache;
             if (cache_key !== true) {
               // btoa is base64encode built-in
-              cache_key = kind + '_' + action_key + '_' + btoa(angular.toJson(defaultArgs));
+              cache_key = kind + '_' + action_key + '_' + btoa(
+                angular.toJson(defaultArgs));
             }
             delete defaults.cache;
-            return endpoint.cached(cache_key, action_key, kind, defaultArgs, defaults);
+            return endpoint.cached(cache_key, action_key, kind,
+              defaultArgs, defaults);
           }
 
         }
