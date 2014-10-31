@@ -15,11 +15,9 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
         transaction: function (reason) {
 
           if (reason == 'timeout') {
-            return
-              'Transaction was not completed due timeout. Please try again.';
+            return 'Transaction was not completed due timeout. Please try again.';
           } else if (reason == 'failed') {
-            return
-              'Transaction was not completed due failure. Please try again.';
+            return 'Transaction was not completed due failure. Please try again.';
           }
 
         }

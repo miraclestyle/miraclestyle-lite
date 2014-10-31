@@ -77,8 +77,7 @@ walk(filePath, function (err, files) {
         }
         console.log('beautify(\'' + file + '\')');
         var data = beautify(data, config);
-        console.log(data);
-        return;
+      
         fs.writeFile(file, data, 'utf8', function (err) {
           if (err !== null) {
             console.log('could not save ' + file + ', err ' + err);
