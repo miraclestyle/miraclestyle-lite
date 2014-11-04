@@ -15,14 +15,12 @@
  
       <div ui-sortable="config.ui.specifics.sortableOptions" 
           ng-model="<%= config.ui.args %>" class="clearfix grid-wrapper">
-        <div ng-repeat="image in config.ui.specifics.entities track by $index"
-             ng-hide="image._state == 'deleted'" 
-             uploaded-image-grid="config.ui.specifics.gridConfig" 
-             ng-model="fails"
+ 
+        <div ng-repeat="image in config.ui.specifics.parentArgs track by $index"
+             ng-hide="image._state == 'deleted'"
+             ng-model="image"
              class="image-image grid-item">
-          <div class="img spaceout">
-            <img ng-src="{{image.serving_url}}=s360" />
-          </div>
+          <div display-image="image" class="img spaceout"></div>
           <button ng-show="<%= config.ui.writableCompiled %>" type="button" 
                   class="button" 
                   ng-click="config.ui.specifics.remove(image)">Remove</button>

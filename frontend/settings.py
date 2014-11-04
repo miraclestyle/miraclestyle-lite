@@ -71,7 +71,7 @@ class Structured():
   def __str__(self):
     return self.segment
 
-ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'), Structured('buyer'), Structured('seller'), 'tests']
+ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'), Structured('buyer'), Structured('seller'), Structured('catalog'), 'tests']
 ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
 ANGULAR_ACTIVE_COMPONENTS = []
 for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
@@ -98,6 +98,9 @@ ANGULAR_TEMPLATES = (
   ('seller/directive/carrier_line_rule_display.html',),
   ('seller/directive/address_rule_location_display.html',),
   ('buyer/directive/buyer_address_display.html',),
+  ('catalog/list.html',),
+  ('catalog/manage.html',),
+  ('catalog/manage_footer.html',),
   
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),

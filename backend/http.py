@@ -68,12 +68,12 @@ class RequestHandler(webapp2.RequestHandler):
   '''
   autoload_current_account = True
   autovalidate_csrf = False # generally all requests for authenticated users should be carrying _csrf
-  _input = None
-  
+ 
   def __init__(self, *args, **kwargs):
     super(RequestHandler, self).__init__(*args, **kwargs)
     self.current_account = None
     self.current_csrf = None
+    self._input = None
   
   def get_input(self):
     if self._input is not None:
@@ -99,6 +99,7 @@ class RequestHandler(webapp2.RequestHandler):
         value = self.request.params.getall(param_key)
         if len(value) == 1:
            value = value[0]
+        '''
         if param_key in dicts:
           dictval = dicts.get(param_key)
           if isinstance(dictval, list):
@@ -107,6 +108,7 @@ class RequestHandler(webapp2.RequestHandler):
             else:
               dictval.append(value)
             continue
+        '''
         newparams[param_key] = value
       dicts.update(newparams)
     self._input = dicts

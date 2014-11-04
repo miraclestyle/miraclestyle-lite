@@ -24,7 +24,8 @@ angular.module('app').config(function (datepickerConfig) {
             }, 400);
           }
           if (e) {
-            e.preventDefault();
+            //e.preventDefault();
+            //return false;
           }
 
         };
@@ -171,8 +172,7 @@ angular.module('app').config(function (datepickerConfig) {
 
         if (!form.length) {
           console.error(
-            'Directive upload-on-select demands explicit <form> tag in \
-         order to perform regular html form submission'
+            'Directive generateUploadUrl demands explicit <form> tag'
           );
           return false;
         }
@@ -387,21 +387,18 @@ angular.module('app').config(function (datepickerConfig) {
   }).directive('compatibilityMaker', function () {
     return {
       restrict: 'A',
-      require: 'ngModel',
-      link: function (scope, element, attrs, ngModelCtrl) {
-        var fn = function (newval, oldval) {
-          if (newval === true) {
+      link: function (scope, element, attrs, ctrl) {
+        var fn = function () {
             var newval = scope.$eval(attrs.compatibilityMaker),
               stringified = JSON.stringify(newval);
-            scope.json_body = stringified;
-          }
+           element.val(stringified); 
         };
 
         scope.$watch('$isUploading', fn);
-        scope.$on('stringifyData', function () {
-          fn(true);
-        });
-
+        scope.$on('stringifyData', fn);
+ 
+        fn();
+  
       }
     }
   })
@@ -440,6 +437,12 @@ angular.module('app').config(function (datepickerConfig) {
         image: '=displayImage'
       },
       link: function (scope, element, attrs) {
+  
+        scope.config = scope.$eval(attrs.displayImageConfig);
+        if (!scope.config)
+        {
+          scope.config = {size: 240};
+        }
         var fn = function (nv, ov) {
 
           if (nv !== ov) {
@@ -447,7 +450,7 @@ angular.module('app').config(function (datepickerConfig) {
               $(element).html($(this));
             };
 
-            $('<img />').on('load', load).attr('src', scope.image.serving_url);
+            $('<img />').on('load', load).attr('src', scope.image.serving_url + '=s' + scope.config.size);
           }
 
         };
@@ -483,6 +486,53 @@ angular.module('app').config(function (datepickerConfig) {
           }
 
         });
+      }
+    };
+  }).directive('submitIfFiles', function ($rootScope) {
+    return {
+      require: '^form',
+      scope: {
+        submit: '=submitIfFiles',
+      },
+      link: function (scope, element, attrs, ctrl) {
+        var form = element.parents('form:first'), files, execute,
+        click = function ()
+        {
+           if (!ctrl.$valid)
+           {
+             console.log('form not valid, stopping submission');
+             return false;
+           }
+           
+           scope.submit().then(function () {
+             files = form.find('input[type="file"]');
+             if (files.length)
+             {
+                execute = false;
+                files.each(function () {
+                  if ($(this).val())
+                  {
+                    execute = true;
+                    return false;
+                  }
+                });
+                
+                if (execute)
+                {  
+                   $rootScope.$broadcast('stringifyData');
+                   form.trigger('submit');
+                }
+             }
+             
+           });
+        };
+        
+        element.on('click', click);
+        
+        scope.$on('$destroy', function () {
+          element.off('click', click);
+        });
+        
       }
     };
   });

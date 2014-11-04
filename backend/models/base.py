@@ -392,8 +392,6 @@ class _BaseImageProperty(_BaseBlobProperty):
   def value_format(self, value):
     if self._repeated and not isinstance(value, list):
       value = [value]
-    if (self._repeated and (not len(value) or not isinstance(value[0], cgi.FieldStorage))) or (not self._repeated and not isinstance(value, cgi.FieldStorage)):
-      return super(_BaseImageProperty, self).value_format(value)
     value = self._property_value_format(value)
     if value is Nonexistent:
       return value
@@ -401,13 +399,13 @@ class _BaseImageProperty(_BaseBlobProperty):
       value = [value]
     out = []
     for i, v in enumerate(value):
-      if isinstance(v, dict) and not self._upload:
+      if not self._upload:
         out.append(self._structured_property_format(v))
       else:
-        if not isinstance(v, cgi.FieldStorage) and not self._required:
-          return Nonexistent  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
+        print v
+        if not isinstance(v, cgi.FieldStorage):
+          continue  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
         # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
-        log(v)
         file_info = blobstore.parse_file_info(v)
         blob_info = blobstore.parse_blob_info(v)
         meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
@@ -419,13 +417,19 @@ class _BaseImageProperty(_BaseBlobProperty):
                                              'image': blob_info.key(),
                                              '_sequence': i})
         out.append(new_image)
-    if self._process_config.get('transform') or self._process_config.get('copy'):
-      self.process(out)
-    else:
-      self.generate_serving_urls(out)
-      if self._process_config.get('measure', True):
-        self.generate_measurements(out)
-    map(lambda x: self.save_blobs_on_success(x.image), out)
+    if not out:
+      if not self._required:
+        return Nonexistent
+      else:
+        raise PropertyError('required')
+    if self._upload:
+      if self._process_config.get('transform') or self._process_config.get('copy'):
+        self.process(out)
+      else:
+        self.generate_serving_urls(out)
+        if self._process_config.get('measure', True):
+          self.generate_measurements(out)
+      map(lambda x: self.save_blobs_on_success(x.image), out)
     if not self._repeated:
       out = out[0]
     return out

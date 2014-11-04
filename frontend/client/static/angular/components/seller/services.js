@@ -1,6 +1,6 @@
 angular.module('app').run(function ($window, modelsConfig, modelsMeta,
   modelsEditor, formInputTypes, underscoreTemplate, $modal, helpers, $q,
-  $timeout) {
+  $timeout, currentAccount) {
 
   formInputTypes.SuperPluginStorageProperty = function (info) {
     var config = info.config,
@@ -290,7 +290,7 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
                   if (is_new) {
                     $scope.parentArgs.push($scope.args);
                   } else {
-                    helpers.update(arg, $scope.args);
+                    $.extend(arg, $scope.args);
                   }
 
                   if (angular.isFunction(config.ui.specifics
@@ -342,6 +342,15 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
     };
 
     $.extend(models['23'], {
+      current : function (args)
+      {
+        if (!args) args = {};
+        args.account = currentAccount.key;
+        return this.actions.read(args, {
+          cache : 'currentSeller',
+          cacheType : 'memory'
+        });
+      },
       settingsModal: function (account_key) {
         var fields = modelsMeta.getActionArguments(this.kind,
           'update');

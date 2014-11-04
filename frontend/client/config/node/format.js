@@ -19,7 +19,7 @@ var config = {
     "break_chained_methods": false,
     "eval_code": false,
     "unescape_strings": false,
-    "wrap_line_length": 79,
+    "wrap_line_length": 80,
     "good_stuff" : true
 };
 
@@ -88,10 +88,3 @@ walk(filePath, function (err, files) {
   });
   
 });
-
-/*glob(filePath + '/*.js', function (err, rootfiles) {
-  console.log(filePath, '/components/*.js');
-  glob(filePath + '/components/*.js', function (err, files) {
-    console.log(rootfiles, files);
-  });
-});*/

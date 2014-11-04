@@ -1,0 +1,21 @@
+<h1 class="fieldset with-button">
+    <span class="fieldset-text">Catalogs</span>
+    <span class="fieldset-button"><a class="button" busy ng-click="create()">Add New</a></span>
+</h1>
+ 
+<div autoload-on-scrollend class="grid-wrapper">
+    <div ng-repeat="result in search.results track by $index" class="grid-item">
+        <a ng-if="result.cover.serving_url" display-image="result.cover" ng-click="manage(result)" class="pointable">
+        </a>
+        <div ng-if="!result.cover.serving_url">
+          <a ng-click="manage(result)" class="pointable">
+            {{result.name}}
+          </a>
+        </div>
+    </div>
+</div>
+ 
+
+<div ng-show="search.more && !search.loading">
+    <button style="width:100%;" class="button block" busy ng-click="search.loadsMore()" type="button">Load More</button>
+</div>

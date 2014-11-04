@@ -58,8 +58,8 @@ angular.module('ngUpload', [])
       }
     };
   }])
-  .directive('ngUpload', ["$log", "$parse", "$document", "$rootScope",
-    function ($log, $parse, $document, $rootScope) {
+  .directive('ngUpload', ["$log", "$parse", "$document", "$rootScope", "errorHandling",
+    function ($log, $parse, $document, $rootScope, errorHandling) {
     var iframeID = 1;
     // Utility function to get meta tag with a given name attribute
     function getMetaTagWithName(name) {
@@ -80,7 +80,7 @@ angular.module('ngUpload', [])
       link: function (scope, element, attrs) {
         // Give each directive instance a new id
         iframeID++;
-
+ 
         function setLoadingState(state) {
           scope.$isUploading = state;
         }
@@ -144,7 +144,7 @@ angular.module('ngUpload', [])
           if(formController && formController.$invalid) return false;
           // perform check before submit file
           if (options.beforeSubmit && options.beforeSubmit(scope, {}) == false) return false;
-
+ 
           // bind load after submit to prevent initial load triggering uploadEnd
           iframe.bind('load', uploadEnd);
 
@@ -196,18 +196,31 @@ angular.module('ngUpload', [])
             content = bodyContent.innerHTML;
             $log.warn('Response is not valid JSON');
           }
+          var noErrors = (content && angular.isObject(content) && !content.errors);
           // if outside a digest cycle, execute the upload response function in the active scope
           // else execute the upload response function in the current digest
-          if (!scope.$$phase) {
-             scope.$apply(function () {
-                 fn(scope, { content: content});
-             });
-          } else {
-            fn(scope, { content: content});
+          if (noErrors)
+          {
+            if (!scope.$$phase) {
+               scope.$apply(function () {
+                   fn(scope, { content: {data: content}});
+               });
+            } else {
+              fn(scope, { content: {data: content}});
+            }
           }
-          
+           
           $rootScope.$broadcast('disableUI', false);
-          $rootScope.$broadcast('ngUploadComplete', content);
+          
+          if (noErrors)
+          { 
+             $rootScope.$broadcast('ngUploadComplete', content);
+          }
+          else
+          {
+            errorHandling.modal(content.errors);
+          }
+         
        
         }
       }

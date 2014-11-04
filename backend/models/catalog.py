@@ -399,7 +399,7 @@ class Catalog(orm.BaseExpando):
         'name': orm.SuperStringProperty(required=True),
         'publish_date': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
-        '_images': orm.SuperLocalStructuredProperty(CatalogImage, repeated=True),
+        '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
         '_products': orm.SuperLocalStructuredProperty(CatalogProduct, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },

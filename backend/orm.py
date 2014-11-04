@@ -3798,7 +3798,7 @@ class Record(BaseExpando):
     self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
     for _, prop in entity._properties.iteritems():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
-      if isinstance(value, PropertyValue):
+      if isinstance(value, LocalStructuredPropertyValue):
         value = value.value
       # prop = copy.deepcopy(prop) no need to deepcopy prop for now, we'll see.
       self._properties[prop._name] = prop

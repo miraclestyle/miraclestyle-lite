@@ -334,3 +334,8 @@ strong, b
 {
   vertical-align:top;
 }
+
+.pointable
+{
+  cursor:pointer;
+}

@@ -1,7 +1,7 @@
 /*global angular, window, console, jQuery, $, document*/
 'use strict';
 
-angular.module('app').value('modelsInfo', {}).factory('errorHandling',
+angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factory('errorHandling',
   function ($modal) {
     var translations = {
         action_denied: function (reason) {
@@ -67,27 +67,6 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
 
       return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g,
         '\\0');
-    },
-    update: function () {
-
-      /**
-       * Overrides dict1 with dict2, dict3 etc.
-       * update(dict1, dict2, dict3...)
-       */
-      var objects = [];
-      angular.forEach(arguments, function (value) {
-        objects.push(value);
-      });
-
-      var target = objects.pop();
-
-      angular.forEach(objects, function (obj) {
-        angular.forEach(target, function (new_value, key) {
-          obj[key] = new_value;
-        });
-      });
-
-      return objects;
     },
     fieldSorter: function (prev, next) {
       var p1 = parseInt(prev.name),
@@ -208,7 +187,7 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
           method: 'GET',
           url: endpoint.url
         };
-      helpers.update(gets, compiled[1]);
+      $.extend(gets, compiled[1]);
       angular.extend(defaults, gets);
       if (defaults && angular.isString(defaults.cache)) {
         var cache_id = defaults.cache;
@@ -222,15 +201,16 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
         cache: 'currentAccount',
         cacheType: 'memory'
       }).then(function (response) {
-
-        angular.module('app').value('currentAccount', response.data
-          .entity);
+ 
+        var currentAccount = $injector.get('currentAccount');  
+        $.extend(currentAccount, response.data.entity);
 
       });
     },
     modelsMeta: function () {
       return endpoint.get(null, null, {}, {
-        cache: false, // model_meta
+        cache: 'modelsMeta',
+        cacheType: 'memory',
         url: GLOBAL_CONFIG.apimodelsMetaPath
       }).then(function (response) {
         var modelsInfo = $injector.get('modelsInfo');
@@ -508,8 +488,8 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
   var dontSend = ['_field_permissions', '_action_permissions'],
     modelsUtil = {
       normalizeMultiple: function (entities) {
-        angular.forEach(entities, function (entity, i) {
-          entities[i] = modelsUtil.normalize(entity);
+        angular.forEach(entities, function (entity) {
+          modelsUtil.normalize(entity);
         });
       },
       normalize: function (entity, fields, parent, subentity_field_key,
@@ -587,7 +567,7 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
           /// ui must be now reserved keyword in datastore and we use it for making ui related functions
           if (parent == undefined) {
             entity.ui.rule = ruleEngine.run(entity);
-          } else if (parent.ui.rule) {
+          } else if (parent.ui.rule && false) {
             entity.ui.rule = {};
             entity.ui.rule.input = parent.ui.rule.input;
             entity.ui.rule.action = parent.ui.rule.action;
@@ -791,20 +771,18 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
             };
           }
           var that = this;
-          models[config.kind].actions.read(args).then(function (
-            response) {
+          models[config.kind].actions.read(args).then(function (response) {
             modelsUtil.normalize(response.data.entity);
-            helpers.update(entity, response.data.entity);
-            that.open(response.data.entity, args);
+            $.extend(entity, response.data.entity);
+            that.open(entity, args);
           });
         },
         prepare: function (entity, args) {
           var that = this;
-          models[config.kind].actions.prepare(args).then(function (
-            response) {
+          models[config.kind].actions.prepare(args).then(function (response) {
             modelsUtil.normalize(response.data.entity);
-            helpers.update(entity, response.data.entity);
-            that.open(response.data.entity, args);
+            $.extend(entity, response.data.entity);
+            that.open(entity, args);
           });
         },
         open: function (entity, args) {
@@ -821,7 +799,7 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
               $scope.entity = entity;
               $scope.$modalInstance = $modalInstance;
               // load into scope from config
-              helpers.update($scope, config.scope);
+              $.extend($scope, config.scope);
               // call config constructor, needed for posible on-spot configurations
               config.defaultInit($scope);
               config.init($scope);
@@ -831,21 +809,50 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
               $scope.args.action_id = config.action;
               $scope.args.action_model = config.kind;
 
-              if (args !== undefined) {
-                helpers.update($scope.args, args);
+              if (angular.isDefined(args)) {
+                $.extend($scope.args, args);
               }
 
               console.log('modelsEditor.init', $scope);
+              
+              $scope.save = function ()
+              { 
+                var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
+  
+                promise.then(function (response) {
+  
+                  modelsUtil.normalize(response.data.entity);
+                  $.extend($scope.entity, response.data.entity);
+  
+                  var new_args = config.argumentLoader($scope);
+  
+                  $.extend($scope.args, new_args);
+                  
+                  if (angular.isDefined(config.afterSave))
+                  {
+                    config.afterSave($scope);
+                  
+                  }
+                 
+    
+                });
+                
+                return promise;
+              };
 
               $scope.complete = function (response) {
 
-                modelsUtil.normalize(response.entity);
-                helpers.update($scope.entity, response.entity);
+                modelsUtil.normalize(response.data.entity);
+                $.extend($scope.entity, response.data.entity);
 
-                var new_args = config.argumentLoader(
-                  $scope);
+                var new_args = config.argumentLoader($scope);
 
-                helpers.update($scope.args, new_args);
+                $.extend($scope.args, new_args);
+                
+                if (angular.isDefined(config.afterComplete))
+                {
+                  config.afterComplete($scope);
+                }
 
                 if (config.closeAfterSave) {
                   $timeout(function () {
@@ -853,8 +860,7 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
                   });
                 }
 
-                console.log('modelsEditor.complete',
-                  $scope);
+                console.log('modelsEditor.complete', $scope);
 
               };
 
@@ -1201,6 +1207,18 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
 
         config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
         config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+        
+        if (!config.ui.specifics.sortableOptions)
+        {
+          config.ui.specifics.sortableOptions = {};
+          config.ui.specifics.sortableOptions.stop = function ()
+          {
+            angular.forEach(config.ui.specifics.parentArgs, function (ent, i) {
+              ent._sequence = i;
+              ent.sequence = i;
+            });
+          };
+        }
 
         info.scope.$watch(config.ui.args, function (neww, old) {
           console.log(config.ui.args, neww !== old);
@@ -1294,7 +1312,7 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
                         if (is_new) {
                           $scope.parentArgs.push($scope.args);
                         } else {
-                          helpers.update(arg, $scope.args);
+                          $.extend(arg, $scope.args);
                         }
                       }
 
@@ -1341,7 +1359,15 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
         return this.SuperLocalStructuredProperty(info);
       },
       SuperImageLocalStructuredProperty: function (info) {
+        this.SuperLocalStructuredProperty(info);
         return 'image';
+      },
+      SuperImageStructuredProperty: function (info) {
+        return this.SuperImageLocalStructuredProperty(info);
+      },
+      SuperImageRemoteStructuredProperty : function (info)
+      {
+        return this.SuperImageLocalStructuredProperty(info);
       },
       SuperTextProperty: function (info) {
         if (info.config.repeated) {
@@ -1472,4 +1498,6 @@ angular.module('app').value('modelsInfo', {}).factory('errorHandling',
 
   return models;
 
+}).factory('searchKinds', function () {
+  
 });
