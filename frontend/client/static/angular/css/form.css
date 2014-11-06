@@ -28,6 +28,12 @@
   /**box-shadow: 1px 1px 3px #333333;**/
 }
 
+.button[disabled]
+{
+  color:#CCCCCC;
+  border-color:#CCCCCC;
+}
+
 .text-input
 {
   border: 1px solid #BBBBBB;

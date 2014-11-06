@@ -24,7 +24,12 @@
       ], // this will be changed accordingly
       apimodelsMetaPath: host + '/api/model_meta',
       apiEndpointPath: host + '/api/endpoint',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss Z'
+      dateFormat: 'yyyy-MM-dd HH:mm:ss Z',
+      defaultImage: 'http://placehold.it/240x100',
+      defaultLogo: 'http://placehold.it/240x100',
+      defaultCatalogCover: 'http://placehold.it/240x100',
+      gridMaxWidth: 240,
+      gridMinWidth: 180
     };
 
   angular.module('app', GLOBAL_CONFIG.angularModules) // we can avoid a global if we build modules for each feature

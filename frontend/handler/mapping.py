@@ -35,7 +35,7 @@ if settings.DEVELOPMENT_SERVER:
       data = self.request.body
       if not data:
         data = self.request.params
-      kwargs = {'payload': data, 'method': method, 'url': full_path, 'headers': self.request.headers}
+      kwargs = {'payload': data, 'deadline': 60, 'method': method, 'url': full_path, 'headers': self.request.headers}
       result = urlfetch.fetch(**kwargs)
       self.response.write(result.content)
       

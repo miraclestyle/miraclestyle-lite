@@ -22,8 +22,9 @@
               <!-- what else to put here? -->
             </tr>
           </thead>
-          <tbody>
-            <tr ng-repeat="ent in config.ui.specifics.parentArgs track by $index">
+          <tbody ui-sortable="config.ui.specifics.sortableOptions" 
+          ng-model="config.ui.specifics.parentArgs">
+            <tr ng-repeat="ent in config.ui.specifics.parentArgs">
               <td>
                 {{ent.name}}
               </td>

@@ -7,6 +7,7 @@ Created on Dec 17, 2013
 
 import cgi
 import inspect
+import json
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
@@ -162,6 +163,7 @@ class Engine:
             argument._validator(argument, value)
           context.input[key] = value
         except orm.PropertyError as e:
+          util.log(e, 'exception')
           if e.message not in input_error:
             input_error[e.message] = []
           input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
@@ -199,6 +201,7 @@ class Engine:
   
   @classmethod
   def run(cls, input):
+    # json.dumps(input, indent=2)
     util.log('Payload: %s' % input)
     context = Context()
     cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!

@@ -26,6 +26,22 @@
     .segment_title a {font-size:11px;}
 
     </style>
+    
+    
+    
+<div ng-init="items = [1,2,3,4,5]" class="segment">
+  <h1 class="segment_title">
+    Sorting
+  </h1>
+  
+  <div ui-sortable>
+    <div ng-repeat="item in items">
+      <div ng-class="{nako: $index % 2, vako: !$index % 2}">{{items}}</div>
+    </div>
+  </div>
+  
+  
+  </div></div>
 
 <div class="segment">
   <h1 class="segment_title">

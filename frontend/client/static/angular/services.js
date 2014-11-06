@@ -86,6 +86,38 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
       });
 
       return options;
+    },
+    calculateGrid: function (canvas_width, max_width, min_width, margin) {
+      /*
+      velicina covera je uvek izmedju 240x360px i 180x270px
+      padding sa svih strana covera je 1px
+      preferirani broj covera u horizontali je 4 ili vise
+      ako je ostatak ekrana izmedju 240px i 360px onda se opet preferira najveci cover
+      sto se tice GAE blobstore-a najbolje je da se uvek radi fetch covera dimenzija 240x360 pa da se ostalo radi na client side.
+      */
+      var loop = max_width - min_width
+      var values = [];
+      for (var i = 0; i < loop; i++) {
+        var cover_width = max_width - i;
+        var cover_count_raw = canvas_width / cover_width;
+        var cover_count = Math.floor(cover_count_raw);
+        cover_width = canvas_width / cover_count;
+        if (cover_width > max_width) {
+          cover_count = cover_count + 1;
+          cover_width = canvas_width / cover_count;
+          if (cover_width < min_width) {
+            cover_count = cover_count - 1;
+            cover_width = max_width;
+          }
+        }
+        var cover_width_rounded = Math.floor(cover_width - margin);
+        var sides = Math.floor((canvas_width % (cover_width_rounded * cover_count)) / 2);
+        values = [cover_width_rounded-margin, cover_count, sides, cover_width_rounded];
+        if (cover_count_raw > 4 || cover_count === 1) {
+          break;
+        }
+      }
+      return values;
     }
   };
 
@@ -199,7 +231,8 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
     currentAccount: function () {
       return endpoint.post('current_account', '11', {}, {
         cache: 'currentAccount',
-        cacheType: 'memory'
+        cacheType: 'memory',
+        normalizeEntity: false
       }).then(function (response) {
  
         var currentAccount = $injector.get('currentAccount');  
@@ -644,10 +677,12 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
     $httpProvider.interceptors.push(['$rootScope', '$q', '$injector',
       function ($rootScope, $q, $injector) {
 
-        var handleError = function (rejection) {
+        var handleResponse = function (rejection) {
 
           var data = rejection.data,
+            normalizeEntity = (rejection.config.normalizeEntity === undefined || rejection.config.normalizeEntity),
             errorHandling = $injector.get('errorHandling'),
+            modelsUtil = $injector.get('modelsUtil'),
             enableUI = function () {
               $rootScope.$broadcast('disableUI', false);
             };
@@ -676,6 +711,19 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
             }
 
           }
+           
+          if (normalizeEntity) {
+            if (angular.isDefined(data.entities))
+            {
+              modelsUtil.normalizeMultiple(data.entities);
+            }
+            else if (angular.isDefined(data.entity))
+            {
+              modelsUtil.normalize(data.entity);
+            }
+            
+          }
+          
           enableUI();
           // otherwise, default behaviour
           return rejection || $q.when(rejection);
@@ -683,8 +731,8 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         };
 
         return {
-          response: handleError,
-          responseError: handleError,
+          response: handleResponse,
+          responseError: handleResponse,
           request: function (config) {
             $rootScope.$broadcast('disableUI', true);
             return config || $q.when(config);
@@ -718,17 +766,30 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
               .config.kind, $scope.config.action),
             args = {};
 
-          angular.forEach(actionArguments, function (arg, arg_key) {
-            var val = entityCopy[arg_key];
-            if (val === undefined) {
+          angular.forEach(actionArguments, function (arg) {
+            var val = entityCopy[arg.code_name];
+            // default is only acceptable if its not null or undefined
+            if (val === undefined && (arg['default'] !== null && arg['default'] !== undefined)) {
               val = arg['default'];
             }
             if (val !== undefined) {
               // arg can never be "undefined"
-              args[arg_key] = val;
+              args[arg.code_name] = val;
             }
 
           });
+          
+          if ($scope.entity.key)
+          {
+            args.key = $scope.entity.key;
+          }
+          
+          // every entity has _read_arguments when retrieved from database
+          // argument loader will attach that to its next rpc
+          if ($scope.entity._read_arguments)
+          {
+            args.read_arguments = $scope.entity._read_arguments;
+          }
 
           return args;
         },
@@ -772,7 +833,6 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
           }
           var that = this;
           models[config.kind].actions.read(args).then(function (response) {
-            modelsUtil.normalize(response.data.entity);
             $.extend(entity, response.data.entity);
             that.open(entity, args);
           });
@@ -780,7 +840,6 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         prepare: function (entity, args) {
           var that = this;
           models[config.kind].actions.prepare(args).then(function (response) {
-            modelsUtil.normalize(response.data.entity);
             $.extend(entity, response.data.entity);
             that.open(entity, args);
           });
@@ -808,6 +867,12 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
               // argument loader to load arguments for editing
               $scope.args.action_id = config.action;
               $scope.args.action_model = config.kind;
+              
+              $scope.setAction = function(action)
+              {
+                $scope.args.action_id = action;
+                config.action = action;
+              };
 
               if (angular.isDefined(args)) {
                 $.extend($scope.args, args);
@@ -820,8 +885,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                 var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
   
                 promise.then(function (response) {
-  
-                  modelsUtil.normalize(response.data.entity);
+   
                   $.extend($scope.entity, response.data.entity);
   
                   var new_args = config.argumentLoader($scope);
@@ -835,14 +899,20 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                   }
                  
     
+                }, function (response) {
+                  // here handle error...
+                  if (angular.isDefined(config.afterSaveError))
+                  {
+                    config.afterSaveError($scope, response);
+                  }
+                  
                 });
                 
                 return promise;
               };
 
               $scope.complete = function (response) {
-
-                modelsUtil.normalize(response.data.entity);
+ 
                 $.extend($scope.entity, response.data.entity);
 
                 var new_args = config.argumentLoader($scope);
@@ -863,7 +933,24 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                 console.log('modelsEditor.complete', $scope);
 
               };
-
+              
+              $scope.noComplete = function ()
+              {
+                if (angular.isDefined(config.noComplete))
+                {
+                  config.noComplete($scope);
+                }
+              };
+              
+              $scope.completeError = function (response)
+              {
+                if (angular.isDefined(config.afterCompleteError))
+                {
+                  config.afterCompleteError($scope, response);
+                }
+                
+              };
+               
               $scope.close = function () {
                 $modalInstance.dismiss('close');
               };
@@ -1210,18 +1297,19 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         
         if (!config.ui.specifics.sortableOptions)
         {
-          config.ui.specifics.sortableOptions = {};
-          config.ui.specifics.sortableOptions.stop = function ()
-          {
-            angular.forEach(config.ui.specifics.parentArgs, function (ent, i) {
-              ent._sequence = i;
-              ent.sequence = i;
-            });
-          };
+          config.ui.specifics.sortableOptions = {
+            stop: function () {
+                angular.forEach(config.ui.specifics.parentArgs, function (ent, i) {
+                  ent._sequence = i;
+                  ent.sequence = i;
+                });
+           
+            }
+          }; 
         }
+        
 
         info.scope.$watch(config.ui.args, function (neww, old) {
-          console.log(config.ui.args, neww !== old);
           if (neww !== old) {
             config.ui.specifics.parentArgs = neww;
           }
@@ -1243,8 +1331,12 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         });
 
         if (!config.repeated) {
+           
           config.ui.specifics.SingularCtrl = function ($scope) {
             $scope.args = config.ui.specifics.parentArgs;
+            info.scope.$watchCollection(config.ui.args, function (neww, old) {
+              $.extend($scope.args, neww);
+            });
           };
 
         } else {
@@ -1278,7 +1370,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                     arg.sequence = length;
                     modelsUtil.normalize(arg, config.modelclass,
                       config.ui.specifics.entity, config.code_name,
-                      length, false);
+                      length);
                     is_new = true;
                   }
                   $scope.container = {};
@@ -1351,15 +1443,30 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
         return 'structured';
       },
+      _RemoteStructuredPropery: function (info)
+      {
+        info.config.ui.specifics.remote = true;
+         
+      },
       SuperStructuredProperty: function (info) {
         return this.SuperLocalStructuredProperty(info);
       },
       SuperRemoteStructuredProperty: function (info) {
         // remote structured is missing here... @todo
-        return this.SuperLocalStructuredProperty(info);
+        var ret = this.SuperLocalStructuredProperty(info);
+        this._RemoteStructuredPropery(info);
+        return ret;
       },
       SuperImageLocalStructuredProperty: function (info) {
         this.SuperLocalStructuredProperty(info);
+                
+        if (!info.config.ui.specifics.displayImageConfig)
+        {
+          info.config.ui.specifics.displayImageConfig = {
+            size: 360
+          };
+        }
+         
         return 'image';
       },
       SuperImageStructuredProperty: function (info) {
@@ -1367,7 +1474,9 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
       },
       SuperImageRemoteStructuredProperty : function (info)
       {
-        return this.SuperImageLocalStructuredProperty(info);
+        var ret = this.SuperImageLocalStructuredProperty(info);
+        this._RemoteStructuredPropery(info);
+        return ret;
       },
       SuperTextProperty: function (info) {
         if (info.config.repeated) {

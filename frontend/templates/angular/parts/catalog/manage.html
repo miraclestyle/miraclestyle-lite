@@ -1,3 +1,4 @@
+<div accordion-on-open="accordions">
   <accordion close-others="accordions.closeOthers">
      
     <accordion-group heading="{{accordions.general.label}}" is-open="accordions.general.open" is-disabled="accordions.general.disabled">
@@ -10,13 +11,10 @@
          <div form-input="config.keyedFields.discontinue_date"></div>
   
     </accordion-group>
-    
-    <accordion-group heading="{{accordions.images.label}}" is-open="accordions.images.open" is-disabled="accordions.images.disabled">
-          <div form-input="config.keyedFields._images"></div>
-    </accordion-group>
+ 
     
     <accordion-group heading="{{accordions.products.label}}" is-open="accordions.products.open" is-disabled="accordions.products.disabled">
-         
+         <div form-input="config.keyedFields._images"></div>
     </accordion-group>
     
     <accordion-group heading="{{accordions.embed.label}}" is-open="accordions.embed.open" is-disabled="accordions.embed.disabled">
@@ -25,3 +23,4 @@
     
  
   </accordion>
+</div>

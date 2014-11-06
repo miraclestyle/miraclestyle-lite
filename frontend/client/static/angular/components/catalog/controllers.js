@@ -20,7 +20,6 @@ angular.module('app')
        var args = modelsMeta.getActionArguments('31', 'search');
        args.search['default'].ancestor = response.data.entity.key;
        models['31'].actions.search(args.search['default']).then(function (response) {
-        modelsUtil.normalizeMultiple(response.data.entities);
         $scope.search.results = response.data.entities;
       });
     });

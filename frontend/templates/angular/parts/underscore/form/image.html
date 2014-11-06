@@ -3,7 +3,7 @@
       <h2 class="fieldset with-button">
         <span class="fieldset-text">Images</span>
         <span class="fieldset-button">
-           <div ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
+           <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
                <input class="upload" name="<%= config.ui.formName %>"
                        multiple
@@ -14,18 +14,24 @@
       </h2>
  
       <div ui-sortable="config.ui.specifics.sortableOptions" 
-          ng-model="<%= config.ui.args %>" class="clearfix grid-wrapper">
+           ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
  
-        <div ng-repeat="image in config.ui.specifics.parentArgs track by $index"
+        <div grid-generator="{margin: 8}" grid-generator-image="image" ng-repeat="image in config.ui.specifics.parentArgs"
              ng-hide="image._state == 'deleted'"
-             ng-model="image"
              class="image-image grid-item">
-          <div display-image="image" class="img spaceout"></div>
-          <button ng-show="<%= config.ui.writableCompiled %>" type="button" 
-                  class="button" 
-                  ng-click="config.ui.specifics.remove(image)">Remove</button>
+              <div class="img spaceout">
+                <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
+              </div>
+              <button ng-show="<%= config.ui.writableCompiled %>" type="button" 
+                      class="button" 
+                      ng-click="config.ui.specifics.remove(image)">Remove</button>
         </div>
       </div>
+      
+      <% if (config.ui.specifics.remote) { %>
+      <button ng-if="config.ui.specifics.readArguments.more" class="button" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
+      <% } %>
+      
       <% } else { %>
         
         <div form-element-wrapper label="<%= config.ui.compiled.label %>">
@@ -33,7 +39,9 @@
                        generate-upload-url
                        type="file" /></div>
                        <br />
-          <div display-image="<%= config.ui.args %>"></div>
+          <div>
+            <img display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
+          </div>
         </div>
  
       <% }  %>

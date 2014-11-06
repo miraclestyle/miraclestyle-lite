@@ -431,35 +431,53 @@ angular.module('app').config(function (datepickerConfig) {
       }
     }
   })
-  .directive('displayImage', function () {
+  .directive('displayImage', function (GLOBAL_CONFIG) {
     return {
       scope: {
-        image: '=displayImage'
+        image: '=displayImage',
+        config: '=displayImageConfig'
       },
       link: function (scope, element, attrs) {
-  
-        scope.config = scope.$eval(attrs.displayImageConfig);
+   
         if (!scope.config)
         {
-          scope.config = {size: 240};
+          scope.config = {};
         }
+         
+        if (!angular.isDefined(scope.config.size))
+        {
+          scope.config.size = 240;
+        }
+          
         var fn = function (nv, ov) {
-
           if (nv !== ov) {
-            var load = function () {
-              $(element).html($(this));
-            };
-
-            $('<img />').on('load', load).attr('src', scope.image.serving_url + '=s' + scope.config.size);
+            var error = function () {
+              var defaultImage = scope.config.defaultImage;
+              if (!defaultImage)
+              {
+                defaultImage = 'defaultImage';
+              }
+              $(this).attr('src', GLOBAL_CONFIG[defaultImage]);
+ 
+            }, 
+            img = element;
+            
+            if (scope.image.serving_url)
+            {
+              img.on('error', error)
+                 .attr('src', scope.image.serving_url + '=s' + scope.config.size);
+            }
+            else
+            {
+              error.call(img);
+            }
           }
-
         };
 
         scope.$watch('image.serving_url', fn);
 
         fn(true, false)
-
-
+ 
       }
     };
   }).directive('conditionalOutput', function (helpers, $compile) {
@@ -477,12 +495,21 @@ angular.module('app').config(function (datepickerConfig) {
   }).directive('loading', function () {
     return {
       link: function (scope, element) {
+        
+        var disable = function (e)
+        {
+          e.preventDefault();
+          return false;
+        };
+        
         scope.$on('disableUI', function ($event, neww) {
 
           if (neww === true) {
             element.attr('disabled', 'disabled');
+            element.on('click', disable);
           } else {
             element.removeAttr('disabled');
+            element.off('click', disable);
           }
 
         });
@@ -493,6 +520,7 @@ angular.module('app').config(function (datepickerConfig) {
       require: '^form',
       scope: {
         submit: '=submitIfFiles',
+        noComplete: '=submitIfFilesNoComplete'
       },
       link: function (scope, element, attrs, ctrl) {
         var form = element.parents('form:first'), files, execute,
@@ -521,8 +549,12 @@ angular.module('app').config(function (datepickerConfig) {
                 {  
                    $rootScope.$broadcast('stringifyData');
                    form.trigger('submit');
+                   return;
                 }
+                
              }
+             
+             scope.noComplete();
              
            });
         };
@@ -533,6 +565,20 @@ angular.module('app').config(function (datepickerConfig) {
           element.off('click', click);
         });
         
+      }
+    };
+  }).directive('accordionOnOpen', function ($timeout) {
+    return {
+
+      link: function (scope) {
+    
+         scope.$watch('accordions.products.open', function (neww, old) {
+           if (neww)
+           {
+             scope.$broadcast('accordionStateChanged');
+           }
+           
+         });
       }
     };
   });

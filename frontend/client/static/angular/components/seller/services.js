@@ -363,6 +363,11 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
             }]
           }
         };
+        fields.logo.ui.specifics = {
+          displayImageConfig: {
+            size:240
+          }
+        };
         fields._plugin_group.ui.label = false;
         fields.address.ui.specifics = {
           sortFields: ['country', 'region', 'city',

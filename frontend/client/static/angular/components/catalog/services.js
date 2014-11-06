@@ -35,28 +35,36 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
         manageModal: function (entity) {
  
           var isNew = !angular.isDefined(entity),
+          afterSave = function ($scope)
+          { 
+            $scope.setAction('catalog_upload_images');
+          },
+          noComplete = function ($scope)
+          {
+            afterComplete($scope);
+          },
+          afterComplete = function ($scope)
+          {
+            $scope.setAction('update');
+          },
           config = {
             kind: this.kind,
             action: (isNew ? 'create' : 'update'),
             fields : _.toArray(fields),
             templateBodyUrl: 'catalog/manage.html',
             templateFooterUrl : 'catalog/manage_footer.html',
-            afterSave: function ($scope)
-            {
-               $scope.args.action_id = 'catalog_upload_images'; 
-            },
-            afterComplete: function ($scope)
-            {
-              $scope.args.action_id = 'update';
-            },
+            afterSave: afterSave,
+            afterSaveError: afterSave,
+            afterComplete: afterComplete,
+            afterCompleteError: afterComplete,
+            noComplete: noComplete,
             scope: {
               accordions: accordions()
             }
           };
           
           if (isNew)
-          {
-            
+          { 
             // current seller
             models['23'].current().then(function (response) {
               
@@ -76,9 +84,7 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
             });
             
           }
-          
-          
-  
+           
         }
       });
 

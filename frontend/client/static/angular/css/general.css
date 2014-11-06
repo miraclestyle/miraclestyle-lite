@@ -167,7 +167,8 @@ strong, b
 	float:left;
 	overflow:hidden;
 	position:relative;
-	margin:5px;
+  margin:4px;
+	
 }
 
 .image-image .spaceout
@@ -175,6 +176,7 @@ strong, b
 	 
 	width:100%;
 	height:auto;
+
 }
 
 .image-image .img
@@ -297,8 +299,9 @@ strong, b
 
 .grid-item img
 {
-	max-width: 100%;
-	max-height: 100%;
+	width: auto;
+	height: auto;
+	display:block;
 }
 
 .frontpage
@@ -338,4 +341,14 @@ strong, b
 .pointable
 {
   cursor:pointer;
+}
+img.horizontal, .horizontal
+{
+  height:100%;
+  width:auto;
+}
+img.vertical, .vertical
+{
+  width:100%;
+  height:auto;
 }

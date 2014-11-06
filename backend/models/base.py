@@ -402,9 +402,8 @@ class _BaseImageProperty(_BaseBlobProperty):
       if not self._upload:
         out.append(self._structured_property_format(v))
       else:
-        print v
         if not isinstance(v, cgi.FieldStorage):
-          continue  # If the field is not required, and it's not an actual upload, immediately return Nonexistent.
+          continue # not file upload
         # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
         file_info = blobstore.parse_file_info(v)
         blob_info = blobstore.parse_blob_info(v)
@@ -415,13 +414,13 @@ class _BaseImageProperty(_BaseBlobProperty):
                                              'content_type': file_info.content_type,
                                              'gs_object_name': file_info.gs_object_name,
                                              'image': blob_info.key(),
-                                             '_sequence': i})
+                                             '_sequence': i+1})
         out.append(new_image)
     if not out:
-      if not self._required:
+      if not self._required: # if field is not required, and there isnt any processed return non existent
         return Nonexistent
       else:
-        raise PropertyError('required')
+        raise PropertyError('required') # otherwise required
     if self._upload:
       if self._process_config.get('transform') or self._process_config.get('copy'):
         self.process(out)

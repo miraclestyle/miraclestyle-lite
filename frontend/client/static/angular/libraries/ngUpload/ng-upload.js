@@ -93,6 +93,7 @@ angular.module('ngUpload', [])
         //    enableRailsCsrf: bool
         // }
         var fn = attrs.ngUpload ? $parse(attrs.ngUpload) : angular.noop;
+        var errorFn = attrs.ngUploadError ? $parse(attrs.ngUploadError) : angular.noop;
         var loading = attrs.ngUploadLoading ? $parse(attrs.ngUploadLoading) : null;
 
         if ( attrs.hasOwnProperty( "uploadOptionsConvertHidden" ) ) {
@@ -196,29 +197,41 @@ angular.module('ngUpload', [])
             content = bodyContent.innerHTML;
             $log.warn('Response is not valid JSON');
           }
-          var noErrors = (content && angular.isObject(content) && !content.errors);
+          var response = { content: {data: content}}, 
+              noErrors = (content && angular.isObject(content) && !content.errors);
           // if outside a digest cycle, execute the upload response function in the active scope
           // else execute the upload response function in the current digest
           if (noErrors)
           {
             if (!scope.$$phase) {
                scope.$apply(function () {
-                   fn(scope, { content: {data: content}});
+                   fn(scope, response);
                });
             } else {
-              fn(scope, { content: {data: content}});
+              fn(scope, response);
+            }
+          }
+          else
+          {
+            if (!scope.$$phase) {
+               scope.$apply(function () {
+                   errorFn(scope, response);
+               });
+            } else {
+              errorFn(scope, response);
             }
           }
            
           $rootScope.$broadcast('disableUI', false);
           
           if (noErrors)
-          { 
+          {
              $rootScope.$broadcast('ngUploadComplete', content);
           }
           else
           {
             errorHandling.modal(content.errors);
+            $rootScope.$broadcast('ngUploadCompleteError', content);
           }
          
        

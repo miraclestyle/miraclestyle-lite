@@ -5,7 +5,7 @@
   <span class="fieldset-text"><%= config.ui.compiled.label %></span>
   <% if (config.repeated) { %>
   <span class="fieldset-button">
-    <button ng-disabled="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.manage()">
+    <button ng-disabled="!<%= config.ui.writableCompiled %>" loading type="button" class="button" ng-click="config.ui.specifics.manage()">
       <%=config.ui.specifics.addText %>
     </button>
   </span>
@@ -21,8 +21,9 @@
               <!-- what else to put here? -->
             </tr>
           </thead>
-          <tbody>
-            <tr ng-repeat="ent in config.ui.specifics.parentArgs track by $index" ng-hide="ent._state == 'deleted'">
+          <tbody ui-sortable="config.ui.specifics.sortableOptions" 
+          ng-model="config.ui.specifics.parentArgs">
+            <tr ng-repeat="ent in config.ui.specifics.parentArgs" ng-hide="ent._state == 'deleted'">
               <% if (config.ui.specifics.showListItem) { %>
                 <td ng-repeat="field in config.ui.specifics.listFields">
                  <span <%=config.ui.specifics.showListItem %>="ent" <%=config.ui.specifics.showListItem %>-field="field"></span>
@@ -40,6 +41,11 @@
             </tr>
           </tbody>
     </table>
+    
+    <% if (config.ui.specifics.remote) { %>
+    <div>Remote data</div>
+    <% } %>
+    
     <% } else { %>
       <div ng-controller="config.ui.specifics.SingularCtrl">
         <div form-builder="config.ui.specifics.formBuilder"></div>

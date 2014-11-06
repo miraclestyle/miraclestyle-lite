@@ -248,7 +248,7 @@ class Catalog(orm.BaseExpando):
   _expando_fields = {
     'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover',
                                                                                   'transform': True, 'width': 240,
-                                                                                  'height': 100, 'crop_to_fit': True}),
+                                                                                  'height': 360, 'crop_to_fit': True}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
@@ -400,7 +400,7 @@ class Catalog(orm.BaseExpando):
         'publish_date': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
         '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
-        '_products': orm.SuperLocalStructuredProperty(CatalogProduct, repeated=True),
+        '_products': orm.SuperRemoteStructuredProperty(CatalogProduct, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -431,14 +431,14 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'catalog_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        '_images': SuperImageLocalStructuredProperty(CatalogImage, upload=True, repeated=True),
-        'read_arguments': orm.SuperJsonProperty()
+        '_images': SuperImageLocalStructuredProperty(CatalogImage, upload=True, repeated=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),
+            Set(cfg={'s': {'_read_arguments': {'_images': {}}}}),
+            Read(cfg={'read': '_read_arguments'}),
             UploadImages(cfg={'path': '_catalog._images',
                               'images_path': 'input._images'}),
             CatalogProcessCoverSet(),

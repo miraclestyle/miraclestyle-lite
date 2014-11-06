@@ -1,17 +1,15 @@
 <h1 class="fieldset with-button">
     <span class="fieldset-text">Catalogs</span>
-    <span class="fieldset-button"><a class="button" busy ng-click="create()">Add New</a></span>
+    <span class="fieldset-button"><a class="button" loading ng-click="create()">Add New</a></span>
 </h1>
  
 <div autoload-on-scrollend class="grid-wrapper">
     <div ng-repeat="result in search.results track by $index" class="grid-item">
-        <a ng-if="result.cover.serving_url" display-image="result.cover" ng-click="manage(result)" class="pointable">
+        <a ng-click="manage(result)" class="pointable">
+          <img display-image="result.cover" 
+               display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
         </a>
-        <div ng-if="!result.cover.serving_url">
-          <a ng-click="manage(result)" class="pointable">
-            {{result.name}}
-          </a>
-        </div>
+      
     </div>
 </div>
  

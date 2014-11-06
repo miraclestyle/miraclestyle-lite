@@ -1771,11 +1771,12 @@ class StructuredPropertyValue(PropertyValue):
       # local structured properties, since their logic for setting data is completely different, it relies on 
       # _sequence for ordering and keys for editing what it needs.
       # as for remotely structured data, that is solved trough prepare_key which builds sequence on its own.
-      last_sequence = 0
       if self._property_value:
-        last_sequence = self._property_value[-1]._sequence + 1
-      for ent in entities:
-        ent._sequence += last_sequence
+        last = self._property_value[-1]
+        if last and last._sequence is not None:
+          last_sequence = self._property_value[-1]._sequence + 1
+          for ent in entities:
+            ent._sequence += last_sequence
     # Always trigger setattr on the property itself
     setattr(self._entity, self.property_name, entities)
 
