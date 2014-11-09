@@ -1,7 +1,8 @@
 /*global angular, window, console, jQuery, $, document*/
 'use strict';
 
-angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factory('errorHandling',
+angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factory(
+  'errorHandling',
   function ($modal) {
     var translations = {
         action_denied: function (reason) {
@@ -15,9 +16,11 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         transaction: function (reason) {
 
           if (reason == 'timeout') {
-            return 'Transaction was not completed due timeout. Please try again.';
+            return
+              'Transaction was not completed due timeout. Please try again.';
           } else if (reason == 'failed') {
-            return 'Transaction was not completed due failure. Please try again.';
+            return
+              'Transaction was not completed due failure. Please try again.';
           }
 
         }
@@ -111,18 +114,21 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
           }
         }
         var cover_width_rounded = Math.floor(cover_width - margin);
-        var sides = Math.floor((canvas_width % (cover_width_rounded * cover_count)) / 2);
-        values = [cover_width_rounded-margin, cover_count, sides, cover_width_rounded];
+        var sides = Math.floor((canvas_width % (cover_width_rounded *
+          cover_count)) / 2);
+        values = [cover_width_rounded - margin, cover_count, sides,
+          cover_width_rounded
+        ];
         if (cover_count_raw > 4 || cover_count === 1) {
           break;
         }
       }
       return values;
     },
-    
+
     fancyGrid: {
       getHeight: function (images, width, margin) {
-        width -= images.length * (margin*2);
+        width -= images.length * (margin * 2);
         var h = 0;
         angular.forEach(images, function (image) {
           h += image.proportion;
@@ -130,21 +136,21 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         return width / h;
       },
       setHeight: function (images, height) {
-        
+
         angular.forEach(images, function (image) {
           image.width = height * image.proportion;
           image.height = height;
         });
-    
+
       },
-    
+
       resize: function (images, width) {
         this.setHeight(images, this.getHeight(images, width));
       },
-    
+
       calculate: function (size, images, max_height, margin) {
         var n = 0,
-            providedImages = images; // reference entire array
+          providedImages = images; // reference entire array
         w: while (images.length > 0) {
           for (var i = 1; i < images.length + 1; ++i) {
             var slice = images.slice(0, i);
@@ -161,7 +167,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
           break;
         }
         return providedImages;
-      } 
+      }
     }
   };
 
@@ -278,8 +284,8 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         cacheType: 'memory',
         normalizeEntity: false
       }).then(function (response) {
- 
-        var currentAccount = $injector.get('currentAccount');  
+
+        var currentAccount = $injector.get('currentAccount');
         $.extend(currentAccount, response.data.entity);
 
       });
@@ -724,7 +730,8 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         var handleResponse = function (rejection) {
 
           var data = rejection.data,
-            normalizeEntity = (rejection.config.normalizeEntity === undefined || rejection.config.normalizeEntity),
+            normalizeEntity = (rejection.config.normalizeEntity ===
+              undefined || rejection.config.normalizeEntity),
             errorHandling = $injector.get('errorHandling'),
             modelsUtil = $injector.get('modelsUtil'),
             enableUI = function () {
@@ -755,19 +762,16 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
             }
 
           }
-           
+
           if (normalizeEntity) {
-            if (angular.isDefined(data.entities))
-            {
+            if (angular.isDefined(data.entities)) {
               modelsUtil.normalizeMultiple(data.entities);
-            }
-            else if (angular.isDefined(data.entity))
-            {
+            } else if (angular.isDefined(data.entity)) {
               modelsUtil.normalize(data.entity);
             }
-            
+
           }
-          
+
           enableUI();
           // otherwise, default behaviour
           return rejection || $q.when(rejection);
@@ -813,7 +817,8 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
           angular.forEach(actionArguments, function (arg) {
             var val = entityCopy[arg.code_name];
             // default is only acceptable if its not null or undefined
-            if (val === undefined && (arg['default'] !== null && arg['default'] !== undefined)) {
+            if (val === undefined && (arg['default'] !== null &&
+                arg['default'] !== undefined)) {
               val = arg['default'];
             }
             if (val !== undefined) {
@@ -822,16 +827,14 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
             }
 
           });
-          
-          if ($scope.entity.key)
-          {
+
+          if ($scope.entity.key) {
             args.key = $scope.entity.key;
           }
-          
+
           // every entity has _read_arguments when retrieved from database
           // argument loader will attach that to its next rpc
-          if ($scope.entity._read_arguments)
-          {
+          if ($scope.entity._read_arguments) {
             args.read_arguments = $scope.entity._read_arguments;
           }
 
@@ -876,14 +879,16 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
             };
           }
           var that = this;
-          models[config.kind].actions.read(args).then(function (response) {
+          models[config.kind].actions.read(args).then(function (
+            response) {
             $.extend(entity, response.data.entity);
             that.open(entity, args);
           });
         },
         prepare: function (entity, args) {
           var that = this;
-          models[config.kind].actions.prepare(args).then(function (response) {
+          models[config.kind].actions.prepare(args).then(function (
+            response) {
             $.extend(entity, response.data.entity);
             that.open(entity, args);
           });
@@ -911,9 +916,8 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
               // argument loader to load arguments for editing
               $scope.args.action_id = config.action;
               $scope.args.action_model = config.kind;
-              
-              $scope.setAction = function(action)
-              {
+
+              $scope.setAction = function (action) {
                 $scope.args.action_id = action;
                 config.action = action;
               };
@@ -923,48 +927,48 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
               }
 
               console.log('modelsEditor.init', $scope);
-              
-              $scope.save = function ()
-              { 
-                var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
-  
+
+              $scope.save = function () {
+                var promise = models[config.kind].actions[
+                  $scope.args.action_id]($scope.args);
+
                 promise.then(function (response) {
-   
-                  $.extend($scope.entity, response.data.entity);
-  
-                  var new_args = config.argumentLoader($scope);
-  
+
+                  $.extend($scope.entity, response.data
+                    .entity);
+
+                  var new_args = config.argumentLoader(
+                    $scope);
+
                   $.extend($scope.args, new_args);
-                  
-                  if (angular.isDefined(config.afterSave))
-                  {
+
+                  if (angular.isDefined(config.afterSave)) {
                     config.afterSave($scope);
-                  
+
                   }
-                 
-    
+
+
                 }, function (response) {
                   // here handle error...
-                  if (angular.isDefined(config.afterSaveError))
-                  {
-                    config.afterSaveError($scope, response);
+                  if (angular.isDefined(config.afterSaveError)) {
+                    config.afterSaveError($scope,
+                      response);
                   }
-                  
+
                 });
-                
+
                 return promise;
               };
 
               $scope.complete = function (response) {
- 
+
                 $.extend($scope.entity, response.data.entity);
 
                 var new_args = config.argumentLoader($scope);
 
                 $.extend($scope.args, new_args);
-                
-                if (angular.isDefined(config.afterComplete))
-                {
+
+                if (angular.isDefined(config.afterComplete)) {
                   config.afterComplete($scope);
                 }
 
@@ -977,24 +981,21 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                 console.log('modelsEditor.complete', $scope);
 
               };
-              
-              $scope.noComplete = function ()
-              {
-                if (angular.isDefined(config.noComplete))
-                {
+
+              $scope.noComplete = function () {
+                if (angular.isDefined(config.noComplete)) {
                   config.noComplete($scope);
                 }
               };
-              
-              $scope.completeError = function (response)
-              {
-                if (angular.isDefined(config.afterCompleteError))
-                {
-                  config.afterCompleteError($scope, response);
+
+              $scope.completeError = function (response) {
+                if (angular.isDefined(config.afterCompleteError)) {
+                  config.afterCompleteError($scope,
+                    response);
                 }
-                
+
               };
-               
+
               $scope.close = function () {
                 $modalInstance.dismiss('close');
               };
@@ -1338,21 +1339,21 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
         config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
         config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-        
-        if (!config.ui.specifics.sortableOptions)
-        {
+
+        if (!config.ui.specifics.sortableOptions) {
           config.ui.specifics.sortableOptions = {
             stop: function () {
-                angular.forEach(config.ui.specifics.parentArgs, function (ent, i) {
+              angular.forEach(config.ui.specifics.parentArgs,
+                function (ent, i) {
                   ent._sequence = i;
                   ent.sequence = i;
                 });
-                 
-                info.scope.$broadcast('itemOrderChanged'); 
+
+              info.scope.$broadcast('itemOrderChanged');
             }
-          }; 
+          };
         }
-        
+
 
         info.scope.$watch(config.ui.args, function (neww, old) {
           if (neww !== old) {
@@ -1376,10 +1377,11 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         });
 
         if (!config.repeated) {
-           
+
           config.ui.specifics.SingularCtrl = function ($scope) {
             $scope.args = config.ui.specifics.parentArgs;
-            info.scope.$watchCollection(config.ui.args, function (neww, old) {
+            info.scope.$watchCollection(config.ui.args, function (neww,
+              old) {
               $.extend($scope.args, neww);
             });
           };
@@ -1488,10 +1490,9 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
         return 'structured';
       },
-      _RemoteStructuredPropery: function (info)
-      {
+      _RemoteStructuredPropery: function (info) {
         info.config.ui.specifics.remote = true;
-         
+
       },
       SuperStructuredProperty: function (info) {
         return this.SuperLocalStructuredProperty(info);
@@ -1504,21 +1505,19 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
       },
       SuperImageLocalStructuredProperty: function (info) {
         this.SuperLocalStructuredProperty(info);
-                
-        if (!info.config.ui.specifics.displayImageConfig)
-        {
+
+        if (!info.config.ui.specifics.displayImageConfig) {
           info.config.ui.specifics.displayImageConfig = {
             size: 360
           };
         }
-         
+
         return 'image';
       },
       SuperImageStructuredProperty: function (info) {
         return this.SuperImageLocalStructuredProperty(info);
       },
-      SuperImageRemoteStructuredProperty : function (info)
-      {
+      SuperImageRemoteStructuredProperty: function (info) {
         var ret = this.SuperImageLocalStructuredProperty(info);
         this._RemoteStructuredPropery(info);
         return ret;
@@ -1653,5 +1652,5 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
   return models;
 
 }).factory('searchKinds', function () {
-  
+
 });

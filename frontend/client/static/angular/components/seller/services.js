@@ -342,13 +342,12 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
     };
 
     $.extend(models['23'], {
-      current : function (args)
-      {
+      current: function (args) {
         if (!args) args = {};
         args.account = currentAccount.key;
         return this.actions.read(args, {
-          cache : 'currentSeller',
-          cacheType : 'memory'
+          cache: 'currentSeller',
+          cacheType: 'memory'
         });
       },
       settingsModal: function (account_key) {
@@ -365,7 +364,7 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
         };
         fields.logo.ui.specifics = {
           displayImageConfig: {
-            size:240
+            size: 240
           }
         };
         fields._plugin_group.ui.label = false;

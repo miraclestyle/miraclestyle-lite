@@ -389,16 +389,16 @@ angular.module('app').config(function (datepickerConfig) {
       restrict: 'A',
       link: function (scope, element, attrs, ctrl) {
         var fn = function () {
-            var newval = scope.$eval(attrs.compatibilityMaker),
-              stringified = JSON.stringify(newval);
-           element.val(stringified); 
+          var newval = scope.$eval(attrs.compatibilityMaker),
+            stringified = JSON.stringify(newval);
+          element.val(stringified);
         };
 
         scope.$watch('$isUploading', fn);
         scope.$on('stringifyData', fn);
- 
+
         fn();
-  
+
       }
     }
   })
@@ -438,37 +438,32 @@ angular.module('app').config(function (datepickerConfig) {
         config: '=displayImageConfig'
       },
       link: function (scope, element, attrs) {
-   
-        if (!scope.config)
-        {
+
+        if (!scope.config) {
           scope.config = {};
         }
-         
-        if (!angular.isDefined(scope.config.size))
-        {
+
+        if (!angular.isDefined(scope.config.size)) {
           scope.config.size = 240;
         }
-          
+
         var fn = function (nv, ov) {
           if (nv !== ov) {
             var error = function () {
-              var defaultImage = scope.config.defaultImage;
-              if (!defaultImage)
-              {
-                defaultImage = 'defaultImage';
-              }
-              $(this).attr('src', GLOBAL_CONFIG[defaultImage]);
- 
-            }, 
-            img = element;
-            
-            if (scope.image.serving_url)
-            {
+                var defaultImage = scope.config.defaultImage;
+                if (!defaultImage) {
+                  defaultImage = 'defaultImage';
+                }
+                $(this).attr('src', GLOBAL_CONFIG[defaultImage]);
+
+              },
+              img = element;
+
+            if (scope.image.serving_url) {
               img.on('error', error)
-                 .attr('src', scope.image.serving_url + '=s' + scope.config.size);
-            }
-            else
-            {
+                .attr('src', scope.image.serving_url + '=s' + scope.config
+                  .size);
+            } else {
               error.call(img);
             }
           }
@@ -477,7 +472,7 @@ angular.module('app').config(function (datepickerConfig) {
         scope.$watch('image.serving_url', fn);
 
         fn(true, false)
- 
+
       }
     };
   }).directive('conditionalOutput', function (helpers, $compile) {
@@ -495,13 +490,12 @@ angular.module('app').config(function (datepickerConfig) {
   }).directive('loading', function () {
     return {
       link: function (scope, element) {
-        
-        var disable = function (e)
-        {
+
+        var disable = function (e) {
           e.preventDefault();
           return false;
         };
-        
+
         scope.$on('disableUI', function ($event, neww) {
 
           if (neww === true) {
@@ -523,192 +517,184 @@ angular.module('app').config(function (datepickerConfig) {
         noComplete: '=submitIfFilesNoComplete'
       },
       link: function (scope, element, attrs, ctrl) {
-        var form = element.parents('form:first'), files, execute,
-        click = function ()
-        {
-           if (!ctrl.$valid)
-           {
-             console.log('form not valid, stopping submission');
-             return false;
-           }
-           
-           scope.submit().then(function () {
-             files = form.find('input[type="file"]');
-             if (files.length)
-             {
+        var form = element.parents('form:first'),
+          files, execute,
+          click = function () {
+            if (!ctrl.$valid) {
+              console.log('form not valid, stopping submission');
+              return false;
+            }
+
+            scope.submit().then(function () {
+              files = form.find('input[type="file"]');
+              if (files.length) {
                 execute = false;
                 files.each(function () {
-                  if ($(this).val())
-                  {
+                  if ($(this).val()) {
                     execute = true;
                     return false;
                   }
                 });
-                
-                if (execute)
-                {  
-                   $rootScope.$broadcast('stringifyData');
-                   form.trigger('submit');
-                   return;
+
+                if (execute) {
+                  $rootScope.$broadcast('stringifyData');
+                  form.trigger('submit');
+                  return;
                 }
-                
-             }
-             
-             scope.noComplete();
-             
-           });
-        };
-        
+
+              }
+
+              scope.noComplete();
+
+            });
+          };
+
         element.on('click', click);
-        
+
         scope.$on('$destroy', function () {
           element.off('click', click);
         });
-        
+
       }
     };
   }).directive('accordionOnOpen', function ($timeout) {
     return {
 
       link: function (scope) {
-        
+
         if (scope.accordions) {
-          
-            angular.forEach(scope.accordions, function(accordion, key) {
-          
-             scope.$watch('accordions.' + key + '.open', function (neww, old) {
-             if (neww)
-             {
-               scope.$broadcast('accordionStateChanged');
-             }
-             
-           });
-            
+
+          angular.forEach(scope.accordions, function (accordion, key) {
+
+            scope.$watch('accordions.' + key + '.open', function (neww,
+              old) {
+              if (neww) {
+                scope.$broadcast('accordionStateChanged');
+              }
+
+            });
+
           });
-          
+
         }
-      
+
       }
     };
   }).directive('onNgRepeatEnd', function ($timeout) {
     return {
-        restrict: 'A',
-        link: function (scope, element, attr) {
-            if (scope.$last === true) {
-                $timeout(function () {
-                    scope.$emit('onNgRepeatEnd'); 
-                });
-            }
+      restrict: 'A',
+      link: function (scope, element, attr) {
+        if (scope.$last === true) {
+          $timeout(function () {
+            scope.$emit('onNgRepeatEnd');
+          });
         }
+      }
     }
-}).directive('fancyGridGenerator', function (helpers, $timeout) {
- 
-  return {
-    link: function (scope, element, attrs) {
-       var resize = function ()
-       {
-         var canvas = element.outerWidth(true),
-             images = [],
-             margin = 5;
-         angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
-           images.push(angular.copy(image));
-         });
-         helpers.fancyGrid.calculate(canvas, images, 200, margin);
-         element.find('.grid-item').each(function (i) {
-           $(this).css({
-             width: images[i].width,
-             height: images[i].height
-           });
-           $(this).find('img').css({
-             height: images[i].height - margin
-           });
-         });
- 
-       };
- 
-       
-       $(window).on('resize', resize);
-       
-       scope.$on('onNgRepeatEnd', resize);
-       scope.$on('accordionStateChanged', resize);
-       scope.$on('itemOrderChanged', resize);
-       
-       scope.$on('$destroy', function () {
-         $(window).off('resize', resize);
-       });
-       
-    }
-  };
-}).directive('gridGenerator', function (GLOBAL_CONFIG, helpers) {
-  return {
-    link: function (scope, element, attrs) {
-  
+  }).directive('fancyGridGenerator', function (helpers, $timeout) {
+
+    return {
+      link: function (scope, element, attrs) {
+        var resize = function () {
+          var canvas = element.outerWidth(true),
+            images = [],
+            margin = 5;
+          angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (
+            image) {
+            images.push(angular.copy(image));
+          });
+          helpers.fancyGrid.calculate(canvas, images, 200, margin);
+          element.find('.grid-item').each(function (i) {
+            $(this).css({
+              width: images[i].width,
+              height: images[i].height
+            });
+            $(this).find('img').css({
+              height: images[i].height - margin
+            });
+          });
+
+        };
+
+
+        $(window).on('resize', resize);
+
+        scope.$on('onNgRepeatEnd', resize);
+        scope.$on('accordionStateChanged', resize);
+        scope.$on('itemOrderChanged', resize);
+
+        scope.$on('$destroy', function () {
+          $(window).off('resize', resize);
+        });
+
+      }
+    };
+  }).directive('gridGenerator', function (GLOBAL_CONFIG, helpers) {
+    return {
+      link: function (scope, element, attrs) {
+
         var config = scope.$eval(attrs.gridGenerator) || {},
-            margin = config.margin || 0,
-            maxWidth = config.maxWidth || GLOBAL_CONFIG.gridMaxWidth,
-            minWidth = config.minWidth || GLOBAL_CONFIG.gridMinWidth,
-            square = (angular.isDefined(config.square) ? config.square : true),
-            timeout = null,
-            resize = function () {
-              if (timeout)
-              {
-                clearTimeout(timeout);
+          margin = config.margin || 0,
+          maxWidth = config.maxWidth || GLOBAL_CONFIG.gridMaxWidth,
+          minWidth = config.minWidth || GLOBAL_CONFIG.gridMinWidth,
+          square = (angular.isDefined(config.square) ? config.square : true),
+          timeout = null,
+          resize = function () {
+            if (timeout) {
+              clearTimeout(timeout);
+            }
+            timeout = setTimeout(function () {
+              element = $(element);
+              if (!element.length) {
+                return;
               }
-              timeout = setTimeout(function () { 
-                element = $(element);
-                if (!element.length)
-                {
-                  return;
-                }
-                var wrapper = element.parents('.grid-wrapper:first'),
-                    canvasWidth = wrapper.outerWidth(true);
-                if (canvasWidth)
-                { 
-                  var values = helpers.calculateGrid(canvasWidth, maxWidth, minWidth, margin);
-                  wrapper.css({
-                    paddingRight: values[2],
-                    paddingLeft: values[2]
-                  });
-                     
-                  element.each(function () {
-                       var box = $(this).width(values[0]);
-                       if (square) {
-                         box.height(values[0]);
-                         var img = box.find('img'), image = scope.$eval(attrs.gridGenerator);
-                         if (image) { 
-                           img.removeClass('horizontal vertical');
-                           if (image.proportion > 1)
-                           {
-                             img.addClass('horizontal');
-                           }
-                           else
-                           {
-                             img.addClass('vertical');
-                           } 
-                         }
-                          
-                       }
-                       
-                     });
-                    
-                  
-                }
-              
-              }, 150);
-            };
-            
-            resize();
-        
-            $(window).bind('resize', resize);
-            
-            scope.$on('accordionStateChanged', function () {
-              resize();
-            });
-            
-            scope.$on('$destroy', function () {
-              $(window).off('resize', resize);
-            });
-             
-    }
-  };
-});
+              var wrapper = element.parents('.grid-wrapper:first'),
+                canvasWidth = wrapper.outerWidth(true);
+              if (canvasWidth) {
+                var values = helpers.calculateGrid(canvasWidth,
+                  maxWidth, minWidth, margin);
+                wrapper.css({
+                  paddingRight: values[2],
+                  paddingLeft: values[2]
+                });
+
+                element.each(function () {
+                  var box = $(this).width(values[0]);
+                  if (square) {
+                    box.height(values[0]);
+                    var img = box.find('img'),
+                      image = scope.$eval(attrs.gridGenerator);
+                    if (image) {
+                      img.removeClass('horizontal vertical');
+                      if (image.proportion > 1) {
+                        img.addClass('horizontal');
+                      } else {
+                        img.addClass('vertical');
+                      }
+                    }
+
+                  }
+
+                });
+
+
+              }
+
+            }, 150);
+          };
+
+        resize();
+
+        $(window).bind('resize', resize);
+
+        scope.$on('accordionStateChanged', function () {
+          resize();
+        });
+
+        scope.$on('$destroy', function () {
+          $(window).off('resize', resize);
+        });
+
+      }
+    };
+  });
