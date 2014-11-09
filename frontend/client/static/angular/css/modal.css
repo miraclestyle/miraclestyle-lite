@@ -103,7 +103,7 @@
 
 .modal-body.scrollable
 {
-	overflow:auto;
+	overflow-y:scroll;
 }
 
 .modal-footer

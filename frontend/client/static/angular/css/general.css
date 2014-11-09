@@ -164,10 +164,10 @@ strong, b
 
 .image-image
 {
-	float:left;
-	overflow:hidden;
+	display:inline-block;
 	position:relative;
-  margin:4px;
+  margin:5px; 
+   
 	
 }
 
@@ -299,10 +299,12 @@ strong, b
 
 .grid-item img
 {
-	width: auto;
+	width:100%;
 	height: auto;
 	display:block;
 }
+
+ 
 
 .frontpage
 {
@@ -317,9 +319,15 @@ strong, b
 }
 
 .image-image .button {
-	position: absolute;
-	bottom: 0px;
-	left: 0px;
+  position: absolute;
+  bottom:0px;
+  left: 0px;
+  width: 100%;
+}
+
+.image-image img
+{
+  width:100%;
 }
 
 .more-hr-space hr
@@ -345,10 +353,13 @@ strong, b
 img.horizontal, .horizontal
 {
   height:100%;
-  width:auto;
+  width:100%;
 }
 img.vertical, .vertical
 {
-  width:100%;
-  height:auto;
+  height: 100%;
+  width: 56%;
+  text-align: center;
+  vertical-align: middle;
+  margin: auto;
 }

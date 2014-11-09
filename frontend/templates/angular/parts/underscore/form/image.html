@@ -14,9 +14,8 @@
       </h2>
  
       <div ui-sortable="config.ui.specifics.sortableOptions" 
-           ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
- 
-        <div grid-generator="{margin: 8}" grid-generator-image="image" ng-repeat="image in config.ui.specifics.parentArgs"
+           fancy-grid-generator="config.ui.specifics.parentArgs" ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
+        <div on-ng-repeat-end  ng-repeat="image in config.ui.specifics.parentArgs"
              ng-hide="image._state == 'deleted'"
              class="image-image grid-item">
               <div class="img spaceout">

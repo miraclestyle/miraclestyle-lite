@@ -118,6 +118,50 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         }
       }
       return values;
+    },
+    
+    fancyGrid: {
+      getHeight: function (images, width, margin) {
+        width -= images.length * (margin*2);
+        var h = 0;
+        angular.forEach(images, function (image) {
+          h += image.proportion;
+        });
+        return width / h;
+      },
+      setHeight: function (images, height) {
+        
+        angular.forEach(images, function (image) {
+          image.width = height * image.proportion;
+          image.height = height;
+        });
+    
+      },
+    
+      resize: function (images, width) {
+        this.setHeight(images, this.getHeight(images, width));
+      },
+    
+      calculate: function (size, images, max_height, margin) {
+        var n = 0,
+            providedImages = images; // reference entire array
+        w: while (images.length > 0) {
+          for (var i = 1; i < images.length + 1; ++i) {
+            var slice = images.slice(0, i);
+            var h = this.getHeight(slice, size, margin);
+            if (h < max_height) {
+              this.setHeight(slice, h);
+              n++;
+              images = images.slice(i);
+              continue w;
+            }
+          }
+          this.setHeight(slice, Math.min(max_height, h));
+          n++;
+          break;
+        }
+        return providedImages;
+      } 
     }
   };
 
@@ -1303,7 +1347,8 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                   ent._sequence = i;
                   ent.sequence = i;
                 });
-           
+                 
+                info.scope.$broadcast('itemOrderChanged'); 
             }
           }; 
         }
