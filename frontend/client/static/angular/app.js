@@ -27,7 +27,7 @@
       dateFormat: 'yyyy-MM-dd HH:mm:ss Z',
       defaultImage: 'http://placehold.it/240x100',
       defaultLogo: 'http://placehold.it/240x100',
-      defaultCatalogCover: 'http://placehold.it/240x100',
+      defaultCatalogCover: 'http://placehold.it/240x360',
       gridMaxWidth: 240,
       gridMinWidth: 180
     };

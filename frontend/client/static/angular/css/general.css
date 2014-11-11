@@ -162,11 +162,28 @@ strong, b
   padding-bottom:14px;
 }
 
+.zero-opacity {
+  /* IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+
+  /* IE 5-7 */
+  filter: alpha(opacity=50);
+
+  /* Netscape */
+  -moz-opacity: 0.5;
+
+  /* Safari 1.x */
+  -khtml-opacity: 0.5;
+
+  /* Good browsers */
+  opacity: 0.5;
+}
+
 .image-image
 {
 	display:inline-block;
 	position:relative;
-  margin:5px; 
+  margin:5px;
    
 	
 }
@@ -362,4 +379,10 @@ img.vertical, .vertical
   text-align: center;
   vertical-align: middle;
   margin: auto;
+}
+
+.grid-generator
+{
+  float:left;
+  margin:5px;
 }

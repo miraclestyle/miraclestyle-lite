@@ -255,7 +255,7 @@ class Catalog(orm.BaseExpando):
   _virtual_fields = {
     '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
                                                   read_arguments={'config': {'order': {'field': 'sequence',
-                                                                                       'direction': 'asc'}}}),
+                                                                                       'direction': 'desc'}}}),
     '_products': orm.SuperRemoteStructuredProperty(CatalogProduct, repeated=True),
     '_records': orm.SuperRecordProperty('31')
     }
@@ -431,14 +431,14 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'catalog_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        '_images': SuperImageLocalStructuredProperty(CatalogImage, upload=True, repeated=True)
+        '_images': SuperImageLocalStructuredProperty(CatalogImage, upload=True, repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
             Context(),
-            Set(cfg={'s': {'_read_arguments': {'_images': {}}}}),
-            Read(cfg={'read': '_read_arguments'}),
+            Read(),
             UploadImages(cfg={'path': '_catalog._images',
                               'images_path': 'input._images'}),
             CatalogProcessCoverSet(),
@@ -537,7 +537,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
           cfg={
             'search_arguments': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '23',

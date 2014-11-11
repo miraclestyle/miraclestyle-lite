@@ -28,7 +28,7 @@
       </div>
       
       <% if (config.ui.specifics.remote) { %>
-      <button ng-if="config.ui.specifics.readArguments.more" class="button" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
+      <button ng-if="config.ui.specifics.canLoadMore" class="button" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
       <% } %>
       
       <% } else { %>

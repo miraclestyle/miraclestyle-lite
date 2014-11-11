@@ -1772,13 +1772,20 @@ class StructuredPropertyValue(PropertyValue):
       # _sequence for ordering and keys for editing what it needs.
       # as for remotely structured data, that is solved trough prepare_key which builds sequence on its own.
       if self._property_value:
-        last = self._property_value[-1]
-        if last and last._sequence is not None:
-          last_sequence = self._property_value[-1]._sequence + 1
-          for ent in entities:
-            ent._sequence += last_sequence
+        try:
+          last = self._property_value[-1]._sequence
+          if last is None:
+            last = 0
+        except IndexError:
+          last = 0
+        last_sequence = last + 1
+        for ent in entities:
+          ent._sequence += last_sequence
+        entities.extend(self._property_value)
+      self._property_value = entities
+        
     # Always trigger setattr on the property itself
-    setattr(self._entity, self.property_name, entities)
+    setattr(self._entity, self.property_name, self._property_value)
 
 
 class LocalStructuredPropertyValue(StructuredPropertyValue):
@@ -1806,8 +1813,9 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     if property_value_as_list is not None:
       if not self._property._repeated:
         property_value_as_list = [property_value_as_list]
+      total = len(property_value_as_list)
       for i, value in enumerate(property_value_as_list):
-        value._sequence = i
+        value._sequence = total - i
       self._property_value = property_value
     else:
       if self._property._repeated:
@@ -1879,6 +1887,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     config = read_arguments.get('config', {})
     urlsafe_cursor = config.get('cursor')
     limit = config.get('limit', 10)
+    offset = config.get('offset')
     order = config.get('order')
     supplied_entities = config.get('entities')
     supplied_keys = config.get('keys')
@@ -1907,7 +1916,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       if limit == -1:
         entities = query.fetch_async()
       else:
-        entities = query.fetch_page_async(limit, start_cursor=cursor)
+        entities = query.fetch_page_async(limit, start_cursor=cursor, offset=offset)
       cursor = None
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
@@ -2409,7 +2418,7 @@ class _BaseStructuredProperty(_BaseProperty):
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
-          current_values = sorted(current_values, key=sorting_function)
+          current_values = sorted(current_values, key=sorting_function, reverse=True)
       else:
         if current_values is None:
           current_values = []

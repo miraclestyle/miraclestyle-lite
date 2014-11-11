@@ -37,6 +37,12 @@ indexes:
   ancestor: yes
   properties:
   - name: '1'
+  
+- kind: '31'
+  ancestor: yes
+  properties:
+  - name: '1'
+    direction: desc
 
 # CatalogProductCategory
 - kind: '24'

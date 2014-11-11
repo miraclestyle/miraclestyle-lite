@@ -23,10 +23,7 @@ angular.module('app').config(function (datepickerConfig) {
               height: ($(window).height() - $('#top-bar').height())
             }, 400);
           }
-          if (e) {
-            //e.preventDefault();
-            //return false;
-          }
+ 
 
         };
 
@@ -336,15 +333,20 @@ angular.module('app').config(function (datepickerConfig) {
               name: name,
               formName: name,
               writable: [name],
+              path: undefined,
               attrs: {}
             }
           };
 
           $.extend(true, config, supplied_config);
 
-          if (config.ui.writableName !== undefined && angular.isArray(
-              config.ui.writable)) {
+          if (angular.isDefined(config.ui.writableName) && angular.isArray(config.ui.writable)) {
             config.ui.writable = [config.ui.writableName];
+          }
+          
+          if (!angular.isDefined(config.ui.path))
+          {
+            config.ui.path = [name];
           }
 
           if (types[supplied_config.type] !== undefined) {
@@ -459,7 +461,7 @@ angular.module('app').config(function (datepickerConfig) {
               },
               img = element;
 
-            if (scope.image.serving_url) {
+            if (scope.image && scope.image.serving_url) {
               img.on('error', error)
                 .attr('src', scope.image.serving_url + '=s' + scope.config
                   .size);
@@ -595,7 +597,8 @@ angular.module('app').config(function (datepickerConfig) {
 
     return {
       link: function (scope, element, attrs) {
-        var resize = function () {
+        var animate = null,
+         resize = function () {
           var canvas = element.outerWidth(true),
             images = [],
             margin = 5;
@@ -604,7 +607,7 @@ angular.module('app').config(function (datepickerConfig) {
             images.push(angular.copy(image));
           });
           helpers.fancyGrid.calculate(canvas, images, 200, margin);
-          element.find('.grid-item').each(function (i) {
+          var items = element.find('.grid-item').each(function (i) {
             $(this).css({
               width: images[i].width,
               height: images[i].height
@@ -613,13 +616,26 @@ angular.module('app').config(function (datepickerConfig) {
               height: images[i].height - margin
             });
           });
+          /*
+          if (animate) {
+            clearTimeout(animate);
+          } 
+          
+          setTimeout(function () {
+            items.animate({
+              opacity:1
+            });
+          }, 200);*/
+          
 
         };
 
 
         $(window).on('resize', resize);
 
-        scope.$on('onNgRepeatEnd', resize);
+        scope.$on('onNgRepeatEnd', function () {
+          scope.$evalAsync(resize);
+        });
         scope.$on('accordionStateChanged', resize);
         scope.$on('itemOrderChanged', resize);
 

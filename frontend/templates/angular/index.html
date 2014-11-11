@@ -16,22 +16,7 @@ This was done for easier maintenance.
     {% for style in settings.ANGULAR_CSS_PATHS %}
     <link rel="stylesheet" type="text/css" href="{{static_dir('angular/%s' % style)}}"/>
     {% endfor %}
- 
-    {% for js in settings.ANGULAR_JS_PATHS %}
-    <script type="text/javascript" src="{{static_dir('angular/%s' % js)}}"></script>
-    {% endfor %}
-    
-    <!-- angular globals -->
-    {% for g in settings.ANGULAR_GLOBAL_JS_PATHS %}
-    <script type="text/javascript" src="{{static_dir('angular/%s.js' % g)}}"></script>
-    {% endfor %}
-  
-    {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
-    <script type="text/javascript" src="{{static_dir('angular/components/%s.js' % module)}}"></script>
-    {% endfor %}
-    
-    <script type="text/javascript" src="{{static_dir('angular/init.js')}}"></script>
-    
+
 
   </head>
   <body>
@@ -123,5 +108,23 @@ This was done for easier maintenance.
     {% for tpl in settings.ANGULAR_TEMPLATES %}
     <script id="{{tpl[0]}}" type="{% if len(tpl) > 2 %}{{tpl[2]}}{% else %}text/ng-template{% endif %}">{% if not len(tpl) > 1 %}{{angular_include_template(tpl[0])|safe}}{% else %}{{angular_include_template(tpl[1])|safe}}{% endif %}</script>
     {% endfor %}
+    
+    
+     
+    {% for js in settings.ANGULAR_JS_PATHS %}
+    <script type="text/javascript" src="{{static_dir('angular/%s' % js)}}"></script>
+    {% endfor %}
+    
+    <!-- angular globals -->
+    {% for g in settings.ANGULAR_GLOBAL_JS_PATHS %}
+    <script type="text/javascript" src="{{static_dir('angular/%s.js' % g)}}"></script>
+    {% endfor %}
+  
+    {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
+    <script type="text/javascript" src="{{static_dir('angular/components/%s.js' % module)}}"></script>
+    {% endfor %}
+    
+    <script type="text/javascript" src="{{static_dir('angular/init.js')}}"></script>
+    
   </body> 
 </html>

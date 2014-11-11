@@ -19,7 +19,7 @@ var config = {
     "break_chained_methods": false,
     "eval_code": false,
     "unescape_strings": false,
-    "wrap_line_length": 80,
+    "wrap_line_length": 0,
     "good_stuff" : true
 };
 

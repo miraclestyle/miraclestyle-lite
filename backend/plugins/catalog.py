@@ -66,16 +66,19 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
 class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
-    catalog_images = sorted(context._catalog._images.value, key=lambda x: x.sequence)
+    catalog_images = context._catalog._images.value
+    for catalog_image in catalog_images:
+      if catalog_image._state != 'deleted':
+        break
     catalog_cover = context._catalog.cover.value
     if catalog_images and len(catalog_images):
       if catalog_cover:
-        if catalog_cover.gs_object_name[:-6] != catalog_images[0].gs_object_name:
-          context._catalog.cover = copy.deepcopy(catalog_images[0])
+        if catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
+          context._catalog.cover = copy.deepcopy(catalog_image)
           context._catalog.cover.value.sequence = 0
           context._catalog.cover.process()
       else:
-        context._catalog.cover = copy.deepcopy(catalog_images[0])
+        context._catalog.cover = copy.deepcopy(catalog_image)
         context._catalog.cover.value.sequence = 0
         context._catalog.cover.process()
     elif catalog_cover:

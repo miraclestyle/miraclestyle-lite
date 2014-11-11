@@ -288,7 +288,13 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
                   var promise = null;
 
                   if (is_new) {
-                    $scope.parentArgs.push($scope.args);
+                    $scope.parentArgs.unshift($scope.args);
+                    var total = $scope.parentArgs.length;
+                    angular.forEach($scope.parentArgs, function (item, i) {
+                      i = total -i;
+                      item._sequence = i;
+                      item.sequence = i;
+                    });
                   } else {
                     $.extend(arg, $scope.args);
                   }
