@@ -14,7 +14,7 @@
   box-shadow: 1px 1px 3px #BBBBBB;
   font-size:14px;
 }
- 
+
 .button:focus
 {
   border: 1px solid #333333;
@@ -24,7 +24,7 @@
 .button:hover, .button.active, li.active .button, .button-active
 {
   border: 1px solid #333333;
-  background-color: #FAFAFA;
+  background-color: #F9F9F9;
   /**box-shadow: 1px 1px 3px #333333;**/
 }
 
@@ -96,8 +96,8 @@
 
 .fieldset
 {
-	border-bottom:1px solid #BBBBBB;
-	padding-bottom:5px;
+	border-bottom: 1px solid #BBBBBB;
+	padding-bottom: 5px;
 }
 
 
