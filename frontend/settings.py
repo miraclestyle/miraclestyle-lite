@@ -59,7 +59,6 @@ ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives',
 
 ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 
                      'vendor/angular-ui-select/dist/select.css',
-                     'vendor/angular-ui-select/dist/select2.css',
                      'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
                      'css/style.css')
 
