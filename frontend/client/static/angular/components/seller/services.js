@@ -221,7 +221,7 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
                   $timeout(function () {
                     $scope.info.build = true;
                     $scope.$apply();
-                  }, 300);
+                  }, 100);
 
                 }
               };

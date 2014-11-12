@@ -35,15 +35,15 @@
               <% } %>
   
               <td>
-                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+                <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
+                <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
               </td>
             </tr>
           </tbody>
     </table>
     
     <% if (config.ui.specifics.remote) { %>
-    <div>Remote data</div>
+    <button ng-if="config.ui.specifics.canLoadMore" loading class="button block load-more" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
     <% } %>
     
     <% } else { %>

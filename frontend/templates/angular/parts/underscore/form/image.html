@@ -1,7 +1,7 @@
 <div class="image-property">
       <% if (config.repeated) { %>
       <h2 class="fieldset with-button">
-        <span class="fieldset-text">Images</span>
+        <span class="fieldset-text"><%= config.ui.compiled.label %></span>
         <span class="fieldset-button">
            <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
@@ -14,21 +14,29 @@
       </h2>
  
       <div ui-sortable="config.ui.specifics.sortableOptions" 
-           fancy-grid-generator="config.ui.specifics.parentArgs" ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
-        <div on-ng-repeat-end  ng-repeat="image in config.ui.specifics.parentArgs"
-             ng-hide="image._state == 'deleted'"
-             class="image-image grid-item">
-              <div class="img spaceout">
-                <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
-              </div>
-              <button ng-show="<%= config.ui.writableCompiled %>" type="button" 
-                      class="button" 
-                      ng-click="config.ui.specifics.remove(image)">Remove</button>
-        </div>
+           fancy-grid-generator="config.ui.specifics.parentArgs" 
+           ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
+           
+          <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
+               ng-hide="image._state == 'deleted'"
+               class="image-image grid-item">
+               
+                <div class="img spaceout">
+                  <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
+                </div>
+                
+                <button ng-show="<%= config.ui.writableCompiled %>" type="button"
+                        loading
+                        class="button" 
+                        ng-click="config.ui.specifics.remove(image)">Remove</button>
+          </div>
       </div>
       
       <% if (config.ui.specifics.remote) { %>
-      <button ng-if="config.ui.specifics.canLoadMore" class="button" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
+      <button ng-if="config.ui.specifics.canLoadMore" 
+              loading
+              class="button block load-more" 
+              type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
       <% } %>
       
       <% } else { %>

@@ -4,8 +4,7 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
   modelsConfig(function (models) {
 
     var fields = modelsMeta.getActionArguments('31', 'update');
-
-
+ 
     $.extend(models['31'], {
       manageModal: function (entity, callback) {
 
