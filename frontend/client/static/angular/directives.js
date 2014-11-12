@@ -14,14 +14,14 @@ angular.module('app').config(function (datepickerConfig) {
           if ((visible || cmd === 1) && cmd !== 2) {
             mm.stop().animate({
               height: 0
-            }, 400, function () {
+            }, 100, function () {
               $(this).hide();
             });
           } else if (!visible || cmd === 2) {
             mm.height(0).show();
             mm.stop().animate({
               height: ($(window).height() - $('#top-bar').height())
-            }, 400);
+            }, 100);
           }
 
 
@@ -34,7 +34,7 @@ angular.module('app').config(function (datepickerConfig) {
           if (visible) {
             mm.stop().animate({
               height: ($(window).height() - $('#top-bar').height())
-            }, 400);
+            }, 100);
 
           }
 
