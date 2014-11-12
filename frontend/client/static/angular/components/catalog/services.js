@@ -2,9 +2,9 @@
 angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
 
   modelsConfig(function (models) {
-  
+
     var fields = modelsMeta.getActionArguments('31', 'update');
- 
+
 
     $.extend(models['31'], {
       manageModal: function (entity, callback) {
@@ -56,10 +56,10 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
 
         if (isNew) {
           // current seller
-          models['23'].current().then(function (response) { 
+          models['23'].current().then(function (response) {
             modelsEditor.create(config).prepare({}, {
               seller: response.data.entity.key
-            }); 
+            });
           });
 
         } else {
