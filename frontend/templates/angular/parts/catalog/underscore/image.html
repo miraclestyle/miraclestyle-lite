@@ -1,9 +1,9 @@
 <div class="image-property">
-      <% if (config.repeated) { %>
       <h2 class="fieldset with-button">
         <span class="fieldset-text"><%= config.ui.compiled.label %></span>
         <span class="fieldset-button">
            
+           <button type="button" ng-click="addProducts()" class="button">Add Products</button>
             
            <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
@@ -33,25 +33,9 @@
                         ng-click="config.ui.specifics.remove(image)">Remove</button>
           </div>
       </div>
-      
-      <% if (config.ui.specifics.remote) { %>
-            <button ng-if="config.ui.specifics.reader.more" 
+ 
+      <button ng-if="config.ui.specifics.reader.more" 
               loading
               class="button block load-more" 
               type="button" ng-click="config.ui.specifics.reader.load()">Load More</button> 
-      <% } %>
-      
-      <% } else { %>
-        
-        <div form-element-wrapper label="<%= config.ui.compiled.label %>">
-          <div><input name="<%= config.ui.formName %>"
-                       generate-upload-url
-                       type="file" /></div>
-                       <br />
-          <div>
-            <img display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
-          </div>
-        </div>
- 
-      <% }  %>
 </div>

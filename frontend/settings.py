@@ -37,6 +37,7 @@ WEBAPP2_EXTRAS = {}
 ANGULAR_JS_PATHS = (
   'vendor/jquery/dist/jquery.js',
   'vendor/jquery-ui/jquery-ui.js',
+  'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
   'vendor/underscore/underscore.js',
   'vendor/angular/angular.js',
   'vendor/angular-ui-sortable/sortable.js',
@@ -48,6 +49,7 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-messages/angular-messages.js',
   'vendor/angular-cookie/angular-cookie.js',
   'vendor/angular-touch/angular-touch.js',
+  'vendor/owlcarousel/owl-carousel/owl.carousel.js',
   'lib/angular-cache/dist/angular-cache.js',
   'vendor/angular-ui-select/dist/select.js',
   'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.js',
@@ -57,9 +59,9 @@ ANGULAR_JS_PATHS = (
 
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
 
-ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css', 
-                     'vendor/angular-ui-select/dist/select.css',
+ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css',
                      'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
+                     'vendor/owlcarousel/owl-carousel/owl.carousel.css',
                      'css/style.css')
 
 class Structured():
@@ -84,22 +86,32 @@ for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
 ANGULAR_TEMPLATES = (
   # core
   ('home/index.html',),
+  
   ('tests/html.html',),
+  
   ('form/builder.html',),
+  
   ('misc/modal_errors.html',),
   ('misc/form_wrapper.html',),
+  
   ('entity/modal_editor.html',),
   ('entity/modal_editor_default_body.html',),
   ('entity/modal_editor_default_footer.html',),
+  
   ('account/settings.html',),
+  
   ('seller/settings.html',),
   ('seller/plugin/default.html',),
   ('seller/directive/carrier_line_rule_display.html',),
   ('seller/directive/address_rule_location_display.html',),
+  
   ('buyer/directive/buyer_address_display.html',),
+  
   ('catalog/list.html',),
   ('catalog/manage.html',),
   ('catalog/manage_footer.html',),
+  ('catalog/underscore/image.html',),
+  ('catalog/products.html',),
   
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),

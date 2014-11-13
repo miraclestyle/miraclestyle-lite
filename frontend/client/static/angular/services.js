@@ -1539,66 +1539,19 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         return 'structured';
       },
       _RemoteStructuredPropery: function (info) {
-
+        
         var entity = info.config.ui.specifics.entity,
           path = info.config.ui.path,
-          canLoadMore = function (nextReadArguments) {
-            return helpers.getProperty(nextReadArguments, path.join('.') + '.config.more')
-          };
-
-        var defaultConfig = {
-          nextReadArguments: null,
-          remote: true,
-          canLoadMore: canLoadMore(entity._next_read_arguments),
-          loadMore: function () {
-            var that = this,
-              digNextReadArguments = {},
-              nextReadArguments = that.nextReadArguments || entity._next_read_arguments,
-              nextReadArgumentsData,
-              access = angular.copy(info.scope.args.ui.access),
-              items,
-              promise,
-              loadedNextReadArguments,
-              paths = [];
-            access.push(info.config.code_name);
-
-            angular.forEach(path, function (p) {
-              paths.push(p);
-              nextReadArgumentsData = helpers.getProperty(nextReadArguments, paths.join('.'));
-              if (!angular.isDefined(nextReadArgumentsData)) {
-                nextReadArgumentsData = {};
-              }
-              digNextReadArguments[p] = nextReadArgumentsData;
-            });
-
-            promise = (angular.isFunction(that.loadMorePromise) ? that.loadMorePromise() : models[entity.kind].actions.read({
-              key: entity.key,
-              read_arguments: that.nextReadArguments || digNextReadArguments
-            }));
-
-            promise.then(function (response) {
-              items = helpers.getProperty(response.data.entity, access.join('.'));
-
-              loadedNextReadArguments = response.data.entity._next_read_arguments;
-              that.canLoadMore = canLoadMore(loadedNextReadArguments);
-
-              info.config.ui.specifics.parentArgs.extend(items);
-
-              if (that.canLoadMore) {
-                that.nextReadArguments = response.data.entity._next_read_arguments;
-              }
-
-            });
-          }
-        };
-
-        angular.forEach(defaultConfig, function (value, key) {
-          if (angular.isDefined(info.config.ui.specifics[key])) {
-            delete defaultConfig[key];
-          }
-        });
-
-        $.extend(info.config.ui.specifics, defaultConfig);
+          access = angular.copy(entity.ui.access);
+          access.push(info.config.code_name); 
+        var defaultReader = models[entity.kind].reader(entity, info.config.ui.specifics.parentArgs, path, access); 
+        if (!angular.isDefined(info.config.ui.specifics.reader))
+        {
+          info.config.ui.specifics.reader = defaultReader;
+        }
+        
+        info.config.ui.specifics.remote = true;
+         
       },
       SuperStructuredProperty: function (info) {
         return this.SuperLocalStructuredProperty(info);
@@ -1664,7 +1617,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
     }
     callbacks.push(callback);
   };
-}).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig) {
+}).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig, helpers) {
   // models depency should never be included directly or indirectly, because its depency on modelsMeta
   var models = {},
     modelCreate = function (kind) {
@@ -1687,6 +1640,60 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                 'get() relies on actions.search action. use actions.read() instead.'
               );
             }
+          },
+          reader: function (entity, update, path, access) {
+             
+            var canLoadMore = function (nextReadArguments) {
+                return helpers.getProperty(nextReadArguments, path.join('.') + '.config.more')
+            };
+              
+            var reader = {
+              next: null,
+              more: canLoadMore(entity._next_read_arguments),
+              load: function () {
+                var that = this,
+                  digNext = {},
+                  next = that.next || entity._next_read_arguments,
+                  nextData,
+                  items,
+                  promise,
+                  loadedNext,
+                  paths = [];
+ 
+                angular.forEach(path, function (p) {
+                  paths.push(p);
+                  nextData = helpers.getProperty(next, paths.join('.'));
+                  if (!angular.isDefined(nextData)) {
+                    nextData = {};
+                  }
+                  digNext[p] = nextData;
+                });
+    
+                promise = models[entity.kind].actions.read({
+                  key: entity.key,
+                  read_arguments: that.next || digNext
+                });
+    
+                promise.then(function (response) {
+                  items = helpers.getProperty(response.data.entity, access.join('.'));
+                  
+                  update.extend(items);
+    
+                  loadedNext = response.data.entity._next_read_arguments;
+                  that.more = canLoadMore(loadedNext);
+     
+                  if (that.more) {
+                    that.next = response.data.entity._next_read_arguments;
+                  } 
+                  
+                });
+                
+                return promise;
+              }
+            }; 
+            
+            return reader;
+             
           }
         };
 

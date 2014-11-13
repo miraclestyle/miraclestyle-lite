@@ -1,0 +1,24 @@
+<div fit-in-dialog>
+<form name="container.form" ng-submit="save()" method="post" action="{{container.action}}">
+  <input type="hidden" compatibility-maker="args" name="__body__" />
+  <div class="modal-body scrollable">
+  <div class="modal-body-inner">
+    
+    
+    <div catalog-slider="args" class="owl-carousel"> 
+         <div ng-repeat="item in args" catalog-slider-item="item"></div> 
+     </div>
+    
+      
+  </div>
+  </div>
+  
+  <div class="modal-footer">
+    <div>
+        <button loading type="submit" class="button">Save</button>
+        <button loading type="button" class="button" ng-click="close()">Cancel</button>
+    </div>
+  </div>
+  
+</form>
+</div>

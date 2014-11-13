@@ -363,9 +363,8 @@ angular.module('app').config(function (datepickerConfig) {
               label: utils.label(config)
             };
 
-            var template = underscoreTemplate.get(config.type !=
-              'Custom' ? 'underscore/form/' + tpl + '.html' : config.template
-            )({
+            var template = underscoreTemplate.get(angular.isDefined(config.ui.template)
+             ? config.ui.template : 'underscore/form/' + tpl + '.html')({
               config: config
             });
 
