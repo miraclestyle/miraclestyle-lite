@@ -1,25 +1,19 @@
-.panel
-{
+.panel {
   margin-bottom: 20px;
 }
 
-.panel-heading
-{
-
+.panel-heading {
 }
 
-.panel-body
-{
+.panel-body {
   padding: 15px;
 }
 
-.panel-heading > .dropdown .dropdown-toggle
-{
+.panel-heading > .dropdown .dropdown-toggle {
   color: inherit;
 }
 
-.panel-title
-{
+.panel-title {
   margin-top: 0;
   margin-bottom: 0;
   color: inherit;
@@ -33,8 +27,7 @@
  text-align:center;
 }
 
-.panel-group .panel
-{
+.panel-group .panel {
   margin-bottom: 0;
   /*overflow: hidden;*/
   border: 1px solid #BBBBBB;
@@ -42,55 +35,45 @@
   box-shadow: 1px 1px 3px #BBBBBB;
 }
 
-.panel-scroller
-{
+.panel-scroller {
   max-height:200px;
   overflow-y:auto;
   overflow-x:hidden;
 }
 
-.panel-is-not-open:hover
-{
+.panel-is-not-open:hover {
   border: 1px solid #999999;
 }
 
-.panel-is-not-open .panel-title > a:hover
-{
+.panel-is-not-open .panel-title > a:hover {
   background-color: #F9F9F9;
 }
 
-.panel-is-open .panel-title > a
-{
+.panel-is-open .panel-title > a {
   border-bottom: 1px solid #BBBBBB;
 }
 
-.panel-is-open .panel-title > a
-{
+.panel-is-open .panel-title > a {
   /*border: 1px solid #999999;*/
 }
 
-.panel-group .panel + .panel
-{
+.panel-group .panel + .panel {
   margin-top: 10px;
 }
 
-.panel-group .panel-heading
-{
+.panel-group .panel-heading {
   border-bottom: 0;
 }
 
-.panel-group .panel-footer
-{
+.panel-group .panel-footer {
   border-top: 0;
 }
 
-.accordion-toggle
-{
+.accordion-toggle {
   cursor: pointer;
 }
 
-.panel-default > .panel-heading
-{
+.panel-default > .panel-heading {
   color: #333333;
   background-color: #FFFFFF;
 }

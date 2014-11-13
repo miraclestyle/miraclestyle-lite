@@ -1,5 +1,4 @@
-.button
-{
+.button {
   border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
   padding: 10px 20px;
@@ -15,27 +14,23 @@
   font-size: 14px;
 }
 
-.button:focus
-{
+.button:focus {
   border: 1px solid #999999;
   background-color: #FFFFFF;
 }
 
-.button:hover, .button.active, li.active .button, .button-active
-{
+.button:hover, .button.active, li.active .button, .button-active {
   border: 1px solid #999999;
   background-color: #F9F9F9;
   /**box-shadow: 1px 1px 3px #333333;**/
 }
 
-.button[disabled]
-{
+.button[disabled] {
   color: #CCCCCC;
   border-color: #CCCCCC;
 }
 
-.text-input
-{
+.text-input {
   border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
   outline: none;
@@ -45,30 +40,25 @@
   width: 100%;
 }
 
-.text-textarea
-{
+.text-textarea {
   min-height:60px;
 }
 
-.text-input:focus
-{
+.text-input:focus {
   border: 1px solid #333333;
 }
 
-.form-control
-{
+.form-control {
   margin-bottom:10px;
 }
 
-.form-control:after
-{
+.form-control:after {
   clear:both;
   content: " ";
   display: table;
 }
 
-.form-label
-{
+.form-label {
   float:left;
   text-align:right;
   width: 16.666666666666664%;
@@ -79,8 +69,7 @@
   padding-top:7px;
 }
 
-.form-input
-{
+.form-input {
   float:left;
   position: relative;
   width:83.33333333333334%;
@@ -89,13 +78,11 @@
   /*padding-right: 15px;*/
 }
 
-.form-text
-{
+.form-text {
   padding-top:5px;
 }
 
-.fieldset
-{
+.fieldset {
   font-size: 28px;
   line-height: 36px;
   border-bottom: 1px solid #BBBBBB;
@@ -104,48 +91,40 @@
   margin-top: 10px;
 }
 
-.fieldset-text
-{
+.fieldset-text {
   float:left;
 }
 
-.fieldset-button
-{
+.fieldset-button {
   float:right;
 }
 
-.fieldset:after
-{
+.fieldset:after {
   clear:both;
 }
 
 .fieldset:before,
-.fieldset:after
-{
+.fieldset:after {
   display: table;
   content: " ";
 }
 
-.fieldset.with-button span.fieldset-text
-{
+.fieldset.with-button span.fieldset-text {
   margin-top: 6px;
 }
 
 /* validation colors */
 
-.ng-invalid-required, .ng-invalid
-{
+.ng-invalid-required, .ng-invalid {
   border-color:red; /* this for now*/
 }
 
-.fake-button
-{
+.fake-button {
   position: relative;
   overflow: hidden;
 }
 
-.fake-button input.upload
-{
+.fake-button input.upload {
   position: absolute;
   top: 0;
   right: 0;
@@ -157,14 +136,12 @@
   filter: alpha(opacity=0);
 }
 
-.button-block
-{
+.button-block {
   width: 100%;
   display:block;
 }
 
-.button-sm
-{
+.button-sm {
   font-size:13px;
   padding:3px 7px;
 }
@@ -375,7 +352,6 @@
   min-height: 26px;
   margin: 0;
   outline: 0;
- 
   border: 1px solid #aaa;
   background: url('images/select2.png') no-repeat 100% -22px;
   border-right: none;
