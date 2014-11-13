@@ -98,12 +98,11 @@
 {
   position: relative;
   padding: 0px;
-  
 }
 
 .modal-body.scrollable
 {
-	overflow-y:scroll;
+  overflow-y:scroll;
 }
 
 .modal-footer
@@ -113,7 +112,7 @@
 }
 
 .modal-footer:before,
-.modal-footer:after 
+.modal-footer:after
 {
   display: table;
   content: " ";
@@ -155,36 +154,35 @@
 .modal-body-inner
 {
   padding: 10px;
-  padding-bottom: 0px;
 }
 
 .modal-small .modal-dialog
 {
-	width:40%;
-	margin:auto;
+  width:40%;
+  margin:auto;
 }
 
 .modal-small, .modal-medium, .modal-large
 {
-	top:10%;
+  top:10%;
 }
 
 
 .modal-small .modal-dialog
 {
-	width:40%;
-	margin:auto;
+  width:40%;
+  margin:auto;
 }
 
 .modal-medium .modal-dialog
 {
-	width:60%;
-	margin:auto;
+  width:60%;
+  margin:auto;
 }
 
 
 .modal-large .modal-dialog
 {
-	width:60%;
-	margin:auto;
+  width:60%;
+  margin:auto;
 }
