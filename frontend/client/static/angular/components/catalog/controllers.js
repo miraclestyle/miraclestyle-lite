@@ -2,12 +2,13 @@
 angular.module('app')
   .controller('SellCatalogsCtrl', function ($scope, modelsEditor, modelsMeta,
     models, modelsUtil) {
-      
+
     var newEntity = function (entity) {
-        if (!_.findWhere($scope.search.results, {key: entity.key}))
-        {
-          $scope.search.results.unshift(entity);
-        }
+      if (!_.findWhere($scope.search.results, {
+          key: entity.key
+        })) {
+        $scope.search.results.unshift(entity);
+      }
     };
 
     $scope.create = function () {
@@ -17,7 +18,7 @@ angular.module('app')
     $scope.manage = function (entity) {
       models['31'].manageModal(entity, newEntity);
     };
- 
+
     $scope.search = {
       results: []
     };

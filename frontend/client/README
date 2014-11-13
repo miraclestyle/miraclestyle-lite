@@ -3,6 +3,12 @@ The folder structure follows:
 client/
   static/ - used for serving all files in it to the client
    angular/ - used for angular only client
+    components/ - all app logic divided into groups
+    css/ - all css files
+    fonts/ - fonts
+    lib/ - libs programmed/modified by us
+    vendor/ - libs that are 3rd party and not modified by us at all!
   config/
    angular/ - used for angular only out of static folder
     index.html - contents compiled by the builder
+   node/ - currently formatter for javascript as format.js

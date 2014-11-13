@@ -1,11 +1,10 @@
 'use strict';
-angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
+angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal) {
 
   modelsConfig(function (models) {
-  
-    var fields = modelsMeta.getActionArguments('31', 'update');
- 
 
+    var fields = modelsMeta.getActionArguments('31', 'update');
+    fields._images.ui.template = 'catalog/underscore/image.html';
     $.extend(models['31'], {
       manageModal: function (entity, callback) {
 
@@ -32,6 +31,26 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
             afterCompleteError: afterComplete,
             noComplete: noComplete,
             scope: {
+              addProducts: function ()
+              {
+                var parentScope = this;
+             
+                
+                $modal.open({
+                  templateUrl: 'catalog/products.html',
+                  controller: function ($scope, $modalInstance) {
+                    $scope.args = angular.copy(parentScope.args._images);
+                    $scope.save = function () {
+                      $.extend(parentScope.args._images, $scope.args);
+                      $scope.close();
+                    };
+                    $scope.close = function () {
+                      $modalInstance.dismiss('close');
+                    };
+                  }
+                });
+                
+              },
               accordions: {
                 closeOthers: true,
                 general: {
@@ -56,10 +75,10 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig) {
 
         if (isNew) {
           // current seller
-          models['23'].current().then(function (response) { 
+          models['23'].current().then(function (response) {
             modelsEditor.create(config).prepare({}, {
               seller: response.data.entity.key
-            }); 
+            });
           });
 
         } else {

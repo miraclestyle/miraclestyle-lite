@@ -23,7 +23,7 @@ angular.module('app').config(function (datepickerConfig) {
               height: ($(window).height() - $('#top-bar').height())
             }, 100);
           }
- 
+
 
         };
 
@@ -343,9 +343,8 @@ angular.module('app').config(function (datepickerConfig) {
           if (angular.isDefined(config.ui.writableName) && angular.isArray(config.ui.writable)) {
             config.ui.writable = [config.ui.writableName];
           }
-          
-          if (!angular.isDefined(config.ui.path))
-          {
+
+          if (!angular.isDefined(config.ui.path)) {
             config.ui.path = [name];
           }
 
@@ -364,9 +363,8 @@ angular.module('app').config(function (datepickerConfig) {
               label: utils.label(config)
             };
 
-            var template = underscoreTemplate.get(config.type !=
-              'Custom' ? 'underscore/form/' + tpl + '.html' : config.template
-            )({
+            var template = underscoreTemplate.get(angular.isDefined(config.ui.template)
+             ? config.ui.template : 'underscore/form/' + tpl + '.html')({
               config: config
             });
 
@@ -568,8 +566,7 @@ angular.module('app').config(function (datepickerConfig) {
 
           angular.forEach(scope.accordions, function (accordion, key) {
 
-            scope.$watch('accordions.' + key + '.open', function (neww,
-              old) {
+            scope.$watch('accordions.' + key + '.open', function (neww, old) {
               if (neww) {
                 scope.$broadcast('accordionStateChanged');
               }
@@ -587,7 +584,7 @@ angular.module('app').config(function (datepickerConfig) {
       restrict: 'A',
       link: function (scope, element, attr) {
         if (scope.$last === true) {
-          $timeout(function () {
+          scope.$evalAsync(function () {
             scope.$emit('onNgRepeatEnd');
           });
         }
@@ -597,45 +594,29 @@ angular.module('app').config(function (datepickerConfig) {
 
     return {
       link: function (scope, element, attrs) {
-        var animate = null,
-         resize = function () {
-          var canvas = element.outerWidth(true),
-            images = [],
-            margin = 5;
-          angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (
-            image) {
-            images.push(angular.copy(image));
-          });
-          helpers.fancyGrid.calculate(canvas, images, 200, margin);
-          var items = element.find('.grid-item').each(function (i) {
-            $(this).css({
-              width: images[i].width,
-              height: images[i].height
+        var resize = function () {
+            var canvas = element.outerWidth(true),
+              images = [],
+              margin = 5;
+            angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
+              images.push(angular.copy(image));
             });
-            $(this).find('img').css({
-              height: images[i].height - margin
+            helpers.fancyGrid.calculate(canvas, images, 200, margin);
+            var items = element.find('.grid-item').each(function (i) {
+              $(this).css({
+                width: images[i].width,
+                height: images[i].height
+              });
+              $(this).find('img').css({
+                height: images[i].height - margin
+              });
             });
-          });
-          /*
-          if (animate) {
-            clearTimeout(animate);
-          } 
-          
-          setTimeout(function () {
-            items.animate({
-              opacity:1
-            });
-          }, 200);*/
-          
-
-        };
-
-
+  
+          };
+ 
         $(window).on('resize', resize);
 
-        scope.$on('onNgRepeatEnd', function () {
-          scope.$evalAsync(resize);
-        });
+        scope.$on('onNgRepeatEnd', resize);
         scope.$on('accordionStateChanged', resize);
         scope.$on('itemOrderChanged', resize);
 

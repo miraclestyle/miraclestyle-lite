@@ -221,7 +221,7 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
                   $timeout(function () {
                     $scope.info.build = true;
                     $scope.$apply();
-                  }, 300);
+                  }, 100);
 
                 }
               };
@@ -291,7 +291,7 @@ angular.module('app').run(function ($window, modelsConfig, modelsMeta,
                     $scope.parentArgs.unshift($scope.args);
                     var total = $scope.parentArgs.length;
                     angular.forEach($scope.parentArgs, function (item, i) {
-                      i = total -i;
+                      i = total - i;
                       item._sequence = i;
                       item.sequence = i;
                     });

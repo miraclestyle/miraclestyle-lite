@@ -16,11 +16,9 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         transaction: function (reason) {
 
           if (reason == 'timeout') {
-            return
-              'Transaction was not completed due timeout. Please try again.';
+            return 'Transaction was not completed due timeout. Please try again.';
           } else if (reason == 'failed') {
-            return
-              'Transaction was not completed due failure. Please try again.';
+            return 'Transaction was not completed due failure. Please try again.';
           }
 
         }
@@ -125,22 +123,22 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
       }
       return values;
     },
-    
+
     setProperty: function (obj, value, prop) {
-      var of = this.getProperty(obj, prop.slice(0, prop.length-1));
-      of[prop.length-1] = value;
+      var of = this.getProperty(obj, prop.slice(0, prop.length - 1));
+      of[prop.length - 1] = value;
     },
     getProperty: function (obj, prop) {
- 
+
       angular.forEach(prop.split('.'), function (path) {
         try {
           obj = obj[path];
-        }catch(e) {
+        } catch (e) {
           return undefined;
-        } 
-      }); 
-       return obj;
-       
+        }
+      });
+      return obj;
+
     },
 
     fancyGrid: {
@@ -695,19 +693,18 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
               });
             } else {
 
-                if ((value === undefined || value === null) && field.required) {
-                  value = {
-                    kind: field.modelclass_kind
-                  };
-                  entity[field.code_name] = value;
-                }
-                
-                if (!(value === undefined || value === null))
-                {
-                  modelsUtil.normalize(value, field.modelclass, entity,
-                    field.code_name, undefined, noui);
-                }
-                 
+              if ((value === undefined || value === null) && field.required) {
+                value = {
+                  kind: field.modelclass_kind
+                };
+                entity[field.code_name] = value;
+              }
+
+              if (!(value === undefined || value === null)) {
+                modelsUtil.normalize(value, field.modelclass, entity,
+                  field.code_name, undefined, noui);
+              }
+
             }
           }
 
@@ -845,7 +842,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
           if ($scope.entity.key) {
             args.key = $scope.entity.key;
           }
-          
+
           args.ui = $scope.entity.ui;
 
           // every entity has _read_arguments when retrieved from database
@@ -861,48 +858,43 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
           return cfg.defaultArgumentLoader($scope);
         },
         defaultPrepareReadArguments: function ($scope) {
-          
-           if (!angular.isObject($scope.args.read_arguments))
-           {
-             $scope.args.read_arguments = {};
-           }
- 
-           var readArgs = $scope.args.read_arguments,
-           parser = function (arg, key, readArgs) {
-               if (angular.isArray(arg))
-               {
-                 var path = readArgs[key];
-                 if (!path)
-                 {
-                   path = {
-                     config: {}
-                   };
-                 }
-                 
-                 if (!path.config)
-                 {
-                   path.config = {};
-                 }
-                  
-                 if (angular.isObject(arg[0]))
-                 {
-                   path.config.keys = [];
-                   angular.forEach(arg, function (subarg) {
-                     path.config.keys.push(subarg.key);
-                     angular.forEach(subarg, function (subargArgs, subargArgskey) {
-                       parser(subargArgs, subargArgskey, path);
-                     });
-                   });
-                 }
-                 
-                 readArgs[key] = path;
-               }
-           };
-           angular.forEach($scope.args, function (arg, key) {
+
+          if (!angular.isObject($scope.args.read_arguments)) {
+            $scope.args.read_arguments = {};
+          }
+
+          var readArgs = $scope.args.read_arguments,
+            parser = function (arg, key, readArgs) {
+              if (angular.isArray(arg)) {
+                var path = readArgs[key];
+                if (!path) {
+                  path = {
+                    config: {}
+                  };
+                }
+
+                if (!path.config) {
+                  path.config = {};
+                }
+
+                if (angular.isObject(arg[0])) {
+                  path.config.keys = [];
+                  angular.forEach(arg, function (subarg) {
+                    path.config.keys.push(subarg.key);
+                    angular.forEach(subarg, function (subargArgs, subargArgskey) {
+                      parser(subargArgs, subargArgskey, path);
+                    });
+                  });
+                }
+
+                readArgs[key] = path;
+              }
+            };
+          angular.forEach($scope.args, function (arg, key) {
             parser(arg, key, readArgs)
-           });
+          });
         },
-         prepareReadArguments: function ($scope) {
+        prepareReadArguments: function ($scope) {
           this.defaultPrepareReadArguments($scope);
         }
       };
@@ -993,13 +985,13 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                 config.prepareReadArguments($scope);
                 var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
 
-                promise.then(function (response) { 
-                  $.extend($scope.entity, response.data.entity); 
-                  var new_args = config.argumentLoader($scope); 
-                  $.extend($scope.args, new_args); 
+                promise.then(function (response) {
+                  $.extend($scope.entity, response.data.entity);
+                  var new_args = config.argumentLoader($scope);
+                  $.extend($scope.args, new_args);
                   if (angular.isDefined(config.afterSave)) {
-                    config.afterSave($scope); 
-                  } 
+                    config.afterSave($scope);
+                  }
                 }, function (response) {
                   // here handle error...
                   if (angular.isDefined(config.afterSaveError)) {
@@ -1014,13 +1006,13 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
               $scope.complete = function (response) {
 
-                $.extend($scope.entity, response.data.entity); 
-                var new_args = config.argumentLoader($scope); 
-                $.extend($scope.args, new_args); 
+                $.extend($scope.entity, response.data.entity);
+                var new_args = config.argumentLoader($scope);
+                $.extend($scope.args, new_args);
                 if (angular.isDefined(config.afterComplete)) {
                   config.afterComplete($scope);
-                } 
-                
+                }
+
                 if (config.closeAfterSave) {
                   $timeout(function () {
                     $scope.close();
@@ -1391,29 +1383,27 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
         if (!config.ui.specifics.sortableOptions) {
           config.ui.specifics.sortableOptions = {};
         }
-        
-          $.extend(config.ui.specifics.sortableOptions, {
-            stop: function () {
-              var sort = config.ui.specifics.sortableOptions.sort;
-              if (!angular.isDefined(sort))
-              {
-                sort = 'asc';
-              }
-              if (sort == 'asc')
-              {
-                sort = config.ui.specifics.parentArgs.length-1;
-              }
-              angular.forEach(config.ui.specifics.parentArgs,
-                function (ent, i) {
-                  i = (angular.isDefined(sort) ? (sort-i) : i);
-                  ent._sequence = i;
-                  ent.sequence = i;
-                });
 
-              info.scope.$broadcast('itemOrderChanged');
+        $.extend(config.ui.specifics.sortableOptions, {
+          stop: function () {
+            var sort = config.ui.specifics.sortableOptions.sort;
+            if (!angular.isDefined(sort)) {
+              sort = 'asc';
             }
-          });
-    
+            if (sort == 'asc') {
+              sort = config.ui.specifics.parentArgs.length - 1;
+            }
+            angular.forEach(config.ui.specifics.parentArgs,
+              function (ent, i) {
+                i = (angular.isDefined(sort) ? (sort - i) : i);
+                ent._sequence = i;
+                ent.sequence = i;
+              });
+
+            info.scope.$broadcast('itemOrderChanged');
+          }
+        });
+
 
 
         info.scope.$watch(config.ui.args, function (neww, old) {
@@ -1430,7 +1420,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
             copyWritable.push((field.ui.writableName ? field.ui.writableName :
               field.code_name));
           }
-          
+
           field.ui.path = [];
           field.ui.path.extend(config.ui.path);
           field.ui.path.push(field.code_name);
@@ -1460,8 +1450,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
             config.ui.specifics.manage = function (arg) {
 
               $modal.open({
-                template: underscoreTemplate.get(config.ui.specifics.templateUrl
-                   ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
+                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
                   config: config
                 }),
                 controller: function ($scope, $modalInstance,
@@ -1482,7 +1471,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                     is_new = true;
                   }
                   $scope.container = {};
-                  $scope.args = angular.copy(arg); 
+                  $scope.args = angular.copy(arg);
                   $scope.parentArgs = config.ui.specifics.parentArgs;
                   $scope.entity = config.ui.specifics.entity;
                   $scope.cancel = function () {
@@ -1491,7 +1480,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
                   $scope.save = function () {
 
-                    if (!$scope.container.form.$valid) {  // check if the form is valid
+                    if (!$scope.container.form.$valid) { // check if the form is valid
                       return;
                     }
                     var promise = null;
@@ -1506,7 +1495,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                       if (config.repeated) {
                         if (is_new) {
                           $scope.parentArgs.unshift($scope.args);
-                          var total = $scope.parentArgs.length-1;
+                          var total = $scope.parentArgs.length - 1;
                           angular.forEach($scope.parentArgs, function (item, i) {
                             i = total - i;
                             item._sequence = i;
@@ -1535,7 +1524,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                       promise.then(complete);
 
                     } else {
-                      complete(); 
+                      complete();
                     }
 
                   };
@@ -1551,66 +1540,18 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
       },
       _RemoteStructuredPropery: function (info) {
         
-        var entity = info.config.ui.specifics.entity, path = info.config.ui.path,
-            canLoadMore = function (nextReadArguments) {
-              return helpers.getProperty(nextReadArguments, path.join('.') + '.config.more')
-            };
+        var entity = info.config.ui.specifics.entity,
+          path = info.config.ui.path,
+          access = angular.copy(entity.ui.access);
+          access.push(info.config.code_name); 
+        var defaultReader = models[entity.kind].reader(entity, info.config.ui.specifics.parentArgs, path, access); 
+        if (!angular.isDefined(info.config.ui.specifics.reader))
+        {
+          info.config.ui.specifics.reader = defaultReader;
+        }
+        
+        info.config.ui.specifics.remote = true;
          
-        var defaultConfig = {
-          nextReadArguments: null,
-          remote: true,
-          canLoadMore: canLoadMore(entity._next_read_arguments),
-          loadMore: function ()
-          {
-            var that = this, digNextReadArguments = {},
-                nextReadArguments = that.nextReadArguments || entity._next_read_arguments,
-                nextReadArgumentsData,
-                access = angular.copy(info.scope.args.ui.access),
-                items,
-                promise,
-                loadedNextReadArguments,
-                paths = [];
-                access.push(info.config.code_name);
- 
-            angular.forEach(path, function (p) {
-              paths.push(p);
-              nextReadArgumentsData = helpers.getProperty(nextReadArguments, paths.join('.'));
-              if (!angular.isDefined(nextReadArgumentsData)) {
-                nextReadArgumentsData = {};
-              }
-              digNextReadArguments[p] = nextReadArgumentsData;
-            });
-            
-            promise = (angular.isFunction(that.loadMorePromise) ? that.loadMorePromise() : models[entity.kind].actions.read({
-              key: entity.key,
-              read_arguments: that.nextReadArguments || digNextReadArguments
-            }));
-            
-            promise.then(function (response) { 
-              items = helpers.getProperty(response.data.entity, access.join('.'));
-                  
-              loadedNextReadArguments = response.data.entity._next_read_arguments;
-              that.canLoadMore = canLoadMore(loadedNextReadArguments);
-              
-              info.config.ui.specifics.parentArgs.extend(items); 
-              
-              if (that.canLoadMore)
-              {
-                that.nextReadArguments = response.data.entity._next_read_arguments;
-              }
-               
-            });
-          }
-        };
-        
-        angular.forEach(defaultConfig, function (value, key) {
-          if (angular.isDefined(info.config.ui.specifics[key]))
-          {
-            delete defaultConfig[key];
-          }
-        });
-        
-        $.extend(info.config.ui.specifics, defaultConfig);
       },
       SuperStructuredProperty: function (info) {
         return this.SuperLocalStructuredProperty(info);
@@ -1676,7 +1617,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
     }
     callbacks.push(callback);
   };
-}).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig) {
+}).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig, helpers) {
   // models depency should never be included directly or indirectly, because its depency on modelsMeta
   var models = {},
     modelCreate = function (kind) {
@@ -1699,6 +1640,60 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                 'get() relies on actions.search action. use actions.read() instead.'
               );
             }
+          },
+          reader: function (entity, update, path, access) {
+             
+            var canLoadMore = function (nextReadArguments) {
+                return helpers.getProperty(nextReadArguments, path.join('.') + '.config.more')
+            };
+              
+            var reader = {
+              next: null,
+              more: canLoadMore(entity._next_read_arguments),
+              load: function () {
+                var that = this,
+                  digNext = {},
+                  next = that.next || entity._next_read_arguments,
+                  nextData,
+                  items,
+                  promise,
+                  loadedNext,
+                  paths = [];
+ 
+                angular.forEach(path, function (p) {
+                  paths.push(p);
+                  nextData = helpers.getProperty(next, paths.join('.'));
+                  if (!angular.isDefined(nextData)) {
+                    nextData = {};
+                  }
+                  digNext[p] = nextData;
+                });
+    
+                promise = models[entity.kind].actions.read({
+                  key: entity.key,
+                  read_arguments: that.next || digNext
+                });
+    
+                promise.then(function (response) {
+                  items = helpers.getProperty(response.data.entity, access.join('.'));
+                  
+                  update.extend(items);
+    
+                  loadedNext = response.data.entity._next_read_arguments;
+                  that.more = canLoadMore(loadedNext);
+     
+                  if (that.more) {
+                    that.next = response.data.entity._next_read_arguments;
+                  } 
+                  
+                });
+                
+                return promise;
+              }
+            }; 
+            
+            return reader;
+             
           }
         };
 
