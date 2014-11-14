@@ -143,12 +143,13 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
     fancyGrid: {
       getHeight: function (images, width, margin) {
-        width -= images.length * (margin * 2);
+        margin = (margin * 2);
+        width -= images.length * margin;
         var h = 0;
         angular.forEach(images, function (image) {
           h += image.proportion;
         });
-        return width / h;
+        return (width / h);
       },
       setHeight: function (images, height) {
 

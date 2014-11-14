@@ -608,7 +608,7 @@ angular.module('app').config(function (datepickerConfig) {
                 height: images[i].height
               });
               $(this).find('img').css({
-                height: images[i].height - margin
+                height: images[i].height
               });
             });
   

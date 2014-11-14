@@ -286,13 +286,6 @@ strong, b {
   display: block;
 }
 
-.image-image .button {
-  position: absolute;
-  bottom: 0px;
-  left: 0px;
-  width: 100%;
-}
-
 .image-image img {
   width: 100%;
 }
@@ -355,4 +348,21 @@ img.vertical, .vertical {
 .kinetic-moving-left, .kinetic-moving-right
 { 
   cursor:url('images/grabbing.png') 8 8, move; 
+}
+
+.button-wrapper
+{
+  position:absolute;
+  width:100%;
+  bottom: 0px;
+  left: 0px;
+  padding-bottom: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.button-wrapper .button
+{
+  width: 100%;
+  display: block;
 }

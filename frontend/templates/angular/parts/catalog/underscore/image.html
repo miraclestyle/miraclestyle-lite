@@ -27,10 +27,12 @@
                   <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
                 </div>
                 
-                <button ng-show="<%= config.ui.writableCompiled %>" type="button"
-                        loading
-                        class="button" 
-                        ng-click="config.ui.specifics.remove(image)">Remove</button>
+                <div class="button-wrapper">
+                  <button ng-show="<%= config.ui.writableCompiled %>" type="button"
+                          loading
+                          class="button" 
+                          ng-click="config.ui.specifics.remove(image)">Remove</button>
+                </div>
           </div>
       </div>
  
