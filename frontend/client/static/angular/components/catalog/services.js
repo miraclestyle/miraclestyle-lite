@@ -3,10 +3,12 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $mod
 
   modelsConfig(function (models) {
 
-    var fields = modelsMeta.getActionArguments('31', 'update');
-    fields._images.ui.template = 'catalog/underscore/image.html';
+
     $.extend(models['31'], {
       manageModal: function (entity, callback) {
+        
+        var fields = modelsMeta.getActionArguments('31', 'update');
+        fields._images.ui.template = 'catalog/underscore/image.html';
 
         var isNew = !angular.isDefined(entity),
           afterSave = function ($scope) {
@@ -34,19 +36,53 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $mod
               addProducts: function ()
               {
                 var parentScope = this;
-             
-                
+              
                 $modal.open({
                   templateUrl: 'catalog/products.html',
                   controller: function ($scope, $modalInstance) {
-                    $scope.args = angular.copy(parentScope.args._images);
+                    $scope.entity = parentScope.entity; // important for config bellow
+                    $scope.args = parentScope.args; // important for config bellow
+                    // inner scope things
+                    $scope.images = angular.copy(parentScope.args._images);
+                    var access = angular.copy(parentScope.args.ui.access);
+                    access.push(fields._images.code_name);
+                    var reader = models['31'].reader(parentScope.entity, $scope.images, access, access);
+                    
+                    $scope.loadMoreImages = function (callback) {
+                      if (reader.more) {
+                        reader.load().then(callback);
+                      }
+                      else {
+                        callback();
+                      }
+                       
+                    };
+                    
+                    $scope.fieldProducts = angular.copy(fields._products);
+                    $.extend(true, $scope.fieldProducts, {
+                      ui: {
+                        specifics: {
+                          listFields: [{
+                            label: 'Name',
+                            ley: 'name'
+                          }],
+                          sortFields: ['country', 'region', 'city', 'postal_code',
+                            'street', 'name', 'email', 'telephone',
+                            'default_shipping', 'default_billing'
+                          ]
+                        }
+                      }
+                    });
+                    
                     $scope.save = function () {
-                      $.extend(parentScope.args._images, $scope.args);
                       $scope.close();
                     };
+                    
                     $scope.close = function () {
                       $modalInstance.dismiss('close');
                     };
+                    
+                    
                   }
                 });
                 

@@ -1453,8 +1453,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                 template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
                   config: config
                 }),
-                controller: function ($scope, $modalInstance,
-                  modelsUtil) {
+                controller: function ($scope, $modalInstance, modelsUtil) {
                   var is_new = false;
 
                   $scope.config = config;
@@ -1528,6 +1527,11 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                     }
 
                   };
+                  
+                  if (config.specifics.scope)
+                  {
+                    $.extend($scope, config.specifics.scope);
+                  }
 
                 }
               });

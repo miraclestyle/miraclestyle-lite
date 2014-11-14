@@ -49,7 +49,8 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-messages/angular-messages.js',
   'vendor/angular-cookie/angular-cookie.js',
   'vendor/angular-touch/angular-touch.js',
-  'vendor/owlcarousel/owl-carousel/owl.carousel.js',
+  'vendor/angular-dragdrop/src/angular-dragdrop.js',
+  'vendor/jquery.kinetic/jquery.kinetic.js',
   'lib/angular-cache/dist/angular-cache.js',
   'vendor/angular-ui-select/dist/select.js',
   'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.js',
@@ -61,7 +62,6 @@ ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives',
 
 ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css',
                      'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
-                     'vendor/owlcarousel/owl-carousel/owl.carousel.css',
                      'css/style.css')
 
 class Structured():

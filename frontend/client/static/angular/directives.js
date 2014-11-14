@@ -420,7 +420,7 @@ angular.module('app').config(function (datepickerConfig) {
           if (modal_footer.length)
             height -= modal_footer.outerHeight() + 3;
 
-          modal_dialog.find('.modal-body.scrollable').height(height);
+          modal_dialog.find('.modal-body.scrollable, .modal-body.unscrollable').height(height);
 
         };
 

@@ -1,24 +1,54 @@
-<div fit-in-dialog>
+<div class="fitter" fit-in-dialog>
 <form name="container.form" ng-submit="save()" method="post" action="{{container.action}}">
   <input type="hidden" compatibility-maker="args" name="__body__" />
-  <div class="modal-body scrollable">
-  <div class="modal-body-inner">
     
-    
-    <div catalog-slider="args" class="owl-carousel"> 
-         <div ng-repeat="item in args" catalog-slider-item="item"></div> 
-     </div>
-    
+  <div class="modal-body unscrollable">
+  <div class="clearfix">
+    <div class="pull-left t60"> 
       
-  </div>
-  </div>
-  
-  <div class="modal-footer">
-    <div>
-        <button loading type="submit" class="button">Save</button>
-        <button loading type="button" class="button" ng-click="close()">Cancel</button>
+      <div class="catalog-slider-outer hand">
+         <div catalog-slider-load-more="loadMoreImages" catalog-slider="images" class="catalog-slider"> 
+             <div ng-repeat="image in images" class="item"><img catalog-slider-image="image" /></div>
+         </div>
+      </div>
+       
+    </div>
+    
+    <div class="pull-right t40">
+      <div class="modal-body-inner scrollable"> 
+        
+        
+        <div form-input="fieldProducts"></div>
+        
+        <!--
+            <div class="text-right">
+              <button type="button" class="button" ng-click="manageProduct()">Add Product</button>
+            </div>
+     
+            <ul>
+              <li class="new-pricetag" ng-repeat='product in entity._products track by $index' data-drag="true" 
+                  data-jqyoui-options="{revert: 'invalid', scope2:'new-pricetag', helper: 'clone'}" 
+                  ng-model="entity._products" jqyoui-draggable="{index: {{$index}}, placeholder: 'keep'}">
+                  <div class="just-text"><a ng-click="manageProduct(product)" href="javascript:;">{{product.name}}</a></div>
+                  <div class="button pricetag">{{product.unit_price}}</div>
+              </li>
+            </ul>
+            
+           <div ng-show="true">
+                <button type="button" ng-click="getMoreProducts()" busy class="button">Load more products</button>
+           </div>-->
+     
+          <div class="corner-right">
+                <div>
+                  <button loading type="submit" class="button">Save</button>
+                  <button loading type="button" class="button" ng-click="close()">Cancel</button>
+              </div>
+           </div>
+      </div>
     </div>
   </div>
-  
+      
+  </div>
+ 
 </form>
 </div>

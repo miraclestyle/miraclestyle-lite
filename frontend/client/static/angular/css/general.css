@@ -326,3 +326,27 @@ img.vertical, .vertical {
   float: left;
   margin: 5px;
 }
+
+.catalog-slider-outer
+{
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.catalog-slider .item
+{
+  float:left;
+  position:relative;
+}
+
+.hand
+{ 
+  cursor:url('images/cursor-openhand.png') 8 8, move; 
+}
+
+
+.kinetic-moving-left, .kinetic-moving-right
+{ 
+  cursor:url('images/grabbing.png') 8 8, move; 
+}
