@@ -1126,11 +1126,11 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
           internalConfig = info.config.ui.specifics.internalConfig,
           defaultInternalConfig = {
             search: {
-              cache_results: {
+              cacheResults: {
                 'default': true,
                 '13': false
               },
-              propsFilter_results: {
+              propsFilterResults: {
                 'default': '{name: $select.search}',
                 '12': '{name: $select.search, code: $select.search}'
               },
@@ -1153,19 +1153,7 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                     });
                 }
               },
-              query: {
-                '13': function (term, search_action) {
-                  var args = info.scope.$eval(info.config.ui.parentArgs);
-                  if ((args && args.country)) {
-                    models['13'].getSubdivisions(args.country).then(
-                      function (response) {
-                        config.ui.specifics.entities = response.data
-                          .entities;
-                      });
-                  }
-
-                }
-              },
+              query: {},
               queryfilter: {
                 '13': function (term, search_action) {
                   var args = info.scope.$eval(info.config.ui.parentArgs);
@@ -1207,10 +1195,10 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
         if (config.kind) {
 
-          var propsFilter = internalConfig.search.propsFilter_results[
+          var propsFilter = internalConfig.search.propsFilterResults[
             config.kind];
           if (!propsFilter) {
-            propsFilter = internalConfig.search.propsFilter_results[
+            propsFilter = internalConfig.search.propsFilterResults[
               'default'];
           }
           config.ui.specifics.propsFilter = propsFilter;
@@ -1240,27 +1228,25 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
           } else {
 
-            var action_search = modelsMeta.getActionArguments(config.kind,
+            var actionSearch = modelsMeta.getActionArguments(config.kind,
                 'search'),
-              should_cache = false,
-              search_command, skip_search_command = false;
+              shouldCache = false,
+              searchCommand;
 
-            if (action_search !== undefined) {
-              var cache_option = internalConfig.search.cache_results[
-                config.kind];
-              if (cache_option !== undefined && cache_option !== false) {
-                should_cache = cache_option;
-              } else if (cache_option !== false) {
-                should_cache = internalConfig.search.cache_results[
-                  'default'];
+            if (actionSearch !== undefined) {
+              var cacheOption = internalConfig.search.cacheResults[config.kind];
+              if (cacheOption !== undefined && cacheOption !== false) {
+                shouldCache = cacheOption;
+              } else if (cacheOption !== false) {
+                shouldCache = internalConfig.search.cacheResults['default'];
               }
 
-              search_command = function (term) {
-                var params = action_search.search['default'],
+              searchCommand = function (term) {
+                var params = actionSearch.search['default'],
                   fn = internalConfig.search.queryfilter[config.kind],
                   args = {};
                 if (angular.isFunction(fn)) {
-                  args = fn(term, action_search);
+                  args = fn(term, actionSearch);
                 } else {
                   args = {
                     search: params
@@ -1270,20 +1256,20 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
                   return false;
                 }
                 models[config.kind].actions.search(args, {
-                  cache: should_cache
+                  cache: shouldCache
                 }).then(function (response) {
                   config.ui.specifics.entities = response.data.entities;
                 });
               };
 
               if (config.ui.specifics.entities === undefined &&
-                should_cache !== false) {
-                search_command();
+                shouldCache !== false) {
+                searchCommand();
               }
 
-              if (should_cache === false) {
+              if (shouldCache === false) {
                 config.ui.specifics.search = function (term) {
-                  search_command(term);
+                  searchCommand(term);
                 };
               }
 
@@ -1528,9 +1514,9 @@ angular.module('app').value('modelsInfo', {}).value('currentAccount', {}).factor
 
                   };
                   
-                  if (config.specifics.scope)
+                  if (config.ui.specifics.scope)
                   {
-                    $.extend($scope, config.specifics.scope);
+                    $.extend($scope, config.ui.specifics.scope);
                   }
 
                 }

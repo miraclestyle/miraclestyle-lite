@@ -59,17 +59,14 @@ angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $mod
                     };
                     
                     $scope.fieldProducts = angular.copy(fields._products);
-                    $.extend(true, $scope.fieldProducts, {
+                    $.extend($scope.fieldProducts, {
                       ui: {
                         specifics: {
+                          sortable:false,
                           listFields: [{
                             label: 'Name',
-                            ley: 'name'
-                          }],
-                          sortFields: ['country', 'region', 'city', 'postal_code',
-                            'street', 'name', 'email', 'telephone',
-                            'default_shipping', 'default_billing'
-                          ]
+                            key: 'name'
+                          }]
                         }
                       }
                     });

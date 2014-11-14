@@ -22,11 +22,11 @@ angular.module('app').directive('catalogSlider', function ($timeout) {
           
       var measure = function () {
         var tw = 0;
-        var items = element.find('.item').each(function () {
-          tw += element.width();
+        element.find('.item').each(function () {
+          tw += $(this).width();
         });
-        
-        element.width(tw);
+   
+        element.width(Math.ceil(tw));
       };
       
       scope.$on('reMeasureCatalogSlider', function () {
@@ -35,8 +35,6 @@ angular.module('app').directive('catalogSlider', function ($timeout) {
   
       scope.$on('readyCatalogSlider', function () {
         
-        $timeout(function () {
-           
           measure();
           
           parent.kinetic({
@@ -46,8 +44,6 @@ angular.module('app').directive('catalogSlider', function ($timeout) {
             moved: tryToLoad,
             stopped: tryToLoad
           });
-           
-        });
         
       });
     }
@@ -57,26 +53,30 @@ angular.module('app').directive('catalogSlider', function ($timeout) {
     restrict: 'A',
     link: function (scope, element, attrs) {
       
+      var image = scope.$eval(attrs.catalogSliderImage);
+      
       var run = function () {
-         var image = scope.$eval(attrs.catalogSliderImage),
-          height = element.parents('.fitter:first').height();
-          
-          element.attr('src', image.serving_url + '=s' + height)
-             .width(height * image.proportion)
-             .height(height);
+         var newHeight = element.parents('.fitter:first').height(),
+          newWidth = newHeight * image.proportion;
+ 
+          element.attr('src', image.serving_url + '=s' + newHeight) // @todo the height range needs to be calculated here
+             .width(newWidth)
+             .height(newHeight);
              
              element.parents('.item:first')
-              .width(height * image.proportion)
-              .height(height);
+              .width(newWidth)
+              .height(newHeight);
       };
       
-      $timeout(run);
+      $timeout(function () {
+        run();
+        if (scope.$last)
+        {
+          scope.$emit('readyCatalogSlider');
+        }
+      });
   
-      if (scope.$last)
-      {
-        scope.$emit('readyCatalogSlider');
-      }
-      
+     
       var resize = function () {
         run();
         scope.$emit('reMeasureCatalogSlider');
