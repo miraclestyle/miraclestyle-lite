@@ -6,9 +6,9 @@
 
 body {
   font-size: 14px;
+  line-height: 18px;
   font-family: "sawasdeeregular", Arial, Helvetica, sans-serif;
   color: #333333;
-  line-height: 1.5em;
 }
 
 body.loading {
@@ -65,9 +65,10 @@ a:visited {
 #logo {
   text-transform: uppercase;
   font-size: 28px;
+  line-height: 36px;
   margin: 0px;
-  padding-top: 16px;
-  padding-bottom: 12px;
+  padding-top: 8px;
+  padding-bottom: 6px;
 }
 
 #main-menu {
@@ -80,7 +81,20 @@ a:visited {
   overflow: auto;
 }
 
+#main-menu .button {
+}
+
+#main-menu .menu .button {
+  width: 240px;
+  height: 100px;
+  padding: 15px 20px;
+  font-size: 18px;
+  line-height: 35px;
+  box-shadow: 3px 3px 5px #BBBBBB;
+}
+
 .menu-inner {
+  padding-top: 15px;
   padding: 10px;
 }
 
@@ -101,20 +115,8 @@ a.block, .block, .button.block {
   display: block;
 }
 
-#main-menu .button {
-
-}
-
-#main-menu .menu .button {
-  width: 240px;
-  height: 100px;
-  padding: 15px 20px;
-  font-size: 18px;
-  box-shadow: 1px 1px 5px #BBBBBB;
-}
-
 .load-more {
-  width: 100%;
+  width:100%;
 }
 
 .no-style {
@@ -166,6 +168,7 @@ strong, b {
 
   display: block;
 }
+
 .text-muted {
   color: gray;
 }
@@ -261,6 +264,7 @@ strong, b {
   width: 240px;
   height: 150px;
 }
+
 .app-block .logo {
   width: 100%;
   height: auto;
@@ -310,10 +314,12 @@ strong, b {
 .pointable {
   cursor: pointer;
 }
+
 img.horizontal, .horizontal {
   height: 100%;
   width: 100%;
 }
+
 img.vertical, .vertical {
   height: 100%;
   width: 56%;
