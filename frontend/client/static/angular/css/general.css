@@ -36,9 +36,7 @@ a:visited {
 }
 
 .content {
-  margin-right: 10px;
-  margin-left: 10px;
-  margin-top: 65px;
+  margin: 65px 10px 10px 10px;
 }
 
 #top-bar {
@@ -90,12 +88,12 @@ a:visited {
   padding: 15px 20px;
   font-size: 18px;
   line-height: 35px;
-  box-shadow: 3px 3px 5px #BBBBBB;
+  /*box-shadow: 3px 3px 5px #BBBBBB;*/
 }
 
 .menu-inner {
-  padding-top: 15px;
   padding: 10px;
+  padding-top: 15px;
 }
 
 .menu {
