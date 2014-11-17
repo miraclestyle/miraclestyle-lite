@@ -5,12 +5,12 @@ angular.module('app')
 
     var newEntity = function (entity) {
       if (!_.findWhere($scope.search.results, {
-          key: entity.key
-        })) {
+        key: entity.key
+      })) {
         $scope.search.results.unshift(entity);
       }
     };
-
+ 
     $scope.create = function () {
       models['31'].manageModal(undefined, newEntity);
     };
@@ -18,6 +18,7 @@ angular.module('app')
     $scope.manage = function (entity) {
       models['31'].manageModal(entity, newEntity);
     };
+
 
     $scope.search = {
       results: []
@@ -33,7 +34,4 @@ angular.module('app')
         $scope.search.results = response.data.entities;
       });
     });
-
-
-
   });

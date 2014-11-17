@@ -1,4 +1,8 @@
-angular.module('app').directive('catalogSlider', function ($timeout) {
+/*global angular, window, console, jQuery, $, document*/
+(function () {
+  'use strict';
+
+  angular.module('app').directive('catalogSlider', function ($timeout) {
   return {
     restrict: 'A',
     link: function (scope, element, attrs) {
@@ -57,15 +61,15 @@ angular.module('app').directive('catalogSlider', function ($timeout) {
       
       var run = function () {
          var newHeight = element.parents('.fitter:first').height(),
-          newWidth = newHeight * image.proportion;
+          newWidth = Math.ceil(newHeight * image.proportion);
  
           element.attr('src', image.serving_url + '=s' + newHeight) // @todo the height range needs to be calculated here
              .width(newWidth)
              .height(newHeight);
              
-             element.parents('.item:first')
-              .width(newWidth)
-              .height(newHeight);
+          element.parents('.item:first')
+           .width(newWidth)
+           .height(newHeight);
       };
       
       $timeout(function () {
@@ -91,3 +95,5 @@ angular.module('app').directive('catalogSlider', function ($timeout) {
     }
   };
 });
+
+}());

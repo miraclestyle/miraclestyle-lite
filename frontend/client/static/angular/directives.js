@@ -1,44 +1,41 @@
 /*global angular, window, console, jQuery, $, document*/
 'use strict';
 angular.module('app').config(function (datepickerConfig) {
-    datepickerConfig.showWeeks = false;
-  })
+  datepickerConfig.showWeeks = false;
+})
   .directive('mainMenuToggler', function ($rootScope) {
 
     return {
       link: function (scope, element) {
         var click = function (e, cmd) {
-          var mm = $('#main-menu'),
-            visible = mm.is(':visible');
+            var mm = $('#main-menu'),
+              visible = mm.is(':visible');
 
-          if ((visible || cmd === 1) && cmd !== 2) {
-            mm.stop().animate({
-              height: 0
-            }, 100, function () {
-              $(this).hide();
-            });
-          } else if (!visible || cmd === 2) {
-            mm.height(0).show();
-            mm.stop().animate({
-              height: ($(window).height() - $('#top-bar').height())
-            }, 100);
-          }
+            if ((visible || cmd === 1) && cmd !== 2) {
+              mm.stop().animate({
+                height: 0
+              }, 100, function () {
+                $(this).hide();
+              });
+            } else if (!visible || cmd === 2) {
+              mm.height(0).show();
+              mm.stop().animate({
+                height: ($(window).height() - $('#top-bar').height())
+              }, 100);
+            }
+          },
+          resize = function () {
+            var mm = $('#main-menu'),
+              visible = mm.is(':visible');
 
+            if (visible) {
+              mm.stop().animate({
+                height: ($(window).height() - $('#top-bar').height())
+              }, 100);
 
-        };
+            }
 
-        var resize = function () {
-          var mm = $('#main-menu'),
-            visible = mm.is(':visible');
-
-          if (visible) {
-            mm.stop().animate({
-              height: ($(window).height() - $('#top-bar').height())
-            }, 100);
-
-          }
-
-        };
+          };
 
         element.on('click', click);
         $(window).on('resize', resize);
@@ -65,12 +62,15 @@ angular.module('app').config(function (datepickerConfig) {
       },
       link: function (scope, element, attrs) {
 
-        var toggle = attrs.toggle;
-        if (!toggle)
+        var toggle = attrs.toggle,
+          splits,
+          init,
+          handler;
+        if (!toggle) {
           toggle = 'Yes/No';
-        var splits = toggle.split('/');
-
-        var init = function () {
+        }
+        splits = toggle.split('/');
+        init = function () {
           if (scope.ngModel) {
             element.text(splits[0]);
           } else {
@@ -80,7 +80,7 @@ angular.module('app').config(function (datepickerConfig) {
 
         init();
 
-        var handler = function () {
+        handler = function () {
           scope.$apply(function () {
             scope.ngModel = !scope.ngModel;
             init();
@@ -100,24 +100,24 @@ angular.module('app').config(function (datepickerConfig) {
       link: function (scope, element, attrs, ctrl) {
         var worker = function (value, what) {
 
-          var test = false;
+            var test = false;
 
-          try {
-            value = angular[what](value);
-            test = true;
+            try {
+              value = angular[what](value);
+              test = true;
 
-          } catch (e) {}
+            } catch (ignore) {}
 
-          ctrl.$setValidity('jsonOnly', test);
+            ctrl.$setValidity('jsonOnly', test);
 
-          return value;
-        };
-        var parser = function (value) {
-          return worker(value, 'fromJson');
-        };
-        var formatter = function (value) {
-          return worker(value, 'toJson');
-        };
+            return value;
+          },
+          parser = function (value) {
+            return worker(value, 'fromJson');
+          },
+          formatter = function (value) {
+            return worker(value, 'toJson');
+          };
 
         ctrl.$parsers.push(parser);
         ctrl.$formatters.push(formatter);
@@ -131,26 +131,26 @@ angular.module('app').config(function (datepickerConfig) {
 
         var worker = function (value, what) {
 
-          var test = false;
+            var test = false;
 
-          try {
-            if (what == 'list') {
-              value = helpers.splitLines(value);
-            }
-            test = true;
+            try {
+              if (what === 'list') {
+                value = helpers.splitLines(value);
+              }
+              test = true;
 
-          } catch (e) {}
+            } catch (ignore) {}
 
-          ctrl.$setValidity('repeatedText', test);
+            ctrl.$setValidity('repeatedText', test);
 
-          return value;
-        };
-        var parser = function (value) {
-          return worker(value, 'list');
-        };
-        var formatter = function (value) {
-          return worker(value, 'str');
-        };
+            return value;
+          },
+          parser = function (value) {
+            return worker(value, 'list');
+          },
+          formatter = function (value) {
+            return worker(value, 'str');
+          };
 
         ctrl.$parsers.push(parser);
         ctrl.$formatters.push(formatter);
@@ -165,7 +165,18 @@ angular.module('app').config(function (datepickerConfig) {
 
         var that = element,
           form = that.parents('form:first'),
-          autoSubmit = scope.$eval(attrs.generateUploadUrl);
+          change = function () {
+
+            if (!that.val()) {
+              return false;
+            }
+
+            endpoint.post('blob_upload_url', '11', {
+              upload_url: endpoint.url
+            }).then(function (response) {
+              form.attr('action', response.data.upload_url);
+            });
+          };
 
         if (!form.length) {
           console.error(
@@ -173,21 +184,6 @@ angular.module('app').config(function (datepickerConfig) {
           );
           return false;
         }
-
-
-        var change = function () {
-
-          if (!that.val()) {
-            return false;
-          }
-
-          endpoint.post('blob_upload_url', '11', {
-            upload_url: endpoint.url
-          }).then(function (response) {
-            form.attr('action', response.data.upload_url);
-          });
-
-        };
 
         $(element).on('change', change);
 
@@ -254,7 +250,8 @@ angular.module('app').config(function (datepickerConfig) {
           return attrs.join(' ');
         },
         default_attrs: function (config) {
-          var attrs = {};
+          var attrs = {},
+            writableCompiled;
           if (config.max_size) {
             attrs['ng-maxlength'] = 'config.max_size';
           }
@@ -270,8 +267,7 @@ angular.module('app').config(function (datepickerConfig) {
             attrs['ng-disabled'] = '!' + config.ui.writable;
             config.ui.writableCompiled = config.ui.writable;
           } else {
-            var writableCompiled = config.ui.model + '.ui.rule.field' + $.map(
-              config.ui.writable,
+            writableCompiled = config.ui.model + '.ui.rule.field' + $.map(config.ui.writable,
               function (item) {
                 return "['" + helpers.addslashes(item) + "']";
               }).join('') + '.writable';
@@ -306,16 +302,17 @@ angular.module('app').config(function (datepickerConfig) {
 
           var supplied_config = scope.$eval(attrs.formInput),
             name = supplied_config.code_name,
-            label = null;
+            label = null,
+            config,
+            tpl,
+            template;
 
           // use backend defined label if was provided, otherwise the label will be humanized
-          if (supplied_config.verbose_name !== null && supplied_config.verbose_name !==
-            undefined) {
+          if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined) {
             label = supplied_config.verbose_name;
           } else {
             label = name;
           }
-
 
           if (!name) {
             console.error('Your field config', supplied_config,
@@ -323,7 +320,7 @@ angular.module('app').config(function (datepickerConfig) {
             return;
           }
 
-          var config = {
+          config = {
             ui: { // root config for entire config, upper structure is ndb property definition
               args: 'args.' + name,
               parentArgs: 'args',
@@ -350,7 +347,7 @@ angular.module('app').config(function (datepickerConfig) {
 
           if (types[supplied_config.type] !== undefined) {
             // reference main locals to type builder
-            var tpl = types[supplied_config.type]({
+            tpl = types[supplied_config.type]({
               config: config,
               element: element,
               scope: scope,
@@ -363,8 +360,7 @@ angular.module('app').config(function (datepickerConfig) {
               label: utils.label(config)
             };
 
-            var template = underscoreTemplate.get(angular.isDefined(config.ui.template)
-             ? config.ui.template : 'underscore/form/' + tpl + '.html')({
+            template = underscoreTemplate.get(angular.isDefined(config.ui.template) ? config.ui.template : 'underscore/form/' + tpl + '.html')({
               config: config
             });
 
@@ -400,25 +396,23 @@ angular.module('app').config(function (datepickerConfig) {
         fn();
 
       }
-    }
+    };
   })
   .directive('fitInDialog', function () {
     return {
       link: function (scope, element, attrs) {
         var fn = function () {
 
-          var modal_dialog = $(element).parents('.modal-dialog:first');
+          var modal_dialog = $(element).parents('.modal-dialog:first'),
+            height = $(window).height(),
+            modal_footer = modal_dialog.find('.modal-footer');
 
-          var height = $(window).height();
-
-          height -= parseInt(modal_dialog.css('margin-top')) + parseInt(
-            modal_dialog.css('margin-bottom'));
+          height -= parseInt(modal_dialog.css('margin-top'), 10) + parseInt(modal_dialog.css('margin-bottom'), 10);
           height -= 2;
 
-          var modal_footer = modal_dialog.find('.modal-footer');
-
-          if (modal_footer.length)
+          if (modal_footer.length) {
             height -= modal_footer.outerHeight() + 3;
+          }
 
           modal_dialog.find('.modal-body.scrollable, .modal-body.unscrollable').height(height);
 
@@ -429,7 +423,7 @@ angular.module('app').config(function (datepickerConfig) {
           $(window).unbind('resize modal.open', fn);
         });
       }
-    }
+    };
   })
   .directive('displayImage', function (GLOBAL_CONFIG) {
     return {
@@ -471,7 +465,7 @@ angular.module('app').config(function (datepickerConfig) {
 
         scope.$watch('image.serving_url', fn);
 
-        fn(true, false)
+        fn(true, false);
 
       }
     };
@@ -518,7 +512,8 @@ angular.module('app').config(function (datepickerConfig) {
       },
       link: function (scope, element, attrs, ctrl) {
         var form = element.parents('form:first'),
-          files, execute,
+          files,
+          execute,
           click = function () {
             if (!ctrl.$valid) {
               console.log('form not valid, stopping submission');
@@ -589,31 +584,31 @@ angular.module('app').config(function (datepickerConfig) {
           });
         }
       }
-    }
+    };
   }).directive('fancyGridGenerator', function (helpers, $timeout) {
 
     return {
       link: function (scope, element, attrs) {
         var resize = function () {
-            var canvas = element.outerWidth(true),
-              images = [],
-              margin = 5;
-            angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
-              images.push(angular.copy(image));
+          var canvas = element.outerWidth(true),
+            images = [],
+            margin = 5;
+          angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
+            images.push(angular.copy(image));
+          });
+          helpers.fancyGrid.calculate(canvas, images, 200, margin);
+          element.find('.grid-item').each(function (i) {
+            $(this).css({
+              width: images[i].width,
+              height: images[i].height
             });
-            helpers.fancyGrid.calculate(canvas, images, 200, margin);
-            var items = element.find('.grid-item').each(function (i) {
-              $(this).css({
-                width: images[i].width,
-                height: images[i].height
-              });
-              $(this).find('img').css({
-                height: images[i].height
-              });
+            $(this).find('img').css({
+              height: images[i].height
             });
-  
-          };
- 
+          });
+
+        };
+
         $(window).on('resize', resize);
 
         scope.$on('onNgRepeatEnd', resize);
@@ -646,9 +641,12 @@ angular.module('app').config(function (datepickerConfig) {
                 return;
               }
               var wrapper = element.parents('.grid-wrapper:first'),
-                canvasWidth = wrapper.outerWidth(true);
+                canvasWidth = wrapper.outerWidth(true),
+                values,
+                img,
+                image;
               if (canvasWidth) {
-                var values = helpers.calculateGrid(canvasWidth,
+                values = helpers.calculateGrid(canvasWidth,
                   maxWidth, minWidth, margin);
                 wrapper.css({
                   paddingRight: values[2],
@@ -659,8 +657,8 @@ angular.module('app').config(function (datepickerConfig) {
                   var box = $(this).width(values[0]);
                   if (square) {
                     box.height(values[0]);
-                    var img = box.find('img'),
-                      image = scope.$eval(attrs.gridGenerator);
+                    img = box.find('img');
+                    image = scope.$eval(attrs.gridGenerator);
                     if (image) {
                       img.removeClass('horizontal vertical');
                       if (image.proportion > 1) {
