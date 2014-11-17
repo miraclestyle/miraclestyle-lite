@@ -14,9 +14,10 @@
   font-size: 14px;
 }
 
-.button:focus {
+.button:hover {
   border: 1px solid #999999;
-  background-color: #FFFFFF;
+  background-color: #F9F9F9;
+  /**box-shadow: 1px 1px 3px #999999;**/
 }
 
 .button:active, .button.active, li.active .button, .button-active {
@@ -25,10 +26,9 @@
   background-color: #FFFFFF;
 }
 
-.button:hover {
+.button:focus {
   border: 1px solid #999999;
-  background-color: #F9F9F9;
-  /**box-shadow: 1px 1px 3px #999999;**/
+  background-color: #FFFFFF;
 }
 
 .button[disabled] {
