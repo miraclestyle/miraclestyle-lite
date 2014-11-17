@@ -30,3 +30,6 @@ http://miraclestyle.appspot.com/api/endpoint
 
 direct access to module subdomian:
 http://backend-dot-miraclestyle.appspot.com/api/endpoint
+
+Development Server run command:
+dev_appserver.py backend/app.yaml frontend/app.yaml dispatch.yaml  --port=9982
