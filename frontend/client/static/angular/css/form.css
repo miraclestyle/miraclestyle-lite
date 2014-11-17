@@ -98,10 +98,11 @@
 .fieldset {
   font-size: 28px;
   line-height: 30px;
-  border-bottom: 1px solid #BBBBBB;
+  border-bottom: 1px solid #EEEEEE;
   padding-bottom: 5px;
   margin-bottom: 15px;
   margin-top: 10px;
+  color: #777777;
 }
 
 .fieldset-text {
@@ -110,6 +111,7 @@
 
 .fieldset-button {
   float:right;
+  color: #333333;
 }
 
 .fieldset:after {
