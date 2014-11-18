@@ -94,6 +94,9 @@
 .modal-footer {
   padding: 10px;
   text-align: right;
+  position: relative;
+  -webkit-box-shadow: 0 -3px 5px #999999;
+  box-shadow: 0 -3px 5px #999999;
 }
 
 .modal-footer:before,

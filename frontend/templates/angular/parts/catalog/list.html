@@ -5,7 +5,7 @@
 </h1>
 
 <div autoload-on-scrollend class="grid-wrapper clearfix">
-    <div ng-repeat="result in search.results track by $index" grid-generator-image="result.cover" grid-generator="{square:false, margin:5, maxWidth:240, maxHeight:360}" class="grid-item grid-generator">
+    <div ng-repeat="result in search.results track by $index" grid-generator-image="result.cover" grid-generator="{square:false, margin:1, maxWidth:240, maxHeight:360}" class="grid-item grid-generator">
         <a ng-click="manage(result)" class="pointable">
             <img display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
         </a>
