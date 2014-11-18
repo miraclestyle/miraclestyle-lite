@@ -594,7 +594,7 @@
                     var resize = function () {
                         var canvas = element.outerWidth(true),
                             images = [],
-                            margin = 5;
+                            margin = 1;
                         angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
                             images.push(angular.copy(image));
                         });

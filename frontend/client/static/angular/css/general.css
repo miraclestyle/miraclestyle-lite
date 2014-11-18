@@ -104,8 +104,7 @@ a:visited {
 
 .menu li {
   display: block;
-  margin-bottom: 10px;
-  margin-right: 10px;
+  margin: 5px;
   float: left;
 }
 
@@ -153,7 +152,7 @@ strong, b {
 .image-image {
   display: inline-block;
   position: relative;
-  margin: 5px;
+  margin: 1px;
 }
 
 .image-image .spaceout {
@@ -321,7 +320,7 @@ img.vertical, .vertical {
 
 .grid-generator {
   float: left;
-  margin: 5px;
+  margin: 1px;
 }
 
 .catalog-slider-outer
