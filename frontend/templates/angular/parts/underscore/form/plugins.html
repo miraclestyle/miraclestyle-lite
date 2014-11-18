@@ -1,16 +1,13 @@
  
 <div class="structured-field">
-  <h2 class="fieldset with-button">
-
-  <span class="fieldset-text">Configurations</span>
  
-  <span class="fieldset-button">
-    <button ng-disabled="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.manage()">
-      Add
-    </button>
-  </span>
- 
-</h2>
+    <div class="clearfix">
+    <div class="pull-right">
+      <button ng-disabled="!<%= config.ui.writableCompiled %>" loading type="button" class="button" ng-click="config.ui.specifics.manage()">
+        Add Plugin
+      </button>
+    </div>
+  </div>
  
     <table class="table">
           <thead>

@@ -1,17 +1,30 @@
-<% if (config.ui.label !== false) { %>
 <div class="structured-field">
-  <h2 ng-class="{'with-button': config.repeated}" class="fieldset">
+<% if (config.ui.label !== false) { %>
+    <h2 ng-class="{'with-button': config.repeated}" class="fieldset">
 
-  <span class="fieldset-text"><%= config.ui.compiled.label %></span>
-  <% if (config.repeated) { %>
-  <span class="fieldset-button">
+    <span class="fieldset-text"><%= config.ui.compiled.label %></span>
+    <% if (config.repeated) { %>
+    <span class="fieldset-button">
+      <button ng-disabled="!<%= config.ui.writableCompiled %>" loading type="button" class="button" ng-click="config.ui.specifics.manage()">
+       <%=config.ui.specifics.addText %>
+      </button>
+    </span>
+    <% } %>
+  </h2>
+<% } else if (config.repeated) { %>
+
+
+<div class="clearfix">
+  <div class="pull-right">
     <button ng-disabled="!<%= config.ui.writableCompiled %>" loading type="button" class="button" ng-click="config.ui.specifics.manage()">
       <%=config.ui.specifics.addText %>
     </button>
-  </span>
-  <% } %>
-</h2>
+  </div>
+</div>
+
+
 <% } %>
+
 <% if (config.repeated) { %>
     <table class="table">
           <thead>

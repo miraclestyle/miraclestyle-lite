@@ -8,7 +8,7 @@
       
       <div class="catalog-slider-outer hand">
          <div catalog-slider-load-more="loadMoreImages" catalog-slider="images" class="catalog-slider"> 
-             <div ng-repeat="image in images" class="item"><img catalog-slider-image="image" /></div>
+             <div ng-repeat="image in args._images" class="item"><img catalog-slider-image="image" /></div>
          </div>
       </div>
        
@@ -16,8 +16,7 @@
     
     <div class="pull-right t40">
       <div class="modal-body-inner scrollable"> 
-        
-        
+         
         <div form-input="fieldProducts"></div>
         
         <!--
