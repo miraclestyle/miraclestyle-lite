@@ -134,6 +134,11 @@
                                 if (what === 'list') {
                                     value = helpers.splitLines(value);
                                 }
+                                if (what === 'string') {
+                                    if (angular.isArray(value)) {
+                                        value = value.join('\n');
+                                    }
+                                }
                                 test = true;
 
                             } catch (ignore) {}

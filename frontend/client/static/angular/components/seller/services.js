@@ -261,7 +261,7 @@
 
                                     }
 
-                                    $scope.cancel = function () {
+                                    $scope.close = function () {
                                         $modalInstance.dismiss('cancel');
                                     };
 
@@ -295,10 +295,10 @@
 
                                             if (promise && promise.then) {
                                                 promise.then(function () {
-                                                    $scope.cancel();
+                                                    $scope.close();
                                                 });
                                             } else {
-                                                $scope.cancel();
+                                                $scope.close();
                                             }
 
                                         };

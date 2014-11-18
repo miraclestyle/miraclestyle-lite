@@ -73,8 +73,11 @@
             fieldSorter: function (prev, next) {
                 var p1 = parseInt(prev.name, 10),
                     p2 = parseInt(next.name, 10);
-                if (isNaN(p1) || isNaN(p2)) {
-                    return 999999;
+                if (isNaN(p1)) {
+                    p1 = 999999;
+                }
+                if (isNaN(p2)) {
+                    p2 = 999999;
                 }
                 return p1 - p2;
             },
@@ -169,8 +172,9 @@
                 },
 
                 calculate: function (size, images, max_height, margin) {
-                    var n = 0, providedImages = images; // reference entire array
-                    w:while (images.length > 0) {
+                    var n = 0,
+                        providedImages = images; // reference entire array
+                    w: while (images.length > 0) {
                         for (var i = 1; i < images.length + 1; ++i) {
                             var slice = images.slice(0, i);
                             var h = this.getHeight(slice, size, margin);
@@ -526,7 +530,7 @@
         };
 
         // expose this to global intentionally, this is used mostly for console debugging @todo remove in production
-        window.modelsMeta = modelsMeta;
+        window._modelsMeta = modelsMeta;
 
         return modelsMeta;
 
@@ -709,7 +713,7 @@
                                         };
                                         entity[field.code_name] = value;
                                     }
-                                    
+
                                 }
 
                                 if (!(value === undefined || value === null)) {
@@ -820,7 +824,7 @@
             create: function (new_config) {
 
                 var config = {
-                    showCancel: true,
+                    showClose: true,
                     closeAfterSave: false,
                     action: 'update',
                     templateBodyUrl: 'entity/modal_editor_default_body.html',
@@ -1255,7 +1259,8 @@
                                 searchCommand = function (term) {
                                     var params = actionSearch.search['default'],
                                         fn = internalConfig.search.queryfilter[config.kind],
-                                        args = {};
+                                        args = {},
+                                        model;
                                     if (angular.isFunction(fn)) {
                                         args = fn(term, actionSearch);
                                     } else {
@@ -1266,15 +1271,20 @@
                                     if (args === false) {
                                         return false;
                                     }
-                                    models[config.kind].actions.search(args, {
-                                        cache: shouldCache
-                                    }).then(function (response) {
-                                        config.ui.specifics.entities = response.data.entities;
-                                    });
+                                    model = models[config.kind];
+                                    if (angular.isDefined(model) && model.actions && angular.isFunction(model.actions.search)) {
+                                        model.actions.search(args, {
+                                            cache: shouldCache
+                                        }).then(function (response) {
+                                            config.ui.specifics.entities = response.data.entities;
+                                        });
+                                    } else {
+                                        config.ui.specifics.entities = [];
+                                    }
+
                                 };
 
-                                if (config.ui.specifics.entities === undefined &&
-                                    shouldCache !== false) {
+                                if (config.ui.specifics.entities === undefined && shouldCache !== false) {
                                     searchCommand();
                                 }
 
@@ -1359,7 +1369,7 @@
                         }
 
                     }
-               
+
                     var defaults = {
                         listFields: listFields,
                         fields: fields,
@@ -1400,7 +1410,7 @@
                             info.scope.$broadcast('itemOrderChanged');
                         }
                     });
- 
+
                     info.scope.$watch(config.ui.args, function (neww, old) {
                         if (neww !== old) {
                             config.ui.specifics.parentArgs = neww;
@@ -1468,7 +1478,7 @@
                                         $scope.args = angular.copy(arg);
                                         $scope.parentArgs = config.ui.specifics.parentArgs;
                                         $scope.entity = config.ui.specifics.entity;
-                                        $scope.cancel = function () {
+                                        $scope.close = function () {
                                             $modalInstance.dismiss('cancel');
                                         };
 
@@ -1506,10 +1516,10 @@
 
                                                 if (promise && promise.then) {
                                                     promise.then(function () {
-                                                        $scope.cancel();
+                                                        $scope.close();
                                                     });
                                                 } else {
-                                                    $scope.cancel();
+                                                    $scope.close();
                                                 }
 
                                             };
@@ -1538,8 +1548,6 @@
                 },
                 _RemoteStructuredPropery: function (info) {
 
-                    // @todo missing save logic
-
                     var entity = info.config.ui.specifics.entity,
                         path = info.config.ui.path,
                         access = angular.copy(entity.ui.access);
@@ -1549,13 +1557,17 @@
                         info.config.ui.specifics.reader = defaultReader;
                     }
                     info.config.ui.specifics.remote = true;
+                    if (!angular.isDefined(info.config.ui.specifics.manage)) {
+                        info.config.ui.specifics.manage = function () {
+
+                        };
+                    }
 
                 },
                 SuperStructuredProperty: function (info) {
                     return this.SuperLocalStructuredProperty(info);
                 },
                 SuperRemoteStructuredProperty: function (info) {
-                    // remote structured is missing here... @todo
                     var ret = this.SuperLocalStructuredProperty(info);
                     this._RemoteStructuredPropery(info);
                     return ret;
@@ -1745,12 +1757,44 @@
             models.initialized = true;
         };
 
-        // expose models to window for debugging @todo remove when in production !!!!
-        window.models = models;
+        // expose models to window for debugging @todo remove when in production
+        window._models = models;
 
         return models;
 
     }).factory('searchKinds', function () {
 
+    }).factory('modals', function ($modal) {
+
+        return {
+            alert: function (text, extraConfig) {
+                return this.create($.extend({
+                    text: text,
+                    type: 'alert'
+                }, extraConfig));
+            },
+            create: function (extraConfig) {
+                var config = {
+                    text: '',
+                    type: 'notice'
+                };
+                $.extend(true, config, extraConfig);
+                return $modal.open({
+                    windowClass: 'modal-medium',
+                    templateUrl: 'misc/modals/' + config.type + '.html',
+                    controller: function ($scope, $modalInstance) {
+
+                        config.dismiss = function () {
+                            $modalInstance.dismiss('dismiss');
+                        };
+
+                        if (!angular.isDefined(extraConfig)) {
+                            extraConfig = {};
+                        }
+                        $scope.config = config;
+                    }
+                });
+            }
+        };
     });
 }());

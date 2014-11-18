@@ -98,7 +98,7 @@
                         $modalInstance.close($scope.selected.item);
                     };
 
-                    $scope.cancel = function () {
+                    $scope.close = function () {
                         $modalInstance.dismiss('cancel');
                     };
                 },

@@ -1,15 +1,13 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal) {
+    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals) {
 
         modelsConfig(function (models) {
             $.extend(models['31'], {
                 manageModal: function (entity, callback) { // modal dialog for managing the catalog
 
-                    var fields = modelsMeta.getActionArguments('31', 'update');
-                    fields._images.ui.label = false;
-                    fields._images.ui.template = 'catalog/underscore/image.html';
-                    var isNew = !angular.isDefined(entity),
+                    var fields = modelsMeta.getActionArguments('31', 'update'),
+                        isNew = !angular.isDefined(entity),
                         afterSave = function ($scope) {
                             $scope.setAction('catalog_upload_images');
                             callback($scope.entity);
@@ -40,7 +38,8 @@
                                         controller: function ($scope, $modalInstance) {
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args); // for modifying
-                                            var access = angular.copy(parentScope.args.ui.access), reader;
+                                            var access = angular.copy(parentScope.args.ui.access),
+                                                reader;
                                             access.push(fields._images.code_name);
                                             reader = models['31'].reader(parentScope.entity, $scope.args._images, access, access);
 
@@ -59,6 +58,55 @@
                                                 ui: {
                                                     specifics: {
                                                         sortable: false,
+                                                        listFields: [{
+                                                            label: 'Name',
+                                                            key: 'name'
+                                                        }]
+                                                    }
+                                                }
+                                            });
+
+                                            $.extend($scope.fieldProducts.modelclass._instances, {
+                                                ui: {
+                                                    specifics: {
+                                                        manage: function () {
+                                                            modals.alert('You must add variations in order to create instance');
+                                                        },
+                                                        label: 'Product Instances',
+                                                        addText: 'Add Product Instance',
+                                                        listFields: [{
+                                                            label: 'Code',
+                                                            key: 'code'
+                                                        }, {
+                                                            label: 'Price Adjustment',
+                                                            key: 'unit_price'
+                                                        }, {
+                                                            label: 'Weight Adjustment',
+                                                            key: 'weight'
+                                                        }, {
+                                                            label: 'Volume Adjustment',
+                                                            key: 'volume'
+                                                        }]
+                                                    }
+                                                }
+                                            });
+
+                                            $.extend($scope.fieldProducts.modelclass.contents, {
+                                                ui: {
+                                                    specifics: {
+                                                        addText: 'Add Content',
+                                                        listFields: [{
+                                                            label: 'Title',
+                                                            key: 'title'
+                                                        }]
+                                                    }
+                                                }
+                                            });
+
+                                            $.extend($scope.fieldProducts.modelclass.variants, {
+                                                ui: {
+                                                    specifics: {
+                                                        addText: 'Add Variant',
                                                         listFields: [{
                                                             label: 'Name',
                                                             key: 'name'
@@ -95,6 +143,8 @@
                             }
                         };
 
+                    fields._images.ui.template = 'catalog/underscore/image.html';
+
                     if (isNew) {
                         // get current seller
                         models['23'].current().then(function (response) {
@@ -106,7 +156,7 @@
                             });
                         });
 
-                    } else { 
+                    } else {
                         modelsEditor.create(config).read(entity, {
                             key: entity.key,
                             read_arguments: {

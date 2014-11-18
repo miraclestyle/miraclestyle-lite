@@ -11,4 +11,3 @@ client/
   config/
    angular/ - used for angular only out of static folder
     index.html - contents compiled by the builder
-   node/ - currently formatter for javascript as format.js
