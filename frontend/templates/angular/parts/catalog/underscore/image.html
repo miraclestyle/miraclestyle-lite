@@ -1,43 +1,32 @@
 <div class="image-property">
-      <h2 class="fieldset with-button">
-        <span class="fieldset-text"><%= config.ui.compiled.label %></span>
-        <span class="fieldset-button">
-           
-           <button type="button" ng-click="addProducts()" class="button">Add Products</button>
-            
-           <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
-               <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
-               <input class="upload" name="<%= config.ui.formName %>"
-                       multiple
-                       generate-upload-url="true"
-                       type="file" />
-           </div>
-        </span>
-      </h2>
- 
-      <div ui-sortable="config.ui.specifics.sortableOptions" 
-           fancy-grid-generator="config.ui.specifics.parentArgs" 
-           ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
-           
-          <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
-               ng-hide="image._state == 'deleted'"
-               class="image-image grid-item">
-               
-                <div class="img spaceout">
-                  <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
-                </div>
-                
-                <div class="button-wrapper">
-                  <button ng-show="<%= config.ui.writableCompiled %>" type="button"
-                          loading
-                          class="button" 
-                          ng-click="config.ui.specifics.remove(image)">Remove</button>
-                </div>
-          </div>
-      </div>
- 
-      <button ng-if="config.ui.specifics.reader.more" 
-              loading
-              class="button block load-more" 
-              type="button" ng-click="config.ui.specifics.reader.load()">Load More</button> 
+
+
+    <div class="clearfix">
+        <div class="pull-right">
+            <button loading type="button" ng-click="addProducts()" class="button">Add Products</button>
+
+            <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
+                <span>Add Images
+                    <span ng-show="$isUploading">(Uploading...)</span>
+                </span>
+                <input class="upload" name="<%= config.ui.formName %>" multiple generate-upload-url="true" type="file" />
+            </div>
+        </div>
+    </div>
+
+    <div ui-sortable="config.ui.specifics.sortableOptions" fancy-grid-generator="config.ui.specifics.parentArgs" ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
+
+        <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs" ng-hide="image._state == 'deleted'" class="image-image grid-item">
+
+            <div class="img spaceout">
+                <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
+            </div>
+
+            <div class="button-wrapper">
+                <button ng-show="<%= config.ui.writableCompiled %>" type="button" loading class="button" ng-click="config.ui.specifics.remove(image)">Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <button ng-if="config.ui.specifics.reader.more" loading class="button block load-more" type="button" ng-click="config.ui.specifics.reader.load()">Load More</button>
 </div>

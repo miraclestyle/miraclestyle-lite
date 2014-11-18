@@ -7,6 +7,7 @@
                 manageModal: function (entity, callback) { // modal dialog for managing the catalog
 
                     var fields = modelsMeta.getActionArguments('31', 'update');
+                    fields._images.ui.label = false;
                     fields._images.ui.template = 'catalog/underscore/image.html';
                     var isNew = !angular.isDefined(entity),
                         afterSave = function ($scope) {
