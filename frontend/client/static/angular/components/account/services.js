@@ -11,18 +11,18 @@
                         config = {
                             kind: this.kind,
                             templateBodyUrl: 'account/settings.html',
-                            argumentLoader: function ($scope) {
+                            argumentLoader: function (entity) {
                                 var disassociate = [];
-                                angular.forEach($scope.entity.identities,
+                                angular.forEach(entity.identities,
                                     function (value) {
                                         if (!value.associated) {
                                             disassociate.push(value.identity);
                                         }
                                     });
                                 return {
-                                    primary_email: $scope.entity._primary_email,
+                                    primary_email: entity._primary_email,
                                     disassociate: disassociate,
-                                    key: $scope.entity.key
+                                    key: entity.key
                                 };
                             },
                             init: function ($scope) {

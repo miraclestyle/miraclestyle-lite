@@ -323,7 +323,7 @@
                             ui: { // root config for entire config, upper structure is ndb property definition
                                 args: 'args.' + name,
                                 parentArgs: 'args',
-                                rootArgs: 'rootArgs',
+                                modalEditorScope: 'modalEditorScope', // pointer to modalEditorScope if any
                                 model: 'entity',
                                 autoLabel: label,
                                 specifics: {}, // used for property specific configurations
@@ -560,12 +560,10 @@
                     if (scope.accordions) {
 
                         angular.forEach(scope.accordions, function (accordion, key) {
-
                             scope.$watch('accordions.' + key + '.open', function (neww, old) {
                                 if (neww) {
                                     scope.$broadcast('accordionStateChanged');
                                 }
-
                             });
 
                         });
@@ -598,6 +596,9 @@
                         });
                         helpers.fancyGrid.calculate(canvas, images, 200, margin);
                         element.find('.grid-item').each(function (i) {
+                            if (!angular.isDefined(images[i])) {
+                                return;
+                            }
                             $(this).css({
                                 width: images[i].width,
                                 height: images[i].height
@@ -614,6 +615,8 @@
                     scope.$on('onNgRepeatEnd', resize);
                     scope.$on('accordionStateChanged', resize);
                     scope.$on('itemOrderChanged', resize);
+                    scope.$on('itemOrderStarted', resize);
+                    scope.$on('itemOrderSorting', resize);
 
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
@@ -682,9 +685,8 @@
 
                     $(window).bind('resize', resize);
 
-                    scope.$on('accordionStateChanged', function () {
-                        resize();
-                    });
+                    scope.$on('accordionStateChanged', resize);
+                    scope.$on('itemOrderChanged', resize);
 
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);

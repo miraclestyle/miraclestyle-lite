@@ -835,11 +835,11 @@
                     defaultInit: function ($scope) {
 
                     },
-                    defaultArgumentLoader: function ($scope) {
+                    defaultArgumentLoader: function ($scope) { // @todo default argument loader must somehow work in more generic way because we need to re-use it
+                        // however, that could be avoided if the modalsEditorScope was also referenced
                         // by default argument loader will attempt to extract the argument data from the current entity
                         var entityCopy = angular.copy($scope.entity),
-                            actionArguments = modelsMeta.getActionArguments($scope
-                                .config.kind, $scope.config.action),
+                            actionArguments = modelsMeta.getActionArguments($scope.config.kind, $scope.config.action),
                             args = {};
 
                         angular.forEach(actionArguments, function (arg) {
@@ -982,9 +982,8 @@
                                 $scope.args.action_id = config.action;
                                 $scope.args.action_model = config.kind;
 
-                                $scope.setRootArgs = function () {
-                                    $scope.rootArgs = $scope.args;
-                                };
+                                $scope.modalEditorScope = $scope;
+
                                 $scope.setAction = function (action) {
                                     $scope.args.action_id = action;
                                     config.action = action;
@@ -1004,7 +1003,6 @@
                                         $.extend($scope.entity, response.data.entity);
                                         var new_args = config.argumentLoader($scope);
                                         $.extend($scope.args, new_args);
-                                        $scope.setRootArgs();
                                         if (angular.isDefined(config.afterSave)) {
                                             config.afterSave($scope);
                                         }
@@ -1024,7 +1022,6 @@
                                     $.extend($scope.entity, response.data.entity);
                                     var new_args = config.argumentLoader($scope);
                                     $.extend($scope.args, new_args);
-                                    $scope.setRootArgs();
                                     if (angular.isDefined(config.afterComplete)) {
                                         config.afterComplete($scope);
                                     }
@@ -1055,8 +1052,6 @@
                                 $scope.close = function () {
                                     $modalInstance.dismiss('close');
                                 };
-
-                                $scope.setRootArgs();
 
                                 console.log('modelsEditor.scope', $scope);
 
@@ -1382,13 +1377,20 @@
 
                     config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
                     config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-                    config.ui.specifics.rootArgs = info.scope.$eval(config.ui.rootArgs);
+                    config.ui.specifics.modalEditorScope = info.scope.$eval(config.ui.modalEditorScope);
 
                     if (!config.ui.specifics.sortableOptions) {
                         config.ui.specifics.sortableOptions = {};
                     }
 
                     $.extend(config.ui.specifics.sortableOptions, {
+                        forcePlaceholderSize: true,
+                        start: function () {
+                            info.scope.$broadcast('itemOrderStarted');
+                        },
+                        sort: function () {
+                            info.scope.$broadcast('itemOrderSorting');
+                        },
                         stop: function () {
                             var sort = config.ui.specifics.sortableOptions.sort;
                             if (!angular.isDefined(sort)) {
@@ -1482,7 +1484,9 @@
 
                                             $scope.save = function () {
                                                 var entity = angular.copy($scope.entity),
-                                                    promise = models[config.kind].actions[config.ui.specifics.rootArgs.action_id](config.ui.specifics.rootArgs);
+                                                    modalEditorConfig = config.ui.specifics.modalEditorConfig,
+                                                    modalEditorArgs = config.ui.specifics.modalEditorArgs,
+                                                    promise = models[modalEditorConfig.kind].actions[modalEditorArgs.action_id](modalEditorArgs);
                                                 console.log(entity, promise);
                                                 return;
                                                 config.prepareReadArguments($scope);
