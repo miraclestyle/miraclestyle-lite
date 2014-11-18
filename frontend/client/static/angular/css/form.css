@@ -43,6 +43,10 @@
   background-color: #FFFFFF;
 }
 
+.clearfix.buttons {
+  margin-bottom: 10px;
+}
+
 .text-input {
   border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
@@ -62,33 +66,32 @@
 }
 
 .form-control {
-  margin-bottom:10px;
+  margin: 5px;
 }
 
 .form-control:after {
-  clear:both;
+  clear: both;
   content: " ";
   display: table;
 }
 
 .form-label {
-  float:left;
-  text-align:right;
-  width: 16.666666666666664%;
-  position: relative;
-  min-height: 1px;
-  padding-left: 15px;
-  padding-right: 15px;
-  padding-top:7px;
+  border-bottom: 1px solid #EEEEEE;
+  padding-bottom: 1px;
+  /*margin-bottom: 2px;*/
+  margin-top: 15px;
+  color: #999999;
+  display: block;
+  float: none;
+  text-align: left;
+  width: 100%;
 }
 
 .form-input {
-  float:left;
-  position: relative;
-  width:83.33333333333334%;
+  float: none;
+  width: 100%;
+  display: block;
   min-height: 1px;
-  padding-left: 15px;
-  /*padding-right: 15px;*/
 }
 
 .form-text {

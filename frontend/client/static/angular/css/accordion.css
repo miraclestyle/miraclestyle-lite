@@ -41,8 +41,15 @@
   background-color: #FFFFFF;
 }
 
+.panel-is-open {
+  border: 1px solid #EEEEEE;
+  -webkit-box-shadow: 1px 1px 3px #EEEEEE;
+  box-shadow: 1px 1px 3px #EEEEEE;
+}
+
 .panel-is-open .panel-title > a {
-  border-bottom: 1px solid #BBBBBB;
+  border-bottom: 1px solid #EEEEEE;
+  color: #777777;
 }
 
 .panel-is-open .panel-title > a {
@@ -64,7 +71,8 @@
   margin-top: 0;
   margin-bottom: 0;
   color: inherit;
-  font-size: 18px;
+  font-size: 24px;
+  line-height: 30px;
 }
 
 .panel-title > a {
