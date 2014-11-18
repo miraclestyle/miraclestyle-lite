@@ -86,8 +86,8 @@
                     kind: this.kind,
                     action: 'update',
                     excludeFields: ['account', 'read_arguments'],
-                    argumentLoader: function (entity, action) {
-                        var args = this.defaultArgumentLoader(entity, action);
+                    argumentLoader: function ($scope) {
+                        var args = this.defaultArgumentLoader($scope);
                         args.account = account_key;
                         return args;
                     }

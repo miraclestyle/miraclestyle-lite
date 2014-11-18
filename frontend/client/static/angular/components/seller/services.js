@@ -377,8 +377,8 @@
                         fields: fields,
                         excludeFields: ['account', 'read_arguments'],
                         templateBodyUrl: 'seller/settings.html',
-                        argumentLoader: function (entity, action) {
-                            var args = this.defaultArgumentLoader(entity, action);
+                        argumentLoader: function ($scope) {
+                            var args = this.defaultArgumentLoader($scope);
                             args.account = account_key;
                             args.read_arguments = read_arguments;
                             return args;

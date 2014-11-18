@@ -11,8 +11,8 @@
                         config = {
                             kind: this.kind,
                             templateBodyUrl: 'account/settings.html',
-                            argumentLoader: function (entity) {
-                                var disassociate = [];
+                            argumentLoader: function ($scope) {
+                                var disassociate = [], entity = $scope.entity;
                                 angular.forEach(entity.identities,
                                     function (value) {
                                         if (!value.associated) {
