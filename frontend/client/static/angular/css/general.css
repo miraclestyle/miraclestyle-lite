@@ -150,9 +150,10 @@ strong, b {
 }
 
 .image-image {
-  display: inline-block;
+  display: block;
   position: relative;
   margin: 1px;
+  float:left;
 }
 
 .image-image .spaceout {
@@ -364,4 +365,8 @@ img.vertical, .vertical {
   display: block;
   /*-webkit-box-shadow: 0px 0px;
   box-shadow: 0px 0px;*/
+}
+
+.modal-alert .alert-message {
+  padding: 40px;
 }

@@ -36,11 +36,10 @@
                                     $modal.open({
                                         templateUrl: 'catalog/products.html',
                                         controller: function ($scope, $modalInstance) {
+                                            var access = angular.copy(parentScope.args.ui.access), reader;
+                                            access.push(fields._images.code_name);
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args); // for modifying
-                                            var access = angular.copy(parentScope.args.ui.access),
-                                                reader;
-                                            access.push(fields._images.code_name);
                                             reader = models['31'].reader(parentScope.entity, $scope.args._images, access, access);
 
                                             $scope.loadMoreImages = function (callback) {
@@ -69,8 +68,11 @@
                                             $.extend($scope.fieldProducts.modelclass._instances, {
                                                 ui: {
                                                     specifics: {
-                                                        manage: function () {
-                                                            modals.alert('You must add variations in order to create instance');
+                                                        beforeManage: function (entity) {
+                                                            if (!entity || !entity._instances.length) {
+                                                                modals.alert('You must add variations in order to create instance');
+                                                                return false;
+                                                            }
                                                         },
                                                         label: 'Product Instances',
                                                         addText: 'Add Product Instance',

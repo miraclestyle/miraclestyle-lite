@@ -173,9 +173,10 @@
 
                 calculate: function (size, images, max_height, margin) {
                     var n = 0,
-                        providedImages = images; // reference entire array
+                        providedImages = images,
+                        i = 1; // reference entire array
                     w: while (images.length > 0) {
-                        for (var i = 1; i < images.length + 1; ++i) {
+                        for (i = 1; i < images.length + 1; ++i) {
                             var slice = images.slice(0, i);
                             var h = this.getHeight(slice, size, margin);
                             if (h < max_height) {
@@ -245,12 +246,12 @@
                 var cacheEngine = getCache(config ? config.cacheType : undefined),
                     cache_key = cache_prefix + key,
                     exists = cacheEngine.get(cache_key),
-                    is_promise = exists && angular.isFunction(exists.then);
+                    is_promise = (exists && angular.isFunction(exists.then));
+
                 if (is_promise) {
-                    return is_promise;
+                    return exists;
                 } else if (exists === undefined) {
-                    var promise = endpoint[config.method ? config.method.toLowerCase() :
-                        'post'](action, model, data, config);
+                    var promise = endpoint[config.method ? config.method.toLowerCase() : 'post'](action, model, data, config);
                     promise.then(function (response) {
                         cacheEngine.put(cache_key, response);
                     }, function () {
@@ -265,6 +266,7 @@
                     return promise;
                 }
 
+
             },
             post: function (action, model, data, config) {
                 var compiled = _compile(action, model, data, config),
@@ -276,8 +278,7 @@
                     var cache_id = compiled[1].cache;
                     compiled[1].cache = false;
                     // avoid recursion
-                    return endpoint.cached(cache_id, action, model, data, compiled[
-                        1]);
+                    return endpoint.cached(cache_id, action, model, data, compiled[1]);
                 }
                 angular.extend(defaults, compiled[1]);
                 defaults.data = compiled[0];
@@ -907,7 +908,7 @@
                                 }
                             };
                         angular.forEach($scope.args, function (arg, key) {
-                            parser(arg, key, readArgs)
+                            parser(arg, key, readArgs);
                         });
                     },
                     prepareReadArguments: function ($scope) {
@@ -917,15 +918,12 @@
 
                 $.extend(true, config, new_config);
 
-                if (!angular.isDefined(config.fields) && angular.isDefined(
-                        config.kind) && angular.isDefined(config.action)) {
+                if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
                     config.fields = [];
-                    var actionArguments = modelsMeta.getActionArguments(config.kind,
-                        config.action);
+                    var actionArguments = modelsMeta.getActionArguments(config.kind, config.action);
 
                     angular.forEach(actionArguments, function (field) {
-                        if (angular.isDefined(config.excludeFields) && $.inArray(
-                                field.code_name, config.excludeFields) !== -1) {
+                        if (angular.isDefined(config.excludeFields) && $.inArray(field.code_name, config.excludeFields) !== -1) {
                             return;
                         }
                         config.fields.push(field);
@@ -948,16 +946,14 @@
                             };
                         }
                         var that = this;
-                        models[config.kind].actions.read(args).then(function (
-                            response) {
+                        models[config.kind].actions.read(args).then(function (response) {
                             $.extend(entity, response.data.entity);
                             that.open(entity, args);
                         });
                     },
                     prepare: function (entity, args) {
                         var that = this;
-                        models[config.kind].actions.prepare(args).then(function (
-                            response) {
+                        models[config.kind].actions.prepare(args).then(function (response) {
                             $.extend(entity, response.data.entity);
                             that.open(entity, args);
                         });
@@ -986,6 +982,9 @@
                                 $scope.args.action_id = config.action;
                                 $scope.args.action_model = config.kind;
 
+                                $scope.setRootArgs = function () {
+                                    $scope.rootArgs = $scope.args;
+                                };
                                 $scope.setAction = function (action) {
                                     $scope.args.action_id = action;
                                     config.action = action;
@@ -1005,6 +1004,7 @@
                                         $.extend($scope.entity, response.data.entity);
                                         var new_args = config.argumentLoader($scope);
                                         $.extend($scope.args, new_args);
+                                        $scope.setRootArgs();
                                         if (angular.isDefined(config.afterSave)) {
                                             config.afterSave($scope);
                                         }
@@ -1024,6 +1024,7 @@
                                     $.extend($scope.entity, response.data.entity);
                                     var new_args = config.argumentLoader($scope);
                                     $.extend($scope.args, new_args);
+                                    $scope.setRootArgs();
                                     if (angular.isDefined(config.afterComplete)) {
                                         config.afterComplete($scope);
                                     }
@@ -1046,8 +1047,7 @@
 
                                 $scope.completeError = function (response) {
                                     if (angular.isDefined(config.afterCompleteError)) {
-                                        config.afterCompleteError($scope,
-                                            response);
+                                        config.afterCompleteError($scope, response);
                                     }
 
                                 };
@@ -1055,6 +1055,8 @@
                                 $scope.close = function () {
                                     $modalInstance.dismiss('close');
                                 };
+
+                                $scope.setRootArgs();
 
                                 console.log('modelsEditor.scope', $scope);
 
@@ -1079,8 +1081,9 @@
         var inflector = $filter('inflector'),
             formInputTypes = {
                 Custom: function (info) {
-                    if (info.config.init !== undefined)
+                    if (info.config.init !== undefined) {
                         info.config.init(info);
+                    }
 
                     return info.config.template;
                 },
@@ -1107,10 +1110,6 @@
                     if (config.choices) {
                         return 'select';
                     }
-
-                    if (config.ui.attrs.type === undefined) {
-                        //config.ui.attrs.type = 'number';
-                    }
                     return this.SuperStringProperty(info);
                 },
                 SuperIntegerProperty: function (info) {
@@ -1130,7 +1129,6 @@
                     return this.SuperFloatProperty(info);
                 },
                 SuperBooleanProperty: function (info) {
-                    var config = info.config;
                     return 'boolean';
                 },
                 SuperVirtualKeyProperty: function (info) {
@@ -1210,11 +1208,9 @@
 
                     if (config.kind) {
 
-                        var propsFilter = internalConfig.search.propsFilterResults[
-                            config.kind];
+                        var propsFilter = internalConfig.search.propsFilterResults[config.kind];
                         if (!propsFilter) {
-                            propsFilter = internalConfig.search.propsFilterResults[
-                                'default'];
+                            propsFilter = internalConfig.search.propsFilterResults['default'];
                         }
                         config.ui.specifics.propsFilter = propsFilter;
 
@@ -1235,16 +1231,14 @@
                         init();
                     }
 
-                    if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(
-                            config.ui.specifics.entities)) {
+                    if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(config.ui.specifics.entities)) {
                         var defaultInternalSearch = internalConfig.search[config.kind];
                         if (defaultInternalSearch !== undefined) {
                             config.ui.specifics.search = defaultInternalSearch;
 
                         } else {
 
-                            var actionSearch = modelsMeta.getActionArguments(config.kind,
-                                    'search'),
+                            var actionSearch = modelsMeta.getActionArguments(config.kind, 'search'),
                                 shouldCache = false,
                                 searchCommand;
 
@@ -1310,7 +1304,11 @@
                 SuperLocalStructuredProperty: function (info) {
                     var config = info.config,
                         fields = [],
-                        beforeSave, modelFields, defaultFields, noSpecifics, afterSave,
+                        beforeSave,
+                        modelFields,
+                        defaultFields,
+                        noSpecifics,
+                        afterSave,
                         listFields = [];
 
                     beforeSave = config.ui.specifics.beforeSave;
@@ -1348,15 +1346,13 @@
                             listFields.push({
                                 key: field.code_name,
                                 generated: true,
-                                label: (field.ui && field.ui.label ? field.ui.label :
-                                    inflector(field.code_name, 'humanize'))
+                                label: (field.ui && field.ui.label ? field.ui.label : inflector(field.code_name, 'humanize'))
                             });
                         });
 
                         if (!noSpecifics && angular.isDefined(config.ui.specifics.onlyListFields)) {
                             var newListFields = [];
-                            angular.forEach(config.ui.specifics.onlyListFields, function (
-                                key) {
+                            angular.forEach(config.ui.specifics.onlyListFields, function (key) {
                                 var find = _.findWhere(listFields, {
                                     key: key
                                 });
@@ -1386,6 +1382,7 @@
 
                     config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
                     config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+                    config.ui.specifics.rootArgs = info.scope.$eval(config.ui.rootArgs);
 
                     if (!config.ui.specifics.sortableOptions) {
                         config.ui.specifics.sortableOptions = {};
@@ -1397,7 +1394,7 @@
                             if (!angular.isDefined(sort)) {
                                 sort = 'asc';
                             }
-                            if (sort == 'asc') {
+                            if (sort === 'asc') {
                                 sort = config.ui.specifics.parentArgs.length - 1;
                             }
                             angular.forEach(config.ui.specifics.parentArgs,
@@ -1422,8 +1419,7 @@
                         var copyWritable = angular.copy(config.ui.writable);
 
                         if (angular.isArray(copyWritable)) {
-                            copyWritable.push((field.ui.writableName ? field.ui.writableName :
-                                field.code_name));
+                            copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
                         }
 
                         field.ui.path = [];
@@ -1459,16 +1455,16 @@
                                         config: config
                                     }),
                                     controller: function ($scope, $modalInstance, modelsUtil) {
-                                        var is_new = false;
+                                        var is_new = false,
+                                            length = config.ui.specifics.parentArgs.length;
 
                                         $scope.config = config;
                                         if (!arg) {
                                             arg = {
-                                                kind: config.modelclass_kind
+                                                kind: config.modelclass_kind,
+                                                _sequence: length,
+                                                sequence: length
                                             };
-                                            var length = config.ui.specifics.parentArgs.length;
-                                            arg._sequence = length;
-                                            arg.sequence = length;
                                             modelsUtil.normalize(arg, config.modelclass,
                                                 config.ui.specifics.entity, config.code_name,
                                                 length);
@@ -1482,56 +1478,120 @@
                                             $modalInstance.dismiss('cancel');
                                         };
 
-                                        $scope.save = function () {
-                                            // @todo remote saving must go over rpc plus the logic bellow
-                                            if (!$scope.container.form.$valid) { // check if the form is valid
+                                        if (config.ui.specifics.remote) {
+
+                                            $scope.save = function () {
+                                                var entity = angular.copy($scope.entity),
+                                                    promise = models[config.kind].actions[config.ui.specifics.rootArgs.action_id](config.ui.specifics.rootArgs);
+                                                console.log(entity, promise);
                                                 return;
-                                            }
-                                            var promise = null;
-                                            if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                promise = config.ui.specifics.beforeSave(
-                                                    $scope, info);
-                                            }
+                                                config.prepareReadArguments($scope);
+                                                var promise = models[config.kind].actions[config.ui.specifics.rootArgs.action_id](config.ui.specifics.rootArgs);
 
-                                            var complete = function () {
-                                                var promise = null;
-
-                                                if (config.repeated) {
-                                                    if (is_new) {
-                                                        $scope.parentArgs.unshift($scope.args);
-                                                        var total = $scope.parentArgs.length - 1;
-                                                        angular.forEach($scope.parentArgs, function (item, i) {
-                                                            i = total - i;
-                                                            item._sequence = i;
-                                                            item.sequence = i;
-                                                        });
-                                                    } else {
-                                                        $.extend(arg, $scope.args);
+                                                promise.then(function (response) {
+                                                    $.extend($scope.entity, response.data.entity);
+                                                    var new_args = config.argumentLoader($scope);
+                                                    $.extend($scope.args, new_args);
+                                                    if (angular.isDefined(config.afterSave)) {
+                                                        config.afterSave($scope);
                                                     }
+                                                }, function (response) {
+                                                    // here handle error...
+                                                    if (angular.isDefined(config.afterSaveError)) {
+                                                        config.afterSaveError($scope, response);
+                                                    }
+
+                                                });
+
+                                                return promise;
+                                            };
+
+                                            $scope.complete = function (response) {
+
+                                                $.extend($scope.entity, response.data.entity);
+                                                var new_args = config.argumentLoader($scope);
+                                                $.extend($scope.args, new_args);
+                                                if (angular.isDefined(config.afterComplete)) {
+                                                    config.afterComplete($scope);
                                                 }
 
-                                                if (angular.isFunction(config.ui.specifics.afterSave)) {
-                                                    promise = config.ui.specifics.afterSave($scope, info);
-                                                }
-
-                                                if (promise && promise.then) {
-                                                    promise.then(function () {
+                                                if (config.closeAfterSave) {
+                                                    $timeout(function () {
                                                         $scope.close();
                                                     });
-                                                } else {
-                                                    $scope.close();
+                                                }
+
+                                                console.log('modelsEditor.complete', $scope);
+
+                                            };
+
+                                            $scope.noComplete = function () {
+                                                if (angular.isDefined(config.noComplete)) {
+                                                    config.noComplete($scope);
+                                                }
+                                            };
+
+                                            $scope.completeError = function (response) {
+                                                if (angular.isDefined(config.afterCompleteError)) {
+                                                    config.afterCompleteError($scope, response);
                                                 }
 
                                             };
 
-                                            if (promise && promise.then) {
-                                                promise.then(complete);
+                                        } else {
 
-                                            } else {
-                                                complete();
-                                            }
 
-                                        };
+                                            $scope.save = function () {
+                                                if (!$scope.container.form.$valid) { // check if the form is valid
+                                                    return;
+                                                }
+                                                var promise = null;
+                                                if (angular.isFunction(config.ui.specifics.beforeSave)) {
+                                                    promise = config.ui.specifics.beforeSave($scope, info);
+                                                }
+
+                                                var complete = function () {
+                                                    var promise = null;
+
+                                                    if (config.repeated) {
+                                                        if (is_new) {
+                                                            $scope.parentArgs.unshift($scope.args);
+                                                            var total = $scope.parentArgs.length - 1;
+                                                            angular.forEach($scope.parentArgs, function (item, i) {
+                                                                i = total - i;
+                                                                item._sequence = i;
+                                                                item.sequence = i;
+                                                            });
+                                                        } else {
+                                                            $.extend(arg, $scope.args);
+                                                        }
+                                                    }
+
+                                                    if (angular.isFunction(config.ui.specifics.afterSave)) {
+                                                        promise = config.ui.specifics.afterSave($scope, info);
+                                                    }
+
+                                                    if (promise && promise.then) {
+                                                        promise.then(function () {
+                                                            $scope.close();
+                                                        });
+                                                    } else {
+                                                        $scope.close();
+                                                    }
+
+                                                };
+
+                                                if (promise && promise.then) {
+                                                    promise.then(complete);
+
+                                                } else {
+                                                    complete();
+                                                }
+
+                                            };
+
+
+                                        }
 
                                         if (config.ui.specifics.scope) {
                                             $.extend($scope, config.ui.specifics.scope);
@@ -1550,18 +1610,14 @@
 
                     var entity = info.config.ui.specifics.entity,
                         path = info.config.ui.path,
-                        access = angular.copy(entity.ui.access);
+                        access = angular.copy(entity.ui.access),
+                        defaultReader;
                     access.push(info.config.code_name);
-                    var defaultReader = models[entity.kind].reader(entity, info.config.ui.specifics.parentArgs, path, access);
+                    defaultReader = models[entity.kind].reader(entity, info.config.ui.specifics.parentArgs, path, access);
                     if (!angular.isDefined(info.config.ui.specifics.reader)) {
                         info.config.ui.specifics.reader = defaultReader;
                     }
                     info.config.ui.specifics.remote = true;
-                    if (!angular.isDefined(info.config.ui.specifics.manage)) {
-                        info.config.ui.specifics.manage = function () {
-
-                        };
-                    }
 
                 },
                 SuperStructuredProperty: function (info) {
@@ -1643,59 +1699,58 @@
                                         keys: [key]
                                     }
                                 });
-                            } else {
-                                console.error('get() relies on actions.search action. use actions.read() instead.');
                             }
+
+                            console.error('get() relies on actions.search action. use actions.read() instead.');
                         },
                         reader: function (entity, update, path, access) {
 
                             var canLoadMore = function (nextReadArguments) {
-                                return helpers.getProperty(nextReadArguments, path.join('.') + '.config.more')
-                            };
+                                    return helpers.getProperty(nextReadArguments, path.join('.') + '.config.more');
+                                },
+                                reader = {
+                                    next: null,
+                                    more: canLoadMore(entity._next_read_arguments),
+                                    load: function () {
+                                        var that = this,
+                                            digNext = {},
+                                            next = that.next || entity._next_read_arguments,
+                                            nextData,
+                                            items,
+                                            promise,
+                                            loadedNext,
+                                            paths = [];
 
-                            var reader = {
-                                next: null,
-                                more: canLoadMore(entity._next_read_arguments),
-                                load: function () {
-                                    var that = this,
-                                        digNext = {},
-                                        next = that.next || entity._next_read_arguments,
-                                        nextData,
-                                        items,
-                                        promise,
-                                        loadedNext,
-                                        paths = [];
+                                        angular.forEach(path, function (p) {
+                                            paths.push(p);
+                                            nextData = helpers.getProperty(next, paths.join('.'));
+                                            if (!angular.isDefined(nextData)) {
+                                                nextData = {};
+                                            }
+                                            digNext[p] = nextData;
+                                        });
 
-                                    angular.forEach(path, function (p) {
-                                        paths.push(p);
-                                        nextData = helpers.getProperty(next, paths.join('.'));
-                                        if (!angular.isDefined(nextData)) {
-                                            nextData = {};
-                                        }
-                                        digNext[p] = nextData;
-                                    });
+                                        promise = models[entity.kind].actions.read({
+                                            key: entity.key,
+                                            read_arguments: that.next || digNext
+                                        });
 
-                                    promise = models[entity.kind].actions.read({
-                                        key: entity.key,
-                                        read_arguments: that.next || digNext
-                                    });
+                                        promise.then(function (response) {
+                                            items = helpers.getProperty(response.data.entity, access.join('.'));
 
-                                    promise.then(function (response) {
-                                        items = helpers.getProperty(response.data.entity, access.join('.'));
+                                            update.extend(items);
 
-                                        update.extend(items);
+                                            loadedNext = response.data.entity._next_read_arguments;
+                                            that.more = canLoadMore(loadedNext);
 
-                                        loadedNext = response.data.entity._next_read_arguments;
-                                        that.more = canLoadMore(loadedNext);
+                                            if (that.more) {
+                                                that.next = response.data.entity._next_read_arguments;
+                                            }
+                                        });
 
-                                        if (that.more) {
-                                            that.next = response.data.entity._next_read_arguments;
-                                        }
-                                    });
-
-                                    return promise;
-                                }
-                            };
+                                        return promise;
+                                    }
+                                };
 
                             return reader;
 
@@ -1706,7 +1761,8 @@
                 angular.forEach(modelsMeta.getActions(kind), function (action, action_key) {
                     service.actions[action_key] = function (args, overrideConfig) {
                         var defaultArgs = modelsMeta.getDefaultActionArguments(kind, action_key),
-                            defaults = angular.copy(config);
+                            defaults = angular.copy(config),
+                            cache_key;
 
                         $.extend(defaultArgs, args);
                         if (angular.isDefined(overrideConfig)) {
@@ -1719,27 +1775,28 @@
 
                         if (!angular.isDefined(defaults.cache) && defaults.cache !== false) {
                             return endpoint.post(action_key, kind, defaultArgs, defaults);
-                        } else {
-                            var cache_key = config.cache;
-                            if (cache_key !== true) {
-                                // btoa is base64encode built-in
-                                cache_key = kind + '_' + action_key + '_' + btoa(angular.toJson(defaultArgs));
-                            }
-                            delete defaults.cache;
-                            return endpoint.cached(cache_key, action_key, kind, defaultArgs, defaults);
                         }
 
-                    }
+                        cache_key = config.cache;
+                        if (cache_key !== true) {
+                            // btoa is base64encode built-in
+                            cache_key = kind + '_' + action_key + '_' + window.btoa(angular.toJson(defaultArgs));
+                        }
+                        delete defaults.cache;
+                        return endpoint.cached(cache_key, action_key, kind, defaultArgs, defaults);
+
+                    };
                 });
                 return service;
             };
 
         models.initialized = false;
         models.init = function () {
-            if (models.initialized === true)
+            if (models.initialized === true) {
                 return;
+            }
 
-            var modelsInfo = $injector.get('modelsInfo');
+            var modelsInfo = $injector.get('modelsInfo'), callbacks;
 
             if (!angular.isDefined(modelsInfo['0'])) {
                 return;
@@ -1749,7 +1806,7 @@
                 models[kind] = modelCreate(kind);
             });
 
-            var callbacks = modelsConfig(true);
+            callbacks = modelsConfig(true);
             angular.forEach(callbacks, function (callback) {
                 callback(models);
             });
@@ -1761,8 +1818,6 @@
         window._models = models;
 
         return models;
-
-    }).factory('searchKinds', function () {
 
     }).factory('modals', function ($modal) {
 

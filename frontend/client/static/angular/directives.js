@@ -134,7 +134,7 @@
                                 if (what === 'list') {
                                     value = helpers.splitLines(value);
                                 }
-                                if (what === 'string') {
+                                if (what === 'str') {
                                     if (angular.isArray(value)) {
                                         value = value.join('\n');
                                     }
@@ -181,9 +181,7 @@
                         };
 
                     if (!form.length) {
-                        console.error(
-                            'Directive generateUploadUrl demands explicit <form> tag'
-                        );
+                        console.error('Directive generateUploadUrl demands explicit <form> tag');
                         return false;
                     }
 
@@ -317,8 +315,7 @@
                         }
 
                         if (!name) {
-                            console.error('Your field config', supplied_config,
-                                'has no name defined defined.');
+                            console.error('Your field config', supplied_config, 'has no name defined defined.');
                             return;
                         }
 
@@ -326,6 +323,7 @@
                             ui: { // root config for entire config, upper structure is ndb property definition
                                 args: 'args.' + name,
                                 parentArgs: 'args',
+                                rootArgs: 'rootArgs',
                                 model: 'entity',
                                 autoLabel: label,
                                 specifics: {}, // used for property specific configurations
