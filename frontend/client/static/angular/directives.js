@@ -323,7 +323,7 @@
                             ui: { // root config for entire config, upper structure is ndb property definition
                                 args: 'args.' + name,
                                 parentArgs: 'args',
-                                modalEditorScope: 'modalEditorScope', // pointer to modalEditorScope if any
+                                modelsEditorScope: 'modelsEditorScope', // pointer to modelsEditorScope if any
                                 model: 'entity',
                                 autoLabel: label,
                                 specifics: {}, // used for property specific configurations
@@ -594,7 +594,7 @@
                         angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
                             images.push(angular.copy(image));
                         });
-                        helpers.fancyGrid.calculate(canvas, images, 200, margin);
+                        helpers.fancyGrid.calculate(canvas, images, 240, margin);
                         element.find('.grid-item').each(function (i) {
                             if (!angular.isDefined(images[i])) {
                                 return;

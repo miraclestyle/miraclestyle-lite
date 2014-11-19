@@ -170,15 +170,16 @@
                 resize: function (images, width) {
                     this.setHeight(images, this.getHeight(images, width));
                 },
-
                 calculate: function (size, images, max_height, margin) {
                     var n = 0,
                         providedImages = images,
-                        i = 1; // reference entire array
-                    w: while (images.length > 0) {
+                        i,
+                        slice,
+                        h; // reference entire array
+w:                  while (images.length > 0) {
                         for (i = 1; i < images.length + 1; ++i) {
-                            var slice = images.slice(0, i);
-                            var h = this.getHeight(slice, size, margin);
+                            slice = images.slice(0, i);
+                            h = this.getHeight(slice, size, margin);
                             if (h < max_height) {
                                 this.setHeight(slice, h);
                                 n++;
@@ -192,6 +193,7 @@
                     }
                     return providedImages;
                 }
+
             }
         };
 
@@ -203,11 +205,11 @@
             getCache = function (type) {
                 if (type === undefined) {
                     return generalLocalCache;
-                } else if (type === 'memory') {
-                    return onlyInMemoryCache;
-                } else {
-                    console.error('Invalid type of cache provided: ' + type);
                 }
+                if (type === 'memory') {
+                    return onlyInMemoryCache;
+                }
+                console.error('Invalid type of cache provided: ' + type);
             },
             _compile = function (action, model, data, config) {
                 config = helpers.alwaysObject(config);
@@ -220,12 +222,13 @@
 
             },
             cache_prefix = 'endpoint_',
-            cacheRegistry = [];
+            cacheRegistry = [],
+            endpoint;
 
         cacheRegistry.push(onlyInMemoryCache);
         cacheRegistry.push(generalLocalCache);
 
-        var endpoint = {
+        endpoint = {
             // invalidates all caches that we use
             invalidate_cache: function (key) {
                 if (angular.isArray(key)) {
@@ -234,11 +237,11 @@
                     });
 
                     return true;
-                } else {
-                    angular.forEach(cacheRegistry, function (cache) {
-                        cache.remove(cache_prefix + key);
-                    });
                 }
+
+                angular.forEach(cacheRegistry, function (cache) {
+                    cache.remove(cache_prefix + key);
+                });
 
             },
             url: GLOBAL_CONFIG.apiEndpointPath,
@@ -246,12 +249,15 @@
                 var cacheEngine = getCache(config ? config.cacheType : undefined),
                     cache_key = cache_prefix + key,
                     exists = cacheEngine.get(cache_key),
-                    is_promise = (exists && angular.isFunction(exists.then));
+                    is_promise = (exists && angular.isFunction(exists.then)),
+                    deffered,
+                    promise;
 
                 if (is_promise) {
                     return exists;
-                } else if (exists === undefined) {
-                    var promise = endpoint[config.method ? config.method.toLowerCase() : 'post'](action, model, data, config);
+                }
+                if (exists === undefined) {
+                    promise = endpoint[config.method ? config.method.toLowerCase() : 'post'](action, model, data, config);
                     promise.then(function (response) {
                         cacheEngine.put(cache_key, response);
                     }, function () {
@@ -259,12 +265,12 @@
                     });
                     cacheEngine.put(cache_key, promise);
                     return promise;
-                } else {
-                    var deffered = $q.defer(),
-                        promise = deffered.promise;
-                    deffered.resolve(exists);
-                    return promise;
                 }
+
+                deffered = $q.defer();
+                promise = deffered.promise;
+                deffered.resolve(exists);
+                return promise;
 
 
             },
@@ -273,9 +279,10 @@
                     defaults = {
                         method: 'POST',
                         url: endpoint.url
-                    };
+                    },
+                    cache_id;
                 if (compiled[1] && angular.isString(compiled[1].cache)) {
-                    var cache_id = compiled[1].cache;
+                    cache_id = compiled[1].cache;
                     compiled[1].cache = false;
                     // avoid recursion
                     return endpoint.cached(cache_id, action, model, data, compiled[1]);
@@ -292,11 +299,12 @@
                     defaults = {
                         method: 'GET',
                         url: endpoint.url
-                    };
+                    },
+                    cache_id;
                 $.extend(gets, compiled[1]);
                 angular.extend(defaults, gets);
                 if (defaults && angular.isString(defaults.cache)) {
-                    var cache_id = defaults.cache;
+                    cache_id = defaults.cache;
                     defaults.cache = false;
                     return endpoint.cached(cache_id, action, model, data, gets);
                 }
@@ -333,22 +341,21 @@
         var inMemory = $cacheFactory('localStoragePolyfillInMemory'),
             // in memory cache for non-serizible jsons
             nothing = '___undefined___',
-            memory_only = '___in_memory_only___';
+            memory_only = '___in_memory_only___',
+            localStoragePolyfill,
+            generalLocalCache;
 
         function prepare(key, val) {
-            if (val && ((val.value && angular.isFunction(val.value.then)) || (
-                    angular.isObject(val.value) && val.value[memory_only] !==
-                    undefined))) {
+            if (val && ((val.value && angular.isFunction(val.value.then)) || (angular.isObject(val.value) && val.value[memory_only] !== undefined))) {
                 return nothing;
             }
             return angular.toJson(val);
         }
 
-        var localStoragePolyfill = {
+        localStoragePolyfill = {
             getItem: function (key) {
                 var out = inMemory.get(key);
-                if (out && angular.isObject(out) && out[memory_only] !==
-                    undefined) {
+                if (out && angular.isObject(out) && out[memory_only] !== undefined) {
                     out = out[memory_only];
                 }
                 if (out === undefined) {
@@ -357,10 +364,8 @@
                 }
                 if (out !== nothing) {
                     return out;
-                } else {
-                    return undefined;
                 }
-                return out;
+                return undefined;
             },
             setItem: function (key, value) {
                 inMemory.put(key, value);
@@ -372,13 +377,13 @@
                 return localStorage.removeItem(key);
             }
         };
-        var generalLocalCache = DSCacheFactory('generalCache', {
+        generalLocalCache = DSCacheFactory('generalCache', {
             storageMode: 'localStorage',
             storageImpl: localStoragePolyfill
         });
 
         generalLocalCache.inMemory = function (value) {
-            var only_in_memory = {}
+            var only_in_memory = {};
             only_in_memory[memory_only] = value;
             return only_in_memory;
         };
@@ -409,21 +414,22 @@
 
         modelsMeta.friendlyActionName = function (kind, action_key) {
 
-            var info = this.get(kind);
+            var info = this.get(kind),
+                actions,
+                friendlyName;
             if (info === undefined) {
                 return undefined;
             }
 
-            var actions = info.actions,
-                friendly_action_name;
+            actions = info.actions;
 
             angular.forEach(actions, function (action) {
                 if (action.key === action_key) {
-                    friendly_action_name = action.id;
+                    friendlyName = action.id;
                 }
             });
 
-            return friendly_action_name;
+            return friendlyName;
         };
 
         modelsMeta.getModelFields = function (kind_id) {
@@ -432,12 +438,14 @@
                     kind_id);
                 return undefined;
             }
-            var info = this.get(kind_id);
+            var info = this.get(kind_id),
+                fields;
             if (!angular.isDefined(info)) {
                 console.error('could not find meta info for kind ' + kind_id);
                 return undefined;
             }
-            var fields = angular.copy(info.fields);
+
+            fields = angular.copy(info.fields);
 
             standardize(fields);
 
@@ -445,10 +453,10 @@
         };
 
         modelsMeta.getDefaultActionArguments = function (kind, action) {
-            var actions = this.getActionArguments(kind, action),
+            var getAction = this.getActionArguments(kind, action),
                 defaultArgs = {};
 
-            angular.forEach(action['arguments'], function (arg) {
+            angular.forEach(getAction['arguments'], function (arg) {
                 if (arg['default'] !== null) {
                     defaultArgs[arg.code_name] = arg['default'];
                 }
@@ -459,17 +467,18 @@
         };
 
         modelsMeta.getActionArguments = function (kind_id, action) {
-            var info = this.get(kind_id);
+            var info = this.get(kind_id),
+                getAction,
+                fields;
             if (!angular.isDefined(info)) {
                 return undefined;
             }
-            var getAction = info.mapped_actions[action];
+            getAction = info.mapped_actions[action];
             if (!angular.isDefined(getAction)) {
-                console.error('action ' + action + ' not found for kind ' +
-                    kind_id)
+                console.error('action ' + action + ' not found for kind ' + kind_id);
                 return undefined;
             }
-            var fields = angular.copy(getAction['arguments']);
+            fields = angular.copy(getAction['arguments']);
 
             standardize(fields);
 
@@ -477,11 +486,12 @@
         };
 
         modelsMeta.getActions = function (kind_id) {
-            var info = this.get(kind_id);
+            var info = this.get(kind_id),
+                actions;
             if (!angular.isDefined(info)) {
                 return undefined;
             }
-            var actions = info.mapped_actions;
+            actions = info.mapped_actions;
             angular.forEach(actions, function (action) {
                 standardize(action['arguments']);
             });
@@ -492,7 +502,7 @@
         modelsMeta.getModelName = function (kind_id) {
             var info = this.get(kind_id);
             if (!angular.isDefined(info)) {
-                console.error('model name not found for kind ' + kind_id)
+                console.error('model name not found for kind ' + kind_id);
                 return undefined;
             }
             return info.name;
@@ -503,7 +513,8 @@
             var modelsInfo = $injector.get('modelsInfo'),
                 kind = modelsInfo[kind_id],
                 fields = {},
-                actions = {};
+                actions = {},
+                data;
 
             if (kind === undefined) {
                 console.error('no info for kind ' + kind_id);
@@ -520,7 +531,7 @@
                 actions[action.id] = action;
             });
 
-            var data = {
+            data = {
                 'actions': kind._actions,
                 'mapped_actions': actions,
                 'fields': fields,
@@ -541,13 +552,9 @@
             run: function (entity) {
                 var actions = {},
                     inputs = {},
-                    kind_info = modelsMeta.getModelFields(entity.kind);
-                var rule_action_permissions = entity._action_permissions;
-                if (rule_action_permissions === undefined) {
-                    return undefined;
-                    // if the permissions are not present, there is no rule engine here...
-                }
-                var rule_field_permissions = entity._field_permissions,
+                    kind_info = modelsMeta.getModelFields(entity.kind),
+                    rule_action_permissions = entity._action_permissions,
+                    rule_field_permissions = entity._field_permissions,
                     rule_actions = kind_info.actions,
                     config = {
                         action: actions,
@@ -555,24 +562,22 @@
                         field: rule_field_permissions
                     },
                     action_permission_translate = function (action_name) {
-                        return rule_action_permissions[rule_actions[action_name][
-                            'key'
-                        ]];
-                    },
-                    check_field = function (name, what) {
-                        return rule_field_permissions[name][what];
+                        return rule_action_permissions[rule_actions[action_name].key];
                     },
                     executable = function (action_name) {
                         var gets = action_permission_translate(action_name);
-                        return gets['executable'];
+                        return gets.executable;
                     };
-
+                if (rule_action_permissions === undefined) {
+                    return undefined;
+                    // if the permissions are not present, there is no rule engine here...
+                }
                 angular.forEach(rule_actions, function (value, key) {
 
                     if (!config.action[value.id]) {
                         config.action[value.id] = {};
                     }
-                    config.action[value.id]['executable'] = executable(key);
+                    config.action[value.id].executable = executable(key);
 
                     angular.forEach(value.arguments, function (argument_value) {
                         var argument_key = argument_value.code_name;
@@ -591,7 +596,7 @@
 
         return ruleEngine;
     }).factory('modelsUtil', function (modelsMeta, ruleEngine) {
-        // Service used for entity based operations
+        // Service used for normalizing entity data. generally this should be done on backend, not here
         var dontSend = ['_field_permissions', '_action_permissions'],
             modelsUtil = {
                 normalizeMultiple: function (entities) {
@@ -599,8 +604,7 @@
                         modelsUtil.normalize(entity);
                     });
                 },
-                normalize: function (entity, fields, parent, subentity_field_key,
-                    subentity_position, noui) {
+                normalize: function (entity, fields, parent, subentity_field_key, subentity_position, noui) {
                     if (entity.ui && entity.ui.normalized) {
                         return;
                     }
@@ -642,37 +646,37 @@
                             return this.access.join('.');
                         };
                         entity.ui.root = function (collect) {
-                            var get_parent = this.parent;
+                            var get_parent = this.parent,
+                                next_parent;
 
                             if (get_parent === undefined) {
                                 if (collect) {
                                     collect.push(entity);
                                 }
                                 return entity;
-                            } else {
-
-                                if (collect) {
-                                    collect.push(entity);
-                                }
-
-                                while (true) {
-                                    if (collect) {
-                                        collect.push(get_parent);
-                                    }
-
-                                    var next_parent = get_parent.ui.parent;
-                                    if (next_parent === undefined) {
-                                        break;
-                                    } else {
-                                        get_parent = next_parent;
-                                    }
-                                }
-
-                                return get_parent;
                             }
+
+                            if (collect) {
+                                collect.push(entity);
+                            }
+
+                            while (true) {
+                                if (collect) {
+                                    collect.push(get_parent);
+                                }
+
+                                next_parent = get_parent.ui.parent;
+                                if (next_parent === undefined) {
+                                    break;
+                                }
+                                get_parent = next_parent;
+                            }
+
+                            return get_parent;
+
                         };
                         /// ui must be now reserved keyword in datastore and we use it for making ui related functions
-                        if (parent == undefined) {
+                        if (parent === undefined) {
                             entity.ui.rule = ruleEngine.run(entity);
                         }
 
@@ -681,7 +685,7 @@
                     angular.forEach(fields, function (field) {
                         var defaults = field['default'],
                             value = entity[field.code_name];
-                        if (field.type == 'SuperDateTimeProperty' && !defaults) {
+                        if (field.type === 'SuperDateTimeProperty' && !defaults) {
                             defaults = new Date();
 
                         }
@@ -749,76 +753,72 @@
                 return _.template(contents);
             }
         };
-    }).config(['$httpProvider',
-        function ($httpProvider) {
+    }).config(['$httpProvider', function ($httpProvider) {
 
-            $httpProvider.interceptors.push(['$rootScope', '$q', '$injector',
-                function ($rootScope, $q, $injector) {
+        $httpProvider.interceptors.push(['$rootScope', '$q', '$injector',
+            function ($rootScope, $q, $injector) {
 
-                    var handleResponse = function (rejection) {
+                var handleResponse = function (rejection) {
 
-                        var data = rejection.data,
-                            normalizeEntity = (rejection.config.normalizeEntity ===
-                                undefined || rejection.config.normalizeEntity),
-                            errorHandling = $injector.get('errorHandling'),
-                            modelsUtil = $injector.get('modelsUtil'),
-                            enableUI = function () {
-                                $rootScope.$broadcast('disableUI', false);
-                            };
+                    var data = rejection.data,
+                        normalizeEntity = (rejection.config.normalizeEntity === undefined || rejection.config.normalizeEntity),
+                        errorHandling = $injector.get('errorHandling'),
+                        modelsUtil = $injector.get('modelsUtil'),
+                        enableUI = function () {
+                            $rootScope.$broadcast('disableUI', false);
+                        },
+                        reject;
 
-                        if (!rejection.config.ignoreErrors) {
+                    if (!rejection.config.ignoreErrors) {
 
-                            if (rejection.status > 200) {
-                                errorHandling.modal(rejection.data.errors);
+                        if (rejection.status > 200) {
+                            errorHandling.modal(rejection.data.errors);
+                            enableUI();
+                            return $q.reject(rejection);
+                        }
+                        if (data && data.errors) {
+                            errorHandling.modal(rejection.data.errors);
+                            reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
+                            if (data.errors.action_denied) {
+                                reject = true;
+                            }
+                            if (reject) {
                                 enableUI();
                                 return $q.reject(rejection);
-                            } else {
-                                if (data && data.errors) {
-                                    errorHandling.modal(rejection.data.errors);
-                                    var reject = (rejection.config.rejectOnErrors ===
-                                        undefined || rejection.config.rejectOnErrors ===
-                                        true);
-                                    if (data.errors.action_denied) {
-                                        reject = true;
-                                    }
-                                    if (reject) {
-                                        enableUI();
-                                        return $q.reject(rejection);
-                                    }
-
-                                }
                             }
 
                         }
 
-                        if (normalizeEntity) {
-                            if (angular.isDefined(data.entities)) {
-                                modelsUtil.normalizeMultiple(data.entities);
-                            } else if (angular.isDefined(data.entity)) {
-                                modelsUtil.normalize(data.entity);
-                            }
 
+                    }
+
+                    if (normalizeEntity) {
+                        if (angular.isDefined(data.entities)) {
+                            modelsUtil.normalizeMultiple(data.entities);
+                        } else if (angular.isDefined(data.entity)) {
+                            modelsUtil.normalize(data.entity);
                         }
 
-                        enableUI();
-                        // otherwise, default behaviour
-                        return rejection || $q.when(rejection);
+                    }
 
-                    };
+                    enableUI();
+                    // otherwise, default behaviour
+                    return rejection || $q.when(rejection);
 
-                    return {
-                        response: handleResponse,
-                        responseError: handleResponse,
-                        request: function (config) {
-                            $rootScope.$broadcast('disableUI', true);
-                            return config || $q.when(config);
-                        }
-                    };
-                }
+                };
+
+                return {
+                    response: handleResponse,
+                    responseError: handleResponse,
+                    request: function (config) {
+                        $rootScope.$broadcast('disableUI', true);
+                        return config || $q.when(config);
+                    }
+                };
+            }
             ]);
 
-        }
-    ]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
+    }]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
         modelsUtil, errorHandling, models, modelsMeta, $timeout) {
 
         var modelsEditor = {
@@ -914,13 +914,13 @@
                     prepareReadArguments: function ($scope) {
                         this.defaultPrepareReadArguments($scope);
                     }
-                };
+                }, actionArguments, modelsEditorInstance;
 
                 $.extend(true, config, new_config);
 
                 if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
                     config.fields = [];
-                    var actionArguments = modelsMeta.getActionArguments(config.kind, config.action);
+                    actionArguments = modelsMeta.getActionArguments(config.kind, config.action);
 
                     angular.forEach(actionArguments, function (field) {
                         if (angular.isDefined(config.excludeFields) && $.inArray(field.code_name, config.excludeFields) !== -1) {
@@ -938,7 +938,7 @@
 
                 console.log('modelsEditor.config', config);
 
-                var modelsEditorInstance = {
+                modelsEditorInstance = {
                     read: function (entity, args) {
                         if (args === undefined) {
                             args = {
@@ -982,7 +982,7 @@
                                 $scope.args.action_id = config.action;
                                 $scope.args.action_model = config.kind;
 
-                                $scope.modalEditorScope = $scope;
+                                $scope.modelsEditorScope = $scope;
 
                                 $scope.setAction = function (action) {
                                     $scope.args.action_id = action;
@@ -1188,7 +1188,14 @@
                                     }
                                 }
                             }
-                        };
+                        },
+                        propsFilter,
+                        init,
+                        defaultInternalSearch,
+                        actionSearch,
+                        shouldCache = false,
+                        searchCommand,
+                        cacheOption;
 
                     if (!angular.isDefined(internalConfig)) {
                         info.config.ui.specifics.internalConfig =
@@ -1203,7 +1210,7 @@
 
                     if (config.kind) {
 
-                        var propsFilter = internalConfig.search.propsFilterResults[config.kind];
+                        propsFilter = internalConfig.search.propsFilterResults[config.kind];
                         if (!propsFilter) {
                             propsFilter = internalConfig.search.propsFilterResults['default'];
                         }
@@ -1221,24 +1228,22 @@
                             return fn(result);
                         };
                     }
-                    var init = internalConfig.search.init[config.kind];
+                    init = internalConfig.search.init[config.kind];
                     if (angular.isDefined(init)) {
                         init();
                     }
 
                     if (!angular.isDefined(config.ui.specifics.search) && !angular.isDefined(config.ui.specifics.entities)) {
-                        var defaultInternalSearch = internalConfig.search[config.kind];
+                        defaultInternalSearch = internalConfig.search[config.kind];
                         if (defaultInternalSearch !== undefined) {
                             config.ui.specifics.search = defaultInternalSearch;
 
                         } else {
 
-                            var actionSearch = modelsMeta.getActionArguments(config.kind, 'search'),
-                                shouldCache = false,
-                                searchCommand;
+                            actionSearch = modelsMeta.getActionArguments(config.kind, 'search');
 
                             if (actionSearch !== undefined) {
-                                var cacheOption = internalConfig.search.cacheResults[config.kind];
+                                cacheOption = internalConfig.search.cacheResults[config.kind];
                                 if (cacheOption !== undefined && cacheOption !== false) {
                                     shouldCache = cacheOption;
                                 } else if (cacheOption !== false) {
@@ -1299,26 +1304,19 @@
                 SuperLocalStructuredProperty: function (info) {
                     var config = info.config,
                         fields = [],
-                        beforeSave,
-                        modelFields,
-                        defaultFields,
-                        noSpecifics,
-                        afterSave,
-                        listFields = [];
+                        modelFields = config.modelclass,
+                        defaultFields = _.toArray(modelFields),
+                        noSpecifics = !angular.isDefined(config.ui.specifics),
+                        listFields = [],
+                        newSort = [],
+                        newListFields = [],
+                        defaults;
 
-                    beforeSave = config.ui.specifics.beforeSave;
-                    afterSave = config.ui.specifics.afterSave;
-                    noSpecifics = !angular.isDefined(config.ui.specifics);
-                    //modelFields = modelsMeta.getModelFields(config.modelclass_kind);
-                    modelFields = config.modelclass;
-
-                    defaultFields = _.toArray(modelFields);
                     defaultFields = defaultFields.sort(helpers.fieldSorter);
 
                     if (noSpecifics || !config.ui.specifics.fields) {
                         config.ui.specifics.fields = defaultFields;
                         if (config.ui.specifics.sortFields) {
-                            var newSort = [];
                             angular.forEach(config.ui.specifics.sortFields, function (key) {
                                 newSort.push(_.findWhere(config.ui.specifics.fields, {
                                     code_name: key
@@ -1346,7 +1344,7 @@
                         });
 
                         if (!noSpecifics && angular.isDefined(config.ui.specifics.onlyListFields)) {
-                            var newListFields = [];
+                            newListFields = [];
                             angular.forEach(config.ui.specifics.onlyListFields, function (key) {
                                 var find = _.findWhere(listFields, {
                                     key: key
@@ -1361,7 +1359,7 @@
 
                     }
 
-                    var defaults = {
+                    defaults = {
                         listFields: listFields,
                         fields: fields,
                         addNewText: 'Add ' + inflector(config.code_name, 'humanize'),
@@ -1377,7 +1375,7 @@
 
                     config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
                     config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-                    config.ui.specifics.modalEditorScope = info.scope.$eval(config.ui.modalEditorScope);
+                    config.ui.specifics.modelsEditorScope = info.scope.$eval(config.ui.modelsEditorScope);
 
                     if (!config.ui.specifics.sortableOptions) {
                         config.ui.specifics.sortableOptions = {};
@@ -1549,41 +1547,40 @@
                                                 if (!$scope.container.form.$valid) { // check if the form is valid
                                                     return;
                                                 }
-                                                var promise = null;
+                                                var promise = null,
+                                                    complete = function () {
+                                                        var completePromise = null,
+                                                            total = $scope.parentArgs.length - 1;
+
+                                                        if (config.repeated) {
+                                                            if (is_new) {
+                                                                $scope.parentArgs.unshift($scope.args);
+                                                                angular.forEach($scope.parentArgs, function (item, i) {
+                                                                    i = total - i;
+                                                                    item._sequence = i;
+                                                                    item.sequence = i;
+                                                                });
+                                                            } else {
+                                                                $.extend(arg, $scope.args);
+                                                            }
+                                                        }
+
+                                                        if (angular.isFunction(config.ui.specifics.afterSave)) {
+                                                            completePromise = config.ui.specifics.afterSave($scope, info);
+                                                        }
+
+                                                        if (completePromise && completePromise.then) {
+                                                            completePromise.then(function () {
+                                                                $scope.close();
+                                                            });
+                                                        } else {
+                                                            $scope.close();
+                                                        }
+                                                    };
+
                                                 if (angular.isFunction(config.ui.specifics.beforeSave)) {
                                                     promise = config.ui.specifics.beforeSave($scope, info);
                                                 }
-
-                                                var complete = function () {
-                                                    var promise = null;
-
-                                                    if (config.repeated) {
-                                                        if (is_new) {
-                                                            $scope.parentArgs.unshift($scope.args);
-                                                            var total = $scope.parentArgs.length - 1;
-                                                            angular.forEach($scope.parentArgs, function (item, i) {
-                                                                i = total - i;
-                                                                item._sequence = i;
-                                                                item.sequence = i;
-                                                            });
-                                                        } else {
-                                                            $.extend(arg, $scope.args);
-                                                        }
-                                                    }
-
-                                                    if (angular.isFunction(config.ui.specifics.afterSave)) {
-                                                        promise = config.ui.specifics.afterSave($scope, info);
-                                                    }
-
-                                                    if (promise && promise.then) {
-                                                        promise.then(function () {
-                                                            $scope.close();
-                                                        });
-                                                    } else {
-                                                        $scope.close();
-                                                    }
-
-                                                };
 
                                                 if (promise && promise.then) {
                                                     promise.then(complete);
@@ -1800,7 +1797,8 @@
                 return;
             }
 
-            var modelsInfo = $injector.get('modelsInfo'), callbacks;
+            var modelsInfo = $injector.get('modelsInfo'),
+                callbacks;
 
             if (!angular.isDefined(modelsInfo['0'])) {
                 return;

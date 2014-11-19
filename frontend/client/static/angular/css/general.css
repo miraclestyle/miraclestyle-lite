@@ -370,3 +370,7 @@ img.vertical, .vertical {
 .modal-alert .alert-message {
   padding: 40px;
 }
+
+.load-more {
+  margin-top:10px;
+}
