@@ -66,7 +66,7 @@
 }
 
 .form-control {
-  margin: 5px;
+  margin: 15px 5px;
 }
 
 .form-control:after {
@@ -76,15 +76,12 @@
 }
 
 .form-label {
-  border-bottom: 1px solid #EEEEEE;
-  padding-bottom: 1px;
-  /*margin-bottom: 2px;*/
-  margin-top: 15px;
-  color: #999999;
+  color: #777777;
   display: block;
   float: none;
   text-align: left;
   width: 100%;
+  /*font-size: 15px;*/
 }
 
 .form-input {
@@ -95,16 +92,16 @@
 }
 
 .form-text {
-  padding-top:5px;
+  padding-top: 2px;
 }
 
 .fieldset {
-  font-size: 28px;
-  line-height: 30px;
+  font-size: 24px;
+  line-height: 26px;
   border-bottom: 1px solid #EEEEEE;
   padding-bottom: 5px;
   margin-bottom: 10px;
-  margin-top: 10px;
+  margin-top: 20px;
   color: #777777;
 }
 
