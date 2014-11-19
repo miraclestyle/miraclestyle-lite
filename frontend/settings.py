@@ -90,10 +90,10 @@ ANGULAR_TEMPLATES = (
   ('tests/html.html',),
   
   ('form/builder.html',),
-  
-  ('misc/modal_errors.html',),
+
   ('misc/form_wrapper.html',),
-  ('misc/modals/alert.html',),
+  ('misc/modal/alert.html',),
+  ('misc/modal/errors.html',),
 
   ('entity/modal_editor.html',),
   ('entity/modal_editor_default_body.html',),

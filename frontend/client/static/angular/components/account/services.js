@@ -28,8 +28,7 @@
                             init: function ($scope) {
                                 $scope.primary_email.choices = $scope.entity.emails;
                                 $scope.primary_email.ui = {};
-                                $scope.primary_email.ui.writableName =
-                                    '_primary_email';
+                                $scope.primary_email.ui.writableName = '_primary_email';
                             },
                             scope: {
                                 primary_email: primary_email,
@@ -42,6 +41,14 @@
                                         this.args.disassociate.push(ident.identity);
                                     } else {
                                         this.args.disassociate.remove(ident.identity);
+                                    }
+                                },
+                                accordions: {
+                                    closeOthers: true,
+                                    general: {
+                                        label: 'General',
+                                        disabled: true,
+                                        open: true
                                     }
                                 }
                             }

@@ -197,8 +197,7 @@
                     });
                 }
             };
-        }).directive('formBuilder', function ($compile, underscoreTemplate,
-            modelsMeta) {
+        }).directive('formBuilder', function ($compile, underscoreTemplate, modelsMeta) {
             /**
              * Main builder. It will construct a form based on a list of configuration params:
              * [

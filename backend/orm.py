@@ -1895,7 +1895,16 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       entities = get_multi_async([entity.key for entity in supplied_entities if entity.key is not None])
       cursor = None
     elif supplied_keys:
-      supplied_keys = SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
+      prepare_supplied_keys = []
+      for supplied_key in supplied_keys:
+        if isinstance(supplied_key, dict):
+          if not hasattr(self._entity, 'prepare_key'):
+            raise PropertyError('not_supported')
+          else:
+            prepare_supplied_keys.append(self._entity.prepare_key(**supplied_key))
+        elif isinstance(supplied_key, basestring):
+          prepare_supplied_keys.append(supplied_key)
+      supplied_keys = SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(prepare_supplied_keys)
       for supplied_key in supplied_keys:
         if supplied_key.parent() != self._entity.key:
           raise PropertyError('invalid_parent_for_key_%s' % supplied_key.urlsafe())

@@ -37,12 +37,11 @@
                     },
                     modal: function (errors) {
                         $modal.open({
-                            templateUrl: 'misc/modal_errors.html',
+                            templateUrl: 'misc/modal/errors.html',
                             controller: function ($scope, $modalInstance) {
                                 $scope.errors = [];
                                 angular.forEach(errors, function (error, key) {
-                                    $scope.errors.push(errorHandling.translate(key,
-                                        error));
+                                    $scope.errors.push(errorHandling.translate(key, error));
                                 });
                                 $scope.ok = function () {
                                     $modalInstance.dismiss('ok');
@@ -1198,8 +1197,7 @@ w:                  while (images.length > 0) {
                         cacheOption;
 
                     if (!angular.isDefined(internalConfig)) {
-                        info.config.ui.specifics.internalConfig =
-                            defaultInternalConfig;
+                        info.config.ui.specifics.internalConfig = defaultInternalConfig;
                         internalConfig = defaultInternalConfig;
                     } else {
                         $.extend(true, defaultInternalConfig, internalConfig);
@@ -1838,7 +1836,7 @@ w:                  while (images.length > 0) {
                 $.extend(true, config, extraConfig);
                 return $modal.open({
                     windowClass: 'modal-medium',
-                    templateUrl: 'misc/modals/' + config.type + '.html',
+                    templateUrl: 'misc/modal/' + config.type + '.html',
                     controller: function ($scope, $modalInstance) {
 
                         config.dismiss = function () {
