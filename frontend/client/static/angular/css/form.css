@@ -12,6 +12,7 @@
   -webkit-box-shadow: 1px 1px 3px #BBBBBB;
   box-shadow: 1px 1px 3px #BBBBBB;
   font-size: 14px;
+  color: #777777;
 }
 
 .button:hover {

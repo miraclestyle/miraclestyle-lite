@@ -49,7 +49,6 @@
 
 .panel-is-open .panel-title > a {
   border-bottom: 1px solid #EEEEEE;
-  color: #777777;
 }
 
 .panel-is-open .panel-title > a {
@@ -73,13 +72,14 @@
   color: inherit;
   font-size: 24px;
   line-height: 26px;
+  color: #777777;
 }
 
 .panel-title > a {
- color: inherit;
- display: block;
- padding: 15px 20px;
- text-align:center;
+  color: inherit;
+  display: block;
+  padding: 15px 20px;
+  text-align:center;
 }
 
 .panel-scroller {
