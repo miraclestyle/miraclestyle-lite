@@ -31,7 +31,7 @@
               <td>
                 {{config.ui.specifics.showType(ent.kind)}}
               </td>
-              <td>
+              <td class="list-actions">
                 <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
                 <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
               </td>

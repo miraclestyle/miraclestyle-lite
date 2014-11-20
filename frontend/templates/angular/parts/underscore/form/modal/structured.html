@@ -1,20 +1,25 @@
 <div fit-in-dialog>
-<form name="container.form" ng-submit="save()">
-  <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
-  <div class="modal-body scrollable">
-    <div class="modal-body-inner">
-    <h2 class="fieldset">General</h2>  
-    <div form-builder="config.ui.specifics.formBuilder"></div>
-    </div>
-  </div>
+    <form name="container.form" ng-submit="save()">
+        <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
+        <div class="modal-body scrollable">
+            <div class="modal-body-inner">
+                <div accordion-on-open="accordions">
+                    <accordion close-others="accordions.closeOthers">
+                        <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
+                            <div form-builder="formBuilder[accordion.key]"></div>
+                        </accordion-group>
+                    </accordion>
+                </div>
+            </div>
+        </div>
 
-  <div class="modal-footer">
-    <button type="submit" loading class="button">
-      Save
-    </button>
-    <button type="button" loading class="button" ng-click="close()">
-      Close
-    </button>
-  </div>
-</form>
+        <div class="modal-footer">
+            <button type="submit" loading class="button">
+                Save
+            </button>
+            <button type="button" loading class="button" ng-click="close()">
+                Close
+            </button>
+        </div>
+    </form>
 </div>

@@ -39,6 +39,7 @@ ANGULAR_JS_PATHS = (
   'vendor/jquery-ui/jquery-ui.js',
   'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
   'vendor/underscore/underscore.js',
+  'vendor/underscore.string/lib/underscore.string.js',
   'vendor/angular/angular.js',
   'vendor/angular-ui-sortable/sortable.js',
   'vendor/angular-ui-utils/ui-utils.js',

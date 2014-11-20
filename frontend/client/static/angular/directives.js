@@ -330,6 +330,7 @@
                                 formName: name,
                                 writable: [name],
                                 path: undefined,
+                                realPath: undefined,
                                 attrs: {}
                             }
                         };
@@ -342,6 +343,10 @@
 
                         if (!angular.isDefined(config.ui.path)) {
                             config.ui.path = [name];
+                        }
+
+                        if (!angular.isDefined(config.ui.realPath)) {
+                            config.ui.realPath = [name];
                         }
 
                         if (types[supplied_config.type] !== undefined) {
@@ -558,8 +563,8 @@
 
                     if (scope.accordions) {
 
-                        angular.forEach(scope.accordions, function (accordion, key) {
-                            scope.$watch('accordions.' + key + '.open', function (neww, old) {
+                        angular.forEach(scope.accordions.groups, function (accordion, i) {
+                            scope.$watch('accordions.groups.' + i + '.open', function (neww, old) {
                                 if (neww) {
                                     scope.$broadcast('accordionStateChanged');
                                 }

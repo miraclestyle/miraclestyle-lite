@@ -374,3 +374,7 @@ img.vertical, .vertical {
 .load-more {
   margin-top: 10px;
 }
+
+.list-actions {
+  text-align: right;
+}

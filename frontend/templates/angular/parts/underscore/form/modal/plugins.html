@@ -1,20 +1,26 @@
 <div fit-in-dialog>
-<form name="container.form" ng-submit="save()">
-  <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
-  <div class="modal-body scrollable">
-    <div class="modal-body-inner">
-       <h2 class="fieldset">General</h2>
-       <div form-input="config.ui.specifics.selectKinds"></div>
-       <div ng-include="pluginTemplate"></div>
-    </div>
-  </div> 
-  <div class="modal-footer">
-    <button type="submit" loading class="button">
-      Save
-    </button>
-    <button type="button" loading class="button" ng-click="close()">
-      Close
-    </button>
-  </div>
-</form>
+    <form name="container.form" ng-submit="save()">
+        <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
+        <div class="modal-body scrollable">
+            <div class="modal-body-inner">
+                <div accordion-on-open="accordions">
+                    <accordion close-others="accordions.closeOthers">
+                        <accordion-group heading="{{accordions.groups.0.label}}" is-open="accordions.groups.0.open" is-disabled="accordions.groups.0.disabled">
+                            <div form-input="config.ui.specifics.selectKinds"></div>
+                            <div ng-include="pluginTemplate"></div>
+                        </accordion-group>
+                    </accordion>
+                </div>
+
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" loading class="button">
+                Save
+            </button>
+            <button type="button" loading class="button" ng-click="close()">
+                Close
+            </button>
+        </div>
+    </form>
 </div>

@@ -40,6 +40,7 @@
                                             access.push(fields._images.code_name);
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args); // for modifying
+                                            $scope.modelsEditorScope = parentScope.modelsEditorScope;
                                             reader = models['31'].reader(parentScope.entity, $scope.args._images, access, access);
 
                                             $scope.loadMoreImages = function (callback) {
@@ -68,6 +69,7 @@
                                             $.extend($scope.fieldProducts.modelclass._instances, {
                                                 ui: {
                                                     specifics: {
+                                                        sortable: false,
                                                         beforeManage: function (entity) {
                                                             if (!entity || !entity._instances.length) {
                                                                 modals.alert('You must add variations in order to create instance');
@@ -133,14 +135,15 @@
                                 },
                                 accordions: { // accordion listeners & labels
                                     closeOthers: true,
-                                    general: {
+                                    groups: [{
                                         label: 'General',
-                                        open: true
-                                    },
-                                    products: {
+                                        open: true,
+                                        key: 'general'
+                                    }, {
                                         label: 'Products',
-                                        open: false
-                                    }
+                                        open: false,
+                                        key: 'products'
+                                    }]
                                 }
                             }
                         };

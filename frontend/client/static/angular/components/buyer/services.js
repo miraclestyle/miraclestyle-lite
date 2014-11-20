@@ -7,8 +7,8 @@
             models['19'].settingsModal = function (account_key) {
                 var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                     config;
-
                 fields.addresses.ui = {
+                    label: false,
                     specifics: {
                         addText: 'Add Address',
                         listFields: [{

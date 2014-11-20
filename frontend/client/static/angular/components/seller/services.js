@@ -12,25 +12,7 @@
                             key: kind_id,
                             name: name
                         };
-                    });
-
-                config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
-                config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-
-                info.scope.$watch(config.ui.args, function (neww, old) {
-
-                    if (neww !== old) {
-                        config.ui.specifics.parentArgs = neww;
-                    }
-                });
-
-                var getPluginFieldOverrides = function (kind_id, field) {
-                        var gets = defaultSpecifics.pluginFieldOverrides[kind_id];
-                        if (angular.isDefined(gets) && angular.isDefined(gets[field])) {
-                            return gets[field];
-                        }
-                        return {};
-                    },
+                    }),
                     locationSpec = {
                         showListItem: 'address-rule-location-display',
                         listFields: [{
@@ -186,8 +168,7 @@
                                 template: underscoreTemplate.get(config.ui.specifics.templateUrl)({
                                     config: config
                                 }),
-                                controller: function ($scope, $modalInstance,
-                                    modelsUtil) {
+                                controller: function ($scope, $modalInstance, modelsUtil) {
                                     var is_new = false;
 
                                     if (!arg) {
@@ -196,6 +177,16 @@
                                     $scope.info = {
                                         build: true
                                     };
+
+                                    $scope.accordions = {
+                                        closeOthers: false,
+                                        groups: [{
+                                            label: 'General',
+                                            disabled: true,
+                                            open: true,
+                                            key: 'general'
+                                        }]
+                                    };
                                     $scope.config = config;
                                     $scope.setNewArg = function () {
                                         if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
@@ -203,8 +194,7 @@
                                                 kind: $scope.info.kind
                                             };
                                             var length = config.ui.specifics.parentArgs.length;
-                                            modelsUtil.normalize(arg, undefined, config.ui
-                                                .specifics.entity, config.code_name,
+                                            modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
                                                 length, false);
                                             is_new = true;
 
@@ -266,20 +256,21 @@
                                     };
 
                                     $scope.save = function () {
-
+                                        var promise, complete;
                                         if (!$scope.container.form.$valid) {
                                             return;
                                         }
-                                        var promise, complete;
+
                                         if (angular.isFunction(config.ui.specifics.beforeSave)) {
                                             promise = config.ui.specifics.beforeSave($scope, info);
                                         }
 
                                         complete = function () {
-                                            promise = null;
+                                            var newPromise = null,
+                                                total = 0;
                                             if (is_new) {
                                                 $scope.parentArgs.unshift($scope.args);
-                                                var total = $scope.parentArgs.length;
+                                                total = $scope.parentArgs.length;
                                                 angular.forEach($scope.parentArgs, function (item, i) {
                                                     i = total - i;
                                                     item._sequence = i;
@@ -290,11 +281,11 @@
                                             }
 
                                             if (angular.isFunction(config.ui.specifics.afterSave)) {
-                                                promise = config.ui.specifics.afterSave($scope, info);
+                                                newPromise = config.ui.specifics.afterSave($scope, info);
                                             }
 
-                                            if (promise && promise.then) {
-                                                promise.then(function () {
+                                            if (newPromise && newPromise.then) {
+                                                newPromise.then(function () {
                                                     $scope.close();
                                                 });
                                             } else {
@@ -316,7 +307,24 @@
                                 }
                             });
                         }
+                    },
+                    getPluginFieldOverrides = function (kind_id, field) {
+                        var gets = defaultSpecifics.pluginFieldOverrides[kind_id];
+                        if (angular.isDefined(gets) && angular.isDefined(gets[field])) {
+                            return gets[field];
+                        }
+                        return {};
                     };
+
+                config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
+                config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+
+                info.scope.$watch(config.ui.args, function (neww, old) {
+
+                    if (neww !== old) {
+                        config.ui.specifics.parentArgs = neww;
+                    }
+                });
 
                 angular.forEach(defaultSpecifics, function (v, k) {
                     if (config.ui.specifics[k] === undefined) {
@@ -386,18 +394,19 @@
                         scope: {
                             accordions: {
                                 closeOthers: true,
-                                general: {
+                                groups: [{
                                     label: 'General',
-                                    open: true
-                                },
-                                plugins: {
+                                    open: true,
+                                    key: 'general'
+                                }, {
                                     label: 'Plugins',
-                                    open: false
-                                },
-                                contents: {
+                                    open: false,
+                                    key: 'plugins'
+                                },  {
                                     label: 'Contents',
-                                    open: false
-                                }
+                                    open: false,
+                                    key: 'contents'
+                                }]
                             }
                         }
                     };

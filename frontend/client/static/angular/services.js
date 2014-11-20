@@ -595,7 +595,7 @@ w:                  while (images.length > 0) {
 
         return ruleEngine;
     }).factory('modelsUtil', function (modelsMeta, ruleEngine) {
-        // Service used for normalizing entity data. generally this should be done on backend, not here
+        // Service used for normalizing entity data that gets retrieved from datastore
         var dontSend = ['_field_permissions', '_action_permissions'],
             modelsUtil = {
                 normalizeMultiple: function (entities) {
@@ -641,7 +641,6 @@ w:                  while (images.length > 0) {
                         }
                         entity.ui.parent = parent;
                         entity.ui.root_access = function () {
-
                             return this.access.join('.');
                         };
                         entity.ui.root = function (collect) {
@@ -663,7 +662,6 @@ w:                  while (images.length > 0) {
                                 if (collect) {
                                     collect.push(get_parent);
                                 }
-
                                 next_parent = get_parent.ui.parent;
                                 if (next_parent === undefined) {
                                     break;
@@ -712,6 +710,7 @@ w:                  while (images.length > 0) {
                                         };
                                         entity[field.code_name] = value;
                                     } else {
+                                        // this should not be here
                                         value = {
                                             kind: field.modelclass_kind
                                         };
@@ -818,7 +817,7 @@ w:                  while (images.length > 0) {
             ]);
 
     }]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
-        modelsUtil, errorHandling, models, modelsMeta, $timeout) {
+        modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter) {
 
         var modelsEditor = {
             create: function (new_config) {
@@ -962,6 +961,7 @@ w:                  while (images.length > 0) {
                         $modal.open({
                             templateUrl: 'entity/modal_editor.html',
                             controller: function ($scope, $modalInstance) {
+                                var inflector = $filter('inflector');
                                 modelsUtil.normalize(entity);
                                 $scope.container = {
                                     action: endpoint.url
@@ -970,18 +970,51 @@ w:                  while (images.length > 0) {
                                 $scope.config = config;
                                 $scope.entity = entity;
                                 $scope.$modalInstance = $modalInstance;
-                                // load into scope from config
-                                $.extend($scope, config.scope);
-                                // call config constructor, needed for posible on-spot configurations
-                                config.defaultInit($scope);
-                                config.init($scope);
-
                                 $scope.args = config.argumentLoader($scope);
                                 // argument loader to load arguments for editing
                                 $scope.args.action_id = config.action;
                                 $scope.args.action_model = config.kind;
 
                                 $scope.modelsEditorScope = $scope;
+
+                                $scope.accordions = {
+                                    closeOthers: true,
+                                    groups: [{
+                                        label: 'General',
+                                        disabled: true,
+                                        key: 'general',
+                                        open: true
+                                    }]
+                                };
+
+                                $scope.formBuilder = {
+                                    general: []
+                                };
+
+                                angular.forEach(config.fields, function (field) {
+                                    if (_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) {
+                                        if (!_.findWhere($scope.accordions.groups, {key: field.code_name})) {
+                                            console.log((field.ui.label || field.code_name));
+                                            $scope.accordions.groups.push({
+                                                label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                disabled: false,
+                                                key: field.code_name,
+                                                open: false
+                                            });
+
+                                        }
+
+                                        if (!angular.isDefined($scope.formBuilder[field.code_name])) {
+                                            $scope.formBuilder[field.code_name] = [];
+                                            $scope.formBuilder[field.code_name].push(field);
+                                        }
+
+
+                                        $scope.accordions.groups[0].disabled = false;
+                                    } else {
+                                        $scope.formBuilder.general.push(field);
+                                    }
+                                });
 
                                 $scope.setAction = function (action) {
                                     $scope.args.action_id = action;
@@ -1051,6 +1084,12 @@ w:                  while (images.length > 0) {
                                 $scope.close = function () {
                                     $modalInstance.dismiss('close');
                                 };
+
+                                // load into scope from config
+                                $.extend($scope, config.scope);
+                                // call config constructor, needed for posible on-spot configurations
+                                config.defaultInit($scope);
+                                config.init($scope);
 
                                 console.log('modelsEditor.scope', $scope);
 
@@ -1329,8 +1368,7 @@ w:                  while (images.length > 0) {
 
                         angular.forEach(defaultFields, function (field) {
                             if (!noSpecifics && (config.ui.specifics.excludeListFields &&
-                                    $.inArray(field.code_name, config.ui.specifics.excludeListFields) !==
-                                    -1)) {
+                                    $.inArray(field.code_name, config.ui.specifics.excludeListFields) !== -1)) {
                                 return;
                             }
 
@@ -1421,8 +1459,11 @@ w:                  while (images.length > 0) {
                         }
 
                         field.ui.path = [];
-                        field.ui.path.extend(config.ui.path);
+                        field.ui.path.extend(angular.copy(config.ui.path));
                         field.ui.path.push(field.code_name);
+                        field.ui.realPath = [];
+                        field.ui.realPath.extend(angular.copy(config.ui.realPath));
+                        field.ui.realPath.push(field.code_name);
                         field.ui.formName = config.ui.formName + '_' + (angular.isDefined(field.ui.formName) ? field.ui.formName : field.code_name);
                         field.ui.writable = copyWritable;
                         config.ui.specifics.formBuilder.push(field);
@@ -1454,7 +1495,10 @@ w:                  while (images.length > 0) {
                                     }),
                                     controller: function ($scope, $modalInstance, modelsUtil) {
                                         var is_new = false,
-                                            length = config.ui.specifics.parentArgs.length;
+                                            length = config.ui.specifics.parentArgs.length,
+                                            formBuilder = {
+                                                general: []
+                                            };
 
                                         $scope.config = config;
                                         if (!arg) {
@@ -1466,11 +1510,55 @@ w:                  while (images.length > 0) {
                                             modelsUtil.normalize(arg, config.modelclass,
                                                 config.ui.specifics.entity, config.code_name,
                                                 length);
+                                            arg.ui.access = angular.copy(config.ui.specifics.formBuilder[0].ui.realPath);
+                                            arg.ui.access.pop();
+                                            arg.ui.access.push(length);
                                             is_new = true;
+                                        } else {
+                                            length = _.last(arg.ui.access);
                                         }
+
+                                        $scope.accordions = {
+                                            closeOthers: true,
+                                            groups: [{
+                                                label: 'General',
+                                                disabled: true,
+                                                key: 'general',
+                                                open: true
+                                            }]
+                                        };
+                                        angular.forEach(config.ui.specifics.formBuilder, function (field) {
+                                            field = angular.copy(field);
+                                            field.ui.realPath.pop();
+                                            field.ui.realPath.push(length);
+                                            field.ui.realPath.push(field.code_name);
+                                            if (_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) {
+                                                if (!_.findWhere($scope.accordions.groups, {key: field.code_name})) {
+                                                    $scope.accordions.groups.push({
+                                                        label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                        disabled: false,
+                                                        key: field.code_name,
+                                                        open: false
+                                                    });
+
+                                                }
+
+                                                if (!angular.isDefined(formBuilder[field.code_name])) {
+                                                    formBuilder[field.code_name] = [];
+                                                    formBuilder[field.code_name].push(field);
+                                                }
+
+
+                                                $scope.accordions.groups[0].disabled = false;
+                                            } else {
+                                                formBuilder.general.push(field);
+                                            }
+                                        });
+                                        $scope.formBuilder = formBuilder;
                                         $scope.container = {};
                                         $scope.args = angular.copy(arg);
                                         $scope.parentArgs = config.ui.specifics.parentArgs;
+                                        $scope.modelsEditorScope = config.ui.specifics.modelsEditorScope;
                                         $scope.entity = config.ui.specifics.entity;
                                         $scope.close = function () {
                                             $modalInstance.dismiss('cancel');
@@ -1479,11 +1567,11 @@ w:                  while (images.length > 0) {
                                         if (config.ui.specifics.remote) {
 
                                             $scope.save = function () {
-                                                var entity = angular.copy($scope.entity),
-                                                    modalEditorConfig = config.ui.specifics.modalEditorConfig,
-                                                    modalEditorArgs = config.ui.specifics.modalEditorArgs,
-                                                    promise = models[modalEditorConfig.kind].actions[modalEditorArgs.action_id](modalEditorArgs);
-                                                console.log(entity, promise);
+                                                var modelsEditorScope = config.ui.specifics.modelsEditorScope,
+                                                    newArgs = $scope.modelsEditorScope.config.argumentLoader(config.ui.specifics.modelsEditorScope),
+                                                    promise;
+
+                                                console.log(newArgs, $scope.args);
                                                 return;
                                                 config.prepareReadArguments($scope);
                                                 var promise = models[config.kind].actions[config.ui.specifics.rootArgs.action_id](config.ui.specifics.rootArgs);
@@ -1548,11 +1636,12 @@ w:                  while (images.length > 0) {
                                                 var promise = null,
                                                     complete = function () {
                                                         var completePromise = null,
-                                                            total = $scope.parentArgs.length - 1;
+                                                            total = 0;
 
                                                         if (config.repeated) {
                                                             if (is_new) {
                                                                 $scope.parentArgs.unshift($scope.args);
+                                                                total = $scope.parentArgs.length - 1;
                                                                 angular.forEach($scope.parentArgs, function (item, i) {
                                                                     i = total - i;
                                                                     item._sequence = i;

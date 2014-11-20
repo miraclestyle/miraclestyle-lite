@@ -45,11 +45,12 @@
                                 },
                                 accordions: {
                                     closeOthers: true,
-                                    general: {
+                                    groups: [{
                                         label: 'General',
                                         disabled: true,
-                                        open: true
-                                    }
+                                        open: true,
+                                        key: 'general'
+                                    }]
                                 }
                             }
                         };
