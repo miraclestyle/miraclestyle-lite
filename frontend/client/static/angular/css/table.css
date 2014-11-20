@@ -16,7 +16,7 @@
 .table > tfoot > tr > td
 {
   padding: 5px;
-  line-height: 45px;
+  vertical-align: middle;
 }
 
 .table > thead > tr > th
