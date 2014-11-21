@@ -129,7 +129,7 @@
 
 /* validation colors */
 
-.ng-invalid-required, .ng-invalid {
+.ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
   border-color:red; /* this for now*/
 }
 
@@ -156,8 +156,8 @@
 }
 
 .button-sm {
-  font-size:13px;
-  padding:3px 7px;
+  /*font-size: 13px;*/
+  padding: 5px 15px;
 }
 
 
