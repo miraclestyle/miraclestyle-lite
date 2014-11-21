@@ -213,7 +213,7 @@
 
 .select2-container .select2-choice {
   display: block;
-  padding: 5px 5px;
+  padding: 5px;
   position: relative;
   border: 1px solid #BBBBBB;
   color: #333333;
@@ -226,6 +226,7 @@
   user-select: none;
   background-color: #FFFFFF;
   text-align: left;
+  line-height: 21px;
 }
 
 .select2-container.select2-drop-above .select2-choice {
@@ -364,10 +365,11 @@
   width: 100%;
   height: auto !important;
   min-height: 26px;
+  padding: 5px;
   margin: 0;
   outline: 0;
   border: 1px solid #999999;
-  background: url('images/select2.png') no-repeat 100% -22px;
+  background: url('images/select2.png') no-repeat 100% -19px; /* This image has to be edited, to retain only magnify glass! */
   border-right: none;
   border-left: none;
 }
@@ -474,7 +476,7 @@
 }
 
 .select2-results .select2-result-label {
-  padding: 3px 7px 4px;
+  padding: 5px;
   margin: 0;
   cursor: pointer;
   min-height: 1em;
@@ -561,21 +563,18 @@
 .select2-container-multi .select2-choices {
   height: auto !important;
   height: 1%;
-  margin: 0;
+  min-height: 26px;
+  padding: 0px;
+  margin: 0px;
   position: relative;
   border: 1px solid #BBBBBB;
   cursor: text;
   overflow: hidden;
-  padding: 2px;
   background-color: #FFFFFF;
 }
 
 .select2-locked {
   padding: 3px 5px 3px 5px !important;
-}
-
-.select2-container-multi .select2-choices {
-  min-height: 26px;
 }
 
 .select2-container-multi.select2-container-active .select2-choices {
@@ -596,13 +595,11 @@ html[dir="rtl"] .select2-container-multi .select2-choices li {
 }
 
 .select2-container-multi .select2-choices .select2-search-field input {
-  padding: 1px;
-  margin: 1px 0;
+  padding: 5px;
+  margin: 0px;
   outline: 0;
   border: 0;
   background: transparent !important;
-  padding-left: 5px;
-  padding-right: 5px;
 }
 
 .select2-container-multi .select2-choices .select2-search-field input.select2-active {
@@ -614,11 +611,11 @@ html[dir="rtl"] .select2-container-multi .select2-choices li {
 }
 
 .select2-container-multi .select2-choices .select2-search-choice {
-  padding: 3px 5px 3px 5px;
-  margin: 3px 0 3px 5px;
+  padding: 5px 10px;
+  margin: 3px;
   position: relative;
   line-height: 13px;
-  color: #333;
+  color: #333333;
   cursor: default;
   border: 1px solid #BBBBBB;
   background-clip: padding-box;
