@@ -1,25 +1,32 @@
 <div fit-in-dialog>
-    <form name="container.form" ng-submit="save()">
-        <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
-        <div class="modal-body scrollable">
-            <div class="modal-body-inner">
-                <div accordion-on-open="accordions">
-                    <accordion close-others="accordions.closeOthers">
-                        <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                            <div form-builder="formBuilder[accordion.key]"></div>
-                        </accordion-group>
-                    </accordion>
-                </div>
-            </div>
-        </div>
+    <form name="container.form" <% if (config.ui.specifics.remote) { %>
+        ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}"
+        <% } else {%>ng-submit="save()"
+            <% } %>>
+                <% if (config.ui.specifics.remote) { %>
+                    <input type="hidden" compatibility-maker="rootArgs" name="__body__" />
+                    <% } %>
+                        <div class="modal-body scrollable">
+                            <div class="modal-body-inner">
+                                <div accordion-on-open="accordions">
+                                    <accordion close-others="accordions.closeOthers">
+                                        <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
+                                            <div form-builder="formBuilder[accordion.key]"></div>
+                                        </accordion-group>
+                                    </accordion>
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="modal-footer">
-            <button type="submit" loading class="button">
-                Save
-            </button>
-            <button type="button" loading class="button" ng-click="close()">
-                Close
-            </button>
-        </div>
+                        <div class="modal-footer">
+                            <button <% if (config.ui.specifics.remote) { %>
+                                 submit-if-files-no-complete="noComplete" submit-if-files="save"
+                                <% } else { %>type="submit"
+                                    <% } %>loading class="button"> Save
+                            </button>
+                            <button type="button" loading class="button" ng-click="close()">
+                                Close
+                            </button>
+                        </div>
     </form>
 </div>

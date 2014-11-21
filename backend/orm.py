@@ -1760,33 +1760,7 @@ class StructuredPropertyValue(PropertyValue):
       self._set_parent()
       self._deep_read(read_arguments)
       return self.value
-  
-  def add(self, entities):
-    '''Primarly used to extend values list of the property, or override change it if its used on non repeated property.
-    '''
-    if self._property._repeated:
-      if not self.has_value():
-        self._property_value = []
-      # @todo this is local's structure problem, because when appending new data, that does not mean anything to
-      # local structured properties, since their logic for setting data is completely different, it relies on 
-      # _sequence for ordering and keys for editing what it needs.
-      # as for remotely structured data, that is solved trough prepare_key which builds sequence on its own.
-      if self._property_value:
-        try:
-          last = self._property_value[-1]._sequence
-          if last is None:
-            last = 0
-        except IndexError:
-          last = 0
-        last_sequence = last + 1
-        for ent in entities:
-          ent._sequence += last_sequence
-        entities.extend(self._property_value)
-      self._property_value = entities
-        
-    # Always trigger setattr on the property itself
-    setattr(self._entity, self.property_name, self._property_value)
-
+   
 
 class LocalStructuredPropertyValue(StructuredPropertyValue):
   
@@ -1869,6 +1843,24 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     self._set_parent()
     self._property._set_value(self._entity, entities, True) # this is because using other method would cause duplicate results via duplicate process.
     return self._property_value
+
+  def add(self, entities):
+    '''Primarly used to extend values list of the property, or override change it if its used on non repeated property.
+    '''
+    if self._property._repeated:
+      if self.has_value():
+        if self._property_value:
+          try:
+            last = self._property_value[-1]._sequence
+            if last is None:
+              last = 0
+          except IndexError:
+            last = 0
+          last_sequence = last + 1
+          for ent in entities:
+            ent._sequence += last_sequence
+    # Always trigger setattr on the property itself
+    setattr(self._entity, self.property_name, entities)
 
 class RemoteStructuredPropertyValue(StructuredPropertyValue):
   
@@ -2067,6 +2059,16 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     else:
       self._duplicate_repeated()
     self._set_parent()
+
+  def add(self, entities):
+    '''Primarly used to extend values list of the property, or override change it if its used on non repeated property.
+    '''
+    if self._property._repeated:
+      if self.has_value():
+        entities.extend(self._property_value)
+    self._property_value = entities
+    # Always trigger setattr on the property itself
+    setattr(self._entity, self.property_name, self._property_value)
 
 
 class ReferenceStructuredPropertyValue(StructuredPropertyValue):

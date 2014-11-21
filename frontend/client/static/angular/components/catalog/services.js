@@ -41,7 +41,7 @@
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args); // for modifying
                                             $scope.modelsEditorScope = parentScope.modelsEditorScope;
-                                            reader = models['31'].reader(parentScope.entity, $scope.args._images, access, access);
+                                            reader = models[config.kind].reader(parentScope.entity, $scope.args._images, access, access);
 
                                             $scope.loadMoreImages = function (callback) {
                                                 if (reader.more) {
@@ -52,22 +52,47 @@
 
                                             };
 
+                                            models[config.kind].actions.read({
+                                                key: $scope.entity.key,
+                                                read_arguments: {
+                                                    _products: {}
+                                                }
+                                            }).then(function (response) {
+                                                $scope.args._products.extend(response.data.entity._products);
+                                            });
+
                                             $scope.fieldProducts = angular.copy(fields._products);
                                             // @todo this needs more work
                                             $.extend($scope.fieldProducts, {
                                                 ui: {
+
                                                     specifics: {
                                                         sortable: false,
                                                         listFields: [{
                                                             label: 'Name',
                                                             key: 'name'
-                                                        }]
+                                                        }],
+                                                        afterSave: function ($scope) {
+                                                            $scope.setAction('product_upload_images');
+                                                            callback($scope.entity);
+                                                        },
+                                                        afterComplete: function ($scope) {
+                                                            $scope.setAction('update');
+                                                        },
+                                                        noComplete: function ($scope) {
+                                                            $scope.setAction('update');
+                                                        }
                                                     }
                                                 }
                                             });
+                                            $scope.fieldProducts.modelclass.images.ui = {
+                                                formName: 'images'
+                                            };
 
                                             $.extend($scope.fieldProducts.modelclass._instances, {
                                                 ui: {
+
+                                                    label: 'Product Instances',
                                                     specifics: {
                                                         sortable: false,
                                                         beforeManage: function (entity) {
@@ -76,7 +101,6 @@
                                                                 return false;
                                                             }
                                                         },
-                                                        label: 'Product Instances',
                                                         addText: 'Add Product Instance',
                                                         listFields: [{
                                                             label: 'Code',
@@ -90,7 +114,18 @@
                                                         }, {
                                                             label: 'Volume Adjustment',
                                                             key: 'volume'
-                                                        }]
+                                                        }],
+                                                        excludeFields: ['variant_signature'],
+                                                        afterSave: function ($scope) {
+                                                            $scope.setAction('product_instance_upload_images');
+                                                            callback($scope.entity);
+                                                        },
+                                                        afterComplete: function ($scope) {
+                                                            $scope.setAction('update');
+                                                        },
+                                                        noComplete: function ($scope) {
+                                                            $scope.setAction('update');
+                                                        }
                                                     }
                                                 }
                                             });
