@@ -875,6 +875,10 @@ w:                  while (images.length > 0) {
                             args.read_arguments = $scope.entity._read_arguments;
                         }
 
+                        if ($scope.entity._read_arguments) {
+                            args._next_read_arguments = $scope.entity._next_read_arguments;
+                        }
+
                         if (angular.isDefined(args)) {
                             $.extend(args, $scope.withArgs);
                         }
@@ -1380,10 +1384,6 @@ w:                  while (images.length > 0) {
                         config.ui.specifics.fields = newFields;
                     }
 
-                    if (!noSpecifics && !config.ui.specifics.showListItem) {
-                       // config.ui.specifics.showListItem = 'default-field-display';
-                    }
-
                     if (noSpecifics || !config.ui.specifics.listFields) {
 
                         angular.forEach(defaultFields, function (field) {
@@ -1768,11 +1768,11 @@ w:                  while (images.length > 0) {
                 },
                 _RemoteStructuredPropery: function (info) {
 
-                    var entity = info.config.ui.specifics.entity,
-                        access = angular.copy(entity.ui.access),
+                    var args = info.config.ui.specifics.rootScope.args,
+                        access = angular.copy(args.ui.access),
                         defaultReader;
                     access.push(info.config.code_name);
-                    defaultReader = models[entity.kind].reader(entity, access, function (items) {
+                    defaultReader = models[args.action_model].reader(args, access, function (items) {
                         info.config.ui.specifics.parentArgs.extend(items);
                     });
                     if (!angular.isDefined(info.config.ui.specifics.reader)) {

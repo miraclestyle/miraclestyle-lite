@@ -23,7 +23,7 @@
                     },
                     measure = function () {
                         var tw = 0;
-                        element.find('.item').each(function () {
+                        element.find('.catalog-slider-item').each(function () {
                             tw += $(this).width();
                         });
 
@@ -63,7 +63,7 @@
                             .width(newWidth)
                             .height(newHeight);
 
-                        element.parents('.item:first')
+                        element.parents('.catalog-slider-item:first')
                             .width(newWidth)
                             .height(newHeight);
                     },
