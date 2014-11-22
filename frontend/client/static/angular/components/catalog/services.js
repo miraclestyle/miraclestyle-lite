@@ -31,41 +31,43 @@
                             noComplete: noComplete,
                             scope: { // scope for this modal dialog
                                 addProducts: function () {
+                                    // this function is completely custom, meaning that the entire workflow defined here is for
+                                    // pricetag positioning and product editing...
                                     var parentScope = this;
-
                                     $modal.open({
                                         templateUrl: 'catalog/products.html',
                                         controller: function ($scope, $modalInstance) {
-                                            var access = angular.copy(parentScope.args.ui.access), reader;
-                                            access.push(fields._images.code_name);
-                                            $scope.entity = parentScope.entity;
-                                            $scope.args = angular.copy(parentScope.args); // for modifying
-                                            $scope.modelsEditorScope = parentScope.modelsEditorScope;
-                                            reader = models[config.kind].reader(parentScope.entity, $scope.args._images, access, access);
+                                            var accessImages = angular.copy(parentScope.args.ui.access),
+                                                accessProducts = angular.copy(parentScope.args.ui.access),
+                                                imagesReader,
+                                                productsReader;
+                                            accessImages.push(fields._images.code_name);
+                                            accessProducts.push(fields._products.code_name);
+                                            $scope.rootScope = parentScope.rootScope; // pass the rootScope
+                                            $scope.entity = $scope.rootScope.entity;
+                                            $scope.args = angular.copy(parentScope.args);
+
+                                            imagesReader = models[config.kind].reader($scope.args, accessImages, function (items) {
+                                                $scope.args._images.extend(items);
+                                            });
+                                            // set next arguments from initially loaded data from root scope
+                                            imagesReader.state(parentScope.config.ui.specifics.reader);
+                                            productsReader = models[config.kind].reader($scope.args, accessProducts, function (items) {
+                                                $scope.args._products.extend(items);
+                                            });
 
                                             $scope.loadMoreImages = function (callback) {
-                                                if (reader.more) {
-                                                    reader.load().then(callback);
+                                                if (imagesReader.more) {
+                                                    imagesReader.load().then(callback);
                                                 } else {
                                                     callback();
                                                 }
-
                                             };
+                                            productsReader.load(); // load first 10 products
 
-                                            models[config.kind].actions.read({
-                                                key: $scope.entity.key,
-                                                read_arguments: {
-                                                    _products: {}
-                                                }
-                                            }).then(function (response) {
-                                                $scope.args._products.extend(response.data.entity._products);
-                                            });
-
-                                            $scope.fieldProducts = angular.copy(fields._products);
-                                            // @todo this needs more work
+                                            $scope.fieldProducts = fields._products;
                                             $.extend($scope.fieldProducts, {
                                                 ui: {
-
                                                     specifics: {
                                                         sortable: false,
                                                         listFields: [{
@@ -74,24 +76,24 @@
                                                         }],
                                                         afterSave: function ($scope) {
                                                             $scope.setAction('product_upload_images');
-                                                            callback($scope.entity);
                                                         },
                                                         afterComplete: function ($scope) {
                                                             $scope.setAction('update');
                                                         },
                                                         noComplete: function ($scope) {
                                                             $scope.setAction('update');
-                                                        }
+                                                        },
+                                                        reader: productsReader
                                                     }
                                                 }
                                             });
+
                                             $scope.fieldProducts.modelclass.images.ui = {
                                                 formName: 'images'
                                             };
 
                                             $.extend($scope.fieldProducts.modelclass._instances, {
                                                 ui: {
-
                                                     label: 'Product Instances',
                                                     specifics: {
                                                         sortable: false,
@@ -118,7 +120,6 @@
                                                         excludeFields: ['variant_signature'],
                                                         afterSave: function ($scope) {
                                                             $scope.setAction('product_instance_upload_images');
-                                                            callback($scope.entity);
                                                         },
                                                         afterComplete: function ($scope) {
                                                             $scope.setAction('update');
@@ -142,6 +143,13 @@
                                                 }
                                             });
 
+                                            $.extend($scope.fieldProducts.modelclass.images, {
+                                                ui: {
+                                                    formName: 'images',
+                                                    specifics: {}
+                                                }
+                                            });
+
                                             $.extend($scope.fieldProducts.modelclass.variants, {
                                                 ui: {
                                                     specifics: {
@@ -155,7 +163,7 @@
                                             });
 
                                             $scope.save = function () {
-                                                // @todo must do an rpc to save the data...
+                                                // @todo rpc to save pricetag data
                                                 $scope.close();
                                             };
 

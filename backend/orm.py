@@ -1894,7 +1894,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
             raise PropertyError('not_supported')
           else:
             prepare_supplied_keys.append(self._entity.prepare_key(**supplied_key))
-        elif isinstance(supplied_key, basestring):
+        else:
           prepare_supplied_keys.append(supplied_key)
       supplied_keys = SuperKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(prepare_supplied_keys)
       for supplied_key in supplied_keys:

@@ -985,7 +985,7 @@ w:                  while (images.length > 0) {
                                 $scope.entity = entity;
                                 $scope.$modalInstance = $modalInstance;
                                 $scope.args = config.argumentLoader($scope);
-                                $scope.modelsEditorScope = $scope;
+                                $scope.rootScope = $scope;
 
                                 $scope.accordions = {
                                     closeOthers: true,
@@ -1010,6 +1010,8 @@ w:                  while (images.length > 0) {
                                                 key: field.code_name,
                                                 open: false
                                             });
+
+                                            field.ui.label = false;
 
                                         }
 
@@ -1089,7 +1091,7 @@ w:                  while (images.length > 0) {
                                     $modalInstance.dismiss('close');
                                 };
 
-                                // load into scope from config
+                                // load scope from config into the current scope
                                 $.extend($scope, config.scope);
                                 // call config constructor, needed for posible on-spot configurations
                                 config.defaultInit($scope);
@@ -1378,6 +1380,10 @@ w:                  while (images.length > 0) {
                         config.ui.specifics.fields = newFields;
                     }
 
+                    if (!noSpecifics && !config.ui.specifics.showListItem) {
+                       // config.ui.specifics.showListItem = 'default-field-display';
+                    }
+
                     if (noSpecifics || !config.ui.specifics.listFields) {
 
                         angular.forEach(defaultFields, function (field) {
@@ -1425,7 +1431,7 @@ w:                  while (images.length > 0) {
 
                     config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
                     config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-                    config.ui.specifics.modelsEditorScope = info.scope.$eval(config.ui.modelsEditorScope);
+                    config.ui.specifics.rootScope = info.scope.$eval(config.ui.rootScope);
 
                     if (!config.ui.specifics.sortableOptions) {
                         config.ui.specifics.sortableOptions = {};
@@ -1550,6 +1556,8 @@ w:                  while (images.length > 0) {
                                                         open: false
                                                     });
 
+                                                    field.ui.label = false;
+
                                                 }
 
                                                 if (!angular.isDefined(formBuilder[field.code_name])) {
@@ -1567,7 +1575,7 @@ w:                  while (images.length > 0) {
                                         };
                                         $scope.args = angular.copy(arg);
                                         $scope.parentArgs = config.ui.specifics.parentArgs;
-                                        $scope.modelsEditorScope = config.ui.specifics.modelsEditorScope;
+                                        $scope.rootScope = config.ui.specifics.rootScope;
                                         $scope.entity = config.ui.specifics.entity;
                                         $scope.close = function () {
                                             $modalInstance.dismiss('cancel');
@@ -1576,19 +1584,26 @@ w:                  while (images.length > 0) {
                                         if (config.ui.specifics.remote) {
 
                                             $scope.setAction = function (action) {
+                                                // internal helper to set the action to be executed
                                                 $scope.rootArgs.action_id = action;
                                             };
-
-                                            $scope.rootArgs = $scope.modelsEditorScope.config.argumentLoader(config.ui.specifics.modelsEditorScope);
+                                            $scope.rootArgs = angular.copy(config.ui.specifics.rootScope.args);
                                             $scope.save = function () {
                                                 if (!$scope.container.form.$valid) { // check if the form is valid
                                                     return;
                                                 }
                                                 var promise,
-                                                    readArgs = angular.copy($scope.rootArgs.read_arguments),
-                                                    reader = $scope.rootArgs,
+                                                    readArgs = {},
+                                                    readRootArgs = $scope.rootArgs,
                                                     parentArgsPath = $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1);
+                                                // set this args as single item in array    
                                                 helpers.setProperty($scope.rootArgs, parentArgsPath, [$scope.args]);
+                                                // delete all remote structured property from rpc data
+                                                angular.forEach($scope.rootScope.config.fields, function (field) {
+                                                    if ((_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) && field.code_name !== $scope.args.ui.access[0]) {
+                                                        delete $scope.rootArgs[field.code_name];
+                                                    }
+                                                });
                                                 $scope.rootArgs.read_arguments = readArgs;
                                                 angular.forEach(parentArgsPath, function (part, i) {
                                                     // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
@@ -1599,25 +1614,39 @@ w:                  while (images.length > 0) {
                                                         };
                                                         readArgs = readArgs[part];
                                                     }
-                                                    reader = reader[part];
-                                                    if (angular.isArray(reader)) {
-                                                        readArgs.config.keys = [];
-                                                        angular.forEach(reader, function (ent) {
-                                                            readArgs.config.keys.push(ent.key);
+                                                    // produce read path for the rpc
+                                                    readRootArgs = readRootArgs[part];
+                                                    if (angular.isArray(readRootArgs)) {
+                                                        angular.forEach(readRootArgs, function (ent) {
+                                                            if (ent.key !== null && !angular.isDefined(ent.key)) {
+                                                                if (!angular.isDefined(readArgs.config.keys)) {
+                                                                    readArgs.config.keys = [];
+                                                                }
+                                                                readArgs.config.keys.push(ent.key);
+                                                            }
                                                         });
                                                     } else {
-                                                        readArgs.config.keys = [reader.key];
+                                                        if (readRootArgs.key !== null && !angular.isDefined(readRootArgs.key)) {
+                                                            readArgs.config.keys = [readRootArgs.key];
+                                                        }
                                                     }
                                                 });
+                                                // create rpc from root args's action model and action id
                                                 promise = models[$scope.rootArgs.action_model].actions[$scope.rootArgs.action_id]($scope.rootArgs);
                                                 promise.then(function (response) {
-                                                    var accessFirst = $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1),
+                                                    var accessPath = [],
                                                         value;
-                                                    accessFirst.push(0);
-                                                    value = helpers.getProperty(response.data.entity, accessFirst);
+                                                    // set the access path like _products.0._instances.0 because we always pick one key for read path    
+                                                    angular.forEach(config.ui.path, function (path) {
+                                                        accessPath.push(path);
+                                                        accessPath.push(0);
+                                                    });
+                                                    // allways populate the data from the response
+                                                    value = helpers.getProperty(response.data.entity, accessPath);
                                                     $.extend($scope.args, value);
                                                     if (isNew) {
                                                         $scope.parentArgs.unshift($scope.args);
+                                                        isNew = false;
                                                     }
 
                                                     $.extend(arg, $scope.args);
@@ -1637,10 +1666,15 @@ w:                  while (images.length > 0) {
 
                                             $scope.complete = function (response) {
 
-                                                var accessFirst = $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1),
+                                                var accessPath = [],
                                                     value;
-                                                accessFirst.push(0);
-                                                value = helpers.getProperty(response.data.entity, accessFirst);
+                                                // set the access path like _products.0._instances.0 because we always pick one key for read path    
+                                                angular.forEach(config.ui.path, function (path) {
+                                                    accessPath.push(path);
+                                                    accessPath.push(0);
+                                                });
+                                                // allways populate the data from the response
+                                                value = helpers.getProperty(response.data.entity, accessPath);
                                                 $.extend($scope.args, value);
                                                 if (angular.isDefined(config.ui.specifics.afterComplete)) {
                                                     config.ui.specifics.afterComplete($scope);
@@ -1735,11 +1769,12 @@ w:                  while (images.length > 0) {
                 _RemoteStructuredPropery: function (info) {
 
                     var entity = info.config.ui.specifics.entity,
-                        path = info.config.ui.path,
                         access = angular.copy(entity.ui.access),
                         defaultReader;
                     access.push(info.config.code_name);
-                    defaultReader = models[entity.kind].reader(entity, info.config.ui.specifics.parentArgs, path, access);
+                    defaultReader = models[entity.kind].reader(entity, access, function (items) {
+                        info.config.ui.specifics.parentArgs.extend(items);
+                    });
                     if (!angular.isDefined(info.config.ui.specifics.reader)) {
                         info.config.ui.specifics.reader = defaultReader;
                     }
@@ -1812,7 +1847,7 @@ w:                  while (images.length > 0) {
         var models = {}, // all model instances
             modelCreate = function (kind) {
                 // creates a new service based on kind
-                // it will map every action into function which can be called similarly: models['12'].actions.search() etc.
+                // it will map every action into function which can be called in this way: models['12'].actions.search() etc.
                 var config = {},
                     service = {
                         kind: kind,
@@ -1829,54 +1864,78 @@ w:                  while (images.length > 0) {
 
                             console.error('get() relies on actions.search action. use actions.read() instead.');
                         },
-                        reader: function (entity, update, path, access) {
-
-                            var canLoadMore = function (nextReadArguments) {
-                                    return helpers.getProperty(nextReadArguments, path.join('.') + '.config.more');
+                        reader: function (args, path, callback) {
+                            // reader instance that internally tracks the pager.
+                            // params provided are instance of root entity
+                            // and path of the entity's part that needs to be loaded
+                            // @return {next, more, load()}
+                            var fields = [],
+                                canLoadMore = function (nextReadArguments) {
+                                    return helpers.getProperty(nextReadArguments, fields.join('.') + '.config.more');
                                 },
-                                reader = {
-                                    next: null,
-                                    more: canLoadMore(entity._next_read_arguments),
-                                    load: function () {
-                                        var that = this,
-                                            digNext = {},
-                                            next = that.next || entity._next_read_arguments,
-                                            nextData,
-                                            items,
-                                            promise,
-                                            loadedNext,
-                                            paths = [];
+                                reader;
+                            if (!angular.isArray(path)) {
+                                path = path.split('.');
+                            }
+                            angular.forEach(path, function (part) {
+                                // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
+                                // properties in datastore that begin with an number
+                                if (isNaN(parseInt(part, 10))) {
+                                    fields.push(part);
+                                }
+                            });
 
-                                        angular.forEach(path, function (p) {
-                                            paths.push(p);
-                                            nextData = helpers.getProperty(next, paths.join('.'));
-                                            if (!angular.isDefined(nextData)) {
-                                                nextData = {};
-                                            }
-                                            digNext[p] = nextData;
-                                        });
+                            reader = {
+                                next: null,
+                                more: canLoadMore(args._next_read_arguments),
+                                state: function (reader) {
+                                    this.next = reader.next;
+                                    this.more = reader.more;
+                                },
+                                load: function () {
+                                    var that = this,
+                                        digNext = {},
+                                        next = that.next || args._next_read_arguments,
+                                        nextData,
+                                        items,
+                                        promise,
+                                        loadedNext,
+                                        paths = [];
 
-                                        promise = models[entity.kind].actions.read({
-                                            key: entity.key,
-                                            read_arguments: that.next || digNext
-                                        });
+                                    angular.forEach(path, function (p) {
+                                        paths.push(p);
+                                        nextData = helpers.getProperty(next, paths);
+                                        if (!angular.isDefined(nextData)) {
+                                            nextData = {
+                                                config: {}
+                                            };
+                                        }
+                                        digNext[p] = nextData;
+                                    });
 
-                                        promise.then(function (response) {
-                                            items = helpers.getProperty(response.data.entity, access.join('.'));
+                                    promise = models[args.action_model].actions.read({
+                                        key: args.key,
+                                        read_arguments: that.next || digNext
+                                    });
 
-                                            update.extend(items);
+                                    promise.then(function (response) {
+                                        items = helpers.getProperty(response.data.entity, path);
 
-                                            loadedNext = response.data.entity._next_read_arguments;
-                                            that.more = canLoadMore(loadedNext);
+                                        if (angular.isFunction(callback)) {
+                                            callback(items);
+                                        }
 
-                                            if (that.more) {
-                                                that.next = response.data.entity._next_read_arguments;
-                                            }
-                                        });
+                                        loadedNext = response.data.entity._next_read_arguments;
+                                        that.more = canLoadMore(loadedNext);
 
-                                        return promise;
-                                    }
-                                };
+                                        if (that.more) {
+                                            that.next = response.data.entity._next_read_arguments;
+                                        }
+                                    });
+
+                                    return promise;
+                                }
+                            };
 
                             return reader;
 

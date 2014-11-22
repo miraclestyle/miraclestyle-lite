@@ -331,7 +331,7 @@ img.vertical, .vertical {
   width: 100%;
 }
 
-.catalog-slider .item
+.catalog-slider .catalog-slider-item
 {
   float:left;
   position:relative;
@@ -345,7 +345,7 @@ img.vertical, .vertical {
 
 .kinetic-moving-left, .kinetic-moving-right
 { 
-  cursor:url('images/grabbing.png') 8 8, move; 
+  /*cursor:url('images/grabbing.png') 8 8, move;*/
 }
 
 .button-wrapper
@@ -377,4 +377,29 @@ img.vertical, .vertical {
 
 .list-actions {
   text-align: right;
+}
+
+.menu-active {
+  overflow: hidden;
+}
+
+.item-left {
+  float:left;
+}
+
+.item-right {
+  float:right;
+}
+
+.item {
+  border-bottom: 1px solid #EEE;
+  width: 100%;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  background: white;
+}
+
+.item-list .item:first-child {
+
+  border-top:1px solid #EEE;
 }

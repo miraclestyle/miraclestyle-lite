@@ -4,6 +4,58 @@
 		"selected_items":
 		[
 			[
+				"access",
+				"accessPath"
+			],
+			[
+				"delete",
+				"delete_filepath"
+			],
+			[
+				"_prope",
+				"_property_value"
+			],
+			[
+				"_prop",
+				"_property_value"
+			],
+			[
+				"noop",
+				"angular.noop"
+			],
+			[
+				"response",
+				"response"
+			],
+			[
+				"accordion",
+				"accordionKey"
+			],
+			[
+				"supplied",
+				"supplied_key"
+			],
+			[
+				"prepare",
+				"prepare_supplied_keys"
+			],
+			[
+				"get_mul",
+				"get_multi_async"
+			],
+			[
+				"refere",
+				"referenceArgs"
+			],
+			[
+				"extra",
+				"extraConfig"
+			],
+			[
+				"i",
+				"ifmain	if __name__ == '__main__'"
+			],
+			[
 				"URL",
 				"URL-getRequest	URL-getRequest"
 			],
@@ -47,9 +99,61 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 375.0,
+		"height": 313.0,
 		"selected_items":
 		[
+			[
+				"status",
+				"Git: Status"
+			],
+			[
+				"push",
+				"Git: Push"
+			],
+			[
+				"commit",
+				"Git: Commit"
+			],
+			[
+				"add",
+				"Git: Add..."
+			],
+			[
+				"branch",
+				"Git: New Branch"
+			],
+			[
+				"pull",
+				"Git: Pull"
+			],
+			[
+				"list",
+				"Package Control: List Packages"
+			],
+			[
+				"pul",
+				"Git: Pull"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"intel",
+				"SublimeCodeIntel: Reset"
+			],
+			[
+				"cache",
+				"SublimeLinter: Clear Caches"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"sublimeintel",
+				"SublimeLinter: Lint This View"
+			],
 			[
 				"git:gui",
 				"Git: Gui"
@@ -67,28 +171,12 @@
 				"SublimeREPL: PHP"
 			],
 			[
-				"install",
-				"Package Control: Install Package"
-			],
-			[
 				"",
 				"ANF: New File"
 			],
 			[
-				"push",
-				"Git: Push"
-			],
-			[
-				"pull",
-				"Git: Pull"
-			],
-			[
 				"gitp",
 				"Git: Push"
-			],
-			[
-				"remove",
-				"Package Control: Remove Package"
 			],
 			[
 				"pf",
@@ -143,16 +231,8 @@
 				"Package Control: Remove Package"
 			],
 			[
-				"list",
-				"Package Control: List Packages"
-			],
-			[
 				"install ",
 				"Package Control: Install Package"
-			],
-			[
-				"cache",
-				"SublimeLinter: Clear Caches"
 			],
 			[
 				"upgrade",
@@ -223,7 +303,7 @@
 				"Snippet: Wrap in try { … } catch (…) { … }"
 			]
 		],
-		"width": 588.0
+		"width": 579.0
 	},
 	"console":
 	{
@@ -245,15 +325,82 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
+	"expanded_folders":
+	[
+	],
 	"file_history":
 	[
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/underscore/image.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/miraclestyle-lite.sublime-project",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/structured.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/.jsbeautifyrc",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeLinter.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeCodeIntel.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/SublimeLinter/SublimeLinter.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/services.js",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/HTMLPrettify.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/plugins.html",
+		"/Users/admin/Dev/php/localhost/artwinlive2/artwinlive2.sublime-project",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/.jsbeautifyrc",
+		"/Users/admin/Dev/php/localhost/aufberg/ftpsync.settings",
+		"/Users/admin/Dev/php/localhost/aufberg/wp-content/themes/aufberg/handlers/booking.php",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/general.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/modal/structured.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/directives.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/services.js",
+		"/Users/admin/Dev/php/localhost/talbot_press/err_log.log",
+		"/Users/admin/Dev/php/localhost/talbot_press/ftpsync.settings",
+		"/Users/admin/Dev/php/localhost/talbot_press/wp-content/plugins/press-core/model/item.php",
+		"/Users/admin/Dev/php/localhost/talbot_press/wp-content/plugins/press-core/ResetSql.sql",
+		"/Users/admin/Dev/php/localhost/talbot_press/wp-config.php",
+		"/Users/admin/Dev/php/localhost/talbot_press/wp-content/plugins/press-core/controller/public/download.php",
+		"/Users/admin/Dev/php/localhost/talbot_press/wp-config-sample.php",
+		"/Users/admin/Dev/php/localhost/talbot_press/php.php",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/catalog.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal_editor.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/seller/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/modal/plugins.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal_editor_default_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/seller/settings.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/manage.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/settings.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/LICENSE",
+		"/Users/admin/Dev/php/localhost/hl_arch/wp-admin/link.php",
+		"/Users/admin/Dev/php/localhost/artwinlive2/application/classes/model/invoice/lines.php",
+		"/Users/admin/Dev/php/localhost/artwinlive2/application/cache/94/94ed803e148c277fbefb879986b931104515cd5e.cache",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/settings.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/vendor/angular/angular.js",
+		"/Users/admin/Dev/php/localhost/artwinlive2/ftpsync.settings",
+		"/Users/admin/Dev/php/localhost/artwinlive2/.gitignore",
+		"/Users/admin/Dev/php/localhost/hl_arch/ftpsync.settings",
+		"/Users/admin/Dev/php/localhost/hl_arch/wp-content/themes/hl/functions.php",
+		"/Users/admin/Dev/php/localhost/hl_arch/wp-content/themes/hl/tpl-all-projects.php",
+		"/Users/admin/Dev/php/localhost/hl_arch/wp-content/themes/hl/ftpsync.settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/services.js",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Package Control.sublime-settings",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer/directive/buyer_address_display.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/products.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/underscore/image.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/modal.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/form.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modals/alert.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/order.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/notice.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/list.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/tests.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/manage_footer.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal_editor_default_footer.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/vendor/angular-bootstrap/ui-bootstrap.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/controllers.js",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeCodeIntel.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/tests.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/handler/base.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/app.js",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/README",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeREPL.sublime-settings",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/SublimeLinter/SublimeLinter.sublime-settings",
 		"/Users/admin/Dev/php/localhost/laravel/server.php",
 		"/Users/admin/Dev/php/localhost/laravel/tests.php",
 		"/Users/admin/Dev/php/localhost/laravel/app/routes.php",
@@ -262,26 +409,16 @@
 		"/Users/admin/Dev/php/localhost/laravel/vendor/laravel/framework/src/Illuminate/Auth/Guard.php",
 		"/Users/admin/Dev/php/localhost/laravel/vendor/symfony/http-foundation/Symfony/Component/HttpFoundation/Request.php",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/seller.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/products.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/home/controllers.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/location/controllers.js",
 		"/Users/admin/Closure.sublime-snippet",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/list.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/manage.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/catalog.py",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/init.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/shim.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/overrides.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/filters.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/vendor/angular/angular.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/directives.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/controllers.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/bootstrap.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/app.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/tests.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/seller/services.js",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/bh_core.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/BracketHighlighter/bh_core.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/BracketHighlighter/bh_wrapping.sublime-settings",
@@ -291,32 +428,20 @@
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/location/services.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/directives.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/directives.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/services.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/controllers.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/services.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/filters.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/controllers.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/HTMLPrettify.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/LiveReload/LiveReload.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Python PEP8 Autoformat/pep8_autoformat.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/pep8_autoformat.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/structured.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/seller/settings.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/plugins.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/.project",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/util.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/tests.py",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/test.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/_old/js/lib/angular/modal.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/lib/ngUpload/ng-upload.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/http.py",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Package Control.sublime-settings",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/http.py",
 		"/Users/admin/Dev/py/miraclestyle-lite/INSTALL",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/general.css",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/JavascriptBeautify.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Terminal/Terminal.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/CSScomb/CSScomb.sublime-settings",
@@ -332,31 +457,7 @@
 		"/Users/admin/Dev/php/localhost/laravel/vendor/maximebf/debugbar/src/DebugBar/Bridge/PropelCollector.php",
 		"/Users/admin/Dev/php/localhost/laravel/vendor/monolog/monolog/src/Monolog/Logger.php",
 		"/Users/admin/Dev/php/localhost/laravel/vendor/psr/log/Psr/Log/AbstractLogger.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/psr/log/Psr/Log/LoggerInterface.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/psr/log/Psr/Log/LoggerTrait.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/symfony/http-kernel/Symfony/Component/HttpKernel/Tests/Logger.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-includes/js/media-views.js",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/anahkiasen/former/src/Former/Former.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/barryvdh/laravel-debugbar/src/Middleware/Debugbar.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-content/themes/artwincreate/css/style.css",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-content/themes/artwincreate/footer.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-content/themes/artwincreate/functions.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-content/themes/artwincreate/page.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-content/themes/artwincreate/index.php",
-		"/Users/admin/Dev/php/localhost/laravel/app/config/auth.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/predis/predis/lib/Predis/Command/ServerObject.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/laravel/framework/src/Illuminate/Database/Eloquent/SoftDeletingScope.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/symfony/security-core/Symfony/Component/Security/Core/Authentication/Provider/DaoAuthenticationProvider.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-content/themes/artwincreate/js/config.js",
-		"/Users/admin/Dev/php/localhost/laravel/app/filters.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/index.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-admin/edit.php",
-		"/Users/admin/Dev/php/localhost/artwincreate/wp-admin/edit-link-form.php",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/PHP.sublime-settings",
-		"/Users/admin/Dev/php/localhost/laravel/artisan",
-		"/Users/admin/Dev/php/localhost/wordpress/wp-login.php",
-		"/Users/admin/Dev/php/localhost/wordpress/phpx/exception.log",
-		"/Users/admin/Dev/php/localhost/wordpress/make.php"
+		"/Users/admin/Dev/php/localhost/laravel/vendor/psr/log/Psr/Log/LoggerInterface.php"
 	],
 	"find":
 	{
@@ -367,6 +468,23 @@
 		"height": 95.0,
 		"where_history":
 		[
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
 			"/Users/admin/Dev/py/miraclestyle-lite",
 			"/Users/admin/Dev/py/miraclestyle-lite/backend",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
@@ -378,31 +496,134 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"closure",
-			"console.log",
-			"humanize",
-			"load:",
-			"var reader",
+			"<table",
+			"startsWith",
+			"startswith",
 			"reader:",
-			"normalize:",
+			"reader",
+			".reader(",
+			"isNan",
+			"callback",
+			"modelsEditorScope",
+			"modelsEditor",
+			"rootScope",
+			"modelsEditorScope",
+			".key",
+			"['keys']",
+			"read_arguments",
+			"tmpdir",
+			"file_path =",
+			"delete_filepath",
+			"file_path",
+			"delete_filepath",
+			"sortableOptions",
+			"_sequence",
+			"_sequence =",
 			"def read",
-			"for catalog_image",
-			"scope.args =",
-			"defaultSpecifics",
+			"_sequence",
+			"PropertyValue",
+			"def add",
+			"formName",
+			"remote",
+			"console.log",
+			"save =",
+			"setProperty",
+			"setProperty:",
+			"setProperty",
+			"setProperty:",
+			"setAction",
+			"$scope.noComplete",
+			".complete =",
+			"before",
+			"submit-if",
+			"container",
+			"newArgs",
+			"excludeFields",
+			"argumentLoader",
+			"arugmentLoader",
+			"setPRoperty",
+			"helpers",
+			"is_new",
+			"modelsEditorScope",
+			"save",
+			"modalEditorScope",
+			"complete = ",
 			"getPluginFieldOverrides",
-			"defaultSpecifics",
-			"afterComplete",
-			"images",
-			"modelsConfig",
-			"addText",
-			"Configurations",
-			"defaultSpecifics",
-			"models",
-			"paths",
-			"$.",
-			"class Record",
-			"Eloquent",
-			"python"
+			".path",
+			"path:",
+			".path",
+			"modelsEditor",
+			"formBuilder",
+			"accordions.contents",
+			"accordions.plugins",
+			"accordions.general",
+			"accordions",
+			"general",
+			"h2",
+			"formBuilder",
+			"$scope.args =",
+			"plugin",
+			"<h2",
+			"General</h2",
+			"<h2",
+			"modals",
+			"keys",
+			"prepare_key",
+			"editor",
+			"modelEditor",
+			"modalEditor",
+			"modelsUtil.normalize",
+			"fields",
+			"argumentLoader",
+			"ngrepeat",
+			"itemOrderStarted",
+			"itemOrderChanged",
+			"itemorder",
+			"sortable",
+			"model:",
+			"modalEditor",
+			"setE",
+			"argumentLoader",
+			"argumentLoader:",
+			"argumentLoader()",
+			"argumentLoader()\nargumentLoader()",
+			"argumentLoader:",
+			"rootArgs",
+			"scope.set",
+			"argumentLoader",
+			"remote",
+			"prepareReadArguments",
+			"var i =",
+			"var i",
+			"referenceArgs",
+			"modalutil",
+			"model:",
+			".remote",
+			"variants",
+			".save =",
+			".manage",
+			"animate",
+			"complete",
+			"console.log",
+			"post:",
+			"actions",
+			"search.",
+			".search.then",
+			".search",
+			"search",
+			".fake-button input.upload",
+			"<button loading",
+			"config.ui.specifics.addText",
+			"cancel",
+			"Cancel",
+			"windowClass",
+			"class catalogProduct",
+			"models[config.kind",
+			"models[",
+			"window._modelsmeta",
+			"window.",
+			"@todo",
+			"codeintel_scan_files_in_project"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -410,6 +631,9 @@
 		"regex": false,
 		"replace_history":
 		[
+			"accordions.groups.2",
+			"accordions.groups.1",
+			"accordions.groups.0",
 			""
 		],
 		"reverse": false,

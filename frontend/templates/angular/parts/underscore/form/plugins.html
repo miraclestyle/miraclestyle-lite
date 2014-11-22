@@ -8,7 +8,24 @@
       </button>
     </div>
   </div>
- 
+
+  <div ui-sortable="config.ui.specifics.sortableOptions" 
+          ng-model="config.ui.specifics.parentArgs" class="item-list">
+    <div ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
+      <div class="item-left">
+        <div>{{ent.name}}</div>
+        <div>
+          (<span ng-if="ent.active">Active</span><span ng-if="!ent.active">Inactive</span>, {{config.ui.specifics.showType(ent.kind)}})
+        </div>
+      </div>
+      <div class="item-right list-actions">
+          <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
+          <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+      </div>
+    </div>
+  </div>
+    
+    <!--
     <table class="table">
           <thead>
             <tr> 
@@ -16,7 +33,6 @@
               <th>Active</th>
               <th>Type</th>
               <th></th>
-              <!-- what else to put here? -->
             </tr>
           </thead>
           <tbody ui-sortable="config.ui.specifics.sortableOptions" 
@@ -38,5 +54,5 @@
             </tr>
           </tbody>
     </table>
- 
+    -->
 </div>

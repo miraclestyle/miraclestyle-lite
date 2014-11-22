@@ -4,7 +4,8 @@
         .directive('mainMenuToggler', function ($rootScope) {
             return {
                 link: function (scope, element) {
-                    var click = function (e, cmd) {
+                    var activeClass = 'menu-active',
+                        click = function (e, cmd) {
                             var mm = $('#main-menu'),
                                 visible = mm.is(':visible');
 
@@ -13,12 +14,15 @@
                                     height: 0
                                 }, 100, function () {
                                     $(this).hide();
+                                    $('body').removeClass(activeClass);
                                 });
                             } else if (!visible || cmd === 2) {
                                 mm.height(0).show();
                                 mm.stop().animate({
                                     height: ($(window).height() - $('#top-bar').height())
-                                }, 100);
+                                }, 100, function () {
+                                    $('body').addClass(activeClass);
+                                });
                             }
                         },
                         resize = function () {
@@ -322,7 +326,7 @@
                             ui: { // root config for entire config, upper structure is ndb property definition
                                 args: 'args.' + name,
                                 parentArgs: 'args',
-                                modelsEditorScope: 'modelsEditorScope', // pointer to modelsEditorScope if any
+                                rootScope: 'rootScope', // pointer to rootScope that should be considered
                                 model: 'entity',
                                 autoLabel: label,
                                 specifics: {}, // used for property specific configurations
@@ -691,10 +695,23 @@
 
                     scope.$on('accordionStateChanged', resize);
                     scope.$on('itemOrderChanged', resize);
-
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
                     });
+
+                }
+            };
+        }).directive('defaultFieldDisplay', function ($compile) {
+            return {
+                scope: {
+                    val: '=defaultFieldDisplay',
+                    field: '=defaultFieldDisplayField'
+                },
+                templateUrl: 'buyer/directive/buyer_address_display.html',
+                controller: function ($scope) {
+                    $scope.notEmpty = function (val) {
+                        return angular.isString(val) || angular.isNumber(val);
+                    };
 
                 }
             };

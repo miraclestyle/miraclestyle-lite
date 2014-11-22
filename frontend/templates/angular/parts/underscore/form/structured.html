@@ -21,17 +21,46 @@
     </button>
   </div>
 </div>
-
-
+ 
 <% } %>
 
 <% if (config.repeated) { %>
+
+
+     <div <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
+                 ui-sortable="config.ui.specifics.sortableOptions" 
+                 <% } %> 
+          ng-model="config.ui.specifics.parentArgs" class="item-list">
+        <div ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
+          <div class="item-left">
+              <div ng-repeat="field in config.ui.specifics.listFields">
+                  
+              <% if (config.ui.specifics.showListItem) { %>
+                <div ng-repeat="field in config.ui.specifics.listFields">
+                 <span <%=config.ui.specifics.showListItem %>="ent" <%=config.ui.specifics.showListItem %>-field="field"></span>
+               </div>
+              <% } else { %>
+              <div ng-repeat="field in config.ui.specifics.listFields">
+                <span ng-if="$index == 2">(</span>{{ent|output:field.key}}<span ng-if="$index == 2">)</span>
+              </div>
+              <% } %>
+
+
+              </div>
+          </div>
+          <div class="item-right list-actions">
+              <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
+              <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+          </div>
+        </div>
+    </div>
+    
+    <!--
     <table class="table">
           <thead>
             <tr> 
               <th ng-repeat="field in config.ui.specifics.listFields">{{field.label}}</th>
               <th></th>
-              <!-- what else to put here? -->
             </tr>
           </thead>
           <tbody <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
@@ -56,6 +85,7 @@
             </tr>
           </tbody>
     </table>
+    -->
     
     <% if (config.ui.specifics.remote) { %>
     <button ng-if="config.ui.specifics.canLoadMore" loading class="button block load-more" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
