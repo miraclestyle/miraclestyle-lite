@@ -95,8 +95,8 @@
   padding: 10px;
   text-align: right;
   position: relative;
-  -webkit-box-shadow: 0 -3px 5px #999999;
-  box-shadow: 0 -3px 5px #999999;
+  -webkit-box-shadow: 0 -3px 5px #BBBBBB;
+  box-shadow: 0 -3px 5px #BBBBBB;
   /*border: 1px solid #EEEEEE;*/
 }
 
