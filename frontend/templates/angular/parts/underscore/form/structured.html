@@ -54,39 +54,7 @@
           </div>
         </div>
     </div>
-    
-    <!--
-    <table class="table">
-          <thead>
-            <tr> 
-              <th ng-repeat="field in config.ui.specifics.listFields">{{field.label}}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
-                 ui-sortable="config.ui.specifics.sortableOptions" 
-                 <% } %> 
-          ng-model="config.ui.specifics.parentArgs">
-            <tr ng-repeat="ent in config.ui.specifics.parentArgs" ng-hide="ent._state == 'deleted'">
-              <% if (config.ui.specifics.showListItem) { %>
-                <td ng-repeat="field in config.ui.specifics.listFields">
-                 <span <%=config.ui.specifics.showListItem %>="ent" <%=config.ui.specifics.showListItem %>-field="field"></span>
-               </td>
-              <% } else { %>
-              <td ng-repeat="field in config.ui.specifics.listFields">
-                {{ent|output:field.key}}
-              </td>
-              <% } %>
-  
-              <td class="list-actions">
-                <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-                <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
-              </td>
-            </tr>
-          </tbody>
-    </table>
-    -->
-    
+ 
     <% if (config.ui.specifics.remote) { %>
     <button ng-if="config.ui.specifics.canLoadMore" loading class="button block load-more" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
     <% } %>

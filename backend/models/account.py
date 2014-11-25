@@ -152,7 +152,7 @@ class Account(orm.BaseExpando):
       key=orm.Action.build_key('11', 'update'),
       arguments={
         'key': orm.SuperKeyProperty(kind='11', required=True),
-        'primary_email': orm.SuperStringProperty(),
+        'primary_identity': orm.SuperStringProperty(),
         'disassociate': orm.SuperStringProperty(repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },

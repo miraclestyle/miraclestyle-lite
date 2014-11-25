@@ -864,24 +864,22 @@ w:                  while (images.length > 0) {
                         });
 
                         if ($scope.entity.key) {
-                            args.key = $scope.entity.key;
+                            args.key = entityCopy.key;
                         }
 
-                        args.ui = $scope.entity.ui;
+                        args.ui = entityCopy.ui;
 
                         // every entity has _read_arguments when retrieved from database
                         // argument loader will attach that to its next rpc
-                        if ($scope.entity._read_arguments) {
-                            args.read_arguments = $scope.entity._read_arguments;
+                        if (entityCopy._read_arguments) {
+                            args.read_arguments = entityCopy._read_arguments;
                         }
 
-                        if ($scope.entity._read_arguments) {
-                            args._next_read_arguments = $scope.entity._next_read_arguments;
+                        if (entityCopy._next_read_arguments) {
+                            args._next_read_arguments = entityCopy._next_read_arguments;
                         }
 
-                        if (angular.isDefined(args)) {
-                            $.extend(args, $scope.withArgs);
-                        }
+                        $.extend(args, $scope.withArgs);
 
                         args.action_id = $scope.config.action;
                         args.action_model = $scope.config.kind;
@@ -910,14 +908,8 @@ w:                  while (images.length > 0) {
                                         path.config = {};
                                     }
 
-                                    if (angular.isObject(arg[0])) {
-                                        path.config.keys = [];
-                                        angular.forEach(arg, function (subarg) {
-                                            path.config.keys.push(subarg.key);
-                                            angular.forEach(subarg, function (subargArgs, subargArgskey) {
-                                                parser(subargArgs, subargArgskey, path);
-                                            });
-                                        });
+                                    if (arg && angular.isObject(arg[0])) {
+                                        path.config.limit = arg.length;
                                     }
 
                                     readArgs[key] = path;
@@ -1015,7 +1007,7 @@ w:                  while (images.length > 0) {
                                                 open: false
                                             });
 
-                                            //field.ui.label = false;
+                                            // field.ui.label = false;
 
                                         }
 
@@ -1088,7 +1080,6 @@ w:                  while (images.length > 0) {
                                     if (angular.isDefined(config.afterCompleteError)) {
                                         config.afterCompleteError($scope, response);
                                     }
-
                                 };
 
                                 $scope.close = function () {
@@ -1556,7 +1547,7 @@ w:                  while (images.length > 0) {
                                                         open: false
                                                     });
 
-                                                    field.ui.label = false;
+                                                    // field.ui.label = false;
 
                                                 }
 

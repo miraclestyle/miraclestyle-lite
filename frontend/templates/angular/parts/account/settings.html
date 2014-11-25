@@ -14,23 +14,25 @@
             <div form-element-wrapper label="Status">
                 <span>{{entity.state}}</span>
             </div>
-
-            <div form-input="primary_email"></div>
-
+  
             <h2 class="fieldset">Associated login methods</h2>
 
-            <div class="form-control">
 
-                <div ng-repeat="ident in entity.identities track by $index" class="form-control">
-                    <div form-element-wrapper label="{{ident.identity|displayProvider}}">
-                        <button type="button" ng-disabled="!entity.ui.rule.field.identities.writable" class="button" ng-click="disassociate(ident)">
+            <div class="item-list">
+                <div ng-repeat="ident in entity.identities" class="item clearfix">
+                  <div class="item-left">
+                    {{ident.identity|displayProvider}}<br />({{ident.email}}<span ng-if="ident.primary">, Primary</span>)
+                  </div>
+                  <div class="item-right list-actions">
+                     <button loading type="button" ng-disabled="!entity.ui.rule.field.identities.writable" class="button" ng-click="disassociate(ident)">
                             <span ng-show="!isAssociated(ident)">Associate</span>
                             <span ng-show="isAssociated(ident)">Disassociate</span>
-                        </button>
-                    </div>
-
+                      </button>
+                      <button ng-disabled="ident.identity == args.primary_identity" ng-click="setPrimary(ident)" type="button" class="button">Primary</button>
+                  </div>
                 </div>
-
+            </div>
+ 
 
         </accordion-group>
 

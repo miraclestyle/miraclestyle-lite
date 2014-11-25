@@ -491,14 +491,19 @@
             };
         }).directive('loading', function () {
             return {
+                priority: 5000,
                 link: function (scope, element) {
 
                     var disable = function (e) {
                         e.preventDefault();
                         return false;
-                    };
+                    }, disabledInitially = element.prop('disabled');
 
                     scope.$on('disableUI', function ($event, neww) {
+
+                        if (disabledInitially) {
+                            return;
+                        }
 
                         if (neww === true) {
                             element.attr('disabled', 'disabled');

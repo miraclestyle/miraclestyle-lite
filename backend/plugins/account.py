@@ -132,7 +132,7 @@ class AccountLogoutOutput(orm.BaseModel):
 class AccountUpdateSet(orm.BaseModel):
   
   def run(self, context):
-    primary_email = context.input.get('primary_email')
+    primary_identity = context.input.get('primary_identity')
     disassociate = context.input.get('disassociate')
     for identity in context._account.identities.value:
       if disassociate:
@@ -140,8 +140,8 @@ class AccountUpdateSet(orm.BaseModel):
           identity.associated = False
       else:
         identity.associated = True
-      if primary_email:
+      if primary_identity:
         identity.primary = False
-        if identity.email == primary_email:
+        if identity.identity == primary_identity:
           identity.primary = True
           identity.associated = True

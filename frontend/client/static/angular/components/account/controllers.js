@@ -21,8 +21,7 @@
             window.location.href = $scope.authorization_urls[type];
         };
 
-    }).controller('AccountManagementCtrl', function ($scope, currentAccount,
-        models) {
+    }).controller('AccountManagementCtrl', function ($scope, currentAccount, models) {
 
         $scope.settings = function () {
             models['11'].settingsModal(currentAccount.key);
