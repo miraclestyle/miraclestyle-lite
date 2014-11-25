@@ -99,13 +99,9 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 313.0,
+		"height": 203.0,
 		"selected_items":
 		[
-			[
-				"status",
-				"Git: Status"
-			],
 			[
 				"push",
 				"Git: Push"
@@ -119,12 +115,16 @@
 				"Git: Add..."
 			],
 			[
-				"branch",
-				"Git: New Branch"
-			],
-			[
 				"pull",
 				"Git: Pull"
+			],
+			[
+				"status",
+				"Git: Status"
+			],
+			[
+				"branch",
+				"Git: New Branch"
 			],
 			[
 				"list",
@@ -327,25 +327,45 @@
 	},
 	"expanded_folders":
 	[
+		"/Users/admin/Dev/py/miraclestyle-lite",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer/directive",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form"
 	],
 	"file_history":
 	[
-		"/Users/admin/Dev/py/miraclestyle-lite/miraclestyle-lite.sublime-project",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/general.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/directives.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/directives.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/products.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer/directive/buyer_address_display.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/structured.html",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/miraclestyle-lite.sublime-project",
 		"/Users/admin/Dev/py/miraclestyle-lite/.jsbeautifyrc",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeLinter.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/HTMLPrettify.sublime-settings",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/plugins.html",
 		"/Users/admin/Dev/php/localhost/artwinlive2/artwinlive2.sublime-project",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/.jsbeautifyrc",
 		"/Users/admin/Dev/php/localhost/aufberg/ftpsync.settings",
 		"/Users/admin/Dev/php/localhost/aufberg/wp-content/themes/aufberg/handlers/booking.php",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/services.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/general.css",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/modal/structured.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/directives.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/services.js",
 		"/Users/admin/Dev/php/localhost/talbot_press/err_log.log",
 		"/Users/admin/Dev/php/localhost/talbot_press/ftpsync.settings",
@@ -379,8 +399,6 @@
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/services.js",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Package Control.sublime-settings",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer/directive/buyer_address_display.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/products.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/underscore/image.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/modal.css",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/form.css",
@@ -426,7 +444,6 @@
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/seller/directives.js",
 		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/ClosureSnippet",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/location/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/directives.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/directives.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/controllers.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/controllers.js",
@@ -461,7 +478,7 @@
 	],
 	"find":
 	{
-		"height": 23.0
+		"height": 37.0
 	},
 	"find_in_files":
 	{
@@ -496,6 +513,17 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"reader",
+			".item",
+			"showListItem",
+			"default",
+			".item",
+			".itemcatalog-slider",
+			".item",
+			"structured",
+			"showListItem",
+			"show",
+			"directive",
 			"<table",
 			"startsWith",
 			"startswith",
@@ -612,18 +640,7 @@
 			".search",
 			"search",
 			".fake-button input.upload",
-			"<button loading",
-			"config.ui.specifics.addText",
-			"cancel",
-			"Cancel",
-			"windowClass",
-			"class catalogProduct",
-			"models[config.kind",
-			"models[",
-			"window._modelsmeta",
-			"window.",
-			"@todo",
-			"codeintel_scan_files_in_project"
+			"<button loading"
 		],
 		"highlight": true,
 		"in_selection": false,

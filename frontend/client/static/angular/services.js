@@ -1015,7 +1015,7 @@ w:                  while (images.length > 0) {
                                                 open: false
                                             });
 
-                                            field.ui.label = false;
+                                            //field.ui.label = false;
 
                                         }
 

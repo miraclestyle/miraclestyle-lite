@@ -1,17 +1,7 @@
-<div accordion-on-open="accordions">
-    <accordion close-others="accordions.closeOthers">
+<h2 ng-class="{'with-button': config.repeated}" class="fieldset"><span class="fieldset-text">General</span></h2>
 
-        <accordion-group heading="{{accordions.groups.0.label}}" is-open="accordions.groups.0.open" is-disabled="accordions.groups.0.disabled">
+<div form-input="config.keyedFields.name"></div>
+<div form-input="config.keyedFields.publish_date"></div>
+<div form-input="config.keyedFields.discontinue_date"></div>
 
-            <div form-input="config.keyedFields.name"></div>
-            <div form-input="config.keyedFields.publish_date"></div>
-            <div form-input="config.keyedFields.discontinue_date"></div>
-
-        </accordion-group>
-
-
-        <accordion-group heading="{{accordions.groups.1.label}}" is-open="accordions.groups.1.open" is-disabled="accordions.groups.1.disabled">
-            <div form-input="config.keyedFields._images"></div>
-        </accordion-group>
-    </accordion>
-</div>
+<div form-input="config.keyedFields._images"></div>
