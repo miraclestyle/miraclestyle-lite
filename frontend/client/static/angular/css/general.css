@@ -385,7 +385,8 @@ img.vertical, .vertical {
 }
 
 .item-left {
-  float:left;
+  float: left;
+  /*padding: 12px 0px 6px;*/
 }
 
 .item-right {
