@@ -3044,6 +3044,8 @@ class SuperDecimalProperty(SuperStringProperty):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
+    if value is None and not self._required:
+      return util.Nonexistent
     if self._repeated:
       value = [decimal.Decimal(v) for v in value]
     else:

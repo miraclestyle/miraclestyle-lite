@@ -52,6 +52,7 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-touch/angular-touch.js',
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
   'vendor/jquery.kinetic/jquery.kinetic.js',
+  'vendor/angular-elastic/elastic.js',
   'lib/angular-cache/dist/angular-cache.js',
   'vendor/angular-ui-select/dist/select.js',
   'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.js',

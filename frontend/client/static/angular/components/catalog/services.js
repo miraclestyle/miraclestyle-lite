@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals) {
+    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers) {
 
         modelsConfig(function (models) {
             $.extend(models['31'], {
@@ -31,6 +31,7 @@
                             init: function ($scope) {
                                 $.extend(fields._images, {
                                     ui: {
+                                        label: 'Products',
                                         template: 'catalog/underscore/image.html',
                                         specifics: {
                                             sortableOptions: {
@@ -50,8 +51,6 @@
                                         }
                                     }
                                 });
-
-                                console.log(angular.equals($scope.config.fields[0], fields._images));
                             },
                             noComplete: noComplete,
                             scope: { // scope for this modal dialog
@@ -68,15 +67,17 @@
                                                 productsReader;
                                             accessImages.push(fields._images.code_name);
                                             accessProducts.push(fields._products.code_name);
+
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args);
 
+                                            // readers here could work but generally not very good
                                             imagesReader = models[config.kind].reader($scope.args, accessImages, function (items) {
                                                 $scope.args._images.extend(items);
                                             });
                                             // set next arguments from initially loaded data from root scope
-                                            imagesReader.state(parentScope.config.ui.specifics.reader);
+                                            imagesReader.state(parentScope.config.ui.specifics.reader); // this is not good
                                             productsReader = models[config.kind].reader($scope.args, accessProducts, function (items) {
                                                 $scope.args._products.extend(items);
                                             });
@@ -88,12 +89,17 @@
                                                     callback();
                                                 }
                                             };
+
                                             productsReader.load(); // load first 10 products
 
                                             $scope.fieldProducts = fields._products;
                                             $.extend($scope.fieldProducts, {
                                                 ui: {
                                                     specifics: {
+                                                        addText: 'Add Product',
+                                                        getRootArgs: function () {
+                                                            return angular.copy($scope.args);
+                                                        },
                                                         sortable: false,
                                                         listFields: [{
                                                             label: 'Name',
@@ -121,10 +127,13 @@
                                                 ui: {
                                                     label: 'Product Instances',
                                                     specifics: {
+                                                        getRootArgs: function () {
+                                                            return angular.copy($scope.args);
+                                                        },
                                                         sortable: false,
-                                                        beforeManage: function (entity) {
+                                                        canManage: function (entity) {
                                                             if (!entity || !entity._instances.length) {
-                                                                modals.alert('You must add variations in order to create instance');
+                                                                modals.alert('You must add variations in order to create instance.');
                                                                 return false;
                                                             }
                                                         },
@@ -195,8 +204,6 @@
                                             $scope.close = function () {
                                                 $modalInstance.dismiss('close');
                                             };
-
-
                                         }
                                     });
 

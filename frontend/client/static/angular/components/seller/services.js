@@ -233,7 +233,7 @@
                                             field.ui.writable = true;
                                             var extra = getPluginFieldOverrides(kind, field.code_name);
                                             if (extra) {
-                                                $.extend(true, field, extra);
+                                                helpers.extendDeep(field, extra);
                                             }
 
                                             $scope.formBuilder.push(field);

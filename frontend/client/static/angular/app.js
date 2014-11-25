@@ -19,7 +19,7 @@
         GLOBAL_CONFIG = {
             host: host,
             angularModules: ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
-                'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector',
+                'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'monospaced.elastic',
                 'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
             apimodelsMetaPath: host + '/api/model_meta',
             apiEndpointPath: host + '/api/endpoint',

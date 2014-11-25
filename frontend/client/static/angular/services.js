@@ -159,7 +159,34 @@
                 return obj;
 
             },
-
+            extendDeep: function (dst) {
+                angular.forEach(arguments, function (obj) {
+                    if (obj !== dst) {
+                        angular.forEach(obj, function (value, key) {
+                            if (dst[key] && angular.isObject(dst[key])) {
+                                helpers.extendDeep(dst[key], value);
+                            } else {
+                                dst[key] = value;
+                            }
+                        });
+                    }
+                });
+                return dst;
+            },
+            mergeDeep: function (dst) {
+                angular.forEach(arguments, function (obj) {
+                    if (obj !== dst) {
+                        angular.forEach(obj, function (value, key) {
+                            if (dst[key] && angular.isObject(dst[key])) {
+                                helpers.mergeDeep(dst[key], value);
+                            } else if (!angular.isDefined(dst[key])) {
+                                dst[key] = value;
+                            }
+                        });
+                    }
+                });
+                return dst;
+            },
             fancyGrid: {
                 getHeight: function (images, width, margin) {
                     margin = (margin * 2);
@@ -208,6 +235,8 @@ w:                  while (images.length > 0) {
 
             }
         };
+
+        window._helpers = helpers; // @todo remove on production
 
         return helpers;
     }).factory('endpoint', function ($http, generalLocalCache, GLOBAL_CONFIG,
@@ -842,6 +871,7 @@ w:                  while (images.length > 0) {
                     templateBodyUrl: 'entity/modal_editor_default_body.html',
                     templateFooterUrl: 'entity/modal_editor_default_footer.html',
                     scope: {},
+                    fields: [],
                     init: angular.noop,
                     defaultInit: angular.noop,
                     defaultArgumentLoader: function ($scope) {
@@ -924,9 +954,7 @@ w:                  while (images.length > 0) {
                     }
                 }, actionArguments, modelsEditorInstance;
 
-                //$.extend(true, config, new_config);
-
-                _.deepExtend(config, new_config);
+                helpers.extendDeep(config, new_config);
 
                 if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
                     config.fields = [];
@@ -1000,7 +1028,7 @@ w:                  while (images.length > 0) {
                                 };
 
                                 angular.forEach(config.fields, function (field) {
-                                    if (_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) {
+                                    if (field.is_structured) {
                                         if (!_.findWhere($scope.accordions.groups, {key: field.code_name})) {
                                             $scope.accordions.groups.push({
                                                 label: inflector((field.ui.label || field.code_name), 'humanize'),
@@ -1009,7 +1037,7 @@ w:                  while (images.length > 0) {
                                                 open: false
                                             });
 
-                                            // field.ui.label = false;
+                                            field.ui.label = false;
 
                                         }
 
@@ -1017,7 +1045,6 @@ w:                  while (images.length > 0) {
                                             $scope.formBuilder[field.code_name] = [];
                                             $scope.formBuilder[field.code_name].push(field);
                                         }
-
 
                                         $scope.accordions.groups[0].disabled = false;
                                     } else {
@@ -1241,7 +1268,7 @@ w:                  while (images.length > 0) {
                         info.config.ui.specifics.internalConfig = defaultInternalConfig;
                         internalConfig = defaultInternalConfig;
                     } else {
-                        $.extend(true, defaultInternalConfig, internalConfig);
+                        helpers.extendDeep(defaultInternalConfig, internalConfig);
                         internalConfig = defaultInternalConfig;
                         info.config.ui.specifics.internalConfig = internalConfig;
 
@@ -1545,7 +1572,7 @@ w:                  while (images.length > 0) {
                                             field.ui.realPath.pop();
                                             field.ui.realPath.push(length);
                                             field.ui.realPath.push(field.code_name);
-                                            if (_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) {
+                                            if (field.is_structured) {
                                                 if (!_.findWhere($scope.accordions.groups, {key: field.code_name})) {
                                                     $scope.accordions.groups.push({
                                                         label: inflector((field.ui.label || field.code_name), 'humanize'),
@@ -1554,7 +1581,7 @@ w:                  while (images.length > 0) {
                                                         open: false
                                                     });
 
-                                                    // field.ui.label = false;
+                                                    field.ui.label = false;
 
                                                 }
 
@@ -1585,50 +1612,54 @@ w:                  while (images.length > 0) {
                                                 // internal helper to set the action to be executed
                                                 $scope.rootArgs.action_id = action;
                                             };
-                                            $scope.rootArgs = angular.copy(config.ui.specifics.rootScope.args);
+                                            $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
                                             $scope.save = function () {
                                                 if (!$scope.container.form.$valid) { // check if the form is valid
                                                     return;
                                                 }
                                                 var promise,
-                                                    readArgs = {},
-                                                    readRootArgs = $scope.rootArgs,
-                                                    parentArgsPath = $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1);
-                                                // set this args as single item in array    
-                                                helpers.setProperty($scope.rootArgs, parentArgsPath, [$scope.args]);
-                                                // delete all remote structured property from rpc data
-                                                angular.forEach($scope.rootScope.config.fields, function (field) {
-                                                    if ((_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) && field.code_name !== $scope.args.ui.access[0]) {
-                                                        delete $scope.rootArgs[field.code_name];
-                                                    }
-                                                });
-                                                $scope.rootArgs.read_arguments = readArgs;
-                                                angular.forEach(parentArgsPath, function (part, i) {
-                                                    // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
-                                                    // properties in datastore that begin with an number, which we do not
-                                                    if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
-                                                        readArgs[part] = {
-                                                            config: {}
-                                                        };
-                                                        readArgs = readArgs[part];
-                                                    }
-                                                    // produce read path for the rpc
-                                                    readRootArgs = readRootArgs[part];
-                                                    if (angular.isArray(readRootArgs)) {
-                                                        angular.forEach(readRootArgs, function (ent) {
-                                                            if (ent.key !== null && !angular.isDefined(ent.key)) {
-                                                                if (!angular.isDefined(readArgs.config.keys)) {
-                                                                    readArgs.config.keys = [];
-                                                                }
-                                                                readArgs.config.keys.push(ent.key);
+                                                    prepare = function () {
+                                                        var readArgs = {},
+                                                            readRootArgs = $scope.rootArgs,
+                                                            parentArgsPath = $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1);
+                                                        // set this args as single item in array    
+                                                        helpers.setProperty($scope.rootArgs, parentArgsPath, [$scope.args]);
+                                                        // delete all remote structured property from rpc data
+                                                        angular.forEach($scope.rootScope.config.fields, function (field) {
+                                                            if ((_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) && field.code_name !== $scope.args.ui.access[0]) {
+                                                                delete $scope.rootArgs[field.code_name];
                                                             }
                                                         });
-                                                    } else {
-                                                        if (readRootArgs.key !== null && !angular.isDefined(readRootArgs.key)) {
-                                                            readArgs.config.keys = [readRootArgs.key];
-                                                        }
-                                                    }
-                                                });
+                                                        $scope.rootArgs.read_arguments = readArgs;
+                                                        angular.forEach(parentArgsPath, function (part, i) {
+                                                            // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
+                                                            // properties in datastore that begin with an number, which we do not
+                                                            if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
+                                                                readArgs[part] = {
+                                                                    config: {}
+                                                                };
+                                                                readArgs = readArgs[part];
+                                                            }
+                                                            // produce read path for the rpc
+                                                            readRootArgs = readRootArgs[part];
+                                                            if (angular.isArray(readRootArgs)) {
+                                                                angular.forEach(readRootArgs, function (ent) {
+                                                                    if (ent.key !== null && angular.isDefined(ent.key)) {
+                                                                        if (!angular.isDefined(readArgs.config.keys)) {
+                                                                            readArgs.config.keys = [];
+                                                                        }
+                                                                        readArgs.config.keys.push(ent.key);
+                                                                    }
+                                                                });
+                                                            } else {
+                                                                if (readRootArgs.key !== null && !angular.isDefined(readRootArgs.key)) {
+                                                                    readArgs.config.keys = [readRootArgs.key];
+                                                                }
+                                                            }
+                                                        });
+                                                    };
+
+                                                prepare();
                                                 // create rpc from root args's action model and action id
                                                 promise = models[$scope.rootArgs.action_model].actions[$scope.rootArgs.action_id]($scope.rootArgs);
                                                 promise.then(function (response) {
@@ -1652,6 +1683,8 @@ w:                  while (images.length > 0) {
                                                     if (angular.isDefined(config.ui.specifics.afterSave)) {
                                                         config.ui.specifics.afterSave($scope);
                                                     }
+                                                    // re-run prepare
+                                                    prepare();
                                                 }, function (response) {
                                                         // here handle error...
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {
@@ -1743,8 +1776,6 @@ w:                  while (images.length > 0) {
                                                 }
 
                                             };
-
-
                                         }
 
                                         if (config.ui.specifics.scope) {
@@ -2003,7 +2034,7 @@ w:                  while (images.length > 0) {
 
         return models;
 
-    }).factory('modals', function ($modal) {
+    }).factory('modals', function ($modal, helpers) {
 
         return {
             alert: function (text, extraConfig) {
@@ -2017,7 +2048,7 @@ w:                  while (images.length > 0) {
                     text: '',
                     type: 'notice'
                 };
-                $.extend(true, config, extraConfig);
+                helpers.extendDeep(config, extraConfig);
                 return $modal.open({
                     windowClass: 'modal-medium',
                     templateUrl: 'misc/modal/' + config.type + '.html',

@@ -339,7 +339,8 @@
                             }
                         };
 
-                        $.extend(true, config, supplied_config);
+                        helpers.mergeDeep(supplied_config, config);
+                        config = supplied_config;
 
                         if (angular.isDefined(config.ui.writableName) && angular.isArray(config.ui.writable)) {
                             config.ui.writable = [config.ui.writableName];
@@ -392,6 +393,7 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs, ctrl) {
+                    return;
                     var fn = function () {
                         var newval = scope.$eval(attrs.compatibilityMaker),
                             stringified = JSON.stringify(newval);
