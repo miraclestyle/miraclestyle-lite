@@ -1,4 +1,4 @@
-<div class="structured-field">
+<div ng-class="{'structured-field-repeated' : config.repeated, 'field-with-label': config.ui.label}" class="structured-field">
 <% if (config.ui.label !== false) { %>
     <h2 ng-class="{'with-button': config.repeated}" class="fieldset">
 
@@ -31,7 +31,7 @@
                  ui-sortable="config.ui.specifics.sortableOptions" 
                  <% } %> 
           ng-model="config.ui.specifics.parentArgs" class="item-list">
-        <div ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
+        <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
           <div class="item-left">
               <div ng-repeat="field in config.ui.specifics.listFields">
                   

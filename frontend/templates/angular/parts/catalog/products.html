@@ -8,7 +8,7 @@
       
       <div class="catalog-slider-outer hand">
          <div catalog-slider-load-more="loadMoreImages" catalog-slider="images" class="catalog-slider"> 
-             <div ng-repeat="image in args._images" class="catalog-slider-item"><img catalog-slider-image="image" /></div>
+             <div ng-hide="image._state == 'deleted'" ng-repeat="image in args._images" class="catalog-slider-item"><img catalog-slider-image="image" /></div>
          </div>
       </div>
        

@@ -156,7 +156,9 @@
                             code_name: 'kind'
                         },
                         remove: function (arg) {
-                            config.ui.specifics.parentArgs.remove(arg);
+                            arg._state = 'deleted';
+                            info.scope.$emit('itemDelete', arg);
+                            info.scope.$broadcast('itemDelete', arg);
                         },
                         manage: function (arg) {
 
@@ -388,6 +390,9 @@
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);
                             args.account = account_key;
+                            if (args.address === null) {
+                                args.address = {};
+                            }
                             args.read_arguments = read_arguments;
                             return args;
                         },

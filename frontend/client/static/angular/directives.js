@@ -463,8 +463,7 @@
 
                             if (scope.image && scope.image.serving_url) {
                                 img.on('error', error)
-                                    .attr('src', scope.image.serving_url + '=s' + scope.config
-                                        .size);
+                                    .attr('src', scope.image.serving_url + '=s' + scope.config.size);
                             } else {
                                 error.call(img);
                             }
@@ -605,10 +604,14 @@
                             images = [],
                             margin = 1;
                         angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
-                            images.push(angular.copy(image));
+                            if (image._state !== 'deleted') {
+                                images.push(angular.copy(image));
+                            }
                         });
                         helpers.fancyGrid.calculate(canvas, images, 240, margin);
-                        element.find('.grid-item').each(function (i) {
+                        element.find('.grid-item').filter(function () {
+                            return $(this).css('display') !== 'none';
+                        }).each(function (i) {
                             if (!angular.isDefined(images[i])) {
                                 return;
                             }
@@ -624,13 +627,12 @@
                     };
 
                     $(window).on('resize', resize);
-
+                    scope.$on('itemOrderChanged', resize);
                     scope.$on('onNgRepeatEnd', resize);
                     scope.$on('accordionStateChanged', resize);
-                    scope.$on('itemOrderChanged', resize);
-                    scope.$on('itemOrderStarted', resize);
-                    scope.$on('itemOrderSorting', resize);
-
+                    scope.$on('itemDelete', function () {
+                        $timeout(resize);
+                    });
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
                     });

@@ -3624,7 +3624,10 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     # plugin storage needs just to generate key if its non existant, it cannot behave like local struct and remote struct
     # because generally its not in its nature to behave like that
     # its just pickling of data with validation.
-    for val in value:
+    for i, val in enumerate(value):
+      if val._state == 'deleted':
+        value.remove(val)
+        continue
       if not val.key:
         val.generate_unique_key()
     return super(SuperPluginStorageProperty, self)._set_value(entity, value)

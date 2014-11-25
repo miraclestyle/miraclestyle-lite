@@ -23,7 +23,9 @@
                     },
                     measure = function () {
                         var tw = 0;
-                        element.find('.catalog-slider-item').each(function () {
+                        element.find('.catalog-slider-item').filter(function () {
+                            return $(this).css('display') !== 'none';
+                        }).each(function () {
                             tw += $(this).width();
                         });
 
@@ -81,6 +83,9 @@
 
                 $(window).bind('resize', resize);
 
+                scope.$on('itemDelete', function () {
+                    $timeout(resize);
+                });
                 scope.$on('$destroy', function () {
                     $(window).off('resize', resize);
                 });

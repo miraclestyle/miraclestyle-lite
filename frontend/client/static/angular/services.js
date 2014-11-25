@@ -168,13 +168,13 @@
                     angular.forEach(images, function (image) {
                         h += image.proportion;
                     });
-                    return (width / h);
+                    return Math.floor(width / h);
                 },
                 setHeight: function (images, height) {
 
                     angular.forEach(images, function (image) {
-                        image.width = height * image.proportion;
-                        image.height = height;
+                        image.width = Math.floor(height * image.proportion);
+                        image.height = Math.floor(height);
                     });
 
                 },
@@ -924,7 +924,9 @@ w:                  while (images.length > 0) {
                     }
                 }, actionArguments, modelsEditorInstance;
 
-                $.extend(true, config, new_config);
+                //$.extend(true, config, new_config);
+
+                _.deepExtend(config, new_config);
 
                 if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
                     config.fields = [];
@@ -1091,7 +1093,6 @@ w:                  while (images.length > 0) {
                                 // call config constructor, needed for posible on-spot configurations
                                 config.defaultInit($scope);
                                 config.init($scope);
-
                                 console.log('modelsEditor.scope', $scope);
 
                             }
@@ -1349,7 +1350,8 @@ w:                  while (images.length > 0) {
                         listFields = [],
                         newSort = [],
                         newListFields = [],
-                        defaults;
+                        defaults,
+                        defaultSortable;
 
                     defaultFields = defaultFields.sort(helpers.fieldSorter);
 
@@ -1428,7 +1430,7 @@ w:                  while (images.length > 0) {
                         config.ui.specifics.sortableOptions = {};
                     }
 
-                    $.extend(config.ui.specifics.sortableOptions, {
+                    defaultSortable = {
                         forcePlaceholderSize: true,
                         start: function () {
                             info.scope.$broadcast('itemOrderStarted');
@@ -1441,12 +1443,15 @@ w:                  while (images.length > 0) {
                                 function (ent, i) {
                                     i = ((config.ui.specifics.parentArgs.length - 1) - i);
                                     ent._sequence = i;
-                                    ent.sequence = i;
                                 });
 
                             info.scope.$broadcast('itemOrderChanged');
                         }
-                    });
+                    };
+
+                    $.extend(defaultSortable, config.ui.specifics.sortableOptions);
+
+                    config.ui.specifics.sortableOptions = defaultSortable;
 
                     info.scope.$watch(config.ui.args, function (neww, old) {
                         if (neww !== old) {
@@ -1489,6 +1494,8 @@ w:                  while (images.length > 0) {
                         if (config.ui.specifics.remove === undefined) {
                             config.ui.specifics.remove = function (arg) {
                                 arg._state = 'deleted';
+                                info.scope.$emit('itemDelete', arg);
+                                info.scope.$broadcast('itemDelete', arg);
                             };
                         }
 

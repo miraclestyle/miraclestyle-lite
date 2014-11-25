@@ -1,4 +1,4 @@
-<div class="image-property">
+<div ng-class="{'structured-field-repeated' : config.repeated, 'field-with-label': config.ui.label}" class="image-field structured-field">
       <% if (config.repeated) { %>
       <h2 class="fieldset with-button">
         <span class="fieldset-text"><%= config.ui.compiled.label %></span>

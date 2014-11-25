@@ -28,6 +28,31 @@
                             afterSaveError: afterSave,
                             afterComplete: afterComplete,
                             afterCompleteError: afterComplete,
+                            init: function ($scope) {
+                                $.extend(fields._images, {
+                                    ui: {
+                                        template: 'catalog/underscore/image.html',
+                                        specifics: {
+                                            sortableOptions: {
+                                                stop: function () {
+                                                    if (fields._images.ui.specifics.parentArgs.length) {
+                                                        var total = fields._images.ui.specifics.parentArgs[0].sequence;
+                                                        angular.forEach(fields._images.ui.specifics.parentArgs,
+                                                            function (ent, i) {
+                                                                i = ((total + 1) - i);
+                                                                ent.sequence = i;
+                                                            });
+
+                                                        $scope.$broadcast('itemOrderChanged');
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+
+                                console.log(angular.equals($scope.config.fields[0], fields._images));
+                            },
                             noComplete: noComplete,
                             scope: { // scope for this modal dialog
                                 addProducts: function () {
@@ -44,7 +69,7 @@
                                             accessImages.push(fields._images.code_name);
                                             accessProducts.push(fields._products.code_name);
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
-                                            $scope.entity = $scope.rootScope.entity;
+                                            $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args);
 
                                             imagesReader = models[config.kind].reader($scope.args, accessImages, function (items) {
@@ -190,8 +215,6 @@
                                 }
                             }
                         };
-
-                    fields._images.ui.template = 'catalog/underscore/image.html';
 
                     if (isNew) {
                         // get current seller

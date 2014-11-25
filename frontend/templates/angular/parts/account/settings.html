@@ -21,7 +21,7 @@
             <div class="item-list">
                 <div ng-repeat="ident in entity.identities" class="item clearfix">
                   <div class="item-left">
-                    {{ident.identity|displayProvider}}<br />({{ident.email}}<span ng-if="ident.primary">, Primary</span>)
+                    {{ident.identity|displayProvider}}<br />({{ident.email}}<span ng-if="ident.identity == args.primary_identity">, Primary</span>)
                   </div>
                   <div class="item-right list-actions">
                      <button loading type="button" ng-disabled="!entity.ui.rule.field.identities.writable" class="button" ng-click="disassociate(ident)">
