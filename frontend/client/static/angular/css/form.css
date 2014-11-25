@@ -124,7 +124,8 @@
 }
 
 .fieldset.with-button span.fieldset-text {
-  margin-top: 16px;
+  /*margin-top: 16px;*/
+  padding: 11px 0px 5px;
 }
 
 /* validation colors */
