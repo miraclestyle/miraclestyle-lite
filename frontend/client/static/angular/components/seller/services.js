@@ -178,7 +178,7 @@
                                         inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
                                             $scope.accordions = {
-                                                closeOthers: false,
+                                                closeOthers: true,
                                                 groups: [{
                                                     label: 'General',
                                                     disabled: true,
