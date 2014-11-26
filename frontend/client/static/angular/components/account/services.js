@@ -51,7 +51,7 @@
                                         disabled: false,
                                         open: true
                                     }, {
-                                        label: 'Associated Login Methods',
+                                        label: 'Login Methods',
                                         disabled: false,
                                         open: false
                                     }]
