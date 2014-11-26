@@ -256,7 +256,9 @@ class Catalog(orm.BaseExpando):
     '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
                                                   read_arguments={'config': {'order': {'field': 'sequence',
                                                                                        'direction': 'desc'}}}),
-    '_products': orm.SuperRemoteStructuredProperty(CatalogProduct, repeated=True),
+    '_products': orm.SuperRemoteStructuredProperty(CatalogProduct, repeated=True,
+                                                  read_arguments={'config': {'order': {'field': 'name',
+                                                                                       'direction': 'asc'}}}),
     '_records': orm.SuperRecordProperty('31')
     }
   

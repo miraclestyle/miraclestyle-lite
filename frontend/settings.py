@@ -103,7 +103,6 @@ ANGULAR_TEMPLATES = (
   
   ('account/settings.html',),
   
-  ('seller/settings.html',),
   ('seller/plugin/default.html',),
   ('seller/directive/carrier_line_rule_display.html',),
   ('seller/directive/address_rule_location_display.html',),
@@ -111,7 +110,6 @@ ANGULAR_TEMPLATES = (
   ('buyer/directive/buyer_address_display.html',),
   
   ('catalog/list.html',),
-  ('catalog/manage.html',),
   ('catalog/manage_footer.html',),
   ('catalog/underscore/image.html',),
   ('catalog/products.html',),

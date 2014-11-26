@@ -11,7 +11,7 @@
                                 <div accordion-on-open="accordions">
                                     <accordion close-others="accordions.closeOthers">
                                         <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                                            <div form-builder="formBuilder[accordion.key]"></div>
+                                            <div form-builder="formBuilder[$index]"></div>
                                         </accordion-group>
                                     </accordion>
                                 </div>

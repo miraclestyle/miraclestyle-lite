@@ -354,9 +354,9 @@
                             config.ui.realPath = [name];
                         }
 
-                        if (types[supplied_config.type] !== undefined) {
+                        if (types[config.type] !== undefined) {
                             // reference main locals to type builder
-                            tpl = types[supplied_config.type]({
+                            tpl = types[config.type]({
                                 config: config,
                                 element: element,
                                 scope: scope,
@@ -393,7 +393,6 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs, ctrl) {
-                    return;
                     var fn = function () {
                         var newval = scope.$eval(attrs.compatibilityMaker),
                             stringified = JSON.stringify(newval);

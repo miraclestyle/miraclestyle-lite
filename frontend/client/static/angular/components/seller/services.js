@@ -160,6 +160,9 @@
                             info.scope.$emit('itemDelete', arg);
                             info.scope.$broadcast('itemDelete', arg);
                         },
+                        create: function () {
+                            return this.manage();
+                        },
                         manage: function (arg) {
 
                             if (!angular.isDefined(config.ui.specifics.templateUrl)) {
@@ -185,8 +188,7 @@
                                         groups: [{
                                             label: 'General',
                                             disabled: true,
-                                            open: true,
-                                            key: 'general'
+                                            open: true
                                         }]
                                     };
                                     $scope.config = config;
@@ -276,7 +278,6 @@
                                                 angular.forEach($scope.parentArgs, function (item, i) {
                                                     i = total - i;
                                                     item._sequence = i;
-                                                    item.sequence = i;
                                                 });
                                             } else {
                                                 $.extend(arg, $scope.args);
@@ -359,6 +360,7 @@
                 },
                 settingsModal: function (account_key) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'), config;
+                    fields.address.ui.label = false;
                     fields._content.ui.label = false;
                     fields._content.modelclass.documents.ui = {
                         label: false,
@@ -384,9 +386,8 @@
                     config = {
                         kind: this.kind,
                         action: 'update',
-                        fields: fields,
+                        fields: _.toArray(fields),
                         excludeFields: ['account', 'read_arguments'],
-                        templateBodyUrl: 'seller/settings.html',
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);
                             args.account = account_key;
@@ -402,15 +403,17 @@
                                 groups: [{
                                     label: 'General',
                                     open: true,
-                                    key: 'general'
+                                    key: 'general',
+                                    fields: ['name', 'logo'],
+                                }, {
+                                    label: 'Address',
+                                    fields: ['address'],
                                 }, {
                                     label: 'Plugins',
-                                    open: false,
-                                    key: 'plugins'
+                                    fields: ['_plugin_group'],
                                 },  {
                                     label: 'Contents',
-                                    open: false,
-                                    key: 'contents'
+                                    fields: ['_content']
                                 }]
                             }
                         }

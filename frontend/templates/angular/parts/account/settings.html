@@ -14,11 +14,12 @@
             <div form-element-wrapper label="Status">
                 <span>{{entity.state}}</span>
             </div>
-  
-            <h2 class="fieldset">Associated login methods</h2>
+ 
 
+        </accordion-group>
 
-            <div class="item-list">
+        <accordion-group heading="{{accordions.groups.1.label}}" is-open="accordions.groups.1.open" is-disabled="accordions.groups.1.disabled">
+           <div class="item-list">
                 <div ng-repeat="ident in entity.identities" class="item clearfix">
                   <div class="item-left">
                     {{ident.identity|displayProvider}}<br />({{ident.email}}<span ng-if="ident.identity == args.primary_identity">, Primary</span>)
@@ -32,8 +33,6 @@
                   </div>
                 </div>
             </div>
- 
-
         </accordion-group>
 
     </accordion>

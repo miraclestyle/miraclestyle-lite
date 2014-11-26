@@ -187,6 +187,13 @@
                 });
                 return dst;
             },
+            isPropertyAccordionable: function (prop) {
+                return $.inArray(prop.type, ['SuperRemoteStructuredProperty',
+                                             'SuperLocalStructuredProperty',
+                                             'SuperStructuredProperty',
+                                             'SuperImageRemoteStructuredProperty',
+                                             'SuperImageLocalStructuredProperty']) !== -1;
+            },
             fancyGrid: {
                 getHeight: function (images, width, margin) {
                     margin = (margin * 2);
@@ -967,7 +974,6 @@ w:                  while (images.length > 0) {
                     });
 
                 }
-
                 config.keyedFields = {};
                 angular.forEach(config.fields, function (field) {
                     config.keyedFields[field.code_name] = field;
@@ -1000,7 +1006,10 @@ w:                  while (images.length > 0) {
                         $modal.open({
                             templateUrl: 'entity/modal_editor.html',
                             controller: function ($scope, $modalInstance) {
-                                var inflector = $filter('inflector');
+                                var inflector = $filter('inflector'),
+                                    field,
+                                    done = {},
+                                    found = false;
                                 modelsUtil.normalize(entity);
                                 $scope.container = {
                                     action: endpoint.url
@@ -1012,45 +1021,6 @@ w:                  while (images.length > 0) {
                                 $scope.$modalInstance = $modalInstance;
                                 $scope.args = config.argumentLoader($scope);
                                 $scope.rootScope = $scope;
-
-                                $scope.accordions = {
-                                    closeOthers: true,
-                                    groups: [{
-                                        label: 'General',
-                                        disabled: true,
-                                        key: 'general',
-                                        open: true
-                                    }]
-                                };
-
-                                $scope.formBuilder = {
-                                    general: []
-                                };
-
-                                angular.forEach(config.fields, function (field) {
-                                    if (field.is_structured) {
-                                        if (!_.findWhere($scope.accordions.groups, {key: field.code_name})) {
-                                            $scope.accordions.groups.push({
-                                                label: inflector((field.ui.label || field.code_name), 'humanize'),
-                                                disabled: false,
-                                                key: field.code_name,
-                                                open: false
-                                            });
-
-                                            field.ui.label = false;
-
-                                        }
-
-                                        if (!angular.isDefined($scope.formBuilder[field.code_name])) {
-                                            $scope.formBuilder[field.code_name] = [];
-                                            $scope.formBuilder[field.code_name].push(field);
-                                        }
-
-                                        $scope.accordions.groups[0].disabled = false;
-                                    } else {
-                                        $scope.formBuilder.general.push(field);
-                                    }
-                                });
 
                                 $scope.setAction = function (action) {
                                     $scope.args.action_id = action;
@@ -1117,6 +1087,86 @@ w:                  while (images.length > 0) {
 
                                 // load scope from config into the current scope
                                 $.extend($scope, config.scope);
+
+                                $scope.formBuilder = {
+                                    '0': []
+                                };
+
+                                if (!angular.isDefined($scope.accordions)) {
+                                    $scope.accordions = {
+                                        closeOthers: true,
+                                        groups: [{
+                                            label: 'General',
+                                            disabled: true,
+                                            open: true
+                                        }]
+                                    };
+
+                                    angular.forEach(config.fields, function (field) {
+                                        if (helpers.isPropertyAccordionable(field)) {
+                                            $scope.accordions.groups.push({
+                                                label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                disabled: false,
+                                                open: false
+                                            });
+
+                                            field.ui.label = false;
+
+                                            var next = $scope.accordions.groups.length - 1;
+
+                                            if (!angular.isDefined($scope.formBuilder[next])) {
+                                                $scope.formBuilder[next] = [];
+                                                $scope.formBuilder[next].push(field);
+                                            }
+
+                                            $scope.accordions.groups[0].disabled = false;
+                                        } else {
+                                            $scope.formBuilder['0'].push(field);
+                                        }
+                                    });
+
+                                    angular.forEach($scope.accordions.groups, function (group, i) {
+                                        if (found) {
+                                            return;
+                                        }
+                                        if ($scope.formBuilder[i].length) {
+                                            group.open = true;
+                                            found = true;
+                                        } else {
+                                            group.open = false;
+                                        }
+                                    });
+
+                                } else {
+                                    angular.forEach($scope.accordions.groups, function (group, i) {
+                                        $scope.formBuilder[i] = [];
+                                        if (!angular.isDefined(group.fields)) {
+                                            var wait = false;
+                                            angular.forEach(config.fields, function (field) {
+                                                if (wait) {
+                                                    return;
+                                                }
+                                                if (!done[field.code_name]) {
+                                                    done[field.code_name] = 1;
+                                                    if (helpers.isPropertyAccordionable(field)) {
+                                                        wait = true;
+                                                    }
+
+                                                    $scope.formBuilder[i].push(field);
+                                                }
+                                            });
+                                        } else {
+                                            angular.forEach(group.fields, function (field_key) {
+                                                if (!done[field_key]) {
+                                                    field = config.keyedFields[field_key];
+                                                    $scope.formBuilder[i].push(field);
+                                                    done[field_key] = 1;
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+
                                 // call config constructor, needed for posible on-spot configurations
                                 config.defaultInit($scope);
                                 config.init($scope);
@@ -1526,6 +1576,7 @@ w:                  while (images.length > 0) {
                             };
                         }
 
+
                         if (config.ui.specifics.manage === undefined) {
                             config.ui.specifics.manage = function (arg) {
 
@@ -1537,15 +1588,14 @@ w:                  while (images.length > 0) {
                                         var isNew = false,
                                             length = config.ui.specifics.parentArgs.length,
                                             formBuilder = {
-                                                general: []
+                                                '0': []
                                             };
 
                                         $scope.config = config;
                                         if (!arg) {
                                             arg = {
                                                 kind: config.modelclass_kind,
-                                                _sequence: length,
-                                                sequence: length
+                                                _sequence: length
                                             };
                                             modelsUtil.normalize(arg, config.modelclass,
                                                 config.ui.specifics.entity, config.code_name,
@@ -1563,7 +1613,6 @@ w:                  while (images.length > 0) {
                                             groups: [{
                                                 label: 'General',
                                                 disabled: true,
-                                                key: 'general',
                                                 open: true
                                             }]
                                         };
@@ -1572,26 +1621,25 @@ w:                  while (images.length > 0) {
                                             field.ui.realPath.pop();
                                             field.ui.realPath.push(length);
                                             field.ui.realPath.push(field.code_name);
-                                            if (field.is_structured) {
-                                                if (!_.findWhere($scope.accordions.groups, {key: field.code_name})) {
-                                                    $scope.accordions.groups.push({
-                                                        label: inflector((field.ui.label || field.code_name), 'humanize'),
-                                                        disabled: false,
-                                                        key: field.code_name,
-                                                        open: false
-                                                    });
+                                            if (helpers.isPropertyAccordionable(field)) {
+                                                $scope.accordions.groups.push({
+                                                    label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                    disabled: false,
+                                                    key: field.code_name,
+                                                    open: false
+                                                });
 
-                                                    field.ui.label = false;
+                                                field.ui.label = false;
 
-                                                }
+                                                var next = $scope.accordions.groups.length - 1;
 
-                                                if (!angular.isDefined(formBuilder[field.code_name])) {
-                                                    formBuilder[field.code_name] = [];
-                                                    formBuilder[field.code_name].push(field);
+                                                if (!angular.isDefined(formBuilder[next])) {
+                                                    formBuilder[next] = [];
+                                                    formBuilder[next].push(field);
                                                 }
                                                 $scope.accordions.groups[0].disabled = false;
                                             } else {
-                                                formBuilder.general.push(field);
+                                                formBuilder['0'].push(field);
                                             }
                                         });
                                         $scope.formBuilder = formBuilder;
@@ -1790,6 +1838,10 @@ w:                  while (images.length > 0) {
                                 });
                             };
 
+                        }
+
+                        if (config.ui.specifics.create === undefined) {
+                            config.ui.specifics.create = config.ui.specifics.manage;
                         }
                     }
 

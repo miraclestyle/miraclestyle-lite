@@ -48,9 +48,12 @@
                                     closeOthers: true,
                                     groups: [{
                                         label: 'General',
-                                        disabled: true,
-                                        open: true,
-                                        key: 'general'
+                                        disabled: false,
+                                        open: true
+                                    }, {
+                                        label: 'Associated login methods',
+                                        disabled: false,
+                                        open: false
                                     }]
                                 }
                             }

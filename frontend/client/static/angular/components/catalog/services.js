@@ -22,7 +22,6 @@
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
                             fields: _.toArray(fields),
-                            templateBodyUrl: 'catalog/manage.html',
                             templateFooterUrl: 'catalog/manage_footer.html',
                             afterSave: afterSave,
                             afterSaveError: afterSave,
@@ -95,6 +94,7 @@
                                             $scope.fieldProducts = fields._products;
                                             $.extend($scope.fieldProducts, {
                                                 ui: {
+                                                    label: false,
                                                     specifics: {
                                                         addText: 'Add Product',
                                                         getRootArgs: function () {
@@ -208,16 +208,16 @@
                                     });
 
                                 },
-                                accordions: { // accordion listeners & labels
+                                accordions: {
                                     closeOthers: true,
                                     groups: [{
                                         label: 'General',
                                         open: true,
-                                        key: 'general'
+                                        fields: ['name', 'publish_date', 'discontinue_date'],
                                     }, {
                                         label: 'Products',
                                         open: false,
-                                        key: 'products'
+                                        fields: ['_images']
                                     }]
                                 }
                             }
