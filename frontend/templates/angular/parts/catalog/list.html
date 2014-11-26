@@ -1,8 +1,9 @@
-<h1 class="fieldset with-button">
-    <span class="fieldset-text">Catalogs</span>
+<div class="clearfix buttons">
+  <div class="pull-right">
     <span class="fieldset-button"><a class="button" loading ng-click="create()">Create Catalog</a>
     </span>
-</h1>
+  </div>
+</div>
 
 <div autoload-on-scrollend class="grid-wrapper clearfix">
     <div ng-repeat="result in search.results track by $index" grid-generator-image="result.cover" grid-generator="{square:false, margin:1, maxWidth:240, minWidth:180}" class="grid-item grid-generator">
