@@ -41,9 +41,11 @@
 .button[disabled]:hover {
   border: 1px solid #CCCCCC;
   background-color: #FFFFFF;
+  border-bottom: 1px solid #EEEEEE;
 }
 
 .clearfix.buttons {
+  padding-bottom: 10px;
   margin-bottom: 10px;
 }
 
