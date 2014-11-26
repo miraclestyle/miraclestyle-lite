@@ -1516,11 +1516,14 @@ w:                  while (images.length > 0) {
                     }
 
                     defaultSortable = {
-                        forcePlaceholderSize: true,
-                        start: function () {
+                        start: function (e, ui) {
                             info.scope.$broadcast('itemOrderStarted');
                         },
-                        sort: function () {
+                        sort: function (e, ui) {
+                            var sample = ui.placeholder.next();
+                            if (sample.length) {
+                                ui.placeholder.width(sample.width()).height(sample.height());
+                            }
                             info.scope.$broadcast('itemOrderSorting');
                         },
                         stop: function () {

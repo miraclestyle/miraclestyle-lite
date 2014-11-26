@@ -287,8 +287,6 @@
                                             found.disabled = true;
                                         }
 
-
-
                                     };
 
                                     $scope.container = {};
