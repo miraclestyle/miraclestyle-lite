@@ -1009,7 +1009,8 @@ w:                  while (images.length > 0) {
                                 var inflector = $filter('inflector'),
                                     field,
                                     done = {},
-                                    found = false;
+                                    found = false,
+                                    realTotal = 0;
                                 modelsUtil.normalize(entity);
                                 $scope.container = {
                                     action: endpoint.url
@@ -1126,16 +1127,23 @@ w:                  while (images.length > 0) {
                                     });
 
                                     angular.forEach($scope.accordions.groups, function (group, i) {
-                                        if (found) {
+                                        if ($scope.formBuilder[i].length) {
+                                            realTotal += 1;
+                                        }
+                                        if (found !== false) {
                                             return;
                                         }
                                         if ($scope.formBuilder[i].length) {
                                             group.open = true;
-                                            found = true;
+                                            found = group;
                                         } else {
                                             group.open = false;
                                         }
                                     });
+
+                                    if (realTotal === 1) {
+                                        found.disabled = true;
+                                    }
 
                                 } else {
                                     angular.forEach($scope.accordions.groups, function (group, i) {

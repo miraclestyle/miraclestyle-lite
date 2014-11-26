@@ -181,7 +181,7 @@
                                                 closeOthers: true,
                                                 groups: [{
                                                     label: 'General',
-                                                    disabled: true,
+                                                    disabled: false,
                                                     open: true
                                                 }]
                                             };
@@ -226,7 +226,9 @@
                                         resetFormBuilder();
                                         var kind = $scope.info.kind,
                                             settingsFields = config.ui.specifics.fields,
-                                            fields = modelsMeta.getModelFields(kind);
+                                            fields = modelsMeta.getModelFields(kind),
+                                            realTotal = 0,
+                                            found = false;
                                         fields = _.toArray(fields);
                                         fields.sort(helpers.fieldSorter);
                                         if (settingsFields) {
@@ -265,6 +267,28 @@
                                                 $scope.formBuilder['0'].push(field);
                                             }
                                         });
+
+                                        angular.forEach($scope.accordions.groups, function (group, i) {
+                                            if ($scope.formBuilder[i].length) {
+                                                realTotal += 1;
+                                            }
+                                            if (found !== false) {
+                                                return;
+                                            }
+                                            if ($scope.formBuilder[i].length) {
+                                                group.open = true;
+                                                found = group;
+                                            } else {
+                                                group.open = false;
+                                            }
+                                        });
+
+                                        if (realTotal === 1) {
+                                            found.disabled = true;
+                                        }
+
+
+
                                     };
 
                                     $scope.container = {};
