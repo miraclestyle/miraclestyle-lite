@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app').run(function ($window, modelsConfig, modelsMeta,
-        modelsEditor, formInputTypes, underscoreTemplate, $modal, helpers, $q, $timeout, currentAccount) {
+        modelsEditor, formInputTypes, underscoreTemplate, $modal, helpers, $q, $timeout, currentAccount, $filter) {
 
         modelsConfig(function (models) {
             formInputTypes.SuperPluginStorageProperty = function (info) {
@@ -174,7 +174,21 @@
                                     config: config
                                 }),
                                 controller: function ($scope, $modalInstance, modelsUtil) {
-                                    var is_new = false;
+                                    var is_new = false,
+                                        inflector = $filter('inflector'),
+                                        resetFormBuilder = function () {
+                                            $scope.accordions = {
+                                                closeOthers: false,
+                                                groups: [{
+                                                    label: 'General',
+                                                    disabled: true,
+                                                    open: true
+                                                }]
+                                            };
+                                            $scope.formBuilder = {
+                                                '0': [config.ui.specifics.selectKinds]
+                                            };
+                                        };
 
                                     if (!arg) {
                                         arg = {};
@@ -183,14 +197,6 @@
                                         build: true
                                     };
 
-                                    $scope.accordions = {
-                                        closeOthers: false,
-                                        groups: [{
-                                            label: 'General',
-                                            disabled: true,
-                                            open: true
-                                        }]
-                                    };
                                     $scope.config = config;
                                     $scope.setNewArg = function () {
                                         if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
@@ -214,10 +220,10 @@
                                         }
                                     };
 
-                                    $scope.pluginTemplate = 'seller/plugin/default.html';
-                                    $scope.formBuilder = [];
+                                    resetFormBuilder();
+
                                     $scope.getFormBuilder = function () {
-                                        $scope.formBuilder = [];
+                                        resetFormBuilder();
                                         var kind = $scope.info.kind,
                                             settingsFields = config.ui.specifics.fields,
                                             fields = modelsMeta.getModelFields(kind);
@@ -230,15 +236,34 @@
                                         }
 
                                         angular.forEach(fields, function (field) {
-
                                             field.ui.formName = 'plugin_' + field.code_name;
                                             field.ui.writable = true;
-                                            var extra = getPluginFieldOverrides(kind, field.code_name);
+                                            var extra = getPluginFieldOverrides(kind, field.code_name),
+                                                next;
                                             if (extra) {
                                                 helpers.extendDeep(field, extra);
                                             }
 
-                                            $scope.formBuilder.push(field);
+                                            if (helpers.isPropertyAccordionable(field)) {
+                                                $scope.accordions.groups.push({
+                                                    label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                    disabled: false,
+                                                    open: false
+                                                });
+
+                                                field.ui.label = false;
+
+                                                next = $scope.accordions.groups.length - 1;
+
+                                                if (!angular.isDefined($scope.formBuilder[next])) {
+                                                    $scope.formBuilder[next] = [];
+                                                    $scope.formBuilder[next].push(field);
+                                                }
+
+                                                $scope.accordions.groups[0].disabled = false;
+                                            } else {
+                                                $scope.formBuilder['0'].push(field);
+                                            }
                                         });
                                     };
 

@@ -5,9 +5,8 @@
             <div class="modal-body-inner">
                 <div accordion-on-open="accordions">
                     <accordion close-others="accordions.closeOthers">
-                        <accordion-group heading="{{accordions.groups.0.label}}" is-open="accordions.groups.0.open" is-disabled="accordions.groups.0.disabled">
-                            <div form-input="config.ui.specifics.selectKinds"></div>
-                            <div ng-include="pluginTemplate"></div>
+                        <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
+                            <div form-builder="formBuilder[$index]"></div>
                         </accordion-group>
                     </accordion>
                 </div>
