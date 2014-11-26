@@ -30,7 +30,7 @@
                             init: function ($scope) {
                                 $.extend(fields._images, {
                                     ui: {
-                                        label: 'Products',
+                                        label: false,
                                         template: 'catalog/underscore/image.html',
                                         specifics: {
                                             sortableOptions: {

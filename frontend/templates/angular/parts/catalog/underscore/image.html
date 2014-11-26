@@ -1,9 +1,28 @@
 <div ng-class="{'structured-field-repeated' : config.repeated, 'field-with-label': config.ui.label}" class="image-field structured-field">
 
 
-   <h2 class="fieldset with-button">
-        <span class="fieldset-text"><%= config.ui.compiled.label %></span>
-        <span class="fieldset-button">
+
+    <% if (config.ui.label !== false) { %>
+           
+
+       <h2 class="fieldset with-button">
+            <span class="fieldset-text"><%= config.ui.compiled.label %></span>
+            <span class="fieldset-button">
+                <button loading type="button" ng-click="addProducts()" class="button">Add Products</button>
+                <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
+                    <span>Add Images
+                        <span ng-show="$isUploading">(Uploading...)</span>
+                    </span>
+                    <input class="upload" name="<%= config.ui.formName %>" multiple generate-upload-url="true" type="file" />
+                </div>
+            </span>
+       </h2>
+      
+      <% } else { %>
+
+
+      <div class="clearfix buttons">
+        <div class="pull-right">
             <button loading type="button" ng-click="addProducts()" class="button">Add Products</button>
             <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
                 <span>Add Images
@@ -11,8 +30,10 @@
                 </span>
                 <input class="upload" name="<%= config.ui.formName %>" multiple generate-upload-url="true" type="file" />
             </div>
-        </span>
-   </h2>
+        </div>
+      </div>
+       
+      <% } %>
  
 
     <div ui-sortable="config.ui.specifics.sortableOptions" fancy-grid-generator="config.ui.specifics.parentArgs" ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
