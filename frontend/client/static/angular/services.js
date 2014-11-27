@@ -194,6 +194,22 @@
                                              'SuperImageRemoteStructuredProperty',
                                              'SuperImageLocalStructuredProperty']) !== -1;
             },
+            calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
+                /*  
+                ihp - Initial Horizontal Price Tag Position 
+                ivp - Initial Vertical Price Tag Position 
+                iiw - Initial Image Width  
+                iih - Initial Image Height  
+
+                ciw - Current Image Width  
+                cih - Current Image Height  
+                chp - Current Horizontal Price Tag Position  
+                cvp - Current Vertical Price Tag Position  
+                */
+                var chp = (ihp / iiw) * ciw,
+                    cvp = (ivp / iih) * cih;
+                return [chp, cvp];
+            },
             fancyGrid: {
                 getHeight: function (images, width, margin) {
                     margin = (margin * 2);
@@ -946,7 +962,10 @@ w:                  while (images.length > 0) {
                                     }
 
                                     if (arg && angular.isObject(arg[0])) {
-                                        path.config.limit = arg.length;
+                                        //path.config.limit = arg.length; // @todo this cannot be used because of entities that have different order by
+                                        path.config.keys = $.map(arg, function (ent) {
+                                            return ent.key;
+                                        });
                                     }
 
                                     readArgs[key] = path;
@@ -1207,6 +1226,13 @@ w:                  while (images.length > 0) {
 
                     return info.config.template;
                 },
+                _SelectBox: function (info) {
+                    if (angular.isDefined(info.config.ui.placeholder)) {
+                        info.config.ui.placeholder = 'Select...';
+                    }
+
+                    return 'select';
+                },
                 SuperStringProperty: function (info) {
                     var config = info.config;
                     if (config.ui.attrs.type === undefined) {
@@ -1214,7 +1240,7 @@ w:                  while (images.length > 0) {
                     }
 
                     if (config.choices) {
-                        return 'select';
+                        return this._SelectBox(info);
                     }
 
                     if (info.config.repeated) {
@@ -1228,7 +1254,7 @@ w:                  while (images.length > 0) {
                     var config = info.config;
 
                     if (config.choices) {
-                        return 'select';
+                        return this._SelectBox(info);
                     }
                     return this.SuperStringProperty(info);
                 },
@@ -1236,7 +1262,7 @@ w:                  while (images.length > 0) {
                     var config = info.config;
 
                     if (config.choices) {
-                        return 'select';
+                        return this._SelectBox(info);
                     }
 
                     return this.SuperFloatProperty(info);
@@ -1244,7 +1270,7 @@ w:                  while (images.length > 0) {
                 SuperDecimalProperty: function (info) {
                     var config = info.config;
                     if (config.choices) {
-                        return 'select';
+                        return this._SelectBox(info);
                     }
                     return this.SuperFloatProperty(info);
                 },
@@ -1269,7 +1295,7 @@ w:                  while (images.length > 0) {
                                 },
                                 view: {
                                     'default': function (result) {
-                                        if (result === undefined) {
+                                        if (!result) {
                                             return '';
                                         }
                                         return result.name;
@@ -1422,9 +1448,11 @@ w:                  while (images.length > 0) {
                     if (angular.isFunction(config.ui.specifics.entities)) {
                         config.ui.specifics.entities = config.ui.specifics.entities();
                     }
+                    if (!angular.isDefined(config.ui.placeholder)) {
+                        config.ui.placeholder = 'Select...';
+                    }
                     return 'select_async';
                 },
-
                 SuperLocalStructuredProperty: function (info) {
                     var config = info.config,
                         fields = [],

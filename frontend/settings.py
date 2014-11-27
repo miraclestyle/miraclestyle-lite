@@ -112,6 +112,7 @@ ANGULAR_TEMPLATES = (
   ('catalog/manage_footer.html',),
   ('catalog/underscore/image.html',),
   ('catalog/products.html',),
+  ('catalog/products_modal_footer.html',),
   
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),

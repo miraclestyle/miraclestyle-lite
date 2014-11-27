@@ -1694,8 +1694,8 @@ class StructuredPropertyValue(PropertyValue):
             else:
               new_list.append(ent)
             property_value = new_list
-    self._property_value = property_value
-    self._set_parent()
+      self._property_value = property_value
+      self._set_parent()
   
   def _deep_read(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
@@ -2424,7 +2424,7 @@ class _BaseStructuredProperty(_BaseProperty):
                   generate = False
                   break
             if generate:
-              if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+              if not val.key:
                 val.generate_unique_key()
               current_values.append(val)
           def sorting_function(val):
@@ -2434,7 +2434,7 @@ class _BaseStructuredProperty(_BaseProperty):
         if current_values is None:
           current_values = []
         for val in current_values:
-          if not val.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+          if not val.key:
             val.generate_unique_key()
     elif not self._repeated:
       if current_values:
@@ -2443,10 +2443,10 @@ class _BaseStructuredProperty(_BaseProperty):
           current_values = value_instance.value
           if current_values and current_values.key: # ensure that we will always have a key
             value.key = current_values.key
-          elif not value.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+          elif not value.key:
             generate = True
           current_values = value
-        elif not current_values.key: # @todo this is not how is supposed to be done, but we have a problem with arguments
+        elif not current_values.key:
           generate = True
         if generate and current_values:
           current_values.generate_unique_key()
@@ -3044,7 +3044,7 @@ class SuperDecimalProperty(SuperStringProperty):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
-    if value is None and not self._required:
+    if (value is None or not len(value)) and not self._required:
       return util.Nonexistent
     if self._repeated:
       value = [decimal.Decimal(v) for v in value]

@@ -1,0 +1,6 @@
+<div>
+  <button ng-if="args.key" loading type="button" class="button" ng-click="config.ui.specifics.remove(args, close)">Remove</button>
+  <button ng-if="args.key" loading type="button" class="button" ng-click="config.ui.specifics.duplicate(args, close)">Duplicate</button>
+  <button submit-if-files-no-complete="noComplete" submit-if-files="save" loading class="button">Save</button>
+  <button loading type="button" class="button" ng-click="close()">Close</button>
+</div>

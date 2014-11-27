@@ -6,7 +6,7 @@
              <%= config.ui.compiled.attrs %>
              <% if (config.repeated) { %>multiple<% } %>>
              
-          <ui-select-match placeholder="Select...">{{config.ui.specifics.view(<% if (config.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
+          <ui-select-match placeholder="{{config.ui.placeholder}}">{{config.ui.specifics.view(<% if (config.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
           <ui-select-choices
                    repeat="ent.key as ent in config.ui.specifics.entities <% if (config.ui.specifics.propsFilter) { %> | propsFilter: <%- config.ui.specifics.propsFilter %> <% } %>"
                    <% if (config.ui.specifics.search) { %>

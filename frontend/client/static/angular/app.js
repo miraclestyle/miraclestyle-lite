@@ -20,7 +20,7 @@
             host: host,
             angularModules: ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
                 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'monospaced.elastic',
-                'ngSanitize', 'angular-data.DSCacheFactory'], // this will be changed accordingly
+                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop'], // this will be changed accordingly
             apimodelsMetaPath: host + '/api/model_meta',
             apiEndpointPath: host + '/api/endpoint',
             dateFormat: 'yyyy-MM-dd HH:mm:ss Z',
@@ -40,3 +40,11 @@
 
 
 }());
+
+$(function () {
+    'use strict';
+    var container = $("<div>").css({ height: 1, overflow: "scroll" }).appendTo("body"),
+        child = $("<div>").css({ height: 2 }).appendTo(container);
+    window.SCROLLBAR_WIDTH = container.width() - child.width();
+    container.remove();
+});

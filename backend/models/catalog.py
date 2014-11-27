@@ -203,7 +203,7 @@ class CatalogPricetag(orm.BaseModel):
   image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
   position_top = orm.SuperFloatProperty('4', required=True, indexed=False)
   position_left = orm.SuperFloatProperty('5', required=True, indexed=False)
-  value = orm.SuperStringProperty('6', required=True, indexed=False)
+  value = orm.SuperJsonProperty('6', required=True, indexed=False)
 
 
 class CatalogImage(Image):
@@ -298,7 +298,7 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'cron')], True, 'account._is_taskqueue'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'public_search')], True, 'True'),
       orm.FieldPermission('31', ['created', 'updated', 'name', 'publish_date', 'discontinue_date',
-                                 'state', 'cover', 'cost', '_images', '_products', '_records'], False, True,
+                                 'state', 'cover', 'cost', '_images', '_records'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and entity._original.key_root == account.key)'),
       orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',

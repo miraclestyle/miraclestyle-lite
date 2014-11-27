@@ -6,6 +6,7 @@
 
             models['19'].settingsModal = function (account_key) {
                 var fields = modelsMeta.getActionArguments(this.kind, 'update'),
+                    addressFields = fields.addresses.modelclass,
                     config;
                 fields.addresses.ui = {
                     label: false,
@@ -80,6 +81,10 @@
 
                     }
                 };
+
+                addressFields.name.ui.placeholder = 'Your first name...'; // example
+                addressFields.city.ui.placeholder = 'The town you reside';
+
 
                 config = {
                     fields: [fields.addresses],

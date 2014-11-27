@@ -265,6 +265,7 @@
 
                         attrs['ng-required'] = 'config.required';
                         attrs['ng-model'] = config.ui.args;
+                        attrs.placeholder = '{{config.ui.placeholder}}';
 
                         if (!angular.isArray(config.ui.writable)) {
                             attrs['ng-disabled'] = '!' + config.ui.writable;
@@ -369,6 +370,10 @@
                                 label: utils.label(config)
                             };
 
+                            if (config.ui.render === false) {
+                                return;
+                            }
+
                             template = underscoreTemplate.get(angular.isDefined(config.ui.template) ? config.ui.template : 'underscore/form/' + tpl + '.html')({
                                 config: config
                             });
@@ -378,7 +383,7 @@
                             $compile(element.contents())(scope);
 
                         } else {
-                            console.error('Field type: ' + config.type +
+                            console.warn('Field type: ' + config.type +
                                 ' is not supported yet.');
                         }
 
@@ -721,6 +726,22 @@
                         return angular.isString(val) || angular.isNumber(val);
                     };
 
+                }
+            };
+        }).directive('standardClick', function ($parse) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    var callback = $parse(attrs.standardClick);
+                    element.on('click', function (event) {
+                        if (element.hasClass('dragged')) {
+                            element.removeClass('dragged');
+                            return;
+                        }
+                        scope.$apply(function () {
+                            callback(scope, {event: event});
+                        });
+                    });
                 }
             };
         });

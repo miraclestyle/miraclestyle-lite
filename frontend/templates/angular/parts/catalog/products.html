@@ -1,33 +1,57 @@
 <div class="fitter" fit-in-dialog>
 <form name="container.form" ng-submit="save()" method="post" action="{{container.action}}">
   <input type="hidden" compatibility-maker="args" name="__body__" />
+  <input type="hidden" form-input="fieldProducts" />
     
   <div class="modal-body unscrollable">
   <div class="clearfix">
-    <div class="pull-left t60"> 
-      
-      <div class="catalog-slider-outer hand">
+ 
+      <div class="catalog-slider-outer">
          <div catalog-slider-load-more="loadMoreImages" catalog-slider="images" class="catalog-slider"> 
-             <div ng-hide="image._state == 'deleted'" ng-repeat="image in args._images" class="catalog-slider-item"><img catalog-slider-image="image" /></div>
+             <div ng-hide="image._state == 'deleted'"
+                  ng-repeat="image in args._images track by $index" class="catalog-slider-item"
+                  drop="true"
+                  jqyoui-options="{accept: '.new-pricetag'}"
+                  jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
+                  >
+             <img catalog-new-pricetag="createProduct(image, config)"
+                  catalog-slider-image="image" />
+
+
+               <div ng-repeat="pricetag in image.pricetags track by $index"
+                    ng-model="image.pricetags"
+                    ng-hide="pricetag._state == 'deleted'"
+                    jqyoui-options="{containment : 'parent'}"
+                    jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
+                    drag="true" class="button pricetag"
+                    catalog-pricetag-position="pricetag">
+                      <a loading standard-click="manageProduct(image, pricetag)" href="javascript:;">{{pricetag.value.name}}</a>
+               </div>
+
+            </div>
          </div>
       </div>
        
     </div>
-    
-    <div class="pull-right t40">
-      <div class="modal-body-inner scrollable"> 
-         
-        <div form-input="fieldProducts"></div>
  
-        <div class="corner-right">
-                <div>
-                  <button loading type="submit" class="button">Save</button>
-                  <button loading type="button" class="button" ng-click="close()">Close</button>
-              </div>
-        </div>
-      </div>
-    </div>
   </div>
+
+  <div class="modal-footer">
+
+      <ul class="list-inline-block">
+       <li ng-repeat="product in fakeProducts track by $index" loading type="button" class="button new-pricetag"
+                    drag="true"
+                    jqyoui-options="{revert: 'invalid', helper: 'clone'}"
+                    ng-model="fakeProducts"
+                    jqyoui-draggable="{index: $index, placeholder: 'keep'}">Add Product</li>
+      </ul>
+
+     
+      <button loading type="submit" class="button">Save</button>
+      <button loading type="button" class="button" ng-click="close()">Close</button>
+ 
+  </div>
+  
       
   </div>
  

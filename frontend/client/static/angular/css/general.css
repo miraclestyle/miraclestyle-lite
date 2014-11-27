@@ -329,6 +329,7 @@ img.vertical, .vertical {
   overflow: hidden;
   position: relative;
   width: 100%;
+  overflow-x:visible;
 }
 
 .catalog-slider .catalog-slider-item
@@ -406,4 +407,13 @@ img.vertical, .vertical {
 
 .ui-sortable-helper {
   border-top:1px solid #EEEEEE;
+}
+.list-inline-block, .list-inline-block li {
+  display:inline-block;
+
+}
+
+.list-inline-block {
+  margin:0px;
+  padding:0px;
 }

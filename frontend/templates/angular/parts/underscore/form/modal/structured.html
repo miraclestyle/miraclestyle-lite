@@ -19,6 +19,9 @@
                         </div>
 
                         <div class="modal-footer">
+                            <% if (config.ui.specifics.templateFooterUrl) { %>
+                            <span ng-include="config.ui.specifics.templateFooterUrl"></span>
+                            <% } else { %>
                             <button <% if (config.ui.specifics.remote) { %>
                                  submit-if-files-no-complete="noComplete" submit-if-files="save"
                                 <% } else { %>type="submit"
@@ -27,6 +30,7 @@
                             <button type="button" loading class="button" ng-click="close()">
                                 Close
                             </button>
+                            <% } %>
                         </div>
     </form>
 </div>
