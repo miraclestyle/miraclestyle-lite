@@ -132,17 +132,19 @@
 
             setProperty: function (obj, prop, value) {
                 var path = prop,
-                    of;
+                    of,
+                    last;
                 if (!angular.isArray(path)) {
                     path = prop.split('.');
                 }
+                last = path[path.length - 1];
                 path = path.slice(0, path.length - 1);
                 if (!path.length) {
                     obj[prop.join('')] = value;
                     return;
                 }
                 of = this.getProperty(obj, path);
-                of[path[path.length - 1]] = value;
+                of[last] = value;
             },
             getProperty: function (obj, prop) {
                 var path = prop;
@@ -1464,7 +1466,8 @@ w:                  while (images.length > 0) {
                         newSort = [],
                         newListFields = [],
                         defaults,
-                        defaultSortable;
+                        defaultSortable,
+                        buildPaths;
 
                     defaultFields = defaultFields.sort(helpers.fieldSorter);
 
@@ -1575,28 +1578,33 @@ w:                  while (images.length > 0) {
                         }
                     });
 
-                    config.ui.specifics.formBuilder = [];
-                    angular.forEach(config.ui.specifics.fields, function (field) {
-                        var copyWritable = angular.copy(config.ui.writable);
+                    buildPaths = function () {
+                        config.ui.specifics.formBuilder = [];
+                        angular.forEach(config.ui.specifics.fields, function (field) {
+                            var copyWritable = angular.copy(config.ui.writable);
 
-                        if (angular.isArray(copyWritable)) {
-                            copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
-                        }
+                            if (angular.isArray(copyWritable)) {
+                                copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
+                            }
 
-                        field.ui.path = [];
-                        field.ui.path.extend(angular.copy(config.ui.path));
-                        field.ui.path.push(field.code_name);
-                        field.ui.realPath = [];
-                        field.ui.realPath.extend(angular.copy(config.ui.realPath));
-                        field.ui.realPath.push(field.code_name);
-                        if (!angular.isDefined(field.ui.formName)) {
-                            field.ui.formName = config.ui.formName + '_' + field.code_name;
-                        }
-                        field.ui.writable = copyWritable;
-                        config.ui.specifics.formBuilder.push(field);
-                    });
+                            field.ui.path = [];
+                            field.ui.path.extend(config.ui.path);
+                            field.ui.path.push(field.code_name);
+                            field.ui.realPath = [];
+                            field.ui.realPath.extend(config.ui.realPath);
+                            field.ui.realPath.push(field.code_name);
+                            if (!angular.isDefined(field.ui.formName)) {
+                                field.ui.formName = config.ui.formName + '_' + field.code_name;
+                            }
+                            field.ui.writable = copyWritable;
+                            config.ui.specifics.formBuilder.push(field);
+                        });
+                    };
 
-                    if (!config.repeated) {
+                    buildPaths();
+
+
+                    if (!config.repeated && config.ui.specifics.modal !== true) {
 
                         config.ui.specifics.SingularCtrl = function ($scope) {
                             $scope.args = config.ui.specifics.parentArgs;
@@ -1619,13 +1627,17 @@ w:                  while (images.length > 0) {
                         if (config.ui.specifics.manage === undefined) {
                             config.ui.specifics.manage = function (arg) {
 
+                                buildPaths();
+
+                                console.log(config.type + '.specifics.manage', config);
+
                                 $modal.open({
                                     template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
                                         config: config
                                     }),
                                     controller: function ($scope, $modalInstance, modelsUtil) {
                                         var isNew = false,
-                                            length = config.ui.specifics.parentArgs.length,
+                                            length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
                                             formBuilder = {
                                                 '0': []
                                             };
@@ -1641,9 +1653,11 @@ w:                  while (images.length > 0) {
                                                 length);
                                             arg.ui.access = angular.copy(config.ui.specifics.formBuilder[0].ui.realPath);
                                             arg.ui.access.pop();
-                                            arg.ui.access.push(length);
+                                            if (!config.ui.specifics.modal) {
+                                                arg.ui.access.push(length);
+                                            }
                                             isNew = true;
-                                        } else {
+                                        } else if (!config.ui.specifics.modal) {
                                             length = _.last(arg.ui.access);
                                         }
 
@@ -1658,7 +1672,9 @@ w:                  while (images.length > 0) {
                                         angular.forEach(config.ui.specifics.formBuilder, function (field) {
                                             field = angular.copy(field);
                                             field.ui.realPath.pop();
-                                            field.ui.realPath.push(length);
+                                            if (!config.ui.specifics.modal) {
+                                                field.ui.realPath.push(length);
+                                            }
                                             field.ui.realPath.push(field.code_name);
                                             if (helpers.isPropertyAccordionable(field)) {
                                                 $scope.accordions.groups.push({
@@ -1708,13 +1724,15 @@ w:                  while (images.length > 0) {
                                                     prepare = function () {
                                                         var readArgs = {},
                                                             readRootArgs = $scope.rootArgs,
-                                                            parentArgsPath = $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1);
-                                                        // set this args as single item in array    
-                                                        helpers.setProperty($scope.rootArgs, parentArgsPath, [$scope.args]);
+                                                            parentArgsPath = (config.ui.specifics.modal ? $scope.args.ui.access : $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1));
+                                                        // set this args as single item in array
+                                                        helpers.setProperty($scope.rootArgs, parentArgsPath, $scope.args);
                                                         // delete all remote structured property from rpc data
                                                         angular.forEach($scope.rootScope.config.fields, function (field) {
                                                             if ((_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) && field.code_name !== $scope.args.ui.access[0]) {
-                                                                delete $scope.rootArgs[field.code_name];
+                                                                if (config.ui.path[0] !== field.code_name) {
+                                                                    delete $scope.rootArgs[field.code_name];
+                                                                }
                                                             }
                                                         });
                                                         $scope.rootArgs.read_arguments = readArgs;
@@ -1729,6 +1747,7 @@ w:                  while (images.length > 0) {
                                                             }
                                                             // produce read path for the rpc
                                                             readRootArgs = readRootArgs[part];
+                                                            console.log(readArgs, readRootArgs);
                                                             if (angular.isArray(readRootArgs)) {
                                                                 angular.forEach(readRootArgs, function (ent) {
                                                                     if (ent.key !== null && angular.isDefined(ent.key)) {
@@ -1739,8 +1758,11 @@ w:                  while (images.length > 0) {
                                                                     }
                                                                 });
                                                             } else {
-                                                                if (readRootArgs.key !== null && !angular.isDefined(readRootArgs.key)) {
-                                                                    readArgs.config.keys = [readRootArgs.key];
+                                                                if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
+                                                                    if (!angular.isDefined(readArgs.config.keys)) {
+                                                                        readArgs.config.keys = [];
+                                                                    }
+                                                                    readArgs.config.keys.push(readRootArgs.key);
                                                                 }
                                                             }
                                                         });
@@ -1757,11 +1779,16 @@ w:                  while (images.length > 0) {
                                                         accessPath.push(path);
                                                         accessPath.push(0);
                                                     });
+                                                    if (config.ui.specifics.modal) {
+                                                        accessPath.pop();
+                                                    }
                                                     // allways populate the data from the response
                                                     value = helpers.getProperty(response.data.entity, accessPath);
                                                     $.extend($scope.args, value);
                                                     if (isNew) {
-                                                        $scope.parentArgs.unshift($scope.args);
+                                                        if (config.repeated) {
+                                                            $scope.parentArgs.unshift($scope.args);
+                                                        }
                                                         isNew = false;
                                                     }
 
@@ -1791,7 +1818,9 @@ w:                  while (images.length > 0) {
                                                     accessPath.push(path);
                                                     accessPath.push(0);
                                                 });
-                                                // allways populate the data from the response
+                                                if (config.ui.specifics.modal) {
+                                                    accessPath.pop();
+                                                }                                                // allways populate the data from the response
                                                 value = helpers.getProperty(response.data.entity, accessPath);
                                                 $.extend($scope.args, value);
                                                 if (angular.isDefined(config.ui.specifics.afterComplete)) {

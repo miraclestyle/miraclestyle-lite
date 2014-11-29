@@ -1763,6 +1763,10 @@ class StructuredPropertyValue(PropertyValue):
    
 
 class LocalStructuredPropertyValue(StructuredPropertyValue):
+
+  def __init__(self, *args, **kwargs):
+    super(LocalStructuredPropertyValue, self).__init__(*args, **kwargs)
+    self._structured_property_values = []
   
   @property
   def value(self):
@@ -1780,6 +1784,12 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
       if wrapped:
         self._property._get_user_value(self._entity) # _get_user_value will unwrap values from _BaseValue when possible
     return super(LocalStructuredPropertyValue, self).value
+
+  def post_update(self):
+    for structured in self._structured_property_values:
+      if isinstance(structured, PropertyValue) and hasattr(structured, 'post_update'):
+        structured.post_update()
+
   
   def _read(self, read_arguments):
     property_value = self._property._get_user_value(self._entity)
@@ -1797,12 +1807,20 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   
   def pre_update(self):
     if self.has_value():
+      fields = self._property.get_modelclass().get_fields()
+      def collect_structured(value):
+        for field_key, field in fields.iteritems():
+          cval = getattr(value, field_key)
+          if isinstance(cval, PropertyValue):
+            self._structured_property_values.append(cval)
+
       if self._property._repeated:
         delete_entities = []
         originals = {}
         if not self._property._updateable:
           originals = dict((ent.key.urlsafe(), ent) for ent in getattr(self._entity._original, self.property_name, []))
         for entity in self._property_value:
+          collect_structured(entity)
           if (entity._state == 'deleted' and self._property._deleteable) \
             or (not self._property._addable and entity.key.urlsafe() not in originals):
             # if the property is deleted and deleteable
@@ -1810,6 +1828,17 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             delete_entities.append(entity)
         for delete_entity in delete_entities:
           self._property_value.remove(delete_entity)
+        for structured in self._structured_property_values:
+          structured.read()
+          if structured.has_value():
+            if isinstance(structured.value, list):
+              for val in structured.value:
+                #val._state = 'deleted'
+                pass
+            else:
+              pass
+              #structured.value._state = 'deleted'
+
         if not self._property._updateable: # if the property is not updatable we must revert all data to original
           for i,ent in enumerate(self._property_value):
             urlsafe = ent.key.urlsafe()
@@ -1817,19 +1846,24 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
               self._property_value[i] = copy.deepcopy(originals[urlsafe])
       else:
         # We must mutate on the entity itself.
+        collect_structured(self._property_value)
         if self._property_value._state == 'deleted' and self._property._deleteable:
           self._property_value = None  # Comply with expando and virtual fields.
       self._property._set_value(self._entity, self._property_value, True) # we override default behaviour because if we dont,
       # the code above is useless, see _set_value in local structured
       
-  def delete(self):
+  def delete(self): # __delete__ could be very agressive on locally structured properties. use `del` keyword with caution
     if self._property._deleteable:
       self.read()
       property_value = self._property_value
       if not self._property._repeated:
         property_value = [self._property_value]
       for value in property_value:
-        value._state = 'deleted'
+        if isinstance(value, PropertyValue):
+          if hasattr(value, 'delete'):
+            value.delete()
+        else:
+          value._state = 'deleted'
   
   def duplicate(self):
     values = self.read()
@@ -2426,6 +2460,8 @@ class _BaseStructuredProperty(_BaseProperty):
             if generate:
               if not val.key:
                 val.generate_unique_key()
+              if hasattr(val, 'prepare'):
+                val.prepare(parent=entity.key)
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
@@ -2436,6 +2472,8 @@ class _BaseStructuredProperty(_BaseProperty):
         for val in current_values:
           if not val.key:
             val.generate_unique_key()
+          if hasattr(val, 'prepare'):
+            val.prepare(parent=entity.key)
     elif not self._repeated:
       if current_values:
         generate = False
@@ -2450,6 +2488,8 @@ class _BaseStructuredProperty(_BaseProperty):
           generate = True
         if generate and current_values:
           current_values.generate_unique_key()
+        if hasattr(current_values, 'prepare'):
+          current_values.prepare(parent=entity.key)
     value_instance.set(current_values)
     return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
   

@@ -191,6 +191,11 @@ class CatalogProduct(orm.BaseExpando):
     '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom')
     }
 
+  def prepare(self, **kwargs):
+    parent = kwargs.get('parent') # catalog->pricetag
+    product_key = self.build_key(parent._id_str, parent=parent.parent())
+    return product_key
+
 
 class CatalogPricetag(orm.BaseModel):
   
@@ -198,13 +203,20 @@ class CatalogPricetag(orm.BaseModel):
   
   _use_rule_engine = False
   
-  product = orm.SuperKeyProperty('1', kind='28', required=True, indexed=False)
-  image_width = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
-  image_height = orm.SuperIntegerProperty('3', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
-  position_top = orm.SuperFloatProperty('4', required=True, indexed=False)
-  position_left = orm.SuperFloatProperty('5', required=True, indexed=False)
-  value = orm.SuperJsonProperty('6', required=True, indexed=False)
+  image_width = orm.SuperIntegerProperty('1', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
+  image_height = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
+  position_top = orm.SuperFloatProperty('3', required=True, indexed=False)
+  position_left = orm.SuperFloatProperty('4', required=True, indexed=False)
+  value = orm.SuperJsonProperty('5', required=True, indexed=False)
 
+  _virtual_fields = {
+    '_product': orm.SuperRemoteStructuredProperty(CatalogProduct, required=True),
+  }
+
+  def prepare(self, **kwargs):
+    parent = kwargs.get('parent') # catalog->catalog_image
+    catalog_pricetag_key = self.build_key(self.key_id_str, parent=parent.parent())
+    return catalog_pricetag_key
 
 class CatalogImage(Image):
   
@@ -217,6 +229,7 @@ class CatalogImage(Image):
   
   def prepare(self, **kwds):
     key_id = self.key_id
+    print self.key, kwds.get('parent')
     self.set_key(key_id, parent=kwds.get('parent'))
     if key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
@@ -256,9 +269,6 @@ class Catalog(orm.BaseExpando):
     '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
                                                   read_arguments={'config': {'order': {'field': 'sequence',
                                                                                        'direction': 'desc'}}}),
-    '_products': orm.SuperRemoteStructuredProperty(CatalogProduct, repeated=True,
-                                                  read_arguments={'config': {'order': {'field': 'name',
-                                                                                       'direction': 'asc'}}}),
     '_records': orm.SuperRecordProperty('31')
     }
   
@@ -402,7 +412,6 @@ class Catalog(orm.BaseExpando):
         'publish_date': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
         '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
-        '_products': orm.SuperRemoteStructuredProperty(CatalogProduct, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -413,8 +422,7 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'_catalog.name': 'input.name',
                            '_catalog.publish_date': 'input.publish_date',
                            '_catalog.discontinue_date': 'input.discontinue_date',
-                           '_catalog._images': 'input._images',
-                           '_catalog._products': 'input._products'}}),
+                           '_catalog._images': 'input._images'}}),
             CatalogProcessCoverSet(),
             RulePrepare(),
             RuleExec()
@@ -469,7 +477,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'path': '_catalog._products.value.0.images',
+            UploadImages(cfg={'path': '_catalog._images.value.0.pricetags.value.0._product.value.images',
                               'images_path': 'input.images'}),
             RulePrepare(),
             RuleExec()
@@ -496,7 +504,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            UploadImages(cfg={'path': '_catalog._products.value.0._instances.value.0.images',
+            UploadImages(cfg={'path': '_catalog._images.value.0.pricetags.value.0._product.value._instances.value.0.images',
                               'images_path': 'input.images'}),
             RulePrepare(),
             RuleExec()

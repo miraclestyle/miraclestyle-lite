@@ -62,14 +62,13 @@
                                         controller: function ($scope, $modalInstance, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
-                                                fieldProductsAfterSave;
+                                                fieldProductAfterSave;
                                             accessImages.push(fields._images.code_name);
 
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.config = $scope.rootScope.config;
-                                            $scope.args._products = [];
 
                                             // readers here could work but generally not very good
                                             imagesReader = models[config.kind].reader($scope.args, accessImages, function (items) {
@@ -121,7 +120,6 @@
                                                         pass = true;
                                                         newParent = prevParent;
                                                         newPositionLeft = (prevParent.width() - helperW) - 5;
-                                                        console.log('moving left');
 
                                                     } else if (left === 0 && !moveLeft) {
                                                         // go to right
@@ -129,11 +127,7 @@
                                                         pass = true;
                                                         newParent = nextParent;
                                                         newPositionLeft = 5;
-                                                        console.log('moving right');
                                                     }
-
-
-                                                    console.log(left, currentLeft, index);
 
                                                     if (index !== -1 && pass) {
                                                         newImage = $scope.args._images[index];
@@ -146,7 +140,6 @@
                                                             pricetag._position_top = currentTop;
                                                             image.pricetags.remove(pricetag);
                                                             newImage.pricetags.push(angular.copy(pricetag));
-                                                            console.log('moving ', pricetag);
 
                                                         }
                                                     }
@@ -190,81 +183,68 @@
                                                 }
                                             };
 
-                                            fieldProductsAfterSave = function ($scope) {
+                                            fieldProductAfterSave = function ($scope) {
                                                 $scope.setAction('product_upload_images');
                                             };
 
                                             $scope.manageProduct = function (image, pricetag) {
-                                                $scope.fieldProducts.ui.specifics.pricetag = pricetag;
-                                                $scope.fieldProducts.ui.specifics.afterSave = function (fieldProductsScope) {
-                                                    fieldProductsAfterSave(fieldProductsScope);
-                                                    if (pricetag) {
-                                                        pricetag.value = {
-                                                            value: fieldProductsScope.args.unit_price,
-                                                            name: fieldProductsScope.args.name
-                                                        };
-                                                        $scope.save();
-                                                    }
-                                                };
-                                                models[config.kind].actions.read({
+                                                $scope.pricetag = pricetag;
+                                                models['31'].actions.read({
                                                     key: $scope.entity.key,
                                                     read_arguments: {
-                                                        _products: {
+                                                        _images: {
                                                             config: {
-                                                                keys: [pricetag.product]
+                                                                keys: [image.key]
+                                                            },
+                                                            pricetags: {
+                                                                _product: {}
                                                             }
                                                         }
                                                     }
-                                                }).then(function (response) {
-                                                    $scope.fieldProducts.ui.specifics.manage(response.data.entity._products[0]);
                                                 });
+                                                //$scope.fieldProduct.ui.specifics.manage(pricetag._product);
                                             };
 
                                             $scope.createProduct = function (image, config) {
-                                                $scope.fieldProducts.ui.specifics.afterSave = function (fieldProductsScope) {
-                                                    fieldProductsAfterSave(fieldProductsScope);
-                                                    var pricetag = _.findWhere(image.pricetags, {product: fieldProductsScope.args.key});
-                                                    console.log(pricetag);
-                                                    if (!pricetag) {
-                                                        image.pricetags.push({
-                                                            image_height: config.image_height,
-                                                            image_width: config.image_width,
-                                                            position_left: config.position_left,
-                                                            position_top: config.position_top,
-                                                            _position_left: config.position_left,
-                                                            _position_top: config.position_top,
-                                                            product: fieldProductsScope.args.key,
-                                                            value: {
-                                                                value: fieldProductsScope.args.unit_price,
-                                                                name: fieldProductsScope.args.name
-                                                            }
-                                                        });
 
-                                                    } else {
-                                                        pricetag.value = {
-                                                            value: fieldProductsScope.args.unit_price,
-                                                            name: fieldProductsScope.args.name
-                                                        };
+                                                var newPricetag = {
+                                                    image_height: config.image_height,
+                                                    image_width: config.image_width,
+                                                    position_left: config.position_left,
+                                                    position_top: config.position_top,
+                                                    _position_left: config.position_left,
+                                                    _position_top: config.position_top,
+                                                    value: {},
+                                                    _product: {},
+                                                    ui: {
+                                                        access: ['_images', 'pricetags', image.pricetags.length]
                                                     }
+                                                }, ii = $scope.args._images.indexOf(image);
 
-                                                    $scope.save();
-                                                };
+                                                $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product'];
 
-                                                $scope.fieldProducts.ui.specifics.create();
+                                                $scope.args._images[ii].pricetags.push(newPricetag);
+                                                $scope.pricetag = newPricetag;
+
+                                                $scope.fieldProduct.ui.specifics.create();
                                             };
 
-                                            $scope.fieldProducts = fields._products;
-                                            $.extend($scope.fieldProducts, {
+                                            $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
+                                            $.extend($scope.fieldProduct, {
                                                 ui: {
+                                                    args: 'pricetag._product',
+                                                    parentArgs: 'pricetag',
+                                                    path: ['_images', 'pricetags', '_product'],
                                                     render: false,
                                                     label: false,
                                                     specifics: {
+                                                        modal: true,
                                                         templateFooterUrl: 'catalog/products_modal_footer.html',
                                                         addText: 'Add Product',
                                                         getRootArgs: function () {
                                                             return angular.copy($scope.args);
                                                         },
-                                                        afterSave: fieldProductsAfterSave,
+                                                        afterSave: fieldProductAfterSave,
                                                         afterComplete: function ($scope) {
                                                             $scope.setAction('update');
                                                         },
@@ -272,8 +252,6 @@
                                                             $scope.setAction('update');
                                                         },
                                                         remove: function (product, close) {
-                                                            product._state = 'deleted';
-                                                            $scope.args._products.push(product);
                                                             this.pricetag._state = 'deleted';
                                                             close();
                                                         }
@@ -281,11 +259,11 @@
                                                 }
                                             });
 
-                                            $scope.fieldProducts.modelclass.images.ui = {
+                                            $scope.fieldProduct.modelclass.images.ui = {
                                                 formName: 'images'
                                             };
 
-                                            $.extend($scope.fieldProducts.modelclass._instances, {
+                                            $.extend($scope.fieldProduct.modelclass._instances, {
                                                 ui: {
                                                     label: 'Product Instances',
                                                     specifics: {
@@ -327,7 +305,7 @@
                                                 }
                                             });
 
-                                            $.extend($scope.fieldProducts.modelclass.contents, {
+                                            $.extend($scope.fieldProduct.modelclass.contents, {
                                                 ui: {
                                                     specifics: {
                                                         addText: 'Add Content',
@@ -339,14 +317,14 @@
                                                 }
                                             });
 
-                                            $.extend($scope.fieldProducts.modelclass.images, {
+                                            $.extend($scope.fieldProduct.modelclass.images, {
                                                 ui: {
                                                     formName: 'images',
                                                     specifics: {}
                                                 }
                                             });
 
-                                            $.extend($scope.fieldProducts.modelclass.variants, {
+                                            $.extend($scope.fieldProduct.modelclass.variants, {
                                                 ui: {
                                                     specifics: {
                                                         addText: 'Add Variant',

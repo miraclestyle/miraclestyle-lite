@@ -343,12 +343,16 @@
                         helpers.mergeDeep(supplied_config, config);
                         config = supplied_config;
 
-                        if (angular.isDefined(config.ui.writableName) && angular.isArray(config.ui.writable)) {
-                            config.ui.writable = [config.ui.writableName];
-                        }
 
                         if (!angular.isDefined(config.ui.path)) {
                             config.ui.path = [name];
+                        }
+
+
+                        if (angular.isDefined(config.ui.writableName)) {
+                            config.ui.writable = [config.ui.writableName];
+                        } else {
+                            config.ui.writable = angular.copy(config.ui.path);
                         }
 
                         if (!angular.isDefined(config.ui.realPath)) {
@@ -369,6 +373,8 @@
                                 attrs: utils.attrs(config),
                                 label: utils.label(config)
                             };
+
+                            console.log(config.type, config);
 
                             if (config.ui.render === false) {
                                 return;

@@ -84,3 +84,9 @@ indexes:
   properties:
   - name: '6'
   - name: '3'
+
+# CatalogProduct
+- kind: '28'
+  ancestor: yes
+  properties:
+  - name: '2'
