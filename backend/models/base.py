@@ -157,6 +157,10 @@ class LocalStructuredImagePropertyValue(_ImagePropertyValue, orm.LocalStructured
     self._update_blobs()
     super(LocalStructuredImagePropertyValue, self).pre_update()
 
+  def delete(self):
+    super(LocalStructuredImagePropertyValue, self).delete()
+    self._update_blobs()
+
 
 class RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm.RemoteStructuredPropertyValue):
   

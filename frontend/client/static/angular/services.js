@@ -11,6 +11,10 @@
                     required: function (fields) {
                         return 'Some values are missing: ' + fields.join(', ');
                     },
+                    traceback: function (trace) {
+                        var parse = $.parseHTML(trace);
+                        return $(parse).filter('pre').text();
+                    },
                     transaction: function (reason) {
 
                         if (reason === 'timeout') {
@@ -137,7 +141,7 @@
                 if (!angular.isArray(path)) {
                     path = prop.split('.');
                 }
-                last = path[path.length - 1];
+                last = _.last(path);
                 path = path.slice(0, path.length - 1);
                 if (!path.length) {
                     obj[prop.join('')] = value;
@@ -837,7 +841,7 @@ w:                  while (images.length > 0) {
                     if (!rejection.config.ignoreErrors) {
 
                         if (rejection.status > 200) {
-                            errorHandling.modal(rejection.data.errors);
+                            errorHandling.modal(angular.isString(rejection.data) ? {'traceback': rejection.data} : rejection.data.errors);
                             enableUI();
                             return $q.reject(rejection);
                         }
@@ -1642,6 +1646,7 @@ w:                  while (images.length > 0) {
                                                 '0': []
                                             };
 
+                                        $scope.response = null;
                                         $scope.config = config;
                                         if (!arg) {
                                             arg = {
@@ -1772,6 +1777,7 @@ w:                  while (images.length > 0) {
                                                 // create rpc from root args's action model and action id
                                                 promise = models[$scope.rootArgs.action_model].actions[$scope.rootArgs.action_id]($scope.rootArgs);
                                                 promise.then(function (response) {
+                                                    $scope.response = response;
                                                     var accessPath = [],
                                                         value;
                                                     // set the access path like _products.0._instances.0 because we always pick one key for read path    
@@ -1810,7 +1816,7 @@ w:                  while (images.length > 0) {
                                             };
 
                                             $scope.complete = function (response) {
-
+                                                $scope.response = response;
                                                 var accessPath = [],
                                                     value;
                                                 // set the access path like _products.0._instances.0 because we always pick one key for read path    

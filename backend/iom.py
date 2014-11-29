@@ -178,11 +178,10 @@ class Engine:
   
   @classmethod
   def execute_action(cls, context, input):
-    util.log('Execute action: %s.%s' % (context.model.__name__, context.action.key_id_str))
-    util.log('Arguments: %s' % (context.input))
+    util.log('Execute Action: %s.%s' % (context.model.__name__, context.action.key_id_str))
     def execute_plugins(plugins):
       for plugin in plugins:
-        util.log('Running plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
+        util.log('Running Plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
         plugin.run(context)
     if hasattr(context.model, 'get_plugin_groups') and callable(context.model.get_plugin_groups):
       try:
@@ -201,8 +200,6 @@ class Engine:
   
   @classmethod
   def run(cls, input):
-    # json.dumps(input, indent=2)
-    util.log('Payload: %s' % input)
     context = Context()
     cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
@@ -213,6 +210,7 @@ class Engine:
       cls.process_action_input(context, input)
       cls.execute_action(context, input)
       cls.process_blob_state('success')  # Delete and/or save all blobs that have to be deleted and/or saved on success.
+      util.log('Action Completed')
     except Exception as e:
       cls.process_blob_state('error')  # Delete and/or save all blobs that have to be deleted and/or saved or error.
       throw = True
@@ -230,5 +228,6 @@ class Engine:
       if throw:
         raise  # Here we raise all other unhandled exceptions!
     finally:
+      util.log('Process Blob Output')
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
     return context.output

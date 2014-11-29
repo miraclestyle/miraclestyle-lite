@@ -57,5 +57,12 @@
 
         };
 
+    }).filter('autobr', function (helpers) {
+
+        return function (str) {
+            return helpers.splitLines(str).join("<br />");
+        };
+
     });
+
 }());

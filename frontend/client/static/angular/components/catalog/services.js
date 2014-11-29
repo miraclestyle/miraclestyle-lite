@@ -183,11 +183,20 @@
                                                 }
                                             };
 
-                                            fieldProductAfterSave = function ($scope) {
-                                                $scope.setAction('product_upload_images');
+                                            fieldProductAfterSave = function (fieldScope) {
+                                                fieldScope.setAction('product_upload_images');
+                                                var image = _.findWhere(fieldScope.response.data.entity._images, {key: $scope.image.key}),
+                                                    updatedPricetag = image.pricetags;
+                                                if (!$scope.pricetag.key) {
+                                                    updatedPricetag = _.last(updatedPricetag);
+                                                } else {
+                                                    updatedPricetag = _.findWhere(updatedPricetag, {key: $scope.pricetag.key});
+                                                }
+                                                $.extend($scope.pricetag, updatedPricetag);
                                             };
 
                                             $scope.manageProduct = function (image, pricetag) {
+                                                $scope.image = image;
                                                 $scope.pricetag = pricetag;
                                                 models['31'].actions.read({
                                                     key: $scope.entity.key,
@@ -197,12 +206,19 @@
                                                                 keys: [image.key]
                                                             },
                                                             pricetags: {
-                                                                _product: {}
+                                                                config: {},
+                                                                _product: {
+                                                                    config: {}
+                                                                }
                                                             }
                                                         }
                                                     }
+                                                }).then(function (response) {
+                                                    var responseEntity = response.data.entity,
+                                                        loadedPricetag = _.findWhere(responseEntity._images[0].pricetags, {key: $scope.pricetag.key});
+                                                    $scope.pricetag._product = loadedPricetag._product;
+                                                    $scope.fieldProduct.ui.specifics.manage(loadedPricetag._product);
                                                 });
-                                                //$scope.fieldProduct.ui.specifics.manage(pricetag._product);
                                             };
 
                                             $scope.createProduct = function (image, config) {
@@ -222,10 +238,9 @@
                                                 }, ii = $scope.args._images.indexOf(image);
 
                                                 $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product'];
-
                                                 $scope.args._images[ii].pricetags.push(newPricetag);
                                                 $scope.pricetag = newPricetag;
-
+                                                $scope.image = image;
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };
 
@@ -252,7 +267,7 @@
                                                             $scope.setAction('update');
                                                         },
                                                         remove: function (product, close) {
-                                                            this.pricetag._state = 'deleted';
+                                                            $scope.pricetag._state = 'deleted';
                                                             close();
                                                         }
                                                     }

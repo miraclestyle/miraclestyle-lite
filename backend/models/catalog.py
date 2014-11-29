@@ -155,7 +155,8 @@ class CatalogProductInstance(orm.BaseExpando):
     return product_instance_key
   
   def prepare(self, **kwargs):
-    self.key = self.prepare_key({'variant_signature': self.variant_signature}, **kwargs)
+    entity = kwargs.get('entity')
+    self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=entity.key)
 
 
 class CatalogProduct(orm.BaseExpando):
@@ -192,9 +193,9 @@ class CatalogProduct(orm.BaseExpando):
     }
 
   def prepare(self, **kwargs):
-    parent = kwargs.get('parent') # catalog->pricetag
-    product_key = self.build_key(parent._id_str, parent=parent.parent())
-    return product_key
+    entity = kwargs.get('entity')
+    product_key = self.build_key(entity.key_id_str, parent=entity.key)
+    self.key = product_key
 
 
 class CatalogPricetag(orm.BaseModel):
@@ -210,13 +211,22 @@ class CatalogPricetag(orm.BaseModel):
   value = orm.SuperJsonProperty('5', required=True, indexed=False)
 
   _virtual_fields = {
-    '_product': orm.SuperRemoteStructuredProperty(CatalogProduct, required=True),
+    '_product': orm.SuperRemoteStructuredProperty(CatalogProduct, required=False), # this cant be required, because every time we need to save a pricetag, we would have to load the product
   }
 
   def prepare(self, **kwargs):
-    parent = kwargs.get('parent') # catalog->catalog_image
-    catalog_pricetag_key = self.build_key(self.key_id_str, parent=parent.parent())
-    return catalog_pricetag_key
+    entity = kwargs.get('entity') # catalog->catalog_image
+    if self._product and self._product.has_value():
+      product = self._product.value
+      self.value = {'value': str(product.unit_price), 'name': product.name}
+    catalog_pricetag_key = self.build_key(self.key_id_str, parent=entity.key.parent())
+    self.key = catalog_pricetag_key
+
+  def duplicate(self):
+    duplicated = super(CatalogPricetag, self).duplicate()
+    duplicated.position_top += 10
+    duplicated.position_left += 10
+    return duplicated
 
 class CatalogImage(Image):
   
@@ -229,8 +239,8 @@ class CatalogImage(Image):
   
   def prepare(self, **kwds):
     key_id = self.key_id
-    print self.key, kwds.get('parent')
-    self.set_key(key_id, parent=kwds.get('parent'))
+    entity = kwds.get('entity')
+    self.set_key(key_id, parent=entity.key)
     if key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
       sequence = mem.temp_get(key, Nonexistent)

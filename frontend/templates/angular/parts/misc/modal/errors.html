@@ -1,9 +1,9 @@
-
+<div fit-in-dialog>
 <div class="modal-body scrollable">
 <div class="modal-body-inner">
 <h2>Errors occurred while attemting to perform an action</h2>
 <ul>
-  <li ng-repeat="error in errors">{{error}}</li>
+  <li ng-repeat="error in errors"><span ng-bind-html="error | autobr"></span></li>
 </ul>
 
 </div>
@@ -14,4 +14,5 @@
   <button type="button" class="button" ng-click="ok()">
     Ok
   </button>
+</div>
 </div>

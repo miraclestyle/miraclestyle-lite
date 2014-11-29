@@ -99,16 +99,6 @@ class RequestHandler(webapp2.RequestHandler):
         value = self.request.params.getall(param_key)
         if len(value) == 1:
            value = value[0]
-        '''
-        if param_key in dicts:
-          dictval = dicts.get(param_key)
-          if isinstance(dictval, list):
-            if isinstance(value, list):
-              dictval.extend(value)
-            else:
-              dictval.append(value)
-            continue
-        '''
         newparams[param_key] = value
       dicts.update(newparams)
     self._input = dicts
@@ -181,6 +171,7 @@ class RequestHandler(webapp2.RequestHandler):
       self.after()
     finally:
       # support our memcache wrapper lib temporary variables, and release them upon request complete
+      util.log('Release In-memory Cache')
       mem._local.__release_local__()
       
 
@@ -371,59 +362,7 @@ class Reset(BaseTestHandler):
     # delete all blobs
     blobstore.delete(blobstore.BlobInfo.all().fetch(keys_only=True))
     mem.flush_all()
-    
-    
-    
-    
-    
-class TestUploadUrl(BaseTestHandler):
-  
-  def _get_upload_content(self, field_storage):
-    import email
-    import email.message
-    import base64
-    """Returns an email.Message holding the values of the file transfer.
-  
-    It decodes the content of the field storage and creates a new email.Message.
-  
-    Args:
-      field_storage: cgi.FieldStorage that represents uploaded blob.
-  
-    Returns:
-      An email.message.Message holding the upload information.
-    """
-    message = email.message.Message()
-    message.add_header(
-        'content-transfer-encoding',
-        field_storage.headers.getheader('Content-Transfer-Encoding', ''))
-    message.set_payload(field_storage.file.read())
-    payload = message.get_payload(decode=True)
-    return email.message_from_string(payload)
 
-  
-  def respond(self):
-    from google.appengine.ext import blobstore
-    self.response.write(self.request.params)
-    if self.request.get('z'):
-      f = self.get_input().get('file')
-    else:
-      self.get_input()
-      for param_key in self.request.params.keys():
-        if param_key == 'file':
-          k = param_key
-          f = self.request.params.get(param_key)
-      dd = {}
-      zz = {}
-      zz[k] = f
-      dd.update(zz)
-      f = dd.get('file')
-    #d = blobstore.parse_file_info(f)
-    x = self._get_upload_content(f)
-    self.response.write(x)
- 
-    if self.request.get('v'):
-      d = blobstore.parse_file_info(f)
-      self.response.write(d.gs_object_name)
       
 class TestParams(BaseTestHandler):
   
