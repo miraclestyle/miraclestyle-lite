@@ -248,6 +248,7 @@
    white-space: nowrap;
 
    text-overflow: ellipsis;*/
+  color: #999999;
 }
 
 .select2-container .select2-choice abbr {
@@ -717,4 +718,20 @@ html[dir="rtl"] .select2-search-choice-close {
   width: 100px;
   height: 100px;
   overflow: scroll;
+}
+
+::-webkit-input-placeholder {
+  color: #999999;
+}
+
+:-moz-placeholder {
+  color: #999999;
+}
+
+::-moz-placeholder {
+  color: #999999;
+}
+
+:-ms-input-placeholder {
+  color: #999999;
 }
