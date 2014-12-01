@@ -2,9 +2,11 @@
 <div class="modal-body scrollable">
 <div class="modal-body-inner">
 <h2>Please select variant for this product instance</h2>
+<form>
     <div ng-repeat="variant in variants track by $index" ng-hide="variant._state == 'deleted'" class="form-control">
         <div form-input="variantSelection[$index]"></div>
     </div>
+</form>
 </div>
 </div>
 

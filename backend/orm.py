@@ -1934,10 +1934,11 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
           if not hasattr(model, 'prepare_key'):
             raise PropertyError('not_supported')
           else:
-            prepare_supplied_keys.append(model.prepare_key(**supplied_key))
+            supplied_key['parent'] = self._entity.key
+            prepare_supplied_keys.append(model.prepare_key(**supplied_key).urlsafe())
         else:
           prepare_supplied_keys.append(supplied_key)
-      supplied_keys = SuperKeyProperty(kind=model.get_kind(), repeated=True).value_format(prepare_supplied_keys)
+      supplied_keys = SuperVirtualKeyProperty(kind=model.get_kind(), repeated=True).value_format(prepare_supplied_keys)
       for supplied_key in supplied_keys:
         if supplied_key.parent() != self._entity.key:
           raise PropertyError('invalid_parent_for_key_%s' % supplied_key.urlsafe())

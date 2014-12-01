@@ -1738,6 +1738,7 @@ w:                  while (images.length > 0) {
                                         $scope.$on('$destroy', function () {
                                             config.ui.specifics.getScope = undefined;
                                         });
+
                                         if (config.ui.specifics.remote) {
 
                                             $scope.setAction = function (action) {
@@ -1776,7 +1777,6 @@ w:                  while (images.length > 0) {
                                                             }
                                                             // produce read path for the rpc
                                                             readRootArgs = readRootArgs[part];
-                                                            console.log(readArgs, readRootArgs);
                                                             if (angular.isArray(readRootArgs)) {
                                                                 angular.forEach(readRootArgs, function (ent) {
                                                                     if (ent.key !== null && angular.isDefined(ent.key)) {

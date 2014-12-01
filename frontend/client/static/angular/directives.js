@@ -352,7 +352,9 @@
                         if (angular.isDefined(config.ui.writableName)) {
                             config.ui.writable = [config.ui.writableName];
                         } else {
-                            config.ui.writable = angular.copy(config.ui.path);
+                            if (angular.isArray(config.ui.writable)) {
+                                config.ui.writable = angular.copy(config.ui.path);
+                            }
                         }
 
                         if (!angular.isDefined(config.ui.realPath)) {
@@ -373,8 +375,6 @@
                                 attrs: utils.attrs(config),
                                 label: utils.label(config)
                             };
-
-                            console.log(config.type, config);
 
                             if (config.ui.render === false) {
                                 return;
