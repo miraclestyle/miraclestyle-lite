@@ -155,8 +155,8 @@ class CatalogProductInstance(orm.BaseExpando):
     return product_instance_key
   
   def prepare(self, **kwargs):
-    entity = kwargs.get('entity')
-    self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=entity.key)
+    parent = kwargs.get('parent')
+    self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=parent)
 
 
 class CatalogProduct(orm.BaseExpando):
@@ -193,8 +193,8 @@ class CatalogProduct(orm.BaseExpando):
     }
 
   def prepare(self, **kwargs):
-    entity = kwargs.get('entity')
-    product_key = self.build_key(entity.key_id_str, parent=entity.key)
+    parent = kwargs.get('parent')
+    product_key = self.build_key(parent._id_str, parent=parent)
     self.key = product_key
 
 
@@ -215,11 +215,8 @@ class CatalogPricetag(orm.BaseModel):
   }
 
   def prepare(self, **kwargs):
-    entity = kwargs.get('entity') # catalog->catalog_image
-    if self._product and self._product.has_value():
-      product = self._product.value
-      self.value = {'value': str(product.unit_price), 'name': product.name}
-    catalog_pricetag_key = self.build_key(self.key_id_str, parent=entity.key.parent())
+    parent = kwargs.get('parent') # catalog->catalog_image
+    catalog_pricetag_key = self.build_key(self.key_id_str, parent=parent.parent())
     self.key = catalog_pricetag_key
 
   def duplicate(self):
@@ -239,8 +236,8 @@ class CatalogImage(Image):
   
   def prepare(self, **kwds):
     key_id = self.key_id
-    entity = kwds.get('entity')
-    self.set_key(key_id, parent=entity.key)
+    parent = kwds.get('parent')
+    self.set_key(key_id, parent=parent)
     if key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
       sequence = mem.temp_get(key, Nonexistent)
@@ -322,7 +319,7 @@ class Catalog(orm.BaseExpando):
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and entity._original.key_root == account.key)'),
       orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',
-                                 'cover', '_images', '_products', '_records'], True, True,
+                                 'cover', '_images', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                           and entity._original.state == "draft"'),
       orm.FieldPermission('31', ['state'], True, True,
@@ -331,19 +328,19 @@ class Catalog(orm.BaseExpando):
                           or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
                           or (action.key_id_str == "sudo" and entity.state != "draft")'),
       orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',
-                                 'state', 'cover', '_images', '_products'], False, True,
+                                 'state', 'cover', '_images'], False, True,
                           'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.FieldPermission('31', ['_records.note'], True, True, 'account._root_admin'),
       orm.FieldPermission('31', ['_records.note'], False, False, 'not account._root_admin'),
       orm.FieldPermission('31', ['_images.image', '_images.content_type', '_images.size', '_images.gs_object_name', '_images.serving_url',
-                                 '_products.images.image', '_products.images.content_type', '_products.images.size', '_images.proportion',
-                                 '_products.images.gs_object_name', '_products.images.serving_url', '_products.images.proportion',
-                                 '_products._instances.images.image', '_products._instances.images.content_type', '_products._instances.images.size',
-                                 '_products._instances.images.gs_object_name', '_products._instances.images.serving_url', '_products._instances.images.proportion'], False, None,
+                                 '_images.pricetags._product.images.image', '_images.pricetags._product.images.content_type', '_images.pricetags._product.images.size', '_images.proportion',
+                                 '_images.pricetags._product.images.gs_object_name', '_images.pricetags._product.images.serving_url', '_images.pricetags._product.images.proportion',
+                                 '_images.pricetags._product._instances.images.image', '_images.pricetags._product._instances.images.content_type', '_images.pricetags._product._instances.images.size',
+                                 '_images.pricetags._product._instances.images.gs_object_name', '_images.pricetags._product._instances.images.serving_url', '_images.pricetags._product._instances.images.proportion'], False, None,
                           '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", \
                           "product_instance_upload_images", "catalog_process_duplicate", "product_process_duplicate"])'),
       orm.FieldPermission('31', ['created', 'updated', 'name', 'publish_date', 'discontinue_date',
-                                 'state', 'cover', 'cost', '_images', '_products'], True, True,
+                                 'state', 'cover', 'cost', '_images'], True, True,
                           '(action.key_id_str in ["catalog_process_duplicate", "product_process_duplicate"])')
       ]
     )

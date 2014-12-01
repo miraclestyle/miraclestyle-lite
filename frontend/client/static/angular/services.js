@@ -902,6 +902,7 @@ w:                  while (images.length > 0) {
                     scope: {},
                     fields: [],
                     init: angular.noop,
+                    getScope: null,
                     defaultInit: angular.noop,
                     defaultArgumentLoader: function ($scope) {
                         var entityCopy = angular.copy($scope.entity),
@@ -1041,6 +1042,10 @@ w:                  while (images.length > 0) {
                                     action: endpoint.url
                                 };
 
+                                config.getScope = function () {
+                                    return $scope;
+                                };
+
                                 $scope.withArgs = args;
                                 $scope.config = config;
                                 $scope.entity = entity;
@@ -1109,7 +1114,14 @@ w:                  while (images.length > 0) {
 
                                 $scope.close = function () {
                                     $modalInstance.dismiss('close');
+                                    if (config.afterClose) {
+                                        config.afterClose($scope);
+                                    }
                                 };
+
+                                $scope.$on('$destroy', function () {
+                                    config.getScope = undefined;
+                                });
 
                                 // load scope from config into the current scope
                                 $.extend($scope, config.scope);
@@ -1615,6 +1627,13 @@ w:                  while (images.length > 0) {
                             info.scope.$watchCollection(config.ui.args, function (neww, old) {
                                 $.extend($scope.args, neww);
                             });
+                            config.ui.specifics.getScope = function () {
+                                return $scope;
+                            };
+
+                            $scope.$on('$destroy', function () {
+                                config.ui.specifics.getScope = undefined;
+                            });
                         };
 
                     } else {
@@ -1633,8 +1652,6 @@ w:                  while (images.length > 0) {
 
                                 buildPaths();
 
-                                console.log(config.type + '.specifics.manage', config);
-
                                 $modal.open({
                                     template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
                                         config: config
@@ -1645,6 +1662,10 @@ w:                  while (images.length > 0) {
                                             formBuilder = {
                                                 '0': []
                                             };
+
+                                        config.ui.specifics.getScope = function () {
+                                            return $scope;
+                                        };
 
                                         $scope.response = null;
                                         $scope.config = config;
@@ -1714,6 +1735,9 @@ w:                  while (images.length > 0) {
                                             $modalInstance.dismiss('cancel');
                                         };
 
+                                        $scope.$on('$destroy', function () {
+                                            config.ui.specifics.getScope = undefined;
+                                        });
                                         if (config.ui.specifics.remote) {
 
                                             $scope.setAction = function (action) {

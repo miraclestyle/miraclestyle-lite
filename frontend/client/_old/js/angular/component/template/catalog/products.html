@@ -19,7 +19,7 @@
 				 	  data-drag="true" class="button pricetag"
 				 	  catalog-pricetag-position
 				 	  ng-repeat="pricetag in catalog_image.pricetags track by $index"
-				 	  ng-hide="pricetag._state == 'deleted'">
+				 	  ng-hide="pricetag._state == 'deleted' || !pricetag.key">
 				 	<a ng-click="manageProductById(pricetag)" href="javascript:;">{{pricetag.value}}</a>
 				 </div>
 				 

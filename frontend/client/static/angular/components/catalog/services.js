@@ -62,7 +62,7 @@
                                         controller: function ($scope, $modalInstance, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
-                                                fieldProductAfterSave;
+                                                setupCurrentPricetag;
                                             accessImages.push(fields._images.code_name);
 
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
@@ -77,9 +77,6 @@
                                             // set next arguments from initially loaded data from root scope
                                             imagesReader.state(parentScope.config.ui.specifics.reader); // this is not good
 
-                                            $scope.fakeProducts = [{
-                                                _state: '_deleted'
-                                            }];
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
@@ -183,21 +180,13 @@
                                                 }
                                             };
 
-                                            fieldProductAfterSave = function (fieldScope) {
-                                                fieldScope.setAction('product_upload_images');
-                                                var image = _.findWhere(fieldScope.response.data.entity._images, {key: $scope.image.key}),
-                                                    updatedPricetag = image.pricetags;
-                                                if (!$scope.pricetag.key) {
-                                                    updatedPricetag = _.last(updatedPricetag);
-                                                } else {
-                                                    updatedPricetag = _.findWhere(updatedPricetag, {key: $scope.pricetag.key});
-                                                }
-                                                $.extend($scope.pricetag, updatedPricetag);
+                                            setupCurrentPricetag = function (image, pricetag) {
+                                                $scope.image = image;
+                                                $scope.pricetag = pricetag;
                                             };
 
                                             $scope.manageProduct = function (image, pricetag) {
-                                                $scope.image = image;
-                                                $scope.pricetag = pricetag;
+                                                setupCurrentPricetag(image, pricetag);
                                                 models['31'].actions.read({
                                                     key: $scope.entity.key,
                                                     read_arguments: {
@@ -206,10 +195,7 @@
                                                                 keys: [image.key]
                                                             },
                                                             pricetags: {
-                                                                config: {},
-                                                                _product: {
-                                                                    config: {}
-                                                                }
+                                                                _product: {}
                                                             }
                                                         }
                                                     }
@@ -238,9 +224,8 @@
                                                 }, ii = $scope.args._images.indexOf(image);
 
                                                 $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product'];
-                                                $scope.args._images[ii].pricetags.push(newPricetag);
-                                                $scope.pricetag = newPricetag;
-                                                $scope.image = image;
+                                                image.pricetags.push(newPricetag);
+                                                setupCurrentPricetag(image, newPricetag);
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };
 
@@ -254,12 +239,27 @@
                                                     label: false,
                                                     specifics: {
                                                         modal: true,
-                                                        templateFooterUrl: 'catalog/products_modal_footer.html',
+                                                        templateFooterUrl: 'catalog/product/modal_footer.html',
                                                         addText: 'Add Product',
                                                         getRootArgs: function () {
                                                             return angular.copy($scope.args);
                                                         },
-                                                        afterSave: fieldProductAfterSave,
+                                                        afterClose: function (fieldProductScope) {
+                                                            if (!fieldProductScope.args.key) {
+                                                                $scope.image.remove($scope.pricetag); // remove the pricetag if we did not commit the product
+                                                            }
+                                                        },
+                                                        afterSave: function (fieldScope) {
+                                                            fieldScope.setAction('product_upload_images');
+                                                            var image = _.findWhere(fieldScope.response.data.entity._images, {key: $scope.image.key}),
+                                                                updatedPricetag = image.pricetags;
+                                                            if (!$scope.pricetag.key) {
+                                                                updatedPricetag = _.last(updatedPricetag);
+                                                            } else {
+                                                                updatedPricetag = _.findWhere(updatedPricetag, {key: $scope.pricetag.key});
+                                                            }
+                                                            $.extend($scope.pricetag, updatedPricetag);
+                                                        },
                                                         afterComplete: function ($scope) {
                                                             $scope.setAction('update');
                                                         },
@@ -286,10 +286,117 @@
                                                             return angular.copy($scope.args);
                                                         },
                                                         sortable: false,
-                                                        canManage: function (entity) {
-                                                            if (!entity || !entity._instances.length) {
-                                                                modals.alert('You must add variations in order to create instance.');
+                                                        create: function () {
+                                                            var that = this,
+                                                                begin,
+                                                                promise,
+                                                                currentProductScope = $scope.fieldProduct.ui.specifics.getScope(),
+                                                                currentArgs = currentProductScope.args;
+
+                                                            if (!currentArgs.variants.variants) {
+                                                                modals.alert('Please create some variants first.');
                                                                 return false;
+                                                            }
+
+                                                            begin = function () {
+
+                                                                $modal.open({
+                                                                    templateUrl: 'catalog/product/variant_choice.html',
+                                                                    controller: function ($variantScope, $modalInstance) {
+                                                                        $variantScope.variants = [];
+                                                                        $variantScope.variantSelection = [];
+
+                                                                        angular.forEach(currentArgs.variants, function (v, i) {
+
+                                                                            $variantScope.variants.push({
+                                                                                'name': v.name,
+                                                                                'options': v.options,
+                                                                                'option': null,
+                                                                            });
+
+                                                                            $variantScope.variantSelection.push({
+                                                                                type: 'SuperStringProperty',
+                                                                                repeated: true,
+                                                                                code_name: 'option_' + i,
+                                                                                ui: {
+                                                                                    label: v.name,
+                                                                                    writable: true,
+                                                                                    args: 'variants.' + i + '.option'
+                                                                                }
+                                                                            });
+
+                                                                        });
+
+                                                                        $variantScope.close = function () {
+                                                                            $modalInstance.dismiss('close');
+                                                                        };
+
+                                                                        $variantScope.choose = function () {
+
+                                                                            var variant_signature = [],
+                                                                                productInstance;
+
+                                                                            angular.forEach($variantScope.variants, function (v) {
+                                                                                var d = {};
+                                                                                d[v.name] = v.option;
+                                                                                variant_signature.push(d);
+                                                                            });
+
+                                                                            // rpc to check the instance
+                                                                            models['31'].actions.read({
+                                                                                key: $scope.entity.key,
+                                                                                read_arguments: {
+                                                                                    _images: {
+                                                                                        config: {keys: [$scope.image.key]},
+                                                                                        pricetags: {
+                                                                                            _product: {
+                                                                                                _instances: {
+                                                                                                    config: {
+                                                                                                        keys: [{
+                                                                                                            parent: currentArgs.key,
+                                                                                                            variant_signature: variant_signature
+                                                                                                        }]
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }).then(function (response) {
+                                                                                var pricetags = response.entity._images[0].pricetags,
+                                                                                    pricetag = _.findWhere(pricetags, {key: $scope.pricetag.key}),
+                                                                                    product = pricetag._product;
+                                                                                if (product) {
+                                                                                    productInstance = product._instances[0];
+                                                                                }
+                                                                                if (!productInstance) {
+                                                                                    that.manage();
+                                                                                } else {
+                                                                                    that.manage(productInstance);
+                                                                                }
+
+                                                                                $variantScope.close();
+
+                                                                            });
+
+                                                                        };
+
+                                                                    }
+                                                                });
+
+                                                            };
+
+                                                            if (!$scope.pricetag._product.key) {
+                                                                promise = currentProductScope.save();
+                                                                if (!promise) {
+                                                                    modals.alert('Please save the product first.');
+                                                                } else {
+                                                                    promise.then(function () {
+                                                                        begin();
+                                                                    });
+                                                                }
+                                                            } else {
+                                                                begin();
                                                             }
                                                         },
                                                         addText: 'Add Product Instance',

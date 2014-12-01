@@ -1828,7 +1828,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           originals = dict((ent.key.urlsafe(), ent) for ent in getattr(self._entity._original, self.property_name, []))
         for entity in self._property_value:
           if hasattr(entity, 'prepare'):
-            entity.prepare(entity=self._entity)
+            entity.prepare(parent=self._entity.key)
           collect_structured(entity)
           if (entity._state == 'deleted' and self._property._deleteable) \
             or (not self._property._addable and entity.key.urlsafe() not in originals):
@@ -1847,7 +1847,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
               self._property_value[i] = copy.deepcopy(originals[urlsafe])
       else:
         if hasattr(self._property_value, 'prepare'):
-          self._property_value.prepare(entity=self._entity)
+          self._property_value.prepare(parent=self._entity.key)
         collect_structured(self._property_value)
         if self._property_value._state == 'deleted' and self._property._deleteable:
           delete_structured(self._property_value)
@@ -2002,7 +2002,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         key_id = self._property_value.key_id
         self._property_value.set_key(key_id, parent=self._entity.key)
     else:
-      self._property_value.prepare(entity=self._entity)
+      self._property_value.prepare(parent=self._entity.key)
     if self._property_value._state == 'deleted' and self._property._deleteable:
       self._property_value.key.delete()
     elif self._property._updateable or (not getattr(self._entity._original, self.property_name, None) \
@@ -2018,7 +2018,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
           key_id = entity.key_id
           entity.set_key(key_id, parent=self._entity.key)
       else:
-        entity.prepare(entity=self._entity)
+        entity.prepare(parent=self._entity.key)
       if entity._state == 'deleted' and self._property._deleteable:
         delete_entities.append(entity)
     for delete_entity in delete_entities:

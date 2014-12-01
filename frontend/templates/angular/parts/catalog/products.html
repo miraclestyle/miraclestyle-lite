@@ -14,18 +14,15 @@
                   jqyoui-options="{accept: '.new-pricetag'}"
                   jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
                   >
-             <img catalog-new-pricetag="createProduct(image, config)"
-                  catalog-slider-image="image" />
-
-
+             <img catalog-slider-image="image" /> 
                <div ng-repeat="pricetag in image.pricetags track by $index"
                     ng-model="image.pricetags"
-                    ng-hide="pricetag._state == 'deleted'"
+                    ng-hide="pricetag._state == 'deleted' || !pricetag.key"
                     jqyoui-options="{containment : 'parent'}"
                     jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
                     drag="true" class="button pricetag"
                     catalog-pricetag-position="pricetag">
-                      <a loading standard-click="manageProduct(image, pricetag)" href="javascript:;">{{pricetag.value.name}}</a>
+                      <a class="pricetag-link" loading standard-click="manageProduct(image, pricetag)" href="javascript:;">{{pricetag.value.name}}</a>
                </div>
 
             </div>
@@ -39,11 +36,10 @@
   <div class="modal-footer">
 
       <ul class="list-inline-block">
-       <li ng-repeat="product in fakeProducts track by $index" loading type="button" class="button new-pricetag"
-                    drag="true"
-                    jqyoui-options="{revert: 'invalid', helper: 'clone'}"
-                    ng-model="fakeProducts"
-                    jqyoui-draggable="{index: $index, placeholder: 'keep'}">Add Product</li>
+       <li loading type="button" class="button new-pricetag"
+            drag="true"
+            jqyoui-options="{revert: 'invalid', helper: 'clone'}"
+            jqyoui-draggable="{placeholder: 'keep'}">Add Product</li>
       </ul>
 
      

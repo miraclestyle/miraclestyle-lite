@@ -1,0 +1,20 @@
+<div fit-in-dialog>
+<div class="modal-body scrollable">
+<div class="modal-body-inner">
+<h2>Please select variant for this product instance</h2>
+    <div ng-repeat="variant in variants track by $index" ng-hide="variant._state == 'deleted'" class="form-control">
+        <div form-input="variantSelection[$index]"></div>
+    </div>
+</div>
+</div>
+
+<div class="modal-footer">
+  
+  <button loading type="button" class="button" ng-click="choose()">
+    Select
+  </button>
+  <button loading type="button" class="button" ng-click="close()">
+      Close
+  </button>
+</div>
+</div>
