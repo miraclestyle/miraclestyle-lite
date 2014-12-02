@@ -95,9 +95,14 @@
   padding: 10px;
   text-align: right;
   position: relative;
+  /*
   -webkit-box-shadow: 0 -3px 5px #BBBBBB;
   box-shadow: 0 -3px 5px #BBBBBB;
-  /*border: 1px solid #EEEEEE;*/
+  border-top: 1px solid #EEEEEE;
+  */
+  -webkit-box-shadow: 0 -1px 3px #BBBBBB;
+  box-shadow: 0 -1px 3px #BBBBBB;
+  border-top: 1px solid #BBBBBB;
 }
 
 .modal-footer:before,
