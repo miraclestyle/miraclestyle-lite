@@ -7,8 +7,8 @@ threadsafe: true
 
 handlers:
 
-- url: /client/static
-  static_dir: client/static
+- url: /client/
+  static_dir: client/
 #  expiration: "364d 5h" # its not ready for cache yet
 
 - url: /favicon\.ico
