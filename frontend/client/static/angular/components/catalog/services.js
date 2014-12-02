@@ -41,6 +41,7 @@
                                                             function (ent, i) {
                                                                 i = ((total + 1) - i);
                                                                 ent.sequence = i;
+                                                                ent.ui.access[ent.ui.access.length - 1] = i;
                                                             });
 
                                                         $scope.$broadcast('itemOrderChanged');
@@ -181,6 +182,7 @@
                                             };
 
                                             setupCurrentPricetag = function (image, pricetag) {
+                                                console.log(image.key, pricetag.key);
                                                 $scope.image = image;
                                                 $scope.pricetag = pricetag;
                                             };
@@ -195,13 +197,20 @@
                                                                 keys: [image.key]
                                                             },
                                                             pricetags: {
-                                                                _product: {}
+                                                                _product: {
+                                                                    _instances: {
+                                                                        config: {}
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 }).then(function (response) {
                                                     var responseEntity = response.data.entity,
-                                                        loadedPricetag = _.findWhere(responseEntity._images[0].pricetags, {key: $scope.pricetag.key});
+                                                        ii = $scope.args._images.indexOf(image),
+                                                        loadedPricetag = _.findWhere(responseEntity._images[0].pricetags, {key: $scope.pricetag.key}),
+                                                        realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product'];
+                                                    $scope.fieldProduct.ui.realPath = realPath;
                                                     $scope.pricetag._product = loadedPricetag._product;
                                                     $scope.fieldProduct.ui.specifics.manage(loadedPricetag._product);
                                                 });
@@ -209,21 +218,23 @@
 
                                             $scope.createProduct = function (image, config) {
 
-                                                var newPricetag = {
-                                                    image_height: config.image_height,
-                                                    image_width: config.image_width,
-                                                    position_left: config.position_left,
-                                                    position_top: config.position_top,
-                                                    _position_left: config.position_left,
-                                                    _position_top: config.position_top,
-                                                    value: {},
-                                                    _product: {},
-                                                    ui: {
-                                                        access: ['_images', 'pricetags', image.pricetags.length]
-                                                    }
-                                                }, ii = $scope.args._images.indexOf(image);
+                                                var ii = $scope.args._images.indexOf(image),
+                                                    newPricetag = {
+                                                        image_height: config.image_height,
+                                                        image_width: config.image_width,
+                                                        position_left: config.position_left,
+                                                        position_top: config.position_top,
+                                                        _position_left: config.position_left,
+                                                        _position_top: config.position_top,
+                                                        value: {},
+                                                        _product: {},
+                                                        ui: {
+                                                            access: ['_images', ii, 'pricetags', image.pricetags.length]
+                                                        }
+                                                    },
+                                                    realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product'];
 
-                                                $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product'];
+                                                $scope.fieldProduct.ui.realPath = realPath;
                                                 image.pricetags.push(newPricetag);
                                                 setupCurrentPricetag(image, newPricetag);
                                                 $scope.fieldProduct.ui.specifics.create();
@@ -239,14 +250,11 @@
                                                     label: false,
                                                     specifics: {
                                                         modal: true,
-                                                        init: function (fieldScope) {
-                                                            var save = fieldScope.save;
-                                                            fieldScope.save = function () {
-                                                                $scope.pricetag.value = {
-                                                                    value: fieldScope.args.unit_price,
-                                                                    name: fieldScope.args.name
-                                                                };
-                                                                return save.call(fieldScope);
+                                                        beforeSave: function (fieldScope) {
+                                                            var findPricetag = helpers.getProperty(fieldScope.rootArgs, fieldScope.args.ui.access.slice(0, fieldScope.args.ui.access.length - 1));
+                                                            findPricetag.value = {
+                                                                name: fieldScope.args.name,
+                                                                value: fieldScope.args.unit_price
                                                             };
                                                         },
                                                         templateFooterUrl: 'catalog/product/modal_footer.html',
@@ -256,13 +264,13 @@
                                                         },
                                                         afterClose: function (fieldProductScope) {
                                                             if (!fieldProductScope.args.key) {
-                                                                $scope.image.remove($scope.pricetag); // remove the pricetag if we did not commit the product
+                                                                $scope.image.pricetags.remove($scope.pricetag); // remove the pricetag if we did not commit the product
                                                             }
                                                         },
                                                         afterSave: function (fieldScope) {
                                                             fieldScope.setAction('product_upload_images');
                                                             var image = _.findWhere(fieldScope.response.data.entity._images, {key: $scope.image.key}),
-                                                                updatedPricetag = image.pricetags;
+                                                                updatedPricetag = $scope.image.pricetags;
                                                             if (!$scope.pricetag.key) {
                                                                 updatedPricetag = _.last(updatedPricetag);
                                                             } else {
@@ -291,6 +299,7 @@
                                             $.extend($scope.fieldProduct.modelclass._instances, {
                                                 ui: {
                                                     label: 'Product Instances',
+                                                    path: ['_images', 'pricetags'],
                                                     specifics: {
                                                         getRootArgs: function () {
                                                             return angular.copy($scope.args);
@@ -391,7 +400,7 @@
                                                                                     productInstance = product._instances[0];
                                                                                 }
                                                                                 if (!productInstance) {
-                                                                                    that.manage();
+                                                                                    that.manage(undefined, {variant_signature: variantSignature});
                                                                                 } else {
                                                                                     that.manage(productInstance);
                                                                                 }

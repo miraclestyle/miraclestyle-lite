@@ -33,20 +33,17 @@
           ng-model="config.ui.specifics.parentArgs" class="item-list">
         <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
           <div class="item-left">
-              <div ng-repeat="field in config.ui.specifics.listFields">
-                  
+ 
               <% if (config.ui.specifics.showListItem) { %>
                 <div ng-repeat="field in config.ui.specifics.listFields">
                  <span <%=config.ui.specifics.showListItem %>="ent" <%=config.ui.specifics.showListItem %>-field="field"></span>
                </div>
               <% } else { %>
               <div ng-repeat="field in config.ui.specifics.listFields">
-                <span ng-if="$index == 2">(</span>{{ent|output:field.key}}<span ng-if="$index == 2">)</span>
+                <span ng-if="$index > 1">(</span>{{ent|output:field.key}}<span ng-if="$index > 1">)</span>
               </div>
               <% } %>
-
-
-              </div>
+ 
           </div>
           <div class="item-right list-actions">
               <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>

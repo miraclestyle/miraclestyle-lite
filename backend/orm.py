@@ -254,6 +254,11 @@ def write_multi(entities, record_arguments=None):
     entity.index_search_documents()
     entity.unindex_search_documents()
 
+def allowed_state(_state):
+  if _state not in [None, 'deleted', 'created', 'modified']:
+    return None
+  return _state
+
 
 ################################################################
 ########## Base extension classes for all ndb models! ##########
@@ -1602,9 +1607,13 @@ class PropertyValue(object):
   @property
   def value(self):
     return getattr(self, '_property_value', None)
+
+  @property
+  def value_read(self):
+    return self.value
   
   def get_output(self):
-    return self.value
+    return self.value_read
 
 
 class StructuredPropertyValue(PropertyValue):
@@ -1763,6 +1772,13 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   def __init__(self, *args, **kwargs):
     super(LocalStructuredPropertyValue, self).__init__(*args, **kwargs)
     self._structured_property_values = []
+    self._property_value_by_read_arguments = []
+
+  @property
+  def read_value(self):
+    # property used for fetching values that were retrived using read_arguments
+    self.value # trigger value's logic
+    return self._property_value_by_read_arguments
   
   @property
   def value(self):
@@ -1789,12 +1805,21 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   def _read(self, read_arguments):
     property_value = self._property._get_user_value(self._entity)
     property_value_as_list = property_value
+    if read_arguments is None:
+      read_arguments = {}
+    config = read_arguments.get('config', {})
+    self._property_value_by_read_arguments = []
     if property_value_as_list is not None:
       if not self._property._repeated:
         property_value_as_list = [property_value_as_list]
       total = len(property_value_as_list)
+      supplied_keys = config.get('keys', [])
+      supplied_keys = SuperVirtualKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
       for i, value in enumerate(property_value_as_list):
         value._sequence = total - i
+        if supplied_keys is not None:
+          if value.key in supplied_keys:
+            self._property_value_by_read_arguments.append(value)
       self._property_value = property_value
     else:
       if self._property._repeated:
@@ -1803,7 +1828,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   def pre_update(self):
     if self.has_value():
       fields = self._property.get_modelclass().get_fields()
-
+      delete_states = ['removed', 'deleted']
       def collect_structured(value):
         for field_key, field in fields.iteritems():
           if hasattr(field, 'is_structured') and field.is_structured:
@@ -1830,12 +1855,13 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           if hasattr(entity, 'prepare'):
             entity.prepare(parent=self._entity.key)
           collect_structured(entity)
-          if (entity._state == 'deleted' and self._property._deleteable) \
+          if (entity._state in delete_states and self._property._deleteable) \
             or (not self._property._addable and entity.key.urlsafe() not in originals):
             # if the property is deleted and deleteable
             # or if property is not addable and it does not exist in originals, remove it.
             delete_entities.append(entity)
-            delete_structured(entity)
+            if entity._state == 'deleted':
+              delete_structured(entity)
 
         for delete_entity in delete_entities:
           self._property_value.remove(delete_entity)
@@ -1849,8 +1875,9 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         if hasattr(self._property_value, 'prepare'):
           self._property_value.prepare(parent=self._entity.key)
         collect_structured(self._property_value)
-        if self._property_value._state == 'deleted' and self._property._deleteable:
-          delete_structured(self._property_value)
+        if self._property_value._state in delete_states and self._property._deleteable:
+          if self._property_value._state == 'deleted':
+            delete_structured(self._property_value)
           self._property_value = None  # Comply with expando and virtual fields.
       self._property._set_value(self._entity, self._property_value, True) # we override default behaviour because if we dont,
       # the code above is useless, see _set_value in local structured
@@ -2512,7 +2539,7 @@ class _BaseStructuredProperty(_BaseProperty):
     return value_instance
   
   def _structured_property_field_format(self, fields, values):
-    _state = values.get('_state')
+    _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
     key = values.get('key')
     for value_key, value in values.items():
@@ -3688,7 +3715,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     return out
   
   def _structured_property_field_format(self, fields, values):
-    _state = values.get('_state')
+    _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
     key = values.get('key')
     for value_key, value in values.items():

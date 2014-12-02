@@ -135,6 +135,7 @@
             },
 
             setProperty: function (obj, prop, value) {
+                console.log('helpers.setProperty', obj, prop, value);
                 var path = prop,
                     of,
                     last;
@@ -151,6 +152,7 @@
                 of[last] = value;
             },
             getProperty: function (obj, prop) {
+                console.log('helpers.getProperty', obj, prop);
                 var path = prop;
                 if (!angular.isArray(path)) {
                     path = prop.split('.');
@@ -1578,6 +1580,7 @@ w:                  while (images.length > 0) {
                                 function (ent, i) {
                                     i = ((config.ui.specifics.parentArgs.length - 1) - i);
                                     ent._sequence = i;
+                                    ent.ui.access[ent.ui.access.length - 1] = i;
                                 });
 
                             info.scope.$broadcast('itemOrderChanged');
@@ -1648,7 +1651,7 @@ w:                  while (images.length > 0) {
 
 
                         if (config.ui.specifics.manage === undefined) {
-                            config.ui.specifics.manage = function (arg) {
+                            config.ui.specifics.manage = function (arg, defaultArgs) {
 
                                 buildPaths();
 
@@ -1682,6 +1685,9 @@ w:                  while (images.length > 0) {
                                             if (!config.ui.specifics.modal) {
                                                 arg.ui.access.push(length);
                                             }
+                                            if (angular.isDefined(defaultArgs)) {
+                                                $.extend(arg, defaultArgs);
+                                            }
                                             isNew = true;
                                         } else if (!config.ui.specifics.modal) {
                                             length = _.last(arg.ui.access);
@@ -1695,6 +1701,25 @@ w:                  while (images.length > 0) {
                                                 open: true
                                             }]
                                         };
+
+                                        $scope.formBuilder = formBuilder;
+                                        $scope.container = {
+                                            action: endpoint.url
+                                        };
+                                        $scope.args = angular.copy(arg);
+                                        $scope.parentArgs = config.ui.specifics.parentArgs;
+                                        $scope.rootScope = config.ui.specifics.rootScope;
+                                        $scope.entity = config.ui.specifics.entity;
+                                        $scope.close = function () {
+                                            $modalInstance.dismiss('cancel');
+                                            if (config.ui.specifics.afterClose) {
+                                                config.ui.specifics.afterClose($scope);
+                                            }
+                                        };
+
+                                        $scope.$on('$destroy', function () {
+                                            config.ui.specifics.getScope = undefined;
+                                        });
                                         angular.forEach(config.ui.specifics.formBuilder, function (field) {
                                             field = angular.copy(field);
                                             field.ui.realPath.pop();
@@ -1723,21 +1748,6 @@ w:                  while (images.length > 0) {
                                                 formBuilder['0'].push(field);
                                             }
                                         });
-                                        $scope.formBuilder = formBuilder;
-                                        $scope.container = {
-                                            action: endpoint.url
-                                        };
-                                        $scope.args = angular.copy(arg);
-                                        $scope.parentArgs = config.ui.specifics.parentArgs;
-                                        $scope.rootScope = config.ui.specifics.rootScope;
-                                        $scope.entity = config.ui.specifics.entity;
-                                        $scope.close = function () {
-                                            $modalInstance.dismiss('cancel');
-                                        };
-
-                                        $scope.$on('$destroy', function () {
-                                            config.ui.specifics.getScope = undefined;
-                                        });
 
                                         if (config.ui.specifics.remote) {
 
@@ -1750,10 +1760,12 @@ w:                  while (images.length > 0) {
                                                 if (!$scope.container.form.$valid) { // check if the form is valid
                                                     return;
                                                 }
+
                                                 var promise,
                                                     prepare = function () {
                                                         var readArgs = {},
                                                             readRootArgs = $scope.rootArgs,
+                                                            readRootArgsAsList,
                                                             parentArgsPath = (config.ui.specifics.modal ? $scope.args.ui.access : $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1));
                                                         // set this args as single item in array
                                                         helpers.setProperty($scope.rootArgs, parentArgsPath, $scope.args);
@@ -1778,20 +1790,20 @@ w:                  while (images.length > 0) {
                                                             // produce read path for the rpc
                                                             readRootArgs = readRootArgs[part];
                                                             if (angular.isArray(readRootArgs)) {
-                                                                angular.forEach(readRootArgs, function (ent) {
-                                                                    if (ent.key !== null && angular.isDefined(ent.key)) {
-                                                                        if (!angular.isDefined(readArgs.config.keys)) {
-                                                                            readArgs.config.keys = [];
-                                                                        }
-                                                                        readArgs.config.keys.push(ent.key);
-                                                                    }
-                                                                });
+                                                                readRootArgsAsList = readRootArgs;
                                                             } else {
                                                                 if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
                                                                     if (!angular.isDefined(readArgs.config.keys)) {
                                                                         readArgs.config.keys = [];
                                                                     }
                                                                     readArgs.config.keys.push(readRootArgs.key);
+                                                                    if (angular.isDefined(readRootArgsAsList)) {
+
+                                                                        readRootArgsAsList.splice(0, readRootArgsAsList.length); // empty the list
+                                                                        readRootArgsAsList.push(readRootArgs);
+                                                                        readRootArgsAsList = undefined;
+
+                                                                    }
                                                                 }
                                                             }
                                                         });
@@ -1799,6 +1811,9 @@ w:                  while (images.length > 0) {
 
                                                 prepare();
                                                 // create rpc from root args's action model and action id
+                                                if (config.ui.specifics.beforeSave) {
+                                                    config.ui.specifics.beforeSave($scope);
+                                                }
                                                 promise = models[$scope.rootArgs.action_model].actions[$scope.rootArgs.action_id]($scope.rootArgs);
                                                 promise.then(function (response) {
                                                     $scope.response = response;

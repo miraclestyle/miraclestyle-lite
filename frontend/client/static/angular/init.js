@@ -15,13 +15,6 @@
                 url: '/sell/catalogs',
                 controller: 'SellCatalogsCtrl',
                 templateUrl: 'catalog/list.html'
-            })
-            .state('tests', {
-                url: '/tests/:what',
-                controller: 'TestsCtrl',
-                templateUrl: function (stateParams) {
-                    return 'tests/' + stateParams.what + '.html';
-                }
             });
         /*
         .state('admin_search', {
