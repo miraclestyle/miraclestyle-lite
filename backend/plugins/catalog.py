@@ -66,9 +66,9 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
 class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
-    catalog_images = context._catalog._images.value
+    catalog_images = context._catalog._images.value # @todo this is a problem
     if catalog_images is not None:
-      for catalog_image in catalog_images:
+      for catalog_image in catalog_images:  # when read arguments are used, this is not correct information @todo fix me
         if catalog_image._state != 'deleted':
           break
       catalog_cover = context._catalog.cover.value

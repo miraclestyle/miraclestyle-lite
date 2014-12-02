@@ -1609,11 +1609,11 @@ class PropertyValue(object):
     return getattr(self, '_property_value', None)
 
   @property
-  def value_read(self):
+  def read_value(self):
     return self.value
   
   def get_output(self):
-    return self.value_read
+    return self.read_value
 
 
 class StructuredPropertyValue(PropertyValue):
@@ -1771,13 +1771,15 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
 
   def __init__(self, *args, **kwargs):
     super(LocalStructuredPropertyValue, self).__init__(*args, **kwargs)
-    self._structured_property_values = []
-    self._property_value_by_read_arguments = []
+    self._structured_values = []
+    self._property_value_by_read_arguments = None
 
   @property
   def read_value(self):
     # property used for fetching values that were retrived using read_arguments
-    self.value # trigger value's logic
+    value = self.value # trigger value's logic
+    if self._property_value_by_read_arguments is None:
+      return value
     return self._property_value_by_read_arguments
   
   @property
@@ -1798,7 +1800,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     return super(LocalStructuredPropertyValue, self).value
 
   def post_update(self):
-    for structured in self._structured_property_values:
+    for structured in self._structured_values:
       if hasattr(structured, 'post_update'):
         structured.post_update()
 
@@ -1808,17 +1810,20 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     if read_arguments is None:
       read_arguments = {}
     config = read_arguments.get('config', {})
-    self._property_value_by_read_arguments = []
     if property_value_as_list is not None:
       if not self._property._repeated:
         property_value_as_list = [property_value_as_list]
-      total = len(property_value_as_list)
+      total = len(property_value_as_list) - 1
       supplied_keys = config.get('keys', [])
       supplied_keys = SuperVirtualKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
+      if self._property_value_by_read_arguments is not None:
+        self._property_value_by_read_arguments = []
       for i, value in enumerate(property_value_as_list):
         value._sequence = total - i
         if supplied_keys is not None:
           if value.key in supplied_keys:
+            if self._property_value_by_read_arguments is None:
+              self._property_value_by_read_arguments = []
             self._property_value_by_read_arguments.append(value)
       self._property_value = property_value
     else:
@@ -1833,10 +1838,10 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         for field_key, field in fields.iteritems():
           if hasattr(field, 'is_structured') and field.is_structured:
             property_value = getattr(value, field_key)
-            self._structured_property_values.append(property_value)
+            self._structured_values.append(property_value)
 
       def delete_structured(entity):
-        for structured in self._structured_property_values:
+        for structured in self._structured_values:
           repeated = structured._property._repeated
           structured = structured.read() # read and mark for delete
           if structured is not None:
@@ -1916,7 +1921,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
       if self.has_value():
         if self._property_value:
           try:
-            last = self._property_value[-1]._sequence
+            last = self._property_value[0]._sequence
             if last is None:
               last = 0
           except IndexError:
@@ -2585,57 +2590,6 @@ class SuperComputedProperty(_BaseProperty, ComputedProperty):
   pass
 
 
-class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
-  '''This property is not meant to be used as property storage. It should be always defined as virtual property.
-  E.g. the property that never gets saved to the datastore.
-  '''
-  _indexed = False
-  _repeated = False
-  _readable = True
-  _updateable = True
-  _deleteable = True
-  _autoload = False
-  _value_class = RemoteStructuredPropertyValue
-  
-  def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
-    if isinstance(modelclass, basestring):
-      set_modelclass = Model._kind_map.get(modelclass)
-      if set_modelclass is not None:
-        modelclass = set_modelclass
-    kwds['generic'] = True
-    super(SuperRemoteStructuredProperty, self).__init__(name, **kwds)
-    self._modelclass = modelclass
-  
-  def get_model_fields(self, **kwargs):
-    return self.get_modelclass(**kwargs).get_fields()
-  
-  def _set_value(self, entity, value):
-    # __set__
-    value_instance = self._get_value(entity)
-    value_instance.set(value)
-  
-  def _prepare_for_put(self, entity):
-    self._get_value(entity)  # For its side effects.
-
-
-class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
-  '''Reference structured is the same as remote, except it uses different default value class and its default flags for
-  updating, deleting are always false.
-  
-  '''
-  _value_class = ReferenceStructuredPropertyValue
-  _updateable = False
-  _deleteable = False
-  _addable = False
-  
-  def __init__(self, *args, **kwargs):
-    self._callback = kwargs.pop('callback', None)
-    self._target_field = kwargs.pop('target_field', None)
-    super(SuperReferenceStructuredProperty, self).__init__(*args, **kwargs)
-    self._updateable = False
-    self._deleteable = False
-
-
 class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
   
   _autoload = True # always automatically load structured props since they dont take any io
@@ -2759,6 +2713,60 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     super(SuperMultiLocalStructuredProperty, self).property_keywords_format(kwds, skip_kwds)
     if 'kinds' not in skip_kwds:
       kwds['kinds'] = map(lambda x: unicode(x), kwds['kinds'])
+
+
+class SuperRemoteStructuredProperty(SuperLocalStructuredProperty):
+  '''This property is not meant to be used as property storage. It should be always defined as virtual property.
+  E.g. the property that never gets saved to the datastore.
+  '''
+  _indexed = False
+  _repeated = False
+  _readable = True
+  _updateable = True
+  _deleteable = True
+  _autoload = False
+  _value_class = RemoteStructuredPropertyValue
+  
+  def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
+    if isinstance(modelclass, basestring):
+      set_modelclass = Model._kind_map.get(modelclass)
+      if set_modelclass is not None:
+        modelclass = set_modelclass
+    kwds['generic'] = True
+    super(SuperRemoteStructuredProperty, self).__init__(name, **kwds)
+    self._modelclass = modelclass
+  
+  def get_model_fields(self, **kwargs):
+    return self.get_modelclass(**kwargs).get_fields()
+  
+  def _set_value(self, entity, value):
+    # __set__
+    super(SuperRemoteStructuredProperty, self)._set_value(entity, value)
+    value_instance = self._get_value(entity)
+    value_instance.set(value)
+  
+  def _prepare_for_put(self, entity):
+    self._values.pop(self._name, None)
+    self._get_value(entity)  # For its side effects.
+
+
+class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
+  '''Reference structured is the same as remote, except it uses different default value class and its default flags for
+  updating, deleting are always false.
+  
+  '''
+  _value_class = ReferenceStructuredPropertyValue
+  _updateable = False
+  _deleteable = False
+  _addable = False
+  
+  def __init__(self, *args, **kwargs):
+    self._callback = kwargs.pop('callback', None)
+    self._target_field = kwargs.pop('target_field', None)
+    super(SuperReferenceStructuredProperty, self).__init__(*args, **kwargs)
+    self._updateable = False
+    self._deleteable = False
+
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):

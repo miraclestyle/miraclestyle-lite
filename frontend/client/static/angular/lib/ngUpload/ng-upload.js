@@ -170,6 +170,8 @@ angular.module('ngUpload', [])
             if (loading) loading(scope);
             setLoadingState(true);
           }
+
+          scope.$broadcast('ngUploadSubmit');
          
           $rootScope.$broadcast('disableUI', true);
           
@@ -226,12 +228,12 @@ angular.module('ngUpload', [])
           
           if (noErrors)
           {
-             $rootScope.$broadcast('ngUploadComplete', content);
+             scope.$broadcast('ngUploadComplete', content);
           }
           else
           {
             errorHandling.modal(content.errors);
-            $rootScope.$broadcast('ngUploadCompleteError', content);
+            scope.$broadcast('ngUploadCompleteError', content);
           }
          
        

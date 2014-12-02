@@ -405,15 +405,12 @@
                 restrict: 'A',
                 link: function (scope, element, attrs, ctrl) {
                     var fn = function () {
-                        var newval = scope.$eval(attrs.compatibilityMaker),
-                            stringified = JSON.stringify(newval);
-                        element.val(stringified);
-                    };
-
-                    scope.$watch('$isUploading', fn);
-                    scope.$on('stringifyData', fn);
-
-                    fn();
+                            var newval = scope.$eval(attrs.compatibilityMaker),
+                                stringified = JSON.stringify(newval);
+                            element.val(stringified);
+                        };
+                    scope.$watch(attrs.compatibilityMaker, fn);
+                    scope.$on('ngUploadSubmit', fn);
 
                 }
             };
@@ -556,11 +553,9 @@
                                     });
 
                                     if (execute) {
-                                        $rootScope.$broadcast('stringifyData');
                                         form.trigger('submit');
-                                        return;
+                                        return false;
                                     }
-
                                 }
 
                                 scope.noComplete();

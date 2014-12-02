@@ -135,7 +135,7 @@
             },
 
             setProperty: function (obj, prop, value) {
-                console.log('helpers.setProperty', obj, prop, value);
+                console.trace('helpers.setProperty', obj, prop, value);
                 var path = prop,
                     of,
                     last;
@@ -152,7 +152,7 @@
                 of[last] = value;
             },
             getProperty: function (obj, prop) {
-                console.log('helpers.getProperty', obj, prop);
+                //console.trace('helpers.getProperty', obj, prop);
                 var path = prop;
                 if (!angular.isArray(path)) {
                     path = prop.split('.');
@@ -692,10 +692,6 @@ w:                  while (images.length > 0) {
                                 copy[key] = value;
                             }
                         });
-                        if (copy.ui && copy.ui.parent) {
-                            delete copy.ui.parent;
-                        }
-
                         return copy;
                     };
 
@@ -712,39 +708,6 @@ w:                  while (images.length > 0) {
                             }
 
                         }
-                        entity.ui.parent = parent;
-                        entity.ui.root_access = function () {
-                            return this.access.join('.');
-                        };
-                        entity.ui.root = function (collect) {
-                            var get_parent = this.parent,
-                                next_parent;
-
-                            if (get_parent === undefined) {
-                                if (collect) {
-                                    collect.push(entity);
-                                }
-                                return entity;
-                            }
-
-                            if (collect) {
-                                collect.push(entity);
-                            }
-
-                            while (true) {
-                                if (collect) {
-                                    collect.push(get_parent);
-                                }
-                                next_parent = get_parent.ui.parent;
-                                if (next_parent === undefined) {
-                                    break;
-                                }
-                                get_parent = next_parent;
-                            }
-
-                            return get_parent;
-
-                        };
                         /// ui must be now reserved keyword in datastore and we use it for making ui related functions
                         if (parent === undefined) {
                             entity.ui.rule = ruleEngine.run(entity);
@@ -1680,17 +1643,18 @@ w:                  while (images.length > 0) {
                                             modelsUtil.normalize(arg, config.modelclass,
                                                 config.ui.specifics.entity, config.code_name,
                                                 length);
-                                            arg.ui.access = angular.copy(config.ui.specifics.formBuilder[0].ui.realPath);
-                                            arg.ui.access.pop();
-                                            if (!config.ui.specifics.modal) {
-                                                arg.ui.access.push(length);
-                                            }
                                             if (angular.isDefined(defaultArgs)) {
                                                 $.extend(arg, defaultArgs);
                                             }
                                             isNew = true;
                                         } else if (!config.ui.specifics.modal) {
                                             length = _.last(arg.ui.access);
+                                        }
+
+                                        console.log(config.ui.realPath);
+                                        arg.ui.access = angular.copy(config.ui.realPath);
+                                        if (!config.ui.specifics.modal) {
+                                            arg.ui.access.push(length);
                                         }
 
                                         $scope.accordions = {
@@ -1755,7 +1719,10 @@ w:                  while (images.length > 0) {
                                                 // internal helper to set the action to be executed
                                                 $scope.rootArgs.action_id = action;
                                             };
+                                            // reference to args that get sent
                                             $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
+                                            // send root args used for packing the rpc call
+                                            $scope.sendRootArgs = {};
                                             $scope.save = function () {
                                                 if (!$scope.container.form.$valid) { // check if the form is valid
                                                     return;
@@ -1766,18 +1733,20 @@ w:                  while (images.length > 0) {
                                                         var readArgs = {},
                                                             readRootArgs = $scope.rootArgs,
                                                             readRootArgsAsList,
-                                                            parentArgsPath = (config.ui.specifics.modal ? $scope.args.ui.access : $scope.args.ui.access.slice(0, $scope.args.ui.access.length - 1));
+                                                            parentArgsPath = $scope.args.ui.access;
                                                         // set this args as single item in array
-                                                        helpers.setProperty($scope.rootArgs, parentArgsPath, $scope.args);
                                                         // delete all remote structured property from rpc data
+                                                        readRootArgs = angular.copy(readRootArgs);
+                                                        helpers.setProperty(readRootArgs, parentArgsPath, $scope.args);
+                                                        $scope.sendRootArgs = readRootArgs;
                                                         angular.forEach($scope.rootScope.config.fields, function (field) {
                                                             if ((_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) && field.code_name !== $scope.args.ui.access[0]) {
                                                                 if (config.ui.path[0] !== field.code_name) {
-                                                                    delete $scope.rootArgs[field.code_name];
+                                                                    delete readRootArgs[field.code_name];
                                                                 }
                                                             }
                                                         });
-                                                        $scope.rootArgs.read_arguments = readArgs;
+                                                        readRootArgs.read_arguments = readArgs;
                                                         angular.forEach(parentArgsPath, function (part, i) {
                                                             // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
                                                             // properties in datastore that begin with an number, which we do not
@@ -1810,39 +1779,41 @@ w:                  while (images.length > 0) {
                                                     };
 
                                                 prepare();
-                                                // create rpc from root args's action model and action id
                                                 if (config.ui.specifics.beforeSave) {
                                                     config.ui.specifics.beforeSave($scope);
                                                 }
-                                                promise = models[$scope.rootArgs.action_model].actions[$scope.rootArgs.action_id]($scope.rootArgs);
+                                                // create rpc from root args's action model and action id
+                                                promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
                                                 promise.then(function (response) {
                                                     $scope.response = response;
                                                     var accessPath = [],
-                                                        value;
-                                                    // set the access path like _products.0._instances.0 because we always pick one key for read path    
-                                                    angular.forEach(config.ui.path, function (path) {
+                                                        value,
+                                                        keepAccess = angular.copy($scope.args.ui.access);
+                                                    // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
+                                                    angular.forEach(keepAccess, function (path, i) {
+                                                        var parse = parseInt(path, 10);
+                                                        if (!isNaN(parse)) {
+                                                            path = 0;
+                                                        }
                                                         accessPath.push(path);
-                                                        accessPath.push(0);
                                                     });
-                                                    if (config.ui.specifics.modal) {
-                                                        accessPath.pop();
-                                                    }
-                                                    // allways populate the data from the response
+                                                    // get data from response and extend current args
                                                     value = helpers.getProperty(response.data.entity, accessPath);
-                                                    $.extend($scope.args, value);
+                                                    $.extend($scope.args, value); // modify current args
+                                                    $scope.args.ui.access = keepAccess; // reference back original access path
                                                     if (isNew) {
                                                         if (config.repeated) {
-                                                            $scope.parentArgs.unshift($scope.args);
+                                                            $scope.parentArgs.unshift($scope.args); // preappend arg if they are new
                                                         }
                                                         isNew = false;
                                                     }
 
-                                                    $.extend(arg, $scope.args);
+                                                    $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
 
                                                     if (angular.isDefined(config.ui.specifics.afterSave)) {
                                                         config.ui.specifics.afterSave($scope);
                                                     }
-                                                    // re-run prepare
+                                                    // re-run prepare to ensure proper paths for complete hook
                                                     prepare();
                                                 }, function (response) {
                                                         // here handle error...
@@ -1857,29 +1828,33 @@ w:                  while (images.length > 0) {
                                             $scope.complete = function (response) {
                                                 $scope.response = response;
                                                 var accessPath = [],
-                                                    value;
-                                                // set the access path like _products.0._instances.0 because we always pick one key for read path    
-                                                angular.forEach(config.ui.path, function (path) {
+                                                    value,
+                                                    keepAccess = angular.copy($scope.args.ui.access);
+                                                angular.forEach(keepAccess, function (path, i) {
+                                                    var parse = parseInt(path, 10);
+                                                    if (!isNaN(parse)) {
+                                                        path = 0;
+                                                    }
                                                     accessPath.push(path);
-                                                    accessPath.push(0);
                                                 });
-                                                if (config.ui.specifics.modal) {
-                                                    accessPath.pop();
-                                                }                                                // allways populate the data from the response
+                                                // allways populate the data from the response
                                                 value = helpers.getProperty(response.data.entity, accessPath);
                                                 $.extend($scope.args, value);
+                                                $scope.args.ui.access = keepAccess;
                                                 if (angular.isDefined(config.ui.specifics.afterComplete)) {
                                                     config.ui.specifics.afterComplete($scope);
                                                 }
                                             };
 
                                             $scope.noComplete = function () {
+                                                // fired when the scope.complete() does not get fired i.e. when no files were sent for upload
                                                 if (angular.isDefined(config.ui.specifics.noComplete)) {
                                                     config.ui.specifics.noComplete($scope);
                                                 }
                                             };
 
                                             $scope.completeError = function (response) {
+                                                // fired when it failed to send http-form-data rpc
                                                 if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
                                                     config.ui.specifics.afterCompleteError($scope, response);
                                                 }

@@ -71,7 +71,7 @@
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.config = $scope.rootScope.config;
 
-                                            // readers here could work but generally not very good
+                                            // readers logic should be completely rewritten, it should be called .pager()
                                             imagesReader = models[config.kind].reader($scope.args, accessImages, function (items) {
                                                 $scope.args._images.extend(items);
                                             });
@@ -136,8 +136,8 @@
                                                             pricetag.position_top = currentTop;
                                                             pricetag._position_left = newPositionLeft;
                                                             pricetag._position_top = currentTop;
-                                                            image.pricetags.remove(pricetag);
                                                             newImage.pricetags.push(angular.copy(pricetag));
+                                                            pricetag._state = 'deleted';
 
                                                         }
                                                     }
@@ -182,13 +182,13 @@
                                             };
 
                                             setupCurrentPricetag = function (image, pricetag) {
-                                                console.log(image.key, pricetag.key);
                                                 $scope.image = image;
                                                 $scope.pricetag = pricetag;
                                             };
 
                                             $scope.manageProduct = function (image, pricetag) {
                                                 setupCurrentPricetag(image, pricetag);
+                                                // perform read catalog.images.0.pricetags.0._product
                                                 models['31'].actions.read({
                                                     key: $scope.entity.key,
                                                     read_arguments: {
@@ -197,6 +197,9 @@
                                                                 keys: [image.key]
                                                             },
                                                             pricetags: {
+                                                                config: {
+                                                                    keys: [pricetag.key],
+                                                                },
                                                                 _product: {
                                                                     _instances: {
                                                                         config: {}
@@ -208,11 +211,12 @@
                                                 }).then(function (response) {
                                                     var responseEntity = response.data.entity,
                                                         ii = $scope.args._images.indexOf(image),
-                                                        loadedPricetag = _.findWhere(responseEntity._images[0].pricetags, {key: $scope.pricetag.key}),
+                                                        product = responseEntity._images[0].pricetags[0]._product,
                                                         realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product'];
-                                                    $scope.fieldProduct.ui.realPath = realPath;
-                                                    $scope.pricetag._product = loadedPricetag._product;
-                                                    $scope.fieldProduct.ui.specifics.manage(loadedPricetag._product);
+                                                    product.ui.access = realPath; // override normalizeEntity auto generated path
+                                                    $scope.fieldProduct.ui.realPath = realPath; // set same path
+                                                    pricetag._product = product;
+                                                    $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
                                                 });
                                             };
 
@@ -220,6 +224,7 @@
 
                                                 var ii = $scope.args._images.indexOf(image),
                                                     newPricetag = {
+                                                        _sequence: image.pricetags.length,
                                                         image_height: config.image_height,
                                                         image_width: config.image_width,
                                                         position_left: config.position_left,
@@ -234,9 +239,9 @@
                                                     },
                                                     realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product'];
 
-                                                $scope.fieldProduct.ui.realPath = realPath;
-                                                image.pricetags.push(newPricetag);
-                                                setupCurrentPricetag(image, newPricetag);
+                                                image.pricetags.push(newPricetag); // append new pricetag to image
+                                                setupCurrentPricetag(image, newPricetag); // set current
+                                                $scope.fieldProduct.ui.realPath = realPath; // set correct pathing for the new product
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };
 
@@ -251,7 +256,8 @@
                                                     specifics: {
                                                         modal: true,
                                                         beforeSave: function (fieldScope) {
-                                                            var findPricetag = helpers.getProperty(fieldScope.rootArgs, fieldScope.args.ui.access.slice(0, fieldScope.args.ui.access.length - 1));
+                                                            // before saving entity, set the name and unit price for the pricetag.
+                                                            var findPricetag = _.last(fieldScope.sendRootArgs._images[0].pricetags);
                                                             findPricetag.value = {
                                                                 name: fieldScope.args.name,
                                                                 value: fieldScope.args.unit_price
@@ -260,31 +266,31 @@
                                                         templateFooterUrl: 'catalog/product/modal_footer.html',
                                                         addText: 'Add Product',
                                                         getRootArgs: function () {
-                                                            return angular.copy($scope.args);
+                                                            // root args is data that gets sent with rpc
+                                                            return $scope.args;
                                                         },
                                                         afterClose: function (fieldProductScope) {
+                                                            // after close hook
                                                             if (!fieldProductScope.args.key) {
                                                                 $scope.image.pricetags.remove($scope.pricetag); // remove the pricetag if we did not commit the product
                                                             }
                                                         },
                                                         afterSave: function (fieldScope) {
+                                                            // after save hook
                                                             fieldScope.setAction('product_upload_images');
-                                                            var image = _.findWhere(fieldScope.response.data.entity._images, {key: $scope.image.key}),
-                                                                updatedPricetag = $scope.image.pricetags;
-                                                            if (!$scope.pricetag.key) {
-                                                                updatedPricetag = _.last(updatedPricetag);
-                                                            } else {
-                                                                updatedPricetag = _.findWhere(updatedPricetag, {key: $scope.pricetag.key});
-                                                            }
-                                                            $.extend($scope.pricetag, updatedPricetag);
+                                                            var updatedPricetag = fieldScope.response.data.entity._images[0].pricetags[0];
+                                                            $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
                                                         },
                                                         afterComplete: function (fieldScope) {
+                                                            // after complete hook
                                                             fieldScope.setAction('update');
                                                         },
                                                         noComplete: function (fieldScope) {
+                                                            // hook for no complete event - complete event only fires if there are images to be uploaded
                                                             fieldScope.setAction('update');
                                                         },
                                                         remove: function (product, close) {
+                                                            // removing the actual product removes the pricetag actually
                                                             $scope.pricetag._state = 'deleted';
                                                             close();
                                                         }
@@ -296,13 +302,17 @@
                                                 formName: 'images'
                                             };
 
+                                            $scope.fieldProduct.modelclass._instances.modelclass.images.ui = {
+                                                formName: 'images'
+                                            };
+
                                             $.extend($scope.fieldProduct.modelclass._instances, {
                                                 ui: {
                                                     label: 'Product Instances',
                                                     path: ['_images', 'pricetags'],
                                                     specifics: {
                                                         getRootArgs: function () {
-                                                            return angular.copy($scope.args);
+                                                            return $scope.args;
                                                         },
                                                         afterSave: function (fieldScope) {
                                                             fieldScope.setAction('product_instance_upload_images');
@@ -322,7 +332,7 @@
                                                                 currentArgs = currentFieldScope.args,
                                                                 $parentScope = $scope;
 
-                                                            if (!currentArgs.variants) {
+                                                            if (!currentArgs.variants.length) {
                                                                 modals.alert('Please create some variants first.');
                                                                 return false;
                                                             }
@@ -378,6 +388,9 @@
                                                                                     _images: {
                                                                                         config: {keys: [$parentScope.image.key]},
                                                                                         pricetags: {
+                                                                                            config: {
+                                                                                                keys: [$parentScope.pricetag.key]
+                                                                                            },
                                                                                             _product: {
                                                                                                 _instances: {
                                                                                                     config: {
@@ -393,9 +406,11 @@
                                                                                     }
                                                                                 }
                                                                             }).then(function (response) {
-                                                                                var pricetags = response.data.entity._images[0].pricetags,
-                                                                                    pricetag = _.findWhere(pricetags, {key: $parentScope.pricetag.key}),
-                                                                                    product = pricetag._product;
+                                                                                var product;
+                                                                                try {
+                                                                                    product = response.data.entity._images[0].pricetags[0]._product;
+                                                                                } catch (ignore) { }
+
                                                                                 if (product) {
                                                                                     productInstance = product._instances[0];
                                                                                 }

@@ -400,7 +400,7 @@ class _BaseImageProperty(_BaseBlobProperty):
     if not self._repeated:
       value = [value]
     out = []
-    total = len(value)
+    total = len(value) - 1
     for i, v in enumerate(value):
       if not self._upload:
         if not isinstance(v, dict) and not self._required:
@@ -408,7 +408,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         out.append(self._structured_property_format(v))
       else:
         if not isinstance(v, cgi.FieldStorage):
-          continue # not file upload
+          raise orm.PropertyError('invalid_input')
         # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
         file_info = blobstore.parse_file_info(v)
         blob_info = blobstore.parse_blob_info(v)
@@ -419,7 +419,7 @@ class _BaseImageProperty(_BaseBlobProperty):
                                              'content_type': file_info.content_type,
                                              'gs_object_name': file_info.gs_object_name,
                                              'image': blob_info.key(),
-                                             '_sequence': total-i})
+                                             '_sequence': total - i})
         out.append(new_image)
     if not out:
       if not self._required: # if field is not required, and there isnt any processed return non existent
