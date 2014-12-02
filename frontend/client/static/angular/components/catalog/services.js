@@ -274,6 +274,8 @@
                                                             if (!fieldProductScope.args.key) {
                                                                 $scope.image.pricetags.remove($scope.pricetag); // remove the pricetag if we did not commit the product
                                                             }
+
+                                                            $scope.pricetag._product = null;
                                                         },
                                                         afterSave: function (fieldScope) {
                                                             // after save hook
