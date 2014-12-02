@@ -92,7 +92,7 @@
 }
 
 .modal-footer {
-  padding: 10px;
+  padding: 5px 10px; /* Note: Tak a look at .modal-footer .button! */
   text-align: right;
   position: relative;
   /*
@@ -103,6 +103,10 @@
   -webkit-box-shadow: 0 -1px 3px #BBBBBB;
   box-shadow: 0 -1px 3px #BBBBBB;
   border-top: 1px solid #BBBBBB;
+}
+
+.modal-footer .button {
+  margin: 5px 0px; /* Perhaps all buttons require similar treatment!? */
 }
 
 .modal-footer:before,
