@@ -746,8 +746,7 @@ w:                  while (images.length > 0) {
                                         };
                                         entity[field.code_name] = value;
                                     } else {
-                                        /*
-                                        value = {
+                                        /*value = {
                                             kind: field.modelclass_kind
                                         };
                                         entity[field.code_name] = value;*/

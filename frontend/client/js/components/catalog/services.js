@@ -58,6 +58,10 @@
                                     // this function is completely custom, meaning that the entire workflow defined here is for
                                     // pricetag positioning and product editing...
                                     var parentScope = this;
+                                    if (!parentScope.args._images || !parentScope.args._images.length) {
+                                        modals.alert('Add some images first!');
+                                        return false;
+                                    }
                                     $modal.open({
                                         templateUrl: 'catalog/products.html',
                                         controller: function ($scope, $modalInstance, $timeout) {
