@@ -249,6 +249,7 @@ class CatalogImage(Image):
           sequence = entity.sequence
         mem.temp_set(key, sequence)
       self.sequence = self._sequence + sequence
+      print self.sequence
 
 
 class Catalog(orm.BaseExpando):
@@ -431,6 +432,7 @@ class Catalog(orm.BaseExpando):
                            '_catalog.discontinue_date': 'input.discontinue_date',
                            '_catalog._images': 'input._images'}}),
             CatalogProcessCoverSet(),
+            CatalogProcessPricetags(),
             RulePrepare(),
             RuleExec()
             ]

@@ -1107,7 +1107,10 @@ class _BaseModel(object):
     self._read_arguments = read_arguments
     futures = []
     for field_key, field in self.get_fields().iteritems():
-      if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
+      has_arguments = field_key in read_arguments
+      if has_arguments or (hasattr(field, '_autoload') and field._autoload):
+        if not has_arguments:
+          read_arguments[field_key] = {'config': {}}
         # we only read what we're told to or if its a local storage or if its marked for autoload
         field_read_arguments = read_arguments.get(field_key, {})
         if hasattr(field, 'is_structured') and field.is_structured:
@@ -1610,6 +1613,8 @@ class PropertyValue(object):
 
   @property
   def read_value(self):
+    # read value is used mainly for def get_output() because it will output whatever the client instructed it to read
+    # by default the read_value will return self.value, which in most of the cases is the case
     return self.value
   
   def get_output(self):
@@ -1691,7 +1696,7 @@ class StructuredPropertyValue(PropertyValue):
                 if isinstance(value, PropertyValue):
                   value = value.value
                 # this is because None cannot be set when there's auto_now, auto_now add  
-                if value is None and isinstance(field, SuperDateTimeProperty) and ((field._auto_now or field._auto_now_add) and field._required):
+                if value is None and not field.can_be_none:
                   continue
                 exists._state = ent._state
                 setattr(exists, field_key, value)
@@ -1707,7 +1712,7 @@ class StructuredPropertyValue(PropertyValue):
     This solves the problem of hierarchy.
     '''
     if self.has_value():
-      entities = self._property_value
+      entities = self.read_value
       if not self._property._repeated:
         if not entities:
           entities = []
@@ -1717,7 +1722,10 @@ class StructuredPropertyValue(PropertyValue):
       for entity in entities:
         for field_key, field in entity.get_fields().iteritems():
           if hasattr(field, 'is_structured') and field.is_structured:
-            if (field_key in read_arguments) or (hasattr(field, '_autoload') and field._autoload):
+            has_arguments = field_key in read_arguments
+            if has_arguments or (hasattr(field, '_autoload') and field._autoload):
+              if not has_arguments:
+                read_arguments[field_key] = {'config': {}}
               value = getattr(entity, field_key)
               field_read_arguments = read_arguments.get(field_key, {})
               value.read_async(field_read_arguments)
@@ -1803,6 +1811,16 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     for structured in self._structured_values:
       if hasattr(structured, 'post_update'):
         structured.post_update()
+    if self.has_value() and self._property._repeated:
+      if self._property._repeated:
+        values = self.value
+        if self._property_value_by_read_arguments is not None:
+          for i,val in enumerate(self._property_value_by_read_arguments):
+            matches = filter(lambda x: x.key == val.key, values)
+            if matches:
+              for match in matches:
+                self._property_value_by_read_arguments[i] = match
+
 
   def _read(self, read_arguments):
     property_value = self._property._get_user_value(self._entity)
@@ -1814,13 +1832,14 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
       if not self._property._repeated:
         property_value_as_list = [property_value_as_list]
       total = len(property_value_as_list) - 1
-      supplied_keys = config.get('keys', [])
-      supplied_keys = SuperVirtualKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
-      if self._property_value_by_read_arguments is not None:
-        self._property_value_by_read_arguments = []
+      if self._property._repeated:
+        supplied_keys = config.get('keys', [])
+        supplied_keys = SuperVirtualKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
+        if self._property_value_by_read_arguments is not None:
+          self._property_value_by_read_arguments = []
       for i, value in enumerate(property_value_as_list):
         value._sequence = total - i
-        if supplied_keys is not None:
+        if self._property._repeated and supplied_keys is not None:
           if value.key in supplied_keys:
             if self._property_value_by_read_arguments is None:
               self._property_value_by_read_arguments = []
@@ -2140,9 +2159,8 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     if self._property._repeated:
       if self.has_value():
         entities.extend(self._property_value)
-    self._property_value = entities
     # Always trigger setattr on the property itself
-    setattr(self._entity, self.property_name, self._property_value)
+    setattr(self._entity, self.property_name, entities)
 
 
 class ReferenceStructuredPropertyValue(StructuredPropertyValue):
@@ -2547,6 +2565,7 @@ class _BaseStructuredProperty(_BaseProperty):
     _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
     key = values.get('key')
+    kind = values.get('kind')
     for value_key, value in values.items():
       field = fields.get(value_key)
       if field:
@@ -2561,7 +2580,7 @@ class _BaseStructuredProperty(_BaseProperty):
       else:
         del values[value_key]
     if key:
-      values['key'] = Key(urlsafe=key) # will throw an error if key was malformed in any way.
+      values['key'] = SuperVirtualKeyProperty(kind=kind, required=True).value_format(key)
     values['_state'] = _state  # Always keep track of _state for rule engine!
     if _sequence is not None:
       values['_sequence'] = _sequence
@@ -2596,7 +2615,7 @@ class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredPrope
   
   def __init__(self, *args, **kwargs):
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
-    self._keep_keys = True
+    self._keep_keys = True # all keys must be stored by default
 
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
@@ -2666,13 +2685,9 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     Currently we do not have the code that would allow this to be saved in datastore:
     Entity.images
     => Image
-    => OtherTypeOfImage
-    => AnotherTypeOfImage
-    We only support
-    Entity.images
-    => Image
-    => Image
-    => Image
+    => OtherTypeOfEntity
+    => OtherTypeOfEntityA
+ 
     In order to support different instances in the repeated list we would also need to store KIND and implement
     additional logic that will load proper model based on protobuff.
     '''
@@ -2715,7 +2730,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
       kwds['kinds'] = map(lambda x: unicode(x), kwds['kinds'])
 
 
-class SuperRemoteStructuredProperty(SuperLocalStructuredProperty):
+class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
   '''This property is not meant to be used as property storage. It should be always defined as virtual property.
   E.g. the property that never gets saved to the datastore.
   '''
@@ -2741,12 +2756,10 @@ class SuperRemoteStructuredProperty(SuperLocalStructuredProperty):
   
   def _set_value(self, entity, value):
     # __set__
-    super(SuperRemoteStructuredProperty, self)._set_value(entity, value)
     value_instance = self._get_value(entity)
     value_instance.set(value)
   
   def _prepare_for_put(self, entity):
-    self._values.pop(self._name, None)
     self._get_value(entity)  # For its side effects.
 
 
@@ -2766,6 +2779,10 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
     super(SuperReferenceStructuredProperty, self).__init__(*args, **kwargs)
     self._updateable = False
     self._deleteable = False
+
+  def value_format(self, value):
+    # reference type properties can never be updated by the client
+    return util.Nonexistent
 
 
 

@@ -398,6 +398,7 @@ div.pricetag {
   left: 20px;
   z-index: 80;
   padding:0px;
+  visibility:hidden;
 }
 
 .pricetag a {

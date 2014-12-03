@@ -66,13 +66,18 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
 class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
-    catalog_images = context._catalog._images.value # @todo this is a problem
-    if catalog_images is not None:
-      for catalog_image in catalog_images:  # when read arguments are used, this is not correct information @todo fix me
-        if catalog_image._state != 'deleted':
-          break
+    catalog_image = None
+    if context.action.key.id() != 'catalog_upload_images':
+      CatalogImage = context.models['30']
+      catalog_image = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).get()
+    if not catalog_image:
+      catalog_images = context._catalog._images.value # @todo this is a problem
+      if catalog_images is not None:
+        for catalog_image in catalog_images:  # when read arguments are used, this is not correct information @todo fix me
+          if catalog_image._state != 'deleted':
+            break
       catalog_cover = context._catalog.cover.value
-      if catalog_images and len(catalog_images):
+      if catalog_image:
         if catalog_cover:
           if catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
             context._catalog.cover = copy.deepcopy(catalog_image)
@@ -247,3 +252,22 @@ class CatalogSearch(orm.BaseModel):
       more = True
     context._cursor = cursor
     context._more = more
+
+class CatalogProcessPricetags(orm.BaseModel):
+ 
+  def run(self, context):
+    pricetags = {}
+    catalog_images = context._catalog._images.value
+    if catalog_images:
+      for catalog_image in catalog_images:
+        if catalog_image.pricetags.value:
+          for pricetag in catalog_image.pricetags.value:
+            pricetag_key = pricetag.key.urlsafe()
+            if pricetag_key not in pricetags:
+              pricetags[pricetag_key] = []
+            pricetags[pricetag_key].append(pricetag)
+      for pricetag_key, pricetag_set in pricetags.iteritems():
+        if len(pricetag_set) > 1:
+          for pricetag in pricetag_set:
+            if pricetag._state == 'deleted':
+              pricetag._state = 'removed'

@@ -144,6 +144,7 @@
                     $(element).css({
                         top: pricetag._position_top,
                         left: pricetag._position_left,
+                        visibility: 'visible'
                     });
                 };
 

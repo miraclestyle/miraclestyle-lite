@@ -408,7 +408,10 @@ class _BaseImageProperty(_BaseBlobProperty):
         out.append(self._structured_property_format(v))
       else:
         if not isinstance(v, cgi.FieldStorage):
-          raise orm.PropertyError('invalid_input')
+          if self._required:
+            raise orm.PropertyError('invalid_input')
+          else:
+            continue
         # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
         file_info = blobstore.parse_file_info(v)
         blob_info = blobstore.parse_blob_info(v)

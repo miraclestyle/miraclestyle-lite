@@ -6,6 +6,7 @@
                     action_denied: function (reason) {
                         return 'You do not have permission to perform this action.';
                     },
+                    invalid_image_type: 'You have supplied incorrect type of image format',
                     invalid_model: 'You have requested access to resource that does not exist',
                     invalid_action: 'You have requested access to the action that does not exist',
                     required: function (fields) {
@@ -49,7 +50,6 @@
                                 });
                                 $scope.ok = function () {
                                     $modalInstance.dismiss('ok');
-
                                 };
                             }
                         });
@@ -1717,7 +1717,7 @@ w:                  while (images.length > 0) {
 
                                             $scope.setAction = function (action) {
                                                 // internal helper to set the action to be executed
-                                                $scope.rootArgs.action_id = action;
+                                                $scope.sendRootArgs.action_id = action;
                                             };
                                             // reference to args that get sent
                                             $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
@@ -1733,17 +1733,17 @@ w:                  while (images.length > 0) {
                                                         var readArgs = {},
                                                             readRootArgs = $scope.rootArgs,
                                                             readRootArgsAsList,
-                                                            parentArgsPath = $scope.args.ui.access;
+                                                            parentArgsPath = $scope.args.ui.access,
+                                                            fieldList,
+                                                            traceDeep;
                                                         // set this args as single item in array
                                                         // delete all remote structured property from rpc data
                                                         readRootArgs = angular.copy(readRootArgs);
                                                         helpers.setProperty(readRootArgs, parentArgsPath, $scope.args);
                                                         $scope.sendRootArgs = readRootArgs;
                                                         angular.forEach($scope.rootScope.config.fields, function (field) {
-                                                            if ((_.string.startsWith(field.type, 'SuperRemote') || _.string.startsWith(field.type, 'SuperImageRemote')) && field.code_name !== $scope.args.ui.access[0]) {
-                                                                if (config.ui.path[0] !== field.code_name) {
-                                                                    delete readRootArgs[field.code_name];
-                                                                }
+                                                            if (_.string.contains(field.type, 'RemoteStructured') && field.code_name !== $scope.args.ui.access[0]) {
+                                                                delete readRootArgs[field.code_name];
                                                             }
                                                         });
                                                         readRootArgs.read_arguments = readArgs;
@@ -1767,15 +1767,39 @@ w:                  while (images.length > 0) {
                                                                     }
                                                                     readArgs.config.keys.push(readRootArgs.key);
                                                                     if (angular.isDefined(readRootArgsAsList)) {
-
                                                                         readRootArgsAsList.splice(0, readRootArgsAsList.length); // empty the list
                                                                         readRootArgsAsList.push(readRootArgs);
                                                                         readRootArgsAsList = undefined;
-
                                                                     }
                                                                 }
                                                             }
                                                         });
+
+                                                        traceDeep = function (readRootArgs, readArgs) {
+                                                            if (readRootArgs && readRootArgs.key) {
+                                                                fieldList = modelsMeta.getModelFields(readRootArgs.kind);
+                                                                angular.forEach(fieldList, function (field) {
+                                                                    if (field.is_structured && _.string.contains(field.type, 'RemoteStructured')) {
+                                                                        var keys = [], newReadArgs = {config: {keys: keys}};
+                                                                        if (field.repeated) {
+                                                                            angular.forEach(readRootArgs[field.code_name], function (ent) {
+                                                                                if (ent.key) {
+                                                                                    keys.push(ent.key);
+                                                                                    traceDeep(ent, newReadArgs);
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                        readArgs[field.code_name] = newReadArgs;
+                                                                    }
+                                                                });
+                                                            } else if (angular.isArray(readRootArgs)) {
+                                                                angular.forEach(readRootArgs, function (readRootArg) {
+                                                                    traceDeep(readRootArg, readArgs);
+                                                                });
+                                                            }
+                                                        };
+
+                                                        traceDeep(readRootArgs, readArgs);
                                                     };
 
                                                 prepare();
@@ -1810,11 +1834,13 @@ w:                  while (images.length > 0) {
 
                                                     $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
 
+
+                                                    // re-run prepare to ensure proper paths for complete hook
+                                                    prepare();
                                                     if (angular.isDefined(config.ui.specifics.afterSave)) {
                                                         config.ui.specifics.afterSave($scope);
                                                     }
-                                                    // re-run prepare to ensure proper paths for complete hook
-                                                    prepare();
+                                                    console.log($scope.sendRootArgs);
                                                 }, function (response) {
                                                         // here handle error...
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {

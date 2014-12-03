@@ -182,6 +182,10 @@
                             }).then(function (response) {
                                 form.attr('action', response.data.upload_url);
                             });
+                        },
+                        reset = function ($event, content) {
+                            form.attr('action', endpoint.url);
+                            that.val('');
                         };
 
                     if (!form.length) {
@@ -195,10 +199,8 @@
                         $(element).off('change', change);
                     });
 
-                    scope.$on('ngUploadComplete', function ($event, content) {
-                        form.attr('action', endpoint.url);
-                        that.val('');
-                    });
+                    scope.$on('ngUploadComplete', reset);
+                    scope.$on('ngUploadCompleteError', change);
                 }
             };
         }).directive('formBuilder', function ($compile, underscoreTemplate, modelsMeta) {

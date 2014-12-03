@@ -212,7 +212,7 @@
                                                     var responseEntity = response.data.entity,
                                                         ii = $scope.args._images.indexOf(image),
                                                         product = responseEntity._images[0].pricetags[0]._product,
-                                                        realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product'];
+                                                        realPath = ['_images', ii, 'pricetags', image.pricetags.indexOf(pricetag), '_product'];
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     pricetag._product = product;
@@ -256,6 +256,7 @@
                                                     specifics: {
                                                         modal: true,
                                                         beforeSave: function (fieldScope) {
+                                                            fieldScope.setAction('update');
                                                             // before saving entity, set the name and unit price for the pricetag.
                                                             var findPricetag = _.last(fieldScope.sendRootArgs._images[0].pricetags);
                                                             findPricetag.value = {
@@ -271,11 +272,10 @@
                                                         },
                                                         afterClose: function (fieldProductScope) {
                                                             // after close hook
+                                                            $scope.pricetag._product = null;
                                                             if (!fieldProductScope.args.key) {
                                                                 $scope.image.pricetags.remove($scope.pricetag); // remove the pricetag if we did not commit the product
                                                             }
-
-                                                            $scope.pricetag._product = null;
                                                         },
                                                         afterSave: function (fieldScope) {
                                                             // after save hook
@@ -315,6 +315,9 @@
                                                     specifics: {
                                                         getRootArgs: function () {
                                                             return $scope.args;
+                                                        },
+                                                        beforeSave: function (fieldScope) {
+                                                            fieldScope.setAction('update');
                                                         },
                                                         afterSave: function (fieldScope) {
                                                             fieldScope.setAction('product_instance_upload_images');
