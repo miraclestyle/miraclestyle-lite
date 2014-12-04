@@ -152,7 +152,6 @@
                 of[last] = value;
             },
             getProperty: function (obj, prop) {
-                //console.trace('helpers.getProperty', obj, prop);
                 var path = prop;
                 if (!angular.isArray(path)) {
                     path = prop.split('.');
@@ -1585,13 +1584,17 @@ w:                  while (images.length > 0) {
 
                     buildPaths();
 
-                    rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
+                    rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
 
                     if (config.ui.specifics.remote) {
                         if (!angular.isDefined(config.ui.specifics.pager)) {
                             config.ui.specifics.pager = models[rootArgs.action_model].pager(rootArgs, config.ui.realPath, function (items) {
                                 config.ui.specifics.parentArgs.extend(items);
                             });
+                        }
+
+                        if (angular.isDefined(config.ui.specifics.pagerSettings)) {
+                            config.ui.specifics.pager.state(config.ui.specifics.pagerSettings);
                         }
                     }
 
@@ -1748,7 +1751,7 @@ w:                  while (images.length > 0) {
                                         if (config.ui.specifics.remote) {
 
                                             // reference to args that get sent
-                                            $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
+                                            $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
 
                                             $scope.setAction = function (action) {
                                                 // internal helper to set the action to be executed
@@ -2104,7 +2107,7 @@ w:                  while (images.length > 0) {
                                 },
                                 setNextReadArguments: function (nextReadArguments) {
                                     this.next = nextReadArguments;
-                                    this.more = canLoadMore(nextReadArguments);
+                                    this.more = canLoadMore(this.next);
                                 },
                                 setAccess: function (access) {
                                     this.access = access;
@@ -2117,10 +2120,10 @@ w:                  while (images.length > 0) {
                                         return false;
                                     }
                                     var that = this,
-                                        next,
+                                        next = that.next,
                                         promise;
 
-                                    if (!that.next) {
+                                    if (!next) {
                                         next = angular.copy(args._next_read_arguments);
                                     }
 
@@ -2130,8 +2133,16 @@ w:                  while (images.length > 0) {
                                     });
 
                                     promise.then(function (response) {
-                                        var items = helpers.getProperty(response.data.entity, that.access),
+                                        var getAccess = [],
+                                            items,
                                             loadedNext;
+                                        angular.forEach(that.access, function (part) {
+                                            if (!isNaN(parseInt(part, 10))) {
+                                                part = 0;
+                                            }
+                                            getAccess.push(part);
+                                        });
+                                        items = helpers.getProperty(response.data.entity, getAccess);
 
                                         if (angular.isFunction(callback)) {
                                             callback(items);

@@ -86,21 +86,9 @@ class _ImagePropertyValue(object):
           self._property.delete_blobs_on_success(entity.image)
         else:
           self._property.save_blobs_on_success(entity.image, False)
-      if hasattr(self._entity, '_original'):
-        original_entities = getattr(self._entity._original, self.property_name, None)
-        if original_entities is not None:
-          original_entities = original_entities.value
-          if not self._property._repeated:
-            if entities[0] is not None and original_entities is not None and entities[0].image != original_entities.image:
-              self._property.delete_blobs_on_success(original_entities.image)
-          else:
-            tmp = dict((ent.key.urlsafe(), ent) for ent in entities if ent.key)
-            if original_entities is not None:
-              for original in original_entities:
-                entity = tmp.get(original.key.urlsafe())
-                if entity is not None:
-                  if entity.image != original.image:
-                    self._property.delete_blobs_on_success(original.image)
+        if hasattr(entity, '_original'):
+          if entity.image != entity._original.image:
+            self._property.delete_blobs_on_success(entity._original.image)
   
   def duplicate(self):
     '''Override duplicate. Parent duplicate method will retrieve all data into self._property_value, and later on,

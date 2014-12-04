@@ -186,7 +186,7 @@ class CatalogProduct(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_instances': orm.SuperRemoteStructuredProperty(CatalogProductInstance, repeated=True),
+    '_instances': orm.SuperRemoteStructuredProperty(CatalogProductInstance, repeated=True), # sorting must be done by code?
     '_product_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='product_category'),
     '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
     '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom')

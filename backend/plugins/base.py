@@ -50,7 +50,6 @@ class Set(orm.BaseModel):
     for key in remove_values:
       del_attr(context, key)
 
-
 class Read(orm.BaseModel):
   
   _kind = 88

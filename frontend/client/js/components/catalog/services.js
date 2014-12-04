@@ -219,8 +219,11 @@
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     pricetag._product = product;
-                                                    $scope.fieldProduct.ui.specifics.pager.setNextReadArguments(response.data.entity._next_read_arguments);
+                                                    $scope.fieldProduct.modelclass._instances.ui.specifics.pagerSettings = {
+                                                        next: response.data.entity._next_read_arguments
+                                                    };
                                                     $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
+
                                                 });
                                             };
 

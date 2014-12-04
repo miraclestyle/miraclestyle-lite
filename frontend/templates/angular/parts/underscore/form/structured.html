@@ -53,7 +53,7 @@
     </div>
  
     <% if (config.ui.specifics.remote) { %>
-    <button ng-if="config.ui.specifics.canLoadMore" loading class="button block load-more" type="button" ng-click="config.ui.specifics.loadMore()">Load More</button>
+    <button ng-if="config.ui.specifics.pager.more" loading class="button block load-more" type="button" ng-click="config.ui.specifics.pager.load()">Load More</button>
     <% } %>
     
     <% } else { %>

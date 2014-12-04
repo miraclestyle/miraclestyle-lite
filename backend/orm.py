@@ -255,7 +255,7 @@ def write_multi(entities, record_arguments=None):
     entity.unindex_search_documents()
 
 def allowed_state(_state):
-  if _state not in [None, 'deleted', 'created', 'modified']:
+  if _state not in [None, 'deleted', 'added']:
     return None
   return _state
 
@@ -1683,6 +1683,7 @@ class StructuredPropertyValue(PropertyValue):
             # e.g. setattr(entity._images, _images) to properly do sets for values of _images
             value = getattr(property_value, field_key, None)
             if isinstance(value, PropertyValue):
+              value._entity = self._property_value
               value = value.value
             if value is None and not field.can_be_none:
               continue
@@ -1704,6 +1705,7 @@ class StructuredPropertyValue(PropertyValue):
               for field_key, field in fields:
                 value = getattr(ent, field_key, None)
                 if isinstance(value, PropertyValue):
+                  value._entity = exists
                   value = value.value
                 # this is because None cannot be set when there's auto_now, auto_now add  
                 if value is None and not field.can_be_none:
@@ -1884,15 +1886,12 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
 
       if self._property._repeated:
         delete_entities = []
-        originals = {}
-        if not self._property._updateable:
-          originals = dict((ent.key.urlsafe(), ent) for ent in getattr(self._entity._original, self.property_name, []))
         for entity in self._property_value:
           if hasattr(entity, 'prepare'):
             entity.prepare(parent=self._entity.key)
           collect_structured(entity)
           if (entity._state in delete_states and self._property._deleteable) \
-            or (not self._property._addable and entity.key.urlsafe() not in originals):
+            or (not self._property._addable and not hasattr(entity, '_original')):
             # if the property is deleted and deleteable
             # or if property is not addable and it does not exist in originals, remove it.
             delete_entities.append(entity)
@@ -1904,9 +1903,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
 
         if not self._property._updateable: # if the property is not updatable we must revert all data to original
           for i,ent in enumerate(self._property_value):
-            urlsafe = ent.key.urlsafe()
-            if urlsafe in originals:
-              self._property_value[i] = copy.deepcopy(originals[urlsafe])
+            if hasattr(ent, '_original'):
+              self._property_value[i] = copy.deepcopy(ent._original)
       else:
         if hasattr(self._property_value, 'prepare'):
           self._property_value.prepare(parent=self._entity.key)
@@ -2090,14 +2088,9 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         delete_entities.append(entity)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
-    originals = {}
-    if hasattr(self._entity, '_original'):
-      original = getattr(self._entity._original, self.property_name, [])
-      if original.value is not None:
-        originals = dict((entity.key.urlsafe(), entity) for entity in original.value)
-    print self.property_name, originals
     for i,entity in enumerate(self._property_value):
-      is_new = entity.key.urlsafe() not in originals
+      is_new = not hasattr(entity, '_original')
+      print self.property_name, is_new
       if is_new and entity._state is None:
         entity._state = 'created'
       if not self._property._addable and is_new:
@@ -2106,7 +2099,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       elif not self._property._updateable and not is_new:
         # if updates are not permitted, then always revert to original value
         # note that if addable is true, then user will be in able to add new items no matter what
-        self._property_value[i] = copy.deepcopy(originals[entity.key.urlsafe()])
+        self._property_value[i] = copy.deepcopy(entity._original)
     delete_multi([entity.key for entity in delete_entities])
     put_multi(self._property_value)
   
@@ -2511,13 +2504,21 @@ class _BaseStructuredProperty(_BaseProperty):
       except IndexError as e:
         out = None
     return out
+
+  def new_values(self, current_value, new_value):
+    for field_key, field in current_value.get_fields().iteritems():
+      value = getattr(new_value, field_key, None)
+      if isinstance(value, PropertyValue):
+        value = value.value
+      setattr(current_value, field_key, value)
+    current_value._state = new_value._state
+
   
   def _set_value(self, entity, value, override=False):
     # __set__
     if override:
       return super(_BaseStructuredProperty, self)._set_value(entity, value)
     value_instance = self._get_value(entity)
-    current_values = value
     if self._repeated:
       if value_instance.has_value():
         if value_instance.value:
@@ -2530,9 +2531,7 @@ class _BaseStructuredProperty(_BaseProperty):
             if val.key:
               for i,current_value in enumerate(current_values):
                 if current_value.key == val.key:
-                  if hasattr(current_value, '_original'):
-                    val._original = current_value._original
-                  current_values[i] = val
+                  self.new_values(current_value, val)
                   generate = False
                   break
             if generate:
@@ -2545,31 +2544,25 @@ class _BaseStructuredProperty(_BaseProperty):
             return val._sequence
           current_values = sorted(current_values, key=sorting_function, reverse=True)
       else:
+        current_values = value
         if current_values is None:
           current_values = []
-        for val in current_values:
-          if not val.key:
-            val.generate_unique_key()
-            if val._state is None:
-              val._state = 'created'
+        else:
+          for val in current_values:
+            if not val.key:
+              val.generate_unique_key()
+              if val._state is None:
+                val._state = 'created'
     elif not self._repeated:
-      if current_values:
-        generate = False
-        if value_instance.has_value():
-          current_values = value_instance.value
-          if current_values and current_values.key: # ensure that we will always have a key
-            value.key = current_values.key
-          elif not value.key:
-            generate = True
-          if hasattr(current_values, '_original'):
-            value._original = current_values._original
+      if value is not None:
+        current_values = value_instance.value
+        if current_values is not None:
+          self.new_values(current_values, value)
+        else:
           current_values = value
-        elif not current_values.key:
-          generate = True
-        if generate and current_values:
           current_values.generate_unique_key()
-          if current_values._state is None:
-            current_values._state = 'created'
+      else:
+        current_values = value
     value_instance.set(current_values)
     return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
   
