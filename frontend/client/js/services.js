@@ -1447,7 +1447,8 @@ w:                  while (images.length > 0) {
                         newListFields = [],
                         defaults,
                         defaultSortable,
-                        buildPaths;
+                        buildPaths,
+                        rootArgs;
 
                     defaultFields = defaultFields.sort(helpers.fieldSorter);
 
@@ -1584,6 +1585,16 @@ w:                  while (images.length > 0) {
 
                     buildPaths();
 
+                    rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
+
+                    if (config.ui.specifics.remote) {
+                        if (!angular.isDefined(config.ui.specifics.pager)) {
+                            config.ui.specifics.pager = models[rootArgs.action_model].pager(rootArgs, config.ui.realPath, function (items) {
+                                config.ui.specifics.parentArgs.extend(items);
+                            });
+                        }
+                    }
+
 
                     if (!config.repeated && config.ui.specifics.modal !== true) {
 
@@ -1626,6 +1637,29 @@ w:                  while (images.length > 0) {
                                             length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
                                             formBuilder = {
                                                 '0': []
+                                            },
+                                            getResult = function (response, access) {
+                                                var accessPath = [],
+                                                    value,
+                                                    isNewAndRepeated = (isNew && config.repeated);
+                                                angular.forEach(access, function (path, i) {
+                                                    var parse = parseInt(path, 10);
+                                                    if (!isNaN(parse)) {
+                                                        path = 0;
+                                                    }
+                                                    accessPath.push(path);
+                                                });
+                                                if (isNewAndRepeated) {
+                                                    accessPath.pop();
+                                                }
+                                                value = helpers.getProperty(response.data.entity, accessPath);
+                                                if (isNewAndRepeated && value.length) {
+                                                    value = _.findWhere({
+                                                        _state: 'created'
+                                                    });
+                                                }
+
+                                                return value;
                                             };
 
                                         config.ui.specifics.getScope = function () {
@@ -1650,7 +1684,6 @@ w:                  while (images.length > 0) {
                                             length = _.last(arg.ui.access);
                                         }
 
-                                        console.log(config.ui.realPath);
                                         arg.ui.access = angular.copy(config.ui.realPath);
                                         if (!config.ui.specifics.modal) {
                                             arg.ui.access.push(length);
@@ -1714,12 +1747,13 @@ w:                  while (images.length > 0) {
 
                                         if (config.ui.specifics.remote) {
 
+                                            // reference to args that get sent
+                                            $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
+
                                             $scope.setAction = function (action) {
                                                 // internal helper to set the action to be executed
                                                 $scope.sendRootArgs.action_id = action;
                                             };
-                                            // reference to args that get sent
-                                            $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : angular.copy(config.ui.specifics.rootScope.args));
                                             // send root args used for packing the rpc call
                                             $scope.sendRootArgs = {};
                                             $scope.save = function () {
@@ -1809,19 +1843,9 @@ w:                  while (images.length > 0) {
                                                 promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
                                                 promise.then(function (response) {
                                                     $scope.response = response;
-                                                    var accessPath = [],
-                                                        value,
-                                                        keepAccess = angular.copy($scope.args.ui.access);
-                                                    // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
-                                                    angular.forEach(keepAccess, function (path, i) {
-                                                        var parse = parseInt(path, 10);
-                                                        if (!isNaN(parse)) {
-                                                            path = 0;
-                                                        }
-                                                        accessPath.push(path);
-                                                    });
-                                                    // get data from response and extend current args
-                                                    value = helpers.getProperty(response.data.entity, accessPath);
+                                                    var keepAccess = angular.copy($scope.args.ui.access),
+                                                        // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
+                                                        value = getResult(response, keepAccess);
                                                     $.extend($scope.args, value); // modify current args
                                                     $scope.args.ui.access = keepAccess; // reference back original access path
                                                     if (isNew) {
@@ -1852,18 +1876,8 @@ w:                  while (images.length > 0) {
 
                                             $scope.complete = function (response) {
                                                 $scope.response = response;
-                                                var accessPath = [],
-                                                    value,
-                                                    keepAccess = angular.copy($scope.args.ui.access);
-                                                angular.forEach(keepAccess, function (path, i) {
-                                                    var parse = parseInt(path, 10);
-                                                    if (!isNaN(parse)) {
-                                                        path = 0;
-                                                    }
-                                                    accessPath.push(path);
-                                                });
-                                                // allways populate the data from the response
-                                                value = helpers.getProperty(response.data.entity, accessPath);
+                                                var keepAccess = angular.copy($scope.args.ui.access),
+                                                    value = getResult(response, keepAccess);
                                                 $.extend($scope.args, value);
                                                 $scope.args.ui.access = keepAccess;
                                                 if (angular.isDefined(config.ui.specifics.afterComplete)) {
@@ -1961,26 +1975,15 @@ w:                  while (images.length > 0) {
                     return 'structured';
                 },
                 _RemoteStructuredPropery: function (info) {
-
-                    var args = info.config.ui.specifics.rootScope.args,
-                        access = angular.copy(args.ui.access),
-                        defaultReader;
-                    access.push(info.config.code_name);
-                    defaultReader = models[args.action_model].reader(args, access, function (items) {
-                        info.config.ui.specifics.parentArgs.extend(items);
-                    });
-                    if (!angular.isDefined(info.config.ui.specifics.reader)) {
-                        info.config.ui.specifics.reader = defaultReader;
-                    }
-                    info.config.ui.specifics.remote = true;
-
+                    var config = info.config;
+                    config.ui.specifics.remote = true;
                 },
                 SuperStructuredProperty: function (info) {
                     return this.SuperLocalStructuredProperty(info);
                 },
                 SuperRemoteStructuredProperty: function (info) {
-                    var ret = this.SuperLocalStructuredProperty(info);
                     this._RemoteStructuredPropery(info);
+                    var ret = this.SuperLocalStructuredProperty(info);
                     return ret;
                 },
                 SuperImageLocalStructuredProperty: function (info) {
@@ -1998,8 +2001,8 @@ w:                  while (images.length > 0) {
                     return this.SuperImageLocalStructuredProperty(info);
                 },
                 SuperImageRemoteStructuredProperty: function (info) {
-                    var ret = this.SuperImageLocalStructuredProperty(info);
                     this._RemoteStructuredPropery(info);
+                    var ret = this.SuperImageLocalStructuredProperty(info);
                     return ret;
                 },
                 SuperTextProperty: function (info) {
@@ -2058,62 +2061,77 @@ w:                  while (images.length > 0) {
 
                             console.error('get() relies on actions.search action. use actions.read() instead.');
                         },
-                        reader: function (args, path, callback) {
-                            // reader instance that internally tracks the pager.
-                            // params provided are instance of root entity
-                            // and path of the entity's part that needs to be loaded
-                            // @return {next, more, load()}
-                            var fields = [],
+                        pager: function (args, access, callback) {
+                            // pager instance that internally tracks the pager next read arguments.
+                            // params provided are action arguments
+                            // and path to the structure that the pager will inject data to
+                            if (!angular.isArray(access)) {
+                                console.error('path must be array, ' + typeof access + ' given');
+                                return;
+                            }
+                            var fields,
                                 canLoadMore = function (nextReadArguments) {
                                     return helpers.getProperty(nextReadArguments, fields.join('.') + '.config.more');
                                 },
-                                reader;
-                            if (!angular.isArray(path)) {
-                                path = path.split('.');
-                            }
-                            angular.forEach(path, function (part) {
-                                // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
-                                // properties in datastore that begin with an number
-                                if (isNaN(parseInt(part, 10))) {
-                                    fields.push(part);
-                                }
-                            });
+                                init = function (access) {
+                                    fields = [];
+                                    angular.forEach(access, function (path) {
+                                        if (isNaN(parseInt(path, 10))) {
+                                            fields.push(path);
+                                        }
+                                    });
+                                },
+                                pager;
 
-                            reader = {
+                            // fields are now _images, pricetags, _product, _instances
+                            init(access);
+
+                            pager = {
                                 next: null,
+                                access: access,
                                 more: canLoadMore(args._next_read_arguments),
-                                state: function (reader) {
-                                    this.next = reader.next;
-                                    this.more = reader.more;
+                                state: function (config) {
+                                    this.next = config.next;
+                                    if (angular.isDefined(config.access)) {
+                                        this.access = config.access;
+                                        init(this.access);
+                                    }
+                                    if (angular.isDefined(config.more)) {
+                                        this.more = config.more;
+                                    } else {
+                                        this.more = canLoadMore(this.next);
+                                    }
+                                },
+                                setNextReadArguments: function (nextReadArguments) {
+                                    this.next = nextReadArguments;
+                                    this.more = canLoadMore(nextReadArguments);
+                                },
+                                setAccess: function (access) {
+                                    this.access = access;
+                                    init(access);
+                                    this.more = canLoadMore(this.next);
                                 },
                                 load: function () {
+                                    if (!this.more) {
+                                        console.debug('nothing to load, more=false');
+                                        return false;
+                                    }
                                     var that = this,
-                                        digNext = {},
-                                        next = that.next || args._next_read_arguments,
-                                        nextData,
-                                        items,
-                                        promise,
-                                        loadedNext,
-                                        paths = [];
+                                        next,
+                                        promise;
 
-                                    angular.forEach(path, function (p) {
-                                        paths.push(p);
-                                        nextData = helpers.getProperty(next, paths);
-                                        if (!angular.isDefined(nextData)) {
-                                            nextData = {
-                                                config: {}
-                                            };
-                                        }
-                                        digNext[p] = nextData;
-                                    });
+                                    if (!that.next) {
+                                        next = angular.copy(args._next_read_arguments);
+                                    }
 
                                     promise = models[args.action_model].actions.read({
                                         key: args.key,
-                                        read_arguments: that.next || digNext
+                                        read_arguments: next
                                     });
 
                                     promise.then(function (response) {
-                                        items = helpers.getProperty(response.data.entity, path);
+                                        var items = helpers.getProperty(response.data.entity, that.access),
+                                            loadedNext;
 
                                         if (angular.isFunction(callback)) {
                                             callback(items);
@@ -2131,7 +2149,7 @@ w:                  while (images.length > 0) {
                                 }
                             };
 
-                            return reader;
+                            return pager;
 
                         }
                     };

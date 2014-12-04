@@ -66,7 +66,7 @@
                                         templateUrl: 'catalog/products.html',
                                         controller: function ($scope, $modalInstance, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
-                                                imagesReader,
+                                                imagesPager,
                                                 setupCurrentPricetag;
                                             accessImages.push(fields._images.code_name);
 
@@ -75,12 +75,11 @@
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.config = $scope.rootScope.config;
 
-                                            // readers logic should be completely rewritten, it should be called .pager()
-                                            imagesReader = models[config.kind].reader($scope.args, accessImages, function (items) {
+                                            imagesPager = models[config.kind].pager($scope.args, accessImages, function (items) {
                                                 $scope.args._images.extend(items);
                                             });
                                             // set next arguments from initially loaded data from root scope
-                                            imagesReader.state(parentScope.config.ui.specifics.reader); // this is not good
+                                            imagesPager.state(parentScope.config.ui.specifics.pager);
 
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
@@ -178,8 +177,8 @@
                                             };
 
                                             $scope.loadMoreImages = function (callback) {
-                                                if (imagesReader.more) {
-                                                    imagesReader.load().then(callback);
+                                                if (imagesPager.more) {
+                                                    imagesPager.load().then(callback);
                                                 } else {
                                                     callback();
                                                 }
@@ -220,6 +219,7 @@
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     pricetag._product = product;
+                                                    $scope.fieldProduct.ui.specifics.pager.setNextReadArguments(response.data.entity._next_read_arguments);
                                                     $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
                                                 });
                                             };
@@ -514,6 +514,7 @@
                                                     $.extend(parentScope.args, new_args);
                                                     $scope.args = angular.copy($scope.args);
                                                     parentScope.args = angular.copy(parentScope.args);
+                                                    parentScope.config.ui.specifics.pager.state(imagesPager);
                                                 }, function (response) {
                                                     // here handle error...
                                                 });

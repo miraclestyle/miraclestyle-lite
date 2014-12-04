@@ -726,10 +726,10 @@ class _BaseModel(object):
     new_entity = model(_deepcopy=True)
     new_entity.key = copy.deepcopy(self.key)
     new_entity._state = self._state
-    for field_key in self.get_fields():
+    for field_key, field in self.get_fields().iteritems():
       if hasattr(self, field_key):
         value = getattr(self, field_key, None)
-        is_property_value_type = isinstance(value, PropertyValue)
+        is_property_value_type = (hasattr(field, 'is_structured') and field.is_structured)
         if is_property_value_type:
           if not value.has_value():
             continue # if there's no value to copy skip it
@@ -1231,13 +1231,23 @@ class _BaseModel(object):
       # recursevely specify original for all locally structured properties.
       # this is because we have huge depency on _original, so we need to have it on its children as well
       def scan(value, field_key, field, original):
-        if isinstance(value, PropertyValue) and value.has_value():
+        if hasattr(field, 'is_structured') and field.is_structured and isinstance(value, PropertyValue) and value.has_value():
           scan(value.value, field_key, field, original.value)
         elif isinstance(value, list):
           for i, val in enumerate(value):
-            scan(val, field_key, field, original[i])
+            if not isinstance(val, Model):
+              break
+            find = filter(lambda x: x.key == val.key, original)
+            try:
+              find = find[0]
+            except IndexError:
+              find = None
+            scan(val, field_key, field, find)
         elif value is not None and isinstance(value, Model):
           value._original = original
+          for field_key, field in value.get_fields().iteritems():
+            scan(getattr(value, field_key, None), field_key, field, getattr(value._original, field_key, None))
+
       for field_key, field in self.get_fields().iteritems():
         scan(getattr(self, field_key, None), field_key, field, getattr(self._original, field_key, None))
   
@@ -1672,6 +1682,8 @@ class StructuredPropertyValue(PropertyValue):
             # this is to support proper setting of data for existing instances
             # e.g. setattr(entity._images, _images) to properly do sets for values of _images
             value = getattr(property_value, field_key, None)
+            current = getattr(self._property_value, field_key, None)
+            exchange_originals(current, value)
             if isinstance(value, PropertyValue):
               value = value.value
             if value is None and not field.can_be_none:
@@ -1703,7 +1715,8 @@ class StructuredPropertyValue(PropertyValue):
               new_list.append(exists)
             else:
               new_list.append(ent)
-            property_value = new_list
+          del property_value[:] 
+          property_value.extend(new_list)
       self._property_value = property_value
       self._set_parent()
   
@@ -1837,6 +1850,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         supplied_keys = SuperVirtualKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
         if self._property_value_by_read_arguments is not None:
           self._property_value_by_read_arguments = []
+      self._property_value_options.update(config)
       for i, value in enumerate(property_value_as_list):
         value._sequence = total - i
         if self._property._repeated and supplied_keys is not None:
@@ -1978,6 +1992,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       entities = get_multi_async([entity.key for entity in supplied_entities if entity.key is not None])
       cursor = None
     elif supplied_keys:
+      supplied_keys_strings = supplied_keys
       prepare_supplied_keys = []
       model = self._property.get_modelclass()
       for supplied_key in supplied_keys:
@@ -1994,6 +2009,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         if supplied_key.parent() != self._entity.key:
           raise PropertyError('invalid_parent_for_key_%s' % supplied_key.urlsafe())
       entities = get_multi_async(supplied_keys)
+      self._property_value_options.update(config)
       cursor = None
     else:
       query = self._property.get_modelclass().query(ancestor=self._entity.key)
@@ -2014,6 +2030,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       cursor = None
     self._property_value = entities
     self._property_value_options['cursor'] = cursor
+    
   
   def _read(self, read_arguments):
     if self._property._repeated:
@@ -2080,8 +2097,11 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       original = getattr(self._entity._original, self.property_name, [])
       if original.value is not None:
         originals = dict((entity.key.urlsafe(), entity) for entity in original.value)
+    print self.property_name, originals
     for i,entity in enumerate(self._property_value):
-      is_new = entity.key not in originals
+      is_new = entity.key.urlsafe() not in originals
+      if is_new and entity._state is None:
+        entity._state = 'created'
       if not self._property._addable and is_new:
         # if property does not allow new values remove it from put queue
         self._property_value.remove(entity)
@@ -2512,12 +2532,16 @@ class _BaseStructuredProperty(_BaseProperty):
             if val.key:
               for i,current_value in enumerate(current_values):
                 if current_value.key == val.key:
+                  if hasattr(current_value, '_original'):
+                    val._original = current_value._original
                   current_values[i] = val
                   generate = False
                   break
             if generate:
               if not val.key:
                 val.generate_unique_key()
+                if val._state is None:
+                  val._state = 'created'
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
@@ -2528,6 +2552,8 @@ class _BaseStructuredProperty(_BaseProperty):
         for val in current_values:
           if not val.key:
             val.generate_unique_key()
+            if val._state is None:
+              val._state = 'created'
     elif not self._repeated:
       if current_values:
         generate = False
@@ -2537,11 +2563,15 @@ class _BaseStructuredProperty(_BaseProperty):
             value.key = current_values.key
           elif not value.key:
             generate = True
+          if hasattr(current_values, '_original'):
+            value._original = current_values._original
           current_values = value
         elif not current_values.key:
           generate = True
         if generate and current_values:
           current_values.generate_unique_key()
+          if current_values._state is None:
+            current_values._state = 'created'
     value_instance.set(current_values)
     return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
   
@@ -2552,13 +2582,13 @@ class _BaseStructuredProperty(_BaseProperty):
   
   def _get_value(self, entity):
     # __get__
+    super(_BaseStructuredProperty, self)._get_value(entity)
     value_name = '%s_value' % self._name
     if value_name in entity._values:
       value_instance = entity._values[value_name]
     else:
       value_instance = self._value_class(property_instance=self, entity=entity)
       entity._values[value_name] = value_instance
-    super(_BaseStructuredProperty, self)._get_value(entity)
     return value_instance
   
   def _structured_property_field_format(self, fields, values):

@@ -12,6 +12,8 @@ import random
 import dis
 import time
 import re
+import pdb
+import sys
 
 from decimal import Decimal, ROUND_HALF_EVEN
 
@@ -330,6 +332,14 @@ def log(message, level=None):
         level = 'info'
     if settings.DO_LOGS:
         getattr(logging, level)(message)
+
+### DEBUG ###
+def dbg():
+    """ Enter pdb in App Engine
+
+    Renable system streams for it.
+    """
+    pdb.Pdb(stdin=getattr(sys,'__stdin__'),stdout=getattr(sys,'__stderr__')).set_trace(sys._getframe().f_back)
 
 
 ########## Unit manipulation functions! ##########

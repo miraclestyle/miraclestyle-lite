@@ -41,19 +41,16 @@ class JSONEncoder(json.JSONEncoder):
       try:
         return o.get_output()
       except TypeError as e:
-        print e
         pass
     if hasattr(o, 'get_meta'):
       try:
        return o.get_meta()
       except TypeError as e:
-       print e
        pass
     try:
       out = str(o)
       return out
     except TypeError as e:
-      print e
       pass
     return json.JSONEncoder.default(self, o)
 
