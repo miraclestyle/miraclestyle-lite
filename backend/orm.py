@@ -1682,8 +1682,6 @@ class StructuredPropertyValue(PropertyValue):
             # this is to support proper setting of data for existing instances
             # e.g. setattr(entity._images, _images) to properly do sets for values of _images
             value = getattr(property_value, field_key, None)
-            current = getattr(self._property_value, field_key, None)
-            exchange_originals(current, value)
             if isinstance(value, PropertyValue):
               value = value.value
             if value is None and not field.can_be_none:
