@@ -1217,6 +1217,7 @@ class _BaseModel(object):
       # prepare_duplicate_key()
       # we always set the key last, because if we dont, then ancestor queries wont work because we placed a new key that
       # does not exist yet
+    new_entity._state = 'duplicated'
     return new_entity
   
   def make_original(self):

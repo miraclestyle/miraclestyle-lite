@@ -37,7 +37,7 @@
             var input = obj[key], fields, field, format;
 
             if (obj.kind) {
-                fields = modelsMeta.getModelFields(obj.kind);
+                fields = modelsMeta.getFields(obj.kind);
                 field = fields[key];
 
                 if (angular.isDefined(field)) {

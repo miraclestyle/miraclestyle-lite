@@ -51,6 +51,51 @@
                                         }
                                     }
                                 });
+
+                                var updateFields = ['state', 'ui.rule'],
+                                    updateState = function (args, newArgs) {
+                                        helpers.update(args, newArgs, updateFields);
+                                        helpers.update(args, newArgs, updateFields);
+                                    };
+
+                                $scope.actions = {
+                                    publish: function () {
+                                        modals.confirm('Publish this catalog will make it not editable and visible to the public.' +
+                                                       'Are you sure you want to do this?',
+                                            function () {
+                                                models['31'].actions.publish({
+                                                    key: $scope.entity.key
+                                                }).then(function (response) {
+                                                    modals.alert('Catalog published. It will be public in few minutes.');
+                                                    updateState(response.entity);
+                                                });
+                                            });
+                                    },
+                                    discontinue: function () {
+                                        modals.confirm('By discontinuing this catalog you will remove it from public, and it will be delted after 40 days.' +
+                                                       'Are you sure you want to do this?',
+                                            function () {
+                                                models['31'].actions.discontinue({
+                                                    key: $scope.entity.key
+                                                }).then(function (response) {
+                                                    modals.alert('Catalog discontinued successfully.');
+                                                    updateState(response.entity);
+                                                });
+                                            });
+                                    },
+                                    duplicate: function () {
+                                        modals.confirm('Are you sure you want to duplicate this catalog?',
+                                            function () {
+                                                models['31'].actions.catalog_duplicate({
+                                                    key: $scope.entity.key
+                                                }).then(function (response) {
+                                                    modals.alert('You will be notified when the catalog is duplicated.');
+                                                });
+                                            });
+                                    },
+                                    sudo: function () {
+                                    }
+                                };
                             },
                             noComplete: noComplete,
                             scope: { // scope for this modal dialog
@@ -302,6 +347,28 @@
                                                             // removing the actual product removes the pricetag actually
                                                             $scope.pricetag._state = 'deleted';
                                                             close();
+                                                        },
+                                                        duplicate: function () {
+                                                            modals.confirm('Are you sure you want to duplicate this pricetag?',
+                                                                function () {
+                                                                    models['31'].actions.catalog_pricetag_duplicate({
+                                                                        key: $scope.entity.key,
+                                                                        read_arguments: {
+                                                                            _images: {
+                                                                                config: {
+                                                                                    keys: [$scope.image.key]
+                                                                                },
+                                                                                pricetags: {
+                                                                                    config: {
+                                                                                        keys: [$scope.pricetag.key]
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }).then(function (response) {
+                                                                        modals.alert('Pricetag is getting duplicated. You will get notified by e-mail.');
+                                                                    });
+                                                                });
                                                         }
                                                     }
                                                 }

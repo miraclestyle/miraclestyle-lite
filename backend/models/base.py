@@ -99,16 +99,20 @@ class _ImagePropertyValue(object):
     def async(entity):
       gs_object_name = entity.gs_object_name
       new_gs_object_name = entity.generate_duplicated_string(gs_object_name)
-      readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
       writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=entity.content_type)
-      # Less consuming memory write, can be only used when using brute force copy.
-      # There is no copy feature in cloudstorage sdk, so we have to implement our own!
-      while True:
-        blob_segment = readonly_blob.read(1000000)  # Read 1mb per write, that should be enough.
-        if not blob_segment:
-          break
-        writable_blob.write(blob_segment)
-      readonly_blob.close()
+      if settings.DEVELOPMENT_SERVER: # gcs does not work on development server when using modules for some reason...
+        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.HOST, gs_object_name[3:]))
+        writable_blob.write(blob.content)
+      else:
+        readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
+        # Less consuming memory write, can be only used when using brute force copy.
+        # There is no copy feature in cloudstorage sdk, so we have to implement our own!
+        while True:
+          blob_segment = readonly_blob.read(1000000)  # Read 1mb per write, that should be enough.
+          if not blob_segment:
+            break
+          writable_blob.write(blob_segment)
+        readonly_blob.close()
       writable_blob.close()
       entity.gs_object_name = new_gs_object_name
       blob_key = yield blobstore.create_gs_key_async(new_gs_object_name)

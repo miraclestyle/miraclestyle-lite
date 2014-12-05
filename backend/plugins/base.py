@@ -144,14 +144,23 @@ class Duplicate(orm.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    child_entity_path = self.cfg.get('copy_path')
+    child_entity_path = self.cfg.get('duplicate_path')
     entity = get_attr(context, entity_path)
     if child_entity_path:
+      # state _images.value.0.pricetags.value.0
+      splited = child_entity_path.split('.')
       child_entity = get_attr(entity, child_entity_path)
-      parent_entity_path = ".".join(child_entity_path.split('.')[:-1])
-      parent_entity = get_attr(entity, parent_entity_path)
-      parent_entity.append(child_entity.duplicate())
+      duplicated_child_entity = child_entity.duplicate()
       duplicate_entity = entity
+      # gets _images.value.0.pricetags
+      middle_entity_path = ".".join(splited[:-2])
+      # sets entity._images.value.0.pricetags => [duplicated_child_entity]
+      try:
+        int(splited[-1]) # this is a case of repeated property, put the duplicated child into list
+        duplicated_child_entity = [duplicated_child_entity]
+      except ValueError:
+        pass
+      set_attr(entity, middle_entity_path, duplicated_child_entity)
     else:
       if entity and isinstance(entity, orm.Model):
         duplicate_entity = entity.duplicate()

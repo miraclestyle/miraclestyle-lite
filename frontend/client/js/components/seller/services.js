@@ -7,7 +7,7 @@
             formInputTypes.SuperPluginStorageProperty = function (info) {
                 var config = info.config,
                     kinds = $.map(config.kinds, function (kind_id) {
-                        var name = modelsMeta.getModelName(kind_id);
+                        var name = modelsMeta.getName(kind_id);
                         return {
                             key: kind_id,
                             name: name
@@ -226,7 +226,7 @@
                                         resetFormBuilder();
                                         var kind = $scope.info.kind,
                                             settingsFields = config.ui.specifics.fields,
-                                            fields = modelsMeta.getModelFields(kind),
+                                            fields = modelsMeta.getFields(kind),
                                             realTotal = 0,
                                             found = false;
                                         fields = _.toArray(fields);

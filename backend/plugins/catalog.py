@@ -169,19 +169,17 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
                       'parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       'cover.value.serving_url': orm.SuperStringProperty(search_document_field_name='cover'),
                       'cover.value.proportion': orm.SuperStringProperty(search_document_field_name='cover_proportion')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
-    product_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
-                      'parent_entity.parent_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'parent_entity.parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
+    product_fields = {'key_parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
+                      'key_parent._parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
+                      'key_parent._parent._parent.entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       '_product_category.value.parent_record': orm.SuperKeyProperty(kind='24', search_document_field_name='product_category_parent_record'),
                       '_product_category.value.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
                       '_product_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
-    context._catalog._images.read({'config': {'cursor': -1}})
-    product_keys = []
+    context._catalog._images.read({'config': {'limit': -1}, 'pricetags': {'_product': {'_product_category': {}}}})
+    products = []
     for image in context._catalog._images.value:
-      product_keys.extend([pricetag.product._urlsafe for pricetag in image.pricetags.value])
-    context._catalog._products.read({'_product_category': {}, 'config': {'keys': product_keys}})
-    products = context._catalog._products.value
-    context._catalog._images = []
+      products.extend([pricetag._product.value for pricetag in image.pricetags.value])
+    context._catalog._images = [] # dismember images from put queue to avoid too many rpcs
     write_index = True
     if not len(products):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
@@ -270,3 +268,13 @@ class CatalogProcessPricetags(orm.BaseModel):
           for pricetag in pricetag_set:
             if pricetag._state == 'deleted':
               pricetag._state = 'removed'
+
+class CatalogPricetagSetDuplicatedPosition(orm.BaseModel):
+
+  def run(self, context):
+    pricetags = context._catalog._images.value[0].pricetags.value
+    if pricetags:
+      for pricetag in pricetags:
+        if pricetag._state == 'duplicated':
+          pricetag.position_left += 20
+          pricetag.position_top += 20

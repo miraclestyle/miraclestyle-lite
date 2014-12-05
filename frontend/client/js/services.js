@@ -137,8 +137,9 @@
                 var path = prop,
                     of,
                     last;
-                if (!angular.isArray(path)) {
-                    path = prop.split('.');
+                if (!angular.isArray(prop)) {
+                    prop = prop.split('.');
+                    path = prop;
                 }
                 last = _.last(path);
                 path = path.slice(0, path.length - 1);
@@ -192,6 +193,16 @@
                     }
                 });
                 return dst;
+            },
+            update: function (obj1, obj2, paths) {
+                if (angular.isDefined(paths)) {
+                    angular.forEach(paths, function (path) {
+                        var val1 = helpers.getProperty(obj2, path);
+                        helpers.setProperty(obj1, path, val1);
+                    });
+                } else {
+                    $.extend(obj1, obj2); // shallow merge
+                }
             },
             calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
                 /*  
@@ -495,7 +506,7 @@ w:                  while (images.length > 0) {
             return friendlyName;
         };
 
-        modelsMeta.getModelFields = function (kind_id) {
+        modelsMeta.getFields = function (kind_id) {
             if (!angular.isDefined(kind_id)) {
                 console.error('provided kind id is not acceptable, got: ' +
                     kind_id);
@@ -562,7 +573,7 @@ w:                  while (images.length > 0) {
             return actions;
         };
 
-        modelsMeta.getModelName = function (kind_id) {
+        modelsMeta.getName = function (kind_id) {
             var info = this.get(kind_id);
             if (!angular.isDefined(info)) {
                 console.error('model name not found for kind ' + kind_id);
@@ -615,40 +626,39 @@ w:                  while (images.length > 0) {
             run: function (entity) {
                 var actions = {},
                     inputs = {},
-                    kind_info = modelsMeta.getModelFields(entity.kind),
-                    rule_action_permissions = entity._action_permissions,
-                    rule_field_permissions = entity._field_permissions,
-                    rule_actions = kind_info.actions,
+                    kindInfo = modelsMeta.get(entity.kind),
+                    actionPermissions = entity._action_permissions,
+                    fieldPermissions = entity._field_permissions,
+                    ruleActions = kindInfo.actions,
                     config = {
                         action: actions,
                         input: inputs,
-                        field: rule_field_permissions
+                        field: fieldPermissions
                     },
-                    action_permission_translate = function (action_name) {
-                        return rule_action_permissions[rule_actions[action_name].key];
+                    actionTranslate = function (actionName) {
+                        return actionPermissions[ruleActions[actionName].key];
                     },
-                    executable = function (action_name) {
-                        var gets = action_permission_translate(action_name);
+                    executable = function (actionName) {
+                        var gets = actionTranslate(actionName);
                         return gets.executable;
                     };
-                if (rule_action_permissions === undefined) {
+                if (actionPermissions === undefined) {
                     return undefined;
                     // if the permissions are not present, there is no rule engine here...
                 }
-                angular.forEach(rule_actions, function (value, key) {
+                angular.forEach(ruleActions, function (value, key) {
 
                     if (!config.action[value.id]) {
                         config.action[value.id] = {};
                     }
                     config.action[value.id].executable = executable(key);
 
-                    angular.forEach(value.arguments, function (argument_value) {
-                        var argument_key = argument_value.code_name;
+                    angular.forEach(value.arguments, function (argumentValue) {
+                        var argument_key = argumentValue.code_name;
                         if (!config.input[value.id]) {
                             config.input[value.id] = {};
                         }
-                        config.input[value.id][argument_key] =
-                            argument_value;
+                        config.input[value.id][argument_key] = argumentValue;
                     });
 
                 });
@@ -672,7 +682,7 @@ w:                  while (images.length > 0) {
                     }
 
                     if (fields === undefined) {
-                        fields = modelsMeta.getModelFields(entity.kind);
+                        fields = modelsMeta.getFields(entity.kind);
                     }
 
                     if (noui === undefined) {
@@ -1839,7 +1849,7 @@ w:                  while (images.length > 0) {
 
                                                         traceDeep = function (readRootArgs, readArgs) {
                                                             if (readRootArgs && readRootArgs.key) {
-                                                                fieldList = modelsMeta.getModelFields(readRootArgs.kind);
+                                                                fieldList = modelsMeta.getFields(readRootArgs.kind);
                                                                 angular.forEach(fieldList, function (field) {
                                                                     if (field.is_structured && _.string.contains(field.type, 'RemoteStructured')) {
                                                                         var keys = [], newReadArgs = {config: {keys: keys}};
@@ -2254,18 +2264,49 @@ w:                  while (images.length > 0) {
 
         return models;
 
-    }).factory('modals', function ($modal, helpers) {
+    }).factory('modals', function ($modal, $q, helpers) {
 
         return {
-            alert: function (text, extraConfig) {
+            alert: function (message, extraConfig) {
                 return this.create($.extend({
-                    text: text,
+                    message: message,
                     type: 'alert'
                 }, extraConfig));
             },
+            confirm: function (messageOrConfig, callbackOrConfig) {
+                var theConfig = {
+                    message: 'Are you sure you want to do this?',
+                    type: 'confirm'
+                }, config;
+
+                if (angular.isFunction(callbackOrConfig)) {
+                    config = {
+                        confirm: callbackOrConfig
+                    };
+                } else if (angular.isObject(callbackOrConfig)) {
+                    config = callbackOrConfig;
+                }
+                if (angular.isDefined(messageOrConfig)) {
+                    if (!angular.isObject(messageOrConfig)) {
+                        config.message = messageOrConfig;
+                    } else {
+                        config = messageOrConfig;
+                    }
+                }
+                config = helpers.alwaysObject(config);
+                helpers.extendDeep(theConfig, config);
+                theConfig.confirm = function () {
+                    if (angular.isFunction(config.confirm)) {
+                        config.confirm.call(this);
+                    }
+
+                    this.dismiss();
+                };
+                return this.create(theConfig);
+            },
             create: function (extraConfig) {
                 var config = {
-                    text: '',
+                    message: '',
                     type: 'notice'
                 };
                 helpers.extendDeep(config, extraConfig);

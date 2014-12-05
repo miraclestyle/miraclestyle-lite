@@ -222,11 +222,6 @@ class CatalogPricetag(orm.BaseModel):
     catalog_pricetag_key = self.build_key(self.key_id_str, parent=parent.parent())
     self.key = catalog_pricetag_key
 
-  def duplicate(self):
-    duplicated = super(CatalogPricetag, self).duplicate()
-    duplicated.position_top += 10
-    duplicated.position_left += 10
-    return duplicated
 
 class CatalogImage(Image):
   
@@ -298,7 +293,7 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'catalog_upload_images'),
                                   orm.Action.build_key('31', 'product_upload_images'),
                                   orm.Action.build_key('31', 'product_instance_upload_images'),
-                                  orm.Action.build_key('31', 'product_duplicate')], True,
+                                  orm.Action.build_key('31', 'catalog_pricetag_duplicate')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "draft"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue'),
@@ -312,7 +307,7 @@ class Catalog(orm.BaseExpando):
       orm.ActionPermission('31', [orm.Action.build_key('31', 'account_discontinue')], True, 'account._root_admin'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'sudo')], True, 'account._root_admin'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'catalog_process_duplicate'),
-                                  orm.Action.build_key('31', 'product_process_duplicate'),
+                                  orm.Action.build_key('31', 'catalog_pricetag_process_duplicate'),
                                   orm.Action.build_key('31', 'delete'),
                                   orm.Action.build_key('31', 'index'),
                                   orm.Action.build_key('31', 'unindex'),
@@ -342,10 +337,10 @@ class Catalog(orm.BaseExpando):
                                  '_images.pricetags._product._instances.images.image', '_images.pricetags._product._instances.images.content_type', '_images.pricetags._product._instances.images.size',
                                  '_images.pricetags._product._instances.images.gs_object_name', '_images.pricetags._product._instances.images.serving_url', '_images.pricetags._product._instances.images.proportion'], False, None,
                           '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", \
-                          "product_instance_upload_images", "catalog_process_duplicate", "product_process_duplicate"])'),
+                          "product_instance_upload_images", "catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
       orm.FieldPermission('31', ['created', 'updated', 'name', 'publish_date', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images'], True, True,
-                          '(action.key_id_str in ["catalog_process_duplicate", "product_process_duplicate"])')
+                          '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])')
       ]
     )
   
@@ -824,7 +819,7 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('31', 'product_duplicate'),
+      key=orm.Action.build_key('31', 'catalog_pricetag_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
         'read_arguments': orm.SuperJsonProperty()
@@ -838,14 +833,14 @@ class Catalog(orm.BaseExpando):
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackExec(cfg=[('callback',
-                               {'action_id': 'product_process_duplicate', 'action_model': '31'},
+                               {'action_id': 'catalog_pricetag_process_duplicate', 'action_model': '31'},
                                {'key': '_catalog.key_urlsafe', 'read_arguments': 'input.read_arguments'})])
             ]
           )
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('31', 'product_process_duplicate'),
+      key=orm.Action.build_key('31', 'catalog_pricetag_process_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
         'read_arguments': orm.SuperJsonProperty()
@@ -862,7 +857,8 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Duplicate(cfg={'copy_path': '_products.value.0'}),
+            Duplicate(cfg={'duplicate_path': '_images.value.0.pricetags.read_value.0'}),
+            CatalogPricetagSetDuplicatedPosition(),
             Write()
             ]
           )
@@ -911,15 +907,6 @@ class Catalog(orm.BaseExpando):
         ]
       )
     ]
-  
-  def duplicate(self):
-    duplicated_entity = super(Catalog, self).duplicate()
-    if duplicated_entity._images.value:
-      for image in duplicated_entity._images.value:
-        if image.pricetags.value:
-          for tag in image.pricetags.value:
-            tag.product = CatalogProduct.build_key(duplicated_entity.duplicate_key_id(tag.product), parent=duplicated_entity.key, namespace=duplicated_entity.key.namespace())
-    return duplicated_entity
   
   @classmethod
   def prepare_key(cls, input, **kwargs):

@@ -94,6 +94,7 @@ ANGULAR_TEMPLATES = (
   ('misc/form_wrapper.html',),
   ('misc/modal/alert.html',),
   ('misc/modal/errors.html',),
+  ('misc/modal/confirm.html',),
 
   ('entity/modal_editor.html',),
   ('entity/modal_editor_default_body.html',),
