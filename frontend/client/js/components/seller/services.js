@@ -390,7 +390,9 @@
         modelsConfig(function (models) {
             var read_arguments = {
                 _address: {},
-                _content: {},
+                _content: {
+                    documents: {}
+                },
                 _plugin_group: {}
             };
 
@@ -440,6 +442,12 @@
                             args.account = account_key;
                             if (args.address === null) {
                                 args.address = {};
+                            }
+                            if (args._content === null) {
+                                args._content = {
+                                    kind: '21',
+                                    documents: []
+                                };
                             }
                             args.read_arguments = read_arguments;
                             return args;

@@ -68,7 +68,7 @@
                     this.actions.logout({
                         key: account_key
                     }).then(function (response) {
-                        endpoint.invalidate_cache('currentAccount');
+                        endpoint.invalidateCache('currentAccount');
                         $window.location.reload();
                     });
                 }

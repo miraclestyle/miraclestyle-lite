@@ -293,10 +293,10 @@ w:                  while (images.length > 0) {
 
         endpoint = {
             // invalidates all caches that we use
-            invalidate_cache: function (key) {
+            invalidateCache: function (key) {
                 if (angular.isArray(key)) {
                     angular.forEach(key, function (k) {
-                        endpoint.invalidate_cache(k);
+                        endpoint.invalidateCache(k);
                     });
 
                     return true;
@@ -660,8 +660,7 @@ w:                  while (images.length > 0) {
         return ruleEngine;
     }).factory('modelsUtil', function (modelsMeta, ruleEngine) {
         // Service used for normalizing entity data that gets retrieved from datastore
-        var dontSend = ['_field_permissions', '_action_permissions'],
-            modelsUtil = {
+        var modelsUtil = {
                 normalizeMultiple: function (entities) {
                     angular.forEach(entities, function (entity) {
                         modelsUtil.normalize(entity);
@@ -675,16 +674,6 @@ w:                  while (images.length > 0) {
                     if (fields === undefined) {
                         fields = modelsMeta.getModelFields(entity.kind);
                     }
-
-                    entity.toJSON = function () {
-                        var copy = {};
-                        angular.forEach(this, function (value, key) {
-                            if ($.inArray(key, dontSend) === -1) {
-                                copy[key] = value;
-                            }
-                        });
-                        return copy;
-                    };
 
                     if (noui === undefined) {
 
@@ -1278,13 +1267,60 @@ w:                  while (images.length > 0) {
                                             '.country',
                                             function (neww, old) {
                                                 if (neww !== old) {
+                                                    var args = info.scope.$eval(info.config.ui.parentArgs);
+                                                    args.region = null;
                                                     config.ui.specifics.search();
                                                 }
                                             });
                                     }
                                 },
                                 query: {},
+                                // this query filter config should be included into places where it's supposed to be
+                                // but for quick access its located here
                                 queryfilter: {
+                                    '17': function (term, search_action) {
+                                        var search = {
+                                                search: {
+                                                    filters: [{
+                                                        value: true,
+                                                        field: 'active',
+                                                        operator: '=='
+                                                    }],
+                                                    orders: [{
+                                                        field: 'name',
+                                                        operator: 'asc'
+                                                    }],
+                                                }
+                                            },
+                                            argument = search.search;
+
+                                        if (config.code_name === 'weight_uom') {
+                                            argument.filters.push({
+                                                value: 'Weight',
+                                                field: 'measurement',
+                                                operator: '=='
+                                            });
+                                        }
+
+                                        if (config.code_name === 'volume_uom') {
+                                            argument.filters.push({
+                                                value: 'Volume',
+                                                field: 'measurement',
+                                                operator: '=='
+                                            });
+                                        }
+
+                                        if (config.code_name === 'product_uom') {
+                                            argument.filters.push({
+                                                value: 'Units',
+                                                field: 'measurement',
+                                                operator: '=='
+                                            });
+                                        }
+
+                                        return search;
+
+                                    },
                                     '13': function (term, search_action) {
                                         var args = info.scope.$eval(info.config.ui.parentArgs);
                                         if ((args && args.country)) {

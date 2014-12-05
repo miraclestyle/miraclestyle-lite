@@ -2060,13 +2060,12 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   def _post_update_single(self):
     if not hasattr(self._property_value, 'prepare'):
       if self._property_value.key_parent != self._entity.key:
-        key_id = self._property_value.key_id
-        self._property_value.set_key(key_id, parent=self._entity.key)
+        self._property_value.set_key(self._entity.key_id_str, parent=self._entity.key)
     else:
       self._property_value.prepare(parent=self._entity.key)
     if self._property_value._state == 'deleted' and self._property._deleteable:
       self._property_value.key.delete()
-    elif self._property._updateable or (not getattr(self._entity._original, self.property_name, None) \
+    elif self._property._updateable or (not getattr(self._property_value, '_original', None) \
                                          and self._property._addable):
       # put only if the property is updateable, or if its not set and its addable, do the put.
       self._property_value.put()

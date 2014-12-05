@@ -470,7 +470,7 @@
                                                             label: 'Volume Adjustment',
                                                             key: 'volume'
                                                         }],
-                                                        excludeFields: ['variant_signature']
+                                                        excludeFields: ['created', 'variant_signature']
                                                     }
                                                 }
                                             });
