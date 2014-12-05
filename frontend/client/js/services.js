@@ -70,7 +70,6 @@
                 return val.match(/[^\r\n]+/g);
             },
             addslashes: function (str) {
-
                 return (str.toString()).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
             },
             fieldSorter: function (prev, next) {
@@ -133,9 +132,8 @@
                 }
                 return values;
             },
-
             setProperty: function (obj, prop, value) {
-                console.trace('helpers.setProperty', obj, prop, value);
+                //console.trace('helpers.setProperty', obj, prop, value);
                 var path = prop,
                     of,
                     last;
@@ -152,6 +150,7 @@
                 of[last] = value;
             },
             getProperty: function (obj, prop) {
+                //console.trace('helpers.getProperty', obj, prop);
                 var path = prop;
                 if (!angular.isArray(path)) {
                     path = prop.split('.');
@@ -193,13 +192,6 @@
                     }
                 });
                 return dst;
-            },
-            isPropertyAccordionable: function (prop) {
-                return $.inArray(prop.type, ['SuperRemoteStructuredProperty',
-                                             'SuperLocalStructuredProperty',
-                                             'SuperStructuredProperty',
-                                             'SuperImageRemoteStructuredProperty',
-                                             'SuperImageLocalStructuredProperty']) !== -1;
             },
             calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
                 /*  
@@ -820,8 +812,6 @@ w:                  while (images.length > 0) {
                             }
 
                         }
-
-
                     }
 
                     if (normalizeEntity) {
@@ -851,7 +841,7 @@ w:                  while (images.length > 0) {
             ]);
 
     }]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
-        modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter) {
+        modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes) {
 
         var modelsEditor = {
             create: function (new_config) {
@@ -1104,7 +1094,7 @@ w:                  while (images.length > 0) {
                                     };
 
                                     angular.forEach(config.fields, function (field) {
-                                        if (helpers.isPropertyAccordionable(field)) {
+                                        if (field.is_structured && formInputTypes[field.type]) {
                                             $scope.accordions.groups.push({
                                                 label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                 disabled: false,
@@ -1156,7 +1146,7 @@ w:                  while (images.length > 0) {
                                                 }
                                                 if (!done[field.code_name]) {
                                                     done[field.code_name] = 1;
-                                                    if (helpers.isPropertyAccordionable(field)) {
+                                                    if (field.is_structured) {
                                                         wait = true;
                                                     }
 
@@ -1726,7 +1716,7 @@ w:                  while (images.length > 0) {
                                                 field.ui.realPath.push(length);
                                             }
                                             field.ui.realPath.push(field.code_name);
-                                            if (helpers.isPropertyAccordionable(field)) {
+                                            if (field.is_structured && formInputTypes[field.type]) {
                                                 $scope.accordions.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                     disabled: false,

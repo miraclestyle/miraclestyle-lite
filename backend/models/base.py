@@ -171,6 +171,8 @@ class RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm.RemoteStructur
         self._set_parent(_entities)
         for entity in _entities:
           self._property.delete_blobs_on_success(entity.image)
+          if hasattr(entity, '_original') and entity.image != entity._original.image:
+            self._property.delete_blobs_on_success(entity._original.image)
         orm.delete_multi([entity.key for entity in _entities])
         if not cursor or not more:
           break

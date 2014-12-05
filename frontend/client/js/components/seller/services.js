@@ -246,7 +246,7 @@
                                                 helpers.extendDeep(field, extra);
                                             }
 
-                                            if (helpers.isPropertyAccordionable(field)) {
+                                            if (field.is_structured && formInputTypes[field.type]) {
                                                 $scope.accordions.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                     disabled: false,

@@ -67,28 +67,27 @@ class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
     catalog_image = None
-    if context.action.key.id() != 'catalog_upload_images':
+    catalog_images = context._catalog._images.value # @todo this is a problem
+    if len(catalog_images) < 2 and context.action.key.id() != 'catalog_upload_images':
       CatalogImage = context.models['30']
       catalog_image = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).get()
-    if not catalog_image:
-      catalog_images = context._catalog._images.value # @todo this is a problem
-      if catalog_images is not None:
-        for catalog_image in catalog_images:  # when read arguments are used, this is not correct information @todo fix me
-          if catalog_image._state != 'deleted':
-            break
-      catalog_cover = context._catalog.cover.value
-      if catalog_image:
-        if catalog_cover:
-          if catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
-            context._catalog.cover = copy.deepcopy(catalog_image)
-            context._catalog.cover.value.sequence = 0
-            context._catalog.cover.process()
-        else:
+    elif catalog_images is not None:
+      for catalog_image in catalog_images:  # when read arguments are used, this is not correct information @todo fix me
+        if catalog_image._state != 'deleted':
+          break
+    catalog_cover = context._catalog.cover.value
+    if catalog_image:
+      if catalog_cover:
+        if catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
           context._catalog.cover = copy.deepcopy(catalog_image)
           context._catalog.cover.value.sequence = 0
           context._catalog.cover.process()
-      elif catalog_cover:
-        context._catalog.cover._state = 'deleted'
+      else:
+        context._catalog.cover = copy.deepcopy(catalog_image)
+        context._catalog.cover.value.sequence = 0
+        context._catalog.cover.process()
+    elif catalog_cover:
+      context._catalog.cover._state = 'deleted'
 
 
 # @todo Wee need all published catalogs here, no matter how many of them!

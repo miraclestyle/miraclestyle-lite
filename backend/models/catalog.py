@@ -125,21 +125,22 @@ class CatalogProductInstance(orm.BaseExpando):
   
   _use_rule_engine = False
   
-  variant_signature = orm.SuperJsonProperty('1', required=True, indexed=False)
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  variant_signature = orm.SuperJsonProperty('2', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'description': orm.SuperTextProperty('2'),
-    'unit_price': orm.SuperDecimalProperty('3'),
-    'availability': orm.SuperStringProperty('4', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder']),
-    'code': orm.SuperStringProperty('5'),
-    'weight': orm.SuperDecimalProperty('6'),
-    'weight_uom': orm.SuperKeyProperty('7', kind='17'),
-    'volume': orm.SuperDecimalProperty('8'),
-    'volume_uom': orm.SuperKeyProperty('9', kind='17'),
-    'images': SuperImageLocalStructuredProperty(Image, '10', repeated=True),
-    'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '11', repeated=True)
+    'description': orm.SuperTextProperty('3'),
+    'unit_price': orm.SuperDecimalProperty('4'),
+    'availability': orm.SuperStringProperty('5', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder']),
+    'code': orm.SuperStringProperty('6'),
+    'weight': orm.SuperDecimalProperty('7'),
+    'weight_uom': orm.SuperKeyProperty('8', kind='17'),
+    'volume': orm.SuperDecimalProperty('9'),
+    'volume_uom': orm.SuperKeyProperty('10', kind='17'),
+    'images': SuperImageLocalStructuredProperty(Image, '11', repeated=True),
+    'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '12', repeated=True)
     }
   
   _virtual_fields = {
@@ -186,7 +187,9 @@ class CatalogProduct(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_instances': orm.SuperRemoteStructuredProperty(CatalogProductInstance, repeated=True), # sorting must be done by code?
+    '_instances': orm.SuperRemoteStructuredProperty(CatalogProductInstance, repeated=True,
+                                                    read_arguments={'config': {'order': {'field': 'created',
+                                                                                         'direction': 'desc'}}}), # sorting must be done by code?
     '_product_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='product_category'),
     '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
     '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom')
@@ -248,7 +251,7 @@ class CatalogImage(Image):
         else:
           sequence = entity.sequence
         mem.temp_set(key, sequence)
-      self.sequence = self._sequence + sequence
+      self.sequence = self._sequence + sequence + 1
       print self.sequence
 
 

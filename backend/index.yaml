@@ -90,3 +90,10 @@ indexes:
   ancestor: yes
   properties:
   - name: '2'
+
+# CatalogProductInstance
+- kind: '27'
+  ancestor: yes
+  properties:
+  - name: '1'
+    direction: desc
