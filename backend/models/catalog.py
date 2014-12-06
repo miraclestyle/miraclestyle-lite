@@ -257,8 +257,8 @@ class Catalog(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, searchable=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True, searchable=True)
   name = orm.SuperStringProperty('3', required=True, searchable=True)
-  publish_date = orm.SuperDateTimeProperty('4', required=True, searchable=True)
-  discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)
+  publish_date = orm.SuperDateTimeProperty('4', required=True, searchable=True)  # @todo This field has to be updated in publish action, hence it doesn't has to be visible in client input (publish action is triggered by the end user, and no locking action is implemented anymore)!
+  discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)  # @todo On client side this field should be labeled Expiration Date, so not sure if it's smart to name the property expiration_date?
   state = orm.SuperStringProperty('6', required=True, default='draft',
                                   choices=['draft', 'published', 'discontinued'], searchable=True)
   
