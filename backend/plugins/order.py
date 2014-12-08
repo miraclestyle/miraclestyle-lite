@@ -413,7 +413,7 @@ class PayPalPayment(PaymentMethod):
     context._order.payment_method = self.key
     
   def complete(self, context):
-    
+    # @todo Remove settings from here, from ALL PLUGINS!!
     if settings.PAYPAL_SANDBOX:
       url = settings.PAYPAL_WEBSCR_SANDBOX
     else:
