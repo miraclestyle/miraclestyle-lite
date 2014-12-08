@@ -2,11 +2,13 @@
     'use strict';
     angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers) {
 
+        var catalogKind = '31';
+
         modelsConfig(function (models) {
-            $.extend(models['31'], {
+            $.extend(models[catalogKind], {
                 manageModal: function (entity, callback) { // modal dialog for managing the catalog
 
-                    var fields = modelsMeta.getActionArguments('31', 'update'),
+                    var fields = modelsMeta.getActionArguments(catalogKind, 'update'),
                         isNew = !angular.isDefined(entity),
                         afterSave = function ($scope) {
                             $scope.setAction('catalog_upload_images');
@@ -28,6 +30,7 @@
                             afterComplete: afterComplete,
                             afterCompleteError: afterComplete,
                             init: function ($scope) {
+
                                 $.extend(fields._images, {
                                     ui: {
                                         label: false,
@@ -53,9 +56,10 @@
                                 });
 
                                 var updateFields = ['state', 'ui.rule'],
-                                    updateState = function (args, newArgs) {
-                                        helpers.update(args, newArgs, updateFields);
-                                        helpers.update(args, newArgs, updateFields);
+                                    updateState = function (newArgs) {
+                                        angular.forEach(['args', 'entity'], function (p) {
+                                            helpers.update($scope[p], newArgs, updateFields);
+                                        });
                                     };
 
                                 $scope.actions = {
@@ -63,11 +67,11 @@
                                         modals.confirm('Publish this catalog will make it not editable and visible to the public.' +
                                                        'Are you sure you want to do this?',
                                             function () {
-                                                models['31'].actions.publish({
+                                                models[catalogKind].actions.publish({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
                                                     modals.alert('Catalog published. It will be public in few minutes.');
-                                                    updateState(response.entity);
+                                                    updateState(response.data.entity);
                                                 });
                                             });
                                     },
@@ -75,18 +79,18 @@
                                         modals.confirm('By discontinuing this catalog you will remove it from public, and it will be delted after 40 days.' +
                                                        'Are you sure you want to do this?',
                                             function () {
-                                                models['31'].actions.discontinue({
+                                                models[catalogKind].actions.discontinue({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
                                                     modals.alert('Catalog discontinued successfully.');
-                                                    updateState(response.entity);
+                                                    updateState(response.data.entity);
                                                 });
                                             });
                                     },
                                     duplicate: function () {
                                         modals.confirm('Are you sure you want to duplicate this catalog?',
                                             function () {
-                                                models['31'].actions.catalog_duplicate({
+                                                models[catalogKind].actions.catalog_duplicate({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
                                                     modals.alert('You will be notified when the catalog is duplicated.');
@@ -94,6 +98,36 @@
                                             });
                                     },
                                     sudo: function () {
+                                        $modal.open({
+                                            templateUrl: 'catalog/administer.html',
+                                            controller: function ($scope, $modalInstance) {
+                                                var sudoFields = modelsMeta.getActionArguments(config.kind, 'sudo');
+                                                $scope.args = {key: entity.key, state: entity.state};
+                                                sudoFields.state.ui.placeholder = 'Set state';
+                                                sudoFields.index_state.ui.placeholder = 'Index action';
+                                                sudoFields.message.ui.placeholder = 'Message for the user';
+                                                sudoFields.note.ui.placeholder = 'Note for administrators';
+                                                $scope.fields = [sudoFields.state, sudoFields.index_state, sudoFields.message, sudoFields.note];
+                                                angular.forEach($scope.fields, function (field) {
+                                                    field.ui.writable = true;
+                                                });
+                                                $scope.close = function () {
+                                                    $modalInstance.dismiss('close');
+                                                };
+
+                                                $scope.container = {};
+
+                                                $scope.save = function () {
+                                                    if (!$scope.container.form.$valid) {
+                                                        $scope.container.form.$setDirty();
+                                                        return false;
+                                                    }
+                                                    models[catalogKind].actions.sudo($scope.args).then(function (response) {
+                                                        updateState(response.data.entity);
+                                                    });
+                                                };
+                                            }
+                                        });
                                     }
                                 };
                             },
@@ -237,7 +271,7 @@
                                             $scope.manageProduct = function (image, pricetag) {
                                                 setupCurrentPricetag(image, pricetag);
                                                 // perform read catalog.images.0.pricetags.0._product
-                                                models['31'].actions.read({
+                                                models[catalogKind].actions.read({
                                                     key: $scope.entity.key,
                                                     read_arguments: {
                                                         _images: {
@@ -351,7 +385,7 @@
                                                         duplicate: function () {
                                                             modals.confirm('Are you sure you want to duplicate this pricetag?',
                                                                 function () {
-                                                                    models['31'].actions.catalog_pricetag_duplicate({
+                                                                    models[catalogKind].actions.catalog_pricetag_duplicate({
                                                                         key: $scope.entity.key,
                                                                         read_arguments: {
                                                                             _images: {
@@ -461,7 +495,7 @@
                                                                             });
 
                                                                             // rpc to check the instance
-                                                                            models['31'].actions.read({
+                                                                            models[catalogKind].actions.read({
                                                                                 key: $parentScope.entity.key,
                                                                                 read_arguments: {
                                                                                     _images: {
@@ -604,7 +638,7 @@
                                     groups: [{
                                         label: 'General',
                                         open: true,
-                                        fields: ['name', 'publish_date', 'discontinue_date'],
+                                        fields: ['name', 'discontinue_date'],
                                     }, {
                                         label: 'Products',
                                         open: false,

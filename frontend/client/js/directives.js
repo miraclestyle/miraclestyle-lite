@@ -303,7 +303,7 @@
                 scope: true,
                 transclude: true,
                 link: function (scope, element, attrs, ctrl) {
-
+ 
                     var run = function () {
 
                         var supplied_config = scope.$eval(attrs.formInput),

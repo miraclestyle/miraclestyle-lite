@@ -634,6 +634,7 @@ class _BaseModel(object):
         if hasattr(value, 'post_update'):
           value.post_update()
     entity.write_search_document()
+    entity.make_original() # in post put hook we override the instance of original with the self, because the entity is now saved and passed the rule engine
     # @todo General problem with documents is that they are not transactional, and upon failure of transaction
     # they might end up being stored anyway.
   

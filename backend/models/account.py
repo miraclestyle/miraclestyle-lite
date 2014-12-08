@@ -317,6 +317,7 @@ class Account(orm.BaseExpando):
     return mem.temp_set('_current_request_is_cron', is_it)
   
   def primary_email(self):
+    self.identities.read() # implicitly call read on identities
     if not self.identities.value:
       return None
     for identity in self.identities.value:

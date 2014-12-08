@@ -148,6 +148,7 @@
                     return;
                 }
                 of = this.getProperty(obj, path);
+                //console.log(of, last, value);
                 of[last] = value;
             },
             getProperty: function (obj, prop) {

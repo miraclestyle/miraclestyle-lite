@@ -257,7 +257,7 @@ class Catalog(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, searchable=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True, searchable=True)
   name = orm.SuperStringProperty('3', required=True, searchable=True)
-  publish_date = orm.SuperDateTimeProperty('4', required=True, searchable=True)
+  published = orm.SuperDateTimeProperty('4', required=False, searchable=True)
   discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)
   state = orm.SuperStringProperty('6', required=True, default='draft',
                                   choices=['draft', 'published', 'discontinued'], searchable=True)
@@ -313,11 +313,11 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'unindex'),
                                   orm.Action.build_key('31', 'cron')], True, 'account._is_taskqueue'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'public_search')], True, 'True'),
-      orm.FieldPermission('31', ['created', 'updated', 'name', 'publish_date', 'discontinue_date',
+      orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images', '_records'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and entity._original.key_root == account.key)'),
-      orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',
+      orm.FieldPermission('31', ['name', 'published', 'discontinue_date',
                                  'cover', '_images', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                           and entity._original.state == "draft"'),
@@ -326,7 +326,7 @@ class Catalog(orm.BaseExpando):
                           or (action.key_id_str == "publish" and entity.state == "published") \
                           or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
                           or (action.key_id_str == "sudo" and entity.state != "draft")'),
-      orm.FieldPermission('31', ['name', 'publish_date', 'discontinue_date',
+      orm.FieldPermission('31', ['name', 'published', 'discontinue_date',
                                  'state', 'cover', '_images'], False, True,
                           'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.FieldPermission('31', ['_records.note'], True, True, 'account._root_admin'),
@@ -338,7 +338,7 @@ class Catalog(orm.BaseExpando):
                                  '_images.pricetags._product._instances.images.gs_object_name', '_images.pricetags._product._instances.images.serving_url', '_images.pricetags._product._instances.images.proportion'], False, None,
                           '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", \
                           "product_instance_upload_images", "catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
-      orm.FieldPermission('31', ['created', 'updated', 'name', 'publish_date', 'discontinue_date',
+      orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images'], True, True,
                           '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])')
       ]
@@ -367,7 +367,7 @@ class Catalog(orm.BaseExpando):
       arguments={
         'seller': orm.SuperKeyProperty(kind='23', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'publish_date': orm.SuperDateTimeProperty(required=True),
+        'published': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True)
         },
       _plugin_groups=[
@@ -377,7 +377,6 @@ class Catalog(orm.BaseExpando):
             Read(),
             Set(cfg={'s': {'_catalog.state': 'draft'},
                      'd': {'_catalog.name': 'input.name',
-                           '_catalog.publish_date': 'input.publish_date',
                            '_catalog.discontinue_date': 'input.discontinue_date'}}),
             RulePrepare(),
             RuleExec()
@@ -415,7 +414,7 @@ class Catalog(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'publish_date': orm.SuperDateTimeProperty(required=True),
+        'published': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
         '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
@@ -426,7 +425,6 @@ class Catalog(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'d': {'_catalog.name': 'input.name',
-                           '_catalog.publish_date': 'input.publish_date',
                            '_catalog.discontinue_date': 'input.discontinue_date',
                            '_catalog._images': 'input._images'}}),
             CatalogProcessCoverSet(),
@@ -603,7 +601,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_catalog.state': 'published'}}),
+            Set(cfg={'s': {'_catalog.state': 'published', '_catalog.published': datetime.datetime.now()}}),
             RulePrepare(),
             RuleExec()
             ]
@@ -694,11 +692,11 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             # @todo Finish Notify plugins!
             Notify(cfg={'condition': 'entity.state == "discontinued"',
-                        'd': {'recipient': 'entity.root_entity._primary_email',
-                              'subject': 'Catalog Discontinued by Admin.',
+                        's': {'subject': 'Catalog Discontinued by Admin.'},
+                        'd': {'recipient': '_catalog.root_entity._primary_email',
                               'body': 'input.message'}}),
-            Notify(cfg={'d': {'recipient': 'account._primary_email',
-                              'subject': 'Admin Note',
+            Notify(cfg={'s': {'subject': 'Admin Note'}, 
+                        'd': {'recipient': 'account._primary_email',
                               'body': 'input.note'}}),
             CallbackExec(cfg=[('callback',
                                {'action_model': '31'},

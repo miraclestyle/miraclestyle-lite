@@ -6,6 +6,7 @@ Created on Jun 14, 2014
 '''
 
 import orm
+import settings
 from tools.base import *
 from util import *
 
@@ -314,16 +315,20 @@ class Notify(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     method = self.cfg.get('method', 'mail')
-    condition = self.cfg.get('condition', True)
+    condition = self.cfg.get('condition', 'True')
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
     entity = get_attr(context, '_' + context.model.__name__.lower())
     values = {'account': context.account.key, 'action': context.action.key, 'entity': entity}
     values.update(static_values)
     for key, value in dynamic_values.iteritems():
+      print value
       values[key] = get_attr(context, value)
     if safe_eval(condition, values):
       if method == 'mail':
+        print values
+        if 'sender' not in values:
+          values['sender'] = settings.NOTIFY_EMAIL
         mail_send(**values)
       elif method == 'http':
         http_send(**values)
