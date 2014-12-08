@@ -8,9 +8,9 @@
       <h2 class="fieldset with-button">
         <span class="fieldset-text"><%= config.ui.compiled.label %></span>
         <span class="fieldset-button">
-           <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
+           <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
-               <input class="upload" name="<%= config.ui.formName %>"
+               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
                        multiple
                        generate-upload-url="true"
                        type="file" />
@@ -23,9 +23,9 @@
 
       <div class="clearfix buttons">
         <div class="pull-right">
-           <div loading ng-show="<%= config.ui.writableCompiled %>" class="button fake-button">
+           <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
-               <input class="upload" name="<%= config.ui.formName %>"
+               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
                        multiple
                        generate-upload-url="true"
                        type="file" />

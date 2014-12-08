@@ -79,17 +79,12 @@ indexes:
   ancestor: yes
   properties:
   - name: '1'
-  
+
+# CountrySubdivision  
 - kind: '13'
   properties:
   - name: '6'
   - name: '3'
-
-# CatalogProduct
-- kind: '28'
-  ancestor: yes
-  properties:
-  - name: '2'
 
 # CatalogProductInstance
 - kind: '27'

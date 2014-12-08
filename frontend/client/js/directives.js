@@ -499,19 +499,30 @@
                     $compile(element.contents())(scope);
                 }
             };
-        }).directive('loading', function () {
+        }).directive('loading', function ($parse) {
             return {
-                priority: 5000,
-                link: function (scope, element) {
+                link: function (scope, element, attrs) {
+
+                    if (angular.isDefined(attrs.loading)) {
+                        scope.$watch(attrs.loading, function ngBooleanAttrWatchAction(value) {
+                            if (value) {
+                                element.attr('disabled', 'disabled');
+                            } else {
+                                element.removeAttr('disabled');
+                            }
+                        });
+                    }
 
                     var disable = function (e) {
                         e.preventDefault();
                         return false;
-                    }, disabledInitially = element.prop('disabled');
+                    }, disabledInitially = angular.isDefined(attrs.loading) ? $parse(attrs.loading) : function () {
+                        return false;
+                    };
 
                     scope.$on('disableUI', function ($event, neww) {
 
-                        if (disabledInitially) {
+                        if (disabledInitially(scope)) {
                             return;
                         }
 

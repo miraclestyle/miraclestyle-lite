@@ -2,7 +2,7 @@
  
     <div class="clearfix buttons">
     <div class="pull-right">
-      <button ng-disabled="!<%= config.ui.writableCompiled %>" loading type="button" class="button" ng-click="config.ui.specifics.create()">
+      <button loading="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.create()">
         Add Plugin
       </button>
     </div>
@@ -18,8 +18,8 @@
         </div>
       </div>
       <div class="item-right list-actions">
-          <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-          <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+          <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
+          <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
       </div>
     </div>
   </div>

@@ -5,7 +5,7 @@
     <span class="fieldset-text"><%= config.ui.compiled.label %></span>
     <% if (config.repeated) { %>
     <span class="fieldset-button">
-      <button ng-disabled="!<%= config.ui.writableCompiled %>" loading type="button" class="button" ng-click="config.ui.specifics.create()">
+      <button loading="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.create()">
        <%=config.ui.specifics.addText %>
       </button>
     </span>
@@ -16,7 +16,7 @@
 
 <div class="clearfix buttons">
   <div class="pull-right">
-    <button ng-disabled="!<%= config.ui.writableCompiled %>" loading type="button" class="button" ng-click="config.ui.specifics.create()">
+    <button loading="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.create()">
       <%=config.ui.specifics.addText %>
     </button>
   </div>
@@ -46,8 +46,8 @@
  
           </div>
           <div class="item-right list-actions">
-              <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-              <button loading ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+              <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
+              <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
           </div>
         </div>
     </div>

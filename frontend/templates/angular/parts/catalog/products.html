@@ -36,10 +36,10 @@
   <div class="modal-footer">
 
       <ul class="list-inline-block">
-       <li loading type="button" class="button new-pricetag"
+       <li loading="!args.ui.rule.field._images.pricetags.writable" type="button" class="button new-pricetag"
             drag="true"
             jqyoui-options="{revert: 'invalid', helper: 'clone'}"
-            jqyoui-draggable="{placeholder: 'keep'}">Add Product</li>
+            jqyoui-draggable="{placeholder: 'keep', onStart: 'onDraggableDroppableStart()'}">Add Product</li>
       </ul>
 
      

@@ -24,7 +24,7 @@
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
                             fields: _.toArray(fields),
-                            templateFooterUrl: 'catalog/manage_footer.html',
+                            templateFooterUrl: 'catalog/modal_footer.html',
                             afterSave: afterSave,
                             afterSaveError: afterSave,
                             afterComplete: afterComplete,
@@ -160,8 +160,19 @@
                                             // set next arguments from initially loaded data from root scope
                                             imagesPager.state(parentScope.config.ui.specifics.pager);
 
+                                            $scope.onDraggableDroppableStart = function (event) {
+                                                if (!$scope.args.ui.rule.field._images.pricetags.writable) {
+                                                    event.preventDefault();
+                                                    return false;
+                                                }
+                                            };
+
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
+                                                if (!$scope.args.ui.rule.field._images.pricetags.writable) {
+                                                    event.preventDefault();
+                                                    return false;
+                                                }
                                                 $(ui.helper).addClass('dragged');
                                                 $(ui.helper).find('a').addClass('dragged');
                                             };
@@ -421,6 +432,7 @@
                                                     label: 'Product Instances',
                                                     path: ['_images', 'pricetags'],
                                                     specifics: {
+                                                        showListItem: 'product-instance-display',
                                                         getRootArgs: function () {
                                                             return $scope.args;
                                                         },
@@ -559,17 +571,8 @@
                                                         },
                                                         addText: 'Add Product Instance',
                                                         listFields: [{
-                                                            label: 'Code',
-                                                            key: 'code'
-                                                        }, {
-                                                            label: 'Price Adjustment',
-                                                            key: 'unit_price'
-                                                        }, {
-                                                            label: 'Weight Adjustment',
-                                                            key: 'weight'
-                                                        }, {
-                                                            label: 'Volume Adjustment',
-                                                            key: 'volume'
+                                                            label: 'Variant Signature',
+                                                            key: 'variant_signature'
                                                         }],
                                                         excludeFields: ['created', 'variant_signature']
                                                     }

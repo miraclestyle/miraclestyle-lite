@@ -1597,6 +1597,7 @@ w:                  while (images.length > 0) {
 
                     defaultSortable = {
                         start: function (e, ui) {
+                            // @todoo fix start sort when writable is false
                             info.scope.$broadcast('itemOrderStarted');
                         },
                         sort: function (e, ui) {

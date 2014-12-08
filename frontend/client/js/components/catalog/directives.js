@@ -157,6 +157,14 @@
                 });
             }
         };
+    }).directive('productInstanceDisplay', function ($compile) {
+        return {
+            scope: {
+                val: '=productInstanceDisplay',
+                field: '=productInstanceDisplayField'
+            },
+            templateUrl: 'catalog/product/directive/product_instance_display.html'
+        };
     });
 
 }());
