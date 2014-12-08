@@ -2,8 +2,8 @@
   margin-bottom: 0;
   /*overflow: hidden;*/
   border: 1px solid #BBBBBB;
-  -webkit-box-shadow: 1px 1px 3px #BBBBBB;
-  box-shadow: 1px 1px 3px #BBBBBB;
+  -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
+  box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
 }
 
 .panel + .panel {
@@ -43,8 +43,8 @@
 
 .panel-is-open {
   border: 1px solid #EEEEEE;
-  -webkit-box-shadow: 1px 1px 3px #EEEEEE;
-  box-shadow: 1px 1px 3px #EEEEEE;
+  -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.05);
+  box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.05);
 }
 
 .panel-is-open .panel-title > a {

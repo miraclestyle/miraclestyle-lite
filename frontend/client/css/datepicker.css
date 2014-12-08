@@ -2,8 +2,8 @@
   position: absolute;
   background: white;
   border: 1px solid #BBBBBB;
-  -webkit-box-shadow: 1px 1px 3px #BBBBBB;
-  box-shadow: 1px 1px 3px #BBBBBB;
+  -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
+  box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
   padding: 10px;
   list-style: none;
   z-index: 10;
