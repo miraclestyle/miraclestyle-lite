@@ -6,7 +6,6 @@ Created on Jun 14, 2014
 '''
 
 import orm
-import settings
 from tools.base import *
 from util import *
 
@@ -322,13 +321,9 @@ class Notify(orm.BaseModel):
     values = {'account': context.account.key, 'action': context.action.key, 'entity': entity}
     values.update(static_values)
     for key, value in dynamic_values.iteritems():
-      print value
       values[key] = get_attr(context, value)
     if safe_eval(condition, values):
       if method == 'mail':
-        print values
-        if 'sender' not in values:
-          values['sender'] = settings.NOTIFY_EMAIL
         mail_send(**values)
       elif method == 'http':
         http_send(**values)

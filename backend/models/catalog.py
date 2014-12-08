@@ -289,8 +289,10 @@ class Catalog(orm.BaseExpando):
                            or (action.key_id == "search" and input["search"]["ancestor"]._root == account.key)'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'read')], True,
                            'entity._original.state == "published" or entity._original.state == "discontinued"'),
-      orm.ActionPermission('31', [orm.Action.build_key('31', 'update'),
-                                  orm.Action.build_key('31', 'catalog_upload_images'),
+      orm.ActionPermission('31', [orm.Action.build_key('31', 'update')], True,
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and (entity._original.state == "draft" or entity._original.state == "published")'),
+      orm.ActionPermission('31', [orm.Action.build_key('31', 'catalog_upload_images'),
                                   orm.Action.build_key('31', 'product_upload_images'),
                                   orm.Action.build_key('31', 'product_instance_upload_images'),
                                   orm.Action.build_key('31', 'catalog_pricetag_duplicate')], True,
@@ -321,6 +323,10 @@ class Catalog(orm.BaseExpando):
                                  'cover', '_images', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                           and entity._original.state == "draft"'),
+      orm.FieldPermission('31', ['_images.pricetags._product.availability',
+                                 '_images.pricetags._product._instances.availability'], True, True,
+                          'not account._is_guest and entity._original.key_root == account.key \
+                          and entity._original.state == "published"'),
       orm.FieldPermission('31', ['state'], True, True,
                           '(action.key_id_str == "create" and entity.state == "draft") \
                           or (action.key_id_str == "publish" and entity.state == "published") \
