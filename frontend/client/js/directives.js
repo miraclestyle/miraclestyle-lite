@@ -402,13 +402,13 @@
                 }
 
             };
-        }).directive('compatibilityMaker', function () {
+        }).directive('compatibilityMaker', function (modelsUtil) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs, ctrl) {
                     var fn = function () {
                             var newval = scope.$eval(attrs.compatibilityMaker),
-                                stringified = JSON.stringify(newval);
+                                stringified = modelsUtil.toJson(newval);
                             element.val(stringified);
                         };
                     scope.$watch(attrs.compatibilityMaker, fn);

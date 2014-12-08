@@ -274,7 +274,7 @@ w:                  while (images.length > 0) {
 
         return helpers;
     }).factory('endpoint', function ($http, generalLocalCache, GLOBAL_CONFIG,
-        helpers, $rootScope, $q, $cacheFactory, $injector) {
+        helpers, modelsUtil, $rootScope, $q, $cacheFactory, $injector) {
 
         var onlyInMemoryCache = $cacheFactory('endpointOnlyInMemory'),
             getCache = function (type) {
@@ -356,6 +356,7 @@ w:                  while (images.length > 0) {
                         url: endpoint.url
                     },
                     cache_id;
+                compiled[0] = modelsUtil.toJson(compiled[0]);
                 if (compiled[1] && angular.isString(compiled[1].cache)) {
                     cache_id = compiled[1].cache;
                     compiled[1].cache = false;
@@ -376,6 +377,7 @@ w:                  while (images.length > 0) {
                         url: endpoint.url
                     },
                     cache_id;
+                compiled[0] = modelsUtil.toJson(compiled[0]);
                 $.extend(gets, compiled[1]);
                 angular.extend(defaults, gets);
                 if (defaults && angular.isString(defaults.cache)) {
@@ -677,6 +679,35 @@ w:                  while (images.length > 0) {
                         modelsUtil.normalize(entity);
                     });
                 },
+                toJson : function (entity, pretty) {
+                    var ignore = ['_field_permissions', '_next_read_arguments', '_read_arguments', '_action_permissions', 'ui'];
+                    return JSON.stringify(entity,
+                        function (key, value) {
+                            var val = value, newval;
+
+                            if (angular.isObject(value) && value.ui) {
+                                newval = {};
+                                angular.forEach(value, function (v, k) {
+                                    if ($.inArray(k, ignore) === -1) {
+                                        newval[k] = v;
+                                    }
+                                });
+                                val = newval;
+                            }
+
+                            if (typeof key === 'string' && key.charAt(0) === '$') {
+                                val = undefined;
+                            } else if (value && value.document && value.location && value.alert && value.setInterval) {
+                                val = '$WINDOW';
+                            } else if (value &&  document === value) {
+                                val = '$DOCUMENT';
+                            } else if (value && value.$evalAsync && value.$watch) {
+                                val = '$SCOPE';
+                            }
+
+                            return val;
+                        }, pretty ? '  ' : null);
+                },
                 normalize: function (entity, fields, parent, subentity_field_key, subentity_position, noui) {
                     if (entity.ui && entity.ui.normalized) {
                         return;
@@ -758,6 +789,7 @@ w:                  while (images.length > 0) {
                 }
             };
 
+        window._modelsUtil = modelsUtil;
         return modelsUtil;
     }).factory('underscoreTemplate', function () {
 
