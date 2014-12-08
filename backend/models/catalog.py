@@ -373,7 +373,6 @@ class Catalog(orm.BaseExpando):
       arguments={
         'seller': orm.SuperKeyProperty(kind='23', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'published': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True)
         },
       _plugin_groups=[
@@ -420,7 +419,6 @@ class Catalog(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'published': orm.SuperDateTimeProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
         '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
@@ -701,7 +699,7 @@ class Catalog(orm.BaseExpando):
                         's': {'subject': 'Catalog Discontinued by Admin.'},
                         'd': {'recipient': '_catalog.root_entity._primary_email',
                               'body': 'input.message'}}),
-            Notify(cfg={'s': {'subject': 'Admin Note'}, 
+            Notify(cfg={'s': {'subject': 'Admin Note'},
                         'd': {'recipient': 'account._primary_email',
                               'body': 'input.note'}}),
             CallbackExec(cfg=[('callback',
