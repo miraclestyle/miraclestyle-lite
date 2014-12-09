@@ -76,7 +76,7 @@
 }
 
 .modal-footer {
-  padding: 5px 10px; /* Note: Tak a look at .modal-footer .button! */
+  padding: 10px 10px 0px; /* Note: Take a look at .modal-footer .button! */
   text-align: right;
   position: relative;
   /*
@@ -90,7 +90,7 @@
 }
 
 .modal-footer .button {
-  margin: 5px 0px; /* Perhaps all buttons require similar treatment!? */
+  margin-bottom: 10px; /* Perhaps all buttons require similar treatment!? */
 }
 
 .modal-footer:before,
