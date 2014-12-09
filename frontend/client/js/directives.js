@@ -673,6 +673,7 @@
                         square = (angular.isDefined(config.square) ? config.square : true),
                         timeout = null,
                         resize = function () {
+                            console.log('resize');
                             if (timeout) {
                                 clearTimeout(timeout);
                             }
@@ -723,6 +724,7 @@
 
                     resize();
 
+                    scope.$on('onNgRepeatEnd', resize);
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
                     });
