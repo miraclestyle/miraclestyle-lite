@@ -14,22 +14,6 @@
   overflow-y: scroll;
 }
 
-.modal.fade .modal-dialog {
-  -webkit-transform: translate(0, -25%);
-  -ms-transform: translate(0, -25%);
-  transform: translate(0, -25%);
-  -webkit-transition: -webkit-transform 0.1s ease-out;
-  -moz-transition: -moz-transform 0.1s ease-out;
-  -o-transition: -o-transform 0.1s ease-out;
-  transition: transform 0.1s ease-out;
-}
-
-.modal.in .modal-dialog {
-  -webkit-transform: translate(0, 0);
-  -ms-transform: translate(0, 0);
-  transform: translate(0, 0);
-}
-
 .modal-dialog {
   position: relative;
   z-index: 1050;
@@ -92,7 +76,7 @@
 }
 
 .modal-footer {
-  padding: 5px 10px; /* Note: Tak a look at .modal-footer .button! */
+  padding: 10px 10px 0px; /* Note: Take a look at .modal-footer .button! */
   text-align: right;
   position: relative;
   /*
@@ -106,7 +90,7 @@
 }
 
 .modal-footer .button {
-  margin: 5px 0px; /* Perhaps all buttons require similar treatment!? */
+  margin-bottom: 10px; /* Perhaps all buttons require similar treatment!? */
 }
 
 .modal-footer:before,

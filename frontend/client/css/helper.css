@@ -1,5 +1,4 @@
-.clearfix:before,
-.clearfix:after {
+.clearfix:before, .clearfix:after {
   display: table;
   content: " ";
 }
@@ -8,9 +7,8 @@
   clear: both;
 }
 
-.clear
-{
-	clear:both;
+.clear {
+  clear: both;
 }
 
 .center-block {
@@ -58,8 +56,10 @@
 
 .fade {
   opacity: 0;
-  -webkit-transition: opacity 0.15s linear;
-          transition: opacity 0.15s linear;
+  -webkit-transition: opacity 0.1s linear;
+  -moz-transition: opacity 0.1s linear;
+  -o-transition: opacity 0.1s linear;
+  transition: opacity 0.1s linear;
 }
 
 .fade.in {
@@ -79,39 +79,34 @@
   height: 0;
   overflow: hidden;
   -webkit-transition: height 0.1s ease;
-          transition: height 0.1s ease;
+  -moz-transition: height 0.1s ease;
+  -o-transition: height 0.1s ease;
+  transition: height 0.1s ease;
 }
 
-.text-right
-{
-	text-align:right;
+.text-right {
+  text-align: right;
 }
 
-.text-center
-{
-	text-align:center;
+.text-center {
+  text-align: center;
 }
 
-.text-left
-{
-	text-align:left;
+.text-left {
+  text-align: left;
 }
 
-.overflow-x
-{
-	overflow-x:auto;
-	overflow-y:hidden;
+.overflow-x {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
-.corner-right
-{
-	position:absolute;
-	right:10px;
-	bottom:10px;
+.corner-right {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
 }
 
-
-body .mb15
-{
-	margin-bottom:15px;
+body .mb15 {
+  margin-bottom: 15px;
 }
