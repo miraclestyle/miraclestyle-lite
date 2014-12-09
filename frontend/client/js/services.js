@@ -123,9 +123,9 @@
                             cover_width = max_width;
                         }
                     }
-                    cover_width_rounded = Math.floor(cover_width - margin);
+                    cover_width_rounded = Math.floor(cover_width) - (margin * 2);
                     sides = Math.floor((canvas_width % (cover_width_rounded * cover_count)) / 2);
-                    values = [cover_width_rounded - margin, cover_count, sides, cover_width_rounded];
+                    values = [cover_width_rounded, cover_count, sides, cover_width_rounded];
                     if (cover_count_raw > 4 || cover_count === 1) {
                         break;
                     }
@@ -148,7 +148,6 @@
                     return;
                 }
                 of = this.getProperty(obj, path);
-                //console.log(of, last, value);
                 of[last] = value;
             },
             getProperty: function (obj, prop) {
@@ -1216,7 +1215,7 @@ w:                  while (images.length > 0) {
 
         return modelsEditor;
 
-    }).factory('formInputTypes', function (underscoreTemplate, $timeout,
+    }).factory('formInputTypes', function (underscoreTemplate, $timeout, $parse,
         endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
         errorHandling) {
 
@@ -1594,10 +1593,10 @@ w:                  while (images.length > 0) {
                     if (!config.ui.specifics.sortableOptions) {
                         config.ui.specifics.sortableOptions = {};
                     }
-
+ 
                     defaultSortable = {
+                        disabled: false,
                         start: function (e, ui) {
-                            // @todoo fix start sort when writable is false
                             info.scope.$broadcast('itemOrderStarted');
                         },
                         sort: function (e, ui) {
@@ -1622,6 +1621,11 @@ w:                  while (images.length > 0) {
                     $.extend(defaultSortable, config.ui.specifics.sortableOptions);
 
                     config.ui.specifics.sortableOptions = defaultSortable;
+
+                    config.ui.preRender.push(function () {
+                        var fieldIsWritable = $parse(config.ui.writableCompiled);
+                        config.ui.specifics.sortableOptions.disabled = !fieldIsWritable(info.scope);
+                    });
 
                     info.scope.$watch(config.ui.args, function (neww, old) {
                         if (neww !== old) {
@@ -1936,7 +1940,6 @@ w:                  while (images.length > 0) {
                                                     if (angular.isDefined(config.ui.specifics.afterSave)) {
                                                         config.ui.specifics.afterSave($scope);
                                                     }
-                                                    console.log($scope.sendRootArgs);
                                                 }, function (response) {
                                                         // here handle error...
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {

@@ -176,7 +176,7 @@ strong, b {
   background: #FAFAFA;
 }
 
-[ui-sortable] > * {
+[ui-sortable] > *:not(.no-move) {
   cursor: move;
 }
 

@@ -204,21 +204,17 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    entities = []
     index_name = self.cfg.get('index', None)
-    entities.append(context._catalog.key)
-    context._catalog._images.read({'config': {'cursor': -1}})
+    entities = []
+    entities.append(context._catalog.key_urlsafe)
+    context._catalog._images.read({'config': {'limit': -1}, 'pricetags': {'_product': {}}})
     product_keys = []
     for image in context._catalog._images.value:
-      product_keys.extend([pricetag.product._urlsafe for pricetag in image.pricetags.value])
-    context._catalog._products.read({'config': {'keys': product_keys}})
-    products = context._catalog._products.value
+      product_keys.extend([pricetag._product.value.key_urlsafe for pricetag in image.pricetags.value])
     context._catalog._images = []
-    entities.extend([product.key for product in products])
+    entities.extend(product_keys)
     context._catalog._delete_custom_indexes = {}
     context._catalog._delete_custom_indexes[index_name] = entities
-    context._catalog._products = []
-
 
 class CatalogSearch(orm.BaseModel):
   

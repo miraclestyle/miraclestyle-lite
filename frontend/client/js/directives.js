@@ -303,7 +303,7 @@
                 scope: true,
                 transclude: true,
                 link: function (scope, element, attrs, ctrl) {
- 
+
                     var run = function () {
 
                         var supplied_config = scope.$eval(attrs.formInput),
@@ -338,18 +338,17 @@
                                 writable: [name],
                                 path: undefined,
                                 realPath: undefined,
-                                attrs: {}
+                                attrs: {},
+                                preRender: [] // holds list of callbacks to execute prior to rendering of the directive
                             }
                         };
 
                         helpers.mergeDeep(supplied_config, config);
                         config = supplied_config;
 
-
                         if (!angular.isDefined(config.ui.path)) {
                             config.ui.path = [name];
                         }
-
 
                         if (angular.isDefined(config.ui.writableName)) {
                             config.ui.writable = [config.ui.writableName];
@@ -378,6 +377,10 @@
                                 label: utils.label(config)
                             };
 
+                            angular.forEach(config.ui.preRender, function (callback) {
+                                callback.call(config);
+                            });
+
                             if (config.ui.render === false) {
                                 return;
                             }
@@ -392,7 +395,7 @@
 
                         } else {
                             console.warn('Field type: ' + config.type +
-                                ' is not supported yet.');
+                                ' is not supported.');
                         }
 
                     };
@@ -659,7 +662,7 @@
 
                 }
             };
-        }).directive('gridGenerator', function (GLOBAL_CONFIG, helpers) {
+        }).directive('gridGenerator', function (GLOBAL_CONFIG, helpers, $timeout) {
             return {
                 link: function (scope, element, attrs) {
 
@@ -713,15 +716,13 @@
 
                                 }
 
-                            }, 150);
+                            }, 0);
                         };
-
-                    resize();
 
                     $(window).bind('resize', resize);
 
-                    scope.$on('accordionStateChanged', resize);
-                    scope.$on('itemOrderChanged', resize);
+                    resize();
+
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
                     });

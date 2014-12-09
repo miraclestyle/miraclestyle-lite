@@ -20,7 +20,7 @@
                     ng-hide="pricetag._state == 'deleted' || !pricetag.key"
                     jqyoui-options="{containment : 'parent'}"
                     jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
-                    drag="true" class="button pricetag"
+                    drag="entity.ui.rule.field._images.pricetags.writable" class="button pricetag"
                     catalog-pricetag-position="pricetag">
                       <a class="pricetag-link" loading standard-click="manageProduct(image, pricetag)" href="javascript:;">{{pricetag.value.name}}</a>
                </div>
@@ -36,10 +36,10 @@
   <div class="modal-footer">
 
       <ul class="list-inline-block">
-       <li loading="!args.ui.rule.field._images.pricetags.writable" type="button" class="button new-pricetag"
-            drag="true"
+       <li loading="!entity.ui.rule.field._images.pricetags.writable" type="button" class="button new-pricetag"
+            drag="entity.ui.rule.field._images.pricetags.writable"
             jqyoui-options="{revert: 'invalid', helper: 'clone'}"
-            jqyoui-draggable="{placeholder: 'keep', onStart: 'onDraggableDroppableStart()'}">Add Product</li>
+            jqyoui-draggable="{placeholder: 'keep'}">Add Product</li>
       </ul>
 
      

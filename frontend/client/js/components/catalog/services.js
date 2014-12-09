@@ -65,7 +65,7 @@
                                 $scope.actions = {
                                     publish: function () {
                                         modals.confirm('Publish this catalog will make it not editable and visible to the public.' +
-                                                       'Are you sure you want to do this?',
+                                                       ' Are you sure you want to do this?',
                                             function () {
                                                 models[catalogKind].actions.publish({
                                                     key: $scope.entity.key
@@ -77,7 +77,7 @@
                                     },
                                     discontinue: function () {
                                         modals.confirm('By discontinuing this catalog you will remove it from public, and it will be delted after 40 days.' +
-                                                       'Are you sure you want to do this?',
+                                                       ' Are you sure you want to do this?',
                                             function () {
                                                 models[catalogKind].actions.discontinue({
                                                     key: $scope.entity.key
@@ -160,19 +160,7 @@
                                             // set next arguments from initially loaded data from root scope
                                             imagesPager.state(parentScope.config.ui.specifics.pager);
 
-                                            $scope.onDraggableDroppableStart = function (event) {
-                                                if (!$scope.args.ui.rule.field._images.pricetags.writable) {
-                                                    event.preventDefault();
-                                                    return false;
-                                                }
-                                            };
-
-
                                             $scope.onStart = function (event, ui, image, pricetag) {
-                                                if (!$scope.args.ui.rule.field._images.pricetags.writable) {
-                                                    event.preventDefault();
-                                                    return false;
-                                                }
                                                 $(ui.helper).addClass('dragged');
                                                 $(ui.helper).find('a').addClass('dragged');
                                             };

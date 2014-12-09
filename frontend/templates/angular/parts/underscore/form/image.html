@@ -40,7 +40,7 @@
            fancy-grid-generator="config.ui.specifics.parentArgs" 
            ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
            
-          <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
+          <div ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
                ng-hide="image._state == 'deleted'"
                class="image-image grid-item">
                
@@ -49,8 +49,7 @@
                 </div>
                 
                 <div class="button-wrapper">
-                  <button ng-show="<%= config.ui.writableCompiled %>" type="button"
-                          loading
+                  <button loading="!<%= config.ui.writableCompiled %>" type="button"
                           class="button" 
                           ng-click="config.ui.specifics.remove(image)">Remove</button>
                 </div>
@@ -67,7 +66,7 @@
       <% } else { %>
         
         <div form-element-wrapper label="<%= config.ui.compiled.label %>">
-          <div><input name="<%= config.ui.formName %>"
+          <div><input ng-show="<%= config.ui.writableCompiled %>" name="<%= config.ui.formName %>"
                        generate-upload-url
                        type="file" /></div>
                        <br />

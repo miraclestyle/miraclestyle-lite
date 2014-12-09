@@ -10,7 +10,7 @@
 
   <div ui-sortable="config.ui.specifics.sortableOptions" 
           ng-model="config.ui.specifics.parentArgs" class="item-list">
-    <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
+    <div ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
       <div class="item-left">
         <div>{{ent.name}}</div>
         <div>
@@ -23,35 +23,5 @@
       </div>
     </div>
   </div>
-    
-    <!--
-    <table class="table">
-          <thead>
-            <tr> 
-              <th>Name</th>
-              <th>Active</th>
-              <th>Type</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody ui-sortable="config.ui.specifics.sortableOptions" 
-          ng-model="config.ui.specifics.parentArgs">
-            <tr ng-repeat="ent in config.ui.specifics.parentArgs">
-              <td>
-                {{ent.name}}
-              </td>
-              <td>
-                {{ent.active}}
-              </td>
-              <td>
-                {{config.ui.specifics.showType(ent.kind)}}
-              </td>
-              <td class="list-actions">
-                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-                <button ng-show="<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
-              </td>
-            </tr>
-          </tbody>
-    </table>
-    -->
+ 
 </div>
