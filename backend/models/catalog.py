@@ -615,10 +615,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Write(),
             RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_catalog'}}),
-            CallbackExec(cfg=[('callback',
-                               {'action_id': 'index', 'action_model': '31'},
-                               {'key': '_catalog.key_urlsafe'})])
+            Set(cfg={'d': {'output.entity': '_catalog'}})
             ]
           )
         ]
