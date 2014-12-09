@@ -122,7 +122,6 @@
         };
     }).directive('catalogPricetagPosition', function ($timeout, helpers) { // directives that are not used anywhere else other than this context are defined in their own context
         return {
-            priority: -1000,
             link: function (scope, element, attr) {
 
                 var pricetag = scope.$eval(attr.catalogPricetagPosition), resize = function () {
@@ -138,6 +137,8 @@
                         pa.height()
                     );
 
+                    console.log(pricetag, sizes);
+
                     pricetag._position_top = sizes[0];
                     pricetag._position_left = sizes[1];
 
@@ -151,6 +152,8 @@
                 $timeout(resize);
 
                 $(window).on('resize', resize);
+
+                scope.$watch(attr.catalogPricetagPosition + '._state', resize);
 
                 scope.$on('$destroy', function () {
                     $(window).off('resize', resize);

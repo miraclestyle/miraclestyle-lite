@@ -123,8 +123,9 @@
                             cover_width = max_width;
                         }
                     }
-                    cover_width_rounded = Math.floor(cover_width) - (margin * 2);
+                    cover_width_rounded = Math.floor(cover_width);
                     sides = Math.floor((canvas_width % (cover_width_rounded * cover_count)) / 2);
+                    cover_width_rounded = cover_width_rounded - (margin * 2);
                     values = [cover_width_rounded, cover_count, sides, cover_width_rounded];
                     if (cover_count_raw > 4 || cover_count === 1) {
                         break;
@@ -1353,11 +1354,19 @@ w:                  while (images.length > 0) {
                                         }
 
                                         if (config.code_name === 'product_uom') {
-                                            argument.filters.push({
-                                                value: 'Units',
+                                            argument.filters.unshift({
+                                                value: 'Currency',
                                                 field: 'measurement',
-                                                operator: '=='
+                                                operator: '!='
                                             });
+
+                                            argument.orders = [{
+                                                field: 'measurement',
+                                                operator: 'asc'
+                                            }, {
+                                                field: 'key',
+                                                operator: 'asc'
+                                            }];
                                         }
 
                                         return search;
@@ -1593,7 +1602,7 @@ w:                  while (images.length > 0) {
                     if (!config.ui.specifics.sortableOptions) {
                         config.ui.specifics.sortableOptions = {};
                     }
- 
+
                     defaultSortable = {
                         disabled: false,
                         start: function (e, ui) {
@@ -1658,9 +1667,8 @@ w:                  while (images.length > 0) {
 
                     buildPaths();
 
-                    rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
-
                     if (config.ui.specifics.remote) {
+                        rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
                         if (!angular.isDefined(config.ui.specifics.pager)) {
                             config.ui.specifics.pager = models[rootArgs.action_model].pager(rootArgs, config.ui.realPath, function (items) {
                                 config.ui.specifics.parentArgs.extend(items);
@@ -1825,13 +1833,13 @@ w:                  while (images.length > 0) {
                                         if (config.ui.specifics.remote) {
 
                                             // reference to args that get sent
-                                            $scope.rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
+                                            $scope.rootArgs = rootArgs;
 
                                             $scope.setAction = function (action) {
                                                 // internal helper to set the action to be executed
                                                 $scope.sendRootArgs.action_id = action;
                                             };
-                                            // send root args used for packing the rpc call
+                                            // copy of root args used for packing the customized arguments
                                             $scope.sendRootArgs = {};
                                             $scope.save = function () {
                                                 if (!$scope.container.form.$valid) { // check if the form is valid

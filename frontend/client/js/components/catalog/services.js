@@ -181,9 +181,10 @@
                                                         left,
                                                         moveLeft = true,
                                                         index = $scope.args._images.indexOf(image),
-                                                        pass = false;
+                                                        pass = false,
+                                                        exists = false;
 
-                                                    if (!parent.length) {
+                                                    if (!parent.length || !helperW) {
                                                         return; // jquery ui callback fallthrough
                                                     }
 
@@ -211,14 +212,22 @@
                                                     if (index !== -1 && pass) {
                                                         newImage = $scope.args._images[index];
                                                         if (angular.isDefined(newImage)) {
+                                                            pricetag._state = 'deleted';
+                                                            exists = _.findWhere(newImage.pricetags, {key: pricetag.key});
+                                                            if (exists) {
+                                                                pricetag = exists;
+                                                            }
                                                             pricetag.image_width = newParent.width();
                                                             pricetag.image_height = newParent.height();
                                                             pricetag.position_left = newPositionLeft;
                                                             pricetag.position_top = currentTop;
                                                             pricetag._position_left = newPositionLeft;
                                                             pricetag._position_top = currentTop;
-                                                            newImage.pricetags.push(angular.copy(pricetag));
-                                                            pricetag._state = 'deleted';
+                                                            pricetag._state = null;
+                                                            if (!exists) {
+                                                                newImage.pricetags.push(angular.copy(pricetag));
+                                                                pricetag._state = 'deleted';
+                                                            }
 
                                                         }
                                                     }
@@ -228,6 +237,9 @@
                                             };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
+                                                if (pricetag._state === 'deleted') {
+                                                    return;
+                                                }
 
                                                 var target = $(event.target).parents('.catalog-slider-item:first');
 

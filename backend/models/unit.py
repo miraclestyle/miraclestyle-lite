@@ -112,7 +112,9 @@ class Unit(orm.BaseExpando):
             'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
                         {'filters': [('active', ['==']), ('measurement', ['=='])],
-                         'orders': [('name', ['asc', 'desc'])]}]
+                         'orders': [('name', ['asc', 'desc'])]},
+                         {'filters': [('measurement', ['!=']), ('active', ['=='])],
+                         'orders': [('measurement', ['asc', 'desc']), ('key', ['asc', 'desc'])]}]
             }
           )
         },
