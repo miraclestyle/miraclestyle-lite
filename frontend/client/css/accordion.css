@@ -57,6 +57,7 @@
 
 .panel-is-open .panel-title > a {
   border-bottom: 1px solid #EEEEEE;
+  box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.05);
 }
 
 .panel-is-open .panel-title > a {
