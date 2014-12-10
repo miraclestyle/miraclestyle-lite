@@ -49,7 +49,6 @@ class OrderInit(orm.BaseModel):
       order.seller_reference = seller_key
       seller = seller_key.get()
       seller.read() # read locals
-      order.seller_address = seller.address.value.get_location()
     else:
       order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
     context._order = order

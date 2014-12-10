@@ -15,7 +15,7 @@ from plugins.seller import *
 
 
 __all__ = ['SellerContentDocument', 'SellerContent', 'SellerFeedbackStats', 'SellerFeedback', 
-           'SellerPluginContainer', 'Seller', 'SellerAddress', 'SellerLocation']
+           'SellerPluginContainer', 'Seller']
 
 
 class SellerContentDocument(orm.BaseModel):
@@ -82,65 +82,6 @@ class SellerPluginContainer(orm.BaseModel):
   def prepare_key(cls, input, **kwargs):
     seller_key = input.get('seller')
     return cls.build_key(seller_key._id_str, parent=seller_key)
-  
-  
-class SellerLocation(orm.BaseExpando):
-  
-  _kind = 122
- 
-  country = orm.SuperStringProperty('1', required=True, indexed=False)
-  country_code = orm.SuperStringProperty('2', required=True, indexed=False)
-  city = orm.SuperStringProperty('3', required=True, indexed=False)
-  postal_code = orm.SuperStringProperty('4', required=True, indexed=False)
-  street = orm.SuperStringProperty('5', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'region': orm.SuperStringProperty('6'),
-    'region_code': orm.SuperStringProperty('7'),
-    'email': orm.SuperStringProperty('8'),
-    'telephone': orm.SuperStringProperty('9')
-    }
-  
-  
-class SellerAddress(orm.BaseExpando):
-  
-  _kind = 120
-  
-  _use_rule_engine = False
- 
-  country = orm.SuperKeyProperty('1', kind='12', required=True, indexed=False)
-  city = orm.SuperStringProperty('2', required=True, indexed=False)
-  postal_code = orm.SuperStringProperty('3', required=True, indexed=False)
-  street = orm.SuperStringProperty('4', required=True, indexed=False)
-  
-  _default_indexed = False
-  
-  _expando_fields = {
-    'region': orm.SuperKeyProperty('5', kind='13'),
-    'email': orm.SuperStringProperty('6'),
-    'telephone': orm.SuperStringProperty('7')
-    }
-  
-  _virtual_fields = {
-    '_country': orm.SuperReferenceStructuredProperty('12', autoload=True, target_field='country'),
-    '_region': orm.SuperReferenceStructuredProperty('13', autoload=True, target_field='region')
-  }
-  
-  def get_location(self):
-    location = self
-    location_country = location.country.get()
-    location_region = location.region.get()
-    return SellerLocation(country=location_country.name,
-                    country_code=location_country.code,
-                    region=location_region.name,
-                    region_code=location_region.code,
-                    city=location.city,
-                    postal_code=location.postal_code,
-                    street=location.street,
-                    email=location.email,
-                    telephone=location.telephone)
 
 
 class Seller(orm.BaseExpando):
@@ -153,10 +94,6 @@ class Seller(orm.BaseExpando):
   logo = SuperImageLocalStructuredProperty(Image, '2', required=True)
   
   _default_indexed = False
-  
-  _expando_fields = {
-    'address': orm.SuperLocalStructuredProperty(SellerAddress, '3')  # @todo Not sure if this should be required?
-    }
   
   _virtual_fields = {
     '_content': orm.SuperRemoteStructuredProperty(SellerContent),
@@ -175,10 +112,10 @@ class Seller(orm.BaseExpando):
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
                            'not account._is_guest and entity._original.root_entity._original.state == "active"'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue'),
-      orm.FieldPermission('23', ['name', 'logo', 'address', '_content', '_plugin_group', '_records'], True, True,
+      orm.FieldPermission('23', ['name', 'logo', '_content', '_plugin_group', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key'),
       orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),
-      orm.FieldPermission('23', ['name', 'logo', 'address', '_feedback'], False, True,
+      orm.FieldPermission('23', ['name', 'logo', '_feedback'], False, True,
                           'not account._is_guest and entity._original.root_entity._original.state == "active"')
       ]
     )
@@ -211,7 +148,6 @@ class Seller(orm.BaseExpando):
         'logo': SuperImageLocalStructuredProperty(Image, upload=True, process_config={'measure': False, 'transform': True,
                                                                          'width': 240, 'height': 100,
                                                                          'crop_to_fit': True}),
-        'address': orm.SuperLocalStructuredProperty(SellerAddress),
         '_content': orm.SuperLocalStructuredProperty(SellerContent),
         '_plugin_group': orm.SuperLocalStructuredProperty(SellerPluginContainer),
         'read_arguments': orm.SuperJsonProperty()
@@ -223,7 +159,6 @@ class Seller(orm.BaseExpando):
             Read(),
             Set(cfg={'d': {'_seller.name': 'input.name',
                            '_seller.logo': 'input.logo',
-                           '_seller.address': 'input.address',
                            '_seller._content': 'input._content',
                            '_seller._plugin_group': 'input._plugin_group'}}),
             SellerSetupDefaults(),

@@ -389,7 +389,6 @@
 
         modelsConfig(function (models) {
             var read_arguments = {
-                _address: {},
                 _content: {
                     documents: {}
                 },
@@ -409,7 +408,6 @@
                 },
                 settingsModal: function (account_key) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'), config;
-                    fields.address.ui.label = false;
                     fields._content.ui.label = false;
                     fields._content.modelclass.documents.ui = {
                         label: false,
@@ -427,10 +425,6 @@
                         }
                     };
                     fields._plugin_group.ui.label = false;
-                    fields.address.ui.specifics = {
-                        sortFields: ['country', 'region', 'city',
-                            'postal_code', 'street', 'email', 'telephone'],
-                    };
 
                     config = {
                         kind: this.kind,
@@ -440,9 +434,6 @@
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);
                             args.account = account_key;
-                            if (args.address === null) {
-                                args.address = {};
-                            }
                             if (args._content === null) {
                                 args._content = {
                                     kind: '21',
@@ -460,9 +451,6 @@
                                     open: true,
                                     key: 'general',
                                     fields: ['name', 'logo'],
-                                }, {
-                                    label: 'Address',
-                                    fields: ['address'],
                                 }, {
                                     label: 'Plugins',
                                     fields: ['_plugin_group'],

@@ -87,7 +87,6 @@ class Order(orm.BaseExpando):
   state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'completed', 'canceled'])
   date = orm.SuperDateTimeProperty('5', required=True)
   seller_reference = orm.SuperKeyProperty('6', kind='23', required=True)
-  seller_address = orm.SuperLocalStructuredProperty('122', '7', required=True)
   billing_address_reference = orm.SuperKeyProperty('8', kind='14', required=True, indexed=False)
   shipping_address_reference = orm.SuperKeyProperty('9', kind='14', required=True, indexed=False)
   billing_address = orm.SuperLocalStructuredProperty('121', '10', required=True)
@@ -173,14 +172,14 @@ class Order(orm.BaseExpando):
                            'account._root_admin and entity._original.state == "completed" \
                            and entity._is_feedback_allowed'),
       # @todo Implement field permissions!
-      orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference', 'seller_address',
+      orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                  'feedback', 'feedback_adjustment', 'payment_method', '_lines', '_messages', '_payment_method', '_records', '_seller'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and (entity._original.key_root == account.key \
                           or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
-      orm.FieldPermission('34', ['name', 'date', 'seller_reference', 'seller_address',
+      orm.FieldPermission('34', ['name', 'date', 'seller_reference',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                  'payment_method', '_lines', '_messages', '_records'], True, True,
