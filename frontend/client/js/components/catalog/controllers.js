@@ -2,7 +2,7 @@
     'use strict';
     // code for account
     angular.module('app')
-        .controller('SellCatalogsCtrl', function ($scope, modelsEditor, modelsMeta, models, modelsUtil) {
+        .controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil) {
 
             var newEntity = function (entity) {
                 if (!_.findWhere($scope.search.results, {
@@ -25,12 +25,22 @@
             };
 
             models['23'].current().then(function (response) {
-                var args = modelsMeta.getActionArguments('31', 'search');
+                var args = modelsMeta.getActionArguments('31', 'search'),
+                    sellerEntity = response.data.entity;
                 args.search['default'].ancestor = response.data.entity.key;
                 models['31'].actions.search({
                     search: args.search['default']
+                }, {
+                    ignoreErrors: true
                 }).then(function (response) {
-                    $scope.search.results = response.data.entities;
+                    var errors = response.data.errors;
+                    if (errors) {
+                        if (errors['not_found_' + sellerEntity.key]) {
+                            modals.alert('You need to update your seller details before making any catalogs!');
+                        }
+                    } else {
+                        $scope.search.results = response.data.entities;
+                    }
                 });
             });
         });

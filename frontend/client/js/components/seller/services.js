@@ -306,9 +306,17 @@
                                         $modalInstance.dismiss('cancel');
                                     };
 
+                                    $scope.validateForm = function () {
+                                        if (!$scope.container.form.$valid) {
+                                            $scope.$broadcast('invalidForm');
+                                            return false;
+                                        }
+                                        return true;
+                                    };
+
                                     $scope.save = function () {
                                         var promise, complete;
-                                        if (!$scope.container.form.$valid) {
+                                        if (!$scope.validateForm()) {
                                             return;
                                         }
 

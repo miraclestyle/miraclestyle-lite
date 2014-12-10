@@ -1,0 +1,33 @@
+<div class="fitter" fit-in-dialog>
+<form name="container.form" ng-submit="save()" method="post" action="{{container.action}}">
+ 
+  <div class="modal-body unscrollable">
+  <div class="clearfix">
+ 
+      <div class="catalog-slider-outer">
+         <div catalog-slider-load-more="loadMoreImages" catalog-slider="images" class="catalog-slider"> 
+             <div ng-repeat="image in args._images track by $index" class="catalog-slider-item">
+             <img catalog-slider-image="image" /> 
+             <div ng-repeat="pricetag in image.pricetags track by $index"
+                  catalog-pricetag-position="pricetag">
+                   <a class="pricetag-link" loading standard-click="viewProduct(image, pricetag)" href="javascript:;">{{pricetag.value.price}}</a>
+              </div>
+            </div>
+         </div>
+      </div>
+       
+    </div>
+ 
+  </div>
+
+  <div class="modal-footer">
+ 
+      <button loading type="button" class="button" ng-click="close()">Close</button>
+ 
+  </div>
+  
+      
+  </div>
+ 
+</form>
+</div>

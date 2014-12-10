@@ -823,7 +823,8 @@ w:                  while (images.length > 0) {
                         enableUI = function () {
                             $rootScope.$broadcast('disableUI', false);
                         },
-                        reject;
+                        reject,
+                        shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
 
                     if (!rejection.config.ignoreErrors) {
 
@@ -854,8 +855,9 @@ w:                  while (images.length > 0) {
                         }
 
                     }
-
-                    enableUI();
+                    if (shouldDisable) {
+                        enableUI();
+                    }
                     // otherwise, default behaviour
                     return rejection || $q.when(rejection);
 
@@ -865,7 +867,10 @@ w:                  while (images.length > 0) {
                     response: handleResponse,
                     responseError: handleResponse,
                     request: function (config) {
-                        $rootScope.$broadcast('disableUI', true);
+                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true);
+                        if (shouldDisable) {
+                            $rootScope.$broadcast('disableUI', true);
+                        }
                         return config || $q.when(config);
                     }
                 };
@@ -882,8 +887,8 @@ w:                  while (images.length > 0) {
                     showClose: true,
                     closeAfterSave: false,
                     action: 'update',
-                    templateBodyUrl: 'entity/modal_editor_default_body.html',
-                    templateFooterUrl: 'entity/modal_editor_default_footer.html',
+                    templateBodyUrl: 'entity/modal/editor_default_body.html',
+                    templateFooterUrl: 'entity/modal/editor_default_footer.html',
                     scope: {},
                     fields: [],
                     init: angular.noop,
@@ -1015,7 +1020,7 @@ w:                  while (images.length > 0) {
                     open: function (entity, args) {
 
                         $modal.open({
-                            templateUrl: 'entity/modal_editor.html',
+                            templateUrl: 'entity/modal/editor.html',
                             controller: function ($scope, $modalInstance) {
                                 var inflector = $filter('inflector'),
                                     field,
@@ -1044,7 +1049,18 @@ w:                  while (images.length > 0) {
                                 };
                                 console.log('modelsEditor.init', $scope);
 
+                                $scope.validateForm = function () {
+                                    if (!$scope.container.form.$valid) {
+                                        $scope.$broadcast('invalidForm');
+                                        return false;
+                                    }
+                                    return true;
+                                };
+
                                 $scope.save = function () {
+                                    if (!$scope.validateForm()) {
+                                        return false;
+                                    }
                                     config.prepareReadArguments($scope);
                                     var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
 
@@ -1797,6 +1813,14 @@ w:                  while (images.length > 0) {
                                                 config.ui.specifics.afterClose($scope);
                                             }
                                         };
+                                        $scope.validateForm = function () {
+                                            if (!$scope.container.form.$valid) {
+                                                $scope.$broadcast('invalidForm');
+                                                return false;
+                                            }
+
+                                            return true;
+                                        };
 
                                         $scope.$on('$destroy', function () {
                                             config.ui.specifics.getScope = undefined;
@@ -1842,8 +1866,8 @@ w:                  while (images.length > 0) {
                                             // copy of root args used for packing the customized arguments
                                             $scope.sendRootArgs = {};
                                             $scope.save = function () {
-                                                if (!$scope.container.form.$valid) { // check if the form is valid
-                                                    return;
+                                                if (!$scope.validateForm()) { // check if the form is valid
+                                                    return false;
                                                 }
 
                                                 var promise,
@@ -1988,8 +2012,8 @@ w:                  while (images.length > 0) {
 
 
                                             $scope.save = function () {
-                                                if (!$scope.container.form.$valid) { // check if the form is valid
-                                                    return;
+                                                if (!$scope.validateForm()) { // check if the form is valid
+                                                    return false;
                                                 }
                                                 var promise = null,
                                                     complete = function () {
@@ -2357,7 +2381,7 @@ w:                  while (images.length > 0) {
                 helpers.extendDeep(config, extraConfig);
                 return $modal.open({
                     windowClass: 'modal-medium',
-                    templateUrl: 'misc/modal/' + config.type + '.html',
+                    templateUrl: (config.templateUrl ? config.templateUrl : 'misc/modal/' + config.type + '.html'),
                     controller: function ($scope, $modalInstance) {
 
                         config.dismiss = function () {

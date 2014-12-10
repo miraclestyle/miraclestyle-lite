@@ -96,30 +96,29 @@ ANGULAR_TEMPLATES = (
   ('misc/modal/errors.html',),
   ('misc/modal/confirm.html',),
 
-  ('entity/modal_editor.html',),
-  ('entity/modal_editor_default_body.html',),
-  ('entity/modal_editor_default_footer.html',),
+  ('entity/modal/editor.html',),
+  ('entity/modal/editor_default_body.html',),
+  ('entity/modal/editor_default_footer.html',),
   
-  ('account/settings.html',),
+  ('account/modal/settings.html',),
   
   ('seller/directive/carrier_line_rule_display.html',),
   ('seller/directive/address_rule_location_display.html',),
   
   ('buyer/directive/buyer_address_display.html',),
   
+  ('catalog/modal/footer.html',),
+  ('catalog/modal/administer.html',),
+  ('catalog/modal/products.html',),
+  ('catalog/product/modal/footer.html',),
+  ('catalog/product/modal/variant_choices.html',),
   ('catalog/list.html',),
-  ('catalog/modal_footer.html',),
-  ('catalog/administer.html',),
-  ('catalog/underscore/image.html',),
-  ('catalog/products.html',),
-  ('catalog/product/modal_footer.html',),
-  ('catalog/product/variant_choices.html',),
+  ('catalog/underscore/form/image.html',),
   ('catalog/product/directive/product_instance_display.html',),
   
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
   ('underscore/form/structured.html',),
-  ('underscore/form/modal/structured.html',),
   ('underscore/form/boolean.html',),
   ('underscore/form/datetime.html',),
   ('underscore/form/text.html',),
@@ -127,6 +126,7 @@ ANGULAR_TEMPLATES = (
   ('underscore/form/string.html',),
   ('underscore/form/plugins.html',),
   ('underscore/form/modal/plugins.html',),
+  ('underscore/form/modal/structured.html',),
  
                      
   ('template/accordion/accordion-group.html',

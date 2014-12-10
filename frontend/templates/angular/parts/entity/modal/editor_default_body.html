@@ -1,7 +1,7 @@
 <div accordion-on-open="accordions">
     <accordion close-others="accordions.closeOthers">
         <accordion-group ng-if="formBuilder[$index].length" ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-            <div form-builder="formBuilder[$index]"></div>
+            <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
         </accordion-group>
     </accordion>
 </div>

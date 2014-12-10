@@ -6,6 +6,11 @@
 
         modelsConfig(function (models) {
             $.extend(models[catalogKind], {
+                viewModal: function (entity) {
+                    models[catalogKind].actions.read({
+                        key: entity.key
+                    });
+                },
                 manageModal: function (entity, callback) { // modal dialog for managing the catalog
 
                     var fields = modelsMeta.getActionArguments(catalogKind, 'update'),
@@ -24,7 +29,7 @@
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
                             fields: _.toArray(fields),
-                            templateFooterUrl: 'catalog/modal_footer.html',
+                            templateFooterUrl: 'catalog/modal/footer.html',
                             afterSave: afterSave,
                             afterSaveError: afterSave,
                             afterComplete: afterComplete,
@@ -34,7 +39,7 @@
                                 $.extend(fields._images, {
                                     ui: {
                                         label: false,
-                                        template: 'catalog/underscore/image.html',
+                                        template: 'catalog/underscore/form/image.html',
                                         specifics: {
                                             sortableOptions: {
                                                 stop: function () {
@@ -99,32 +104,32 @@
                                     },
                                     sudo: function () {
                                         $modal.open({
-                                            templateUrl: 'catalog/administer.html',
+                                            templateUrl: 'catalog/modal/administer.html',
                                             controller: function ($scope, $modalInstance) {
                                                 var sudoFields = modelsMeta.getActionArguments(config.kind, 'sudo');
                                                 $scope.args = {key: entity.key, state: entity.state};
+
                                                 sudoFields.state.ui.placeholder = 'Set state';
                                                 sudoFields.index_state.ui.placeholder = 'Index action';
                                                 sudoFields.message.ui.placeholder = 'Message for the user';
                                                 sudoFields.note.ui.placeholder = 'Note for administrators';
+
                                                 $scope.fields = [sudoFields.state, sudoFields.index_state, sudoFields.message, sudoFields.note];
                                                 angular.forEach($scope.fields, function (field) {
                                                     field.ui.writable = true;
                                                 });
-                                                $scope.close = function () {
-                                                    $modalInstance.dismiss('close');
-                                                };
 
                                                 $scope.container = {};
-
                                                 $scope.save = function () {
                                                     if (!$scope.container.form.$valid) {
-                                                        $scope.container.form.$setDirty();
                                                         return false;
                                                     }
                                                     models[catalogKind].actions.sudo($scope.args).then(function (response) {
                                                         updateState(response.data.entity);
                                                     });
+                                                };
+                                                $scope.close = function () {
+                                                    $modalInstance.dismiss('close');
                                                 };
                                             }
                                         });
@@ -142,7 +147,7 @@
                                         return false;
                                     }
                                     $modal.open({
-                                        templateUrl: 'catalog/products.html',
+                                        templateUrl: 'catalog/modal/products.html',
                                         controller: function ($scope, $modalInstance, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesPager,
@@ -358,10 +363,10 @@
                                                             var findPricetag = _.last(fieldScope.sendRootArgs._images[0].pricetags);
                                                             findPricetag.value = {
                                                                 name: fieldScope.args.name,
-                                                                value: fieldScope.args.unit_price
+                                                                price: fieldScope.args.unit_price
                                                             };
                                                         },
-                                                        templateFooterUrl: 'catalog/product/modal_footer.html',
+                                                        templateFooterUrl: 'catalog/product/modal/footer.html',
                                                         addText: 'Add Product',
                                                         getRootArgs: function () {
                                                             // root args is data that gets sent with rpc
@@ -464,7 +469,7 @@
 
                                                             begin = function () {
                                                                 $modal.open({
-                                                                    templateUrl: 'catalog/product/variant_choices.html',
+                                                                    templateUrl: 'catalog/product/modal/variant_choices.html',
                                                                     controller: function ($scope, $modalInstance) {
                                                                         $scope.variants = [];
                                                                         $scope.variantSelection = [];

@@ -11,7 +11,7 @@
                                 <div accordion-on-open="accordions">
                                     <accordion close-others="accordions.closeOthers">
                                         <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                                            <div form-builder="formBuilder[$index]"></div>
+                                            <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
                                         </accordion-group>
                                     </accordion>
                                 </div>
@@ -23,7 +23,7 @@
                             <span ng-include="config.ui.specifics.templateFooterUrl"></span>
                             <% } else { %>
                             <button <% if (config.ui.specifics.remote) { %>
-                                 submit-if-files-no-complete="noComplete" submit-if-files="save"
+                                 submit-if-files-no-complete="noComplete()" submit-if-files="save()"
                                 <% } else { %>type="submit"
                                     <% } %>loading class="button"> Save
                             </button>

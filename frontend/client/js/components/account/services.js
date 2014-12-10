@@ -8,7 +8,7 @@
                 settingsModal: function (account_key) {
                     var config = {
                             kind: this.kind,
-                            templateBodyUrl: 'account/settings.html',
+                            templateBodyUrl: 'account/modal/settings.html',
                             argumentLoader: function ($scope) {
                                 var disassociate = [],
                                     entity = $scope.entity,

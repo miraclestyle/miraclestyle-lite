@@ -1,12 +1,11 @@
 <div fit-in-dialog>
     <form name="container.form" ng-submit="save()">
-        <textarea style="display:none;" compatibility-maker="args" ng-model="json_body" name="__body__"></textarea>
         <div class="modal-body scrollable">
             <div class="modal-body-inner">
                 <div accordion-on-open="accordions">
                     <accordion close-others="accordions.closeOthers">
                         <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                            <div form-builder="formBuilder[$index]"></div>
+                            <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
                         </accordion-group>
                     </accordion>
                 </div>
