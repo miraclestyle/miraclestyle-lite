@@ -2381,7 +2381,7 @@ w:                  while (images.length > 0) {
                 helpers.extendDeep(config, extraConfig);
                 return $modal.open({
                     windowClass: 'modal-medium',
-                    templateUrl: (config.templateUrl ? config.templateUrl : 'misc/modal/' + config.type + '.html'),
+                    templateUrl: 'misc/modal/' + config.type + '.html',
                     controller: function ($scope, $modalInstance) {
 
                         config.dismiss = function () {
@@ -2394,6 +2394,30 @@ w:                  while (images.length > 0) {
                         $scope.config = config;
                     }
                 });
+            }
+        };
+    }).factory('visualAid', function (modals) {
+        return {
+            navigate: function () {
+                var start = function (args, i) {
+                    var arg = args[i],
+                        find = $(arg);
+                    if (!arg) {
+                        return;
+                    }
+                    if (angular.isString(arg)) {
+                        if (find.length) {
+                            find.click();
+                            setTimeout(function () {
+                                i += 1;
+                                start(args, i);
+                            }, 150);
+                        } else {
+                            modals.alert('Instruction failed at ' + arg + ', element not found ' + arg);
+                        }
+                    }
+                };
+                start(arguments, 0);
             }
         };
     });

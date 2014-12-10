@@ -2,7 +2,7 @@
     'use strict';
     // code for account
     angular.module('app')
-        .controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil) {
+        .controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid) {
 
             var newEntity = function (entity) {
                 if (!_.findWhere($scope.search.results, {
@@ -36,7 +36,7 @@
                     var errors = response.data.errors;
                     if (errors) {
                         if (errors['not_found_' + sellerEntity.key]) {
-                            modals.alert('You need to update your seller details before making any catalogs!');
+                            modals.alert('You do not have any seller information yet.');
                         }
                     } else {
                         $scope.search.results = response.data.entities;

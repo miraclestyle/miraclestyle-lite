@@ -275,6 +275,7 @@ class Catalog(orm.BaseExpando):
     '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
                                                   read_arguments={'config': {'order': {'field': 'sequence',
                                                                                        'direction': 'desc'}}}),
+    '_seller': orm.SuperReferenceStructuredProperty('23', callback=lambda self: self.key.parent().get_async(), autoload=False),
     '_records': orm.SuperRecordProperty('31')
     }
   
@@ -346,7 +347,8 @@ class Catalog(orm.BaseExpando):
                           "product_instance_upload_images", "catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
       orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images'], True, True,
-                          '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])')
+                          '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
+      orm.FieldPermission('31', ['_seller'], True, True, 'True')
       ]
     )
   
