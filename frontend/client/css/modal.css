@@ -18,7 +18,7 @@
   position: relative;
   z-index: 1050;
   width: auto;
-  margin: 10px;
+  margin: 15px;
 }
 
 .modal-content {
@@ -127,7 +127,7 @@
 }
 
 .modal-body-inner {
-  padding: 10px;
+  /* padding: 10px; */
 }
 
 .modal-small .modal-dialog {
