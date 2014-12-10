@@ -14,7 +14,8 @@ from models.location import *
 from plugins.seller import *
 
 
-__all__ = ['SellerContentDocument', 'SellerContent', 'SellerFeedbackStats', 'SellerFeedback', 
+__all__ = ['SellerContentDocument', 'SellerContent',
+           'SellerFeedbackStats', 'SellerFeedback',
            'SellerPluginContainer', 'Seller']
 
 
@@ -39,7 +40,7 @@ class SellerContent(orm.BaseModel):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     seller_key = input.get('seller')
-    return cls.build_key(seller_key._id_str, parent=seller_key)
+    return cls.build_key('_content', parent=seller_key)
 
 
 class SellerFeedbackStats(orm.BaseModel):
@@ -67,7 +68,7 @@ class SellerFeedback(orm.BaseModel):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     seller_key = input.get('seller')
-    return cls.build_key(seller_key._id_str, parent=seller_key)
+    return cls.build_key('_feedback', parent=seller_key)
 
 
 class SellerPluginContainer(orm.BaseModel):
@@ -81,7 +82,7 @@ class SellerPluginContainer(orm.BaseModel):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     seller_key = input.get('seller')
-    return cls.build_key(seller_key._id_str, parent=seller_key)
+    return cls.build_key('_plugin_group', parent=seller_key)
 
 
 class Seller(orm.BaseExpando):
