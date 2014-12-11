@@ -6,9 +6,23 @@
 
         modelsConfig(function (models) {
             $.extend(models[catalogKind], {
-                viewModal: function (entity) {
+                viewModal: function (key) {
                     models[catalogKind].actions.read({
-                        key: entity.key
+                        key: key,
+                        read_arguments: {
+                            _seller: {},
+                            _images: {
+                                pricetags: {}
+                            }
+                        }
+                    }).then(function (response) {
+                        var entity = response.data.entity;
+                        $modal.open({
+                            templateUrl: 'catalog/modal/view.html',
+                            controller: function ($scope) {
+                                $scope.catalog = entity;
+                            }
+                        });
                     });
                 },
                 manageModal: function (entity, callback) { // modal dialog for managing the catalog

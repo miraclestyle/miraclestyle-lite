@@ -32,12 +32,16 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
         if op == None:
           op = str
         gets = item.get(key)
+        if gets == 'None':
+          gets = None
         if gets != None:
           return op(gets.text)
         return gets
       
       def __eval(item, key):
         gets = item.get(key)
+        if gets == 'None':
+          gets = None
         if gets != None:
           return eval(gets.attrib.get('eval'))
         return gets

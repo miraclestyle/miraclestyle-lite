@@ -608,15 +608,13 @@ class _BaseModel(object):
     entity = future.get_result()
     if entity is not None and entity.key:
       entity.make_original()
-      print entity.__class__.__name__
       entity._make_async_calls()
   
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
     entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)
     entity.make_original()
-    if entity.key:
-      print 'from_pb', entity.__class__.__name__
+    if entity.key: # make async calls only if the key is present, meaning that the entity is loaded from datastore and not in preparation mode
       entity._make_async_calls()
     return entity
   
@@ -2086,7 +2084,6 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     elif self._property._updateable or (not getattr(self._property_value, '_original', None) \
                                          and self._property._addable):
       # put only if the property is updateable, or if its not set and its addable, do the put.
-      print self._property_value
       self._property_value.put()
   
   def _post_update_repeated(self):
