@@ -608,13 +608,16 @@ class _BaseModel(object):
     entity = future.get_result()
     if entity is not None and entity.key:
       entity.make_original()
+      print entity.__class__.__name__
       entity._make_async_calls()
   
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
     entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)
     entity.make_original()
-    entity._make_async_calls()
+    if entity.key:
+      print 'from_pb', entity.__class__.__name__
+      entity._make_async_calls()
     return entity
   
   def _pre_put_hook(self):
@@ -634,7 +637,8 @@ class _BaseModel(object):
         if hasattr(value, 'post_update'):
           value.post_update()
     entity.write_search_document()
-    entity.make_original() # in post put hook we override the instance of original with the self, because the entity is now saved and passed the rule engine
+    if self._root is self: # make_original will only be called on root entity, because make_original logic will handle substructures
+      entity.make_original() # in post put hook we override the instance of original with the self, because the entity is now saved and passed the rule engine
     # @todo General problem with documents is that they are not transactional, and upon failure of transaction
     # they might end up being stored anyway.
   
@@ -728,7 +732,8 @@ class _BaseModel(object):
     new_entity.key = copy.deepcopy(self.key)
     new_entity._state = self._state
     for field_key, field in self.get_fields().iteritems():
-      if hasattr(self, field_key):
+      has_can_be_copied = hasattr(field, 'can_be_copied')
+      if (not has_can_be_copied or (has_can_be_copied and field.can_be_copied)) and hasattr(self, field_key):
         value = getattr(self, field_key, None)
         is_property_value_type = (hasattr(field, 'is_structured') and field.is_structured)
         if is_property_value_type:
@@ -1207,11 +1212,10 @@ class _BaseModel(object):
     the_id = new_entity.duplicate_key_id()
     # user with insufficient permissions on fields might not be in able to write complete copy of entity
     # basically everything that got loaded inb4
-    for field_key in new_entity.get_fields():
-      if hasattr(self, field_key):
+    for field_key, field in new_entity.get_fields().iteritems():
+      if hasattr(field, 'is_structured') and field.is_structured:
         value = getattr(new_entity, field_key, None)
-        if isinstance(value, PropertyValue):
-          value.duplicate() # call duplicate for every structured field
+        value.duplicate() # call duplicate for every structured field
     if new_entity.key:
       new_entity.set_key(the_id, parent=self.key_parent, namespace=self.key_namespace)
       # we append _duplicate to the key, this we could change the behaviour of this by implementing something like
@@ -1230,6 +1234,12 @@ class _BaseModel(object):
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
+      def can_copy(field):
+        has_can_be_copied = hasattr(field, 'can_be_copied')
+        if not has_can_be_copied:
+          return True
+        else:
+          return field.can_be_copied
       # recursevely set original for all structured properties.
       # this is because we have huge depency on _original, so we need to have it on its children as well
       def scan(value, field_key, field, original):
@@ -1248,10 +1258,12 @@ class _BaseModel(object):
         elif value is not None and isinstance(value, Model):
           value._original = original
           for field_key, field in value.get_fields().iteritems():
-            scan(getattr(value, field_key, None), field_key, field, getattr(value._original, field_key, None))
+            if can_copy(field):
+              scan(getattr(value, field_key, None), field_key, field, getattr(value._original, field_key, None))
 
       for field_key, field in self.get_fields().iteritems():
-        scan(getattr(self, field_key, None), field_key, field, getattr(self._original, field_key, None))
+        if can_copy(field):
+          scan(getattr(self, field_key, None), field_key, field, getattr(self._original, field_key, None))
   
   def get_search_document(self, fields=None):
     '''Returns search document representation of the entity, based on property configurations.
@@ -1721,10 +1733,10 @@ class StructuredPropertyValue(PropertyValue):
   
   def _deep_read(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
-    This solves the problem of hierarchy.
+    This solves the problem of loading data in hierarchy.
     '''
     if self.has_value():
-      entities = self.read_value
+      entities = self.read_value # @todo this should be .value, but for locally structured .read_value
       if not self._property._repeated:
         if not entities:
           entities = []
@@ -1772,7 +1784,7 @@ class StructuredPropertyValue(PropertyValue):
   def read(self, read_arguments=None):
     '''Reads the property values in sync mode. Calls read_async and _read_sync to complete full read.
     Also calls _format_callback on the results, sets hierarchy and starts read recursion if possible.
-    This function should always be called publicly if data is needed from the desired property.
+    This function should always be called publicly if data is needed right away from the desired property.
     '''
     if read_arguments is None:
       read_arguments = {}
@@ -1957,7 +1969,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           for ent in entities:
             ent._sequence += last_sequence
     else:
-      util.log('cannot use .add() on non repeated property')
+      util.log('cannot use .add() on non repeated property', 'warn')
     # Always trigger setattr on the property itself
     setattr(self._entity, self.property_name, entities)
 
@@ -1971,7 +1983,11 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     return isinstance(value, Future)
   
   def _read_single(self, read_arguments):
-    property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    model = self._property.get_modelclass()
+    if not hasattr(model, 'prepare_key'):
+      property_value_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+    else:
+      property_value_key = model.prepare_key(parent=self._entity.key)
     self._property_value = property_value_key.get_async()
   
   def _read_repeated(self, read_arguments):
@@ -1995,7 +2011,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
             raise PropertyError('not_supported')
           else:
             supplied_key['parent'] = self._entity.key
-            prepare_supplied_keys.append(model.prepare_key(**supplied_key).urlsafe())
+            prepare_supplied_keys.append(model.prepare_key(**supplied_key).urlsafe()) # this is not correct because the supplied_key is raw input from user and it should be formatted.
         else:
           prepare_supplied_keys.append(supplied_key)
       supplied_keys = SuperVirtualKeyProperty(kind=model.get_kind(), repeated=True).value_format(prepare_supplied_keys)
@@ -2070,6 +2086,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     elif self._property._updateable or (not getattr(self._property_value, '_original', None) \
                                          and self._property._addable):
       # put only if the property is updateable, or if its not set and its addable, do the put.
+      print self._property_value
       self._property_value.put()
   
   def _post_update_repeated(self):
@@ -3529,7 +3546,8 @@ class SuperSearchProperty(SuperJsonProperty):
 class SuperReferenceProperty(SuperKeyProperty):
   '''This property can be used to read stuff in async mode upon reading entity from protobuff.
   However, this can be also used for storing keys, behaving like SuperKeyProperty.
-  Setter value should always be a key, however it can be an entire entity instance from which it will use its .key.
+  Setter value should always be a key, however it can be an entire entity instance from which it will use its .key
+  The property will have no substructure permissions. If you want those, use SuperReferenceStructuredProperty
   >>> entity.user = user_key
   Getter usually retrieves entire entity instance,
   or something else can be returned based on the _format_callback option.
@@ -3544,6 +3562,8 @@ class SuperReferenceProperty(SuperKeyProperty):
   can retreive whatever it wants and how it wants. @see class Record for reference.
   '''
   _value_class = ReferencePropertyValue
+
+  can_be_copied = False
   
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
@@ -3583,10 +3603,7 @@ class SuperReferenceProperty(SuperKeyProperty):
       entity._values[value_name] = value_instance
     if internal:
       return value_instance
-    if not value_instance.has_value():
-      return value_instance
-    else:
-      return value_instance.read()
+    return value_instance.read()
   
   def get_output(self):
     dic = super(SuperReferenceProperty, self).get_meta()

@@ -38,9 +38,12 @@ class SellerContent(orm.BaseModel):
   documents = orm.SuperLocalStructuredProperty(SellerContentDocument, '1', repeated=True)  # @todo Or we could call it pages?
   
   @classmethod
-  def prepare_key(cls, input, **kwargs):
-    seller_key = input.get('seller')
+  def prepare_key(cls, **kwargs):
+    seller_key = kwargs.get('parent')
     return cls.build_key('_content', parent=seller_key)
+
+  def prepare(self, **kwargs):
+    self.key = self.prepare_key(**kwargs)
 
 
 class SellerFeedbackStats(orm.BaseModel):
@@ -66,9 +69,12 @@ class SellerFeedback(orm.BaseModel):
   feedbacks = orm.SuperLocalStructuredProperty(SellerFeedbackStats, '1', repeated=True)
   
   @classmethod
-  def prepare_key(cls, input, **kwargs):
-    seller_key = input.get('seller')
+  def prepare_key(cls, **kwargs):
+    seller_key = kwargs.get('parent')
     return cls.build_key('_feedback', parent=seller_key)
+
+  def prepare(self, **kwargs):
+    self.key = self.prepare_key(**kwargs)
 
 
 class SellerPluginContainer(orm.BaseModel):
@@ -80,9 +86,12 @@ class SellerPluginContainer(orm.BaseModel):
   plugins = orm.SuperPluginStorageProperty(('107', '108', '109', '113', '117'), '1', required=True, default=[], compressed=False)
   
   @classmethod
-  def prepare_key(cls, input, **kwargs):
-    seller_key = input.get('seller')
+  def prepare_key(cls, **kwargs):
+    seller_key = kwargs.get('parent')
     return cls.build_key('_plugin_group', parent=seller_key)
+
+  def prepare(self, **kwargs):
+    self.key = self.prepare_key(**kwargs)
 
 
 class Seller(orm.BaseExpando):
@@ -100,7 +109,9 @@ class Seller(orm.BaseExpando):
     '_content': orm.SuperRemoteStructuredProperty(SellerContent),
     '_feedback': orm.SuperRemoteStructuredProperty(SellerFeedback),
     '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
-    '_records': orm.SuperRecordProperty('23')
+    '_records': orm.SuperRecordProperty('23'),
+    '_currency': orm.SuperReferenceProperty('17', callback=lambda self: self._get_currency_callback(),
+                                                  format_callback=lambda self, value: value)
     }
   
   _global_role = GlobalRole(
@@ -116,7 +127,7 @@ class Seller(orm.BaseExpando):
       orm.FieldPermission('23', ['name', 'logo', '_content', '_plugin_group', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key'),
       orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),
-      orm.FieldPermission('23', ['name', 'logo', '_feedback'], False, True,
+      orm.FieldPermission('23', ['name', 'logo', '_currency', '_feedback'], False, True,
                           'not account._is_guest and entity._original.root_entity._original.state == "active"')
       ]
     )
@@ -198,6 +209,16 @@ class Seller(orm.BaseExpando):
         ]
       )
     ]
+ 
+  def _get_currency_callback(self):
+    self._plugin_group.read()
+    currency = None
+    for plugin in self._plugin_group.value.plugins:
+      if plugin.get_kind() == '117':
+        currency = plugin.currency
+    if currency is not None:
+      currency = currency.get_async()
+    return currency
   
   @classmethod
   def prepare_key(cls, input, **kwargs):

@@ -354,10 +354,6 @@ class OrderCurrency(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   currency = orm.SuperKeyProperty('3', kind=Unit, required=True, indexed=False)
-
-  _virtual_fields = {
-    '_currency': orm.SuperReferenceProperty(kind=Unit, callback=lambda self: self.currency.get_async(), format_callback=lambda value: value)
-  }
   
   def run(self, context):
     if not self.active:

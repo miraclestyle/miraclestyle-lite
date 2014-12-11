@@ -7,7 +7,7 @@
   <div class="clearfix">
  
       <div class="catalog-slider-outer">
-         <div catalog-slider-load-more="loadMoreImages" catalog-slider="images" class="catalog-slider"> 
+         <div catalog-slider-load-more="loadMoreImages(callback)" catalog-slider="images" class="catalog-slider"> 
              <div ng-hide="image._state == 'deleted'"
                   ng-repeat="image in args._images track by $index" class="catalog-slider-item"
                   drop="true"

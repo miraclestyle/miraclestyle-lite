@@ -268,6 +268,7 @@ class Catalog(orm.BaseExpando):
     'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover',
                                                                                   'transform': True, 'width': 240,
                                                                                   'height': 360, 'crop_to_fit': True}),
+    '_seller': orm.SuperReferenceStructuredProperty('23', callback=lambda self: self.key.parent().get_async()),
     'cost': orm.SuperDecimalProperty('8')
     }
   
@@ -275,7 +276,6 @@ class Catalog(orm.BaseExpando):
     '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
                                                   read_arguments={'config': {'order': {'field': 'sequence',
                                                                                        'direction': 'desc'}}}),
-    '_seller': orm.SuperReferenceStructuredProperty('23', callback=lambda self: self.key.parent().get_async(), autoload=False),
     '_records': orm.SuperRecordProperty('31')
     }
   
@@ -348,7 +348,8 @@ class Catalog(orm.BaseExpando):
       orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images'], True, True,
                           '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
-      orm.FieldPermission('31', ['_seller'], True, True, 'True')
+      orm.FieldPermission('31', ['_seller'], False, True, 'True'),
+      orm.FieldPermission('31', ['_seller._plugin_group'], False, False, 'True')
       ]
     )
   

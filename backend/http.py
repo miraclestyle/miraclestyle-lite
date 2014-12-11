@@ -320,7 +320,7 @@ class Reset(BaseTestHandler):
       ignore = self.request.get('ignore')
     @orm.tasklet
     def wipe(kind):
-      util.log(kind)
+      util.log('DELETE ENTITY KIND %s' % kind)
       @orm.tasklet
       def generator():
         model = models.get(kind)
@@ -329,7 +329,7 @@ class Reset(BaseTestHandler):
           keys_to_delete.extend(keys)
           indexes.append(search.Index(name=kind))
           for namespace in namespaces:
-            util.log(namespace)
+            util.log('DELETE NAMESPACE %s' % namespace)
             keys = yield model.query(namespace=namespace).fetch_async(keys_only=True)
             keys_to_delete.extend(keys)
             indexes.append(search.Index(name=kind, namespace=namespace))
@@ -364,10 +364,10 @@ class Reset(BaseTestHandler):
     mem.flush_all()
 
       
-class TestParams(BaseTestHandler):
+class TestAsync(BaseTestHandler):
   
   def respond(self):
-    self.response.write(self.request.params.keys())
+    pass
 
     
 for k,o in globals().items():

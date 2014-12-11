@@ -1,12 +1,12 @@
 (function () {
     'use strict';
 
-    angular.module('app').directive('catalogSlider', function ($timeout) {
+    angular.module('app').directive('catalogSlider', function ($timeout, $parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
                 var loading = null,
-                    callback = scope.$eval(attrs.catalogSliderLoadMore),
+                    callback = $parse(attrs.catalogSliderLoadMore),
                     parent = element.parent('.catalog-slider-outer:first'),
                     tryToLoad = function (settings) {
                         var p = parent.get(0),
@@ -14,9 +14,9 @@
                             sense = maxscroll - parent.scrollLeft();
                         if (sense < 300 && !loading) {
                             loading = setTimeout(function () {
-                                callback(function () {
+                                callback(scope, {callback: function () {
                                     loading = null;
-                                });
+                                }});
                             }, 200);
 
                         }

@@ -57,7 +57,8 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-ui-select/dist/select.js',
   'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.js',
   'lib/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js',
-  'lib/ngUpload/ng-upload.js'
+  'lib/ngUpload/ng-upload.js',
+  'vendor/angular-currency-filter/src/currency-filter.js'
 )
 
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
