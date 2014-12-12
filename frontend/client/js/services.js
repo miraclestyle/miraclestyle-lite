@@ -221,6 +221,19 @@
                     cvp = (ivp / iih) * cih;
                 return [chp, cvp];
             },
+            closestLargestNumber: function (arr, closestTo) {
+
+                var closest = Math.max.apply(null, arr),
+                    i = 0; //Get the highest number in arr in case it match nothing.
+
+                for (i = 0; i < arr.length; i++) { //Loop the array
+                    if (arr[i] > closestTo && arr[i] < closest) {
+                        closest = arr[i];
+                    } //Check if it's higher than your number, but lower than your closest value
+                }
+
+                return closest; // return the value
+            },
             fancyGrid: {
                 getHeight: function (images, width, margin) {
                     margin = (margin * 2);
@@ -239,7 +252,6 @@
                     });
 
                 },
-
                 resize: function (images, width) {
                     this.setHeight(images, this.getHeight(images, width));
                 },
@@ -2172,7 +2184,7 @@ w:                  while (images.length > 0) {
                         pager: function (args, access, callback) {
                             // pager instance that internally tracks the pager next read arguments.
                             // params provided are action arguments
-                            // and path to the structure that the pager will inject data to
+                            // and path to the structure that the pager will inject/read data
                             if (!angular.isArray(access)) {
                                 console.error('path must be array, ' + typeof access + ' given');
                                 return;

@@ -21,6 +21,7 @@ h1, h2, h3, h4, h5, h6 {
 
 a {
   color: #333333;
+  cursor:pointer;
 }
 
 a:hover {
@@ -422,4 +423,16 @@ div.pricetag {
 
 .new-pricetag.ui-draggable-dragging .just-text {
   display: none;
+}
+
+.catalog-view-seller-logo, .catalog-view-controls {
+  position: fixed;
+  bottom:20px;
+  left:10px;
+  z-index: 100;
+}
+
+.catalog-view-controls {
+  left:auto;
+  right:20px;
 }

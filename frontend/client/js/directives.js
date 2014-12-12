@@ -425,18 +425,19 @@
                 link: function (scope, element, attrs) {
                     var fn = function () {
 
+                        return;
+
                         var modal_dialog = $(element).parents('.modal-dialog:first'),
                             height = $(window).height(),
                             modal_footer = modal_dialog.find('.modal-footer');
 
                         height -= parseInt(modal_dialog.css('margin-top'), 10) + parseInt(modal_dialog.css('margin-bottom'), 10);
-                        height -= 2;
 
                         if (modal_footer.length) {
-                            height -= modal_footer.outerHeight() + 3;
+                            height -= modal_footer.outerHeight();
                         }
 
-                        modal_dialog.find('.modal-body.scrollable, .modal-body.unscrollable').height(height);
+                        modal_dialog.find('.modal-body.scrollable, .modal-body.unscrollable').css('min-height', height);
 
                     };
 

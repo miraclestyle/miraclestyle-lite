@@ -19,8 +19,33 @@
                         var entity = response.data.entity;
                         $modal.open({
                             templateUrl: 'catalog/modal/view.html',
-                            controller: function ($scope) {
+                            controller: function ($scope, $modalInstance) {
+                                var imagesPager,
+                                    accessImages;
+
                                 $scope.catalog = entity;
+                                $scope.catalog.action_model = catalogKind;
+                                $scope.logoImageConfig = {};
+
+                                accessImages = angular.copy($scope.catalog.ui.access);
+                                accessImages.push('_images');
+
+                                imagesPager = models[catalogKind].pager($scope.catalog, accessImages, function (items) {
+                                    $scope.catalog._images.extend(items);
+                                });
+                                imagesPager.setNextReadArguments($scope.catalog._next_read_arguments);
+
+                                $scope.loadMoreImages = function (callback) {
+                                    if (imagesPager.more) {
+                                        imagesPager.load().then(callback);
+                                    } else {
+                                        callback();
+                                    }
+                                };
+
+                                $scope.close = function () {
+                                    $modalInstance.close();
+                                };
                             }
                         });
                     });
@@ -120,7 +145,7 @@
                                         $modal.open({
                                             templateUrl: 'catalog/modal/administer.html',
                                             controller: function ($scope, $modalInstance) {
-                                                var sudoFields = modelsMeta.getActionArguments(config.kind, 'sudo');
+                                                var sudoFields = modelsMeta.getActionArguments(catalogKind, 'sudo');
                                                 $scope.args = {key: entity.key, state: entity.state};
 
                                                 sudoFields.state.ui.placeholder = 'Set state';
@@ -173,7 +198,7 @@
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.config = $scope.rootScope.config;
 
-                                            imagesPager = models[config.kind].pager($scope.args, accessImages, function (items) {
+                                            imagesPager = models[catalogKind].pager($scope.args, accessImages, function (items) {
                                                 $scope.args._images.extend(items);
                                             });
                                             // set next arguments from initially loaded data from root scope
@@ -631,7 +656,7 @@
 
                                             $scope.save = function () {
                                                 $scope.rootScope.config.prepareReadArguments($scope);
-                                                var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
+                                                var promise = models[catalogKind].actions[$scope.args.action_id]($scope.args);
 
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);

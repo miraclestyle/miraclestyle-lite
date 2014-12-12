@@ -30,42 +30,50 @@
                         });
 
                         element.width(Math.ceil(tw));
+                    },
+                    resize = function () {
+                        if (parent.parents('.modal').length) {
+                            var height = $(window).height(),
+                                footer = parent.parents('.modal').find('.modal-footer');
+                            if (footer.length) {
+                                height -= (footer.outerHeight());
+                            }
+                            parent.height(height);
+                        }
                     };
 
+                resize();
+                $(window).bind('resize', resize);
+
                 scope.$on('reMeasureCatalogSlider', function () {
+                    resize();
                     measure();
                 });
 
                 scope.$on('readyCatalogSlider', function () {
-
+                    resize();
                     measure();
-
-                    /*
-
-                    parent.kinetic({
-                        y: false,
-                        cursor: false,
-                        maxvelocity: 60,
-                        moved: tryToLoad,
-                        stopped: tryToLoad
-                    });*/
-
                     parent.scroll(tryToLoad);
+                });
 
+                scope.$on('$destroy', function () {
+                    $(window).off('resize', resize);
                 });
             }
         };
-    }).directive('catalogSliderImage', function ($timeout) {
+    }).directive('catalogSliderImage', function ($timeout, helpers) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
 
-                var image = scope.$eval(attrs.catalogSliderImage),
+                var sizingScopes = _.range(0, 1700, 100),
+                    image = scope.$eval(attrs.catalogSliderImage),
                     run = function () {
                         var newHeight = element.parents('.modal-body:first').innerHeight() - window.SCROLLBAR_WIDTH,
-                            newWidth = Math.ceil(newHeight * image.proportion);
+                            newWidth = Math.ceil(newHeight * image.proportion),
+                            imageSize = helpers.closestLargestNumber(sizingScopes, newHeight);
 
-                        element.attr('src', image.serving_url + '=s' + newHeight) // @todo the height range needs to be calculated here
+                        element.attr('src', image.serving_url + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 

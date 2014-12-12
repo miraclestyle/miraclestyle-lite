@@ -211,14 +211,15 @@ class Seller(orm.BaseExpando):
     ]
  
   def _get_currency_callback(self):
-    self._plugin_group.read()
     currency = None
-    for plugin in self._plugin_group.value.plugins:
-      if plugin.get_kind() == '117':
-        currency = plugin.currency
-    if currency is not None:
-      currency = currency.get_async()
-    return currency
+    if self.key:
+      self._plugin_group.read()
+      for plugin in self._plugin_group.value.plugins:
+        if plugin.get_kind() == '117':
+          currency = plugin.currency
+      if currency is not None:
+        currency = currency.get_async()
+      return currency
   
   @classmethod
   def prepare_key(cls, input, **kwargs):

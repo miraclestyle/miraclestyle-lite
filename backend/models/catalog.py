@@ -247,7 +247,6 @@ class CatalogImage(Image):
           sequence = entity.sequence
         mem.temp_set(key, sequence)
       self.sequence = self._sequence + sequence + 1
-      print self.sequence
 
 
 class Catalog(orm.BaseExpando):

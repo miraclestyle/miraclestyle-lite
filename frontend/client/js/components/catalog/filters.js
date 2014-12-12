@@ -4,9 +4,9 @@
         var $filter = $injector.get('$filter'),
             numberFilter = $filter('number'),
             formats = $locale.NUMBER_FORMATS;
-        // https://github.com/angular/angular.js/pull/3642
         formats.DEFAULT_PRECISION = angular.isUndefined(formats.DEFAULT_PRECISION) ? 2 : formats.DEFAULT_PRECISION;
         return function (amount, currency) {
+            amount = parseFloat(amount, 10);
             if (!angular.isNumber(amount)) { return ''; }
             var isNegative = amount < 0,
                 parts = [],
@@ -51,7 +51,6 @@
               "negative_sign_position": 1
             }
              */
-            return amount;
 
             amount = Math.abs(amount);
             number = numberFilter(amount, currency.digits);
@@ -60,13 +59,18 @@
                 if (currency.negative_currency_symbol_precedes) {
                     parts.push(currency.symbol);
                 }
-                parts.push(currency.negative_sign);
+
+                if (currency.negative_sign !== 'None' && currency.negative_sign) {
+                    parts.push(currency.negative_sign);
+                }
             } else {
                 if (!isNegative && currency.positive_sign_position) {
                     if (currency.negative_currency_symbol_precedes) {
                         parts.push(currency.symbol);
                     }
-                    parts.push(currency.positive_sign);
+                    if (currency.positive_sign !== 'None' && currency.positive_sign) {
+                        parts.push(currency.positive_sign);
+                    }
                 }
             }
             parts.push(number);
@@ -81,7 +85,9 @@
                     if (currency.negative_currency_symbol_precedes) {
                         parts.push(currency.symbol);
                     }
-                    parts.push(currency.positive_sign);
+                    if (currency.positive_sign !== 'None' && currency.positive_sign) {
+                        parts.push(currency.positive_sign);
+                    }
                 }
             }
 

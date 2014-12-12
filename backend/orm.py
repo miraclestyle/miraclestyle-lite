@@ -2069,7 +2069,11 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       else: # this is for key.get_async()
         result = self._property_value.get_result()
         if result is None:
-          remote_single_key = Key(self._property.get_modelclass().get_kind(), self._entity.key_id_str, parent=self._entity.key)
+          model = self._property.get_modelclass()
+          if not hasattr(model, 'prepare_key'):
+            remote_single_key = Key(model.get_kind(), self._entity.key_id_str, parent=self._entity.key)
+          else:
+            remote_single_key = model.prepare_key(parent=self._entity.key)
           result = self._property.get_modelclass()(key=remote_single_key)
         self._property_value = result
   
@@ -3948,6 +3952,8 @@ class Record(BaseExpando):
       value = prop._get_value(entity)
       if isinstance(value, LocalStructuredPropertyValue):
         value = value.value
+      elif hasattr(prop, 'is_structured') and prop.is_structured:
+        continue # we cannot log structured properties
       # prop = copy.deepcopy(prop) no need to deepcopy prop for now, we'll see.
       self._properties[prop._name] = prop
       try:
