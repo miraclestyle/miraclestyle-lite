@@ -3954,7 +3954,7 @@ class Record(BaseExpando):
         value = value.value
       elif hasattr(prop, 'is_structured') and prop.is_structured:
         continue # we cannot log structured properties
-      # prop = copy.deepcopy(prop) no need to deepcopy prop for now, we'll see.
+      prop = copy.deepcopy(prop)
       self._properties[prop._name] = prop
       try:
         prop._set_value(self, value)
