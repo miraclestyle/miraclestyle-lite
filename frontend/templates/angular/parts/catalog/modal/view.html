@@ -4,10 +4,10 @@
   <div class="modal-body no-footer">
   <div class="clearfix">
  
-      <div class="catalog-slider-outer">
-         <div catalog-slider-load-more="loadMoreImages(callback)" catalog-slider="catalog._images" class="catalog-slider"> 
-             <div ng-repeat="image in catalog._images track by $index" class="catalog-slider-item">
-             <img catalog-slider-image="image" /> 
+      <div class="image-slider-outer">
+         <div image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
+             <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
+             <img slider-image="image" /> 
              <div ng-repeat="pricetag in image.pricetags track by $index"
                   class="button pricetag"
                   catalog-pricetag-position="pricetag">
@@ -17,9 +17,8 @@
               </div>
             </div>
 
-           <div class="catalog-view-seller-logo">
-               <a ng-click="sellerDetails()">
-                   <img display-image-config="logoImageConfig" display-image="catalog._seller.logo" />
+           <div class="catalog-view-details">
+               <a class="catalog-view-details-icon" ng-click="details()">
                </a>
             </div>
 

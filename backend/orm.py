@@ -3944,11 +3944,10 @@ class Record(BaseExpando):
     self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
     for _, prop in entity._properties.iteritems():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
-      if isinstance(value, LocalStructuredPropertyValue):
+      if isinstance(value, LocalStructuredPropertyValue): # we can only log locally structured data
         value = value.value
       elif hasattr(prop, 'is_structured') and prop.is_structured:
         continue # we cannot log structured properties
-      prop = copy.deepcopy(prop)
       self._properties[prop._name] = prop
       try:
         prop._set_value(self, value)

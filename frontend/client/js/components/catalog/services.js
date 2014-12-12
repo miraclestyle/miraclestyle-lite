@@ -19,6 +19,7 @@
                         var entity = response.data.entity;
                         $modal.open({
                             templateUrl: 'catalog/modal/view.html',
+                            windowClass: 'no-overflow',
                             controller: function ($scope, $modalInstance) {
                                 var imagesPager,
                                     accessImages;
@@ -41,6 +42,126 @@
                                     } else {
                                         callback();
                                     }
+                                };
+
+                                $scope.viewProduct = function (image, pricetag) {
+                                    var readArguments = {
+                                            _images: {
+                                                config: {
+                                                    keys: [image.key]
+                                                },
+                                                pricetags: {
+                                                    config: {
+                                                        keys: [pricetag.key]
+                                                    },
+                                                    _product: {
+                                                        _product_category: {}
+                                                    }
+                                                }
+                                            }
+                                        };
+                                    models[catalogKind].actions.read({
+                                        key: $scope.catalog.key,
+                                        read_arguments: readArguments
+                                    }).then(function (response) {
+                                        var parentScope = $scope;
+                                        $modal.open({
+                                            templateUrl: 'catalog/product/view.html',
+                                            controller: function ($scope, $modalInstance) {
+                                                $scope.product = response.data.entity._images[0].pricetags[0]._product;
+                                                $scope.originalProduct = angular.copy($scope.product);
+                                                $scope.catalog = parentScope.catalog;
+                                                $scope.variants = [];
+                                                $scope.variantSelection = [];
+                                                $scope.image = image;
+                                                $scope.pricetag = pricetag;
+                                                angular.forEach($scope.product.variants, function (v, i) {
+
+                                                    $scope.variants.push({
+                                                        name: v.name,
+                                                        options: v.options,
+                                                        option: null,
+                                                    });
+
+                                                    $scope.variantSelection.push({
+                                                        type: 'SuperStringProperty',
+                                                        choices: v.options,
+                                                        code_name: 'option_' + i,
+                                                        ui: {
+                                                            label: v.name,
+                                                            writable: true,
+                                                            attrs: {
+                                                                'ng-change': 'changeVariation()'
+                                                            },
+                                                            placeholder: 'Select option...',
+                                                            args: 'variants.' + i + '.option'
+                                                        }
+                                                    });
+
+                                                });
+
+                                                $scope.changeVariation = function () {
+                                                    var variantSignature = [],
+                                                        productInstance,
+                                                        skip = false;
+
+                                                    angular.forEach($scope.variants, function (v) {
+                                                        var d = {};
+                                                        if (v.option === null) {
+                                                            skip = true;
+                                                        }
+                                                        d[v.name] = v.option;
+                                                        variantSignature.push(d);
+                                                    });
+
+                                                    if (!skip) {
+                                                        return;
+                                                    }
+
+                                                    // rpc to check the instance
+                                                    models[catalogKind].actions.read({
+                                                        key: parentScope.entity.key,
+                                                        read_arguments: {
+                                                            _images: {
+                                                                config: {keys: [parentScope.image.key]},
+                                                                pricetags: {
+                                                                    config: {
+                                                                        keys: [parentScope.pricetag.key]
+                                                                    },
+                                                                    _product: {
+                                                                        _instances: {
+                                                                            config: {
+                                                                                keys: [{
+                                                                                    input: {
+                                                                                        variant_signature: variantSignature
+                                                                                    }
+                                                                                }]
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }).then(function (response) {
+                                                        var product;
+                                                        try {
+                                                            product = response.data.entity._images[0].pricetags[0]._product;
+                                                        } catch (ignore) { }
+
+                                                        if (product) {
+                                                            productInstance = product._instances[0];
+                                                        }
+
+                                                        console.log(productInstance);
+                                                    });
+                                                };
+
+                                                $scope.close = function () {
+                                                    $modalInstance.dismiss('close');
+                                                };
+                                            }
+                                        });
+                                    });
                                 };
 
                                 $scope.close = function () {
@@ -187,6 +308,7 @@
                                     }
                                     $modal.open({
                                         templateUrl: 'catalog/modal/products.html',
+                                        windowClass: 'no-overflow',
                                         controller: function ($scope, $modalInstance, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesPager,
@@ -212,7 +334,7 @@
                                             $scope.onDrag = function (event, ui, image, pricetag) {
                                                 var fn = function () {
                                                     var helper = $(ui.helper),
-                                                        parent = helper.parents('.catalog-slider-item:first'),
+                                                        parent = helper.parents('.image-slider-item:first'),
                                                         helperW = helper.outerWidth(),
                                                         parentW = parent.width(),
                                                         nextParent = parent.next(),
@@ -285,7 +407,7 @@
                                                     return;
                                                 }
 
-                                                var target = $(event.target).parents('.catalog-slider-item:first');
+                                                var target = $(event.target).parents('.image-slider-item:first');
 
                                                 pricetag.position_top = ui.position.top;
                                                 pricetag.position_left = ui.position.left;
@@ -499,7 +621,7 @@
                                                                 promise,
                                                                 currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                                 currentArgs = currentFieldScope.args,
-                                                                $parentScope = $scope;
+                                                                subParentScope = $scope;
 
                                                             if (!currentArgs.variants.length) {
                                                                 modals.alert('Please create some variants first.');
@@ -552,13 +674,13 @@
 
                                                                             // rpc to check the instance
                                                                             models[catalogKind].actions.read({
-                                                                                key: $parentScope.entity.key,
+                                                                                key: subParentScope.entity.key,
                                                                                 read_arguments: {
                                                                                     _images: {
-                                                                                        config: {keys: [$parentScope.image.key]},
+                                                                                        config: {keys: [subParentScope.image.key]},
                                                                                         pricetags: {
                                                                                             config: {
-                                                                                                keys: [$parentScope.pricetag.key]
+                                                                                                keys: [subParentScope.pricetag.key]
                                                                                             },
                                                                                             _product: {
                                                                                                 _instances: {

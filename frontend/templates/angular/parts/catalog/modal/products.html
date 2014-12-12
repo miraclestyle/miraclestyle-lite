@@ -6,15 +6,15 @@
   <div class="modal-body unscrollable">
   <div class="clearfix">
  
-      <div class="catalog-slider-outer">
-         <div catalog-slider-load-more="loadMoreImages(callback)" catalog-slider="args._images" class="catalog-slider"> 
+      <div class="image-slider-outer">
+         <div image-slider-load-more="loadMoreImages(callback)" image-slider="args._images" class="image-slider"> 
              <div ng-hide="image._state == 'deleted'"
-                  ng-repeat="image in args._images track by $index" class="catalog-slider-item"
+                  ng-repeat="image in args._images track by $index" class="image-slider-item"
                   drop="true"
                   jqyoui-options="{accept: '.new-pricetag'}"
                   jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
                   >
-             <img catalog-slider-image="image" /> 
+             <img slider-image="image" /> 
                <div ng-repeat="pricetag in image.pricetags track by $index"
                     ng-model="image.pricetags"
                     ng-hide="pricetag._state == 'deleted' || !pricetag.key"

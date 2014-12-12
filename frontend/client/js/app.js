@@ -28,7 +28,8 @@
             defaultLogo: 'http://placehold.it/240x100',
             defaultCatalogCover: 'http://placehold.it/240x360',
             gridMaxWidth: 240,
-            gridMinWidth: 180
+            gridMinWidth: 180,
+            imageSizes: _.range(0, 1700, 50)
         };
 
     angular.module('app', GLOBAL_CONFIG.angularModules) // we can avoid a global if we build modules for each feature

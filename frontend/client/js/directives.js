@@ -784,5 +784,110 @@
                     scope.$on('invalidForm', check);
                 }
             };
+        }).directive('imageSlider', function ($timeout, $parse) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    var loading = null,
+                        callback = $parse(attrs.imageSliderLoadMore),
+                        parent = element.parent('.image-slider-outer:first'),
+                        tryToLoad = function (settings) {
+                            if (!callback) {
+                                return;
+                            }
+                            var p = parent.get(0),
+                                maxscroll = p.scrollWidth - p.clientWidth,
+                                sense = maxscroll - parent.scrollLeft();
+                            if (sense < 300 && !loading) {
+                                loading = setTimeout(function () {
+                                    callback(scope, {callback: function () {
+                                        loading = null;
+                                    }});
+                                }, 200);
+
+                            }
+                        },
+                        measure = function () {
+                            var tw = 0;
+                            element.find('.image-slider-item').filter(function () {
+                                return $(this).css('display') !== 'none';
+                            }).each(function () {
+                                tw += $(this).width();
+                            });
+
+                            element.width(Math.ceil(tw));
+                        },
+                        resize = function () {
+                            if (parent.parents('.modal').length) {
+                                var height = $(window).height(),
+                                    footer = parent.parents('.modal').find('.modal-footer');
+                                if (footer.length) {
+                                    height -= (footer.outerHeight());
+                                }
+                                parent.height(height);
+                            }
+                        };
+
+                    resize();
+                    $(window).bind('resize', resize);
+
+                    scope.$on('reMeasureImageSlider', function () {
+                        resize();
+                        measure();
+                    });
+
+                    scope.$on('readyImageSlider', function () {
+                        resize();
+                        measure();
+                        parent.scroll(tryToLoad);
+                    });
+
+                    scope.$on('$destroy', function () {
+                        $(window).off('resize', resize);
+                    });
+                }
+            };
+        }).directive('sliderImage', function ($timeout, helpers, GLOBAL_CONFIG) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+
+                    var image = scope.$eval(attrs.sliderImage),
+                        run = function () {
+                            var newHeight = element.parents('.modal-body:first').innerHeight() - window.SCROLLBAR_WIDTH,
+                                newWidth = Math.ceil(newHeight * image.proportion),
+                                imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight);
+
+                            element.attr('src', image.serving_url + '=s' + imageSize)
+                                .width(newWidth)
+                                .height(newHeight);
+
+                            element.parents('.image-slider-item:first')
+                                .width(newWidth)
+                                .height(newHeight);
+                        },
+                        resize = function () {
+                            run();
+                            scope.$emit('reMeasureImageSlider');
+                        };
+
+                    $timeout(function () {
+                        run();
+                        if (scope.$last) {
+                            scope.$emit('readyImageSlider');
+                        }
+                    });
+
+                    $(window).bind('resize', resize);
+
+                    scope.$on('itemDelete', function () {
+                        $timeout(resize);
+                    });
+                    scope.$on('$destroy', function () {
+                        $(window).off('resize', resize);
+                    });
+
+                }
+            };
         });
 }());
