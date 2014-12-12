@@ -731,19 +731,13 @@ class _BaseModel(object):
     new_entity._state = self._state
     for field_key, field in self.get_fields().iteritems():
       has_can_be_copied = hasattr(field, 'can_be_copied')
-      if (not has_can_be_copied or (has_can_be_copied and field.can_be_copied)) and hasattr(self, field_key):
+      if (not has_can_be_copied or (has_can_be_copied and field.can_be_copied)):
         value = getattr(self, field_key, None)
         is_property_value_type = (hasattr(field, 'is_structured') and field.is_structured)
         if is_property_value_type:
           if not value.has_value():
             continue # if there's no value to copy skip it
           value = value.value
-        if isinstance(value, Future) or (isinstance(value, list) and len(value) and isinstance(value[0], Future)):
-          continue
-          '''we cannot copy futures - this is mainly because of ReferenceProperty because it never exposes result
-          until second read was implied to it. we could solve this by implementing flags on properties that should not 
-          be copied.
-          '''
         value = copy.deepcopy(value)
         if is_property_value_type:
           new_entity_value = getattr(new_entity, field_key)
