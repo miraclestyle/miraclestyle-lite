@@ -11,18 +11,24 @@
              <div ng-repeat="pricetag in image.pricetags track by $index"
                   class="button pricetag"
                   catalog-pricetag-position="pricetag">
+                  <div class="catalog-pricetag-wrapper">
+                      <div class="catalog-pricetag-dot"></div>
                    <a class="pricetag-link" loading standard-click="viewProduct(image, pricetag)" href="javascript:;">
                       {{pricetag.value.price|displayCurrency:catalog._seller._currency}}
                    </a>
+                   </div>
               </div>
             </div>
 
            <div class="catalog-view-details">
                <a class="catalog-view-details-icon" ng-click="details()">
+                  <div class="catalog-view-details-icon-bar"></div>
+                  <div class="catalog-view-details-icon-bar"></div>
+                  <div class="catalog-view-details-icon-bar"></div>
                </a>
             </div>
 
-            <div class="catalog-view-controls">
+            <div catalog-close-button-position class="catalog-view-controls">
                <button loading type="button" class="button" ng-click="close()">Close</button>
             </div>
          </div>

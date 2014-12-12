@@ -107,11 +107,11 @@ ANGULAR_TEMPLATES = (
   
   ('buyer/directive/buyer_address_display.html',),
   
-  ('catalog/modal/footer.html',),
+  ('catalog/modal/manage_footer.html',),
   ('catalog/modal/administer.html',),
   ('catalog/modal/products.html',),
   ('catalog/modal/view.html',),
-  ('catalog/product/modal/footer.html',),
+  ('catalog/product/modal/manage_footer.html',),
   ('catalog/product/modal/view.html',),
   ('catalog/product/modal/variant_choices.html',),
   ('catalog/list.html',),

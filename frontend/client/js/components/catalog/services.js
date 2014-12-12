@@ -6,7 +6,12 @@
 
         modelsConfig(function (models) {
             $.extend(models[catalogKind], {
-                viewModal: function (key) {
+                previewModal: function (key, config) {
+                    config = helpers.alwaysObject(config);
+                    config.hideAddToCart = true;
+                    return this.viewModal(key, config);
+                },
+                viewModal: function (key, config) {
                     models[catalogKind].actions.read({
                         key: key,
                         read_arguments: {
@@ -66,7 +71,8 @@
                                     }).then(function (response) {
                                         var parentScope = $scope;
                                         $modal.open({
-                                            templateUrl: 'catalog/product/view.html',
+                                            templateUrl: 'catalog/product/modal/view.html',
+                                            windowClass: 'no-overflow',
                                             controller: function ($scope, $modalInstance) {
                                                 $scope.product = response.data.entity._images[0].pricetags[0]._product;
                                                 $scope.originalProduct = angular.copy($scope.product);
@@ -75,6 +81,7 @@
                                                 $scope.variantSelection = [];
                                                 $scope.image = image;
                                                 $scope.pricetag = pricetag;
+                                                $scope.hideAddToCart = config.hideAddToCart;
                                                 angular.forEach($scope.product.variants, function (v, i) {
 
                                                     $scope.variants.push({
@@ -100,6 +107,16 @@
 
                                                 });
 
+                                                $scope.resetVariation = function () {
+                                                    $.extend($scope.product, $scope.originalProduct);
+                                                    $scope.variationApplied = false;
+                                                    angular.forEach($scope.variants, function (v) {
+                                                        v.option = null;
+                                                    });
+                                                };
+
+                                                $scope.variationApplied = false;
+
                                                 $scope.changeVariation = function () {
                                                     var variantSignature = [],
                                                         productInstance,
@@ -114,19 +131,19 @@
                                                         variantSignature.push(d);
                                                     });
 
-                                                    if (!skip) {
+                                                    if (skip) {
                                                         return;
                                                     }
 
                                                     // rpc to check the instance
                                                     models[catalogKind].actions.read({
-                                                        key: parentScope.entity.key,
+                                                        key: $scope.catalog.key,
                                                         read_arguments: {
                                                             _images: {
-                                                                config: {keys: [parentScope.image.key]},
+                                                                config: {keys: [$scope.image.key]},
                                                                 pricetags: {
                                                                     config: {
-                                                                        keys: [parentScope.pricetag.key]
+                                                                        keys: [$scope.pricetag.key]
                                                                     },
                                                                     _product: {
                                                                         _instances: {
@@ -143,7 +160,9 @@
                                                             }
                                                         }
                                                     }).then(function (response) {
-                                                        var product;
+                                                        var product,
+                                                            toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
+                                                                             'description', 'contents', 'availability'];
                                                         try {
                                                             product = response.data.entity._images[0].pricetags[0]._product;
                                                         } catch (ignore) { }
@@ -152,7 +171,17 @@
                                                             productInstance = product._instances[0];
                                                         }
 
-                                                        console.log(productInstance);
+                                                        if (productInstance) {
+
+                                                            angular.forEach(toUpdate, function (field) {
+                                                                var next = productInstance[field];
+                                                                if (next !== null && next.length) {
+                                                                    $scope.product[field] = next;
+                                                                }
+                                                            });
+                                                        }
+
+                                                        $scope.variationApplied = true;
                                                     });
                                                 };
 
@@ -189,7 +218,7 @@
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
                             fields: _.toArray(fields),
-                            templateFooterUrl: 'catalog/modal/footer.html',
+                            templateFooterUrl: 'catalog/modal/manage_footer.html',
                             afterSave: afterSave,
                             afterSaveError: afterSave,
                             afterComplete: afterComplete,
@@ -527,7 +556,7 @@
                                                                 price: fieldScope.args.unit_price
                                                             };
                                                         },
-                                                        templateFooterUrl: 'catalog/product/modal/footer.html',
+                                                        templateFooterUrl: 'catalog/product/modal/manage_footer.html',
                                                         addText: 'Add Product',
                                                         getRootArgs: function () {
                                                             // root args is data that gets sent with rpc

@@ -101,12 +101,19 @@
   overflow-y: hidden;
 }
 
-.corner-right {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
+.overflow-y {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.overflow-hidden {
+  overflow: hidden;
 }
 
 body .mb15 {
   margin-bottom: 15px;
+}
+
+.relative {
+  position:relative;
 }

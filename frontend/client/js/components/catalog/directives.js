@@ -42,8 +42,6 @@
                         pa.height()
                     );
 
-                    console.log(pricetag, sizes);
-
                     pricetag._position_top = sizes[0];
                     pricetag._position_left = sizes[1];
 
@@ -72,6 +70,12 @@
                 field: '=productInstanceDisplayField'
             },
             templateUrl: 'catalog/product/directive/product_instance_display.html'
+        };
+    }).directive('catalogCloseButtonPosition', function () {
+        return {
+            link: function (scope, element, attrs) {
+                element.css('bottom', parseInt(element.css('bottom'), 10) + window.SCROLLBAR_WIDTH);
+            }
         };
     });
 

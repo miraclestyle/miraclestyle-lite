@@ -1,0 +1,73 @@
+<div fit-in-dialog>
+
+<form ng-submit="save()" name="container.main">
+    
+<div class="modal-body min-height no-footer">
+ 
+<div class="clearfix">
+
+    <div class="pull-left t60 fixed-height product-left relative overflow-x">
+         <div ng-if="product.images.length" image-slider="product.images" class="image-slider"> 
+             <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
+                <img slider-image="image" />
+            </div>
+         </div>
+         <div ng-if="!product.images.length">
+           <h1 class="no-things-available">No images available</h1>
+         </div>
+    </div>
+    
+    <div class="pull-right t40 fixed-height product-right relative overflow-y">
+         
+         <div class="product-detail-content">
+            <div class="catalog-name">{{catalog.name}}</div>
+            <h1 class="product-name">{{product.name}}</h1>
+            <div class="product-description">{{product.description}}</div>
+            
+            <div class="product-price">
+              {{product.unit_price|displayCurrency:catalog._seller._currency}}
+            </div>
+            <div class="product-code">
+              {{product.code}}
+            </div>
+
+            <div class="product-availability">
+              {{product.availability}}
+            </div>
+ 
+ 
+            <div ng-if="product.contents.length" class="product-contents">
+                 <div accordion>
+                      <div ng-repeat="content in product.contents track by content.key" accordion-group heading="{{content.title}}">
+                          {{content.body}}
+                      </div>
+                  </div>
+            </div>
+       
+ 
+            <div class="product-variant-selection" ng-if="variantSelection.length">
+              <div form-builder="variantSelection"></div>
+              <div ng-if="variationApplied" class="text-right">
+                <button type="button" class="button" ng-click="resetVariation()">Reset</button>
+              </div>
+            </div>
+        
+         </div>
+         
+         <div class="modal-footer-right clearfix">
+               <button ng-hide="hideAddToCart" type="button" ng-click="addToCart()" 
+                       loading class="button">
+                  Add To Cart
+              </button>
+              <button type="button" loading class="button" ng-click="close()">
+                  Close
+              </button>
+         </div> 
+    </div>
+</div>
+   
+
+</div>
+
+ 
+</form></div>

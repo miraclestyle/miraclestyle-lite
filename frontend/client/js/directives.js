@@ -425,8 +425,6 @@
                 link: function (scope, element, attrs) {
                     var fn = function () {
 
-                        return;
-
                         var modal_dialog = $(element).parents('.modal-dialog:first'),
                             height = $(window).height(),
                             modal_footer = modal_dialog.find('.modal-footer');
@@ -437,7 +435,8 @@
                             height -= modal_footer.outerHeight();
                         }
 
-                        modal_dialog.find('.modal-body.scrollable, .modal-body.unscrollable').css('min-height', height);
+                        modal_dialog.find('.modal-body.min-height').css('min-height', height);
+                        modal_dialog.find('.fixed-height').height(height);
 
                     };
 
@@ -825,6 +824,8 @@
                                     height -= (footer.outerHeight());
                                 }
                                 parent.height(height);
+
+                                scope.$broadcast('imageSliderResized', height);
                             }
                         };
 

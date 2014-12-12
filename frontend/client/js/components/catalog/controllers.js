@@ -16,8 +16,8 @@
                 models['31'].manageModal(undefined, newEntity);
             };
 
-            $scope.view = function (key) {
-                models['31'].viewModal(key);
+            $scope.preview = function (key) {
+                models['31'].previewModal(key);
             };
 
             $scope.manage = function (entity) {

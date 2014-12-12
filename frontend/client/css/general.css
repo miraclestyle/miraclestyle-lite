@@ -297,6 +297,7 @@ img.vertical, .vertical {
 .grid-generator {
   float: left;
   margin: 1px;
+  position:relative;
 }
 
 .image-slider-outer
@@ -427,7 +428,7 @@ div.pricetag {
 
 .catalog-view-details, .catalog-view-controls {
   position: fixed;
-  bottom:25px;
+  bottom:10px;
   left:10px;
   z-index: 100;
 }
@@ -438,17 +439,62 @@ div.pricetag {
 }
 
 .catalog-view-details {
-  top:10px;
-  right:10px;
-  left:auto;
-  height: 22px;
-  width: 22px;
-  bottom:auto;
+  top: 10px;
+  right: 10px;
+  left: auto;
+  bottom: auto;
+  background: rgba(255,255,255, 0.5);
+  padding: 5px;
+  width: 35px;
+  border-radius: 4px;
 }
 
 .catalog-view-details-icon {
-  width:22px;
-  height:22px;
-  background: transparent url('images/menu.png') no-repeat center center;
   display:block;
+}
+
+.catalog-view-details-icon-bar {
+  width: 100%;
+  height: 4px;
+  background: white;
+  -webkit-box-shadow: 1px 1px 6px #333333;
+  box-shadow: 1px 1px 6px #333333;
+  margin-bottom: 5px;
+  border-radius: 3px;
+}
+
+.catalog-pricetag-wrapper {
+  position:relative;
+}
+
+.catalog-pricetag-dot {
+  border-radius:10px; /* this can be more depending on the actual dot size */
+  background: black;
+  width:4px;
+  height:4px;
+  border:1px solid transparent;
+  position:absolute;
+  top:5px;
+  left:5px;
+}
+
+.no-things-available {
+  color:#CCC;
+  text-align:center;
+}
+
+.modal-footer-right {
+   padding: 10px 10px 10px; /* Note: Take a look at .modal-footer .button! */
+  text-align: right;
+  border-top: 1px solid #EEEEEE;
+  position:absolute;
+  bottom:0px;
+  right:0px;
+  width:100%;
+  background: white;
+}
+
+.product-detail-content {
+  padding:10px;
+  padding-bottom:63px;
 }
