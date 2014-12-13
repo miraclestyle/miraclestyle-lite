@@ -21,7 +21,7 @@ h1, h2, h3, h4, h5, h6 {
 
 a {
   color: #333333;
-  cursor:pointer;
+  cursor: pointer;
 }
 
 a:hover {
@@ -114,7 +114,7 @@ a.block, .block, .button.block {
 }
 
 .load-more {
-  width:100%;
+  width: 100%;
 }
 
 .no-style {
@@ -154,17 +154,15 @@ strong, b {
   display: block;
   position: relative;
   margin: 1px;
-  float:left;
+  float: left;
 }
 
 .image-image .spaceout {
-
   width: 100%;
   height: auto;
 }
 
 .image-image .img {
-
   display: block;
 }
 
@@ -223,7 +221,6 @@ strong, b {
   list-style: none;
 }
 
-
 .placeholder-image {
   background: gray;
   color: white;
@@ -264,7 +261,6 @@ strong, b {
 }
 
 .more-hr-space hr {
-
   border-color: #bbb;
   border-style: solid;
   border-width: 1px;
@@ -297,44 +293,39 @@ img.vertical, .vertical {
 .grid-generator {
   float: left;
   margin: 1px;
-  position:relative;
+  position: relative;
 }
 
-.image-slider-outer
-{
+.image-slider-outer {
   overflow: hidden;
   position: relative;
   width: 100%;
-  overflow-x:visible;
+  overflow-x: visible;
 }
 
-.image-slider .image-slider-item
-{
-  float:left;
-  position:relative;
+.image-slider .image-slider-item {
+  float: left;
+  position: relative;
 }
 
-.hand
-{ 
-  cursor:url('images/cursor-openhand.png') 8 8, move; 
+.hand {
+  cursor: url('images/cursor-openhand.png') 8 8, move;
 }
 
-
-.kinetic-moving-left, .kinetic-moving-right
-{ 
-  /*cursor:url('images/grabbing.png') 8 8, move;*/
+.kinetic-moving-left, .kinetic-moving-right {
+  /*cursor: url('images/grabbing.png') 8 8, move;*/
 }
 
 .button-wrapper
 {
-  position:absolute;
-  width:100%;
+  position: absolute;
+  width: 100%;
   bottom: 0px;
   left: 0px;
   padding-bottom: 5px;
   padding-left: 5px;
   padding-right: 5px;
-  height:47px;
+  height: 47px;
 }
 
 .button-wrapper .button
@@ -368,7 +359,7 @@ img.vertical, .vertical {
 }
 
 .item-right {
-  float:right;
+  float: right;
 }
 
 .item {
@@ -383,16 +374,15 @@ img.vertical, .vertical {
 }
 
 .ui-sortable-helper {
-  border-top:1px solid #EEEEEE;
+  border-top: 1px solid #EEEEEE;
 }
 .list-inline-block, .list-inline-block li {
-  display:inline-block;
-
+  display: inline-block;
 }
 
 .list-inline-block {
-  margin:0px;
-  padding:0px;
+  margin: 0px;
+  padding: 0px;
 }
 
 div.pricetag {
@@ -400,14 +390,27 @@ div.pricetag {
   top: 20%;
   left: 20px;
   z-index: 80;
-  padding:0px;
-  visibility:hidden;
+  padding: 0px;
+  visibility: hidden;
+  border-radius: 3px;
+  -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+  box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+}
+
+.catalog-pricetag-dot {
+  border-radius: 50%; /* this can be more depending on the actual dot size */
+  background: #333333;
+  width: 2px;
+  height: 2px;
+  position: absolute;
+  top: 3px;
+  left: 3px;
 }
 
 .pricetag a {
   text-decoration: none;
-  display:block;
-  padding:10px 20px;
+  display: block;
+  padding: 5px 10px;
 }
 
 .new-pricetag {
@@ -428,73 +431,58 @@ div.pricetag {
 
 .catalog-view-details, .catalog-view-controls {
   position: fixed;
-  bottom:10px;
-  left:10px;
+  left: auto;
   z-index: 100;
 }
 
 .catalog-view-controls {
-  left:auto;
-  right:10px;
+  right: 10px;
+  bottom: 10px;
 }
 
 .catalog-view-details {
   top: 10px;
   right: 10px;
-  left: auto;
   bottom: auto;
-  background: rgba(255,255,255, 0.5);
-  padding: 5px;
-  width: 35px;
-  border-radius: 4px;
+  padding: 0px 5px;
+  width: 40px;
 }
 
 .catalog-view-details-icon {
-  display:block;
+  display: block;
 }
 
 .catalog-view-details-icon-bar {
   width: 100%;
-  height: 4px;
-  background: white;
-  -webkit-box-shadow: 1px 1px 6px #333333;
-  box-shadow: 1px 1px 6px #333333;
-  margin-bottom: 5px;
-  border-radius: 3px;
+  height: 5px;
+  background: #FFFFFF;
+  -webkit-box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+  margin-bottom: 7px;
+  /* border-radius: 2px; */
 }
 
 .catalog-pricetag-wrapper {
-  position:relative;
-}
-
-.catalog-pricetag-dot {
-  border-radius:10px; /* this can be more depending on the actual dot size */
-  background: black;
-  width:4px;
-  height:4px;
-  border:1px solid transparent;
-  position:absolute;
-  top:5px;
-  left:5px;
+  position: relative;
 }
 
 .no-things-available {
-  color:#CCC;
-  text-align:center;
+  color: #CCC;
+  text-align: center;
 }
 
 .modal-footer-right {
-   padding: 10px 10px 10px; /* Note: Take a look at .modal-footer .button! */
+  padding: 10px 10px 10px; /* Note: Take a look at .modal-footer .button! */
   text-align: right;
   border-top: 1px solid #EEEEEE;
   position:absolute;
-  bottom:0px;
-  right:0px;
-  width:100%;
+  bottom: 0px;
+  right: 0px;
+  width: 100%;
   background: white;
 }
 
 .product-detail-content {
-  padding:10px;
-  padding-bottom:63px;
+  padding: 10px;
+  padding-bottom: 63px;
 }
