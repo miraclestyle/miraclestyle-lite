@@ -4,7 +4,7 @@
         .controller('BuyerManagementCtrl', function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
-                models['19'].settingsModal(currentAccount.key);
+                models['19'].manageModal(currentAccount.key);
             };
 
         });

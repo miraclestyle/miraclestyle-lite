@@ -25,28 +25,36 @@
             };
 
             $scope.search = {
-                results: []
+                results: [],
+                pagination: {}
             };
 
             models['23'].current().then(function (response) {
-                var args = modelsMeta.getActionArguments('31', 'search'),
-                    sellerEntity = response.data.entity;
-                args.search['default'].ancestor = response.data.entity.key;
-                models['31'].actions.search({
-                    search: args.search['default']
-                }, {
-                    ignoreErrors: true
-                }).then(function (response) {
-                    var errors = response.data.errors;
-                    if (errors) {
-                        if (errors['not_found_' + sellerEntity.key]) {
-                            modals.alert('You do not have any seller information yet.');
+                var sellerEntity = response.data.entity;
+                $scope.search.pagination = models['31'].paginate({
+                    kind: '31',
+                    args: {
+                        search: {
+                            ancestor: sellerEntity.key
                         }
-                    } else {
-                        $scope.search.results = response.data.entities;
+                    },
+                    config: {
+                        ignoreErrors: true
+                    },
+                    callback: function (response) {
+                        var errors = response.data.errors;
+                        if (errors) {
+                            if (errors['not_found_' + sellerEntity.key]) {
+                                modals.alert('You do not have any seller information yet.');
+                            }
+                        } else {
+                            $scope.search.results.extend(response.data.entities);
+                        }
                     }
                 });
+                $scope.search.pagination.load();
             });
+
         });
 
 }());

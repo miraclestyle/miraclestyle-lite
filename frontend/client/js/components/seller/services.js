@@ -414,7 +414,7 @@
                         cacheType: 'memory'
                     });
                 },
-                settingsModal: function (account_key) {
+                manageModal: function (account_key) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'), config;
                     fields._content.ui.label = false;
                     fields._content.modelclass.documents.ui = {

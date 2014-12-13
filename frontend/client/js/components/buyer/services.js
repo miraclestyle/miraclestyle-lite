@@ -4,7 +4,7 @@
 
         modelsConfig(function (models) {
 
-            models['19'].settingsModal = function (account_key) {
+            models['19'].manageModal = function (account_key) {
                 var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                     addressFields = fields.addresses.modelclass,
                     config;

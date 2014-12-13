@@ -411,7 +411,7 @@
                 link: function (scope, element, attrs, ctrl) {
                     var fn = function () {
                             var newval = scope.$eval(attrs.compatibilityMaker),
-                                stringified = modelsUtil.toJson(newval);
+                                stringified = modelsUtil.argumentsToJson(newval);
                             element.val(stringified);
                         };
                     scope.$watch(attrs.compatibilityMaker, fn);
@@ -705,10 +705,11 @@
                                             }
                                         }
 
+                                    } else {
+                                        $(this).height(helpers.newHeightByWidth(maxWidth, GLOBAL_CONFIG.gridMaxHeight, values[0]));
                                     }
 
                                 });
-
 
                             }
                         };
@@ -888,6 +889,14 @@
                         $(window).off('resize', resize);
                     });
 
+                }
+            };
+        }).directive('loadMoreButton', function () {
+            return {
+                restrict: 'A',
+                templateUrl: 'misc/load_more_button.html',
+                scope: {
+                    config: '=loadMoreButton'
                 }
             };
         });

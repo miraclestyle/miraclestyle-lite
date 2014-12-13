@@ -9,8 +9,12 @@ import json
 import datetime
 import inspect
 import copy
- 
+import sys
+
 import orm, mem, iom, settings, util
+
+sys.setrecursionlimit(2147483647) # we need recursion stack because most of our code relies on recursion
+# however, we could rewrite the code to not use recursion in future
 
 CSRF_KEY = '_csrf'
 COOKIE_USER_KEY = 'auth'

@@ -234,6 +234,22 @@
 
                 return closest; // return the value
             },
+            newWidthByHeight: function (original_width, original_height, new_height) {
+                var ratio;
+                original_width = parseInt(original_width, 10);
+                original_height = parseInt(original_height, 10);
+                new_height = parseInt(new_height, 10);
+                ratio = new_height / original_height;
+                return (original_width * ratio);
+            },
+            newHeightByWidth:  function (original_width, original_height, new_width) {
+                var ratio;
+                original_width = parseInt(original_width, 10);
+                original_height = parseInt(original_height, 10);
+                new_width = parseInt(new_width, 10);
+                ratio = new_width / original_width; // get ratio for scaling image
+                return (original_height * ratio);
+            },
             fancyGrid: {
                 getHeight: function (images, width, margin) {
                     margin = (margin * 2);
@@ -368,7 +384,7 @@ w:                  while (images.length > 0) {
                         url: endpoint.url
                     },
                     cache_id;
-                compiled[0] = modelsUtil.toJson(compiled[0]);
+                compiled[0] = modelsUtil.argumentsToJson(compiled[0]);
                 if (compiled[1] && angular.isString(compiled[1].cache)) {
                     cache_id = compiled[1].cache;
                     compiled[1].cache = false;
@@ -389,7 +405,7 @@ w:                  while (images.length > 0) {
                         url: endpoint.url
                     },
                     cache_id;
-                compiled[0] = modelsUtil.toJson(compiled[0]);
+                compiled[0] = modelsUtil.argumentsToJson(compiled[0]);
                 $.extend(gets, compiled[1]);
                 angular.extend(defaults, gets);
                 if (defaults && angular.isString(defaults.cache)) {
@@ -402,12 +418,12 @@ w:                  while (images.length > 0) {
             currentAccount: function () {
                 return endpoint.post('current_account', '11', {}, {
                     cache: 'currentAccount',
-                    cacheType: 'memory',
-                    normalizeEntity: false
+                    cacheType: 'memory'
                 }).then(function (response) {
 
                     var currentAccount = $injector.get('currentAccount');
                     $.extend(currentAccount, response.data.entity);
+                    window._currentAccount = currentAccount; // delete in production
 
                 });
             },
@@ -691,7 +707,7 @@ w:                  while (images.length > 0) {
                         modelsUtil.normalize(entity);
                     });
                 },
-                toJson : function (entity, pretty) {
+                argumentsToJson : function (entity, pretty) {
                     var ignore = ['_field_permissions', '_next_read_arguments', '_read_arguments', '_action_permissions', 'ui'];
                     return JSON.stringify(entity,
                         function (key, value) {
@@ -1697,14 +1713,20 @@ w:                  while (images.length > 0) {
 
                     if (config.ui.specifics.remote) {
                         rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
-                        if (!angular.isDefined(config.ui.specifics.pager)) {
-                            config.ui.specifics.pager = models[rootArgs.action_model].pager(rootArgs, config.ui.realPath, function (items) {
-                                config.ui.specifics.parentArgs.extend(items);
+                        if (!angular.isDefined(config.ui.specifics.reader)) {
+                            config.ui.specifics.reader = models[rootArgs.action_model].reader({
+                                kind: rootArgs.action_model,
+                                key: rootArgs.key,
+                                next: rootArgs._next_read_arguments,
+                                access: config.ui.realPath,
+                                callback: function (items) {
+                                    config.ui.specifics.parentArgs.extend(items);
+                                }
                             });
                         }
 
-                        if (angular.isDefined(config.ui.specifics.pagerSettings)) {
-                            config.ui.specifics.pager.state(config.ui.specifics.pagerSettings);
+                        if (angular.isDefined(config.ui.specifics.readerSettings)) {
+                            config.ui.specifics.reader.state(config.ui.specifics.readerSettings);
                         }
                     }
 
@@ -2181,12 +2203,42 @@ w:                  while (images.length > 0) {
 
                             console.error('get() relies on actions.search action. use actions.read() instead.');
                         },
-                        pager: function (args, access, callback) {
-                            // pager instance that internally tracks the pager next read arguments.
-                            // params provided are action arguments
-                            // and path to the structure that the pager will inject/read data
-                            if (!angular.isArray(access)) {
-                                console.error('path must be array, ' + typeof access + ' given');
+                        paginate: function (config) {
+                            var that = this,
+                                theConfig = {
+                                    args: {
+                                        search: {}
+                                    },
+                                    config: {}
+                                },
+                                searchAction = modelsMeta.getActionArguments(config.kind, 'search'),
+                                paginate = {
+                                    more: false,
+                                    cursor: null,
+                                    load: function () {
+                                        var promise = that.actions.search(theConfig.args, theConfig.config);
+                                        promise.then(function (response) {
+                                            paginate.more = response.data.more;
+                                            paginate.cursor = response.data.cursor;
+                                            if (angular.isFunction(config.callback)) {
+                                                config.callback.call(this, response);
+                                            }
+                                        });
+                                        return promise;
+                                    }
+                                };
+                            helpers.extendDeep(theConfig.args.search, searchAction.search['default']);
+                            if (angular.isDefined(config.args)) {
+                                helpers.extendDeep(theConfig.args, config.args);
+                            }
+                            return paginate;
+                        },
+                        reader: function (config) {
+                            // reader instance that internally tracks the reader next read arguments.
+                            // params provided are config, access, and callback
+                            // and path to the structure that the reader will inject/read data
+                            if (!angular.isArray(config.access)) {
+                                console.error('path must be array, ' + typeof config.access + ' given');
                                 return;
                             }
                             var fields,
@@ -2201,15 +2253,15 @@ w:                  while (images.length > 0) {
                                         }
                                     });
                                 },
-                                pager;
+                                reader;
 
                             // fields are now _images, pricetags, _product, _instances
-                            init(access);
+                            init(config.access);
 
-                            pager = {
+                            reader = {
                                 next: null,
-                                access: access,
-                                more: canLoadMore(args._next_read_arguments),
+                                access: config.access,
+                                more: canLoadMore(config.next),
                                 state: function (config) {
                                     this.next = config.next;
                                     if (angular.isDefined(config.access)) {
@@ -2241,11 +2293,11 @@ w:                  while (images.length > 0) {
                                         promise;
 
                                     if (!next) {
-                                        next = angular.copy(args._next_read_arguments);
+                                        next = angular.copy(config.next);
                                     }
 
-                                    promise = models[args.action_model].actions.read({
-                                        key: args.key,
+                                    promise = models[config.kind].actions.read({
+                                        key: config.key,
                                         read_arguments: next
                                     });
 
@@ -2261,8 +2313,8 @@ w:                  while (images.length > 0) {
                                         });
                                         items = helpers.getProperty(response.data.entity, getAccess);
 
-                                        if (angular.isFunction(callback)) {
-                                            callback(items);
+                                        if (angular.isFunction(config.callback)) {
+                                            config.callback(items);
                                         }
 
                                         loadedNext = response.data.entity._next_read_arguments;
@@ -2277,7 +2329,7 @@ w:                  while (images.length > 0) {
                                 }
                             };
 
-                            return pager;
+                            return reader;
 
                         }
                     };

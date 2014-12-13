@@ -29,6 +29,7 @@
             defaultCatalogCover: 'http://placehold.it/240x360',
             gridMaxWidth: 240,
             gridMinWidth: 180,
+            gridMaxHeight: 360,
             imageSizes: _.range(0, 1700, 50)
         };
 

@@ -5,7 +5,7 @@
             currentAccount, models) {
 
             $scope.settings = function () {
-                models['23'].settingsModal(currentAccount.key);
+                models['23'].manageModal(currentAccount.key);
             };
 
         });

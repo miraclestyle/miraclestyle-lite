@@ -26,7 +26,7 @@
                             templateUrl: 'catalog/modal/view.html',
                             windowClass: 'no-overflow',
                             controller: function ($scope, $modalInstance) {
-                                var imagesPager,
+                                var imagesReader,
                                     accessImages;
 
                                 $scope.catalog = entity;
@@ -36,14 +36,20 @@
                                 accessImages = angular.copy($scope.catalog.ui.access);
                                 accessImages.push('_images');
 
-                                imagesPager = models[catalogKind].pager($scope.catalog, accessImages, function (items) {
-                                    $scope.catalog._images.extend(items);
+                                imagesReader = models[catalogKind].reader({
+                                    kind: $scope.catalog.kind,
+                                    key: $scope.catalog.key,
+                                    next: {_images: $scope.catalog._next_read_arguments._images},
+                                    access: accessImages,
+                                    callback: function (items) {
+                                        $scope.catalog._images.extend(items);
+                                    }
                                 });
-                                imagesPager.setNextReadArguments($scope.catalog._next_read_arguments);
+                                imagesReader.setNextReadArguments($scope.catalog._next_read_arguments);
 
                                 $scope.loadMoreImages = function (callback) {
-                                    if (imagesPager.more) {
-                                        imagesPager.load().then(callback);
+                                    if (imagesReader.more) {
+                                        imagesReader.load().then(callback);
                                     } else {
                                         callback();
                                     }
@@ -340,7 +346,7 @@
                                         windowClass: 'no-overflow',
                                         controller: function ($scope, $modalInstance, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
-                                                imagesPager,
+                                                imagesReader,
                                                 setupCurrentPricetag;
                                             accessImages.push(fields._images.code_name);
 
@@ -349,11 +355,17 @@
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.config = $scope.rootScope.config;
 
-                                            imagesPager = models[catalogKind].pager($scope.args, accessImages, function (items) {
-                                                $scope.args._images.extend(items);
+                                            imagesReader = models[catalogKind].reader({
+                                                kind: catalogKind,
+                                                key: $scope.args.key,
+                                                next: $scope.args._next_read_arguments,
+                                                access: accessImages,
+                                                callback: function (items) {
+                                                    $scope.args._images.extend(items);
+                                                }
                                             });
                                             // set next arguments from initially loaded data from root scope
-                                            imagesPager.state(parentScope.config.ui.specifics.pager);
+                                            imagesReader.state(parentScope.config.ui.specifics.reader);
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
@@ -462,8 +474,8 @@
                                             };
 
                                             $scope.loadMoreImages = function (callback) {
-                                                if (imagesPager.more) {
-                                                    imagesPager.load().then(callback);
+                                                if (imagesReader.more) {
+                                                    imagesReader.load().then(callback);
                                                 } else {
                                                     callback();
                                                 }
@@ -504,7 +516,7 @@
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     pricetag._product = product;
-                                                    $scope.fieldProduct.modelclass._instances.ui.specifics.pagerSettings = {
+                                                    $scope.fieldProduct.modelclass._instances.ui.specifics.readerSettings = {
                                                         next: response.data.entity._next_read_arguments
                                                     };
                                                     $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
@@ -816,7 +828,7 @@
                                                     $.extend(parentScope.args, new_args);
                                                     $scope.args = angular.copy($scope.args);
                                                     parentScope.args = angular.copy(parentScope.args);
-                                                    parentScope.config.ui.specifics.pager.state(imagesPager);
+                                                    parentScope.config.ui.specifics.reader.state(imagesReader);
                                                 }, function (response) {
                                                     // here handle error...
                                                 });

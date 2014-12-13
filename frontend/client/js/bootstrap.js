@@ -3,15 +3,24 @@
     'use strict';
     angular.element(document).ready(function () {
         var injector = angular.injector(['app']),
-            endpoint = injector.get('endpoint'),
-            $q = injector.get('$q'),
-            depencies = [endpoint.modelsMeta(), endpoint.currentAccount()];
+            endpoint = injector.get('endpoint');
 
-        $q.all(depencies).then(function () {
+        endpoint.modelsMeta().then(function () {
+            return endpoint.currentAccount();
+        }).then(function () {
             angular.bootstrap(document, ['app']);
         }, function () {
             alert('Could not bootstrap the application. Please reload the browser.');
         });
+
+        /*
+        
+        depencies = [endpoint.modelsMeta(), endpoint.currentAccount()]
+        $q.all(depencies).then(function () {
+            angular.bootstrap(document, ['app']);
+        }, function () {
+            alert('Could not bootstrap the application. Please reload the browser.');
+        });*/
 
     });
 }());

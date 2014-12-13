@@ -1,11 +1,11 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, $window, modelsEditor, modelsMeta) {
+    angular.module('app').run(function (modelsConfig, endpoint, $window, modelsEditor, modelsMeta, modelsUtil) {
 
         modelsConfig(function (models) {
 
             $.extend(models['11'], {
-                settingsModal: function (account_key) {
+                manageModal: function (account) {
                     var config = {
                             kind: this.kind,
                             templateBodyUrl: 'account/modal/settings.html',
@@ -60,7 +60,7 @@
                         };
 
                     modelsEditor.create(config).read({
-                        key: account_key
+                        key: account.key
                     });
 
                 },

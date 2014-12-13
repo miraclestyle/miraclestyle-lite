@@ -5,19 +5,17 @@
   </div>
 </div>
 
-<div autoload-on-scrollend class="grid-wrapper clearfix">
+<div autoload-on-scrollend="search.paginaiton" class="grid-wrapper clearfix">
     <div ng-repeat="result in search.results track by $index" grid-generator-image="result.cover" grid-generator="{square:false, margin:1, maxWidth:240, minWidth:180}" on-ng-repeat-end class="grid-item grid-generator">
         <a ng-click="preview(result.key)" class="pointable">
             <img display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
         </a>
         <div class="button-wrapper">
-            <a class="button block" ng-click="manage(result)">
+            <a loading class="button block" ng-click="manage(result)">
                 Edit
             </a>
         </div>
     </div>
 </div>
 
-<div ng-show="search.more && !search.loading">
-    <button style="width:100%;" class="button block" busy ng-click="search.loadsMore()" type="button">Load More</button>
-</div>
+<div load-more-button="search.pagination"></div>
