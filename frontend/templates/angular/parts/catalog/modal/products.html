@@ -11,7 +11,7 @@
              <div ng-hide="image._state == 'deleted'"
                   ng-repeat="image in args._images track by $index" class="image-slider-item"
                   drop="true"
-                  jqyoui-options="{accept: '.new-pricetag'}"
+                  jqyoui-options="{accept: '.catalog-new-pricetag'}"
                   jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
                   >
              <img slider-image="image" /> 
