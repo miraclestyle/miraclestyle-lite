@@ -453,12 +453,12 @@ li.catalog-new-pricetag {
   top: 10px;
   right: 10px;
   bottom: auto;
-  padding: 7px 5px 1px;
+  padding: 7px 5px 3px;
   width: 40px;
   background-color: #FFFFFF;
   border: 1px solid #BBBBBB;
-  -webkit-box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
-  box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
+  -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
+  box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
 }*/
 
 .catalog-view-details {
@@ -476,10 +476,10 @@ li.catalog-new-pricetag {
 /* Catalog Menu v2! */
 /*.catalog-view-details-icon-bar {
   width: 100%;
-  height: 4px;
+  height: 6px;
   background: #777777;
-  margin-bottom: 6px;
-  border-radius: 2px;
+  margin-bottom: 4px;
+  border-radius: 4px;
 }*/
 
 .catalog-view-details-icon-bar {
