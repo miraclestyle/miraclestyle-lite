@@ -9,11 +9,11 @@
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
              <img slider-image="image" /> 
              <div ng-repeat="pricetag in image.pricetags track by $index"
-                  class="button pricetag"
+                  class="button catalog-pricetag"
                   catalog-pricetag-position="pricetag">
                   <div class="catalog-pricetag-wrapper">
                       <div class="catalog-pricetag-dot"></div>
-                   <a class="pricetag-link" loading standard-click="viewProduct(image, pricetag)" href="javascript:;">
+                   <a class="catalog-pricetag-link" loading standard-click="viewProduct(image, pricetag)" href="javascript:;">
                       {{pricetag.value.price|displayCurrency:catalog._seller._currency}}
                    </a>
                    </div>

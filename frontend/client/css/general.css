@@ -385,7 +385,7 @@ img.vertical, .vertical {
   padding: 0px;
 }
 
-div.pricetag {
+div.catalog-pricetag {
   position: absolute;
   top: 20%;
   left: 20px;
@@ -397,8 +397,16 @@ div.pricetag {
   box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
 }
 
+li.catalog-new-pricetag {
+  padding: 5px 10px;
+  margin-right: 5px;
+  border-radius: 3px;
+  -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+  box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+}
+
 .catalog-pricetag-dot {
-  border-radius: 50%; /* this can be more depending on the actual dot size */
+  border-radius: 50%;
   background: #333333;
   width: 2px;
   height: 2px;
@@ -407,25 +415,25 @@ div.pricetag {
   left: 3px;
 }
 
-.pricetag a {
+.catalog-pricetag a {
   text-decoration: none;
   display: block;
   padding: 5px 10px;
 }
 
-.new-pricetag {
+.catalog-new-pricetag {
   display: block;
 }
 
-.new-pricetag .pricetag {
+.catalog-new-pricetag .catalog-pricetag {
   display: none;
 }
 
-.new-pricetag.ui-draggable-dragging .pricetag {
+.catalog-new-pricetag.ui-draggable-dragging .catalog-pricetag {
   display: block;
 }
 
-.new-pricetag.ui-draggable-dragging .just-text {
+.catalog-new-pricetag.ui-draggable-dragging .just-text {
   display: none;
 }
 
