@@ -385,7 +385,7 @@ img.vertical, .vertical {
   padding: 0px;
 }
 
-div.pricetag {
+div.catalog-pricetag {
   position: absolute;
   top: 20%;
   left: 20px;
@@ -397,8 +397,16 @@ div.pricetag {
   box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
 }
 
+li.catalog-new-pricetag {
+  padding: 5px 10px;
+  margin-right: 5px;
+  border-radius: 3px;
+  -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+  box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+}
+
 .catalog-pricetag-dot {
-  border-radius: 50%; /* this can be more depending on the actual dot size */
+  border-radius: 50%;
   background: #333333;
   width: 2px;
   height: 2px;
@@ -407,29 +415,29 @@ div.pricetag {
   left: 3px;
 }
 
-.pricetag a {
+.catalog-pricetag a {
   text-decoration: none;
   display: block;
   padding: 5px 10px;
 }
 
-.new-pricetag {
+.catalog-new-pricetag {
   display: block;
 }
 
-.new-pricetag .pricetag {
+.catalog-new-pricetag .catalog-pricetag {
   display: none;
 }
 
-.new-pricetag.ui-draggable-dragging .pricetag {
+.catalog-new-pricetag.ui-draggable-dragging .catalog-pricetag {
   display: block;
 }
 
-.new-pricetag.ui-draggable-dragging .just-text {
+.catalog-new-pricetag.ui-draggable-dragging .just-text {
   display: none;
 }
 
-.catalog-view-details, .catalog-view-controls {
+.catalog-view-menu, .catalog-view-controls {
   position: fixed;
   left: auto;
   z-index: 100;
@@ -440,7 +448,20 @@ div.pricetag {
   bottom: 10px;
 }
 
-.catalog-view-details {
+/* Catalog Menu v2! */
+/*.catalog-view-menu {
+  top: 10px;
+  right: 10px;
+  bottom: auto;
+  padding: 7px 5px 3px;
+  width: 40px;
+  background-color: #FFFFFF;
+  border: 1px solid #BBBBBB;
+  -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
+  box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
+}*/
+
+.catalog-view-menu {
   top: 10px;
   right: 10px;
   bottom: auto;
@@ -448,11 +469,20 @@ div.pricetag {
   width: 40px;
 }
 
-.catalog-view-details-icon {
+.catalog-view-menu-icon {
   display: block;
 }
 
-.catalog-view-details-icon-bar {
+/* Catalog Menu v2! */
+/*.catalog-view-menu-icon-bar {
+  width: 100%;
+  height: 6px;
+  background: #777777;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}*/
+
+.catalog-view-menu-icon-bar {
   width: 100%;
   height: 5px;
   background: #FFFFFF;
