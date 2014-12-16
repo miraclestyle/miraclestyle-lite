@@ -1278,6 +1278,10 @@ w:                  while (images.length > 0) {
                         info.config.ui.placeholder = 'Select...';
                     }
 
+                    if (!angular.isDefined(info.config.ui.specifics.repeatAs)) {
+                        info.config.ui.specifics.repeatAs = '';
+                    }
+
                     return 'select';
                 },
                 SuperStringProperty: function (info) {
@@ -2215,6 +2219,7 @@ w:                  while (images.length > 0) {
                                 paginate = {
                                     more: false,
                                     cursor: null,
+                                    args: theConfig.args,
                                     load: function () {
                                         var promise = that.actions.search(theConfig.args, theConfig.config);
                                         promise.then(function (response) {
@@ -2227,7 +2232,7 @@ w:                  while (images.length > 0) {
                                         return promise;
                                     }
                                 };
-                            helpers.extendDeep(theConfig.args.search, searchAction.search['default']);
+                            theConfig.args.search = searchAction.search['default'];
                             if (angular.isDefined(config.args)) {
                                 helpers.extendDeep(theConfig.args, config.args);
                             }
@@ -2491,6 +2496,260 @@ w:                  while (images.length > 0) {
                 };
                 start(arguments, 0);
             }
+        };
+    }).factory('searchForm', function (modelsMeta) {
+        var create = function () {
+            var make = {
+                kind: null,
+                hide: false,
+                filters: {},
+                indexes: [],
+                index_id: null,
+                fields: {
+                    index_id: {
+                        type: 'SuperStringProperty',
+                        choices: [],
+                        code_name: 'index_id',
+                        required: true,
+                        ui: {
+                            args: 'search.index_id',
+                            label: 'Search Options',
+                            placeholder: 'Select index',
+                            writable: true,
+                            attrs: {
+                                'ng-change': 'search.makeFilters()'
+                            },
+                            specifics: {
+                                choiceFilter: 'showFriendlyIndexName',
+                                repeatAs: 'choice._index as '
+                            }
+                        }
+                    },
+                    filters: [],
+                    orders: []
+                },
+                mapIndexes: function (obj) {
+                    angular.forEach(obj, function (o, i) {
+                        o._index = i;
+                    });
+                },
+                resetFilters: function () {
+                    this.send.filters = [];
+                    this.send.orders = [];
+                },
+                changeKindUI: function () {
+                    this.changeKind();
+                    this.setSearch(this.kind, undefined);
+                    this.makeFilters();
+                },
+                changeKind: function () {
+
+                    var kindinfo = modelsMeta.get(this.kind),
+                        search_argument = null,
+                        cfg;
+
+                    if (kindinfo) {
+                        try {
+                            search_argument = kindinfo.mapped_actions.search['arguments'].search;
+                            this.default_send = search_argument['default'];
+                        } catch (ignore) {}
+
+                        if (!search_argument) {
+                            this.hide = true;
+                            search_argument = {};
+                        } else {
+                            this.hide = false;
+                        }
+
+                        cfg = search_argument.cfg;
+                        this.send.kind = this.kind;
+                        this.filters = cfg.filters || {};
+                        this.indexes = cfg.indexes || [];
+                        this.index_id = null;
+                        this.mapIndexes(cfg.indexes);
+                        this.fields.index_id.choices = cfg.indexes;
+
+                    }
+
+                },
+                changeOrderBy: function (e) {
+                    e.field = this.indexes[this.index_id].orders[e._index][0];
+                },
+                makeFilters: function (reset) {
+                    var that = this,
+                        indx,
+                        field,
+                        operator;
+
+                    if (!angular.isDefined(reset)) {
+                        reset = true;
+                    }
+
+                    if (reset) {
+                        that.send.filters = [];
+                        that.send.orders = [];
+                    }
+                    that.fields.filters = [];
+                    that.fields.orders = [];
+
+                    indx = that.indexes[that.index_id];
+
+                    angular.forEach(indx.filters, function (filter, i) {
+                        field = that.filters[filter[0]];
+                        field.required = 'search.index_id != null && search.send.filters.length';
+                        field.code_name = 'filter_' + filter[0];
+                        field.ui = {
+                            placeholder: 'Select value...',
+                            args: 'search.send.filters[\'' + i + '\'].value',
+                            writable: true
+                        };
+
+                        if (reset) {
+                            that.send.filters.push({
+                                field: filter[0],
+                                operator: filter[1][0],
+                                value: (field['default'] ? field['default'] : ''),
+                                _index: i
+                            });
+                        }
+
+                        operator = {
+                            type: 'SuperStringProperty',
+                            choices: filter[1],
+                            code_name: 'op_' + i,
+                            required: field.required,
+                            ui: {
+                                label: 'Operator',
+                                placeholder: 'Select operator',
+                                writable: true,
+                                args: 'search.send.filters[\'' + i + '\'].operator'
+                            }
+                        };
+                        that.fields.filters.push([operator, field]);
+                    });
+
+                    angular.forEach(indx.orders, function (order, i) {
+
+                        if (reset) {
+                            that.send.orders.push({
+                                field: order[0],
+                                operator: order[1][0],
+                                _index: i,
+                            });
+                        }
+
+                        field = {
+                            type: 'SuperStringProperty',
+                            choices: order[1],
+                            code_name: 'order_by_' + order[0],
+                            required: 'search.index_id != null && search.send.filters.length',
+                            ui: {
+                                placeholder: 'Select direction',
+                                writable: true,
+                                args: 'search.send.orders[\'' + i + '\'].operator'
+                            }
+                        };
+
+                        that.fields.orders.push(field);
+                    });
+
+                },
+                discoverIndexID: function () {
+
+                    var that = this,
+                        filters = this.send.filters,
+                        orders = this.send.orders;
+
+                    angular.forEach(this.indexes, function (index, index_id) {
+
+                        var got_filters = true;
+
+                        if (index.filters) {
+                            got_filters = false;
+                            if (filters && filters.length) {
+                                angular.forEach(index.filters, function (filter) {
+                                    var gets = _.findWhere(filters, {
+                                        field: filter[0]
+                                    });
+                                    if (gets && $.inArray(gets.operator, filter[1]) !== -1) {
+                                        got_filters = true;
+                                        that.index_id = index_id;
+                                    }
+                                });
+                            }
+
+                        }
+
+
+                        angular.forEach(index.orders, function (order, oi) {
+
+                            var gets = _.findWhere(orders, {
+                                field: order[0]
+                            });
+
+                            if (got_filters && gets && $.inArray(gets.operator, order[1]) !== -1) {
+                                that.index_id = index_id;
+                                gets._index = oi;
+                            }
+                        });
+
+                    });
+
+                },
+                setSearch: function (kind, search) {
+
+                    if (kind === undefined || kind === null) {
+                        this.hide = true;
+                        return;
+
+                    }
+
+                    if (this.kind !== kind) {
+                        this.kind = kind;
+                        this.changeKind();
+                        this.resetFilters();
+
+                    }
+
+                    var kindinfo = modelsMeta.get(this.kind),
+                        search_argument = null;
+                    if (kindinfo) {
+                        try {
+                            search_argument = kindinfo.mapped_actions.search['arguments'].search;
+                        } catch (ignore) {}
+
+                        if (search_argument) {
+
+                            if (search === undefined && search_argument['default']) {
+                                this.send = search_argument['default'];
+                            } else if (search) {
+                                this.send = search;
+                            }
+
+                            this.discoverIndexID();
+                            this.makeFilters(false);
+                        }
+
+                    } else {
+                        this.hide = true;
+                    }
+
+                },
+                doSearch: function () {
+                    throw new Error('Not implemented');
+                },
+                submitSearch: function () {
+                    this.doSearch();
+                },
+                send: {
+                    filters: [],
+                    orders: [],
+                },
+            };
+            return make;
+        };
+        return {
+            create: create
         };
     });
 }());

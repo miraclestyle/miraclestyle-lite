@@ -1,6 +1,4 @@
-<div>
-  <button ng-if="args.key" loading="!entity.ui.rule.field._images.pricetags.writable" type="button" class="button" ng-click="config.ui.specifics.remove(args, close)">Remove</button>
-  <button ng-if="args.key" loading="!entity.ui.rule.action.catalog_pricetag_duplicate.executable" type="button" class="button" ng-click="config.ui.specifics.duplicate(args, close)">Duplicate</button>
-  <button submit-if-files-no-complete="noComplete()" submit-if-files="save()" loading class="button">Save</button>
-  <button loading type="button" class="button" ng-click="close()">Close</button>
-</div>
+<button ng-if="args.key" loading="!entity.ui.rule.field._images.pricetags.writable" type="button" class="button" ng-click="config.ui.specifics.remove(args, close)">Remove</button>
+<button ng-if="args.key" loading="!entity.ui.rule.action.catalog_pricetag_duplicate.executable" type="button" class="button" ng-click="config.ui.specifics.duplicate(args, close)">Duplicate</button>
+<button submit-if-files-no-complete="noComplete()" submit-if-files="save()" loading class="button">Save</button>
+<button loading type="button" class="button" ng-click="close()">Close</button>

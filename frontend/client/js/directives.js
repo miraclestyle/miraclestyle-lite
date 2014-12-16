@@ -265,7 +265,11 @@
                             attrs['ng-pattern'] = config.pattern;
                         }
 
-                        attrs['ng-required'] = 'config.required';
+                        if (angular.isString(config.required)) {
+                            attrs['ng-required'] = config.required;
+                        } else {
+                            attrs['ng-required'] = 'config.required';
+                        }
                         attrs['ng-model'] = config.ui.args;
                         attrs.placeholder = '{{config.ui.placeholder}}';
 

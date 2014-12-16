@@ -24,6 +24,7 @@
                 models['31'].manageModal(entity, newEntity);
             };
 
+
             $scope.search = {
                 results: [],
                 pagination: {}

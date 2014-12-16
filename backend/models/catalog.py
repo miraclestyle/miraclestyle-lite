@@ -565,7 +565,7 @@ class Catalog(orm.BaseExpando):
             'ancestor_kind': '23',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
+                        'state': orm.SuperStringProperty(choices=['published', 'draft'])},
             'indexes': [{'ancestor': True, 'orders': [('name', ['asc', 'desc'])]},
                         {'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
                         {'ancestor': True, 'orders': [('updated', ['asc', 'desc'])]},
