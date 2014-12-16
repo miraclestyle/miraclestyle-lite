@@ -27,13 +27,23 @@
             defaultImage: 'http://placehold.it/240x100',
             defaultLogo: 'http://placehold.it/240x100',
             defaultCatalogCover: 'http://placehold.it/240x360',
-            gridMaxWidth: 240,
-            gridMinWidth: 180,
-            gridMaxHeight: 360,
-            imageSizes: _.range(0, 1700, 50)
+            grid: {
+                maxWidth: 240,
+                minWidth: 180,
+                maxHeight: 360
+            },
+            imageSizes: _.range(50, 1650, 50), // loading ranges for get serving url
+            admin: {
+                listTemplates: {},
+                listDisplayDirective: ['31', '11'],
+                listTitles: {
+                    '31': 'Catalogs',
+                    '11': 'Users'
+                }
+            }
         };
 
-    angular.module('app', GLOBAL_CONFIG.angularModules) // we can avoid a global if we build modules for each feature
+    angular.module('app', GLOBAL_CONFIG.angularModules)
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function ($httpProvider, $locationProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');

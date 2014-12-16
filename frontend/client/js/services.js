@@ -2401,6 +2401,11 @@ w:                  while (images.length > 0) {
 
         return {
             alert: function (message, extraConfig) {
+                if (angular.isFunction(extraConfig)) {
+                    extraConfig = {
+                        ok: extraConfig
+                    };
+                }
                 return this.create($.extend({
                     message: message,
                     type: 'alert'
@@ -2447,12 +2452,15 @@ w:                  while (images.length > 0) {
                     windowClass: 'modal-medium',
                     templateUrl: 'misc/modal/' + config.type + '.html',
                     controller: function ($scope, $modalInstance) {
-
+                        var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
                         config.dismiss = function () {
+                            if (callback) {
+                                callback.call(this);
+                            }
                             $modalInstance.dismiss('dismiss');
                         };
 
-                        if (!angular.isDefined(extraConfig)) {
+                        if (!angular.isObject(extraConfig)) {
                             extraConfig = {};
                         }
                         $scope.config = config;

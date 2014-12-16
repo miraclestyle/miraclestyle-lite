@@ -668,8 +668,8 @@
 
                     var config = scope.$eval(attrs.gridGenerator) || {},
                         margin = config.margin || 0,
-                        maxWidth = config.maxWidth || GLOBAL_CONFIG.gridMaxWidth,
-                        minWidth = config.minWidth || GLOBAL_CONFIG.gridMinWidth,
+                        maxWidth = config.maxWidth || GLOBAL_CONFIG.grid.maxWidth,
+                        minWidth = config.minWidth || GLOBAL_CONFIG.grid.minWidth,
                         square = (angular.isDefined(config.square) ? config.square : true),
                         resize = function () {
 
@@ -706,7 +706,7 @@
                                         }
 
                                     } else {
-                                        $(this).height(helpers.newHeightByWidth(maxWidth, GLOBAL_CONFIG.gridMaxHeight, values[0]));
+                                        $(this).height(helpers.newHeightByWidth(maxWidth, GLOBAL_CONFIG.grid.maxHeight, values[0]));
                                     }
 
                                 });

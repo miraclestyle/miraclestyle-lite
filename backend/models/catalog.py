@@ -696,10 +696,10 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             # @todo Finish Notify plugins!
             Notify(cfg={'condition': 'entity.state == "discontinued"',
-                        's': {'subject': 'Catalog Discontinued by Admin.'},
+                        's': {'subject': 'Catalog Discontinued by Admin.', 'sender': settings.NOTIFY_EMAIL},
                         'd': {'recipient': '_catalog.root_entity._primary_email',
                               'body': 'input.message'}}),
-            Notify(cfg={'s': {'subject': 'Admin Note'},
+            Notify(cfg={'s': {'subject': 'Admin Note', 'sender': settings.NOTIFY_EMAIL},
                         'd': {'recipient': 'account._primary_email',
                               'body': 'input.note'}}),
             CallbackExec(cfg=[('callback',

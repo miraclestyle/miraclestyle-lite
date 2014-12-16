@@ -49,6 +49,13 @@ class Set(orm.BaseModel):
         set_attr(context, key, set_value)
     for key in remove_values:
       del_attr(context, key)
+    for key in remove_structured_values:
+      items = get_attr(key)
+      if isinstance(items, list):
+        for item in items:
+          item._state = 'removed'
+        else:
+          items._state = 'removed'
 
 class Read(orm.BaseModel):
   

@@ -10,6 +10,7 @@ import datetime
 import inspect
 import copy
 import sys
+import urllib
 
 import orm, mem, iom, settings, util
 
@@ -232,27 +233,25 @@ class AccountLogin(RequestHandler):
        provider = 'google'
     data = self.get_input()
     data['login_method'] = provider
-    data.update({
-                 'action_model' : '11',
-                 'action_id' : 'login',   
-                })
+    data.update({'action_model' : '11',
+                 'action_id' : 'login'})
     output = iom.Engine.run(data)
     if 'authorization_code' in output:
       self.response.set_cookie('auth', output.get('authorization_code'), httponly=True)
-      self.redirect('/') # @todo there is no other way to signal back to user what he needs to do next other than just redirect him to /
+      self.redirect('/login_status?success=true') # we need to see how we can handle continue to link behaviour
+    elif 'errors' in output:
+      self.redirect('/login_status?errors=%s' % urllib.quote(self.json_output(output['errors'])))
     self.send_json(output)
  
 class AccountLogout(RequestHandler):
     
   def respond(self):
     data = self.get_input()
-    data.update({
-                 'action_model' : '11',
-                 'action_key' : 'logout',   
-               })
+    data.update({'action_model' : '11',
+                 'action_key' : 'logout'})
     output = iom.Engine.run(data)
     self.response.delete_cookie('auth')
-    self.redirect('/') # @todo there is no other way to signal back to user what he needs to do next other than just redirect him to /
+    self.redirect('/')
             
             
 class OrderComplete(RequestHandler):
@@ -265,7 +264,7 @@ class OrderComplete(RequestHandler):
     for param in params:
       data['request'][param] = getattr(self.request, param)
     output = iom.Engine.run(data)
-    return output      
+    return output
             
     
 ROUTES = [('/api/endpoint', Endpoint),

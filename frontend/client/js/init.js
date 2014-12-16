@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').config(function ($stateProvider) {
+    angular.module('app').config(function ($stateProvider, GLOBAL_CONFIG) {
 
         $stateProvider
             .state('home', {
@@ -8,33 +8,34 @@
                 templateUrl: 'home/index.html',
                 controller: 'HomePageCtrl'
             })
-            .state('login', {
-                url: '/login/:provider',
-                controller: 'LoginPageCtrl'
-            }).state('sell-catalogs', {
+            .state('sell-catalogs', {
                 url: '/sell/catalogs',
                 controller: 'SellCatalogsCtrl',
                 templateUrl: 'catalog/list.html'
-            });
-        /*
-        .state('admin_search', {
-            url: '/admin/search/:kind/:query',
-            templateUrl: function (stateParams) {
+            })
+            .state('login-status', {
+                url: '/login_status',
+                template: '',
+                controller: 'AccountLoginStatusCtrl'
+            })
+            .state('admin-list', {
+                url: '/admin/list/:kind/:query',
+                templateUrl: function ($stateParams) {
 
-                var defaults = 'admin/search.html',
-                    config;
+                    var defaults = 'admin/list.html',
+                        config;
 
-                if (stateParams.kind !== undefined) {
-                    config = ADMIN_SEARCH_KIND_CONFIG[stateParams.kind];
-                    if (config && config.templateUrl) {
-                        defaults = config.templateUrl;
+                    if ($stateParams.kind !== undefined) {
+                        config = GLOBAL_CONFIG.admin.listTemplates[$stateParams.kind];
+                        if (config && config.templateUrl) {
+                            defaults = config.templateUrl;
+                        }
                     }
-                }
 
-                return defaults;
-            },
-            controller: 'AdminSearchCtrl'
-        })*/
+                    return defaults;
+                },
+                controller: 'AdminListCtrl'
+            });
 
     }).run(function (models) {
         models.init();

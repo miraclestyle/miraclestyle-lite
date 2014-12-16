@@ -71,7 +71,7 @@ def render_template(template_as_string, values={}):
 def mail_send(**kwargs):
   message_sender = kwargs.get('sender', None)
   if not message_sender:
-    raise orm.TerminateAction()
+    raise ValueError('`sender` not found in kwargs')
   message = mail.EmailMessage()
   message.sender = message_sender
   message.bcc = kwargs['recipient']

@@ -1,0 +1,20 @@
+<h2 class="fieldset">
+
+    <span class="fieldset-text">Administer {{config.titles[config.kind]}}</span>
+     
+</h2>
+<div autoload-on-scrollend="search.pagination" class="grid-wrapper clearfix">
+     <div class="item-list">
+        <div ng-repeat="ent in search.results track by ent.key" class="item clearfix">
+          <div class="item-left">
+                <div admin-display-list-kind="{{config.kind}}" admin-display-list-item="ent"></div>
+          </div>
+          <div class="item-right list-actions">
+              <button loading ng-click="manage(ent)" type="button" class="button">Manage</button>
+          </div>
+        </div>
+    </div>
+   
+</div>
+
+<div load-more-button="search.pagination"></div>

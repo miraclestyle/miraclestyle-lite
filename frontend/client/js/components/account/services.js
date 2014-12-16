@@ -1,34 +1,76 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, $window, modelsEditor, modelsMeta, modelsUtil) {
+    angular.module('app').run(function (modelsConfig, endpoint, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers) {
 
         modelsConfig(function (models) {
 
             $.extend(models['11'], {
                 manageModal: function (account) {
-                    var config = {
+                    var that = this,
+                        config = {
                             kind: this.kind,
-                            templateBodyUrl: 'account/modal/settings.html',
+                            templateBodyUrl: 'account/modal/manage.html',
+                            templateFooterUrl: 'account/modal/manage_footer.html',
                             argumentLoader: function ($scope) {
                                 var disassociate = [],
                                     entity = $scope.entity,
                                     identity = _.findWhere(entity.identities, {primary: true}),
-                                    obj;
+                                    obj = $scope.config.defaultArgumentLoader($scope);
                                 angular.forEach(entity.identities,
                                     function (value) {
                                         if (!value.associated) {
                                             disassociate.push(value.identity);
                                         }
                                     });
-                                obj = {
+                                $.extend(obj, {
                                     action_id: $scope.config.action,
                                     action_model: $scope.config.kind,
                                     primary_identity: identity.identity,
                                     disassociate: disassociate,
                                     key: entity.key
-                                };
+                                });
 
                                 return obj;
+                            },
+                            init: function ($scope) {
+                                var entity = $scope.entity,
+                                    updateFields = ['state', 'ui.rule', 'created', 'updated'],
+                                    updateState = function (newArgs) {
+                                        angular.forEach(['args', 'entity'], function (p) {
+                                            helpers.update($scope[p], newArgs, updateFields);
+                                        });
+                                    };
+                                $scope.actions.sudo = function () {
+                                    $modal.open({
+                                        templateUrl: 'account/modal/administer.html',
+                                        controller: function ($scope, $modalInstance) {
+                                            var sudoFields = modelsMeta.getActionArguments(that.kind, 'sudo');
+                                            $scope.args = {key: entity.key, state: entity.state};
+
+                                            sudoFields.state.ui.placeholder = 'Set state';
+                                            sudoFields.message.ui.placeholder = 'Message for the user';
+                                            sudoFields.note.ui.placeholder = 'Note for administrators';
+
+                                            $scope.fields = [sudoFields.state, sudoFields.message, sudoFields.note];
+                                            angular.forEach($scope.fields, function (field) {
+                                                field.ui.writable = true;
+                                            });
+
+                                            $scope.container = {};
+                                            $scope.save = function () {
+                                                if (!$scope.container.form.$valid) {
+                                                    return false;
+                                                }
+                                                models[that.kind].actions.sudo($scope.args).then(function (response) {
+                                                    updateState(response.data.entity);
+                                                });
+                                            };
+                                            $scope.close = function () {
+                                                $modalInstance.dismiss('close');
+                                            };
+                                        }
+                                    });
+                                };
                             },
                             scope: {
                                 isAssociated: function (ident) {
@@ -44,6 +86,7 @@
                                         this.args.disassociate.remove(ident.identity);
                                     }
                                 },
+                                actions: {},
                                 accordions: {
                                     closeOthers: true,
                                     groups: [{
@@ -59,7 +102,7 @@
                             }
                         };
 
-                    modelsEditor.create(config).read({
+                    modelsEditor.create(config).read(account, {
                         key: account.key
                     });
 

@@ -74,7 +74,9 @@ class Structured():
   def __str__(self):
     return self.segment
 
-ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'), Structured('buyer'), Structured('seller'), Structured('catalog')]
+ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'),
+                             Structured('buyer'), Structured('seller'), 
+                             Structured('catalog'), Structured('admin')]
 ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
 ANGULAR_ACTIVE_COMPONENTS = []
 for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
@@ -84,11 +86,9 @@ for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
   else:
     ANGULAR_ACTIVE_COMPONENTS.append(angular_component)
 
-# ('Alias', 'Full path to the template in the app')
+# ('Alias', 'Full path to the template in the app'), something to read https://cloud.google.com/appengine/docs/python/config/appconfig#application_readable
 ANGULAR_TEMPLATES = (
   # core
-  ('home/index.html',),
-
   ('form/builder.html',),
 
   ('misc/form_wrapper.html',),
@@ -100,24 +100,6 @@ ANGULAR_TEMPLATES = (
   ('entity/modal/editor.html',),
   ('entity/modal/editor_default_body.html',),
   ('entity/modal/editor_default_footer.html',),
-  
-  ('account/modal/settings.html',),
-  
-  ('seller/directive/carrier_line_rule_display.html',),
-  ('seller/directive/address_rule_location_display.html',),
-  
-  ('buyer/directive/buyer_address_display.html',),
-  
-  ('catalog/modal/manage_footer.html',),
-  ('catalog/modal/administer.html',),
-  ('catalog/modal/products.html',),
-  ('catalog/modal/view.html',),
-  ('catalog/product/modal/manage_footer.html',),
-  ('catalog/product/modal/view.html',),
-  ('catalog/product/modal/variant_choices.html',),
-  ('catalog/list.html',),
-  ('catalog/underscore/form/image.html',),
-  ('catalog/product/directive/product_instance_display.html',),
   
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
@@ -131,7 +113,7 @@ ANGULAR_TEMPLATES = (
   ('underscore/form/modal/plugins.html',),
   ('underscore/form/modal/structured.html',),
  
-                     
+  # 3rd party                   
   ('template/accordion/accordion-group.html',
    'lib/angular-bootstrap/accordion/accordion-group.html'),
   ('template/accordion/accordion.html',
@@ -163,7 +145,8 @@ ANGULAR_TEMPLATES = (
    ),
   ('template/tooltip/tooltip-popup.html',
    'lib/angular-bootstrap/tooltip/tooltip-popup.html'),
-  # select2
+
+  # 3rd party select2
   ('bootstrap/choices.tpl.html',
    'lib/angular-ui-select/bootstrap/choices.tpl.html'),
   ('bootstrap/match-multiple.tpl.html',
@@ -190,4 +173,38 @@ ANGULAR_TEMPLATES = (
    'lib/angular-ui-select/selectize/match.tpl.html'),
   ('selectize/select.tpl.html',
    'lib/angular-ui-select/selectize/select.tpl.html'),
+
+
+  # account
+  ('account/modal/manage.html',),
+  ('account/modal/manage_footer.html',),
+  ('account/modal/administer.html',),
+  
+  # seller
+  ('seller/directive/carrier_line_rule_display.html',),
+  ('seller/directive/address_rule_location_display.html',),
+  
+  # buyer
+  ('buyer/directive/buyer_address_display.html',),
+
+  # admin area
+  ('admin/list.html',),
+  ('admin/directive/list/default.html',),
+  ('admin/directive/list/31.html',), # display directive template for catalog
+  ('admin/directive/list/11.html',), # display directive template for account
+
+  # catalog
+  ('catalog/modal/manage_footer.html',),
+  ('catalog/modal/administer.html',),
+  ('catalog/modal/products.html',),
+  ('catalog/modal/view.html',),
+  ('catalog/product/modal/manage_footer.html',),
+  ('catalog/product/modal/view.html',),
+  ('catalog/product/modal/variant_choices.html',),
+  ('catalog/list.html',),
+  ('catalog/underscore/form/image.html',),
+  ('catalog/product/directive/product_instance_display.html',),
+
+  # other
+  ('home/index.html',),
 )

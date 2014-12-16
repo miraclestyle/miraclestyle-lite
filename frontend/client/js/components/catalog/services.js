@@ -255,7 +255,7 @@
                                     }
                                 });
 
-                                var updateFields = ['state', 'ui.rule'],
+                                var updateFields = ['state', 'ui.rule', 'created', 'updated'],
                                     updateState = function (newArgs) {
                                         angular.forEach(['args', 'entity'], function (p) {
                                             helpers.update($scope[p], newArgs, updateFields);

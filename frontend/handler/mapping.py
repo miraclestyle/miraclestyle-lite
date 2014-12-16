@@ -8,13 +8,12 @@ import settings
 import urllib
 
 from handler import base
-    
+
+# update this config to map paths    
 settings.ROUTES.extend(((r'/', base.AngularBlank),
                        (r'/sell/catalogs', base.AngularBlank),
-                       (r'/login', base.AngularBlank),
-                       (r'/login/<provider>', base.AngularBlank),
-                       (r'/tests/<what>', base.AngularBlank),
-                       (r'/admin/search/<kind>/<filter>', base.AngularBlank)))
+                       (r'/login_status', base.AngularBlank),
+                       (r'/admin/list/<kind>/<filter>', base.AngularBlank)))
 
 # due development server bug, proxy the endpoint api to the real module
 if settings.DEVELOPMENT_SERVER:

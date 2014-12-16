@@ -10,6 +10,10 @@ import os
 from handler import base
 
 class BuildAngularIndexHTML(base.Angular):
+
+  '''
+    Handler used to compile index html file for external use
+  '''
   
   def after(self):
     pass
