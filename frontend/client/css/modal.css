@@ -12,7 +12,7 @@
   display: none;
   overflow: auto;
   overflow-y: scroll;
-  background:white;
+  background: #FFFFFF;
 }
 
 .modal.no-overflow {
@@ -57,33 +57,40 @@
 
 .modal-title {
   margin: 0;
-  line-height: 1.428571429;
+  /*float: left;
+  color: #777777;
+  font-size: 24px;
+  line-height: 28px;
+  padding: 7px 0px;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: middle;
+  display: block;*/
 }
 
 .modal-body {
   position: relative;
   padding: 0px;
-  padding-bottom:65px;
+  padding-bottom: 65px;
 }
 
 .modal-body.no-footer, .modal-body.unscrollable {
-  padding-bottom:0px;
+  padding-bottom: 0px;
 }
 
 .modal-footer {
   padding: 10px 10px 0px; /* Note: Take a look at .modal-footer .button! */
   text-align: right;
-  
   /*
   position: relative;
   -webkit-box-shadow: 0px -1px 3px 0px rgba(0, 0, 0, 0.25);
   box-shadow: 0px -1px 3px 0px rgba(0, 0, 0, 0.25);
   */
   border-top: 1px solid #EEEEEE;
-  position:fixed;
-  bottom:0px;
-  width:100%;
-  background: white;
+  position: fixed;
+  bottom: 0px;
+  width: 100%;
+  background: #FFFFFF;
 }
 
 .modal-footer .button {
@@ -124,13 +131,13 @@
 }
 
 .modal-small .modal-dialog {
-  width:40%;
-  margin:auto;
+  width: 40%;
+  margin: auto;
 }
 
 .modal-small, .modal-medium, .modal-large {
-  top:10%;
-  background:none;
+  top: 10%;
+  background: none;
   overflow: visible;
 }
 
@@ -139,32 +146,31 @@
 }
 
 .modal-medium .modal-dialog {
-  background:white;
+  background: #FFFFFF;
   -webkit-box-shadow: 1px 1px 6px #333333;
-  box-shadow:1px 1px 6px #333333;
+  box-shadow: 1px 1px 6px #333333;
   background-clip: padding-box;
 }
 
 .modal-medium .modal-body {
-  padding-bottom:0px;
+  padding-bottom: 0px;
 }
 
 .modal-body-inner-padded {
-  padding:10px;
+  padding: 10px;
 }
 
-
 .modal-small .modal-dialog {
-  width:40%;
-  margin:auto;
+  width: 40%;
+  margin: auto;
 }
 
 .modal-medium .modal-dialog {
-  width:60%;
-  margin:auto;
+  width: 60%;
+  margin: auto;
 }
 
 .modal-large .modal-dialog {
-  width:60%;
-  margin:auto;
+  width: 60%;
+  margin: auto;
 }
