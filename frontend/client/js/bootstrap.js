@@ -5,6 +5,7 @@
         var injector = angular.injector(['app']),
             endpoint = injector.get('endpoint');
 
+        // models meta must be loaded first above all things because entire application depends on it
         endpoint.modelsMeta().then(function () {
             return endpoint.currentAccount();
         }).then(function () {
@@ -12,15 +13,6 @@
         }, function () {
             alert('Could not bootstrap the application. Please reload the browser.');
         });
-
-        /*
-        
-        depencies = [endpoint.modelsMeta(), endpoint.currentAccount()]
-        $q.all(depencies).then(function () {
-            angular.bootstrap(document, ['app']);
-        }, function () {
-            alert('Could not bootstrap the application. Please reload the browser.');
-        });*/
 
     });
 }());

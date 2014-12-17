@@ -823,14 +823,10 @@
 
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);
-                                                    var new_args = $scope.rootScope.config.argumentLoader($scope);
-                                                    $.extend($scope.args, new_args);
-                                                    $.extend(parentScope.args, new_args);
-                                                    $scope.args = angular.copy($scope.args);
-                                                    parentScope.args = angular.copy(parentScope.args);
+                                                    var newArgs = $scope.rootScope.config.argumentLoader($scope);
+                                                    parentScope.args = angular.copy(newArgs);
+                                                    $scope.args = angular.copy(newArgs);
                                                     parentScope.config.ui.specifics.reader.state(imagesReader);
-                                                }, function (response) {
-                                                    // here handle error...
                                                 });
 
                                                 return promise;

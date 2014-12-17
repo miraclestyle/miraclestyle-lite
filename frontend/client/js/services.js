@@ -46,7 +46,7 @@
                             controller: function ($scope, $modalInstance) {
                                 $scope.errors = [];
                                 angular.forEach(errors, function (error, key) {
-                                    $scope.errors.push(errorHandling.translate(key, error));
+                                    $scope.errors.push(key, errorHandling.translate(key, error));
                                 });
                                 $scope.ok = function () {
                                     $modalInstance.dismiss('ok');
@@ -987,7 +987,6 @@ w:                  while (images.length > 0) {
                                     }
 
                                     if (arg && angular.isObject(arg[0])) {
-                                        //path.config.limit = arg.length; // @todo this cannot be used because of entities that have different order by
                                         path.config.keys = $.map(arg, function (ent) {
                                             return ent.key;
                                         });
@@ -1159,6 +1158,7 @@ w:                  while (images.length > 0) {
                                     '0': []
                                 };
 
+                                // if no accordions are defined, use the auto-builder
                                 if (!angular.isDefined($scope.accordions)) {
                                     $scope.accordions = {
                                         closeOthers: true,
@@ -1241,7 +1241,7 @@ w:                  while (images.length > 0) {
                                     });
                                 }
 
-                                // call config constructor, needed for posible on-spot configurations
+                                // call config constructor, needed for posible after variable setup configurations
                                 config.defaultInit($scope);
                                 config.init($scope);
                                 console.log('modelsEditor.scope', $scope);
@@ -2497,7 +2497,7 @@ w:                  while (images.length > 0) {
                 start(arguments, 0);
             }
         };
-    }).factory('searchForm', function (modelsMeta) {
+    }).factory('searchBuilder', function (modelsMeta) {
         var create = function () {
             var make = {
                 kind: null,
@@ -2708,7 +2708,6 @@ w:                  while (images.length > 0) {
                         this.kind = kind;
                         this.changeKind();
                         this.resetFilters();
-
                     }
 
                     var kindinfo = modelsMeta.get(this.kind),
@@ -2719,7 +2718,6 @@ w:                  while (images.length > 0) {
                         } catch (ignore) {}
 
                         if (search_argument) {
-
                             if (search === undefined && search_argument['default']) {
                                 this.send = search_argument['default'];
                             } else if (search) {
@@ -2744,7 +2742,7 @@ w:                  while (images.length > 0) {
                 send: {
                     filters: [],
                     orders: [],
-                },
+                }
             };
             return make;
         };

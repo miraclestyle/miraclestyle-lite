@@ -1,18 +1,16 @@
 <div fit-in-dialog>
 <div class="modal-body scrollable">
 <div class="modal-body-inner-padded">
-<h2>Errors occurred while attemting to perform an action</h2>
+<h2>Errors occurred while attempting to perform an action</h2>
 <ul>
-  <li ng-repeat="error in errors"><span ng-bind-html="error | autobr"></span></li>
+  <li ng-repeat="error in errors">
+    <span ng-if="error[0] !== 'traceback'" ng-bind-html="error[1]"></span>
+    <pre ng-if="error[0] === 'traceback'">{{error[1]}}</pre>
+ </li>
 </ul>
-
 </div>
 </div>
-
 <div class="modal-footer">
-  
-  <button type="button" class="button" ng-click="ok()">
-    Ok
-  </button>
+  <button type="button" class="button" ng-click="ok()">Ok</button>
 </div>
 </div>

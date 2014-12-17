@@ -35,6 +35,7 @@
             imageSizes: _.range(50, 1650, 50), // loading ranges for get serving url
             admin: {
                 listTemplates: {},
+                menu: [{name: 'Catalogs', kind: 31}, {name: 'Users', kind: 11}], // admin paths shown in the menu
                 listDisplayDirective: ['31', '11'],
                 listTitles: {
                     '31': 'Catalogs',

@@ -586,6 +586,26 @@
 
                 }
             };
+        }).directive('submitIfValid', function ($parse) {
+            return {
+                require: '^form',
+                link: function (scope, element, attrs, ctrl) {
+                    var form = element.parents('form:first'),
+                        check = $parse(attrs.submitIfValid),
+                        click = function (e) {
+                            if (check(scope)) {
+                                form.submit();
+                            }
+                            return e.preventDefault();
+                        };
+
+                    element.on('click', click);
+                    scope.$on('$destroy', function () {
+                        element.off('click', click);
+                    });
+
+                }
+            };
         }).directive('accordionOnOpen', function ($timeout, helpers) {
             return {
 

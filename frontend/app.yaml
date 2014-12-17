@@ -9,7 +9,7 @@ handlers:
 
 - url: /client/
   static_dir: client/
-#  expiration: "364d 5h" # its not ready for cache yet
+  expiration: "364d 5h"
 
 - url: /favicon\.ico
   static_files: client/static/favicon.ico

@@ -70,7 +70,7 @@
         formats.DEFAULT_PRECISION = angular.isUndefined(formats.DEFAULT_PRECISION) ? 2 : formats.DEFAULT_PRECISION;
         return function (amount, currency) {
             amount = parseFloat(amount, 10);
-            if (!angular.isNumber(amount)) { return ''; }
+            if (!angular.isNumber(amount) || isNaN(amount)) { return ''; }
             var isNegative = amount < 0,
                 parts = [],
                 number;

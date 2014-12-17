@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchForm, $state) {
+        .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state) {
             var kind = $stateParams.kind,
                 query = null,
                 args = {};
@@ -15,17 +15,16 @@
                 titles: GLOBAL_CONFIG.admin.listTitles,
                 kind: kind
             };
-
             $scope.manage = function (entity) {
                 models[kind].manageModal(entity);
             };
-            $scope.search = searchForm.create();
+            $scope.search = searchBuilder.create();
             $.extend($scope.search, {
                 doSearch: function () {
                     $state.go('admin-list', {
                         kind: this.kind,
                         query: JSON.stringify({
-                            search : this.send,
+                            search : this.send
                         })
                     });
                 },

@@ -63,14 +63,13 @@ This was done for easier maintenance.
             <ul ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest" class="menu clearfix">
                 <li><button ng-click="login(1)" type="button" class="button block">Login with Google</button></li>
             </ul>
-            <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin_kinds">
-                
+            <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
                 <h1 class="fieldset">Administration</h1>
                 <ul class="menu clearfix">
-                     <li ng-repeat="(kind_key, kind) in GLOBAL_CONFIG.admin_kinds">
+                     <li ng-repeat="item in GLOBAL_CONFIG.admin.menu">
                          <button type="button" main-menu-toggler
-                                ui-sref="admin_search({query: JSON.stringify({}), kind : kind_key})" 
-                                ui-sref-active="active" class="button block" ng-bind="kind"></button></li>
+                                ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" 
+                                ui-sref-active="active" class="button block" ng-bind="item.name"></button></li>
                 </ul>
             </div>
             
