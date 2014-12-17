@@ -435,12 +435,8 @@
 
                         height -= parseInt(modal_dialog.css('margin-top'), 10) + parseInt(modal_dialog.css('margin-bottom'), 10);
 
-                        if (modal_footer.length) {
-                            height -= modal_footer.outerHeight();
-                        }
-
                         modal_dialog.find('.modal-body.min-height').css('min-height', height);
-                        modal_dialog.find('.fixed-height').height(height);
+                        modal_dialog.find('.fixed-height, .modal-body.scrollable').height(height);
 
                     };
 
