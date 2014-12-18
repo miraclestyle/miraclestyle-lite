@@ -1,11 +1,11 @@
 .button {
   border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
-  padding: 10px 20px;
+  padding: 15px 20px;
   outline: none;
   text-align: center;
   vertical-align: middle;
-  line-height: 20px;
+  line-height: 16px;
   text-decoration: none;
   cursor:pointer;
   display: inline-block;
@@ -102,7 +102,7 @@
 
 .fieldset {
   font-size: 24px;
-  line-height: 26px;
+  line-height: 27px;
   border-bottom: 1px solid #EEEEEE;
   padding-bottom: 5px;
   margin-bottom: 10px;
