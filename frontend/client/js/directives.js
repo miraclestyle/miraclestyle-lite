@@ -429,14 +429,13 @@
                 link: function (scope, element, attrs) {
                     var fn = function () {
 
-                        var modal_dialog = $(element).parents('.modal-dialog:first'),
-                            height = $(window).height(),
-                            modal_footer = modal_dialog.find('.modal-footer');
+                        var modalDialog = $(element).parents('.modal-dialog:first'),
+                            height = $(window).height();
 
-                        height -= parseInt(modal_dialog.css('margin-top'), 10) + parseInt(modal_dialog.css('margin-bottom'), 10);
+                        height -= parseInt(modalDialog.css('margin-top'), 10) + parseInt(modalDialog.css('margin-bottom'), 10);
 
-                        modal_dialog.find('.modal-body.min-height').css('min-height', height);
-                        modal_dialog.find('.fixed-height, .modal-body.scrollable').height(height);
+                        modalDialog.find('.modal-body.min-height').css('min-height', height);
+                        modalDialog.find('.fixed-height, .modal-body.scrollable, .modal-body.unscrollable').height(height);
 
                     };
 
@@ -876,9 +875,15 @@
 
                     var image = scope.$eval(attrs.sliderImage),
                         run = function () {
-                            var newHeight = element.parents('.modal-body:first').innerHeight() - window.SCROLLBAR_WIDTH,
+                            var rootModal = element.parents('.modal:first'),
+                                newHeight = rootModal.find('.modal-body:first').innerHeight() - window.SCROLLBAR_WIDTH,
                                 newWidth = Math.ceil(newHeight * image.proportion),
-                                imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight);
+                                imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
+                                modalFooter = rootModal.find('.modal-footer');
+
+                            if (modalFooter.length) {
+                                newHeight -= modalFooter.outerHeight();
+                            }
 
                             element.attr('src', image.serving_url + '=s' + imageSize)
                                 .width(newWidth)
