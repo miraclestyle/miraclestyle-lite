@@ -555,3 +555,8 @@ li.catalog-new-pricetag {
 .menu-catalog-items .menu-catalog-item:last-child {
   margin-bottom:0px;
 }
+
+.seller-logo {
+  width:240px;
+  height:100px;
+}
