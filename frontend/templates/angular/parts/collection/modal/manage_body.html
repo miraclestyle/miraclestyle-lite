@@ -1,0 +1,27 @@
+<div accordion-on-open="accordions">
+    <accordion close-others="accordions.closeOthers">
+
+        <accordion-group heading="{{accordions.groups.0.label}}" is-open="accordions.groups.0.open" is-disabled="accordions.groups.0.disabled">
+
+            <div form-input="config.keyedFields.notify" />
+ 
+
+        </accordion-group>
+
+        <accordion-group heading="{{accordions.groups.1.label}}" is-open="accordions.groups.1.open" is-disabled="accordions.groups.1.disabled">
+            <div class="grid-wrapper clearfix">
+                <div ng-repeat="seller in entity._sellers track by $index" grid-generator-image="seller.logo" grid-generator2="{square:true, margin:1, maxWidth:240, minWidth:180}" on-ng-repeat-end class="grid-item grid-generator">
+                    <a ng-click="view(seller)" class="pointable">
+                        <img display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
+                    </a>
+                    <div class="button-wrapper">
+                        <a loading class="button block" ng-click="remove(seller)">
+                            Remove
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </accordion-group>
+
+    </accordion>
+ </div>

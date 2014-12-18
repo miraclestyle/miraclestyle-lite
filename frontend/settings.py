@@ -56,6 +56,7 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-elastic/elastic.js',
   'vendor/angular-ui-select/dist/select.js',
   'vendor/angular-timer/dist/angular-timer.js',
+  'lib/angulike/angulike.js',
   'lib/angular-bootstrap/ui-bootstrap.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
   'lib/angular-cache/dist/angular-cache.js',
@@ -79,7 +80,7 @@ class Structured():
     return self.segment
 
 ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'),
-                             Structured('buyer'), Structured('seller'), 
+                             Structured('buyer'), Structured('collection'), Structured('seller'), 
                              Structured('catalog'), Structured('admin')]
 ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
 ANGULAR_ACTIVE_COMPONENTS = []
@@ -181,16 +182,21 @@ ANGULAR_TEMPLATES = (
 
 
   # account
-  ('account/modal/manage.html',),
+  ('account/modal/manage_body.html',),
   ('account/modal/manage_footer.html',),
   ('account/modal/administer.html',),
   
   # seller
   ('seller/directive/carrier_line_rule_display.html',),
   ('seller/directive/address_rule_location_display.html',),
+  ('seller/modal/view_body.html',),
+  ('seller/modal/view_footer.html',),
   
   # buyer
   ('buyer/directive/buyer_address_display.html',),
+
+  # colleciton
+  ('collection/modal/manage_body.html',),
 
   # admin area
   ('admin/list.html',),
@@ -209,6 +215,7 @@ ANGULAR_TEMPLATES = (
   ('catalog/list.html',),
   ('catalog/underscore/form/image.html',),
   ('catalog/product/directive/product_instance_display.html',),
+
 
   # other
   ('home/index.html',),

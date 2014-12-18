@@ -526,6 +526,7 @@ li.catalog-new-pricetag {
   overflow-y:auto;
   top:10px;
   width:260px;
+  overflow-x:hidden;
 }
 
 .catalog-view-menu-content-inner {
@@ -559,4 +560,8 @@ li.catalog-new-pricetag {
 .seller-logo {
   width:240px;
   height:100px;
+}
+
+.menu-catalog-social-item {
+  margin-bottom: 10px;
 }

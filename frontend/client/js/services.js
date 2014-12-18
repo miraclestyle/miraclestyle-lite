@@ -315,6 +315,11 @@ w:                  while (images.length > 0) {
                 isPortrait: function () {
                     return !this.isLandscape();
                 }
+            },
+            url: {
+                abs: function (part) {
+                    return window.location.protocol + '//' + window.location.host + '/' + part;
+                }
             }
         };
 

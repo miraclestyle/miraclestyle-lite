@@ -20,7 +20,7 @@
             host: host,
             angularModules: ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
                 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'monospaced.elastic',
-                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch', 'timer'], // this will be changed accordingly
+                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch', 'timer', 'angulike'], // this will be changed accordingly
             apimodelsMetaPath: host + '/api/model_meta',
             apiEndpointPath: host + '/api/endpoint',
             dateFormat: 'yyyy-MM-dd HH:mm:ss Z',
@@ -33,6 +33,11 @@
                 maxHeight: 360
             },
             imageSizes: _.range(50, 1650, 50), // loading ranges for get serving url
+            social: {
+                facebook: {
+                    id: '125702284258635'
+                }
+            },
             admin: {
                 listTemplates: {},
                 menu: [{name: 'Catalogs', kind: 31}, {name: 'Users', kind: 11}], // admin paths shown in the menu

@@ -25,9 +25,9 @@ class Collection(orm.BaseExpando):
   
   _virtual_fields = {
     '_records': orm.SuperRecordProperty('18'),
-    '_sellers': orm.SuperReferenceStructuredProperty('11', autoload=False,
+    '_sellers': orm.SuperReferenceStructuredProperty('23', autoload=False, repeated=True,
                                                      callback=lambda self: orm.get_multi_async(self.sellers),
-                                                     format_callback=lambda self, entities: orm.get_async_results(entities))
+                                                     format_callback=lambda self, entities: self._get_asynced_sellers(entities))
     }
   
   _global_role = GlobalRole(
@@ -35,8 +35,10 @@ class Collection(orm.BaseExpando):
       orm.ActionPermission('18', [orm.Action.build_key('18', 'update'),
                                   orm.Action.build_key('18', 'read')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
+      orm.FieldPermission('18', ['_sellers'], None, True, 'not account._is_guest'),
       orm.FieldPermission('18', ['notify', 'sellers', '_records', '_sellers.name', '_sellers.logo'], True, True,
-                          'not account._is_guest and entity._original.key_root == account.key')
+                          'not account._is_guest and entity._original.key_root == account.key'),
+
       ]
     )
   
@@ -93,6 +95,10 @@ class Collection(orm.BaseExpando):
         ]
       )
     ]
+
+  def _get_asynced_sellers(self, entities):
+    orm.get_async_results(entities)
+    return entities
   
   @classmethod
   def prepare_key(cls, input, **kwargs):

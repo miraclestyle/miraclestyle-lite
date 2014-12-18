@@ -9,7 +9,7 @@
                     var that = this,
                         config = {
                             kind: this.kind,
-                            templateBodyUrl: 'account/modal/manage.html',
+                            templateBodyUrl: 'account/modal/manage_body.html',
                             templateFooterUrl: 'account/modal/manage_footer.html',
                             argumentLoader: function ($scope) {
                                 var disassociate = [],

@@ -26,12 +26,12 @@
                             templateUrl: 'catalog/modal/view.html',
                             windowClass: 'no-overflow',
                             controller: function ($scope, $modalInstance) {
-                                var imagesReader,
-                                    accessImages;
-
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = catalogKind;
                                 $scope.logoImageConfig = {};
+                                var imagesReader,
+                                    accessImages,
+                                    catalogUrl = helpers.url.abs('catalog/' + $scope.catalog.key);
                                 accessImages = angular.copy($scope.catalog.ui.access);
                                 accessImages.push('_images');
 
@@ -45,6 +45,22 @@
                                     }
                                 });
                                 imagesReader.setNextReadArguments($scope.catalog._next_read_arguments);
+                                $scope.social = {
+                                    fb: {
+                                        url: catalogUrl
+                                    },
+                                    twitter: {
+                                        url: catalogUrl,
+                                        text: 'Check out this catalog!'
+                                    },
+                                    pinterest: {
+                                        url: catalogUrl,
+                                        image: $scope.catalog._images[0].serving_url + '=s600'
+                                    },
+                                    gplus: {
+                                        url: catalogUrl
+                                    }
+                                };
 
                                 $scope.loadMoreImages = function (callback) {
                                     if (imagesReader.more) {
@@ -197,6 +213,20 @@
                                                 };
                                             }
                                         });
+                                    });
+                                };
+
+                                $scope.sellerDetails = function () {
+                                    models[catalogKind].actions.read({
+                                        key: $scope.catalog.key,
+                                        read_arguments: {
+                                            _seller: {
+                                                _content: {},
+                                                _feedback: {}
+                                            }
+                                        }
+                                    }).then(function (response) {
+                                        models['23'].viewModal(response.data.entity._seller);
                                     });
                                 };
 
