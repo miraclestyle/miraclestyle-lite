@@ -514,3 +514,44 @@ li.catalog-new-pricetag {
   padding: 10px;
   padding-bottom: 63px;
 }
+
+.catalog-view-menu-content {
+  display:none;
+  position: fixed;
+  right:10px;
+  background: #FFFFFF;
+  -webkit-box-shadow: 1px 1px 6px #333333;
+  box-shadow: 1px 1px 6px #333333;
+  background-clip: padding-box;
+  overflow-y:auto;
+  top:10px;
+  width:260px;
+}
+
+.catalog-view-menu-content-inner {
+  padding:10px;
+}
+
+.menu-catalog-items {
+  list-style: none;
+  display:block;
+  padding:0px;
+  margin:0px;
+}
+
+.menu-catalog-item {
+  display:block;
+  list-style: none;
+}
+
+.menu-catalog-item .button.block {
+  width:100%;
+}
+
+.menu-catalog-item {
+  margin-bottom:10px;
+}
+
+.menu-catalog-items .menu-catalog-item:last-child {
+  margin-bottom:0px;
+}

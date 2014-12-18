@@ -612,8 +612,11 @@
 
                         angular.forEach(accordions.groups, function (accordion, i) {
                             scope.$watch(attrs.accordionOnOpen + '.groups.' + i + '.open', function (neww, old) {
+                                var which = accordions.groups[i];
                                 if (neww) {
-                                    scope.$broadcast('accordionStateChanged', accordions.groups[i], i);
+                                    scope.$broadcast('accordionStateOpened', which, i);
+                                } else {
+                                    scope.$broadcast('accordionStateClosed', which, i);
                                 }
                             });
 
@@ -671,7 +674,7 @@
                     $(window).on('resize', resize);
                     scope.$on('itemOrderChanged', resize);
                     scope.$on('ngRepeatEnd', resize);
-                    scope.$on('accordionStateChanged', resize);
+                    scope.$on('accordionStateOpened', resize);
                     scope.$on('itemDelete', function () {
                         $timeout(resize);
                     });
@@ -897,10 +900,12 @@
                                 newHeight = rootModal.find('.modal-body:first').innerHeight() - window.SCROLLBAR_WIDTH,
                                 newWidth = Math.ceil(newHeight * image.proportion),
                                 imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
-                                modalFooter = rootModal.find('.modal-footer');
+                                modalFooter = rootModal.find('.modal-footer'),
+                                originalNewHeight = newHeight;
 
                             if (modalFooter.length) {
                                 newHeight -= modalFooter.outerHeight();
+                                newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
                             }
 
                             element.attr('src', image.serving_url + '=s' + imageSize)

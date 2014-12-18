@@ -19,14 +19,42 @@
                    </div>
               </div>
             </div>
+           
+          <div catalog-view-menu class="catalog-view-menu-wrap">
+              <div class="catalog-view-menu">
+                  <a class="catalog-view-menu-icon" ng-click="menu.toggle()">
+                      <div class="catalog-view-menu-icon-bar"></div>
+                      <div class="catalog-view-menu-icon-bar"></div>
+                      <div class="catalog-view-menu-icon-bar"></div>
+                  </a>
+              </div>
+              <div class="catalog-view-menu-content">
+                  <div class="catalog-view-menu-content-inner">
+                      <div ng-if="menu.init">
+                          <div class="menu-catalog-name">{{catalog.name}}</div>
+                          <div class="menu-catalog-expire-time">
+                              Expires in
+                              <timer end-time="catalog.discontinue_date">{{days}} days, {{hours}} hours, {{minutes}} minutes, {{seconds}} seconds.</timer>
+                          </div>
 
-           <div class="catalog-view-menu">
-               <a class="catalog-view-menu-icon" ng-click="details()">
-                  <div class="catalog-view-menu-icon-bar"></div>
-                  <div class="catalog-view-menu-icon-bar"></div>
-                  <div class="catalog-view-menu-icon-bar"></div>
-               </a>
-            </div>
+                          <ul class="menu-catalog-items clearfix">
+                              <li class="menu-catalog-item">
+                                  <a ng-click="sellerDetails()">
+                                     <img display-image-config="logoImageConfig" display-image="catalog._seller.logo" />
+                                  </a>
+                              </li>
+                              <li class="menu-catalog-item">
+                                  <button type="button" ng-click="displayCart()" class="button block">Cart</button>
+                              </li>
+                              <li class="menu-catalog-item">
+                                  <button type="button" class="button block">Share</button>
+                              </li>
+                          </ul>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
 
             <div catalog-close-button-position class="catalog-view-controls">
                <button loading type="button" class="button" ng-click="close()">Close</button>

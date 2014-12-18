@@ -32,7 +32,6 @@
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = catalogKind;
                                 $scope.logoImageConfig = {};
-
                                 accessImages = angular.copy($scope.catalog.ui.access);
                                 accessImages.push('_images');
 

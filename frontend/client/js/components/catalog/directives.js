@@ -77,6 +77,62 @@
                 element.css('bottom', parseInt(element.css('bottom'), 10) + window.SCROLLBAR_WIDTH);
             }
         };
+    }).directive('catalogViewMenu', function ($timeout) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                var content = element.find('.catalog-view-menu-content');
+                scope.menu = {
+                    hide: true,
+                    init: false,
+                    toggle: function () {
+                        this.init = true;
+                        this.hide = !this.hide;
+                        var that = this;
+                        $timeout(function () {
+                            if (!that.hide) {
+                                if (!content.data('top')) {
+                                    content.data('top', parseInt(content.css('top'), 10));
+                                }
+                                var parent = element.parents('.image-slider-outer:first'),
+                                    height = parent.height(),
+                                    icon = parent.find('.catalog-view-menu'),
+                                    controls = parent.find('.catalog-view-controls'),
+                                    iconheight = icon.height(),
+                                    icontop = parseInt(icon.css('top'), 10),
+                                    iconspace = iconheight + icontop,
+                                    contentTop = iconspace + content.data('top');
+
+                                height -= iconheight;
+                                height -= controls.height();
+                                height -= icontop;
+                                height -= parseInt(controls.css('bottom'), 10);
+                                height -= contentTop;
+                                content.css({
+                                    visibility: 'hidden',
+                                    height: 'auto'
+                                }).show();
+                                height = content.height();
+                                content.hide();
+                                content.height(0).css({
+                                    visibility: 'visible',
+                                    top: contentTop
+                                }).show().stop().animate({
+                                    height: height
+                                }, 100);
+
+                            } else {
+                                content.stop().animate({
+                                    height: 0
+                                }, 100, function () {
+                                    $(this).hide();
+                                });
+                            }
+                        });
+                    }
+                };
+            }
+        };
     });
 
 }());

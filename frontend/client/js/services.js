@@ -801,6 +801,11 @@ w:                  while (images.length > 0) {
                                 entity[field.code_name] = defaults;
                             }
                         }
+
+                        if (field.type === 'SuperDateTimeProperty' && angular.isString(value)) {
+                            entity[field.code_name] = new Date(value);
+                        }
+
                         if (field.is_structured) {
                             if (field.repeated) {
                                 angular.forEach(value, function (subentity, i) {
