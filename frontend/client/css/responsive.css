@@ -1,0 +1,30 @@
+@media screen and (orientation: portrait) {
+    /* Portrait styles here */
+    
+    #is-landscape {
+        visibility: hidden;
+    }
+}
+/* Landscape */
+
+@media screen and (orientation: landscape) {
+    /* Landscape styles here */
+    
+    #is-landscape {
+        visibility: visible;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    #is_tablet {
+        visibility: visible;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    /*this is only for mobile devices */
+   #is_mobile {
+        visibility: visible;
+    }
+
+}

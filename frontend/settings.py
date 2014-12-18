@@ -35,6 +35,7 @@ WEBAPP2_EXTRAS = {}
 
 # Angular only configurations for user interface
 ANGULAR_JS_PATHS = (
+  'vendor/modernizr/modernizr.js',
   'vendor/jquery/dist/jquery.js',
   'vendor/jquery-ui/jquery-ui.js',
   'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
@@ -44,14 +45,15 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-ui-sortable/sortable.js',
   'vendor/angular-ui-utils/ui-utils.js',
   'vendor/angular-sanitize/angular-sanitize.js',
-  'vendor/angular-bootstrap/ui-bootstrap.js',
-  'vendor/angular-bootstrap/ui-bootstrap-tpls.js',
+  'vendor/hammerjs/hammer.js',
+  'vendor/jquery-hammerjs/jquery.hammer.js',
+  'lib/angular-bootstrap/ui-bootstrap.js',
+  'lib/angular-bootstrap/ui-bootstrap-tpls.js',
   'vendor/angular-ui-router/release/angular-ui-router.js',
-  'vendor/angular-messages/angular-messages.js',
   'vendor/angular-cookie/angular-cookie.js',
   'vendor/angular-touch/angular-touch.js',
+  'vendor/angular-gestures/gestures.min.js',
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
-  'vendor/jquery.kinetic/jquery.kinetic.js',
   'vendor/angular-elastic/elastic.js',
   'lib/angular-cache/dist/angular-cache.js',
   'vendor/angular-ui-select/dist/select.js',

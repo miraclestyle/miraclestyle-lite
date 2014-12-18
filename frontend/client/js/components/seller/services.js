@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app').run(function ($window, modelsConfig, modelsMeta,
-        modelsEditor, formInputTypes, underscoreTemplate, $modal, helpers, $q, $timeout, currentAccount, $filter) {
+        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter) {
 
         modelsConfig(function (models) {
             formInputTypes.SuperPluginStorageProperty = function (info) {
@@ -66,6 +66,23 @@
                         }
                     },
                     defaultSpecifics = {
+                        sortableOptions: {
+                            disabled: false,
+                            start: function (e, ui) {
+                                info.scope.$broadcast('itemOrderStarted');
+                            },
+                            whatSortMeans: function () {
+                                modals.alert('Grab the button to start sorting.');
+                            },
+                            handle: '.sort-handle',
+                            sort: function (e, ui) {
+                                var sample = ui.placeholder.next();
+                                if (sample.length) {
+                                    ui.placeholder.width(sample.width()).height(sample.height());
+                                }
+                                info.scope.$broadcast('itemOrderSorting');
+                            }
+                        },
                         pluginFieldOverrides: {
                             '113': {
                                 lines: {

@@ -13,7 +13,7 @@
                   catalog-pricetag-position="pricetag">
                   <div class="catalog-pricetag-wrapper">
                       <div class="catalog-pricetag-dot"></div>
-                   <a class="catalog-pricetag-link" loading standard-click="viewProduct(image, pricetag)" href="javascript:;">
+                   <a class="catalog-pricetag-link" loading ng-click="viewProduct(image, pricetag)" href="javascript:;">
                       {{pricetag.value.price|displayCurrency:catalog._seller._currency}}
                    </a>
                    </div>

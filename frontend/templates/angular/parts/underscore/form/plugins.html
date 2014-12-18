@@ -10,7 +10,7 @@
 
   <div ui-sortable="config.ui.specifics.sortableOptions" 
           ng-model="config.ui.specifics.parentArgs" class="item-list">
-    <div ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="item clearfix">
+    <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="no-move item clearfix">
       <div class="item-left">
         <div>{{ent.name}}</div>
         <div>
@@ -20,6 +20,7 @@
       <div class="item-right list-actions">
           <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
           <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
+          <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
       </div>
     </div>
   </div>

@@ -745,3 +745,7 @@ html[dir="rtl"] .select2-search-choice-close {
 :-ms-input-placeholder {
   color: #999999;
 }
+
+a.button.sort-handle {
+  cursor: move;
+}

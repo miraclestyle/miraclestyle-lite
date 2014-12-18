@@ -295,6 +295,26 @@ w:                  while (images.length > 0) {
                     return providedImages;
                 }
 
+            },
+            responsive: {
+                isTouch: function () {
+                    return Modernizr.touch;
+                },
+                isMobile: function () {
+                    return $('#is-mobile').css('visible') === 'visible';
+                },
+                isTablet: function () {
+                    return $('#is-tablet').css('visible') === 'visible';
+                },
+                isDesktop: function () {
+                    return !this.isMobile();
+                },
+                isLandscape: function () {
+                    return $('#is-landscape').css('visibility') === 'visible';
+                },
+                isPortrait: function () {
+                    return !this.isLandscape();
+                }
             }
         };
 
@@ -1262,7 +1282,7 @@ w:                  while (images.length > 0) {
 
     }).factory('formInputTypes', function (underscoreTemplate, $timeout, $parse,
         endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
-        errorHandling) {
+        errorHandling, modals) {
 
         var inflector = $filter('inflector'),
             formInputTypes = {
@@ -1656,6 +1676,10 @@ w:                  while (images.length > 0) {
                         start: function (e, ui) {
                             info.scope.$broadcast('itemOrderStarted');
                         },
+                        whatSortMeans: function () {
+                            modals.alert('Grab the button to start sorting.');
+                        },
+                        handle: '.sort-handle',
                         sort: function (e, ui) {
                             var sample = ui.placeholder.next();
                             if (sample.length) {

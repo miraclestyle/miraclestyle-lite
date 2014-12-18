@@ -16,14 +16,17 @@
 
     <div ui-sortable="config.ui.specifics.sortableOptions" fancy-grid-generator="config.ui.specifics.parentArgs" ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
 
-        <div ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs" ng-hide="image._state == 'deleted'" class="image-image grid-item">
+        <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs" ng-hide="image._state == 'deleted'" class="no-move image-image grid-item">
 
             <div class="img spaceout">
                 <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
             </div>
 
-            <div class="button-wrapper">
-                <button loading="!<%= config.ui.writableCompiled %>" type="button" loading class="button" ng-click="config.ui.specifics.remove(image)">Remove</button>
+            <div class="button-wrapper clearfix">
+                <div class="button-left"><button loading="!<%= config.ui.writableCompiled %>" type="button" loading class="button" ng-click="config.ui.specifics.remove(image)">Remove</button></div>
+                <div class="button-right">
+                    <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
+                </div>
             </div>
         </div>
     </div>

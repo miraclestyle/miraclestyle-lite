@@ -758,19 +758,37 @@
 
                 }
             };
-        }).directive('standardClick', function ($parse) {
+        }).directive('tapOrClick', function ($parse, helpers) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    var callback = $parse(attrs.standardClick);
-                    element.on('click', function (event) {
-                        if (element.hasClass('dragged')) {
-                            element.removeClass('dragged');
-                            return;
+                    var callback = $parse(attrs.tapOrClick),
+                        click = function (event, tap) {
+                            if (element.hasClass('dragged') && !tap) {
+                                element.removeClass('dragged');
+                                return;
+                            }
+                            scope.$apply(function () {
+                                callback(scope, {event: event});
+                            });
+                        },
+                        tap = function (e) {
+                            click.call(this, e, 1);
+                            return e.preventDefault();
+                        },
+                        touch = helpers.responsive.isTouch();
+                    if (touch) {
+                        $(element).hammer().bind('tap', tap);
+                    } else {
+                        element.on('click', click);
+                    }
+
+                    scope.$on('$destroy', function () {
+                        if (touch) {
+                            $(element).hammer().off('tap', tap);
+                        } else {
+                            element.off('click', click);
                         }
-                        scope.$apply(function () {
-                            callback(scope, {event: event});
-                        });
                     });
                 }
             };
