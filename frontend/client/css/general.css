@@ -73,7 +73,7 @@ a:visited {
 #main-menu {
   background: white;
   position: absolute;
-  top: 50px;
+  bottom: 10px;
   z-index: 90;
   width: 100%;
   border-bottom: 1px solid #BBBBBB;

@@ -6,7 +6,8 @@
                 link: function (scope, element) {
                     var activeClass = 'menu-active',
                         click = function (e, cmd) {
-                            var mm = $('#main-menu'),
+                            var height = ($(window).height() - $('#top-bar').height()),
+                                mm = $('#main-menu'),
                                 visible = mm.is(':visible');
 
                             if ((visible || cmd === 1) && cmd !== 2) {
@@ -17,10 +18,12 @@
                                     $('body').removeClass(activeClass);
                                 });
                             } else if (!visible || cmd === 2) {
+                                mm.css('top', $(document).scrollTop() + $('#top-bar').height());
                                 mm.height(0).show();
                                 mm.stop().animate({
-                                    height: ($(window).height() - $('#top-bar').height())
+                                    height: height
                                 }, 100, function () {
+                                    mm.scrollTop(0);
                                     $('body').addClass(activeClass);
                                 });
                             }
