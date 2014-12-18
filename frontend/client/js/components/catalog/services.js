@@ -48,9 +48,11 @@
 
                                 $scope.loadMoreImages = function (callback) {
                                     if (imagesReader.more) {
-                                        imagesReader.load().then(callback);
+                                        imagesReader.load().then(function () {
+                                            callback.call(this, response, imagesReader.more);
+                                        });
                                     } else {
-                                        callback();
+                                        callback.call(this, undefined, imagesReader.more);
                                     }
                                 };
 
@@ -474,9 +476,11 @@
 
                                             $scope.loadMoreImages = function (callback) {
                                                 if (imagesReader.more) {
-                                                    imagesReader.load().then(callback);
+                                                    imagesReader.load().then(function (response) {
+                                                        callback.call(this, response, imagesReader.more);
+                                                    });
                                                 } else {
-                                                    callback();
+                                                    callback.call(this, undefined, imagesReader.more);
                                                 }
                                             };
 

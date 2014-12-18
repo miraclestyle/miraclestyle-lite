@@ -831,24 +831,18 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    var loading = null,
-                        callback = $parse(attrs.imageSliderLoadMore),
+                    var callback = $parse(attrs.imageSliderLoadMore),
                         parent = element.parent('.image-slider-outer:first'),
-                        tryToLoad = function (settings) {
-                            if (!callback) {
-                                return;
+                        steadyScroll,
+                        anyMore = true,
+                        tryToLoadSteady = function (values, done) {
+                            if (!anyMore) {
+                                return false;
                             }
-                            var p = parent.get(0),
-                                maxscroll = p.scrollWidth - p.clientWidth,
-                                sense = maxscroll - parent.scrollLeft();
-                            if (sense < 300 && !loading) {
-                                loading = setTimeout(function () {
-                                    callback(scope, {callback: function () {
-                                        loading = null;
-                                    }});
-                                }, 200);
-
-                            }
+                            callback(scope, {callback: function (response, state) {
+                                done();
+                                anyMore = state;
+                            }});
                         },
                         measure = function () {
                             var tw = 0;
@@ -884,7 +878,27 @@
                     scope.$on('readyImageSlider', function () {
                         resize();
                         measure();
-                        parent.scroll(tryToLoad);
+                        //parent.scroll(tryToLoad);
+                        steadyScroll = new Steady({
+                            throttle: 100,
+                            scrollElement: parent.get(0),
+                            handler: tryToLoadSteady
+                        });
+
+                        steadyScroll.addTracker('checkLeft', function () {
+                            if (!callback) {
+                                return;
+                            }
+                            var p = parent.get(0),
+                                maxscroll = p.scrollWidth - p.clientWidth,
+                                sense = maxscroll - parent.scrollLeft();
+                            if (sense < 300) {
+                                return true;
+                            }
+                            return false;
+                        });
+
+                        steadyScroll.addCondition('checkLeft', true);
                     });
 
                     scope.$on('$destroy', function () {
