@@ -464,7 +464,7 @@
                                         notify: loadedCollection.notify
                                     }).then(function (newResponse) {
                                         var updatedCollection = newResponse.data.entity;
-                                        modals.alert('Successfully ' + (removed ? 'removed seller from your' : 'added seller to your') +  ' colleciton.');
+                                        //modals.alert('Successfully ' + (removed ? 'removed seller from your' : 'added seller to your') +  ' colleciton.');
                                         $scope.alreadyInCollection = !removed;
                                         // update cache
                                         $.extend(loadedCollection, updatedCollection);
