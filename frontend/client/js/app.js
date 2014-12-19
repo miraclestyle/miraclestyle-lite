@@ -64,5 +64,8 @@ $(function () {
     var container = $("<div>").css({ height: 1, overflow: "scroll" }).appendTo("body"),
         child = $("<div>").css({ height: 2 }).appendTo(container);
     window.SCROLLBAR_WIDTH = container.width() - child.width();
+    if (Modernizr.touch) {
+        window.SCROLLBAR_WIDTH = 0;
+    }
     container.remove();
 });

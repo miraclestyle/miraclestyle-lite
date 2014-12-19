@@ -45,10 +45,10 @@
                                     next: {_images: $scope.catalog._next_read_arguments._images},
                                     access: accessImages,
                                     callback: function (items) {
+                                        console.log(items);
                                         $scope.catalog._images.extend(items);
                                     }
                                 });
-                                imagesReader.setNextReadArguments($scope.catalog._next_read_arguments);
                                 $scope.social = {
                                     fb: {
                                         url: catalogUrl

@@ -535,6 +535,7 @@ li.catalog-new-pricetag {
   top:10px;
   width:260px;
   overflow-x:hidden;
+  z-index:200;
 }
 
 .catalog-view-menu-content-inner {

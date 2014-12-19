@@ -16,14 +16,14 @@
 }
 
 @media screen and (max-width: 1024px) {
-    #is_tablet {
+    #is-tablet {
         visibility: visible;
     }
 }
 
 @media screen and (max-width: 767px) {
     /*this is only for mobile devices */
-   #is_mobile {
+   #is-mobile {
         visibility: visible;
     }
 

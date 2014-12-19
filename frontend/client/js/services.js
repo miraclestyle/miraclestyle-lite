@@ -301,10 +301,10 @@ w:                  while (images.length > 0) {
                     return Modernizr.touch;
                 },
                 isMobile: function () {
-                    return $('#is-mobile').css('visible') === 'visible';
+                    return $('#is-mobile').css('visibility') === 'visible';
                 },
                 isTablet: function () {
-                    return $('#is-tablet').css('visible') === 'visible';
+                    return $('#is-tablet').css('visibility') === 'visible';
                 },
                 isDesktop: function () {
                     return !this.isMobile();

@@ -838,6 +838,7 @@
                             if (!anyMore) {
                                 return false;
                             }
+                            anyMore = false;
                             callback(scope, {callback: function (response, state) {
                                 done();
                                 anyMore = state;
@@ -898,10 +899,15 @@
                         });
 
                         steadyScroll.addCondition('checkLeft', true);
+
+                        parent.data('steady', steadyScroll);
                     });
 
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
+                        if (steadyScroll) {
+                            steadyScroll.stop();
+                        }
                     });
                 }
             };
