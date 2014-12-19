@@ -443,7 +443,7 @@ li.catalog-new-pricetag {
   left: 3px;
 }
 
-.catalog-pricetag a {
+.catalog-pricetag button.button-transparent {
   text-decoration: none;
   display: block;
   padding: 6px 10px 4px;

@@ -283,7 +283,7 @@ class Catalog(orm.BaseExpando):
       orm.ActionPermission('31', [orm.Action.build_key('31', 'prepare')], True, 'not account._is_guest'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'create'),
                                   orm.Action.build_key('31', 'read')], True,
-                           'not account._is_guest and entity._original.key_root == account.key'),
+                           'not account._is_guest and (entity._original.key_root == account.key or account._root_admin)'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'search')], True,
                            'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key)) \
                            or (action.key_id == "search" and input["search"]["ancestor"]._root == account.key)'),

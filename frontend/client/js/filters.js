@@ -28,16 +28,23 @@
 
             return out;
         };
-    }).filter('output', function (modelsMeta, outputTypes) {
+    }).filter('output', function (modelsMeta, outputTypes, $cacheFactory) {
 
-        var types = outputTypes;
+        var types = outputTypes,
+            cacheFields = $cacheFactory('cacheFields'),
+            getFields = function (kind) {
+                if (!cacheFields.get(kind)) {
+                    cacheFields.put(kind, modelsMeta.getFields(kind));
+                }
+                return cacheFields.get(kind);
+            };
 
         return function (obj, key, args) {
 
             var input = obj[key], fields, field, format;
 
             if (obj.kind) {
-                fields = modelsMeta.getFields(obj.kind);
+                fields = getFields(obj.kind);
                 field = fields[key];
 
                 if (angular.isDefined(field)) {

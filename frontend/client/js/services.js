@@ -41,12 +41,13 @@
                         return v;
                     },
                     modal: function (errors) {
+                        console.log(errors);
                         $modal.open({
                             templateUrl: 'misc/modal/errors.html',
                             controller: function ($scope, $modalInstance) {
                                 $scope.errors = [];
                                 angular.forEach(errors, function (error, key) {
-                                    $scope.errors.push(key, errorHandling.translate(key, error));
+                                    $scope.errors.push([key, errorHandling.translate(key, error)]);
                                 });
                                 $scope.ok = function () {
                                     $modalInstance.dismiss('ok');
@@ -894,7 +895,7 @@ w:                  while (images.length > 0) {
                     if (!rejection.config.ignoreErrors) {
 
                         if (rejection.status > 200) {
-                            errorHandling.modal(angular.isString(rejection.data) ? {'traceback': rejection.data} : rejection.data.errors);
+                            errorHandling.modal(angular.isString(rejection.data) ? {traceback: rejection.data} : rejection.data.errors);
                             enableUI();
                             return $q.reject(rejection);
                         }

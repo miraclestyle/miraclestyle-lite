@@ -700,6 +700,8 @@
                         margin = config.margin || 0,
                         maxWidth = config.maxWidth || GLOBAL_CONFIG.grid.maxWidth,
                         minWidth = config.minWidth || GLOBAL_CONFIG.grid.minWidth,
+                        maxHeight = config.maxHeight || GLOBAL_CONFIG.grid.maxHeight,
+                        fixedHeight = config.fixedHeight,
                         image = scope.$eval(attrs.gridGenerator),
                         square = (angular.isDefined(config.square) ? config.square : true),
                         resize = function () {
@@ -734,7 +736,7 @@
                                         }
 
                                     } else {
-                                        $(this).height(helpers.newHeightByWidth(maxWidth, GLOBAL_CONFIG.grid.maxHeight, values[0]));
+                                        $(this).height(fixedHeight ? fixedHeight : helpers.newHeightByWidth(maxWidth, maxHeight, values[0]));
                                     }
 
                                 });

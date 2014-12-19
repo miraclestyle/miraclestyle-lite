@@ -156,9 +156,7 @@
                             showDetails.hide();
                         } else {
                             if (!isMobile) {
-                                productImages.addClass('t100', 100, function () {
-                                    //productImages.scrollLeft(0);
-                                });
+                                productImages.addClass('t100', 100);
                                 productDetails.addClass('t0', 100, function () {
                                     showDetails.show();
                                 });
