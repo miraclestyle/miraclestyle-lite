@@ -778,9 +778,6 @@
                                 element.removeClass('dragged');
                                 return;
                             }
-                            if (element.attr('disabled')) {
-                                return false;
-                            }
                             scope.$apply(function () {
                                 callback(scope, {$event: event});
                             });
