@@ -340,29 +340,42 @@ img.vertical, .vertical {
   width: 100%;
   display: block;
   padding: 15px 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.75);
+  box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.75);
   /*-webkit-box-shadow: 0px 0px;
   box-shadow: 0px 0px;*/
+  margin-top: 5px;
+}
+
+.button-wrapper .button[disabled]:hover,
+.button-wrapper .button:hover,
+.button-wrapper .button[disabled]:focus,
+.button-wrapper .button:focus,
+.button-wrapper .button[disabled]:active,
+.button-wrapper .button:active {
+  background-color: rgba(0, 0, 0, 0.75);
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.75);
 }
 
 .button-wrapper .button-left .button {
-  margin-right:2px;
-  width:99%;
+  width: 99%;
 }
 
 .button-wrapper .button-right .button {
-  margin-left:2px;
-  width:99%;
+  width: 99%;
 }
 
 .button-wrapper .button-left, .button-wrapper .button-right {
-  width:50%;
+  width: 100%;
 }
 
 .button-wrapper .button-left {
-  float:left;
 }
 .button-wrapper .button-right {
-  float:right;
 }
 
 .modal-alert .alert-message, .modal-confirm .confirm-message {
