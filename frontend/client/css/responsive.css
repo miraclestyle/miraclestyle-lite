@@ -1,3 +1,9 @@
+#is-mobile {
+    visibility: hidden;
+}
+#is-tablet {
+    visibility: hidden;
+}
 @media screen and (orientation: portrait) {
     /* Portrait styles here */
     

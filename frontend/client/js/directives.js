@@ -622,9 +622,9 @@
                             scope.$watch(attrs.accordionOnOpen + '.groups.' + i + '.open', function (neww, old) {
                                 var which = accordions.groups[i];
                                 if (neww) {
-                                    scope.$broadcast('accordionStateOpened', which, i);
+                                    scope.$broadcast('accordionOpened', which, i);
                                 } else {
-                                    scope.$broadcast('accordionStateClosed', which, i);
+                                    scope.$broadcast('accordionClosed', which, i);
                                 }
                             });
 
@@ -682,7 +682,7 @@
                     $(window).on('resize', resize);
                     scope.$on('itemOrderChanged', resize);
                     scope.$on('ngRepeatEnd', resize);
-                    scope.$on('accordionStateOpened', resize);
+                    scope.$on('accordionOpened', resize);
                     scope.$on('itemDelete', function () {
                         $timeout(resize);
                     });
