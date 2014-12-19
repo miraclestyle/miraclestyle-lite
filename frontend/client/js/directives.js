@@ -519,24 +519,29 @@
                     }
 
                     var disable = function (e) {
+                        e.stopImmediatePropagation();
                         e.preventDefault();
                         return false;
                     }, disabledInitially = angular.isDefined(attrs.loading) ? $parse(attrs.loading) : function () {
                         return false;
-                    };
+                    }, timer = null;
 
                     scope.$on('disableUI', function ($event, neww) {
 
                         if (disabledInitially(scope)) {
                             return;
                         }
-
                         if (neww === true) {
                             element.attr('disabled', 'disabled');
                             element.on('click', disable);
                         } else {
-                            element.removeAttr('disabled');
-                            element.off('click', disable);
+                            if (timer) {
+                                clearTimeout(timer);
+                            }
+                            timer = setTimeout(function () {
+                                element.removeAttr('disabled');
+                                element.off('click', disable);
+                            }, 200);
                         }
 
                     });
@@ -773,8 +778,11 @@
                                 element.removeClass('dragged');
                                 return;
                             }
+                            if (element.attr('disabled')) {
+                                return false;
+                            }
                             scope.$apply(function () {
-                                callback(scope, {event: event});
+                                callback(scope, {$event: event});
                             });
                         },
                         tap = function (e) {
