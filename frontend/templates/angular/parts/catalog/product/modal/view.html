@@ -15,6 +15,9 @@
          <div ng-if="!product.images.length">
            <h1 class="no-things-available">No images available</h1>
          </div>
+         <div catalog-button-bottom-floater-position class="catalog-product-show-details-wrapper">
+           <button type="button" catalog-product-show-toggler="true" class="button">Show Details</button>
+         </div>
     </div>
     
     <div class="pull-right t40 fixed-height product-right relative overflow-y">
@@ -55,6 +58,9 @@
          </div>
          
          <div class="modal-footer-right clearfix">
+               <button catalog-product-show-toggler="false" type="button" loading class="button">
+                  Show Images
+               </button>
                <button ng-hide="hideAddToCart" type="button" ng-click="addToCart()" 
                        loading class="button">
                   Add To Cart

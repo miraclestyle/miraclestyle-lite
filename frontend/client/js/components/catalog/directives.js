@@ -71,7 +71,7 @@
             },
             templateUrl: 'catalog/product/directive/product_instance_display.html'
         };
-    }).directive('catalogCloseButtonPosition', function () {
+    }).directive('catalogButtonBottomFloaterPosition', function () {
         return {
             link: function (scope, element, attrs) {
                 element.css('bottom', parseInt(element.css('bottom'), 10) + window.SCROLLBAR_WIDTH);
@@ -131,6 +131,45 @@
                         });
                     }
                 };
+            }
+        };
+    }).directive('catalogProductShowToggler', function (helpers) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                var modal = element.parents('.modal:first'),
+                    productImages = modal.find('.product-left'),
+                    productDetails = modal.find('.product-right'),
+                    inImages = attrs.catalogProductShowToggler === 'true',
+                    showDetails = productImages.find('.catalog-product-show-details-wrapper'),
+                    click = function () {
+                        var isMobile = helpers.responsive.isMobile();
+                        if (inImages) {
+                            if (!isMobile) {
+                                productImages.removeClass('t100', 100);
+                                productDetails.removeClass('t0', 100);
+                            } else {
+                                productImages.hide();
+                                productDetails.show();
+                            }
+
+                            showDetails.hide();
+                        } else {
+                            if (!isMobile) {
+                                productImages.addClass('t100', 100);
+                                productDetails.addClass('t0', 100, function () {
+                                    showDetails.show();
+                                });
+                            } else {
+                                productDetails.hide();
+                                productImages.show();
+                            }
+                        }
+                    };
+                element.click(click);
+                scope.$on('$destroy', function () {
+                    element.off('click', click);
+                });
             }
         };
     });

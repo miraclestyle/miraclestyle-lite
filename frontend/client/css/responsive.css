@@ -27,4 +27,12 @@
         visibility: visible;
     }
 
+    .product-left.t60 {
+        display:none;
+    }
+ 
+    .product-right.t40, .product-left.t60 {
+      width: 100%;
+    }
+
 }

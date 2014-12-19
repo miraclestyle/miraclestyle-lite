@@ -198,6 +198,14 @@ strong, b {
   width: 40%;
 }
 
+.t100 {
+  width:100%;
+}
+
+.t0 {
+  width:0%;
+}
+
 .overflow-master {
   width: 1500000000px;
 }
@@ -564,4 +572,12 @@ li.catalog-new-pricetag {
 
 .menu-catalog-social-item {
   margin-bottom: 10px;
+}
+
+.catalog-product-show-details-wrapper {
+  position:fixed;
+  right:10px;
+  bottom:10px;
+  display:none;
+  z-index: 100;
 }
