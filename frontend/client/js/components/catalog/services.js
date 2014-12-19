@@ -14,8 +14,12 @@
                 viewModal: function (key, config) {
                     models[catalogKind].actions.read({
                         key: key,
+                        // 5 rpcs
                         read_arguments: {
-                            _seller: {},
+                            _seller: {
+                                _content: {},
+                                _feedback: {}
+                            },
                             _images: {
                                 pricetags: {}
                             }
@@ -161,6 +165,7 @@
                                                     // rpc to check the instance
                                                     models[catalogKind].actions.read({
                                                         key: $scope.catalog.key,
+                                                        // 4 rpcs
                                                         read_arguments: {
                                                             _images: {
                                                                 config: {keys: [$scope.image.key]},
@@ -217,17 +222,7 @@
                                 };
 
                                 $scope.sellerDetails = function () {
-                                    models[catalogKind].actions.read({
-                                        key: $scope.catalog.key,
-                                        read_arguments: {
-                                            _seller: {
-                                                _content: {},
-                                                _feedback: {}
-                                            }
-                                        }
-                                    }).then(function (response) {
-                                        models['23'].viewModal(response.data.entity._seller);
-                                    });
+                                    models['23'].viewModal($scope.catalog._seller);
                                 };
 
                                 $scope.close = function () {

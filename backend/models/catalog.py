@@ -274,7 +274,6 @@ class Catalog(orm.BaseExpando):
     '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
                                                   read_arguments={'config': {'order': {'field': 'sequence',
                                                                                        'direction': 'desc'}}}),
-
     '_seller': orm.SuperReferenceStructuredProperty('23', callback=lambda self: self.key.parent().get_async()),
     '_records': orm.SuperRecordProperty('31')
     }

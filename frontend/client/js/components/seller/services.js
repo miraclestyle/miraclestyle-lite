@@ -421,7 +421,7 @@
             };
 
             $.extend(models['23'], {
-                viewModal: function (seller) {
+                viewModal: function (seller, removedOrAdded) {
                     $modal.open({
                         templateUrl: 'entity/modal/editor.html',
                         controller: function ($scope, currentAccount, $modalInstance) {
@@ -441,15 +441,16 @@
                             };
                             $scope.alreadyInCollection = false;
                             $scope.loadedCollection = models['18'].current().then(function (response) {
-                                if ($.inArray($scope.seller.key, response.data.entity.sellers) !== -1) {
+                                var collection = response.data.entity;
+                                if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
                                     $scope.alreadyInCollection = true;
                                 }
-                                return response;
+                                return collection;
                             });
 
                             $scope.toggleCollection = function () {
-                                $scope.loadedCollection.then(function (response) {
-                                    var loadedCollection = response.data.entity,
+                                $scope.loadedCollection.then(function (collection) {
+                                    var loadedCollection = collection,
                                         removed = false;
                                     if ($scope.alreadyInCollection) {
                                         removed = true;
@@ -461,9 +462,15 @@
                                         account: currentAccount.key,
                                         sellers: loadedCollection.sellers,
                                         notify: loadedCollection.notify
-                                    }).then(function () {
+                                    }).then(function (newResponse) {
+                                        var updatedCollection = newResponse.data.entity;
                                         modals.alert('Successfully ' + (removed ? 'removed seller from your' : 'added seller to your') +  ' colleciton.');
                                         $scope.alreadyInCollection = !removed;
+                                        // update cache
+                                        $.extend(loadedCollection, updatedCollection);
+                                        if (angular.isFunction(removedOrAdded)) {
+                                            removedOrAdded(updatedCollection, $scope.alreadyInCollection);
+                                        }
                                     });
                                 });
                             };

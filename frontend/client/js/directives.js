@@ -695,9 +695,9 @@
                         margin = config.margin || 0,
                         maxWidth = config.maxWidth || GLOBAL_CONFIG.grid.maxWidth,
                         minWidth = config.minWidth || GLOBAL_CONFIG.grid.minWidth,
+                        image = scope.$eval(attrs.gridGenerator),
                         square = (angular.isDefined(config.square) ? config.square : true),
                         resize = function () {
-
                             element = $(element);
                             if (!element.length) {
                                 return;
@@ -705,8 +705,7 @@
                             var wrapper = element.parents('.grid-wrapper:first'),
                                 canvasWidth = wrapper.outerWidth(true),
                                 values,
-                                img,
-                                image;
+                                img;
                             if (canvasWidth) {
                                 values = helpers.calculateGrid(canvasWidth,
                                     maxWidth, minWidth, margin);
@@ -720,7 +719,6 @@
                                     if (square) {
                                         box.height(values[0]);
                                         img = box.find('img');
-                                        image = scope.$eval(attrs.gridGenerator);
                                         if (image) {
                                             img.removeClass('horizontal vertical');
                                             if (image.proportion > 1) {
@@ -744,6 +742,7 @@
                     resize();
 
                     scope.$on('ngRepeatEnd', resize);
+                    scope.$on('accordionOpened', resize);
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
                     });
