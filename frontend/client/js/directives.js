@@ -976,5 +976,49 @@
                     config: '=loadMoreButton'
                 }
             };
+        }).directive('autoloadOnScrollend', function () {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    if (!attrs.autoloadOnScrollend) {
+                        return;
+                    }
+                    var config = scope.$eval(attrs.autoloadOnScrollend),
+                        loading = false,
+                        scroll = config.scroll || window,
+                        loadMore = function (values, done) {
+                            var loader = config.loader;
+                            if (loading || !loader.more) {
+                                done();
+                                return false;
+                            }
+                            loading = true;
+                            loader.load().then(function () {
+                                loading = false;
+                                done();
+                            });
+                        },
+                        steady,
+                        steadyOpts = {
+                            conditions: {
+                                "max-bottom": config.bottom || 40
+                            },
+                            scrollElement: $(scroll).get(0),
+                            throttle: 100,
+                            handler: loadMore
+                        };
+
+                    if (steadyOpts.scrollElement === window) {
+                        delete steadyOpts.scorllElement;
+                    }
+
+                    steady = new Steady(steadyOpts);
+
+                    scope.$on('$destroy', function () {
+                        steady.stop();
+                    });
+
+                }
+            };
         });
 }());

@@ -19,6 +19,7 @@
                 models[kind].manageModal(entity);
             };
             $scope.search = searchBuilder.create();
+            $scope.scrollEnd = {loader: false};
             $.extend($scope.search, {
                 doSearch: function () {
                     $state.go('admin-list', {
@@ -46,6 +47,7 @@
             if (query) {
                 $scope.search.setSearch(kind, query.search);
             }
+            $scope.scrollEnd = {loader: $scope.search.pagination};
             $scope.search.pagination.load();
 
 

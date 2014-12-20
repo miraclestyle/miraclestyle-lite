@@ -6,7 +6,7 @@
 
 <div ng-include="'misc/search_form.html'"></div>
 
-<div autoload-on-scrollend="search.pagination" class="grid-wrapper clearfix">
+<div autoload-on-scrollend="scrollEnd" class="grid-wrapper clearfix">
      <div class="item-list">
         <div ng-repeat="ent in search.results track by ent.key" class="item clearfix">
           <div class="item-left">

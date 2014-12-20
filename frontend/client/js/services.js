@@ -2265,6 +2265,10 @@ w:                  while (images.length > 0) {
                                     cursor: null,
                                     args: theConfig.args,
                                     load: function () {
+                                        if (!theConfig.args.search.options) {
+                                            theConfig.args.search.options = {};
+                                        }
+                                        theConfig.args.search.options.start_cursor = this.cursor;
                                         var promise = that.actions.search(theConfig.args, theConfig.config);
                                         promise.then(function (response) {
                                             paginate.more = response.data.more;
@@ -2591,24 +2595,24 @@ w:                  while (images.length > 0) {
                 },
                 changeKind: function () {
 
-                    var kindinfo = modelsMeta.get(this.kind),
-                        search_argument = null,
+                    var searchActionArguments = modelsMeta.getActionArguments(this.kind, 'search'),
+                        searchField,
                         cfg;
 
-                    if (kindinfo) {
+                    if (searchActionArguments) {
                         try {
-                            search_argument = kindinfo.mapped_actions.search['arguments'].search;
-                            this.default_send = search_argument['default'];
+                            searchField = searchActionArguments.search;
+                            this.default_send = searchField['default'];
                         } catch (ignore) {}
 
-                        if (!search_argument) {
+                        if (!searchField) {
                             this.hide = true;
-                            search_argument = {};
+                            searchField = {};
                         } else {
                             this.hide = false;
                         }
 
-                        cfg = search_argument.cfg;
+                        cfg = searchField.cfg;
                         this.send.kind = this.kind;
                         this.filters = cfg.filters || {};
                         this.indexes = cfg.indexes || [];

@@ -30,6 +30,8 @@
                 pagination: {}
             };
 
+            $scope.scrollEnd = {loader: false};
+
             models['23'].current().then(function (response) {
                 var sellerEntity = response.data.entity;
                 $scope.search.pagination = models['31'].paginate({
@@ -53,6 +55,7 @@
                         }
                     }
                 });
+                $scope.scrollEnd.loader = $scope.search.pagination;
                 $scope.search.pagination.load();
             });
 
