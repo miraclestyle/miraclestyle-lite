@@ -2761,16 +2761,16 @@ w:                  while (images.length > 0) {
                         this.resetFilters();
                     }
 
-                    var kindinfo = modelsMeta.get(this.kind),
-                        search_argument = null;
-                    if (kindinfo) {
+                    var searchActionArguments = modelsMeta.getActionArguments(this.kind, 'search'),
+                        searchArgument = null;
+                    if (searchActionArguments) {
                         try {
-                            search_argument = kindinfo.mapped_actions.search['arguments'].search;
+                            searchArgument = searchActionArguments.search;
                         } catch (ignore) {}
 
-                        if (search_argument) {
-                            if (search === undefined && search_argument['default']) {
-                                this.send = search_argument['default'];
+                        if (searchArgument) {
+                            if (search === undefined && searchArgument['default']) {
+                                this.send = searchArgument['default'];
                             } else if (search) {
                                 this.send = search;
                             }

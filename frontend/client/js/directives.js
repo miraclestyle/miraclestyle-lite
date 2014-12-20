@@ -1009,7 +1009,7 @@
                         };
 
                     if (steadyOpts.scrollElement === window) {
-                        delete steadyOpts.scorllElement;
+                        delete steadyOpts.scrollElement;
                     }
 
                     steady = new Steady(steadyOpts);

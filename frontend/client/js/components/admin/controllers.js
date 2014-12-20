@@ -2,6 +2,7 @@
     'use strict';
     angular.module('app')
         .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state) {
+
             var kind = $stateParams.kind,
                 query = null,
                 args = {};
