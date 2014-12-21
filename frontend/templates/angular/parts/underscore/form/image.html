@@ -9,9 +9,10 @@
         <span class="fieldset-text"><%= config.ui.compiled.label %></span>
         <span class="fieldset-button">
            <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
-               <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
+               <span>Add Images <span class="selected-total">(Selected: :total)</span> <span ng-show="$isUploading">(Uploading...)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
                        multiple
+                       show-number-of-selected-files=".selected-total"
                        generate-upload-url="true"
                        type="file" />
            </div>
@@ -24,9 +25,10 @@
       <div class="clearfix buttons">
         <div class="pull-right">
            <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
-               <span>Add Images <span ng-show="$isUploading">(Uploading...)</span></span>
+               <span>Add Images <span class="selected-total">(Selected: :total)</span> <span ng-show="$isUploading">(Uploading...)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
                        multiple
+                       show-number-of-selected-files=".selected-total"
                        generate-upload-url="true"
                        type="file" />
            </div>

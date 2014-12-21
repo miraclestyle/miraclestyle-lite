@@ -5,8 +5,8 @@
   </div>
 </div>
 
-<div autoload-on-scrollend="scrollEnd" class="grid-wrapper clearfix">
-    <div ng-repeat="result in search.results track by $index" grid-generator-image="result.cover" grid-generator="{square:false, margin:1, maxWidth:240, minWidth:180}" on-ng-repeat-end class="grid-item grid-generator">
+<div autoload-on-scrollend="scrollEnd" grid-generator-items="search.results" grid-generator="{square:false, margin:1, maxWidth:240, minWidth:180}" class="grid-wrapper clearfix">
+    <div ng-repeat="result in search.results track by $index" on-ng-repeat-end class="grid-item grid-generator">
         <button loading ng-click="preview(result.key)" class="button-transparent pointable">
             <img display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
         </button>

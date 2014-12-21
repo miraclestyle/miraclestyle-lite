@@ -524,7 +524,7 @@
                         return false;
                     }, disabledInitially = angular.isDefined(attrs.loading) ? $parse(attrs.loading) : function () {
                         return false;
-                    }, timer = null;
+                    };
 
                     scope.$on('disableUI', function ($event, neww) {
 
@@ -535,13 +535,8 @@
                             element.attr('disabled', 'disabled');
                             element.on('click', disable);
                         } else {
-                            if (timer) {
-                                clearTimeout(timer);
-                            }
-                            timer = setTimeout(function () {
-                                element.removeAttr('disabled');
-                                element.off('click', disable);
-                            }, 200);
+                            element.removeAttr('disabled');
+                            element.off('click', disable);
                         }
 
                     });
@@ -686,6 +681,9 @@
                     scope.$on('itemDelete', function () {
                         $timeout(resize);
                     });
+                    scope.$on(attrs.fancyGridGenerator + '.length', function () {
+                        $timeout(resize);
+                    });
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
                     });
@@ -702,41 +700,37 @@
                         minWidth = config.minWidth || GLOBAL_CONFIG.grid.minWidth,
                         maxHeight = config.maxHeight || GLOBAL_CONFIG.grid.maxHeight,
                         fixedHeight = config.fixedHeight,
-                        image = scope.$eval(attrs.gridGenerator),
                         square = (angular.isDefined(config.square) ? config.square : true),
                         resize = function () {
                             element = $(element);
                             if (!element.length) {
                                 return;
                             }
-                            var wrapper = element.parents('.grid-wrapper:first'),
+                            var wrapper = element,
                                 canvasWidth = wrapper.outerWidth(true),
-                                values,
-                                img;
+                                values;
                             if (canvasWidth) {
                                 values = helpers.calculateGrid(canvasWidth,
                                     maxWidth, minWidth, margin);
-                                wrapper.css({
-                                    paddingRight: values[2],
-                                    paddingLeft: values[2]
-                                });
 
-                                element.each(function () {
-                                    var box = $(this).width(values[0]);
-                                    if (square) {
-                                        box.height(values[0]);
-                                        img = box.find('img');
-                                        if (image) {
-                                            img.removeClass('horizontal vertical');
-                                            if (image.proportion > 1) {
-                                                img.addClass('horizontal');
-                                            } else {
-                                                img.addClass('vertical');
-                                            }
+                                if (wrapper.css('paddingLeft') !== values[2] || wrapper.css('paddingRight') !== values[2]) {
+                                    wrapper.css({
+                                        paddingRight: values[2],
+                                        paddingLeft: values[2]
+                                    });
+                                }
+
+                                wrapper.find('.grid-item').filter(function () {
+                                    return $(this).css('display') !== 'none';
+                                }).each(function () {
+                                    var box, newHeight = fixedHeight ? fixedHeight : helpers.newHeightByWidth(maxWidth, maxHeight, values[0]);
+                                    if (values[0] !== $(this).width() || $(this).height() !== newHeight) {
+                                        box = $(this).width(values[0]);
+                                        if (square) {
+                                            box.height(values[0]);
+                                        } else {
+                                            $(this).height(newHeight);
                                         }
-
-                                    } else {
-                                        $(this).height(fixedHeight ? fixedHeight : helpers.newHeightByWidth(maxWidth, maxHeight, values[0]));
                                     }
 
                                 });
@@ -744,14 +738,13 @@
                             }
                         };
 
-                    $(window).bind('resize', resize);
-
-                    resize();
-
+                    $(window).bind('resize modal.close', resize);
                     scope.$on('ngRepeatEnd', resize);
                     scope.$on('accordionOpened', resize);
+                    scope.$on('itemDelete', resize);
+                    scope.$watch(attrs.gridGeneratorItems + '.length', resize);
                     scope.$on('$destroy', function () {
-                        $(window).off('resize', resize);
+                        $(window).off('resize modal.close', resize);
                     });
 
                 }
@@ -1007,17 +1000,42 @@
                             throttle: 100,
                             handler: loadMore
                         };
-
                     if (steadyOpts.scrollElement === window) {
                         delete steadyOpts.scrollElement;
                     }
-
                     steady = new Steady(steadyOpts);
-
                     scope.$on('$destroy', function () {
                         steady.stop();
                     });
 
+                }
+            };
+        }).directive('showNumberOfSelectedFiles', function () {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    var root = element.parents('.fake-button:first'),
+                        target = root.find(attrs.showNumberOfSelectedFiles),
+                        totalText = target.text(),
+                        change = function () {
+                            setTimeout(function () {
+                                var files = element.prop('files');
+                                if (files && files.length) {
+                                    target.show();
+                                    target.text(totalText.replace(':total', files.length));
+                                } else {
+                                    target.hide();
+                                }
+                            }, 200);
+
+                        };
+                    element.bind('change', change);
+                    change();
+                    scope.$on('ngUploadComplete', change);
+                    scope.$on('ngUploadCompleteError', change);
+                    scope.$on('$destroy', function () {
+                        element.unbind('change', change);
+                    });
                 }
             };
         });

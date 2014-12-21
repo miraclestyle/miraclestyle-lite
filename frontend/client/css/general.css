@@ -595,3 +595,7 @@ li.catalog-new-pricetag {
   display:none;
   z-index: 100;
 }
+
+.selected-total {
+  display:none;
+}

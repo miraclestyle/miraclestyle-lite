@@ -1950,6 +1950,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
           modalWindow.modalScope.$destroy();
           body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
           checkRemoveBackdrop();
+          $(window).trigger('modal.close');
         });
       }
 

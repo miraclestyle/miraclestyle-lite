@@ -26,6 +26,10 @@
                         }
                     }).then(function (response) {
                         var entity = response.data.entity;
+                        if (!entity._images.length) {
+                            modals.alert('Catalog has no images, add some in order to view it');
+                            return;
+                        }
                         $modal.open({
                             templateUrl: 'catalog/modal/view.html',
                             windowClass: 'no-overflow',
@@ -45,7 +49,6 @@
                                     next: {_images: $scope.catalog._next_read_arguments._images},
                                     access: accessImages,
                                     callback: function (items) {
-                                        console.log(items);
                                         $scope.catalog._images.extend(items);
                                     }
                                 });

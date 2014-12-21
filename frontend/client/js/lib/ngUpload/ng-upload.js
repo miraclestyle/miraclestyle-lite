@@ -178,7 +178,6 @@ angular.module('ngUpload', [])
                         }
 
                         scope.$broadcast('ngUploadSubmit');
-
                         $rootScope.$broadcast('disableUI', true);
 
                     });
