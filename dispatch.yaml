@@ -1,4 +1,4 @@
-application: universal-trail-608
+application: x-arcanum-801
 
 dispatch:
   - url: '*/api/*'
