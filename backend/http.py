@@ -238,9 +238,9 @@ class AccountLogin(RequestHandler):
     output = iom.Engine.run(data)
     if 'authorization_code' in output:
       self.response.set_cookie('auth', output.get('authorization_code'), httponly=True)
-      self.redirect('/login_status?success=true') # we need to see how we can handle continue to link behaviour
+      self.redirect('/login/status?success=true') # we need to see how we can handle continue to link behaviour, generally this needs more work
     elif 'errors' in output:
-      self.redirect('/login_status?errors=%s' % urllib.quote(self.json_output(output['errors'])))
+      self.redirect('/login/status?errors=%s' % urllib.quote(self.json_output(output['errors'])))
     self.send_json(output)
  
 class AccountLogout(RequestHandler):

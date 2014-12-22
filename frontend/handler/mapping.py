@@ -12,7 +12,7 @@ from handler import base
 # update this config to map paths    
 settings.ROUTES.extend(((r'/', base.AngularBlank),
                        (r'/sell/catalogs', base.AngularBlank),
-                       (r'/login_status', base.AngularBlank),
+                       (r'/login/status', base.AngularBlank),
                        (r'/admin/list/<kind>/<filter>', base.AngularBlank)))
 
 # due development server bug, proxy the endpoint api to the real module
