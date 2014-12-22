@@ -47,8 +47,7 @@
                     }
                 }
             };
-        }
-    ]).directive('gplus', ['$window', function ($window) {
+        }]).directive('gplus', ['$window', function ($window) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -112,6 +111,7 @@
             restrict: 'A',
             scope: {
                 pinIt: '=',
+                pinItUrl: '=',
                 pinItImage: '='
             },
             link: function (scope, element, attrs) {
@@ -129,9 +129,9 @@
                                 }
                             });
                         } else {
-                            scope.pinItUrl = $location.absUrl();
+                            scope.pinItUrl = scope.pinItUrl || $location.absUrl();
                             element.html('<a href="//www.pinterest.com/pin/create/button/?url=' + encodeURIComponent(scope.pinItUrl) + '&media=' + scope.pinItImage + '&description=' + encodeURIComponent(scope.pinIt) + '" data-pin-do="buttonPin" data-pin-config="beside"><img src="//assets.pinterest.com/images/pidgets/pinit_fg_en_rect_gray_20.png" /></a>');
-                            $window.parsePins(element.parent()[0]);
+                            window.parsePins(element.parent()[0]);
                         }
                     };
                 if (!$window.parsePins) {
