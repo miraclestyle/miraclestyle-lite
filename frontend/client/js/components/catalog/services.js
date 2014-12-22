@@ -62,7 +62,8 @@
                                     },
                                     pinterest: {
                                         url: catalogUrl,
-                                        image: $scope.catalog._images[0].serving_url + '=s600'
+                                        image: $scope.catalog._images[0].serving_url + '=s600',
+                                        text: 'Share on pinterest'
                                     },
                                     gplus: {
                                         url: catalogUrl
