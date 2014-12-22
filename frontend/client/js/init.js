@@ -14,7 +14,7 @@
                 templateUrl: 'catalog/list.html'
             })
             .state('login-status', {
-                url: '/login_status',
+                url: '/login/status',
                 template: '',
                 controller: 'AccountLoginStatusCtrl'
             })
