@@ -19,6 +19,11 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: normal;
 }
 
+h1 {
+  font-size: 28px;
+  margin: 20px 0px;
+}
+
 a {
   color: #333333;
   cursor: pointer;
@@ -606,4 +611,46 @@ li.catalog-new-pricetag {
 }
 .product-content-item {
   margin-bottom:10px;
+}
+.catalog-name {
+  padding: 5px;
+}
+
+.product-name {
+  font-size: 28px;
+  line-height: 32px;
+  margin: 0px;
+  padding: 15px 5px 0px;
+}
+
+.product-description {
+  padding: 10px 5px;
+}
+
+.product-price {
+  padding: 10px 5px 0px;
+  font-size: 24px;
+  line-height: 27px;
+}
+
+.product-code {
+  padding: 5px;
+}
+
+.product-availability {
+  padding: 10px 5px;
+  font-size: 18px;
+  line-height: 21px;
+}
+
+.product-contents {
+  padding: 10px 5px;
+}
+
+.product-variant-selection {
+  padding: 10px 0px;
+}
+
+.product-variant-selection .form-control {
+  /*margin: 15px 0px;*/
 }

@@ -35,7 +35,7 @@ RECORDS_PAGE = 10
 SEARCH_PAGE = 10
 
 # Blob cloud storage settings.
-BUCKET_PATH = 'universal-trail-608.appspot.com'
+BUCKET_PATH = 'x-arcanum-801.appspot.com'
 
 # Catalog settings.
 CATALOG_PAGE = 10
@@ -68,8 +68,8 @@ BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
-   'client_id'    : '206755588982-194qvci376p5pj9ulujen5jt1jt5mdtg.apps.googleusercontent.com',
-   'client_secret': 'HdIWuYgYF22bYiBJH94LYS8V',
+   'client_id'    : '659759206787-v5nj4qd1k6trkv6kttkc9rt92ojkcvtu.apps.googleusercontent.com',
+   'client_secret': 'NiPPgts3FGMcICryDRn05X3x',
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
