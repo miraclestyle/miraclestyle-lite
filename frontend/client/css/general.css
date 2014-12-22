@@ -21,6 +21,7 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
   font-size: 28px;
+  line-height: 32px;
   margin: 20px 0px;
 }
 
@@ -617,8 +618,6 @@ li.catalog-new-pricetag {
 }
 
 .product-name {
-  font-size: 28px;
-  line-height: 32px;
   margin: 0px;
   padding: 15px 5px 0px;
 }
