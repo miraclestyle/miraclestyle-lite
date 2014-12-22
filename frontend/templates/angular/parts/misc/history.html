@@ -1,0 +1,10 @@
+<div ng-controller="HistoryListingCtrl">
+    <div class="item-list">
+        <div class="item" ng-repeat="record in history.records">
+            <div>{{record|output: 'logged'}}</div>
+            <div>{{record._action}}</div>
+            <div>{{record._agent}}</div>
+        </div>
+    </div>
+    <div load-more-button="history.reader"></div>
+</div>

@@ -16,6 +16,7 @@
                                 }, 100, function () {
                                     $(this).hide();
                                     $('body').removeClass(activeClass);
+                                    $(window).trigger('mainMenu.hide');
                                 });
                             } else if (!visible || cmd === 2) {
                                 mm.css('top', $(document).scrollTop() + $('#top-bar').height());
@@ -25,6 +26,7 @@
                                 }, 100, function () {
                                     mm.scrollTop(0);
                                     $('body').addClass(activeClass);
+                                    $(window).trigger('mainMenu.show');
                                 });
                             }
                         },
@@ -738,13 +740,13 @@
                             }
                         };
 
-                    $(window).bind('resize modal.close', resize);
+                    $(window).bind('resize modal.close mainMenu.hide', resize);
                     scope.$on('ngRepeatEnd', resize);
                     scope.$on('accordionOpened', resize);
                     scope.$on('itemDelete', resize);
                     scope.$watch(attrs.gridGeneratorItems + '.length', resize);
                     scope.$on('$destroy', function () {
-                        $(window).off('resize modal.close', resize);
+                        $(window).off('resize modal.close mainMenu.hide', resize);
                     });
 
                 }
@@ -969,16 +971,16 @@
                     config: '=loadMoreButton'
                 }
             };
-        }).directive('autoloadOnScrollend', function () {
+        }).directive('autoloadOnVerticalScrollEnd', function () {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    if (!attrs.autoloadOnScrollend) {
+                    if (!attrs.autoloadOnVerticalScrollEnd) {
                         return;
                     }
-                    var config = scope.$eval(attrs.autoloadOnScrollend),
+                    var config = scope.$eval(attrs.autoloadOnVerticalScrollEnd),
                         loading = false,
-                        scroll = config.scroll || window,
+                        listen = config.listen || window,
                         loadMore = function (values, done) {
                             var loader = config.loader;
                             if (loading || !loader.more) {
@@ -996,13 +998,38 @@
                             conditions: {
                                 "max-bottom": config.bottom || 40
                             },
-                            scrollElement: $(scroll).get(0),
+                            scrollElement: $(listen).get(0),
                             throttle: 100,
                             handler: loadMore
                         };
-                    if (steadyOpts.scrollElement === window) {
-                        delete steadyOpts.scrollElement;
+                    steady = new Steady(steadyOpts);
+                    scope.$on('$destroy', function () {
+                        steady.stop();
+                    });
+
+                }
+            };
+        }).directive('onVerticalScrollEndEvent', function () {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    if (!attrs.onVerticalScrollEndEvent) {
+                        return;
                     }
+                    var config = scope.$eval(attrs.onVerticalScrollEndEvent),
+                        scroll = config.listen === 'window' ? window : (config.listen ? config.listen : element),
+                        steady,
+                        triggerEvent = function (values, done) {
+                            scope.$broadcast('onVerticalScrollEnd', values, done);
+                        },
+                        steadyOpts = {
+                            conditions: {
+                                "max-bottom": config.bottom || 40
+                            },
+                            scrollElement: $(scroll).get(0),
+                            throttle: 100,
+                            handler: triggerEvent
+                        };
                     steady = new Steady(steadyOpts);
                     scope.$on('$destroy', function () {
                         steady.stop();

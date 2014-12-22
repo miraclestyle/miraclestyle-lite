@@ -95,13 +95,13 @@ for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
 ANGULAR_TEMPLATES = (
   # core
   ('form/builder.html',),
-
   ('misc/form_wrapper.html',),
   ('misc/modal/alert.html',),
   ('misc/modal/errors.html',),
   ('misc/modal/confirm.html',),
   ('misc/load_more_button.html',),
   ('misc/search_form.html',),
+  ('misc/history.html',),
 
   ('entity/modal/editor.html',),
   ('entity/modal/editor_default_body.html',),
@@ -205,6 +205,7 @@ ANGULAR_TEMPLATES = (
   ('admin/directive/list/11.html',), # display directive template for account
 
   # catalog
+  ('catalog/quick_info.html',),
   ('catalog/modal/manage_footer.html',),
   ('catalog/modal/administer.html',),
   ('catalog/modal/products.html',),
@@ -215,6 +216,8 @@ ANGULAR_TEMPLATES = (
   ('catalog/list.html',),
   ('catalog/underscore/form/image.html',),
   ('catalog/product/directive/product_instance_display.html',),
+  ('catalog/product/modal/content_view_body.html',),
+  ('catalog/product/modal/content_view_footer.html',),
 
 
   # other

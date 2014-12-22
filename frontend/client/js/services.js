@@ -944,7 +944,7 @@ w:                  while (images.length > 0) {
             ]);
 
     }]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
-        modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes) {
+        modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordAccordion) {
 
         var modelsEditor = {
             create: function (new_config) {
@@ -1091,7 +1091,31 @@ w:                  while (images.length > 0) {
                                     field,
                                     done = {},
                                     found = false,
-                                    realTotal = 0;
+                                    realTotal = 0,
+                                    madeHistory = false,
+                                    makeHistory = function () {
+                                        if (madeHistory || !$scope.entity.id) {
+                                            return false;
+                                        }
+                                        if (!angular.isDefined($scope.historyConfig)) {
+                                            $scope.historyConfig = false;
+                                        }
+                                        if ($scope.historyConfig === true) {
+                                            $scope.historyConfig = {
+                                                kind: config.kind,
+                                                key: $scope.entity.key
+                                            };
+                                        } else {
+                                            if ($scope.historyConfig === false) {
+                                                return false;
+                                            }
+                                        }
+                                        madeHistory = true;
+                                        $scope.historyConfig.key = $scope.entity.key;
+                                        if ($scope.args.ui.rule.field._records.visible) {
+                                            recordAccordion.attach($scope.accordions);
+                                        }
+                                    };
                                 modelsUtil.normalize(entity);
                                 $scope.container = {
                                     action: endpoint.url
@@ -1133,6 +1157,7 @@ w:                  while (images.length > 0) {
                                         $.extend($scope.entity, response.data.entity);
                                         var new_args = config.argumentLoader($scope);
                                         $.extend($scope.args, new_args);
+                                        makeHistory();
                                         if (angular.isDefined(config.afterSave)) {
                                             config.afterSave($scope);
                                         }
@@ -1152,6 +1177,7 @@ w:                  while (images.length > 0) {
                                     $.extend($scope.entity, response.data.entity);
                                     var newArgs = config.argumentLoader($scope);
                                     $.extend($scope.args, newArgs);
+                                    makeHistory();
                                     if (angular.isDefined(config.afterComplete)) {
                                         config.afterComplete($scope);
                                     }
@@ -1285,6 +1311,7 @@ w:                  while (images.length > 0) {
                                 config.defaultInit($scope);
                                 config.init($scope);
                                 console.log('modelsEditor.scope', $scope);
+                                makeHistory();
 
                             }
                         });
@@ -1320,6 +1347,14 @@ w:                  while (images.length > 0) {
 
                     if (!angular.isDefined(info.config.ui.specifics.repeatAs)) {
                         info.config.ui.specifics.repeatAs = '';
+                    }
+
+                    if (!angular.isDefined(info.config.ui.specifics.searchEnabled)) {
+                        if (info.config.choices.length < 10) {
+                            info.config.ui.specifics.searchEnabled = false;
+                        } else {
+                            info.config.ui.specifics.searchEnabled = true;
+                        }
                     }
 
                     return 'select';
@@ -1596,6 +1631,9 @@ w:                  while (images.length > 0) {
                     }
                     if (!angular.isDefined(config.ui.placeholder)) {
                         config.ui.placeholder = 'Select...';
+                    }
+                    if (!angular.isDefined(config.ui.specifics.searchEnabled)) {
+                        config.ui.specifics.searchEnabled = true;
                     }
                     return 'select_async';
                 },
@@ -2315,6 +2353,7 @@ w:                  while (images.length > 0) {
                                 next: null,
                                 access: config.access,
                                 more: canLoadMore(config.next),
+                                config: config,
                                 state: function (config) {
                                     this.next = config.next;
                                     if (angular.isDefined(config.access)) {
@@ -2349,10 +2388,10 @@ w:                  while (images.length > 0) {
                                         next = angular.copy(config.next);
                                     }
 
-                                    promise = models[config.kind].actions.read({
+                                    promise = (config.read ? config.read(next) : models[config.kind].actions.read({
                                         key: config.key,
                                         read_arguments: next
-                                    });
+                                    }));
 
                                     promise.then(function (response) {
                                         var getAccess = [],
@@ -2752,7 +2791,6 @@ w:                  while (images.length > 0) {
                     if (kind === undefined || kind === null) {
                         this.hide = true;
                         return;
-
                     }
 
                     if (this.kind !== kind) {
@@ -2799,6 +2837,17 @@ w:                  while (images.length > 0) {
         };
         return {
             create: create
+        };
+    }).factory('recordAccordion', function () {
+        return {
+            attach: function (accordions) {
+                accordions.groups.push({
+                    label: 'History',
+                    key: 'history',
+                    open: false,
+                    include: 'misc/history.html'
+                });
+            }
         };
     });
 }());

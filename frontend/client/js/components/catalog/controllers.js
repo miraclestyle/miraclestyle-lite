@@ -2,7 +2,9 @@
     'use strict';
     // code for account
     angular.module('app')
-        .controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid) {
+        .controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+
+            $rootScope.pageTitle = 'Sell Catalogs';
 
             var newEntity = function (entity) {
                 if (!_.findWhere($scope.search.results, {

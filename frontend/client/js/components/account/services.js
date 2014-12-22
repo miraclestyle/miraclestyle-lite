@@ -73,6 +73,7 @@
                                 };
                             },
                             scope: {
+                                historyConfig: true,
                                 isAssociated: function (ident) {
                                     return $.inArray(ident.identity, this.args.disassociate) === -1;
                                 },

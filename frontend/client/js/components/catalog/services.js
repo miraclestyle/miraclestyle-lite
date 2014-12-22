@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers) {
+    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q) {
 
         var catalogKind = '31';
 
@@ -99,11 +99,9 @@
                                         key: $scope.catalog.key,
                                         read_arguments: readArguments
                                     }).then(function (response) {
-                                        var parentScope = $scope;
-                                        $modal.open({
-                                            templateUrl: 'catalog/product/modal/view.html',
-                                            windowClass: 'no-overflow',
-                                            controller: function ($scope, $modalInstance) {
+                                        var parentScope = $scope,
+                                            makeFakeScope = function () {
+                                                $scope = {};
                                                 $scope.product = response.data.entity._images[0].pricetags[0]._product;
                                                 $scope.originalProduct = angular.copy($scope.product);
                                                 $scope.catalog = parentScope.catalog;
@@ -117,7 +115,7 @@
                                                     $scope.variants.push({
                                                         name: v.name,
                                                         options: v.options,
-                                                        option: null,
+                                                        option: v.options[0],
                                                     });
 
                                                     $scope.variantSelection.push({
@@ -137,20 +135,10 @@
 
                                                 });
 
-                                                $scope.resetVariation = function () {
-                                                    $.extend($scope.product, $scope.originalProduct);
-                                                    $scope.variationApplied = false;
-                                                    angular.forEach($scope.variants, function (v) {
-                                                        v.option = null;
-                                                    });
-                                                };
-
-                                                $scope.variationApplied = false;
-
-                                                $scope.changeVariation = function () {
+                                                $scope.changeVariationPromise = function () {
                                                     var variantSignature = [],
-                                                        productInstance,
-                                                        skip = false;
+                                                        skip = false,
+                                                        promise;
 
                                                     angular.forEach($scope.variants, function (v) {
                                                         var d = {};
@@ -162,19 +150,21 @@
                                                     });
 
                                                     if (skip) {
-                                                        return;
+                                                        promise = $q.defer().promise;
+                                                        promise.resolve();
+                                                        return promise;
                                                     }
 
                                                     // rpc to check the instance
-                                                    models[catalogKind].actions.read({
-                                                        key: $scope.catalog.key,
+                                                    return models[catalogKind].actions.read({
+                                                        key: this.catalog.key,
                                                         // 4 rpcs
                                                         read_arguments: {
                                                             _images: {
-                                                                config: {keys: [$scope.image.key]},
+                                                                config: {keys: [this.image.key]},
                                                                 pricetags: {
                                                                     config: {
-                                                                        keys: [$scope.pricetag.key]
+                                                                        keys: [this.pricetag.key]
                                                                     },
                                                                     _product: {
                                                                         _instances: {
@@ -190,31 +180,83 @@
                                                                 }
                                                             }
                                                         }
-                                                    }).then(function (response) {
-                                                        var product,
-                                                            toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
-                                                                             'description', 'contents', 'availability'];
-                                                        try {
-                                                            product = response.data.entity._images[0].pricetags[0]._product;
-                                                        } catch (ignore) { }
-
-                                                        if (product) {
-                                                            productInstance = product._instances[0];
-                                                        }
-
-                                                        if (productInstance) {
-
-                                                            angular.forEach(toUpdate, function (field) {
-                                                                var next = productInstance[field];
-                                                                if (next !== null && next.length) {
-                                                                    $scope.product[field] = next;
-                                                                }
-                                                            });
-                                                        }
-
-                                                        $scope.variationApplied = true;
                                                     });
                                                 };
+
+                                                return $scope;
+                                            },
+                                            fakeScope = makeFakeScope();
+                                        $modal.open({
+                                            resolve: {productInstanceResponse: function () {
+                                                return fakeScope.changeVariationPromise().then(function (response) {
+                                                    return response;
+                                                });
+                                            }},
+                                            templateUrl: 'catalog/product/modal/view.html',
+                                            windowClass: 'no-overflow',
+                                            controller: function ($scope, $modalInstance, productInstanceResponse) {
+                                                var loadProductInstance;
+                                                $.extend($scope, fakeScope);
+                                                $scope.resetVariation = function () {
+                                                    this.resetVariantProduct();
+                                                    $scope.variationApplied = false;
+                                                    angular.forEach($scope.variants, function (v) {
+                                                        v.option = null;
+                                                    });
+                                                };
+                                                $scope.resetVariantProduct = function () {
+                                                    $.extend(this.product, this.originalProduct);
+                                                };
+                                                $scope.variationApplied = false;
+                                                $scope.viewContent = function (content) {
+                                                    $modal.open({
+                                                        templateUrl: 'entity/modal/editor.html',
+                                                        controller: function ($scope, $modalInstance) {
+                                                            $scope.config = {};
+                                                            $scope.config.templateBodyUrl = 'catalog/product/modal/content_view_body.html';
+                                                            $scope.config.templateFooterUrl = 'catalog/product/modal/content_view_footer.html';
+                                                            $scope.content = content;
+                                                            $scope.close = function () {
+                                                                $modalInstance.dismiss('close');
+                                                            };
+                                                        }
+                                                    });
+                                                };
+
+                                                loadProductInstance = function (response) {
+                                                    var product,
+                                                        productInstance,
+                                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
+                                                                         'description', 'contents', 'availability'];
+                                                    try {
+                                                        product = response.data.entity._images[0].pricetags[0]._product;
+                                                    } catch (ignore) { }
+
+                                                    if (product) {
+                                                        productInstance = product._instances[0];
+                                                    }
+
+                                                    if (productInstance) {
+
+                                                        angular.forEach(toUpdate, function (field) {
+                                                            var next = productInstance[field];
+                                                            if (next !== null && next.length) {
+                                                                $scope.product[field] = next;
+                                                            }
+                                                        });
+                                                    } else {
+                                                        $scope.resetVariantProduct();
+                                                    }
+
+                                                    $scope.variationApplied = true;
+                                                };
+
+                                                $scope.changeVariation = function () {
+                                                    // rpc to check the instance
+                                                    this.changeVariationPromise().then(loadProductInstance);
+                                                };
+
+                                                loadProductInstance(productInstanceResponse);
 
                                                 $scope.close = function () {
                                                     $modalInstance.dismiss('close');
@@ -362,6 +404,7 @@
                             },
                             noComplete: noComplete,
                             scope: { // scope for this modal dialog
+                                historyConfig: true,
                                 addProducts: function () {
                                     // this function is completely custom, meaning that the entire workflow defined here is for
                                     // pricetag positioning and product editing...

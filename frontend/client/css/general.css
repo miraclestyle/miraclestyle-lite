@@ -533,7 +533,7 @@ li.catalog-new-pricetag {
 
 .product-detail-content {
   padding: 10px;
-  padding-bottom: 63px;
+  padding-bottom: 77px;
 }
 
 .catalog-view-menu-content {
@@ -598,4 +598,12 @@ li.catalog-new-pricetag {
 
 .selected-total {
   display:none;
+}
+
+.product-content-item .button {
+  display:block;
+  width:100%;
+}
+.product-content-item {
+  margin-bottom:10px;
 }

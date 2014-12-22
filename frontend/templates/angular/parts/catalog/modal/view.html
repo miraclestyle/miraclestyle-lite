@@ -32,11 +32,8 @@
                   <div class="catalog-view-menu-content-inner">
                       <!-- ng-if="menu.init" lazy loading can be achieved with ng-if -->
                       <div>
-                          <div class="menu-catalog-name">{{catalog.name}}</div>
-                          <div class="menu-catalog-expire-time">
-                              Expires in
-                              <timer end-time="catalog.discontinue_date">{{days}} days, {{hours}} hours, {{minutes}} minutes, {{seconds}} seconds.</timer>
-                          </div>
+                          
+                          <div ng-include="'catalog/quick_info.html'"></div>
 
                           <ul class="menu-catalog-items clearfix">
                               <li class="menu-catalog-item">
@@ -66,7 +63,6 @@
                   </div>
               </div>
           </div>
-
 
             <div catalog-button-bottom-floater-position class="catalog-view-controls">
                <button loading type="button" class="button" ng-click="close()">Close</button>

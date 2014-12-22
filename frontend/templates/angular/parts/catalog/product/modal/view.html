@@ -20,41 +20,35 @@
          </div>
     </div>
     
-    <div class="pull-right t40 fixed-height product-right relative overflow-y">
-         
-         <div class="product-detail-content">
-            <div class="catalog-name">{{catalog.name}}</div>
-            <h1 class="product-name">{{product.name}}</h1>
-            <div class="product-description">{{product.description}}</div>
-            
-            <div class="product-price">
-              {{product.unit_price|displayCurrency:catalog._seller._currency}}
-            </div>
-            <div class="product-code">
-              {{product.code}}
-            </div>
+    <div class="pull-right t40 fixed-height product-right relative overflow-hidden">
+         <div class="fixed-height overflow-y">
+           <div class="product-detail-content">
+              <div ng-include="'catalog/quick_info.html'"></div>
+              <h1 class="product-name">{{product.name}}</h1>
+              <div class="product-description">{{product.description}}</div>
+              
+              <div class="product-price">
+                {{product.unit_price|displayCurrency:catalog._seller._currency}}
+              </div>
+              <div class="product-code">
+                {{product.code}}
+              </div>
 
-            <div class="product-availability">
-              {{product.availability}}
-            </div>
- 
- 
-            <div ng-if="product.contents.length" class="product-contents">
-                 <div accordion>
-                      <div ng-repeat="content in product.contents track by content.key" accordion-group heading="{{content.title}}">
-                          {{content.body}}
-                      </div>
-                  </div>
-            </div>
-       
- 
-            <div class="product-variant-selection" ng-if="variantSelection.length">
-              <div form-builder="variantSelection"></div>
-              <div ng-if="variationApplied" class="text-right">
-                <button type="button" class="button" ng-click="resetVariation()">Reset</button>
+              <div class="product-availability">
+                {{product.availability}}
+              </div>
+   
+   
+              <div ng-if="product.contents.length" class="product-contents">
+                   <div ng-repeat="content in product.contents track by content.key" class="product-content-item">
+                     <button ng-click="viewContent(content)" type="button" class="button">{{content.title}}</button>
+                   </div>
+              </div>
+        
+              <div class="product-variant-selection" ng-if="variantSelection.length">
+                <div form-builder="variantSelection"></div>
               </div>
             </div>
-        
          </div>
          
          <div class="modal-footer-right clearfix">

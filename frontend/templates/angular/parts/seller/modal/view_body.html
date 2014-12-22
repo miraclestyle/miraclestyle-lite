@@ -1,25 +1,17 @@
-<div accordion-on-open="accordions">
-    <accordion close-others="accordions.closeOthers">
-        <accordion-group heading="{{accordions.groups[0].label}}" is-open="accordions.groups[0].open" is-disabled="accordions.groups[0].disabled">
-
-        
-        <div ng-if="seller._content.documents.length" accordion close-others="accordions.closeOthers">
-            <accordion-group ng-repeat="document in seller._content.documents" heading="{{document.title}}" is-open="$first">
-                {{document.body}}
-            </accordion-group>
+<div class="modal-body-inner-padded">
+    <h1 class="seller-name">{{seller.name}}</h1>
+    <div>
+        <div class="seller-feedback">
+            @todo
         </div>
-
-        <div ng-if="!seller._content.documents.length">
-            <h1 class="no-things-available">No information available</h1>
+    </div>
+    <div class="seller-contents">
+        <div accordion-on-open="accordions">
+            <accordion close-others="accordions.closeOthers">
+                <accordion-group ng-repeat="document in seller._content.documents" heading="{{document.title}}" is-open="$first">
+                        {{document.body}}
+                </accordion-group>
+            </accordion>
         </div>
-        
-
-        </accordion-group>
-
-
-        <accordion-group heading="{{accordions.groups[1].label}}" is-open="accordions.groups[1].open" is-disabled="accordions.groups[1].disabled">
-        @todo
-        </accordion-group>
-
-    </accordion>
+    </div>
 </div>

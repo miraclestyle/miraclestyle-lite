@@ -35,5 +35,10 @@
             </div>
         </accordion-group>
 
+
+        <accordion-group ng-if="accordions.groups.2" heading="{{accordions.groups.2.label}}" is-open="accordions.groups.2.open" is-disabled="accordions.groups.2.disabled" ng-init="accordion = accordions.groups.2">
+          <div ng-if="accordion.include" ng-include="accordion.include"></div>
+        </accordion-group>
+
     </accordion>
  </div>

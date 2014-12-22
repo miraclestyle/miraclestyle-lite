@@ -1,5 +1,5 @@
 <div form-element-wrapper label="<%= config.ui.compiled.label %>">
-       <ui-select name="<%= config.ui.formName %>" theme="select2" 
+       <ui-select search-enabled="{{config.ui.specifics.searchEnabled}}" name="<%= config.ui.formName %>" theme="select2" 
           <%= config.ui.compiled.attrs %> <% if (config.repeated) { %>multiple="true"<% } %>>
           <ui-select-match placeholder="{{config.ui.placeholder}}">
           <% if (config.repeated) { %>
