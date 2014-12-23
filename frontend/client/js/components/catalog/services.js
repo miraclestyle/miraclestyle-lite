@@ -71,13 +71,20 @@
                                 };
 
                                 $scope.loadMoreImages = function (callback) {
-                                    if (imagesReader.more) {
-                                        imagesReader.load().then(function () {
+                                    var promise = imagesReader.load();
+                                    if (promise) {
+                                        promise.then(function () {
                                             callback.call(this, response, imagesReader.more);
                                         });
                                     } else {
                                         callback.call(this, undefined, imagesReader.more);
                                     }
+                                };
+
+                                $scope.displayCart = function () {
+                                    models['19'].current().then(function (response) {
+                                        models['34'].viewCartModal($scope.catalog._seller, response.data.entity);
+                                    });
                                 };
 
                                 $scope.viewProduct = function (image, pricetag) {
@@ -111,6 +118,7 @@
                                                 $scope.image = image;
                                                 $scope.pricetag = pricetag;
                                                 $scope.hideAddToCart = config.hideAddToCart;
+                                                $scope.currentVariation = null;
                                                 angular.forEach($scope.product.variants, function (v, i) {
 
                                                     $scope.variants.push({
@@ -155,6 +163,8 @@
                                                         promise.resolve();
                                                         return promise;
                                                     }
+
+                                                    $scope.currentVariation = variantSignature;
 
                                                     // rpc to check the instance
                                                     return models[catalogKind].actions.read({
@@ -207,6 +217,7 @@
                                                 };
                                                 $scope.resetVariantProduct = function () {
                                                     $.extend(this.product, this.originalProduct);
+                                                    $scope.productInstance = null;
                                                 };
                                                 $scope.variationApplied = false;
                                                 $scope.viewContent = function (content) {
@@ -239,6 +250,8 @@
 
                                                     if (productInstance) {
 
+                                                        $scope.productInstance = productInstance;
+
                                                         angular.forEach(toUpdate, function (field) {
                                                             var next = productInstance[field];
                                                             if (next !== null && next.length) {
@@ -258,6 +271,18 @@
                                                 };
 
                                                 loadProductInstance(productInstanceResponse);
+
+                                                $scope.addToCart = function () {
+                                                    models['19'].current().then(function (response) {
+                                                        return models['34'].actions.add_to_cart({
+                                                            buyer: response.data.entity.key,
+                                                            product: $scope.product.key,
+                                                            variant_signature: $scope.currentVariation
+                                                        });
+                                                    }).then(function (response) {
+                                                        console.log(response);
+                                                    });
+                                                };
 
                                                 $scope.close = function () {
                                                     $modalInstance.dismiss('close');
@@ -547,8 +572,9 @@
                                             };
 
                                             $scope.loadMoreImages = function (callback) {
-                                                if (imagesReader.more) {
-                                                    imagesReader.load().then(function (response) {
+                                                var promise = imagesReader.load();
+                                                if (promise) {
+                                                    promise.then(function (response) {
                                                         callback.call(this, response, imagesReader.more);
                                                     });
                                                 } else {

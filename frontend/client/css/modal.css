@@ -80,7 +80,8 @@
   overflow-y:scroll;
 }
 
-.modal-body.scrollable.has-footer .modal-body-inner, .modal-body.unscrollable.has-footer .modal-body-inner {
+.modal-body.scrollable.has-footer .modal-body-inner, .modal-body.unscrollable.has-footer .modal-body-inner,
+.modal-body.unscrollable.has-footer .modal-body-inner-padded, .modal-body.scrollable.has-footer .modal-body-inner-padded {
   padding-bottom:77px;
 }
 

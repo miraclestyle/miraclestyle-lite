@@ -80,8 +80,9 @@ class Structured():
     return self.segment
 
 ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'),
-                             Structured('buyer'), Structured('collection'), Structured('seller'), 
-                             Structured('catalog'), Structured('admin')]
+                             Structured('buyer'), Structured('collection'), 
+                             Structured('seller'), Structured('catalog'),
+                             Structured('order'), Structured('admin')]
 ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
 ANGULAR_ACTIVE_COMPONENTS = []
 for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
@@ -195,7 +196,7 @@ ANGULAR_TEMPLATES = (
   ('seller/modal/view_footer.html',),
   
   # buyer
-  ('buyer/directive/buyer_address_display.html',),
+  ('buyer/directive/address_display.html',),
 
   # colleciton
   ('collection/modal/manage_body.html',),
@@ -219,6 +220,8 @@ ANGULAR_TEMPLATES = (
   ('catalog/underscore/form/image.html',),
   ('catalog/product/directive/product_instance_display.html',),
 
+  # order
+  ('order/modal/cart_view.html',),
 
   # other
   ('home/index.html',),

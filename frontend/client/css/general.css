@@ -661,3 +661,7 @@ li.catalog-new-pricetag {
 .product-variant-selection .form-control {
   margin: 15px 0px;
 }
+
+.cart-totals {
+  margin-top:10px;
+}

@@ -38,7 +38,7 @@ class OrderInit(orm.BaseModel):
       product = context.input.get('product')
       if not product:
         raise PluginError('seller_missing')
-      seller_key = product.parent().parent() # go 2 levels up, account->seller->catalog->product
+      seller_key = product.parent().parent().parent() # go 3 levels up, account->seller->catalog->pricetag->product
     order = Order.query(Order.seller_reference == seller_key,
                         Order.state.IN(['cart', 'checkout']),
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this

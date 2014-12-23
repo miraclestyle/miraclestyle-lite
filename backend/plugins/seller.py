@@ -58,7 +58,7 @@ class SellerSetupDefaults(orm.BaseModel):
     plugin_group.read()
     plugin_group = plugin_group.value
     default_address_rule_shipping = AddressRule(name='Default Address Shipping Rule', exclusion=False, address_type='shipping')
-    default_address_rule_billing = AddressRule(name='Default Address Shipping Rule', exclusion=False, address_type='shipping')
+    default_address_rule_billing = AddressRule(name='Default Address Shipping Rule', exclusion=False, address_type='billing')
     default_currency = OrderCurrency(name='Default Currency', currency=Unit.build_key('usd'))
     default_paypal_payment = PayPalPayment(name='Paypal Payment Method', reciever_email='your paypal e-mail', business='your paypal merchant id or e-mail')
     if not plugin_group or not plugin_group.plugins: # now user wont be in able to delete the config completely, he will always have these defaults
