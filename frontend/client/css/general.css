@@ -527,7 +527,7 @@ li.catalog-new-pricetag {
 }
 
 .modal-footer-right {
-  padding: 10px 10px 10px; /* Note: Take a look at .modal-footer .button! */
+  padding: 10px 10px 0px; /* Note: Take a look at .modal-footer .button! */
   text-align: right;
   border-top: 1px solid #EEEEEE;
   position: absolute;
@@ -535,6 +535,10 @@ li.catalog-new-pricetag {
   right: 0px;
   width: 100%;
   background: white;
+}
+
+.modal-footer-right .button {
+  margin-bottom: 10px;
 }
 
 .catalog-view-menu-content {
@@ -660,7 +664,7 @@ li.catalog-new-pricetag {
 }
 
 .product-variant-selection .form-control {
-  margin: 15px 0px;
+  padding: 10px 0px;
 }
 
 .cart-totals {
