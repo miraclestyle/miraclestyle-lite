@@ -619,15 +619,16 @@ li.catalog-new-pricetag {
 .catalog-name {
   font-size: 18px;
   line-height: 21px;
+  padding-bottom: 5px;
 }
 
 .catalog-expire-time {
-  padding: 5px 0px;
+  padding-bottom: 5px;
 }
 
 .product-name {
   margin: 0px;
-  padding: 15px 0px 0px;
+  padding: 20px 0px 0px;
 }
 
 .product-description {
