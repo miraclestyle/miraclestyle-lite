@@ -122,7 +122,7 @@ class Order(orm.BaseExpando):
                                                    read_arguments={'config': {'order': {'field': 'created',
                                                                                        'direction': 'asc'}}}),
     '_records': orm.SuperRecordProperty('34'),
-    '_payment_method': orm.SuperReferenceProperty(callback=_get_payment_method, format_callback=lambda self: self),
+    '_payment_method': orm.SuperReferenceProperty(callback=_get_payment_method, format_callback=lambda self, value: value),
     }
   
   _global_role = GlobalRole(

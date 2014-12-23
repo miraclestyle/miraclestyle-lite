@@ -2267,7 +2267,7 @@ w:                  while (images.length > 0) {
             }
             callbacks.push(callback);
         };
-    }).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig, helpers) {
+    }).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig, helpers, $q) {
         // models depency should never be included directly or indirectly, because its depency on modelsMeta
         var models = {}, // all model instances
             modelCreate = function (kind) {
@@ -2299,21 +2299,29 @@ w:                  while (images.length > 0) {
                                 },
                                 searchAction = modelsMeta.getActionArguments(config.kind, 'search'),
                                 paginate = {
+                                    loading: false,
                                     more: false,
                                     cursor: null,
                                     args: theConfig.args,
                                     load: function () {
+                                        var promise;
+                                        if (this.loading) {
+                                            return false;
+                                        }
                                         if (!theConfig.args.search.options) {
                                             theConfig.args.search.options = {};
                                         }
                                         theConfig.args.search.options.start_cursor = this.cursor;
-                                        var promise = that.actions.search(theConfig.args, theConfig.config);
+                                        this.loading = true;
+                                        promise = that.actions.search(theConfig.args, theConfig.config);
                                         promise.then(function (response) {
                                             paginate.more = response.data.more;
                                             paginate.cursor = response.data.cursor;
                                             if (angular.isFunction(config.callback)) {
                                                 config.callback.call(this, response);
                                             }
+                                        })['finally'](function () {
+                                            paginate.loading = false;
                                         });
                                         return promise;
                                     }
@@ -2351,6 +2359,7 @@ w:                  while (images.length > 0) {
 
                             reader = {
                                 next: null,
+                                loading: false,
                                 access: config.access,
                                 more: canLoadMore(config.next),
                                 config: config,
@@ -2376,8 +2385,7 @@ w:                  while (images.length > 0) {
                                     this.more = canLoadMore(this.next);
                                 },
                                 load: function () {
-                                    if (!this.more) {
-                                        console.debug('nothing to load, more=false');
+                                    if (!this.more || this.loading) {
                                         return false;
                                     }
                                     var that = this,
@@ -2387,6 +2395,8 @@ w:                  while (images.length > 0) {
                                     if (!next) {
                                         next = angular.copy(config.next);
                                     }
+
+                                    this.loading = true;
 
                                     promise = (config.read ? config.read(next) : models[config.kind].actions.read({
                                         key: config.key,
@@ -2415,6 +2425,8 @@ w:                  while (images.length > 0) {
                                         if (that.more) {
                                             that.next = response.data.entity._next_read_arguments;
                                         }
+                                    })['finally'](function () {
+                                        reader.loading = false;
                                     });
 
                                     return promise;

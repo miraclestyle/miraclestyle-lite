@@ -757,7 +757,7 @@
                     val: '=defaultFieldDisplay',
                     field: '=defaultFieldDisplayField'
                 },
-                templateUrl: 'buyer/directive/buyer_address_display.html',
+                templateUrl: 'buyer/directive/address_display.html',
                 controller: function ($scope) {
                     $scope.notEmpty = function (val) {
                         return angular.isString(val) || angular.isNumber(val);
@@ -979,17 +979,14 @@
                         return;
                     }
                     var config = scope.$eval(attrs.autoloadOnVerticalScrollEnd),
-                        loading = false,
                         listen = config.listen || window,
                         loadMore = function (values, done) {
-                            var loader = config.loader;
-                            if (loading || !loader.more) {
+                            var promise = config.loader.load();
+                            if (!promise) {
                                 done();
                                 return false;
                             }
-                            loading = true;
-                            loader.load().then(function () {
-                                loading = false;
+                            promise.then(function () {
                                 done();
                             });
                         },
