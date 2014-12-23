@@ -99,6 +99,8 @@ ANGULAR_TEMPLATES = (
   ('misc/modal/alert.html',),
   ('misc/modal/errors.html',),
   ('misc/modal/confirm.html',),
+  ('misc/modal/content_view_body.html',),
+  ('misc/modal/content_view_footer.html',),
   ('misc/load_more_button.html',),
   ('misc/search_form.html',),
   ('misc/history.html',),
@@ -216,8 +218,6 @@ ANGULAR_TEMPLATES = (
   ('catalog/list.html',),
   ('catalog/underscore/form/image.html',),
   ('catalog/product/directive/product_instance_display.html',),
-  ('catalog/product/modal/content_view_body.html',),
-  ('catalog/product/modal/content_view_footer.html',),
 
 
   # other

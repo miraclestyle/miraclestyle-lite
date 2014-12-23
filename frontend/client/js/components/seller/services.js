@@ -448,6 +448,21 @@
                                 return collection;
                             });
 
+                            $scope.viewContent = function (content) {
+                                $modal.open({
+                                    templateUrl: 'entity/modal/editor.html',
+                                    controller: function ($scope, $modalInstance) {
+                                        $scope.config = {};
+                                        $scope.config.templateBodyUrl = 'misc/modal/content_view_body.html';
+                                        $scope.config.templateFooterUrl = 'misc/modal/content_view_footer.html';
+                                        $scope.content = content;
+                                        $scope.close = function () {
+                                            $modalInstance.dismiss('close');
+                                        };
+                                    }
+                                });
+                            };
+
                             $scope.toggleCollection = function () {
                                 $scope.loadedCollection.then(function (collection) {
                                     var loadedCollection = collection,

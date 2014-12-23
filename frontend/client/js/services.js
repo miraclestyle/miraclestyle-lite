@@ -2320,7 +2320,7 @@ w:                  while (images.length > 0) {
                                 };
                             theConfig.args.search = searchAction.search['default'];
                             if (angular.isDefined(config.args)) {
-                                helpers.extendDeep(theConfig.args, config.args);
+                                helpers.extendDeep(theConfig, config);
                             }
                             return paginate;
                         },

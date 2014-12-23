@@ -214,8 +214,8 @@
                                                         templateUrl: 'entity/modal/editor.html',
                                                         controller: function ($scope, $modalInstance) {
                                                             $scope.config = {};
-                                                            $scope.config.templateBodyUrl = 'catalog/product/modal/content_view_body.html';
-                                                            $scope.config.templateFooterUrl = 'catalog/product/modal/content_view_footer.html';
+                                                            $scope.config.templateBodyUrl = 'misc/modal/content_view_body.html';
+                                                            $scope.config.templateFooterUrl = 'misc/modal/content_view_footer.html';
                                                             $scope.content = content;
                                                             $scope.close = function () {
                                                                 $modalInstance.dismiss('close');
