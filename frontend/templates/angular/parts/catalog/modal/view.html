@@ -31,35 +31,35 @@
               <div class="catalog-view-menu-content">
                   <div class="catalog-view-menu-content-inner">
                       <!-- ng-if="menu.init" lazy loading can be achieved with ng-if -->
-                      <div>
-                          
                           <div ng-include="'catalog/quick_info.html'"></div>
 
-                          <ul class="menu-catalog-items clearfix">
-                              <li class="menu-catalog-item">
+                          <ul class="catalog-view-menu-items clearfix">
+                              <li class="catalog-view-menu-item">
                                   <a loading ng-click="sellerDetails()">
-                                     <img class="seller-logo" display-image-config="logoImageConfig" display-image="catalog._seller.logo" />
+                                     <img class="seller-logo button" display-image-config="logoImageConfig" display-image="catalog._seller.logo" />
                                   </a>
                               </li>
-                              <li class="menu-catalog-item">
+                              <li class="catalog-view-menu-item">
                                   <button type="button" ng-click="displayCart()" class="button block">Cart</button>
                               </li>
-                              <li class="menu-catalog-item">
-                                  <div class="menu-catalog-social-item">
+                              <li class="catalog-view-menu-item">
+                                <button type="button" ng-click="displayShare()" class="button block">Share</button>
+                                <!-- These sharing items are replaced with the Share button for now!
+                                  <div class="catalog-view-menu-social-item">
                                     <span fb-like="social.fb.url"></span>
                                   </div>
-                                  <div class="menu-catalog-social-item">
+                                  <div class="catalog-view-menu-social-item">
                                     <span twitter="social.twitter.text" twitter-url="social.twitter.url"></span>
                                   </div>
-                                  <div class="menu-catalog-social-item">
+                                  <div class="catalog-view-menu-social-item">
                                     <span gplus="social.gplus.url"></span>
                                   </div>
-                                  <div class="menu-catalog-social-item">
+                                  <div class="catalog-view-menu-social-item">
                                     <span pin-it-image="social.pinterest.image" pin-it="social.pinterest.text" pin-it-url="social.pinterest.url"></span>
                                   </div>
+                                -->
                               </li>
                           </ul>
-                      </div>
                   </div>
               </div>
           </div>
