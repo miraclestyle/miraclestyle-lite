@@ -1,14 +1,14 @@
 <div fit-in-dialog>
+<form method="post" target="_blank" name="container.paypalForm" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
 <div class="modal-body scrollable has-footer">
 <div class="modal-body-inner-padded">
 
-    <form method="post" name="container.form">
+    <div ng-form method="post" name="container.form">
           <div form-input="fields.billingAddress"></div>
           <div form-input="fields.shippingAddress"></div>
           <div form-input="fields.carrier"></div>
-    </form>
+    </div>
 
-    <form method="post" target="_blank" name="container.paypalForm" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
  
     <div class="shopping-cart">
     <input type="hidden" name="cmd" value="_cart" />
@@ -33,7 +33,7 @@
     <input type="hidden" name="address1" value="{{order.shipping_address.street}}" />
     <input ng-if="order.shipping_address.street2" type="hidden" name="address2" value="{{order.shipping_address.street2}}" />
     <input type="hidden" name="city" value="{{order.shipping_address.city}}" />
-    <input ng-if="order.shipping_address.region_code === 'US'" type="hidden" name="state" value="{{order.shipping_address.region_code}}" />
+    <input ng-if="order.shipping_address.country_code === 'US'" type="hidden" name="state" value="{{order.shipping_address.region_code|substr:3}}" />
     <input ng-if="order.shipping_address.postal_code" type="hidden" name="zip" value="{{order.shipping_address.postal_code}}" />
     <input type="hidden" name="country" value="{{order.shipping_address.country_code}}" />
     <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
@@ -95,7 +95,7 @@
     </div>
 
     </div>
-    </form>
+
 
 </div>
 </div>
@@ -121,4 +121,5 @@
         Close
     </button>
 </div>
+</form>
 </div>
