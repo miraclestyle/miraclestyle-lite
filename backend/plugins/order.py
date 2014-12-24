@@ -51,6 +51,7 @@ class OrderInit(orm.BaseModel):
       seller.read() # read locals
     else:
       order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
+      order.make_original()
     context._order = order
 
 
@@ -116,8 +117,10 @@ class ProductToOrderLine(orm.BaseModel):
       new_line.product_category_complete_name = product._product_category.value.complete_name
       new_line.product_category_reference = product.product_category
       new_line.code = product.code
-      new_line.unit_price = product.unit_price
-      new_line.product_uom = copy.deepcopy(product.product_uom.get())
+      new_line.unit_price = format_value(product.unit_price, order.currency.value)
+      product_uom = product.product_uom.get()
+      copy_product_uom = copy.deepcopy(product_uom)
+      new_line.product_uom = copy_product_uom
       new_line.quantity = format_value('1', new_line.product_uom.value)
       new_line.discount = format_value('0', Unit(digits=4))
       if product_instance is not None:
@@ -147,31 +150,32 @@ class ProductSpecs(orm.BaseModel):
     total_weight = format_value('0', weight_uom)
     total_volume = format_value('0', volume_uom)
     total_quantity = format_value('0', unit_uom)
-    for line in order._lines.value:
-      line._weight = None
-      line._weight_uom = None
-      line._volume = None
-      line._volume_uom = None
-      if hasattr(line, 'product_reference'):
-        product = line.product_reference.get()
-        if product:
-          line._weight = product.weight
-          line._weight_uom = product.weight_uom.get()
-          line._volume = product.volume
-          line._volume_uom = product.volume_uom.get()
-          if line.product_variant_signature:
-            product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
-            product_instance = product_instance_key.get()
-            if product_instance is not None:
-              if hasattr(product_instance, 'weight'):
-                line._weight = product_instance.weight
-                line._weight_uom = product_instance.weight_uom.get()
-              if hasattr(product_instance, 'volume'):
-                line._volume = product_instance.volume
-                line._volume_uom = product_instance.volume_uom.get()
-          total_weight = total_weight + convert_value(line._weight, line._weight_uom, weight_uom)
-          total_volume = total_volume + convert_value(line._volume, line._volume_uom, volume_uom)
-          total_quantity = total_quantity + convert_value(line.quantity, line.product_uom.value, unit_uom)
+    if order._lines.value:
+      for line in order._lines.value:
+        line._weight = None
+        line._weight_uom = None
+        line._volume = None
+        line._volume_uom = None
+        if hasattr(line, 'product_reference'):
+          product = line.product_reference.get()
+          if product:
+            line._weight = product.weight
+            line._weight_uom = product.weight_uom.get()
+            line._volume = product.volume
+            line._volume_uom = product.volume_uom.get()
+            if line.product_variant_signature:
+              product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
+              product_instance = product_instance_key.get()
+              if product_instance is not None:
+                if hasattr(product_instance, 'weight'):
+                  line._weight = product_instance.weight
+                  line._weight_uom = product_instance.weight_uom.get()
+                if hasattr(product_instance, 'volume'):
+                  line._volume = product_instance.volume
+                  line._volume_uom = product_instance.volume_uom.get()
+            total_weight = total_weight + convert_value(line._weight, line._weight_uom, weight_uom)
+            total_volume = total_volume + convert_value(line._volume, line._volume_uom, volume_uom)
+            total_quantity = total_quantity + convert_value(line.quantity, line.product_uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume
     order._total_quantity = total_quantity
@@ -197,17 +201,42 @@ class OrderLineFormat(orm.BaseModel):
           line.quantity = format_value(line.quantity, line.product_uom.value)
         line.subtotal = format_value((line.unit_price * line.quantity), order.currency.value)
         line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), order.currency.value)
-        line.total = format_value(line.discount_subtotal, order.currency.value)
         tax_subtotal = format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
-            if (tax.type == 'percent'):
+            if tax.type == 'percent':
               tax_amount = format_value(tax.amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
-              tax_subtotal = tax_subtotal + (line.total * tax_amount)
-            elif (tax.type == 'fixed'):
+              tax_subtotal = tax_subtotal + (line.discount_subtotal * tax_amount)
+            elif tax.type == 'fixed':
               tax_amount = format_value(tax.amount, order.currency.value)
               tax_subtotal = tax_subtotal + tax_amount
         line.tax_subtotal = tax_subtotal
+        line.total = format_value(line.discount_subtotal + line.tax_subtotal, order.currency.value)
+
+
+# This is system plugin, which means end user can not use it!
+class OrderCarrierFormat(orm.BaseModel):
+  
+  _kind = 122
+  
+  _use_rule_engine = False
+  
+  def run(self, context):
+    order = context._order
+    carrier = order.carrier.value
+    if carrier:
+      carrier.subtotal = format_value(carrier.unit_price, order.currency.value)
+      tax_subtotal = format_value('0', order.currency.value)
+      if carrier.taxes.value:
+        for tax in carrier.taxes.value:
+          if tax.type == 'percent':
+            tax_amount = format_value(tax.amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))
+            tax_subtotal = tax_subtotal + (carrier.subtotal * tax_amount)
+          elif tax.type == 'fixed':
+            tax_amount = format_value(tax.amount, order.currency.value)
+            tax_subtotal = tax_subtotal + tax_amount
+      carrier.tax_subtotal = tax_subtotal
+      carrier.total = format_value(carrier.subtotal + carrier.tax_subtotal, order.currency.value)
 
 
 # This is system plugin, which means end user can not use it!
@@ -217,7 +246,6 @@ class OrderFormat(orm.BaseModel):
   
   _use_rule_engine = False
   
-  # @todo We need receivable calcualtior as well!
   def run(self, context):
     order = context._order
     untaxed_amount = format_value('0', order.currency.value)
@@ -225,9 +253,14 @@ class OrderFormat(orm.BaseModel):
     total_amount = format_value('0', order.currency.value)
     for line in order._lines.value:
       if hasattr(line, 'product_reference'):
-        untaxed_amount = untaxed_amount + line.subtotal
+        untaxed_amount = untaxed_amount + line.discount_subtotal
         tax_amount = tax_amount + line.tax_subtotal
-        total_amount = total_amount + (line.subtotal + line.tax_subtotal) # we cannot use += for decimal its not supported
+        total_amount = total_amount + (line.discount_subtotal + line.tax_subtotal) # we cannot use += for decimal its not supported
+    carrier = order.carrier.value
+    if carrier:
+      untaxed_amount = untaxed_amount + carrier.subtotal
+      tax_amount = tax_amount + carrier.tax_subtotal
+      total_amount = total_amount + (carrier.subtotal + carrier.tax_subtotal)
     order.untaxed_amount = format_value(untaxed_amount, order.currency.value)
     order.tax_amount = format_value(tax_amount, order.currency.value)
     order.total_amount = format_value(total_amount, order.currency.value)
@@ -552,7 +585,7 @@ class Tax(orm.BaseModel):
     if not self.active:
       return # tax is inactive
     self.read() # read locals
-    OrderLineTax = context.models['32']
+    OrderTax = context.models['32']
     order = context._order
     allowed = self.validate_tax(order)
     for line in order._lines.value:
@@ -562,24 +595,42 @@ class Tax(orm.BaseModel):
       for tax in taxes:
         if tax.key_id_str == self.key_id_str:
           tax._state = 'deleted'
-      if ((self.carriers and self.carriers.count(line.carrier_reference)) \
-      or (self.product_categories and self.product_categories.count(line.product_category))) \
+      if (self.product_categories and self.product_categories.count(line.product_category)) \
       or (not self.carriers and not self.product_categories and self.locations.value): # if user did not specify any carriers and product categories, but did locations
         if allowed:
           tax_exists = False
           for tax in taxes:
             if tax.key_id_str == self.key_id_str:
-              tax._state = 'modified'
+              tax._state = None
               tax.name = self.name
-              tax.code = self.code
               tax.type = self.type
               tax.amount = self.amount
               tax_exists = True
               break
           if not tax_exists:
-            taxes.append(OrderLineTax(id=self.key_id_str, name=self.name, code=self.code, type=self.type, amount=self.amount))
+            taxes.append(OrderTax(id=self.key_id_str, name=self.name, type=self.type, amount=self.amount))
           line.taxes = taxes
-  
+    if self.carriers and order.carrier.value:
+      taxes = order.carrier.value.taxes.value
+      if not taxes:
+        taxes = []
+      for tax in taxes:
+        if tax.key_id_str == self.key_id_str:
+          tax._state = 'deleted'
+      if self.carriers.count(order.carrier.value.reference) and allowed:
+        tax_exists = False
+        for tax in taxes:
+          if tax.key_id_str == self.key_id_str:
+            tax._state = None
+            tax.name = self.name
+            tax.type = self.type
+            tax.amount = self.amount
+            tax_exists = True
+            break
+        if not tax_exists:
+          taxes.append(OrderTax(id=self.key_id_str, name=self.name, type=self.type, amount=self.amount))
+        order.carrier.value.taxes = taxes
+
   def validate_tax(self, order):
     address = None
     address_reference_key = '%s_address_reference' % self.address_type
@@ -621,7 +672,7 @@ class Tax(orm.BaseModel):
       # If tax is configured for carriers then check if the order references carrier on which the tax applies.
       if self.carriers:
         allowed = False
-        if order.carrier_reference and order.carrier_reference.urlsafe() in [carrier.key.urlsafe() for carrier in self.carrieres.value]:
+        if order.carrier.value and order.carrier.value.reference and order.carrier.value.reference.urlsafe() in [carrier_key.urlsafe() for carrier_key in self.carriers]:
           allowed = True
       # If tax is configured for product categories, then check if the order contains a line which has product category to which the tax applies.
       elif self.product_categories:
@@ -689,6 +740,8 @@ class Carrier(orm.BaseModel):
       return # this is not active carrier
     self.read() # read locals
     ProductInstance = context.models['27']
+    OrderCarrier = context.models['123']
+    carrier = context.input.get('carrier')
     order = context._order
     valid_lines = []
     for carrier_line in self.lines.value:
@@ -696,16 +749,24 @@ class Carrier(orm.BaseModel):
         continue # inactive carrier line
       if self.validate_line(carrier_line, order):
         valid_lines.append(carrier_line)
+    current_carrier = order.carrier.value
     if len(valid_lines):
       carrier_price = self.calculate_lines(valid_lines, order)
       if 'carriers' not in context.output:
         context.output['carriers'] = []
+      if carrier and carrier == self.key:
+        order.carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
+      elif not current_carrier:
+        set_carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
+        order.carrier = set_carrier
       context.output['carriers'].append({'name': self.name,
                                          'price': carrier_price,
-                                         'key': self.key.urlsafe()})
+                                         'key': self.key})
  
   
   def calculate_lines(self, valid_lines, order):
+    if not order._lines.value:
+      return Decimal('0') # if no lines are present return 0
     for line in order._lines.value:
       carrier_prices = []
       for carrier_line in valid_lines:
@@ -731,6 +792,8 @@ class Carrier(orm.BaseModel):
               }
               price = safe_eval(price_calculation, price_data)
               line_prices.append(price)
+        else:
+          line_prices.append(Decimal('0'))
         carrier_prices.append(min(line_prices))
       return min(carrier_prices)  # Return the lowest price possible of all lines!
     
@@ -755,37 +818,43 @@ class Carrier(orm.BaseModel):
     else:
       # Apply everywhere except at the following locations.
       allowed = True
-    for loc in carrier_line.locations.value:
-      if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-        if (address.country == loc.country):
-          allowed = carrier_line.exclusion
-          break
-      elif not (loc.postal_code_from and loc.postal_code_to):
-        if (address.country == loc.country and address.region == loc.region):
-          allowed = carrier_line.exclusion
-          break
-      elif not (loc.postal_code_to):
-        if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-          allowed = carrier_line.exclusion
-          break
-      else:
-        if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-          allowed = carrier_line.exclusion
-          break
+    if carrier_line.locations.value:
+      for loc in carrier_line.locations.value:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = carrier_line.exclusion
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = carrier_line.exclusion
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = carrier_line.exclusion
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = carrier_line.exclusion
+            break
+    else:
+      allowed = True # if no locations were defined for the specific rule, then its always considered truthly
     if allowed:
       allowed = False
-      for rule in carrier_line.rules.value:
-        condition = rule.make_condition()
-        condition_data = {
-          'condition_value': rule.condition_value,
-          'weight': order._total_weight,
-          'volume': order._total_volume,
-          'price': order.total_amount,
-          'quantity': order._total_quantity,
-        }
-        if safe_eval(condition, condition_data):
-          allowed = True
-          break
+      if carrier_line.rules.value:
+        for rule in carrier_line.rules.value:
+          condition = rule.make_condition()
+          condition_data = {
+            'condition_value': rule.condition_value,
+            'weight': order._total_weight,
+            'volume': order._total_volume,
+            'price': order.total_amount,
+            'quantity': order._total_quantity,
+          }
+          if safe_eval(condition, condition_data):
+            allowed = True
+            break
+      else:
+        allowed = True # if no rules were provided, its considered truthly
     return allowed
  
  

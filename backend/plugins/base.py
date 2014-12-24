@@ -76,7 +76,10 @@ class Read(orm.BaseModel):
     model = get_attr(context, model_path)
     parent = get_attr(context, parent_path)
     namespace = get_attr(context, namespace_path)
-    read_arguments = get_attr(context, read_arguments_path, {})
+    if isinstance(read_arguments_path, dict):
+      read_arguments = read_arguments_path
+    else:
+      read_arguments = get_attr(context, read_arguments_path, {})
     if parent is not None:
       namespace = None
     if source and isinstance(source, orm.Key):
@@ -116,6 +119,7 @@ class Write(orm.BaseModel):
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = get_attr(context, value)
+      print entity._lines.value
       entity.write(record_arguments)
 
 

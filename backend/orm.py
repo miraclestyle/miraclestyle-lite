@@ -778,8 +778,8 @@ class _BaseModel(object):
     return Key(*new_args, **kwargs)
   
   def set_key(self, *args, **kwargs):
-    self._key = self.build_key(*args, **kwargs)
-    return self._key
+    self.key = self.build_key(*args, **kwargs)
+    return self.key
   
   @property
   def key_id(self):
@@ -2562,7 +2562,8 @@ class _BaseStructuredProperty(_BaseProperty):
           current_values.populate_from(value)
         else:
           current_values = value
-          current_values.generate_unique_key()
+          if not current_values.key:
+            current_values.generate_unique_key()
       else:
         current_values = value
     value_instance.set(current_values)
@@ -3755,6 +3756,10 @@ class SuperPluginStorageProperty(SuperPickleProperty):
         continue
       if not val.key:
         val.generate_unique_key()
+      for field_key, field in val.get_fields().iteritems():
+        if hasattr(field, 'is_structured') and field.is_structured:
+          structured = getattr(val, field_key)
+          structured.pre_update()
     return super(SuperPluginStorageProperty, self)._set_value(entity, value)
   
   def value_format(self, value):

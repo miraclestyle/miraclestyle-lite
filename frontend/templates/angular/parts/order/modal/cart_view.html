@@ -5,6 +5,7 @@
     <form method="post" name="container.form">
           <div form-input="fields.billingAddress"></div>
           <div form-input="fields.shippingAddress"></div>
+          <div form-input="fields.carrier"></div>
     </form>
 
     <form method="post" target="_blank" name="container.paypalForm" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
@@ -43,8 +44,7 @@
             <div class="item-list">
               <div class="item clearfix" ng-hide="line._state === 'deleted'" ng-repeat="line in order._lines track by $index">
                   <div class="item-left">
-                    <div class="cart-line-detail cart-line-name"><a ng-click="viewProduct(line)">{{line.name}}</a></div>
-                    <div class="cart-line-detail cart-line-description">{{line.description}}</div>
+                    <div class="cart-line-detail cart-line-description"><a ng-click="viewProduct(line)">{{line.description}}</a></div>
                     <div class="cart-line-detail cart-line-quantity">
                       Quantity:  <input ng-disabled="order.state !== 'cart'" type="numeric" style="width:50px;" ng-model="line.quantity"/>
                     </div>
@@ -52,7 +52,7 @@
                       Unit: {{line.product_uom.name}}
                     </div>
                     <div class="cart-line-detail cart-line-tax">
-                      Taxes: {{line.taxes|json}}
+                      Taxes: {{line.taxes|displayTaxes}}
                     </div>
                     <div class="cart-line-detail cart-line-unitprice">
                       Unit Price: {{line.unit_price}}
@@ -62,6 +62,9 @@
                     </div>
                     <div class="cart-line-detail cart-line-subtotal">
                       Subtotal: {{line.subtotal}}
+                    </div>
+                    <div class="cart-line-detail cart-line-subtotal">
+                      Total: {{line.total}}
                     </div>
                     <input type="hidden" value="{{line.description}}" name="item_name_{{line.sequence}}" />
                     <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
@@ -81,9 +84,13 @@
     
     <div class="cart-totals clearfix">
       <div class="pull-right">
-        <div class="cart-total-stat">Net Total: {{order.untaxed_amount}}</div>
-        <div class="cart-total-stat">Taxes: {{order.tax_amount}}</div>
-        <div class="cart-total-stat">Total: {{order.total_amount}}</div>
+        <div class="cart-total-stat">Shipping net total: {{order.carrier.subtotal|displayCurrency:order.currency}}</div>
+        <div class="cart-total-stat">Shipping tax: {{order.carrier.tax_subtotal|displayCurrency:order.currency}}</div>
+        <div class="cart-total-stat">Shipping total: {{order.carrier.total|displayCurrency:order.currency}}</div>
+
+        <div class="cart-total-stat">Net Total: {{order.untaxed_amount|displayCurrency:order.currency}}</div>
+        <div class="cart-total-stat">Taxes: {{order.tax_amount|displayCurrency:order.currency}}</div>
+        <div class="cart-total-stat">Total: {{order.total_amount|displayCurrency:order.currency}}</div>
       </div>
     </div>
 
@@ -94,19 +101,23 @@
 </div>
 <div class="modal-footer">
     
-     <button ng-show="order.state !== 'checkout'" ng-click="checkout()" type="button" class="button">
+     <button loading ng-show="order.ui.rule.action.checkout.executable && order._lines.length" ng-click="checkout()" type="button" class="button">
         Checkout
     </button>
     
-    <button ng-show="order.state !== 'checkout'" ng-click="update()" type="button" class="button">
+    <button loading ng-show="order.ui.rule.action.update.executable" ng-click="update()" type="button" class="button">
         Update
     </button>
-    
-    <button ng-show="order.state === 'checkout'" type="submit" class="button">
+
+    <button loading ng-show="order.ui.rule.action.cancel.executable" type="submit" class="button">
         Pay
     </button>
+
+    <button loading ng-click="cancel()" ng-show="order.ui.rule.action.cancel.executable" type="button" class="button">
+        Cancel
+    </button>
     
-    <button type="button" class="button" ng-click="close()">
+    <button loading type="button" class="button" ng-click="close()">
         Close
     </button>
 </div>

@@ -670,10 +670,10 @@ w:                  while (images.length > 0) {
             });
 
             data = {
-                'actions': kind._actions,
-                'mapped_actions': actions,
-                'fields': fields,
-                'name': kind.__name__
+                actions: kind._actions,
+                mapped_actions: actions,
+                fields: fields,
+                name: kind.__name__
             };
 
             return data;
@@ -1629,6 +1629,13 @@ w:                  while (images.length > 0) {
                     if (angular.isFunction(config.ui.specifics.entities)) {
                         config.ui.specifics.entities = config.ui.specifics.entities();
                     }
+
+                    if (angular.isDefined(config.ui.specifics.entities) && config.ui.specifics.entities.length < 10) {
+                        if (!angular.isDefined(config.ui.specifics.searchEnabled)) {
+                            config.ui.specifics.searchEnabled = false;
+                        }
+                    }
+
                     if (!angular.isDefined(config.ui.placeholder)) {
                         config.ui.placeholder = 'Select...';
                     }
@@ -1901,13 +1908,15 @@ w:                  while (images.length > 0) {
                                                 $.extend(arg, defaultArgs);
                                             }
                                             isNew = true;
-                                        } else if (!config.ui.specifics.modal) {
+                                        } else if (!config.ui.specifics.modal && arg.ui) {
                                             length = _.last(arg.ui.access);
                                         }
 
-                                        arg.ui.access = angular.copy(config.ui.realPath);
-                                        if (!config.ui.specifics.modal) {
-                                            arg.ui.access.push(length);
+                                        if (angular.isDefined(arg.ui)) {
+                                            arg.ui.access = angular.copy(config.ui.realPath);
+                                            if (!config.ui.specifics.modal) {
+                                                arg.ui.access.push(length);
+                                            }
                                         }
 
                                         $scope.accordions = {
