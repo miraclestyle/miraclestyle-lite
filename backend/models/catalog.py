@@ -303,7 +303,9 @@ class Catalog(orm.BaseExpando):
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "published"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'publish')], True,
-                           '(account._is_taskqueue or account._root_admin) and entity._original.state != "published"'),
+                           '(account._is_taskqueue or account._root_admin or \
+                           (not account._is_guest and entity._original.key_root == account.key)) \
+                           and entity._original.state != "published"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue')], True,
                            'account._is_taskqueue and entity._original.state != "discontinued"'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'account_discontinue')], True, 'account._root_admin'),
