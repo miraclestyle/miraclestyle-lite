@@ -119,7 +119,6 @@ class Write(orm.BaseModel):
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = get_attr(context, value)
-      print entity._lines.value
       entity.write(record_arguments)
 
 
