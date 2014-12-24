@@ -51,10 +51,8 @@
                 </div>
                 
               <div class="button-wrapper clearfix">
-                  <div class="button-left"><button loading="!<%= config.ui.writableCompiled %>" type="button" loading class="button" ng-click="config.ui.specifics.remove(image)">Remove</button></div>
-                  <div class="button-right">
-                      <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
-                  </div>
+                  <button loading="!<%= config.ui.writableCompiled %>" type="button" loading class="button" ng-click="config.ui.specifics.remove(image)">Remove</button>
+                  <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
               </div>
           </div>
       </div>
