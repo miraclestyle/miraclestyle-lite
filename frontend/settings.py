@@ -12,18 +12,22 @@ DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
 ACTIVE_HANDLERS = ('mapping', 'builder')
 
+HOST_URL = None
+if DEVELOPMENT_SERVER:
+  HOST_URL = 'http://128.65.105.64:9982'
+  # HOST_URL = 'http://localhost:9982'
 
-def __discover_host():
-  http = 'http://'
-  if os.environ.get('HTTPS') == 'on':
-    http = 'https://'
-  return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
- 
-HOST = __discover_host()
+if HOST_URL is None:
+  def __discover_host_url():
+    http = 'http://'
+    if os.environ.get('HTTPS') == 'on':
+      http = 'https://'
+    return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
+  HOST_URL = __discover_host_url()
 
 # api path configs
-API_ENDPOINT = HOST + '/api/endpoint'
-API_MODEL_META = HOST + '/api/model_meta'
+API_ENDPOINT = HOST_URL + '/api/endpoint'
+API_MODEL_META = HOST_URL + '/api/model_meta'
 
 ROUTES = []
 JINJA_GLOBALS = {}

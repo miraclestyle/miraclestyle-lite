@@ -19,7 +19,7 @@ class BuildAngularIndexHTML(base.Angular):
     pass
   
   def _static_dir(self, file_path):
-    static_dir = '%s/' % settings.HOST
+    static_dir = '%s/' % settings.HOST_URL
     if self.request.get('static_dir') != None:
       static_dir = self.request.get('static_dir')
     return '%sclient/static/%s' % (static_dir, file_path)

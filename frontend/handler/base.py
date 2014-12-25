@@ -29,7 +29,7 @@ def to_json(s, **kwds):
   return json.dumps(s, **kwds)
 
 def _static_dir(file_path):
-  return '%s/client/%s' % (settings.HOST, file_path)
+  return '%s/client/%s' % (settings.HOST_URL, file_path)
 
 def _angular_include_template(path):
   return codecs.open(os.path.join(settings.ROOT_DIR, 'templates/angular/parts', path), 'r', 'utf-8').read()

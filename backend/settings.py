@@ -47,13 +47,18 @@ CATALOG_DOCUMENTS_PER_INDEX = 200
 # How many days does user have to leave feedback
 FEEDBACK_ALLOWED_DAYS = 7
 
-def __discover_host():
-  http = 'http://'
-  if os.environ.get('HTTPS') == 'on':
-    http = 'https://'
-  return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
- 
-HOST = __discover_host()
+HOST_URL = None
+if DEVELOPMENT_SERVER:
+  HOST_URL = 'http://128.65.105.64:9982'
+  # HOST_URL = 'http://localhost:9982'
+
+if HOST_URL is None:
+  def __discover_host_url():
+    http = 'http://'
+    if os.environ.get('HTTPS') == 'on':
+      http = 'https://'
+    return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
+  HOST_URL = __discover_host_url()
 
 ETC_DATA_DIR = os.path.join(ROOT_DIR, 'etc', 'data')
 
@@ -73,7 +78,7 @@ GOOGLE_OAUTH2 = {
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : '%s/api/account/login/google' % HOST,
+   'redirect_uri' : '%s/api/account/login/google' % HOST_URL,
    'type' : 1,
    'accountinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
@@ -84,7 +89,7 @@ FACEBOOK_OAUTH2 = {
    'scope'        : ",".join(['email']),
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : '%s/api/account/login/facebook' % HOST,
+   'redirect_uri' : '%s/api/account/login/facebook' % HOST_URL,
    'type' : 2,
    'accountinfo' : 'https://graph.facebook.com/me',
 }

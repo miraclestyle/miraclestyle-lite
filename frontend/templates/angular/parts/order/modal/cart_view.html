@@ -108,12 +108,16 @@
         Update
     </button>
 
+    <button loading ng-show="order.ui.rule.action.log_message.executable" type="submit" class="button">
+        Send Message
+    </button>
+
     <button loading ng-show="order.ui.rule.action.cancel.executable" type="submit" class="button">
-        Pay
+        Pay Now
     </button>
 
     <button loading ng-click="cancel()" ng-show="order.ui.rule.action.cancel.executable" type="button" class="button">
-        Cancel
+        Cancel Order
     </button>
     
     <button loading type="button" class="button" ng-click="close()">

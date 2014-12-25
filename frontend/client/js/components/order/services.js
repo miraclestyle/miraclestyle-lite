@@ -102,7 +102,7 @@
                                         models[orderKind].actions.checkout({
                                             key: $scope.order.key
                                         }).then(function (response) {
-                                            reactOnStateChange(response);
+                                            $.extend($scope.order, response.data.entity);
                                         });
                                     }
                                 };

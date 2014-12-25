@@ -511,7 +511,7 @@ class PayPalPayment(PaymentMethod):
     if (shipping_address.name != ipn['address_name']):
       mismatches.append('address_name')
     
-    if shipping_address.country_code == 'US' and shipping_address.country_code != ipn['address_state']: # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
+    if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']: # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
       mismatches.append('address_state')
 
     if (shipping_address.street != ipn['address_street']): 
@@ -532,7 +532,7 @@ class PayPalPayment(PaymentMethod):
         mismatches.append('item_name%s' % str(line.sequence))
       if (line.quantity != format_value(ipn['quantity%s' % str(line.sequence)], line.product_uom.value)):
         mismatches.append('quantity%s' % str(line.sequence))
-      if ((line.subtotal + line.tax_subtotal) != format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
+      if (line.subtotal != format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
         mismatches.append('mc_gross_%s' % str(line.sequence))
     # Ukoliko je doslo do fail-ova u poredjenjima
     # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
@@ -866,6 +866,7 @@ class OrderProcessPayment(orm.BaseModel):
   def run(self, context):
     order = context._order
     order.read({'_lines': {'config': {'limit': -1}}, '_payment_method': {}})
+    order.make_original()
     payment_plugin = order._payment_method
     if not payment_plugin:
       raise PluginError('no_payment_method_supplied') # @todo generally payment method should always be present

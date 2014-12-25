@@ -385,7 +385,7 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'checkout'),
+      key=orm.Action.build_key('34', 'checkout'), # checkout needs to run last pluginExec to make sure that all data that seller and buyer provided are synced one more for last time before "big freeze"
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True)
         },
@@ -393,7 +393,12 @@ class Order(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(),
+            Read(cfg={'read': {'_lines': {'config': {'limit': -1}}}}),
+            ProductSpecs(),
+            PluginExec(),
+            OrderLineFormat(),
+            OrderCarrierFormat(),
+            OrderFormat(),
             Set(cfg={'s': {'_order.state': 'checkout'}}),
             RulePrepare(),
             RuleExec()
@@ -410,7 +415,7 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'cancel'),
+      key=orm.Action.build_key('34', 'cancel'), # should we consider introducing cancel on cart state as well?
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True)
         },

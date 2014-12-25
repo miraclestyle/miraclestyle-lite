@@ -6,8 +6,9 @@
                 <% if (config.ui.specifics.remote) { %>
                     <input type="hidden" compatibility-maker="sendRootArgs" name="__body__" />
                     <% } %>
-                        <div class="modal-body scrollable has-footer">
-                            <div class="modal-body-inner">
+                        <div class="modal-body fixed-height has-footer overflow-hidden">
+                           <div class="fixed-height include-footer-height overflow-y">
+                                <div class="modal-body-inner">
                                 <div accordion-on-open="accordions">
                                     <accordion close-others="accordions.closeOthers">
                                         <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
@@ -16,6 +17,7 @@
                                     </accordion>
                                 </div>
                             </div>
+                           </div>
                         </div>
 
                         <div class="modal-footer">
