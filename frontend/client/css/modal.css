@@ -80,9 +80,8 @@
   overflow-y:scroll;
 }
 
-
 .modal-footer {
-  padding: 10px 10px 0px; /* Note: Take a look at .modal-footer .button! */
+  padding: 5px; /* Note: Take a look at .modal-footer .button! */
   text-align: right;
   /*
   position: relative;
@@ -95,10 +94,11 @@
   width: 100%;
   background: #FFFFFF;
   z-index:9;
+  font-size: 0px;
 }
 
 .modal-footer .button {
-  margin-bottom: 10px; /* Perhaps all buttons require similar treatment!? */
+  margin: 5px; /* Perhaps all buttons require similar treatment!? */
 }
 
 .modal-footer:before,
