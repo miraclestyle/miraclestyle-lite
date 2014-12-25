@@ -63,11 +63,16 @@
       
       <% } else { %>
         
-        <div form-element-wrapper label="<%= config.ui.compiled.label %>">
-          <div><input ng-show="<%= config.ui.writableCompiled %>" name="<%= config.ui.formName %>"
+        <div form-element-wrapper label="">
+           <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
+               <span><%=config.ui.compiled.label %> <span ng-show="$isUploading">(Uploading...)</span></span>
+               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
+                       multiple
                        generate-upload-url
-                       type="file" /></div>
-                       <br />
+                       type="file" />
+           </div>
+          <br />
+           <br />
           <div>
             <img display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
           </div>

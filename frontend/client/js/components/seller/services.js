@@ -519,6 +519,7 @@
                             }]
                         }
                     };
+                    fields.logo.ui.label = 'Select Logo';
                     fields.logo.ui.specifics = {
                         displayImageConfig: {
                             size: 240

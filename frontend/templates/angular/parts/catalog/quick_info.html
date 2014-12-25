@@ -1,5 +1,11 @@
 <div class="catalog-name">{{catalog.name}}</div>
 <div class="catalog-expire-time">
-    Expires in
-    <timer end-time="catalog.discontinue_date">{{days}} days, {{hours}} hours, {{minutes}} minutes, {{seconds}} seconds.</timer>
+    <timer end-time="catalog.discontinue_date">
+        Expires in <span ng-show="minutes > 0">more than</span>
+        <span ng-show="years > 0">{{years}} year{{yearsS}}.</span>
+        <span ng-show="days > 0 && years < 1">{{days}} day{{daysS}}.</span>
+        <span ng-show="hours > 0 && days < 1">{{hours}} hour{{hoursS}}.</span>
+        <span ng-show="hours < 1 && minutes > 0">{{minutes}} minute{{minutesS}}.</span>
+        <span ng-show="minutes < 1">{{seconds}} second{{secondsS}}.</span>
+    </timer>
 </div>
