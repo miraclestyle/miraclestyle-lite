@@ -388,17 +388,13 @@ img.vertical, .vertical {
   margin-top: 10px;
 }
 
-.list-actions {
-  text-align: right;
-}
-
 .menu-active {
   overflow: hidden;
 }
 
 .item-left {
   float: left;
-  padding-bottom: 5px;
+  padding: 5px;
 }
 
 .item-right {
@@ -408,12 +404,12 @@ img.vertical, .vertical {
 .item {
   border-bottom: 1px solid #EEEEEE;
   width: 100%;
-  padding: 10px 5px;
+  padding: 5px 0px;
   background: white;
 }
 
 .item-list .item:first-child {
-  padding: 0px 5px 10px 5px;
+  padding: 0px 0px 5px;
 }
 
 .ui-sortable-helper {
@@ -490,18 +486,19 @@ li.catalog-new-pricetag {
 }
 
 .modal-footer-right {
-  padding: 10px 10px 0px; /* Note: Take a look at .modal-footer .button! */
+  padding: 5px; /* Note: Take a look at .modal-footer .button! */
   text-align: right;
   border-top: 1px solid #EEEEEE;
   position: absolute;
   bottom: 0px;
   right: 0px;
   width: 100%;
-  background: white;
+  background: #FFFFFF;
+  font-size: 0px;
 }
 
 .modal-footer-right .button {
-  margin-bottom: 10px;
+  margin: 5px;
 }
 
 .catalog-view-menu, .catalog-view-controls {
