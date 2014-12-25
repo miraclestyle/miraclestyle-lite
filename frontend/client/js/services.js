@@ -263,8 +263,8 @@
                 setHeight: function (images, height) {
 
                     angular.forEach(images, function (image) {
-                        image.width = Math.floor(height * image.proportion);
-                        image.height = Math.floor(height);
+                        image.width = (height * image.proportion);
+                        image.height = (height);
                     });
 
                 },

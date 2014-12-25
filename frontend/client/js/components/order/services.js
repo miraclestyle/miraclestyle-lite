@@ -11,6 +11,9 @@
                     models[orderKind].actions.view_order({
                         buyer: buyer.key,
                         seller: seller.key,
+                        read_arguments: {
+                            _messages: {}
+                        }
                     }).then(function (response) {
 
                         if (!response.data.entity.id) {
@@ -21,19 +24,31 @@
                         $modal.open({
                             templateUrl: 'order/modal/cart_view.html',
                             controller: function ($scope, $modalInstance) {
-                                var addresses = buyer.addresses, reactOnStateChange;
+                                var addresses = buyer.addresses, reactOnStateChange,
+                                    updateFields = modelsMeta.getActionArguments('34', 'update'),
+                                    logMessageFields = modelsMeta.getActionArguments('34', 'log_message');
+                                $.extend(logMessageFields.message.ui, {
+                                    args: 'newMessage.message',
+                                    parentArgs: 'newMessage',
+                                    writable: true
+                                });
+                                logMessageFields.message.required = false;
                                 $scope.order = response.data.entity;
                                 $scope.seller = seller;
                                 $scope.buyer = buyer;
+                                $scope.newMessage = {
+                                    message: null,
+                                    key: $scope.order.key
+                                };
                                 $scope.order.selectedCarrier = $scope.order.carrier ? $scope.order.carrier.reference : null;
                                 $scope.fields = {
                                     billingAddress: {
-                                        kind: '19',
+                                        kind: updateFields.billing_address_reference.kind,
                                         type: 'SuperKeyProperty',
                                         code_name: 'billingAddress',
-                                        required: true,
+                                        required: updateFields.billing_address_reference.required,
                                         ui: {
-                                            args: 'order.shipping_address_reference',
+                                            args: 'order.billing_address_reference',
                                             label: 'Billing Address',
                                             writable: 'order.ui.rule.field.billing_address_reference.writable',
                                             specifics: {
@@ -42,10 +57,10 @@
                                         }
                                     },
                                     shippingAddress: {
-                                        kind: '19',
+                                        kind: updateFields.shipping_address_reference.kind,
                                         type: 'SuperKeyProperty',
                                         code_name: 'shippingAddress',
-                                        required: true,
+                                        required: updateFields.shipping_address_reference.required,
                                         ui: {
                                             args: 'order.shipping_address_reference',
                                             label: 'Shipping Address',
@@ -56,10 +71,10 @@
                                         }
                                     },
                                     carrier: {
-                                        kind: '19',
+                                        kind: updateFields.carrier.kind,
                                         type: 'SuperKeyProperty',
                                         code_name: 'carrier',
-                                        required: true,
+                                        required: updateFields.carrier.required,
                                         ui: {
                                             args: 'order.selectedCarrier',
                                             label: 'Delivery Method',
@@ -74,7 +89,8 @@
                                                 }) : [])
                                             }
                                         }
-                                    }
+                                    },
+                                    message: logMessageFields.message
                                 };
 
                                 $scope.remove = function (line) {
@@ -99,12 +115,21 @@
 
                                 $scope.checkout = function () {
                                     if ($scope.order.state !== 'checkout') {
-                                        models[orderKind].actions.checkout({
-                                            key: $scope.order.key
-                                        }).then(function (response) {
-                                            $.extend($scope.order, response.data.entity);
+                                        modals.confirm('Are you sure you want to go to checkout? You will be in able to send messages to seller or cancel this order.', function () {
+                                            models[orderKind].actions.checkout({
+                                                key: $scope.order.key
+                                            }).then(function (response) {
+                                                $.extend($scope.order, response.data.entity);
+                                            });
                                         });
                                     }
+                                };
+
+                                $scope.sendMessage = function () {
+                                    models[orderKind].actions.log_message($scope.newMessage).then(function (response) {
+                                        $scope.newMessage.message = '';
+                                        $scope.order._messages.unshift(response.data.entity._messages[0]);
+                                    });
                                 };
 
                                 $scope.cancel = function () {
@@ -127,6 +152,15 @@
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/' + $scope.order.key);
                                 $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
                                 $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
+                                $scope.messagesReader = models[orderKind].reader({
+                                    kind: orderKind,
+                                    key: $scope.order.key,
+                                    next: $scope.order._next_read_arguments,
+                                    access: ['_messages'],
+                                    callback: function (items) {
+                                        $scope.order._messages.extend(items);
+                                    }
+                                });
 
                             }
                         });

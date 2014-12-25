@@ -43,6 +43,7 @@ ANGULAR_JS_PATHS = (
   'vendor/jquery/dist/jquery.js',
   'vendor/jquery-ui/jquery-ui.js',
   'vendor/Steady.js/Steady.js',
+  'vendor/jquery.scrollTo/jquery.scrollTo.js',
   'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
   'vendor/underscore/underscore.js',
   'vendor/underscore.string/lib/underscore.string.js',
@@ -109,6 +110,10 @@ ANGULAR_TEMPLATES = (
   ('misc/load_more_button.html',),
   ('misc/search_form.html',),
   ('misc/history.html',),
+
+  # common
+  ('misc/common/orders.html',),
+  ('misc/common/carts.html',),
 
   ('entity/modal/editor.html',),
   ('entity/modal/editor_default_body.html',),

@@ -5,6 +5,7 @@ Created on Aug 30, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 import datetime
+import hashlib
 import orm, settings
 
 from models.base import *
@@ -73,6 +74,16 @@ class OrderLine(orm.BaseExpando):
   tax_subtotal = orm.SuperDecimalProperty('16', required=True, indexed=False)
   
   _default_indexed = False
+
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
+    parent = kwargs.get('parent')
+    return cls.build_key(hashlib.md5('%s-%s' % (input.get('product_reference').urlsafe(), json.dumps(input.get('product_variant_signature')))).hexdigest(), parent=parent)
+
+  def prepare(self, **kwargs):
+    parent = kwargs.get('parent')
+    product_key = self.prepare_key({'product_reference': self.product_reference, 'product_variant_signature': self.product_variant_signature}, parent=parent)
+    self.key = product_key
   
 
 class OrderMessage(orm.BaseExpando):
@@ -83,14 +94,18 @@ class OrderMessage(orm.BaseExpando):
   agent = orm.SuperKeyProperty('2', kind='11', required=True, indexed=False)
   body = orm.SuperTextProperty('3', required=True, indexed=False)
   
-  _default_indexed = False  
-  
-  
-class OrderPaymentInfo(orm.BaseExpando):
-  
-  _kind = 116
-  
   _default_indexed = True
+
+  _virtual_fields = {
+    '_agent': orm.SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
+                                     format_callback=lambda self, value: self._retrieve_agent_name(value)),
+    }
+  
+  def _retrieve_agent_name(self, value):
+    return value._primary_email
+  
+  def _retreive_agent(self):
+    return self.agent.get_async()
 
 
 class Order(orm.BaseExpando):
@@ -135,16 +150,16 @@ class Order(orm.BaseExpando):
     '_seller': orm.SuperReferenceStructuredProperty('23', target_field='seller_reference', autoload=True),
     '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True, read_arguments={'config': {'order': {'field': 'sequence',
                                                                                        'direction': 'asc'}}}),
-    '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, addable=True, updateable=False, deleteable=False,
+    '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, deleteable=False,
                                                    read_arguments={'config': {'order': {'field': 'created',
-                                                                                       'direction': 'asc'}}}),
+                                                                                       'direction': 'desc'}}}),
     '_records': orm.SuperRecordProperty('34'),
     '_payment_method': orm.SuperReferenceProperty(callback=_get_payment_method, format_callback=lambda self, value: value),
     }
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart')], True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart'), orm.Action.build_key('34', 'cart_product_quantity')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
       orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
@@ -393,12 +408,7 @@ class Order(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(cfg={'read': {'_lines': {'config': {'limit': -1}}}}),
-            ProductSpecs(),
-            PluginExec(),
-            OrderLineFormat(),
-            OrderCarrierFormat(),
-            OrderFormat(),
+            Read(),
             Set(cfg={'s': {'_order.state': 'checkout'}}),
             RulePrepare(),
             RuleExec()
@@ -598,6 +608,22 @@ class Order(orm.BaseExpando):
           plugins=[
             Write(),
             Set(cfg={'d': {'output.entity': '_order'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('34', 'cart_product_quantity'),
+      arguments={
+        'buyer': orm.SuperKeyProperty(kind='19', required=True),
+        'product': orm.SuperKeyProperty(kind='28', required=True),
+        'variant_signature': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            OrderCartProductQuantity(),
             ]
           )
         ]

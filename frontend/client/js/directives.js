@@ -654,39 +654,47 @@
             return {
                 link: function (scope, element, attrs) {
                     var resize = function () {
-                        var canvas = element.outerWidth(true),
-                            images = [],
-                            margin = 1;
-                        if (!canvas) {
-                            return; // do not measure if canvas is falsy
-                        }
-                        angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
-                            if (image._state !== 'deleted') {
-                                images.push(angular.copy(image));
-                            }
-                        });
-                        helpers.fancyGrid.calculate(canvas, images, 240, margin);
-                        element.find('.grid-item').filter(function () {
-                            return $(this).css('display') !== 'none';
-                        }).each(function (i) {
-                            if (!angular.isDefined(images[i])) {
-                                return;
-                            }
-                            $(this).css({
-                                width: images[i].width,
-                                height: images[i].height
-                            });
-                            $(this).find('img').css({
-                                height: images[i].height
-                            });
-                        });
-
+                        var originalCanvas = 0,
+                            run = function (check) {
+                                var canvas = element.outerWidth(true),
+                                    images = [],
+                                    margin = 1;
+                                if (!canvas || (check && originalCanvas === canvas)) {
+                                    return; // do not measure if canvas is falsy
+                                }
+                                angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
+                                    if (image._state !== 'deleted') {
+                                        images.push(angular.copy(image));
+                                    }
+                                });
+                                helpers.fancyGrid.calculate(canvas, images, 240, margin);
+                                element.find('.grid-item').filter(function () {
+                                    return $(this).css('display') !== 'none';
+                                }).each(function (i) {
+                                    if (!angular.isDefined(images[i])) {
+                                        return;
+                                    }
+                                    $(this).css({
+                                        width: images[i].width,
+                                        height: images[i].height
+                                    });
+                                    $(this).find('img').css({
+                                        height: images[i].height
+                                    });
+                                });
+                            };
+                        run();
+                        setTimeout(function () {
+                            run(true);
+                        }, 50);
                     };
 
                     $(window).on('resize', resize);
                     scope.$on('itemOrderChanged', resize);
                     scope.$on('ngRepeatEnd', resize);
-                    scope.$on('accordionOpened', resize);
+                    scope.$on('accordionOpened', function () {
+                        setTimeout(resize, 110);
+                    });
                     scope.$on('itemDelete', function () {
                         $timeout(resize);
                     });
@@ -749,7 +757,9 @@
 
                     $(window).bind('resize modal.close mainMenu.hide', resize);
                     scope.$on('ngRepeatEnd', resize);
-                    scope.$on('accordionOpened', resize);
+                    scope.$on('accordionOpened', function () {
+                        setTimeout(resize, 110);
+                    });
                     scope.$on('itemDelete', resize);
                     scope.$watch(attrs.gridGeneratorItems + '.length', resize);
                     scope.$on('$destroy', function () {

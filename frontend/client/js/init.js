@@ -13,6 +13,26 @@
                 controller: 'SellCatalogsCtrl',
                 templateUrl: 'catalog/list.html'
             })
+            .state('sell-orders', {
+                url: '/sell/orders',
+                controller: 'SellOrdersCtrl',
+                templateUrl: 'misc/common/orders.html'
+            })
+            .state('sell-carts', {
+                url: '/sell/carts',
+                controller: 'SellCartsCtrl',
+                templateUrl: 'misc/common/carts.html'
+            })
+            .state('buy-orders', {
+                url: '/buy/orders',
+                controller: 'BuyOrdersCtrl',
+                templateUrl: 'misc/common/orders.html'
+            })
+            .state('buy-carts', {
+                url: '/buy/carts',
+                controller: 'BuyCartsCtrl',
+                templateUrl: 'misc/common/carts.html'
+            })
             .state('login-status', {
                 url: '/login/status',
                 template: '',

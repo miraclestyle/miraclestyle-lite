@@ -97,3 +97,10 @@ indexes:
   properties:
   - name: '1'
     direction: desc
+
+# OrderMessage
+- kind: '35'
+  ancestor: yes
+  properties:
+  - name: '1'
+    direction: desc

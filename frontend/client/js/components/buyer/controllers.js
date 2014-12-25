@@ -11,5 +11,12 @@
                 models['18'].manageModal(currentAccount.key);
             };
 
+        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+
+            $rootScope.pageTitle = 'Buyer Orders';
+
+        }).controller('BuyCartsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+
+            $rootScope.pageTitle = 'Buyer Carts';
         });
 }());

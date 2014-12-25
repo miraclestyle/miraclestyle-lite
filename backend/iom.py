@@ -194,7 +194,7 @@ class Engine:
               else:
                 execute_plugins(group.plugins)
       except orm.TerminateAction as e:
-        pass
+        util.log('Action terminated with code: %s' % e.message)
       except Exception as e:
         raise
   

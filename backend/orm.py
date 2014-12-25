@@ -745,6 +745,8 @@ class _BaseModel(object):
         if is_property_value_type:
           new_entity_value = getattr(new_entity, field_key)
           new_entity_value.set(value)
+        if value is None and (hasattr(field, 'can_be_none') and not field.can_be_none):
+          continue
         try:
           setattr(new_entity, field_key, value)
         except ComputedPropertyError as e:

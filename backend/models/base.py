@@ -101,7 +101,7 @@ class _ImagePropertyValue(object):
       new_gs_object_name = entity.generate_duplicated_string(gs_object_name)
       writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=entity.content_type)
       if settings.DEVELOPMENT_SERVER: # gcs does not work on development server when using modules for some reason...
-        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.HOST, gs_object_name[3:]))
+        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.HOST_URL, gs_object_name[3:]))
         writable_blob.write(blob.content)
       else:
         readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')
@@ -344,7 +344,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       # - failed to create get_serving_url / serving url service failed for some reason;
       # - failed to write to cloudstorage / cloudstorage failed for some reason.
       if settings.DEVELOPMENT_SERVER:
-        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.HOST, gs_object_name[3:]))
+        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.HOST_URL, gs_object_name[3:]))
         blob = blob.content
       else:
         readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')

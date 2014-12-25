@@ -50,7 +50,10 @@ class OrderInit(orm.BaseModel):
       seller = seller_key.get()
       seller.read() # read locals
     else:
-      order.read({'_lines' : {'config' : {'limit': -1}}})  # @todo It is possible that we will have to read more stuff here.
+      defaults = {'_lines' : {'config' : {'limit': -1}}}
+      if 'read_arguments' in context.input:
+        override_dict(defaults, context.input.get('read_arguments'))
+      order.read(defaults)  # @todo It is possible that we will have to read more stuff here.
       order.make_original()
     context._order = order
 
@@ -167,10 +170,10 @@ class ProductSpecs(orm.BaseModel):
               product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
               product_instance = product_instance_key.get()
               if product_instance is not None:
-                if hasattr(product_instance, 'weight'):
+                if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom  is not None:
                   line._weight = product_instance.weight
                   line._weight_uom = product_instance.weight_uom.get()
-                if hasattr(product_instance, 'volume'):
+                if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
                   line._volume = product_instance.volume
                   line._volume_uom = product_instance.volume_uom.get()
             total_weight = total_weight + convert_value(line._weight, line._weight_uom, weight_uom)
@@ -469,20 +472,22 @@ class PayPalPayment(PaymentMethod):
     ipn_payment_status = ipn['payment_status']
     
     # only verified ipn messages are to be saved
-    OrderPaymentInfo = context.models['116']
-    order_payment_infos = OrderPaymentInfo.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
-    for order_payment_info in order_payment_infos:
-      if (order_payment_info.payment_status == ipn_payment_status):
-        raise PluginError('duplicate_entry') # ipns that come in with same payment_status are to be rejected
+    OrderMessage = context.models['35']
+    Account = context.models['11']
+    order_messages = OrderMessage.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
+    for order_message in order_messages:
+      if order_message.payment_status == ipn_payment_status:
+        raise orm.TerminateAction('duplicate_entry') # ipns that come in with same payment_status are to be rejected
         # by the way, we cannot raise exceptions cause that will cause status code other than 200 and cause that the same
         # ipn will be called again until it reaches 200 status response code
         # ipn will retry for x amount of times till it gives up
         # so we might as well use `return` statement to exit silently
-    payment_info = OrderPaymentInfo(ipn_txn_id=ipn['txn_id'], payment_status=ipn_payment_status)
-    payment_info._clone_properties() # this is a hack, because we put all properties indexed = True
-    payment_info._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
-    payment_info._properties['ipn']._set_value(payment_info, request['body'])
-    payment_info.put()
+    body = 'Paypal Payment action %s' % ipn_payment_status
+    new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
+    new_order_message._clone_properties() # this is a hack, because we put all properties indexed = True
+    new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
+    new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
+    new_order_message.put()
     
     # begin ipn message validation
     mismatches = []
@@ -882,3 +887,26 @@ class SetMessage(orm.BaseModel):
     OrderMessage = context.models['35']
     # this could be extended to allow params
     context._order._messages = [OrderMessage(agent=context.account.key, body=context.input['message'])]
+
+
+class OrderCartProductQuantity(orm.BaseModel):
+  
+  _kind = 124
+  
+  def run(self, context):
+    Order = context.models['34']
+    OrderLine = context.models['33']
+    product = context.input.get('product')
+    variant_signature = context.input.get('variant_signature')
+    seller_key = product.parent().parent().parent() # go 3 levels up, account->seller->catalog->pricetag->product
+    order = Order.query(Order.seller_reference == seller_key,
+                        Order.state.IN(['cart', 'checkout']),
+                        ancestor=context.input.get('buyer')).get()
+    quantity = 0
+    if order:
+      order_line_key = OrderLine.prepare_key({'product_reference': product, 
+                                              'product_variant_signature': variant_signature}, parent=order.key)
+      order_line = order_line_key.get()
+      if order_line:
+        quantity = int(order_line.quantity)
+    context.output['quantity'] = quantity

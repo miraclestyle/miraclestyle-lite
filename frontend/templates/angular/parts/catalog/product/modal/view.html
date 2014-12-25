@@ -37,6 +37,10 @@
               <div class="product-availability">
                 {{product.availability}}
               </div>
+
+              <div ng-show="productQuantity > 0" class="product-user-cart-quantity">
+                You have {{productQuantity}} of these in your cart.
+              </div>
    
    
               <div ng-if="product.contents.length" class="product-contents">
@@ -55,6 +59,10 @@
                <button catalog-product-show-toggler="false" type="button" loading class="button">
                   Show Images
                </button>
+               <button type="button" ng-click="share()" 
+                       loading class="button">
+                  Share
+              </button>
                <button type="button" ng-click="addToCart()" 
                        loading class="button">
                   Add To Cart

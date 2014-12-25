@@ -11,7 +11,11 @@ from handler import base
 
 # update this config to map paths    
 settings.ROUTES.extend(((r'/', base.AngularBlank),
+                       (r'/buy/orders', base.AngularBlank),
+                       (r'/buy/carts', base.AngularBlank),
                        (r'/sell/catalogs', base.AngularBlank),
+                       (r'/sell/orders', base.AngularBlank),
+                       (r'/sell/carts', base.AngularBlank),
                        (r'/login/status', base.AngularBlank),
                        (r'/admin/list/<kind>/<filter>', base.AngularBlank)))
 

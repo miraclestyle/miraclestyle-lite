@@ -235,6 +235,8 @@
                                                     });
                                                 };
 
+                                                $scope.productQuantity = -1;
+
                                                 loadProductInstance = function (response) {
                                                     var product,
                                                         productInstance,
@@ -247,6 +249,16 @@
                                                     if (product) {
                                                         productInstance = product._instances[0];
                                                     }
+
+                                                    models['19'].current().then(function (response) {
+                                                        models['34'].actions.cart_product_quantity({
+                                                            buyer: response.data.entity.key,
+                                                            product: $scope.product.key,
+                                                            variant_signature: $scope.currentVariation
+                                                        }).then(function (response) {
+                                                            $scope.productQuantity = response.data.quantity;
+                                                        });
+                                                    });
 
                                                     if (productInstance) {
 
@@ -281,6 +293,10 @@
                                                         });
                                                     }).then(function (response) {
                                                         console.log(response);
+                                                        if ($scope.productQuantity < 0) {
+                                                            $scope.productQuantity = 0;
+                                                        }
+                                                        $scope.productQuantity += 1;
                                                     });
                                                 };
 
