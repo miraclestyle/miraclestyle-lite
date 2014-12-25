@@ -1,10 +1,12 @@
 <div fit-in-dialog>
 <form name="container.form" ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}">
   <input type="hidden" compatibility-maker="args" name="__body__" />
-  <div class="modal-body scrollable has-footer">
-  <div class="modal-body-inner">
-      <div ng-include="config.templateBodyUrl"></div>
-  </div>
+  <div class="modal-body fixed-height overflow-hidden has-footer">
+    <div class="fixed-height include-footer-height overflow-y">
+          <div class="modal-body-inner">
+              <div ng-include="config.templateBodyUrl"></div>
+          </div>
+    </div>
   </div>
   
   <div class="modal-footer">

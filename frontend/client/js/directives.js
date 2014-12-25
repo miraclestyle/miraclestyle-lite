@@ -440,7 +440,14 @@
                         height -= parseInt(modalDialog.css('margin-top'), 10) + parseInt(modalDialog.css('margin-bottom'), 10);
 
                         modalDialog.find('.modal-body.min-height').css('min-height', height);
-                        modalDialog.find('.fixed-height, .modal-body.scrollable, .modal-body.unscrollable').height(height);
+                        modalDialog.find('.fixed-height, .modal-body.scrollable, .modal-body.unscrollable').each(function () {
+                            var newHeight = height, footerClass = '.modal-footer';
+                            if ($(this).hasClass('include-footer-height')) {
+                                footerClass = $(this).data('footer_element') || footerClass;
+                                newHeight -= modalDialog.find(footerClass).outerHeight();
+                            }
+                            $(this).height(newHeight);
+                        });
 
                     };
 

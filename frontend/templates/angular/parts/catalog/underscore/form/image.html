@@ -26,7 +26,7 @@
 
             <div class="button-wrapper clearfix">
                 <button loading="!<%= config.ui.writableCompiled %>" type="button" loading class="button" ng-click="config.ui.specifics.remove(image)">Remove</button>
-                <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
+                <a ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable" ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
             </div>
         </div>
     </div>

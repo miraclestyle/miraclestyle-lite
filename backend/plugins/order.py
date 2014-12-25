@@ -596,7 +596,7 @@ class Tax(orm.BaseModel):
         if tax.key_id_str == self.key_id_str:
           tax._state = 'deleted'
       if (self.product_categories and self.product_categories.count(line.product_category)) \
-      or (not self.carriers and not self.product_categories and self.locations.value): # if user did not specify any carriers and product categories, but did locations
+      or (not self.carriers and not self.product_categories):
         if allowed:
           tax_exists = False
           for tax in taxes:
@@ -651,23 +651,24 @@ class Tax(orm.BaseModel):
     else:
       # Apply everywhere except at the following locations.
       allowed = True
-    for loc in self.locations.value:
-      if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-        if (address.country == loc.country):
-          allowed = self.exclusion
-          break
-      elif not (loc.postal_code_from and loc.postal_code_to):
-        if (address.country == loc.country and address.region == loc.region):
-          allowed = self.exclusion
-          break
-      elif not (loc.postal_code_to):
-        if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-          allowed = self.exclusion
-          break
-      else:
-        if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-          allowed = self.exclusion
-          break
+    if self.locations.value:
+      for loc in self.locations.value:
+        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country):
+            allowed = self.exclusion
+            break
+        elif not (loc.postal_code_from and loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region):
+            allowed = self.exclusion
+            break
+        elif not (loc.postal_code_to):
+          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
+            allowed = self.exclusion
+            break
+        else:
+          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+            allowed = self.exclusion
+            break
     if allowed:
       # If tax is configured for carriers then check if the order references carrier on which the tax applies.
       if self.carriers:

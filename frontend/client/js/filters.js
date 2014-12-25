@@ -163,6 +163,14 @@
 
             return parts.join('').replace(/\u00A4/g, '');
         };
-    }]);
+    }]).filter('substr', function () {
+        return function (str) {
+            if (angular.isString(str)) {
+                return String.prototype.substr.apply(str, Array.prototype.slice.call(arguments, 1));
+            }
+            return str;
+        };
+
+    });
 
 }());

@@ -80,10 +80,6 @@
   overflow-y:scroll;
 }
 
-.modal-body.scrollable.has-footer .modal-body-inner, .modal-body.unscrollable.has-footer .modal-body-inner,
-.modal-body.unscrollable.has-footer .modal-body-inner-padded, .modal-body.scrollable.has-footer .modal-body-inner-padded {
-  padding-bottom:77px;
-}
 
 .modal-footer {
   padding: 10px 10px 0px; /* Note: Take a look at .modal-footer .button! */
