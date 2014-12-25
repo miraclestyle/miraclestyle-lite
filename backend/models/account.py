@@ -74,9 +74,9 @@ class Account(orm.BaseExpando):
                            'not account._is_guest and account.key == entity._original.key'),
       orm.ActionPermission('11', [orm.Action.build_key('11', 'blob_upload_url')], True, # it just needs true when the user is not guest
                            'not account._is_guest'),
-      orm.FieldPermission('11', ['created', 'updated', 'state'], False, True,
+      orm.FieldPermission('11', ['created', 'updated', 'state', '_records'], False, True,
                           'not account._is_guest and account.key == entity._original.key'),
-      orm.FieldPermission('11', ['identities', 'emails', 'sessions', '_primary_email'], True, True,
+      orm.FieldPermission('11', ['identities', 'emails', 'sessions', '_primary_email', '_records'], True, True,
                           'not account._is_guest and account.key == entity._original.key'),
       # Account is unit of administration, hence root admins need control over it!
       # Root admins can always: read account; search for accounts (exclusively);

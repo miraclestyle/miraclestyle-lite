@@ -497,6 +497,7 @@ li.catalog-new-pricetag {
   bottom: auto;
   padding: 0px 5px;
   width: 40px;
+  /*z-index: 300;*/
 }
 
 .catalog-view-menu-icon {
@@ -540,7 +541,7 @@ li.catalog-new-pricetag {
 .catalog-view-menu-content {
   display: none;
   position: fixed;
-  right: 10px;
+  right: 0px;
   background: #FFFFFF;
   -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
   box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
