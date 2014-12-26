@@ -13,6 +13,7 @@
                             name: name
                         };
                     }),
+                    rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
                     locationSpec = {
                         showListItem: 'address-rule-location-display',
                         listFields: [{
@@ -80,6 +81,7 @@
                                 if (sample.length) {
                                     ui.placeholder.width(sample.width()).height(sample.height());
                                 }
+                                rootFormSetDirty();
                                 info.scope.$broadcast('itemOrderSorting');
                             }
                         },
@@ -176,6 +178,7 @@
                             arg._state = 'deleted';
                             info.scope.$emit('itemDelete', arg);
                             info.scope.$broadcast('itemDelete', arg);
+                            rootFormSetDirty();
                         },
                         create: function () {
                             return this.manage();
@@ -368,6 +371,8 @@
                                             }
 
                                         };
+
+                                        rootFormSetDirty();
 
                                         if (promise && promise.then) {
                                             promise.then(complete);

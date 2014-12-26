@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers) {
+    angular.module('app').run(function (modelsConfig, endpoint, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers, modals) {
 
         modelsConfig(function (models) {
 
@@ -78,9 +78,11 @@
                                     return $.inArray(ident.identity, this.args.disassociate) === -1;
                                 },
                                 setPrimary: function (ident) {
+                                    this.container.form.$setDirty();
                                     this.args.primary_identity = ident.identity;
                                 },
                                 disassociate: function (ident) {
+                                    this.container.form.$setDirty();
                                     if (this.isAssociated(ident)) {
                                         this.args.disassociate.push(ident.identity);
                                     } else {
@@ -109,12 +111,16 @@
 
                 },
                 logout: function (account_key) {
-                    this.actions.logout({
-                        key: account_key
-                    }).then(function (response) {
-                        endpoint.invalidateCache('currentAccount');
-                        $window.location.reload();
+                    var that = this;
+                    modals.confirm('Are you sure you want to logout?', function () {
+                        that.actions.logout({
+                            key: account_key
+                        }).then(function (response) {
+                            endpoint.invalidateCache();
+                            $window.location.reload();
+                        });
                     });
+
                 }
             });
 

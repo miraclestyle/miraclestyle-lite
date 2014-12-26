@@ -63,10 +63,11 @@
             };
         }).directive('toggle', function () {
             return {
+                require: ['^form', '^ngModel'],
                 scope: {
                     ngModel: '='
                 },
-                link: function (scope, element, attrs) {
+                link: function (scope, element, attrs, ctrls) {
 
                     var toggle = attrs.toggle,
                         splits,
@@ -89,6 +90,7 @@
                     handler = function () {
                         scope.$apply(function () {
                             scope.ngModel = !scope.ngModel;
+                            ctrls[0].$setDirty();
                             init();
                         });
                     };
@@ -186,6 +188,7 @@
                                 upload_url: endpoint.url
                             }).then(function (response) {
                                 form.attr('action', response.data.upload_url);
+                                ctrl.$setDirty();
                             });
                         },
                         reset = function ($event, content) {

@@ -162,10 +162,12 @@ class ProductSpecs(orm.BaseModel):
         if hasattr(line, 'product_reference'):
           product = line.product_reference.get()
           if product:
-            line._weight = product.weight
-            line._weight_uom = product.weight_uom.get()
-            line._volume = product.volume
-            line._volume_uom = product.volume_uom.get()
+            if product.weight is not None and product.weight_uom is not None:
+              line._weight = product.weight
+              line._weight_uom = product.weight_uom.get()
+            if product.volume is not None and product.volume_uom is not None:
+              line._volume = product.volume
+              line._volume_uom = product.volume_uom.get()
             if line.product_variant_signature:
               product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
               product_instance = product_instance_key.get()
@@ -176,8 +178,10 @@ class ProductSpecs(orm.BaseModel):
                 if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
                   line._volume = product_instance.volume
                   line._volume_uom = product_instance.volume_uom.get()
-            total_weight = total_weight + convert_value(line._weight, line._weight_uom, weight_uom)
-            total_volume = total_volume + convert_value(line._volume, line._volume_uom, volume_uom)
+            if line._weight is not None:
+              total_weight = total_weight + convert_value(line._weight, line._weight_uom, weight_uom)
+            if line._volume is not None:
+              total_volume = total_volume + convert_value(line._volume, line._volume_uom, volume_uom)
             total_quantity = total_quantity + convert_value(line.quantity, line.product_uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume

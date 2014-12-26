@@ -91,39 +91,22 @@
                         var that = this;
                         $timeout(function () {
                             if (!that.hide) {
-                                if (!content.data('top')) {
-                                    content.data('top', parseInt(content.css('top'), 10));
+                                if (!content.data('width')) {
+                                    content.data('width', parseInt(content.css('width'), 10));
                                 }
-                                var parent = element.parents('.image-slider-outer:first'),
-                                    height = parent.height(),
-                                    icon = parent.find('.catalog-view-menu'),
-                                    controls = parent.find('.catalog-view-controls'),
-                                    iconheight = icon.height(),
-                                    icontop = parseInt(icon.css('top'), 10),
-                                    iconspace = iconheight + icontop,
-                                    contentTop = iconspace + content.data('top');
-
-                                height -= iconheight;
-                                height -= controls.height();
-                                height -= icontop;
-                                height -= parseInt(controls.css('bottom'), 10);
-                                height -= contentTop;
-                                content.css({
-                                    visibility: 'hidden',
-                                    height: 'auto'
-                                }).show();
-                                height = content.height();
-                                content.hide();
-                                content.height(0).css({
-                                    visibility: 'visible',
-                                    top: contentTop
-                                }).show().stop().animate({
-                                    height: height
-                                }, 100);
+                                var width = content.data('width');
+                                if (width > $(window).width()) {
+                                    width = $(window).width();
+                                }
+                                content.stop().width(0).css('visibility', 'visible').show().animate({
+                                    width: width
+                                }, 100, function () {
+                                    $(this).show();
+                                });
 
                             } else {
                                 content.stop().animate({
-                                    height: 0
+                                    width: 0
                                 }, 100, function () {
                                     $(this).hide();
                                 });

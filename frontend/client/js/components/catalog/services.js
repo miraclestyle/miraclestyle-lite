@@ -468,6 +468,17 @@
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.config = $scope.rootScope.config;
+                                            $scope.container = {};
+                                            $scope.formSetPristine = function () {
+                                                if ($scope.container && $scope.container.form) {
+                                                    $scope.container.form.$setPristine();
+                                                }
+                                            };
+                                            $scope.formSetDirty = function () {
+                                                if ($scope.container && $scope.container.form) {
+                                                    $scope.container.form.$setDirty();
+                                                }
+                                            };
 
                                             imagesReader = models[catalogKind].reader({
                                                 kind: catalogKind,
@@ -571,6 +582,8 @@
 
                                                 pricetag._position_top = pricetag.position_top;
                                                 pricetag._position_left = pricetag.position_left;
+
+                                                $scope.formSetDirty();
 
                                             };
 
@@ -944,6 +957,7 @@
                                                     parentScope.args = angular.copy(newArgs);
                                                     $scope.args = angular.copy(newArgs);
                                                     parentScope.config.ui.specifics.reader.state(imagesReader);
+                                                    $scope.formSetPristine();
                                                 });
 
                                                 return promise;

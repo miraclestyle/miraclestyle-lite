@@ -3,5 +3,5 @@
 <button ng-show="args.ui.rule.action.discontinue.executable" loading type="button" ng-click="actions.discontinue()" class="button">Discontinue</button>
 <button ng-show="args.ui.rule.action.catalog_duplicate.executable" loading type="button" ng-click="actions.duplicate()" class="button">Duplicate</button>
 
-<button loading type="button" submit-if-files-no-complete="noComplete()" submit-if-files="save()" class="button">Save</button>
+<button loading="container.form.$pristine" type="button" submit-if-files-no-complete="noComplete()" submit-if-files="save()" class="button">Save</button>
 <button ng-show="config.showClose" loading type="button" class="button" ng-click="close()">Close</button>

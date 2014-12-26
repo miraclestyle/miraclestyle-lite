@@ -25,7 +25,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                       <div class="catalog-pricetag-dot"></div>
-                      <button type="button" class="button-transparent catalog-pricetag-link" loading tap-or-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</button>
+                      <a class="catalog-pricetag-link" loading tap-or-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</a>
                     </div>
                </div>
 
@@ -52,7 +52,7 @@
       </ul>
 
      
-      <button loading type="submit" class="button">Save</button>
+      <button loading="container.form.$pristine" type="submit" class="button">Save</button>
       <button loading type="button" class="button" ng-click="close()">Close</button>
  
   </div>

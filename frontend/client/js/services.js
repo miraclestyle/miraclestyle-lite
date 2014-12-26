@@ -60,6 +60,12 @@
         }).factory('helpers', function () {
 
         var helpers = {
+            callable: function (fn) {
+                if (angular.isFunction(fn)) {
+                    return fn;
+                }
+                return angular.noop;
+            },
             alwaysObject: function (obj) {
                 if (!angular.isObject(obj)) {
                     return {};
@@ -367,6 +373,13 @@ w:                  while (images.length > 0) {
                 return result;
             },
             invalidateCache: function (key) {
+
+                if (!angular.isDefined(key)) {
+                    angular.forEach(cacheRegistry, function (cache) {
+                        cache.removeAll();
+                    });
+                    return true;
+                }
                 if (angular.isArray(key)) {
                     angular.forEach(key, function (k) {
                         endpoint.invalidateCache(k);
@@ -1130,6 +1143,16 @@ w:                  while (images.length > 0) {
                                 $scope.$modalInstance = $modalInstance;
                                 $scope.args = config.argumentLoader($scope);
                                 $scope.rootScope = $scope;
+                                $scope.formSetPristine = function () {
+                                    if ($scope.container && $scope.container.form) {
+                                        $scope.container.form.$setPristine();
+                                    }
+                                };
+                                $scope.formSetDirty = function () {
+                                    if ($scope.container && $scope.container.form) {
+                                        $scope.container.form.$setDirty();
+                                    }
+                                };
 
                                 $scope.setAction = function (action) {
                                     $scope.args.action_id = action;
@@ -1160,6 +1183,7 @@ w:                  while (images.length > 0) {
                                         if (angular.isDefined(config.afterSave)) {
                                             config.afterSave($scope);
                                         }
+                                        $scope.formSetPristine();
                                     }, function (response) {
                                         // here handle error...
                                         if (angular.isDefined(config.afterSaveError)) {
@@ -1186,6 +1210,8 @@ w:                  while (images.length > 0) {
                                             $scope.close();
                                         });
                                     }
+
+                                    $scope.formSetPristine();
 
                                     console.log('modelsEditor.complete', $scope);
 
@@ -1656,7 +1682,8 @@ w:                  while (images.length > 0) {
                         defaults,
                         defaultSortable,
                         buildPaths,
-                        rootArgs;
+                        rootArgs,
+                        rootFormSetDirty = helpers.callable(info.scope.formSetDirty);
 
                     defaultFields = defaultFields.sort(helpers.fieldSorter);
 
@@ -1759,6 +1786,8 @@ w:                  while (images.length > 0) {
                                     ent.ui.access[ent.ui.access.length - 1] = i;
                                 });
 
+                            rootFormSetDirty();
+
                             info.scope.$broadcast('itemOrderChanged');
                         }
                     };
@@ -1846,6 +1875,7 @@ w:                  while (images.length > 0) {
                                 arg._state = 'deleted';
                                 info.scope.$emit('itemDelete', arg);
                                 info.scope.$broadcast('itemDelete', arg);
+                                rootFormSetDirty();
                             };
                         }
 
@@ -1891,6 +1921,18 @@ w:                  while (images.length > 0) {
 
                                         config.ui.specifics.getScope = function () {
                                             return $scope;
+                                        };
+
+                                        $scope.rootFormSetDirty = rootFormSetDirty;
+                                        $scope.formSetDirty = function () {
+                                            if ($scope.container && $scope.container.form) {
+                                                return $scope.container.form.$setDirty();
+                                            }
+                                        };
+                                        $scope.formSetPristine = function () {
+                                            if ($scope.container && $scope.container.form) {
+                                                return $scope.container.form.$setPristine();
+                                            }
                                         };
 
                                         $scope.response = null;
@@ -1986,7 +2028,6 @@ w:                  while (images.length > 0) {
 
                                             // reference to args that get sent
                                             $scope.rootArgs = rootArgs;
-
                                             $scope.setAction = function (action) {
                                                 // internal helper to set the action to be executed
                                                 $scope.sendRootArgs.action_id = action;
@@ -1997,7 +2038,7 @@ w:                  while (images.length > 0) {
                                                 if (!$scope.validateForm()) { // check if the form is valid
                                                     return false;
                                                 }
-
+                                                $scope.rootFormSetDirty();
                                                 var promise,
                                                     prepare = function () {
                                                         var readArgs = {},
@@ -2100,6 +2141,9 @@ w:                  while (images.length > 0) {
                                                     if (angular.isDefined(config.ui.specifics.afterSave)) {
                                                         config.ui.specifics.afterSave($scope);
                                                     }
+
+                                                    $scope.formSetPristine();
+
                                                 }, function (response) {
                                                         // here handle error...
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {
@@ -2119,6 +2163,9 @@ w:                  while (images.length > 0) {
                                                 if (angular.isDefined(config.ui.specifics.afterComplete)) {
                                                     config.ui.specifics.afterComplete($scope);
                                                 }
+
+                                                $scope.rootFormSetDirty();
+                                                $scope.formSetPristine();
                                             };
 
                                             $scope.noComplete = function () {
@@ -2126,6 +2173,9 @@ w:                  while (images.length > 0) {
                                                 if (angular.isDefined(config.ui.specifics.noComplete)) {
                                                     config.ui.specifics.noComplete($scope);
                                                 }
+
+                                                $scope.rootFormSetDirty();
+                                                $scope.formSetPristine();
                                             };
 
                                             $scope.completeError = function (response) {
@@ -2133,6 +2183,9 @@ w:                  while (images.length > 0) {
                                                 if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
                                                     config.ui.specifics.afterCompleteError($scope, response);
                                                 }
+
+                                                $scope.rootFormSetDirty();
+                                                $scope.formSetPristine();
                                             };
 
 
@@ -2143,6 +2196,7 @@ w:                  while (images.length > 0) {
                                                 if (!$scope.validateForm()) { // check if the form is valid
                                                     return false;
                                                 }
+                                                $scope.rootFormSetDirty();
                                                 var promise = null,
                                                     complete = function () {
                                                         var completePromise = null,
@@ -2168,11 +2222,18 @@ w:                  while (images.length > 0) {
 
                                                         if (completePromise && completePromise.then) {
                                                             completePromise.then(function () {
-                                                                $scope.close();
+                                                                $scope.formSetPristine();
+                                                                if (config.closeAfterSave) {
+                                                                    $scope.close();
+                                                                }
                                                             });
                                                         } else {
-                                                            $scope.close();
+                                                            $scope.formSetPristine();
+                                                            if (config.closeAfterSave) {
+                                                                $scope.close();
+                                                            }
                                                         }
+
                                                     };
 
                                                 if (angular.isFunction(config.ui.specifics.beforeSave)) {

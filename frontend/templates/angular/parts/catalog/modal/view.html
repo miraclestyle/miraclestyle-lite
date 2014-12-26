@@ -35,15 +35,15 @@
 
                           <ul class="catalog-view-menu-items menu clearfix">
                               <li class="catalog-view-menu-item">
-                                  <a loading ng-click="sellerDetails()">
+                                  <button type="button" class="button button-transparent" loading ng-click="sellerDetails()">
                                      <img class="seller-logo button" display-image-config="logoImageConfig" display-image="catalog._seller.logo" />
-                                  </a>
+                                  </button>
                               </li>
                               <li class="catalog-view-menu-item">
-                                  <button type="button" ng-click="displayCart()" class="button block">Cart</button>
+                                  <button loading type="button" ng-click="displayCart()" class="button block">Cart</button>
                               </li>
                               <li class="catalog-view-menu-item">
-                                <button type="button" ng-click="displayShare()" class="button block">Share</button>
+                                <button loading type="button" ng-click="displayShare()" class="button block">Share</button>
                                 <!-- These sharing items are replaced with the Share button for now!
                                   <div class="catalog-view-menu-social-item">
                                     <span fb-like="social.fb.url"></span>

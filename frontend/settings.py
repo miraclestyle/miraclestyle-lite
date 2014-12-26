@@ -62,10 +62,8 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-ui-select/dist/select.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'lib/angulike/angulike.js',
-  'lib/angular-bootstrap/ui-bootstrap.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
   'lib/angular-cache/dist/angular-cache.js',
-  'lib/angular-ui-bootstrap-datetimepicker/datetimepicker.js',
   'lib/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js',
   'lib/ngUpload/ng-upload.js'
 )

@@ -45,7 +45,7 @@
                                     billingAddress: {
                                         kind: updateFields.billing_address_reference.kind,
                                         type: 'SuperKeyProperty',
-                                        code_name: 'billingAddress',
+                                        code_name: 'billing_address_reference',
                                         required: updateFields.billing_address_reference.required,
                                         ui: {
                                             args: 'order.billing_address_reference',
@@ -59,7 +59,7 @@
                                     shippingAddress: {
                                         kind: updateFields.shipping_address_reference.kind,
                                         type: 'SuperKeyProperty',
-                                        code_name: 'shippingAddress',
+                                        code_name: 'shipping_address_reference',
                                         required: updateFields.shipping_address_reference.required,
                                         ui: {
                                             args: 'order.shipping_address_reference',
@@ -73,7 +73,7 @@
                                     carrier: {
                                         kind: updateFields.carrier.kind,
                                         type: 'SuperKeyProperty',
-                                        code_name: 'carrier',
+                                        code_name: 'selectedCarrier',
                                         required: updateFields.carrier.required,
                                         ui: {
                                             args: 'order.selectedCarrier',
@@ -105,7 +105,9 @@
                                         shipping_address_reference: $scope.order.shipping_address_reference,
                                         _lines: $scope.order._lines
                                     }).then(function (response) {
+                                        var messages = $scope.order._messages;
                                         $.extend($scope.order, response.data.entity);
+                                        $scope.order._messages = messages;
                                     });
                                 };
 
@@ -119,7 +121,7 @@
                                             models[orderKind].actions.checkout({
                                                 key: $scope.order.key
                                             }).then(function (response) {
-                                                $.extend($scope.order, response.data.entity);
+                                                reactOnStateChange(response);
                                             });
                                         });
                                     }

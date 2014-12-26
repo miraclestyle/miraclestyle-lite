@@ -27,7 +27,7 @@
                             <button <% if (config.ui.specifics.remote) { %>
                                  submit-if-files-no-complete="noComplete()" submit-if-files="save()"
                                 <% } else { %>type="submit"
-                                    <% } %>loading class="button"> Save
+                                    <% } %>loading="container.form.$pristine" class="button"> Save
                             </button>
                             <button type="button" loading class="button" ng-click="close()">
                                 Close
