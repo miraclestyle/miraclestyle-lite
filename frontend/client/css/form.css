@@ -44,14 +44,13 @@
 }
 
 .clearfix.buttons {
-  /*margin-bottom: 5px;*/
   padding: 5px 0px;
   border-bottom: 1px solid #EEEEEE;
   font-size: 0px;
 }
 
 .clearfix.grid-wrapper {
-  padding: 10px 0px;
+  padding: 10px 0px;  /* @todo It may be changed to 10px 0px 0px */
 }
 
 .list-actions {
@@ -172,7 +171,6 @@
 }
 
 .button-sm {
-  /*font-size: 13px;*/
   padding: 5px 15px;
 }
 
@@ -385,7 +383,6 @@
   margin: 0;
   outline: 0;
   border: 1px solid #999999;
-  /*background: url('images/select2.png') no-repeat 100% -19px; */
   border-right: none;
   border-left: none;
 }
@@ -602,9 +599,11 @@
   float: left;
   list-style: none;
 }
+
 html[dir="rtl"] .select2-container-multi .select2-choices li {
   float: right;
 }
+
 .select2-container-multi .select2-choices .select2-search-field {
   margin: 0;
   padding: 0;

@@ -120,6 +120,7 @@ a.block, .block, .button.block {
 }
 
 .load-more {
+  margin: 10px 0px; /* @todo It may be changed to 10px 0px 0px */
   width: 100%;
 }
 
@@ -387,12 +388,12 @@ img.vertical, .vertical {
   padding: 40px;
 }
 
-.load-more {
-  margin-top: 10px;
-}
-
 .menu-active {
   overflow: hidden;
+}
+
+.item-list {
+  padding-bottom: 10px; /* @todo It may be removed */
 }
 
 .item-left {
@@ -411,13 +412,10 @@ img.vertical, .vertical {
   background: white;
 }
 
-.item-list .item:first-child {
-  /*padding: 0px 0px 5px;*/
-}
-
 .ui-sortable-helper {
   border-top: 1px solid #EEEEEE;
 }
+
 .list-inline-block, .list-inline-block li {
   display: inline-block;
 }
