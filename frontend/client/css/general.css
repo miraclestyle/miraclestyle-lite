@@ -43,7 +43,7 @@ a:visited {
 }
 
 .content {
-  margin: 65px 10px 10px 10px;
+  margin: 60px 10px 10px 10px;
 }
 
 #top-bar {
@@ -88,7 +88,6 @@ a:visited {
 
 .menu-inner {
   padding: 10px;
-  padding-top: 15px;
 }
 
 .menu {
@@ -413,7 +412,7 @@ img.vertical, .vertical {
 }
 
 .item-list .item:first-child {
-  padding: 0px 0px 5px;
+  /*padding: 0px 0px 5px;*/
 }
 
 .ui-sortable-helper {
@@ -562,7 +561,7 @@ li.catalog-new-pricetag {
 }
 
 .catalog-view-menu-content-inner {
-  padding: 60px 15px 15px;
+  padding: 56px 15px 15px;
 }
 
 .catalog-view-menu-items {

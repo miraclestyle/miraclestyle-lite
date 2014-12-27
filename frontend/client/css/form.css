@@ -44,14 +44,14 @@
 }
 
 .clearfix.buttons {
-  margin-bottom: 5px;
-  padding-bottom: 5px;
+  /*margin-bottom: 5px;*/
+  padding: 5px 0px;
   border-bottom: 1px solid #EEEEEE;
   font-size: 0px;
 }
 
 .clearfix.grid-wrapper {
-  padding: 5px 0px;
+  padding: 10px 0px;
 }
 
 .list-actions {
