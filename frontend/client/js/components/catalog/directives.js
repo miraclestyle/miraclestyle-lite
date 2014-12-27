@@ -100,14 +100,14 @@
                                 }
                                 content.stop().width(0).css('visibility', 'visible').show().animate({
                                     width: width
-                                }, 100, function () {
+                                }, 50, function () {
                                     $(this).show();
                                 });
 
                             } else {
                                 content.stop().animate({
                                     width: 0
-                                }, 100, function () {
+                                }, 50, function () {
                                     $(this).hide();
                                 });
                             }
