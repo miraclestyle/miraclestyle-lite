@@ -120,7 +120,7 @@ a.block, .block, .button.block {
 }
 
 .load-more {
-  margin: 10px 0px; /* @todo It may be changed to 10px 0px 0px */
+  margin: 10px 0px 0px;
   width: 100%;
 }
 
@@ -392,10 +392,6 @@ img.vertical, .vertical {
   overflow: hidden;
 }
 
-.item-list {
-  padding-bottom: 10px; /* @todo It may be removed */
-}
-
 .item-left {
   float: left;
   padding: 5px;
@@ -547,8 +543,6 @@ li.catalog-new-pricetag {
   position: fixed;
   right: 0px;
   background: #FFFFFF;
-  -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
-  box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
   background-clip: padding-box;
   overflow-y: auto;
   top: 0px;
@@ -606,15 +600,6 @@ li.catalog-new-pricetag {
   display: none;
 }
 
-.product-content-item .button {
-  display: block;
-  width: 100%;
-}
-
-.product-content-item {
-  margin-bottom: 10px;
-}
-
 .catalog-name {
   font-size: 18px;
   line-height: 21px;
@@ -650,8 +635,20 @@ li.catalog-new-pricetag {
   line-height: 21px;
 }
 
+.seller-contents,
 .product-contents {
   padding: 10px 0px;
+}
+
+.seller-content-item,
+.product-content-item {
+  margin-bottom: 10px;
+}
+
+.seller-content-item .button,
+.product-content-item .button {
+  display: block;
+  width: 100%;
 }
 
 .product-variant-selection {

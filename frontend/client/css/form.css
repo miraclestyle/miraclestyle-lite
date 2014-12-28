@@ -50,7 +50,8 @@
 }
 
 .clearfix.grid-wrapper {
-  padding: 10px 0px;  /* @todo It may be changed to 10px 0px 0px */
+  padding: 10px 0px;
+  border-bottom: 1px solid #EEEEEE;
 }
 
 .list-actions {

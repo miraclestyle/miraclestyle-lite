@@ -5,11 +5,9 @@
             @todo
         </div>
     </div>
-    <div class="seller-contents">
-        <div ng-if="seller._content.documents.length" class="product-contents">
-           <div ng-repeat="content in seller._content.documents track by content.key" class="product-content-item">
-             <button ng-click="viewContent(content)" type="button" class="button">{{content.title}}</button>
-           </div>
-        </div>
+    <div ng-if="seller._content.documents.length" class="seller-contents">
+       <div ng-repeat="content in seller._content.documents track by content.key" class="seller-content-item">
+         <button ng-click="viewContent(content)" type="button" class="button">{{content.title}}</button>
+       </div>
     </div>
 </div>
