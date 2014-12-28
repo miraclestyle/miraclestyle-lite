@@ -25,30 +25,18 @@
            <div class="product-detail-content">
               <div ng-include="'catalog/quick_info.html'"></div>
               <h1 class="product-name">{{product.name}}</h1>
+              <div class="product-code">{{product.code}}</div>
               <div class="product-description">{{product.description}}</div>
-              
               <div class="product-price">
                 {{product.unit_price|displayCurrency:catalog._seller._currency}}
               </div>
-              <div class="product-code">
-                {{product.code}}
-              </div>
-
-              <div class="product-availability">
-                {{product.availability}}
-              </div>
-
-              <div ng-show="productQuantity > 0" class="product-user-cart-quantity">
-                You have {{productQuantity}} of these in your cart.
-              </div>
-   
-   
+             <div class="product-availability">{{product.availability}}</div>
+             <div class="product-user-cart-quantity">{{productQuantity}} in your cart.</div>
               <div ng-if="product.contents.length" class="product-contents">
-                   <div ng-repeat="content in product.contents track by content.key" class="product-content-item">
-                     <button ng-click="viewContent(content)" type="button" class="button">{{content.title}}</button>
-                   </div>
+                 <div ng-repeat="content in product.contents track by content.key" class="product-content-item">
+                   <button ng-click="viewContent(content)" type="button" class="button">{{content.title}}</button>
+                 </div>
               </div>
-        
               <div class="product-variant-selection" ng-if="variantSelection.length">
                 <div form-builder="variantSelection"></div>
               </div>

@@ -51,6 +51,9 @@
 
 .clearfix.grid-wrapper {
   padding: 10px 0px;
+}
+
+.panel-body  .clearfix.grid-wrapper {
   border-bottom: 1px solid #EEEEEE;
 }
 
@@ -314,6 +317,7 @@
   color: #333333;
   border: 1px solid #BBBBBB;
   border-top: 0;
+  margin-bottom: 10px;
 }
 
 .select2-drop.select2-drop-above {
