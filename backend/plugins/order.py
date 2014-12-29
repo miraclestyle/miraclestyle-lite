@@ -107,9 +107,14 @@ class ProductToOrderLine(orm.BaseModel):
       ProductInstance = context.models['27']
       Line = context.models['33']
       product = product_key.get()
+      product_instance = None
       product.read({'_product_category': {}})  # more fields probably need to be specified
-      product_instance_key = ProductInstance.prepare_key(context.input, parent=product_key)
-      product_instance = product_instance_key.get()
+      if variant_signature:
+        product_instance_query = ProductInstance.query()
+        for variant in variant_signature:
+          item = variant.iteritems().next()
+          product_instance_query = product_instance_query.filter(variant_options == '%s: %s' % (item[0], item[1]))
+        product_instance = product_instance_query.get()
       new_line = Line()
       new_line.sequence = 1
       if order._lines.value:

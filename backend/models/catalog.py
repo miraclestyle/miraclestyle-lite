@@ -125,22 +125,22 @@ class CatalogProductInstance(orm.BaseExpando):
   
   _use_rule_engine = False
   
-  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
-  variant_signature = orm.SuperJsonProperty('2', required=True, indexed=False)
+  sequence = orm.SuperIntegerProperty('1', required=True, indexed=True)
+  variant_options = orm.SuperStringProperty('2', repeated=True, indexed=True)
   
   _default_indexed = False
   
   _expando_fields = {
-    'description': orm.SuperTextProperty('3'),
-    'unit_price': orm.SuperDecimalProperty('4'),
-    'availability': orm.SuperStringProperty('5', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder']),
-    'code': orm.SuperStringProperty('6'),
+    'code': orm.SuperStringProperty('3'),
+    'description': orm.SuperTextProperty('4'),
+    'unit_price': orm.SuperDecimalProperty('5'),
+    'availability': orm.SuperStringProperty('6', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder']),
     'weight': orm.SuperDecimalProperty('7'),
     'weight_uom': orm.SuperKeyProperty('8', kind='17'),
     'volume': orm.SuperDecimalProperty('9'),
-    'volume_uom': orm.SuperKeyProperty('10', kind='17'),
-    'images': SuperImageLocalStructuredProperty(Image, '11', repeated=True),
-    'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '12', repeated=True)
+    'volume_uom': orm.SuperKeyProperty('11', kind='17'),
+    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True),
+    'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True)
     }
   
   _virtual_fields = {
@@ -157,6 +157,19 @@ class CatalogProductInstance(orm.BaseExpando):
   
   def prepare(self, **kwargs):
     parent = kwargs.get('parent')
+    if self.key_id is None and self.sequence is None:
+      key = 'prepare_%s' % self.key.urlsafe()
+      sequence = mem.temp_get(key, Nonexistent)
+      if sequence is Nonexistent:
+        entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
+        if not entity:
+          sequence = 0
+        else:
+          sequence = entity.sequence
+        mem.temp_set(key, sequence)
+      else:
+        mem.temp_set(key, sequence + 1)
+      self.sequence = sequence + 1
     self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=parent)
 
 
@@ -168,11 +181,11 @@ class CatalogProduct(orm.BaseExpando):
   
   product_category = orm.SuperKeyProperty('1', kind='24', required=True, searchable=True)
   name = orm.SuperStringProperty('2', required=True, searchable=True)
-  description = orm.SuperTextProperty('3', required=True, searchable=True)  # Soft limit 64kb.
-  product_uom = orm.SuperKeyProperty('4', kind='17', required=True, indexed=False)
-  unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
-  availability = orm.SuperStringProperty('6', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder'])
-  code = orm.SuperStringProperty('7', required=True, indexed=False, searchable=True)
+  product_uom = orm.SuperKeyProperty('3', kind='17', required=True, indexed=False)
+  code = orm.SuperStringProperty('4', required=True, indexed=False, searchable=True)
+  description = orm.SuperTextProperty('5', required=True, searchable=True)  # Soft limit 64kb.
+  unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
+  availability = orm.SuperStringProperty('7', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder'])
   
   _default_indexed = False
   
@@ -246,7 +259,9 @@ class CatalogImage(Image):
         else:
           sequence = entity.sequence
         mem.temp_set(key, sequence)
-      self.sequence = self._sequence + sequence + 1
+      else:
+        mem.temp_set(key, sequence + 1)
+      self.sequence = sequence + 1
 
 
 class Catalog(orm.BaseExpando):
@@ -317,6 +332,10 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'unindex'),
                                   orm.Action.build_key('31', 'cron')], True, 'account._is_taskqueue'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'public_search')], True, 'True'),
+      # @todo read_product_instance is now public, it needs correct permissions
+      orm.ActionPermission('31', [orm.Action.build_key('31', 'read_product_instance')], True,
+                           'True'),
+      # field permissions
       orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images', '_records'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
@@ -350,7 +369,7 @@ class Catalog(orm.BaseExpando):
                                  'state', 'cover', 'cost', '_images'], True, True,
                           '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
       orm.FieldPermission('31', ['_seller'], False, True, 'True'),
-      orm.FieldPermission('31', ['_seller._plugin_group'], False, False, 'True')
+      orm.FieldPermission('31', ['_seller._plugin_group'], False, False, 'True'),
       ]
     )
   
@@ -590,6 +609,38 @@ class Catalog(orm.BaseExpando):
             RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
             # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
+            Search(),
+            RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('31', 'read_product_instance'),
+      arguments={
+        'search': orm.SuperSearchProperty(
+          default={'filters': [], 'orders': [{'field': 'sequence', 'operator': 'desc'}]},
+          cfg={
+            'search_arguments': {'kind': '27', 'options': {'limit': 1}},
+            'ancestor_kind': '28',
+            'search_by_keys': False,
+            'filters': {'variant_options': orm.SuperStringProperty(repeated=True)},
+            'indexes': [{'ancestor': True, 
+                         'filters': [('variant_options', ['ALL_IN'])],
+                         'orders': [('sequence', ['desc'])]}]
+            }
+          )
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(cfg={'d': {'input': 'input'}}),
+            RuleExec(),
             Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',

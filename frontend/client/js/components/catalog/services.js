@@ -235,7 +235,19 @@
                                                     });
                                                 };
 
-                                                $scope.productQuantity = -1;
+                                                $scope.productQuantity = 0;
+
+                                                $scope.cartProductQuantity = function () {
+                                                    models['19'].current().then(function (response) {
+                                                        models['34'].actions.cart_product_quantity({
+                                                            buyer: response.data.entity.key,
+                                                            product: $scope.product.key,
+                                                            variant_signature: $scope.currentVariation
+                                                        }).then(function (response) {
+                                                            $scope.productQuantity = response.data.quantity;
+                                                        });
+                                                    });
+                                                };
 
                                                 loadProductInstance = function (response) {
                                                     var product,
@@ -249,16 +261,6 @@
                                                     if (product) {
                                                         productInstance = product._instances[0];
                                                     }
-
-                                                    models['19'].current().then(function (response) {
-                                                        models['34'].actions.cart_product_quantity({
-                                                            buyer: response.data.entity.key,
-                                                            product: $scope.product.key,
-                                                            variant_signature: $scope.currentVariation
-                                                        }).then(function (response) {
-                                                            $scope.productQuantity = response.data.quantity;
-                                                        });
-                                                    });
 
                                                     if (productInstance) {
 
@@ -279,10 +281,14 @@
 
                                                 $scope.changeVariation = function () {
                                                     // rpc to check the instance
-                                                    this.changeVariationPromise().then(loadProductInstance);
+                                                    this.changeVariationPromise()
+                                                        .then(loadProductInstance)
+                                                        .then($scope.cartProductQuantity);
                                                 };
 
                                                 loadProductInstance(productInstanceResponse);
+
+                                                $scope.cartProductQuantity();
 
                                                 $scope.addToCart = function () {
                                                     models['19'].current().then(function (response) {
@@ -293,9 +299,6 @@
                                                         });
                                                     }).then(function (response) {
                                                         console.log(response);
-                                                        if ($scope.productQuantity < 0) {
-                                                            $scope.productQuantity = 0;
-                                                        }
                                                         $scope.productQuantity += 1;
                                                     });
                                                 };
@@ -816,7 +819,7 @@
 
                                                                             $scope.variantSelection.push({
                                                                                 type: 'SuperStringProperty',
-                                                                                choices: v.options,
+                                                                                choices: (v.allow_custom_value ? null : v.options),
                                                                                 code_name: 'option_' + i,
                                                                                 ui: {
                                                                                     label: v.name,
@@ -911,7 +914,7 @@
                                                             label: 'Variant Signature',
                                                             key: 'variant_signature'
                                                         }],
-                                                        excludeFields: ['created', 'variant_signature']
+                                                        excludeFields: ['created', 'sequence']
                                                     }
                                                 }
                                             });

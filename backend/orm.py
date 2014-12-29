@@ -3442,6 +3442,9 @@ class SuperSearchProperty(SuperJsonProperty):
         filters.append(field >= value)
       elif op == 'IN':
         filters.append(field.IN(value))
+      elif op == 'ALL_IN':
+        for v in value:
+          filters.append(field == v)
       elif op == 'contains':
         letters = list(string.printable)
         try:
