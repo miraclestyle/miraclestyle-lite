@@ -18,7 +18,7 @@ from plugins.order import *
 
 
 
-__all__ = ['OrderTax', 'OrderLine', 'OrderCarrier', 'OrderMessage', 'Order']
+__all__ = ['OrderTax', 'OrderLine', 'OrderProduct', 'OrderCarrier', 'OrderMessage', 'Order']
 
 
 class OrderTax(orm.BaseModel):
@@ -32,9 +32,9 @@ class OrderTax(orm.BaseModel):
   amount = orm.SuperDecimalProperty('3', required=True, indexed=False)
 
 # Modify this class accordingly!
-class OrderLineProduct(orm.BaseExpando):  # @todo Do we name this OrderProduct like we did OrderTax ?
-  
-  _kind = # ??
+class OrderProduct(orm.BaseExpando):
+
+  _kind = 125
   
   _use_rule_engine = False
   
@@ -80,7 +80,7 @@ class OrderLine(orm.BaseExpando):
   _use_rule_engine = False
   
   sequence = orm.SuperIntegerProperty('1', required=True)
-  product = orm.SuperLocalStructuredProperty(OrderLineProduct, '2', required=True)
+  product = orm.SuperLocalStructuredProperty(OrderProduct, '2', required=True)
   taxes = orm.SuperLocalStructuredProperty(OrderTax, '3', repeated=True)
   quantity = orm.SuperDecimalProperty('4', required=True, indexed=False)
   discount = orm.SuperDecimalProperty('5', required=True, indexed=False)
@@ -94,11 +94,13 @@ class OrderLine(orm.BaseExpando):
   @classmethod
   def prepare_key(cls, input, **kwargs):
     parent = kwargs.get('parent')
-    return cls.build_key(hashlib.md5('%s-%s' % (input.get('product_reference').urlsafe(), json.dumps(input.get('product_variant_signature')))).hexdigest(), parent=parent)
+    product = input.get('product')
+    return cls.build_key(hashlib.md5('%s-%s' % (product.get('reference').urlsafe(), json.dumps(product.get('variant_signature')))).hexdigest(), parent=parent)
 
   def prepare(self, **kwargs):
     parent = kwargs.get('parent')
-    product_key = self.prepare_key({'product_reference': self.product_reference, 'product_variant_signature': self.product_variant_signature}, parent=parent)
+    product = self.product.value
+    product_key = self.prepare_key({'product': {'reference': product.reference, 'variant_signature': product.variant_signature}}, parent=parent)
     self.key = product_key
 
 

@@ -44,18 +44,18 @@
               <div class="item-list">
                 <div class="item clearfix" ng-hide="line._state === 'deleted'" ng-repeat="line in order._lines track by $index">
                     <div class="item-left">
-                      <div class="cart-line-detail cart-line-description"><a ng-click="viewProduct(line)">{{line.description}}</a></div>
+                      <div class="cart-line-detail cart-line-description"><a ng-click="viewProduct(line)">{{line.product.name}}</a></div>
                       <div class="cart-line-detail cart-line-quantity">
                         Quantity:  <input ng-disabled="order.state !== 'cart'" type="numeric" style="width:50px;" ng-model="line.quantity"/>
                       </div>
                       <div class="cart-line-detail cart-line-unit">
-                        Unit: {{line.product_uom.name}}
+                        Unit: {{line.product.uom.name}}
                       </div>
                       <div class="cart-line-detail cart-line-tax">
                         Taxes: {{line.taxes|displayTaxes}}
                       </div>
                       <div class="cart-line-detail cart-line-unitprice">
-                        Unit Price: {{line.unit_price}}
+                        Unit Price: {{line.product.unit_price}}
                       </div>
                       <div class="cart-line-detail cart-line-discount">
                         Discount: {{line.discount}}%
@@ -66,7 +66,7 @@
                       <div class="cart-line-detail cart-line-subtotal">
                         Total: {{line.total}}
                       </div>
-                      <input type="hidden" value="{{line.description}}" name="item_name_{{line.sequence}}" />
+                      <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
                       <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
                       <input type="hidden" value="{{line.quantity}}" name="quantity_{{line.sequence}}" />
                       <input type="hidden" value="{{line.unit_price}}" name="amount_{{line.sequence}}" />

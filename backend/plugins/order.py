@@ -97,10 +97,11 @@ class ProductToOrderLine(orm.BaseModel):
     line_exists = False
     if order._lines.value:
       for line in order._lines.value:
-        if hasattr(line, 'product_reference') and line.product_reference == product_key \
-        and line.product_variant_signature == variant_signature:
+        product = line.product.value
+        if product and product.reference == product_key \
+        and product.variant_signature == variant_signature:
           line._state = 'modified'
-          line.quantity = line.quantity + format_value('1', line.product_uom.value)
+          line.quantity = line.quantity + format_value('1', product.uom.value)
           line_exists = True
           break
     if not line_exists:
@@ -119,23 +120,48 @@ class ProductToOrderLine(orm.BaseModel):
       new_line.sequence = 1
       if order._lines.value:
         new_line.sequence = order._lines.value[-1].sequence + 1
-      new_line.description = product.name
-      new_line.product_reference = product_key
-      new_line.product_variant_signature = variant_signature
-      new_line.product_category_complete_name = product._product_category.value.complete_name
-      new_line.product_category_reference = product.product_category
-      new_line.code = product.code
-      new_line.unit_price = format_value(product.unit_price, order.currency.value)
-      product_uom = product.product_uom.get()
-      copy_product_uom = copy.deepcopy(product_uom)
-      new_line.product_uom = copy_product_uom
-      new_line.quantity = format_value('1', new_line.product_uom.value)
-      new_line.discount = format_value('0', Unit(digits=4))
+      '''
+        reference = orm.SuperKeyProperty('1', kind='28', required=True, indexed=False)
+        category = orm.SuperLocalStructuredProperty('24', '2', required=True)
+        name = orm.SuperStringProperty('3', required=True, indexed=False)
+        uom = orm.SuperLocalStructuredProperty('17', '4', required=True)
+        code = orm.SuperStringProperty('5', required=True, indexed=False)
+        unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
+        variant_signature = orm.SuperJsonProperty('7', required=True, default={}, indexed=False)
+      '''
+      copy_product = OrderProduct()
+      copy_product.reference = product_key
+      copy_product.variant_signature = variant_signature
+      copy_product.category = copy.deepcopy(product._product_category.value)
+      copy_product.code = product.code
+      copy_product.unit_price = format_value(product.unit_price, order.currency.value)
+      copy_product.uom = copy.deepcopy(product.product_uom.get())
       if product_instance is not None:
-        if hasattr(product_instance, 'unit_price'):
-          new_line.unit_price = product_instance.unit_price
-        if hasattr(product_instance, 'code'):
-          new_line.code = product_instance.code
+        if hasattr(product_instance, 'unit_price') and product_instance.unit_price is not None:
+          copy_product.unit_price = product_instance.unit_price
+        if hasattr(product_instance, 'code') and product_instance.code is not None:
+          copy_product.code = product_instance.code
+      copy_product.weight = None
+      copy_product.weight_uom = None
+      copy_product.volume = None
+      copy_product.volume_uom = None
+      if product.weight is not None and product.weight_uom is not None:
+        copy_product.weight = product.weight
+        copy_product.weight_uom = copy.deepcopy(product.weight_uom.get())
+      if product.volume is not None and product.volume_uom is not None:
+        copy_product.volume = product.volume
+        copy_product.volume_uom = copy.deepcopy(product.volume_uom.get())
+      if copy_product.variant_signature:
+        if product_instance is not None:
+          if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom  is not None:
+            copy_product.weight = product_instance.weight
+            copy_product.weight_uom = copy.deepcopy(product_instance.weight_uom.get())
+          if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
+            copy_product.volume = product_instance.volume
+            copy_product.volume_uom = copy.deepcopy(product_instance.volume_uom.get())
+      new_line.product = copy_product
+      new_line.quantity = format_value('1', copy_product.uom.value)
+      new_line.discount = format_value('0', Unit(digits=4))
       lines = order._lines.value
       if lines is None:
         lines = []
@@ -160,34 +186,12 @@ class ProductSpecs(orm.BaseModel):
     total_quantity = format_value('0', unit_uom)
     if order._lines.value:
       for line in order._lines.value:
-        line._weight = None
-        line._weight_uom = None
-        line._volume = None
-        line._volume_uom = None
-        if hasattr(line, 'product_reference'):
-          product = line.product_reference.get()
-          if product:
-            if product.weight is not None and product.weight_uom is not None:
-              line._weight = product.weight
-              line._weight_uom = product.weight_uom.get()
-            if product.volume is not None and product.volume_uom is not None:
-              line._volume = product.volume
-              line._volume_uom = product.volume_uom.get()
-            if line.product_variant_signature:
-              product_instance_key = ProductInstance.prepare_key({'variant_signature': line.product_variant_signature}, parent=line.product_reference)
-              product_instance = product_instance_key.get()
-              if product_instance is not None:
-                if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom  is not None:
-                  line._weight = product_instance.weight
-                  line._weight_uom = product_instance.weight_uom.get()
-                if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
-                  line._volume = product_instance.volume
-                  line._volume_uom = product_instance.volume_uom.get()
-            if line._weight is not None:
-              total_weight = total_weight + convert_value(line._weight, line._weight_uom, weight_uom)
-            if line._volume is not None:
-              total_volume = total_volume + convert_value(line._volume, line._volume_uom, volume_uom)
-            total_quantity = total_quantity + convert_value(line.quantity, line.product_uom.value, unit_uom)
+        product = line.product.value
+        if product.weight is not None:
+          total_weight = total_weight + convert_value(product.weight, product.weight_uom.value, weight_uom)
+        if product.volume is not None:
+          total_volume = total_volume + convert_value(product.volume, product.volume_uom.value, volume_uom)
+        total_quantity = total_quantity + convert_value(line.quantity, product.uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume
     order._total_quantity = total_quantity
@@ -203,15 +207,16 @@ class OrderLineFormat(orm.BaseModel):
   def run(self, context):
     order = context._order
     for line in order._lines.value:
-      if hasattr(line, 'product_reference'):
-        if order.seller_reference._root != line.product_reference._root:
+      product = line.product.value
+      if product:
+        if order.seller_reference._root != product.reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
         line.discount = format_value(line.discount, Unit(digits=4))
         if line.quantity <= Decimal('0'):
           line._state = 'deleted'
         else:
-          line.quantity = format_value(line.quantity, line.product_uom.value)
-        line.subtotal = format_value((line.unit_price * line.quantity), order.currency.value)
+          line.quantity = format_value(line.quantity, product.uom.value)
+        line.subtotal = format_value((product.unit_price * line.quantity), order.currency.value)
         line.discount_subtotal = format_value((line.subtotal - (line.subtotal * line.discount)), order.currency.value)
         tax_subtotal = format_value('0', order.currency.value)
         if line.taxes.value:
@@ -264,7 +269,8 @@ class OrderFormat(orm.BaseModel):
     tax_amount = format_value('0', order.currency.value)
     total_amount = format_value('0', order.currency.value)
     for line in order._lines.value:
-      if hasattr(line, 'product_reference'):
+      product = line.product.value
+      if product:
         untaxed_amount = untaxed_amount + line.discount_subtotal
         tax_amount = tax_amount + line.tax_subtotal
         total_amount = total_amount + (line.discount_subtotal + line.tax_subtotal) # we cannot use += for decimal its not supported
@@ -453,7 +459,7 @@ class PayPalPayment(PaymentMethod):
     if not self.active:
       return
     super(PayPalPayment, self).run(context)
-    # CURRENTLY WE ONLY SUPPORT PAYPAL, SO IT IS AUTOMATICALLY SET EITHERWAY
+    # currently we only support paypal, so its enforced by default
     context._order.payment_method = self.key
     
   def complete(self, context):
@@ -538,13 +544,14 @@ class PayPalPayment(PaymentMethod):
       mismatches.append('address_zip')
         
     for line in order._lines.value:
+      product = line.product.value
       log('Order sequence %s' % line.sequence)
       # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
       if (str(line.sequence) != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
         mismatches.append('item_number%s' % str(line.sequence))
-      if (line.description != ipn['item_name%s' % str(line.sequence)]):
+      if (product.name != ipn['item_name%s' % str(line.sequence)]):
         mismatches.append('item_name%s' % str(line.sequence))
-      if (line.quantity != format_value(ipn['quantity%s' % str(line.sequence)], line.product_uom.value)):
+      if (line.quantity != format_value(ipn['quantity%s' % str(line.sequence)], product.uom.value)):
         mismatches.append('quantity%s' % str(line.sequence))
       if (line.subtotal != format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
         mismatches.append('mc_gross_%s' % str(line.sequence))
@@ -609,7 +616,7 @@ class Tax(orm.BaseModel):
       for tax in taxes:
         if tax.key_id_str == self.key_id_str:
           tax._state = 'deleted'
-      if (self.product_categories and self.product_categories.count(line.product_category)) \
+      if (self.product_categories and self.product_categories.count(copy_product.category.key)) \
       or (not self.carriers and not self.product_categories):
         if allowed:
           tax_exists = False
@@ -693,7 +700,8 @@ class Tax(orm.BaseModel):
       elif self.product_categories:
         allowed = False
         for line in order._lines.value:
-          if self.product_categories.count(line.product_category):
+          product = line.product.value
+          if self.product_categories.count(product.category.value.key):
             allowed = True
             break
     return allowed
@@ -783,6 +791,7 @@ class Carrier(orm.BaseModel):
     if not order._lines.value:
       return Decimal('0') # if no lines are present return 0
     for line in order._lines.value:
+      product = line.product.value
       carrier_prices = []
       for carrier_line in valid_lines:
         line_prices = []
@@ -800,8 +809,8 @@ class Carrier(orm.BaseModel):
             if safe_eval(condition, condition_data):
               price_calculation = rule.make_price_calculator()
               price_data = {
-                'weight': line._weight,
-                'volume': line._volume,
+                'weight': product.weight,
+                'volume': product.volume,
                 'quantity': line.quantity,
                 'price_value': rule.price_value,
               }
@@ -913,8 +922,7 @@ class OrderCartProductQuantity(orm.BaseModel):
                         ancestor=context.input.get('buyer')).get()
     quantity = 0
     if order:
-      order_line_key = OrderLine.prepare_key({'product_reference': product, 
-                                              'product_variant_signature': variant_signature}, parent=order.key)
+      order_line_key = OrderLine.prepare_key({'product': {'reference': product, 'variant_signature': variant_signature}}, parent=order.key)
       order_line = order_line_key.get()
       if order_line:
         quantity = int(order_line.quantity)
