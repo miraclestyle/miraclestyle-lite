@@ -169,7 +169,9 @@ class CatalogProductInstance(orm.BaseExpando):
         mem.temp_set(key, sequence)
       else:
         mem.temp_set(key, sequence + 1)
-      self.sequence = sequence + 1
+      if self._sequence is None:
+        self._sequence = 0
+      self.sequence = self._sequence + sequence + 1
     self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=parent)
 
 
@@ -201,7 +203,7 @@ class CatalogProduct(orm.BaseExpando):
   
   _virtual_fields = {
     '_instances': orm.SuperRemoteStructuredProperty(CatalogProductInstance, repeated=True,
-                                                    read_arguments={'config': {'order': {'field': 'created',
+                                                    read_arguments={'config': {'order': {'field': 'sequence',
                                                                                          'direction': 'desc'}}}), # sorting must be done by code?
     '_product_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='product_category'),
     '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
@@ -259,9 +261,7 @@ class CatalogImage(Image):
         else:
           sequence = entity.sequence
         mem.temp_set(key, sequence)
-      else:
-        mem.temp_set(key, sequence + 1)
-      self.sequence = sequence + 1
+      self.sequence = self._sequence + sequence + 1
 
 
 class Catalog(orm.BaseExpando):

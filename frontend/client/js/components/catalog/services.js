@@ -129,7 +129,7 @@
 
                                                     $scope.variantSelection.push({
                                                         type: 'SuperStringProperty',
-                                                        choices: v.options,
+                                                        choices: (v.allow_custom_value ? null : v.options),
                                                         code_name: 'option_' + i,
                                                         ui: {
                                                             label: v.name,
@@ -362,6 +362,8 @@
                                                                 ent.sequence = i;
                                                                 ent.ui.access[ent.ui.access.length - 1] = i;
                                                             });
+
+                                                        $scope.formSetDirty();
 
                                                         $scope.$broadcast('itemOrderChanged');
                                                     }
@@ -789,125 +791,26 @@
                                                             fieldScope.setAction('update');
                                                         },
                                                         sortable: false,
-                                                        create: function () {
-                                                            var that = this,
-                                                                begin,
-                                                                promise,
-                                                                currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
+                                                        init: function () {
+                                                            var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                                 currentArgs = currentFieldScope.args,
-                                                                subParentScope = $scope;
-
+                                                                choices = [],
+                                                                variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
                                                             if (!currentArgs.variants.length) {
                                                                 modals.alert('Please create some variants first.');
                                                                 return false;
                                                             }
 
-                                                            begin = function () {
-                                                                $modal.open({
-                                                                    templateUrl: 'catalog/product/modal/variant_choices.html',
-                                                                    controller: function ($scope, $modalInstance) {
-                                                                        $scope.variants = [];
-                                                                        $scope.variantSelection = [];
-
-                                                                        angular.forEach(currentArgs.variants, function (v, i) {
-
-                                                                            $scope.variants.push({
-                                                                                name: v.name,
-                                                                                options: v.options,
-                                                                                option: null,
-                                                                            });
-
-                                                                            $scope.variantSelection.push({
-                                                                                type: 'SuperStringProperty',
-                                                                                choices: (v.allow_custom_value ? null : v.options),
-                                                                                code_name: 'option_' + i,
-                                                                                ui: {
-                                                                                    label: v.name,
-                                                                                    writable: true,
-                                                                                    placeholder: 'Select option...',
-                                                                                    args: 'variants.' + i + '.option'
-                                                                                }
-                                                                            });
-
-                                                                        });
-
-                                                                        $scope.close = function () {
-                                                                            $modalInstance.dismiss('close');
-                                                                        };
-
-                                                                        $scope.choose = function () {
-
-                                                                            var variantSignature = [],
-                                                                                productInstance;
-
-                                                                            angular.forEach($scope.variants, function (v) {
-                                                                                var d = {};
-                                                                                d[v.name] = v.option;
-                                                                                variantSignature.push(d);
-                                                                            });
-
-                                                                            // rpc to check the instance
-                                                                            models[catalogKind].actions.read({
-                                                                                key: subParentScope.entity.key,
-                                                                                read_arguments: {
-                                                                                    _images: {
-                                                                                        config: {keys: [subParentScope.image.key]},
-                                                                                        pricetags: {
-                                                                                            config: {
-                                                                                                keys: [subParentScope.pricetag.key]
-                                                                                            },
-                                                                                            _product: {
-                                                                                                _instances: {
-                                                                                                    config: {
-                                                                                                        keys: [{
-                                                                                                            input: {
-                                                                                                                variant_signature: variantSignature
-                                                                                                            }
-                                                                                                        }]
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }).then(function (response) {
-                                                                                var product;
-                                                                                try {
-                                                                                    product = response.data.entity._images[0].pricetags[0]._product;
-                                                                                } catch (ignore) { }
-
-                                                                                if (product) {
-                                                                                    productInstance = product._instances[0];
-                                                                                }
-                                                                                if (!productInstance) {
-                                                                                    that.manage(undefined, {variant_signature: variantSignature});
-                                                                                } else {
-                                                                                    that.manage(productInstance);
-                                                                                }
-
-                                                                                $scope.close();
-
-                                                                            });
-
-                                                                        };
-
-                                                                    }
-                                                                });
-
-                                                            };
-
-                                                            if (!$scope.pricetag._product.key) {
-                                                                promise = currentFieldScope.save();
-                                                                if (!promise) {
-                                                                    modals.alert('Please save the product first');
-                                                                } else {
-                                                                    promise.then(function () {
-                                                                        begin();
-                                                                    });
+                                                            angular.forEach(currentArgs.variants, function (variant) {
+                                                                if (variant.allow_custom_value) {
+                                                                    return;
                                                                 }
-                                                            } else {
-                                                                begin();
-                                                            }
+                                                                angular.forEach(variant.options, function (variantOpt) {
+                                                                    choices.push(variant.name + ': ' + variantOpt);
+                                                                });
+                                                            });
+
+                                                            variantOptions.choices = choices;
                                                         },
                                                         addText: 'Add Product Instance',
                                                         listFields: [{

@@ -57,6 +57,10 @@
   border-bottom: 1px solid #EEEEEE;
 }
 
+.panel-body  .clearfix.grid-wrapper.grid-no-items {
+  border-bottom: none;
+}
+
 .list-actions {
   text-align: right;
   font-size: 0px;

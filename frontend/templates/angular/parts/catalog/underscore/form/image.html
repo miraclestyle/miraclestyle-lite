@@ -16,7 +16,7 @@
       </div>
  
 
-    <div ui-sortable="config.ui.specifics.sortableOptions" fancy-grid-generator="config.ui.specifics.parentArgs" ng-model="config.ui.specifics.parentArgs" class="clearfix grid-wrapper">
+    <div ui-sortable="config.ui.specifics.sortableOptions" fancy-grid-generator="config.ui.specifics.parentArgs" ng-model="config.ui.specifics.parentArgs" ng-class="{'grid-no-items': !config.ui.specifics.parentArgs.length}" class="clearfix grid-wrapper">
 
         <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs" ng-hide="image._state == 'deleted'" class="no-move image-image grid-item">
 

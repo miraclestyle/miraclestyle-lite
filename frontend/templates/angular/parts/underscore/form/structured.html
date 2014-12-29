@@ -30,7 +30,7 @@
      <div <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
                  ui-sortable="config.ui.specifics.sortableOptions" 
                  <% } %> 
-          ng-model="config.ui.specifics.parentArgs" class="item-list">
+          ng-model="config.ui.specifics.parentArgs" ng-class="{'no-items': !config.ui.specifics.parentArgs.length}" class="item-list">
         <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="no-move item clearfix">
           <div class="item-left">
  
