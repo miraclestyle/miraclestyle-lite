@@ -179,9 +179,9 @@ class CatalogProduct(orm.BaseExpando):
   
   _use_rule_engine = False
   
-  product_category = orm.SuperKeyProperty('1', kind='24', required=True, searchable=True)
+  product_category = orm.SuperKeyProperty('1', kind='24', required=True, searchable=True)  # @todo Why did we name this product_category instead of category ?
   name = orm.SuperStringProperty('2', required=True, searchable=True)
-  product_uom = orm.SuperKeyProperty('3', kind='17', required=True, indexed=False)
+  product_uom = orm.SuperKeyProperty('3', kind='17', required=True, indexed=False)  # @todo Why did we name this product_category instead of category ?
   code = orm.SuperStringProperty('4', required=True, indexed=False, searchable=True)
   description = orm.SuperTextProperty('5', required=True, searchable=True)  # Soft limit 64kb.
   unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)

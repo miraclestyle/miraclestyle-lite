@@ -12,7 +12,7 @@ from models.base import *
 from plugins.base import *
 
 from models.buyer import *
-from models.location import * # We have collision of names here, class `Location` appears in plugins.order
+from models.location import *
 from models.unit import *
 from plugins.order import *
 
@@ -30,6 +30,30 @@ class OrderTax(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   type = orm.SuperStringProperty('2', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
   amount = orm.SuperDecimalProperty('3', required=True, indexed=False)
+
+# Modify this class accordingly!
+class OrderLineProduct(orm.BaseExpando):  # @todo Do we name this OrderProduct like we did OrderTax ?
+  
+  _kind = # ??
+  
+  _use_rule_engine = False
+  
+  reference = orm.SuperKeyProperty('1', kind='28', required=True, indexed=False)
+  category = orm.SuperLocalStructuredProperty('24', '2', required=True)
+  name = orm.SuperStringProperty('3', required=True, indexed=False)
+  uom = orm.SuperLocalStructuredProperty('17', '4', required=True)
+  code = orm.SuperStringProperty('5', required=True, indexed=False)
+  unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
+  variant_signature = orm.SuperJsonProperty('7', required=True, default={}, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'weight': orm.SuperDecimalProperty('8'),
+    'weight_uom': orm.SuperKeyProperty('9', kind='17'),
+    'volume': orm.SuperDecimalProperty('10'),
+    'volume_uom': orm.SuperKeyProperty('11', kind='17')
+    }
 
 
 class OrderCarrier(orm.BaseExpando):
@@ -56,22 +80,14 @@ class OrderLine(orm.BaseExpando):
   _use_rule_engine = False
   
   sequence = orm.SuperIntegerProperty('1', required=True)
-  description = orm.SuperTextProperty('2', required=True)
-  product_reference = orm.SuperKeyProperty('3', kind='28', required=True, indexed=False)
-  product_variant_signature = orm.SuperJsonProperty('4', required=False) # @todo product_variant_signature cannot always be required !
-  product_category_complete_name = orm.SuperTextProperty('5', required=True)
-  product_category_reference = orm.SuperKeyProperty('6', kind='24', required=True, indexed=False)
-  code = orm.SuperStringProperty('7', required=True, indexed=False)
-  unit_price = orm.SuperDecimalProperty('8', required=True, indexed=False)
-  product_uom = orm.SuperLocalStructuredProperty(Unit, '9', required=True)
-  quantity = orm.SuperDecimalProperty('10', required=True, indexed=False)
-  discount = orm.SuperDecimalProperty('11', required=True, indexed=False)
-  taxes = orm.SuperLocalStructuredProperty(OrderTax, '12', repeated=True)
-  subtotal = orm.SuperDecimalProperty('13', required=True, indexed=False)
-  discount_subtotal = orm.SuperDecimalProperty('14', required=True, indexed=False)
-  total = orm.SuperDecimalProperty('15', required=True, indexed=False)
-  # @todo this was missing, not sure if we need this here?
-  tax_subtotal = orm.SuperDecimalProperty('16', required=True, indexed=False)
+  product = orm.SuperLocalStructuredProperty(OrderLineProduct, '2', required=True)
+  taxes = orm.SuperLocalStructuredProperty(OrderTax, '3', repeated=True)
+  quantity = orm.SuperDecimalProperty('4', required=True, indexed=False)
+  discount = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  subtotal = orm.SuperDecimalProperty('6', required=True, indexed=False)
+  discount_subtotal = orm.SuperDecimalProperty('7', required=True, indexed=False)
+  tax_subtotal = orm.SuperDecimalProperty('8', required=True, indexed=False)
+  total = orm.SuperDecimalProperty('9', required=True, indexed=False)
   
   _default_indexed = False
 
@@ -84,7 +100,7 @@ class OrderLine(orm.BaseExpando):
     parent = kwargs.get('parent')
     product_key = self.prepare_key({'product_reference': self.product_reference, 'product_variant_signature': self.product_variant_signature}, parent=parent)
     self.key = product_key
-  
+
 
 class OrderMessage(orm.BaseExpando):
   
@@ -122,7 +138,7 @@ class Order(orm.BaseExpando):
   shipping_address_reference = orm.SuperKeyProperty('9', kind='14', required=True, indexed=False)
   billing_address = orm.SuperLocalStructuredProperty('121', '10', required=True)
   shipping_address = orm.SuperLocalStructuredProperty('121', '11', required=True)
-  currency = orm.SuperLocalStructuredProperty(Unit, '12', required=True)
+  currency = orm.SuperLocalStructuredProperty('17', '12', required=True)
   untaxed_amount = orm.SuperDecimalProperty('13', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
