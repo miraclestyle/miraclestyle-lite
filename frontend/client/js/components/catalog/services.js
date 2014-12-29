@@ -150,12 +150,12 @@
                                                         promise;
 
                                                     angular.forEach($scope.variants, function (v) {
-                                                        var d = {};
                                                         if (v.option === null) {
                                                             skip = true;
                                                         }
-                                                        d[v.name] = v.option;
-                                                        variantSignature.push(d);
+                                                        if (!v.allow_custom_value) {
+                                                            variantSignature.push(v.name + ': ' + v.option);
+                                                        }
                                                     });
 
                                                     if (skip) {
@@ -167,29 +167,11 @@
                                                     $scope.currentVariation = variantSignature;
 
                                                     // rpc to check the instance
-                                                    return models[catalogKind].actions.read({
-                                                        key: this.catalog.key,
-                                                        // 4 rpcs
-                                                        read_arguments: {
-                                                            _images: {
-                                                                config: {keys: [this.image.key]},
-                                                                pricetags: {
-                                                                    config: {
-                                                                        keys: [this.pricetag.key]
-                                                                    },
-                                                                    _product: {
-                                                                        _instances: {
-                                                                            config: {
-                                                                                keys: [{
-                                                                                    input: {
-                                                                                        variant_signature: variantSignature
-                                                                                    }
-                                                                                }]
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
+                                                    return models[catalogKind].actions.read_product_instance({
+                                                        search: {
+                                                            ancestor: $scope.product.key,
+                                                            filters: [{field: 'variant_options', operator: 'ALL_IN', value: variantSignature}],
+                                                            orders: [{field: 'sequence', operator: 'desc'}]
                                                         }
                                                     });
                                                 };
@@ -250,22 +232,15 @@
                                                 };
 
                                                 loadProductInstance = function (response) {
-                                                    var product,
-                                                        productInstance,
+                                                    var productInstance,
                                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
                                                                          'description', 'contents', 'availability'];
                                                     try {
-                                                        product = response.data.entity._images[0].pricetags[0]._product;
+                                                        productInstance = response.data.entities[0];
                                                     } catch (ignore) { }
 
-                                                    if (product) {
-                                                        productInstance = product._instances[0];
-                                                    }
-
                                                     if (productInstance) {
-
                                                         $scope.productInstance = productInstance;
-
                                                         angular.forEach(toUpdate, function (field) {
                                                             var next = productInstance[field];
                                                             if (next !== null && next.length) {

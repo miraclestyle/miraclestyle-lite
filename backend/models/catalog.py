@@ -150,13 +150,13 @@ class CatalogProductInstance(orm.BaseExpando):
   
   @classmethod
   def prepare_key(cls, input, **kwargs):
-    variant_signature = input.get('variant_signature')  # @todo This variant signature has to be filtered to remove custom variant values!
-    key_id = hashlib.md5(json.dumps(variant_signature)).hexdigest()
-    product_instance_key = cls.build_key(key_id, parent=kwargs.get('parent'))
+    product_instance_key = cls.build_key(None, parent=kwargs.get('parent'))
     return product_instance_key
   
   def prepare(self, **kwargs):
     parent = kwargs.get('parent')
+    if not self.key_id:
+      self.key = self.prepare_key({}, parent=parent)
     if self.key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
       sequence = mem.temp_get(key, Nonexistent)
@@ -172,7 +172,6 @@ class CatalogProductInstance(orm.BaseExpando):
       if self._sequence is None:
         self._sequence = 0
       self.sequence = self._sequence + sequence + 1
-    self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=parent)
 
 
 class CatalogProduct(orm.BaseExpando):

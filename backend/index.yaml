@@ -91,7 +91,15 @@ indexes:
   - name: '6'
   - name: '3'
 
-# CatalogProductInstance
+# CatalogProductInstance.variant_options == 'thing', sequence desc
+- kind: '27'
+  ancestor: yes
+  properties:
+  - name: '2'
+  - name: '1'
+    direction: desc
+
+# CatalogProductInstance.sequence desc
 - kind: '27'
   ancestor: yes
   properties:

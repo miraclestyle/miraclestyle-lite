@@ -1262,8 +1262,12 @@ w:                  while (images.length > 0) {
 
                                     angular.forEach(config.fields, function (field) {
                                         if (field.is_structured && formInputTypes[field.type]) {
+
+                                            if (!field.ui.initialLabel) {
+                                                field.ui.initialLabel = field.ui.label;
+                                            }
                                             $scope.accordions.groups.push({
-                                                label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                label: inflector((field.ui.initialLabel || field.code_name), 'humanize'),
                                                 disabled: false,
                                                 open: false
                                             });
@@ -1996,7 +2000,12 @@ w:                  while (images.length > 0) {
                                             config.ui.specifics.getScope = undefined;
                                         });
                                         angular.forEach(config.ui.specifics.formBuilder, function (field) {
-                                            field = angular.copy(field);
+                                            //field = angular.copy(field); // why copy?
+                                            if (!field.ui.initialRealPath) {
+                                                field.ui.initialRealPath = angular.copy(field.ui.realPath);
+                                            } else {
+                                                field.ui.realPath = angular.copy(field.ui.initialRealPath);
+                                            }
                                             field.ui.realPath.pop();
                                             if (!config.ui.specifics.modal) {
                                                 field.ui.realPath.push(length);

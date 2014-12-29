@@ -2003,14 +2003,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       prepare_supplied_keys = []
       model = self._property.get_modelclass()
       for supplied_key in supplied_keys:
-        if isinstance(supplied_key, dict):
-          if not hasattr(model, 'prepare_key'):
-            raise PropertyError('not_supported')
-          else:
-            supplied_key['parent'] = self._entity.key
-            prepare_supplied_keys.append(model.prepare_key(**supplied_key).urlsafe()) # this is not correct because the supplied_key is raw input from user and it should be formatted.
-        else:
-          prepare_supplied_keys.append(supplied_key)
+        prepare_supplied_keys.append(supplied_key)
       supplied_keys = SuperVirtualKeyProperty(kind=model.get_kind(), repeated=True).value_format(prepare_supplied_keys)
       for supplied_key in supplied_keys:
         if supplied_key.parent() != self._entity.key:
@@ -2773,6 +2766,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
   _deleteable = True
   _autoload = False
   _value_class = RemoteStructuredPropertyValue
+  _search = None
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     if isinstance(modelclass, basestring):
@@ -2780,6 +2774,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
       if set_modelclass is not None:
         modelclass = set_modelclass
     kwds['generic'] = True
+    self._search = kwds.pop('search', None)
     super(SuperRemoteStructuredProperty, self).__init__(name, **kwds)
     self._modelclass = modelclass
   
@@ -3482,6 +3477,7 @@ class SuperSearchProperty(SuperJsonProperty):
     filters = self.build_datastore_query_filters(value)
     orders = self.build_datastore_query_orders(value)
     default_options = self.build_datastore_query_default_options(value)
+    print filters, orders
     return Query(kind=value.get('kind'), ancestor=value.get('ancestor'),
                  namespace=value.get('namespace'), projection=value.get('projection'),
                  group_by=value.get('group_by'), default_options=default_options).filter(*filters).order(*orders)

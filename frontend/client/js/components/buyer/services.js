@@ -35,6 +35,35 @@
                             afterSave: function () {
                                 endpoint.invalidateCache(cacheCurrentBuyerKey);
                             },
+                            init: function ($scope) {
+                                $scope.setDefaults = function (updated_address) {
+                                    angular.forEach($scope.parentArgs, function (address) {
+                                        return;
+                                        if ((updated_address.default_billing || updated_address.default_shipping)) {
+                                            if (updated_address !== address) {
+
+                                                if (updated_address.default_billing) {
+                                                    address.default_billing = false;
+                                                }
+
+                                                if (updated_address.default_shipping) {
+                                                    address.default_shipping = false;
+                                                }
+                                            }
+
+                                        }
+
+                                    });
+                                };
+
+                                var remove = $scope.config.ui.specifics.remove;
+
+                                $scope.config.ui.specifics.remove = function () {
+                                    remove.apply(this, arguments);
+                                    $scope.setDefaults();
+                                };
+
+                            },
                             beforeSave: function ($scope, info) {
                                 var promises = [],
                                     updated_address = $scope.args,
@@ -70,23 +99,7 @@
 
                                     promises.push(promise);
                                 }
-
-                                angular.forEach($scope.parentArgs, function (address) {
-                                    if (updated_address.default_billing || updated_address.default_shipping) {
-                                        if (updated_address !== address) {
-
-                                            if (updated_address.default_billing) {
-                                                address.default_billing = false;
-                                            }
-
-                                            if (updated_address.default_shipping) {
-                                                address.default_shipping = false;
-                                            }
-                                        }
-
-                                    }
-
-                                });
+                                $scope.setDefaults(updated_address);
                                 if (promises.length) {
                                     return $q.all(promises);
                                 }
