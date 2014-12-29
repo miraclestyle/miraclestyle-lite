@@ -17,25 +17,36 @@ class BuyerUpdateSet(orm.BaseModel):
     if addresses:
       default_billing = None
       default_shipping = None
-      initial_default_billing = 0
-      initial_default_shipping = 0
+      original_default_billing = None
+      original_default_shipping = None
       for i, address in enumerate(addresses):
-        original_address = get_attr(original_addresses, i)
-        if (original_address and original_address.default_billing):
-          initial_default_billing = i
-        if (original_address and original_address.default_shipping):
-          initial_default_shipping = i
-        if address.default_shipping:
-          default_shipping = i
-        if address.default_billing:
-          default_billing = i
-        address.default_shipping = False
+        if address._state != 'deleted':
+          original_address = get_attr(original_addresses, i)
+          if original_address and original_address.default_billing:
+            original_default_billing = i
+          if original_address and original_address.default_shipping:
+            original_default_shipping = i
+          if address.default_billing:
+            default_billing = i
+          if address.default_shipping:
+            default_shipping = i
         address.default_billing = False
+        address.default_shipping = False
       if (default_billing is not None):
         addresses[default_billing].default_billing = True
+      elif (original_default_billing is not None):
+        addresses[original_default_billing].default_billing = True
       else:
-        addresses[initial_default_billing].default_billing = True
+        for address in addresses:
+          if address._state != 'deleted':
+            address.default_billing = True
+            break
       if (default_shipping is not None):
         addresses[default_shipping].default_shipping = True
+      elif (original_default_shipping is not None):
+        addresses[original_default_shipping].default_shipping = True
       else:
-        addresses[initial_default_shipping].default_shipping = True
+        for address in addresses:
+          if address._state != 'deleted':
+            address.default_shipping = True
+            break
