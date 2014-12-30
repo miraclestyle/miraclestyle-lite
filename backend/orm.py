@@ -1989,49 +1989,37 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   
   def _read_repeated(self, read_arguments):
     config = read_arguments.get('config', {})
-    urlsafe_cursor = config.get('cursor')
-    limit = config.get('limit', 10)
-    offset = config.get('offset')
-    order = config.get('order')
-    supplied_entities = config.get('entities')
+    search = config.get('search', {})
     supplied_keys = config.get('keys')
-    if supplied_entities:
-      entities = get_multi_async([entity.key for entity in supplied_entities if entity.key is not None])
-      cursor = None
-    elif supplied_keys:
-      supplied_keys_strings = supplied_keys
-      prepare_supplied_keys = []
+    if supplied_keys:
       model = self._property.get_modelclass()
-      for supplied_key in supplied_keys:
-        prepare_supplied_keys.append(supplied_key)
-      supplied_keys = SuperVirtualKeyProperty(kind=model.get_kind(), repeated=True).value_format(prepare_supplied_keys)
+      supplied_keys = SuperVirtualKeyProperty(kind=model.get_kind(), repeated=True).value_format(supplied_keys)
       for supplied_key in supplied_keys:
         if supplied_key.parent() != self._entity.key:
           raise PropertyError('invalid_parent_for_key_%s' % supplied_key.urlsafe())
       entities = get_multi_async(supplied_keys)
       self._property_value_options.update(config)
-      cursor = None
     else:
-      query = self._property.get_modelclass().query(ancestor=self._entity.key)
-      if order:
-        order_field = getattr(self._property.get_modelclass(), order['field'])
-        if order['direction'] == 'asc':
-          query = query.order(order_field)
-        else:
-          query = query.order(-order_field)
-      try:
-        cursor = Cursor(urlsafe=urlsafe_cursor)
-      except:
-        cursor = Cursor()
-      if limit == -1:
-        entities = query.fetch_async()
+      if 'search' not in config:
+        config['search'] = search
+      search['ancestor'] = self._entity.key.urlsafe()
+      if 'options' not in search:
+        search['options'] = {'limit': 10}
+      search_property = self._property.search
+      search_property.cfg.update({'ancestor_kind': self._entity.get_kind()})
+      search_arguments = search_property.value_format(search)
+      if search_arguments.get('keys'):
+        entities = get_multi_async(search_arguments.get('keys'))
       else:
-        entities = query.fetch_page_async(limit, start_cursor=cursor, offset=offset)
-      cursor = None
+        options = search_property.build_datastore_query_options(search_arguments)
+        query = search_property.build_datastore_query(search_arguments)
+        entities = query.fetch_page_async(options.limit, options=options)
+      if 'property' in search:
+        del search['property']
+      self._property_value_options['search'] = search
     self._property_value = entities
-    self._property_value_options['cursor'] = cursor
-    
-  
+
+
   def _read(self, read_arguments):
     if self._property._repeated:
       self._read_repeated(read_arguments)
@@ -2054,7 +2042,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
               cursor = cursor.urlsafe()
             util.remove_value(property_value[0])
             self._property_value = property_value[0]
-            self._property_value_options['cursor'] = cursor
+            self._property_value_options['search']['options']['start_cursor'] = cursor
             self._property_value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
@@ -2285,6 +2273,7 @@ class _BaseProperty(object):
   _value_filters = None
   _searchable = None
   _search_document_field_name = None
+  initilized = False
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
@@ -2766,7 +2755,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
   _deleteable = True
   _autoload = False
   _value_class = RemoteStructuredPropertyValue
-  _search = None
+  search = None
   
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     if isinstance(modelclass, basestring):
@@ -2774,7 +2763,12 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
       if set_modelclass is not None:
         modelclass = set_modelclass
     kwds['generic'] = True
-    self._search = kwds.pop('search', None)
+    self.search = kwds.pop('search', None)
+    if self.search is None:
+      self.search = {'cfg':{
+              'filters': {},
+              'indexes': [{'ancestor': True, 'filters': [], 'orders': []}],
+            }}
     super(SuperRemoteStructuredProperty, self).__init__(name, **kwds)
     self._modelclass = modelclass
   
@@ -2789,6 +2783,22 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
   def _prepare_for_put(self, entity):
     self._get_value(entity)  # For its side effects.
 
+  def initialize(self):
+    super(SuperRemoteStructuredProperty, self).initialize()
+    default_search_cfg = {'cfg': {'search_arguments': {'kind': self._modelclass.get_kind(), 'options': {'limit': 10}},
+                          'search_by_keys': False,
+                          'filters': {},
+                          'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
+    util.merge_dicts(self.search, default_search_cfg)
+    self.search = SuperSearchProperty(**self.search)
+
+  def get_meta(self):
+    '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
+    The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
+    '''
+    dic = super(SuperRemoteStructuredProperty, self).get_meta()
+    dic['search'] = self.search
+    return dic
 
 class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
   '''Reference structured is the same as remote, except it uses different default value class and its default flags for
@@ -3226,7 +3236,7 @@ class SuperSearchProperty(SuperJsonProperty):
                                'keys': [key1, key2, key3]}
     
     '''
-    self._cfg = kwargs.pop('cfg', {})
+    self.cfg = kwargs.pop('cfg', {})
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
@@ -3235,7 +3245,7 @@ class SuperSearchProperty(SuperJsonProperty):
     
     '''
     dic = super(SuperSearchProperty, self).get_meta()
-    dic['cfg'] = self._cfg
+    dic['cfg'] = self.cfg
     return dic
   
   def _clean_format(self, values):
@@ -3255,17 +3265,22 @@ class SuperSearchProperty(SuperJsonProperty):
   def _ancestor_format(self, values):
     ancestor = values.get('ancestor')
     if ancestor is not None:
-      ancestor_kind = self._cfg.get('ancestor_kind')
+      ancestor_kind = self.cfg.get('ancestor_kind')
       if ancestor_kind is not None:
-        values['ancestor'] = SuperKeyProperty(kind=ancestor_kind, required=True).value_format(ancestor)
+        # sometimes the parent is not stored in database, so just shallow validation should suffice
+        values['ancestor'] = SuperVirtualKeyProperty(kind=ancestor_kind, required=True).value_format(ancestor)
       else:
         del values['ancestor']
   
   def _keys_format(self, values):
     keys = values.get('keys')
+    ancestor = values.get('ancestor')
     if keys is not None:
-      if self._cfg.get('search_by_keys'):
+      if self.cfg.get('search_by_keys'):
         values['keys'] = SuperKeyProperty(kind=values['kind'], repeated=True).value_format(keys)
+        for key in values['keys']:
+          if key.parent() != ancestor:
+            raise PropertyError('invalid_parent_for_key_%s' % key.urlsafe())
       else:
         del values['keys']
   
@@ -3306,13 +3321,21 @@ class SuperSearchProperty(SuperJsonProperty):
         if input_value['operator'] not in cfg_value[1]:
           raise PropertyError('expected_operator_%s_%s_%s' % (method, cfg_value[1], i))
     
-    if self._cfg.get('search_by_keys') and 'keys' in values:
+    if self.cfg.get('search_by_keys') and 'keys' in values:
       return values
+    defaults = self._default
+    # if defaults are defined then load them if the user did not supply them
+    if not defaults:
+      defaults = {}
     ancestor = values.get('ancestor')
-    filters = values.get('filters', [])
-    orders = values.get('orders', [])
-    cfg_filters = self._cfg.get('filters', {})
-    cfg_indexes = self._cfg['indexes']
+    if 'filters' not in values:
+      values['filters'] = defaults.get('filters', [])
+    if 'orders' not in values:
+      values['orders'] = defaults.get('orders', [])
+    filters = values.get('filters')
+    orders = values.get('orders')
+    cfg_filters = self.cfg.get('filters', {})
+    cfg_indexes = self.cfg['indexes']
     success = False
     e = 'unknown'
     for cfg_index in cfg_indexes:
@@ -3372,7 +3395,7 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def _search_query_orders_format(self, values):
     orders = values.get('orders')
-    cfg_orders = self._cfg.get('orders', {})
+    cfg_orders = self.cfg.get('orders', {})
     if orders is not None:
       for _order in orders:
         cfg_order = cfg_orders.get(_order['field'], {})
@@ -3396,7 +3419,7 @@ class SuperSearchProperty(SuperJsonProperty):
   
   def value_format(self, values):
     values = super(SuperSearchProperty, self).value_format(values)
-    override = self._cfg.get('search_arguments', {})
+    override = self.cfg.get('search_arguments', {})
     util.override_dict(values, override)
     self._clean_format(values)
     self._kind_format(values)
@@ -3404,7 +3427,7 @@ class SuperSearchProperty(SuperJsonProperty):
     self._keys_format(values)
     self._projection_group_by_format(values)
     self._filters_orders_format(values)
-    if self._cfg.get('use_search_engine', False):
+    if self.cfg.get('use_search_engine', False):
       self._search_query_orders_format(values)
       self._search_query_options_format(values)
     else:
@@ -3477,7 +3500,6 @@ class SuperSearchProperty(SuperJsonProperty):
     filters = self.build_datastore_query_filters(value)
     orders = self.build_datastore_query_orders(value)
     default_options = self.build_datastore_query_default_options(value)
-    print filters, orders
     return Query(kind=value.get('kind'), ancestor=value.get('ancestor'),
                  namespace=value.get('namespace'), projection=value.get('projection'),
                  group_by=value.get('group_by'), default_options=default_options).filter(*filters).order(*orders)
@@ -3671,12 +3693,12 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
   
   '''
   def __init__(self, *args, **kwargs):
-    self._cfg = kwargs.pop('cfg', None)
+    self.cfg = kwargs.pop('cfg', None)
     super(SuperPropertyStorageProperty, self).__init__(*args, **kwargs)
   
   def get_meta(self):
     dic = super(SuperPropertyStorageProperty, self).get_meta()
-    dic['cfg'] = self._cfg
+    dic['cfg'] = self.cfg
     return dic
   
   def value_format(self, value):
@@ -3696,7 +3718,7 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
       field = None
       skip_kwargs = None
       required_kwargs = None
-      for cfg in self._cfg:
+      for cfg in self.cfg:
         the_field = cfg[0]
         skip_kwargs = gets(cfg, 1, ())
         required_kwargs = gets(cfg, 2, None)

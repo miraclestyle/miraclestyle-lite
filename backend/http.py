@@ -260,7 +260,7 @@ class OrderComplete(RequestHandler):
     params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
               'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
     data = {'action_model': '34', 'key': order_key, 'action_id': 'complete', 'request': {},
-            'read_arguments': {'_lines': {'config': {'limit': -1}}}}
+            'read_arguments': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}
     for param in params:
       data['request'][param] = getattr(self.request, param)
     output = iom.Engine.run(data)

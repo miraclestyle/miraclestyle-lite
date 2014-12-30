@@ -166,14 +166,42 @@ class Order(orm.BaseExpando):
   
   _virtual_fields = {
     '_seller': orm.SuperReferenceStructuredProperty('23', target_field='seller_reference', autoload=True),
-    '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True, read_arguments={'config': {'order': {'field': 'sequence',
-                                                                                       'direction': 'asc'}}}),
+    '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True, search={
+        'default': {
+          'filters': [],
+          'orders': [{
+            'field': 'sequence',
+            'operator': 'asc'
+          }]
+        },
+        'cfg': {
+          'indexes': [{
+            'ancestor': True,
+            'filters': [],
+            'orders': [('sequence', ['asc'])]
+          }],
+        }
+      }),
     '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, deleteable=False,
-                                                   read_arguments={'config': {'order': {'field': 'created',
-                                                                                       'direction': 'desc'}}}),
+      search={
+        'default': {
+          'filters': [],
+          'orders': [{
+            'field': 'created',
+            'operator': 'desc'
+          }]
+        },
+        'cfg': {
+          'indexes': [{
+            'ancestor': True,
+            'filters': [],
+            'orders': [('created', ['desc'])]
+          }],
+        }
+      }),
     '_records': orm.SuperRecordProperty('34'),
     '_payment_method': orm.SuperReferenceProperty(callback=_get_payment_method, format_callback=lambda self, value: value),
-    }
+  }
   
   _global_role = GlobalRole(
     permissions=[
@@ -355,7 +383,7 @@ class Order(orm.BaseExpando):
         orm.PluginGroup(
           plugins=[
             Context(),
-            Read(cfg={'read': {'_lines': {'config': {'limit': -1}}}}),
+            Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
             Set(cfg={'d': {'_order.billing_address_reference': 'input.billing_address_reference',
                            '_order.shipping_address_reference': 'input.shipping_address_reference',
                            '_order.payment_method': 'input.payment_method',

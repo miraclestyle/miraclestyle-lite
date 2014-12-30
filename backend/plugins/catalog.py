@@ -175,7 +175,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
                       '_product_category.value.parent_record': orm.SuperKeyProperty(kind='24', search_document_field_name='product_category_parent_record'),
                       '_product_category.value.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
                       '_product_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
-    context._catalog._images.read({'config': {'limit': -1}, 'pricetags': {'_product': {'_product_category': {}}}})
+    context._catalog._images.read({'config': {'search': {'options': {'limit': 0}}}, 'pricetags': {'_product': {'_product_category': {}}}})
     products = []
     for image in context._catalog._images.value:
       products.extend([pricetag._product.value for pricetag in image.pricetags.value])
@@ -207,7 +207,7 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     index_name = self.cfg.get('index', None)
     entities = []
     entities.append(context._catalog.key_urlsafe)
-    context._catalog._images.read({'config': {'limit': -1}, 'pricetags': {'_product': {}}})
+    context._catalog._images.read({'config': {'search': {'options': {'limit': 0}}}, 'pricetags': {'_product': {}}})
     product_keys = []
     for image in context._catalog._images.value:
       product_keys.extend([pricetag._product.value.key_urlsafe for pricetag in image.pricetags.value])

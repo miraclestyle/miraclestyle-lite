@@ -200,13 +200,18 @@ class CatalogProduct(orm.BaseExpando):
     'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '14', repeated=True)
     }
   
-  _virtual_fields = {
-    '_instances': orm.SuperRemoteStructuredProperty(CatalogProductInstance, repeated=True,
-                                                    read_arguments={'config': {'order': {'field': 'sequence',
-                                                                                         'direction': 'desc'}}}), # sorting must be done by code?
+  _virtual_fields = {  # sorting must be done by code?
+    '_instances': orm.SuperRemoteStructuredProperty('27',
+            repeated=True,
+            search={'default': {'filters': [], 'orders': [{'field': 'sequence', 'operator': 'desc'}]},
+            'cfg':{
+              'filters': {'variant_options': orm.SuperStringProperty(repeated=True)},
+              'indexes': [{'ancestor': True, 'filters': [('variant_options', ['ALL_IN'])], 'orders': [('sequence', ['desc'])]},
+                          {'ancestor': True, 'filters': [], 'orders': [('sequence', ['desc'])]}],
+            }}),
     '_product_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='product_category'),
     '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
-    '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom')
+    '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom'),
     }
 
   def prepare(self, **kwargs):
@@ -286,11 +291,25 @@ class Catalog(orm.BaseExpando):
   
   _virtual_fields = {
     '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
-                                                  read_arguments={'config': {'order': {'field': 'sequence',
-                                                                                       'direction': 'desc'}}}),
+      search={
+        'default': {
+          'filters': [],
+          'orders': [{
+            'field': 'sequence',
+            'operator': 'desc'
+          }]
+        },
+        'cfg': {
+          'indexes': [{
+            'ancestor': True,
+            'filters': [],
+            'orders': [('sequence', ['desc'])]
+          }],
+        }
+      }),
     '_seller': orm.SuperReferenceStructuredProperty('23', callback=lambda self: self.key.parent().get_async()),
     '_records': orm.SuperRecordProperty('31')
-    }
+  }
   
   _global_role = GlobalRole(
     permissions=[
@@ -331,9 +350,6 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'unindex'),
                                   orm.Action.build_key('31', 'cron')], True, 'account._is_taskqueue'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'public_search')], True, 'True'),
-      # @todo read_product_instance is now public, it needs correct permissions
-      orm.ActionPermission('31', [orm.Action.build_key('31', 'read_product_instance')], True,
-                           'True'),
       # field permissions
       orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images', '_records'], False, True,
@@ -608,38 +624,6 @@ class Catalog(orm.BaseExpando):
             RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
             # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
-            Search(),
-            RulePrepare(cfg={'path': '_entities'}),
-            Set(cfg={'d': {'output.entities': '_entities',
-                           'output.cursor': '_cursor',
-                           'output.more': '_more'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('31', 'read_product_instance'),
-      arguments={
-        'search': orm.SuperSearchProperty(
-          default={'filters': [], 'orders': [{'field': 'sequence', 'operator': 'desc'}]},
-          cfg={
-            'search_arguments': {'kind': '27', 'options': {'limit': 1}},
-            'ancestor_kind': '28',
-            'search_by_keys': False,
-            'filters': {'variant_options': orm.SuperStringProperty(repeated=True)},
-            'indexes': [{'ancestor': True, 
-                         'filters': [('variant_options', ['ALL_IN'])],
-                         'orders': [('sequence', ['desc'])]}]
-            }
-          )
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(cfg={'d': {'input': 'input'}}),
-            RuleExec(),
             Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',

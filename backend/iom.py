@@ -119,8 +119,9 @@ class Engine:
         if model.get_fields.__self__ is model:
           fields = model.get_fields()
           for field_key, field in fields.iteritems():
-            if hasattr(field, 'initialize'):
+            if hasattr(field, 'initialize') and not field.initilized: # initialize() can only be called once
               field.initialize()
+              field.initilized = True
   
   @classmethod
   def get_schema(cls):

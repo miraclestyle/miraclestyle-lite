@@ -50,7 +50,7 @@ class OrderInit(orm.BaseModel):
       seller = seller_key.get()
       seller.read() # read locals
     else:
-      defaults = {'_lines' : {'config' : {'limit': -1}}}
+      defaults = {'_lines' : {'config': {'search': {'options': {'limit': 0}}}}}
       if 'read_arguments' in context.input:
         override_dict(defaults, context.input.get('read_arguments'))
       order.read(defaults)  # @todo It is possible that we will have to read more stuff here.
@@ -888,7 +888,7 @@ class OrderProcessPayment(orm.BaseModel):
   
   def run(self, context):
     order = context._order
-    order.read({'_lines': {'config': {'limit': -1}}, '_payment_method': {}})
+    order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
     order.make_original()
     payment_plugin = order._payment_method
     if not payment_plugin:

@@ -167,11 +167,27 @@
                                                     $scope.currentVariation = variantSignature;
 
                                                     // rpc to check the instance
-                                                    return models[catalogKind].actions.read_product_instance({
-                                                        search: {
-                                                            ancestor: $scope.product.key,
-                                                            filters: [{field: 'variant_options', operator: 'ALL_IN', value: variantSignature}],
-                                                            orders: [{field: 'sequence', operator: 'desc'}]
+                                                    return models[catalogKind].actions.read({
+                                                        key: this.catalog.key,
+                                                        // 4 rpcs
+                                                        read_arguments: {
+                                                            _images: {
+                                                                config: {keys: [this.image.key]},
+                                                                pricetags: {
+                                                                    config: {
+                                                                        keys: [this.pricetag.key]
+                                                                    },
+                                                                    _product: {
+                                                                        _instances: {
+                                                                            config: {
+                                                                                search: {
+                                                                                    filters: [{field: 'variant_options', operation: 'ALL_IN', value: variantSignature}]
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     });
                                                 };
@@ -232,13 +248,17 @@
                                                 };
 
                                                 loadProductInstance = function (response) {
-                                                    var productInstance,
+                                                    var product,
+                                                        productInstance,
                                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
                                                                          'description', 'contents', 'availability'];
                                                     try {
-                                                        productInstance = response.data.entities[0];
+                                                        product = response.data.entity._images[0].pricetags[0]._product;
                                                     } catch (ignore) { }
 
+                                                    if (product) {
+                                                        productInstance = product._instances[0];
+                                                    }
                                                     if (productInstance) {
                                                         $scope.productInstance = productInstance;
                                                         angular.forEach(toUpdate, function (field) {

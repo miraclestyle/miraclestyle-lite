@@ -38,7 +38,6 @@
                             init: function ($scope) {
                                 $scope.setDefaults = function (updated_address) {
                                     angular.forEach($scope.parentArgs, function (address) {
-                                        return;
                                         if ((updated_address.default_billing || updated_address.default_shipping)) {
                                             if (updated_address !== address) {
 
