@@ -12,24 +12,24 @@ from util import *
 class BuyerUpdateSet(orm.BaseModel):
   
   def run(self, context):
-    original_addresses = context._buyer._original.addresses.value
     addresses = context._buyer.addresses.value
+    log(addresses)
     if addresses:
       default_billing = None
       default_shipping = None
       original_default_billing = None
       original_default_shipping = None
       for i, address in enumerate(addresses):
+        log('address: %s' % address)
         if address._state != 'deleted':
-          original_address = get_attr(original_addresses, i)
-          if original_address and original_address.default_billing:
-            original_default_billing = i
-          if original_address and original_address.default_shipping:
-            original_default_shipping = i
           if address.default_billing:
             default_billing = i
+          if hasattr(address, '_original') and get_attr(address, '_original.default_billing'):
+            original_default_billing = i
           if address.default_shipping:
             default_shipping = i
+          if hasattr(address, '_original') and get_attr(address, '_original.default_shipping'):
+            original_default_shipping = i
         address.default_billing = False
         address.default_shipping = False
       if (default_billing is not None):
