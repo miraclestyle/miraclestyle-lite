@@ -219,11 +219,11 @@ class Order(orm.BaseExpando):
                            and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key \
                            and entity._original.state == "checkout"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
-                           'account._root_admin or (not account._is_guest and entity._original.key_root == account.key \
+                           'action.key_id_str == "search" and (account._root_admin or (not account._is_guest and entity._original.key_root == account.key \
                            and input["search"]["ancestor"] == account.key) or (not account._is_guest \
                            and entity._original.seller_reference._root == account.key \
                            and input["search"]["filters"][0]["operator"] == "==" \
-                           and input["search"]["filters"][0]["value"]._root == account.key)'),
+                           and input["search"]["filters"][0]["value"]._root == account.key))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),
@@ -280,7 +280,7 @@ class Order(orm.BaseExpando):
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['_lines.discount', '_lines.subtotal',
-                                 '_lines.discount_subtotal', '_lines.total', 
+                                 '_lines.discount_subtotal', '_lines.total',
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.seller_reference and entity._original.seller_reference._root == account.key \
                           and entity._original.state == "checkout" and action.key_id_str == "update"'),

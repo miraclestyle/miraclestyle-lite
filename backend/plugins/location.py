@@ -64,7 +64,9 @@ class CountryUpdateWrite(orm.BaseModel):
             continue
           if child2.text:
             dat[name] = child2.text
-        to_put.append(Country(name=dat['name'], id=dat['id'], code=dat['code'], active=True))
+        _country = Country(name=dat['name'], id=dat['id'], code=dat['code'], active=True)
+        _country._use_rule_engine = False
+        to_put.append(_country)
         if i == 100 and not production_environment:
           break
       processed_keys = {}
