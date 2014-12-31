@@ -276,10 +276,7 @@ class Order(orm.BaseExpando):
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str in ["update", "view_order"]'),
-      orm.FieldPermission('34', ['_lines.sequence', '_lines.description', '_lines.product_reference',
-                                 '_lines.product_variant_signature', '_lines.product_category_complete_name',
-                                 '_lines.product_category_reference', '_lines.code', '_lines.unit_price',
-                                 '_lines.product_uom', '_lines.discount', '_lines.taxes'], False, None,
+      orm.FieldPermission('34', ['_lines.sequence', '_lines.product','_lines.discount', '_lines.taxes'], False, None,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['_lines.discount', '_lines.subtotal',

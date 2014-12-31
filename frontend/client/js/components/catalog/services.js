@@ -97,9 +97,7 @@
                                                     config: {
                                                         keys: [pricetag.key]
                                                     },
-                                                    _product: {
-                                                        _product_category: {}
-                                                    }
+                                                    _product: {}
                                                 }
                                             }
                                         };
@@ -118,7 +116,7 @@
                                                 $scope.image = image;
                                                 $scope.pricetag = pricetag;
                                                 $scope.hideAddToCart = config.hideAddToCart;
-                                                $scope.currentVariation = null;
+                                                $scope.currentVariation = [];
                                                 angular.forEach($scope.product.variants, function (v, i) {
 
                                                     $scope.variants.push({
@@ -150,11 +148,14 @@
                                                         promise;
 
                                                     angular.forEach($scope.variants, function (v) {
+                                                        var d = {};
                                                         if (v.option === null) {
                                                             skip = true;
                                                         }
                                                         if (!v.allow_custom_value) {
                                                             variantSignature.push(v.name + ': ' + v.option);
+                                                            d[v.name] = v.option;
+                                                            $scope.currentVariation.push(d);
                                                         }
                                                     });
 
@@ -163,8 +164,6 @@
                                                         promise.resolve();
                                                         return promise;
                                                     }
-
-                                                    $scope.currentVariation = variantSignature;
 
                                                     // rpc to check the instance
                                                     return models[catalogKind].actions.read({
@@ -181,7 +180,7 @@
                                                                         _instances: {
                                                                             config: {
                                                                                 search: {
-                                                                                    filters: [{field: 'variant_options', operation: 'ALL_IN', value: variantSignature}]
+                                                                                    filters: [{field: 'variant_options', operator: 'ALL_IN', value: variantSignature}]
                                                                                 }
                                                                             }
                                                                         }

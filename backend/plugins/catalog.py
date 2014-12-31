@@ -8,6 +8,7 @@ Created on Apr 15, 2014
 import hashlib
 import datetime
 import copy
+import collections
 
 from google.appengine.api import search
 
@@ -36,30 +37,39 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
           data.append(line.replace('\n', ''))
     write_data = []
     sep = ' > '
-    parent = None
-    dig = 0
+    structure = collections.OrderedDict()
     for i, item in enumerate(data):
       if i == 100 and not production_environment:
         break
-      new_cat = {}
-      current = item.split(sep)
-      try:
-        next = data[i+1].split(sep)
-      except IndexError as e:
-        next = current
-      if len(next) == len(current):
+      full_path = item.split(sep)
+      current_structure = structure
+      for path in full_path:
+        if path not in current_structure:
+          current_structure[path] = collections.OrderedDict([('path', full_path)])
+        current_structure = current_structure[path]
+
+    def parse_structure(structure):
+      for key, value in structure:
+        if not hasattr(value, 'iteritems'):
+          continue
+        current = value.get('path')
         current_total = len(current)-1
-        last = current[current_total]
-        parent = current[current_total-1]
-        new_cat['id'] = hashlib.md5(last).hexdigest()
-        new_cat['parent_record'] = Category.build_key(hashlib.md5(parent).hexdigest())
-        new_cat['name'] = last
-        new_cat['complete_name'] = ' / '.join(current[:current_total+1])
-        new_cat['state'] = 'indexable'
+        parent = current[:-1]
+        new_cat = {}
+        new_cat['id'] = hashlib.md5(''.join(current)).hexdigest()
+        new_cat['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
+        new_cat['name'] = ' / '.join(current)
+        new_cat['state'] = ['indexable']
+        if len(value) < 2:
+          new_cat['state'].append('visible') # leafs
         new_cat = Category(**new_cat)
         new_cat._use_rule_engine = False
         new_cat._use_record_engine = False
         write_data.append(new_cat)
+        if len(value) > 1:
+          # roots
+          parse_structure(value.iteritems())
+    parse_structure(structure.iteritems())
     orm.put_multi(write_data)
 
 
@@ -172,10 +182,10 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     product_fields = {'key_parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
                       'key_parent._parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
                       'key_parent._parent._parent.entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
-                      '_product_category.value.parent_record': orm.SuperKeyProperty(kind='24', search_document_field_name='product_category_parent_record'),
-                      '_product_category.value.name': orm.SuperStringProperty(search_document_field_name='product_category_name'),
-                      '_product_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='product_category_complete_name')}
-    context._catalog._images.read({'config': {'search': {'options': {'limit': 0}}}, 'pricetags': {'_product': {'_product_category': {}}}})
+                      '_category.value.parent_record': orm.SuperKeyProperty(kind='24', search_document_field_name='category_parent_record'),
+                      '_category.value.name': orm.SuperStringProperty(search_document_field_name='category_name'),
+                      '_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='category_complete_name')}
+    context._catalog._images.read({'config': {'search': {'options': {'limit': 0}}}, 'pricetags': {'_product': {'_category': {}}}})
     products = []
     for image in context._catalog._images.value:
       products.extend([pricetag._product.value for pricetag in image.pricetags.value])
@@ -185,7 +195,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
       # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
       pass
     for product in products:
-      if product._product_category.value.state != 'indexable':
+      if 'indexable' not in product._category.value.state:
         write_index = False
         break
     results = None

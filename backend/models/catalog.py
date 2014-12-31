@@ -26,17 +26,16 @@ class CatalogProductCategory(orm.BaseModel):
   _use_record_engine = False
   
   parent_record = orm.SuperKeyProperty('1', kind='24', indexed=False)
-  name = orm.SuperStringProperty('2', required=True)
-  complete_name = orm.SuperTextProperty('3', required=True)
-  state = orm.SuperStringProperty('4', required=True, default='indexable')
+  name = orm.SuperTextProperty('2', required=True)
+  state = orm.SuperStringProperty('3', repeated=True)
   
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('24', [orm.Action.build_key('24', 'update')], True,
                            'account._root_admin or account._is_taskqueue'),
       orm.ActionPermission('24', [orm.Action.build_key('24', 'search')], True, 'not account._is_guest'),
-      orm.FieldPermission('24', ['parent_record', 'name', 'complete_name', 'state'], False, True, 'True'),
-      orm.FieldPermission('24', ['parent_record', 'name', 'complete_name', 'state'], True, True,
+      orm.FieldPermission('24', ['parent_record', 'name', 'state'], False, True, 'True'),
+      orm.FieldPermission('24', ['parent_record', 'name', 'state'], True, True,
                           'account._root_admin or account._is_taskqueue')
       ]
     )
@@ -62,18 +61,15 @@ class CatalogProductCategory(orm.BaseModel):
       key=orm.Action.build_key('24', 'search'),  # @todo Search is very inaccurate when using 'contains' filter. so we will have to use here document search i think.
       arguments={  # @todo Add default filter to list active ones.
         'search': orm.SuperSearchProperty(
-          default={'filters': [{'field': 'state', 'value': 'indexable', 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          default={'filters': [{'field': 'state', 'value': ['indexable', 'visible'], 'operator': 'ALL_IN'}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
             'search_arguments': {'kind': '24', 'options': {'limit': settings.SEARCH_PAGE}},
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(choices=['indexable'])},
-            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('name', ['==', 'contains', '!='])],
+                        'state': orm.SuperStringProperty(repeated=True, choices=['indexable', 'visible'])},
+            'indexes': [{'filters': [('state', ['ALL_IN'])],
                          'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
+                        {'filters': [('state', ['ALL_IN']), ('name', ['==', 'contains', '!='])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }
           )
@@ -180,9 +176,9 @@ class CatalogProduct(orm.BaseExpando):
   
   _use_rule_engine = False
   
-  product_category = orm.SuperKeyProperty('1', kind='24', required=True, searchable=True)  # @todo Why did we name this product_category instead of category ?
+  category = orm.SuperKeyProperty('1', kind='24', required=True, searchable=True)
   name = orm.SuperStringProperty('2', required=True, searchable=True)
-  product_uom = orm.SuperKeyProperty('3', kind='17', required=True, indexed=False)  # @todo Why did we name this product_uom instead of uom ?
+  uom = orm.SuperKeyProperty('3', kind='17', required=True, indexed=False)
   code = orm.SuperStringProperty('4', required=True, indexed=False, searchable=True)
   description = orm.SuperTextProperty('5', required=True, searchable=True)  # Soft limit 64kb.
   unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
@@ -209,7 +205,7 @@ class CatalogProduct(orm.BaseExpando):
               'indexes': [{'ancestor': True, 'filters': [('variant_options', ['ALL_IN'])], 'orders': [('sequence', ['desc'])]},
                           {'ancestor': True, 'filters': [], 'orders': [('sequence', ['desc'])]}],
             }}),
-    '_product_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='product_category'),
+    '_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='category'),
     '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
     '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom'),
     }

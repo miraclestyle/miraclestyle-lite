@@ -47,7 +47,7 @@ indexes:
 # CatalogProductCategory
 - kind: '24'
   properties:
-  - name: '4'
+  - name: '3'
   - name: '2'
 
 # Unit

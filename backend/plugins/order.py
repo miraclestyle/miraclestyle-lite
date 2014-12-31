@@ -89,6 +89,7 @@ class ProductToOrderLine(orm.BaseModel):
   _use_rule_engine = False
   
   def run(self, context):
+    OrderProduct = context.models['125']
     order = context._order
     product_key = context.input.get('product')
     if order.state != 'cart':
@@ -109,12 +110,12 @@ class ProductToOrderLine(orm.BaseModel):
       Line = context.models['33']
       product = product_key.get()
       product_instance = None
-      product.read({'_product_category': {}})  # more fields probably need to be specified
+      product.read({'_category': {}})  # more fields probably need to be specified
       if variant_signature:
         product_instance_query = ProductInstance.query()
         for variant in variant_signature:
           item = variant.iteritems().next()
-          product_instance_query = product_instance_query.filter(variant_options == '%s: %s' % (item[0], item[1]))
+          product_instance_query = product_instance_query.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
         product_instance = product_instance_query.get()
       new_line = Line()
       new_line.sequence = 1
@@ -130,9 +131,10 @@ class ProductToOrderLine(orm.BaseModel):
         variant_signature = orm.SuperJsonProperty('7', required=True, default={}, indexed=False)
       '''
       copy_product = OrderProduct()
+      copy_product.name = product.name
       copy_product.reference = product_key
       copy_product.variant_signature = variant_signature
-      copy_product.category = copy.deepcopy(product._product_category.value)
+      copy_product.category = copy.deepcopy(product._category.value)
       copy_product.code = product.code
       copy_product.unit_price = format_value(product.unit_price, order.currency.value)
       copy_product.uom = copy.deepcopy(product.product_uom.get())
