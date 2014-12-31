@@ -1473,7 +1473,17 @@ w:                  while (images.length > 0) {
                                 // this query filter config should be included into places where it's supposed to be
                                 // but for quick access its located here
                                 queryfilter: {
-                                    '17': function (term, search_action) {
+                                    '24': function (term, searchArguments) {
+                                        var search = angular.copy(searchArguments.search['default']),
+                                            args = {
+                                                search: search
+                                            };
+                                        if (term) {
+                                            args.search.filters.unshift({field: 'name', operator: '=', value: term});
+                                        }
+                                        return search;
+                                    },
+                                    '17': function (term, searchArguments) {
                                         var search = {
                                                 search: {
                                                     filters: [{
@@ -1524,7 +1534,7 @@ w:                  while (images.length > 0) {
                                         return search;
 
                                     },
-                                    '13': function (term, search_action) {
+                                    '13': function (term, searchArguments) {
                                         var args = info.scope.$eval(info.config.ui.parentArgs);
                                         if ((args && args.country)) {
 
@@ -1545,7 +1555,6 @@ w:                  while (images.length > 0) {
                                         }
 
                                         return false;
-
                                     }
                                 }
                             }
@@ -1553,7 +1562,7 @@ w:                  while (images.length > 0) {
                         propsFilter,
                         init,
                         defaultInternalSearch,
-                        actionSearch,
+                        searchArguments,
                         shouldCache = false,
                         searchCommand,
                         cacheOption;
@@ -1600,9 +1609,9 @@ w:                  while (images.length > 0) {
 
                         } else {
 
-                            actionSearch = modelsMeta.getActionArguments(config.kind, 'search');
+                            searchArguments = modelsMeta.getActionArguments(config.kind, 'search');
 
-                            if (actionSearch !== undefined) {
+                            if (searchArguments !== undefined) {
                                 cacheOption = internalConfig.search.cacheResults[config.kind];
                                 if (cacheOption !== undefined && cacheOption !== false) {
                                     shouldCache = cacheOption;
@@ -1611,12 +1620,12 @@ w:                  while (images.length > 0) {
                                 }
 
                                 searchCommand = function (term) {
-                                    var params = actionSearch.search['default'],
+                                    var params = searchArguments.search['default'],
                                         fn = internalConfig.search.queryfilter[config.kind],
                                         args = {},
                                         model;
                                     if (angular.isFunction(fn)) {
-                                        args = fn(term, actionSearch);
+                                        args = fn(term, searchArguments);
                                     } else {
                                         args = {
                                             search: params

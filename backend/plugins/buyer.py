@@ -13,14 +13,13 @@ class BuyerUpdateSet(orm.BaseModel):
   
   def run(self, context):
     addresses = context._buyer.addresses.value
-    log(addresses)
+    log('%s' % map(lambda x: [x.name, x._sequence], addresses))
     if addresses:
       default_billing = None
       default_shipping = None
       original_default_billing = None
       original_default_shipping = None
       for i, address in enumerate(addresses):
-        log('address: %s' % address)
         if address._state != 'deleted':
           if address.default_billing:
             default_billing = i

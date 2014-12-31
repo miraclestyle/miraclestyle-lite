@@ -2921,6 +2921,8 @@ class SuperTextProperty(_BaseProperty, TextProperty):
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
+    if value is None:
+      return value
     if self._repeated:
       return [unicode(v) for v in value]
     else:
