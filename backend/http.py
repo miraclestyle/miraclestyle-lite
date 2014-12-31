@@ -303,7 +303,7 @@ class Reset(BaseTestHandler):
     from google.appengine.ext import blobstore
     # @todo THIS DELETES EVERYTHING FROM DATASTORE AND BLOBSTORE, AND CURRENTLY EXISTS ONLY FOR TESTING PURPOSES!
     models = iom.Engine.get_schema()
-    kinds = ['0', '6', '83', '5', '35', '36', '62', '61', '39', '38', '60', '8', '57', '77', '10', '15', '16', '17', '18', '19', '49', '47']
+    kinds = [str(i) for i in range(50)]
     namespaces = metadata.get_namespaces()
     indexes = []
     keys_to_delete = []
@@ -318,7 +318,7 @@ class Reset(BaseTestHandler):
           except ValueError:
             pass
     util.log('DELETE KINDS %s' % kinds)
-    ignore = ['15', '16', '17', '18', '19']
+    ignore = []  #['15', '16', '17', '18', '19']
     if self.request.get('ignore'):
       ignore = self.request.get('ignore')
     @orm.tasklet
@@ -363,7 +363,7 @@ class Reset(BaseTestHandler):
         except:
           pass
     # delete all blobs
-    blobstore.delete(blobstore.BlobInfo.all().fetch(keys_only=True))
+    blobstore.delete(blobstore.BlobInfo.all().fetch(None, keys_only=True))
     mem.flush_all()
 
       
