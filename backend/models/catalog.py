@@ -61,6 +61,8 @@ class CatalogProductCategory(orm.BaseModel):
       key=orm.Action.build_key('24', 'search'),  # @todo Search is very inaccurate when using 'contains' filter. so we will have to use here document search i think.
       arguments={  # @todo Add default filter to list active ones.
         'search': orm.SuperSearchProperty(
+          ## @todo NAME is not INDEXABLE so the sorting wont work, we need to find a way to sort these categories
+          # they should have sequence, or something like that
           default={'filters': [{'field': 'state', 'value': ['indexable', 'visible'], 'operator': 'ALL_IN'}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
             'search_arguments': {'kind': '24', 'options': {'limit': settings.SEARCH_PAGE}},
