@@ -137,7 +137,7 @@ class ProductToOrderLine(orm.BaseModel):
       copy_product.category = copy.deepcopy(product._category.value)
       copy_product.code = product.code
       copy_product.unit_price = format_value(product.unit_price, order.currency.value)
-      copy_product.uom = copy.deepcopy(product.product_uom.get())
+      copy_product.uom = copy.deepcopy(product.uom.get())
       if product_instance is not None:
         if hasattr(product_instance, 'unit_price') and product_instance.unit_price is not None:
           copy_product.unit_price = product_instance.unit_price

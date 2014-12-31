@@ -44,12 +44,6 @@ indexes:
   - name: '1'
     direction: desc
 
-# CatalogProductCategory
-- kind: '24'
-  properties:
-  - name: '3'
-  - name: '2'
-
 # Unit
 - kind: '17'
   properties:

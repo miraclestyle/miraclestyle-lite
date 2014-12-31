@@ -67,7 +67,6 @@
            <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
                <span><%=config.ui.compiled.label %> <span ng-show="$isUploading">(Uploading...)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
-                       multiple
                        generate-upload-url
                        type="file" />
            </div>

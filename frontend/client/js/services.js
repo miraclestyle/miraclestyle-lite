@@ -2378,12 +2378,12 @@ w:                  while (images.length > 0) {
                                 searchAction = modelsMeta.getActionArguments(config.kind, 'search'),
                                 paginate = {
                                     loading: false,
-                                    more: false,
+                                    more: null,
                                     cursor: null,
                                     args: theConfig.args,
                                     load: function () {
                                         var promise;
-                                        if (this.loading) {
+                                        if (this.loading || this.more === false) {
                                             return false;
                                         }
                                         if (!theConfig.args.search.options) {

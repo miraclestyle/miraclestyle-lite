@@ -57,7 +57,8 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
         parent = current[:-1]
         new_cat = {}
         new_cat['id'] = hashlib.md5(''.join(current)).hexdigest()
-        new_cat['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
+        if parent:
+          new_cat['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
         new_cat['name'] = ' / '.join(current)
         new_cat['state'] = ['indexable']
         if len(value) < 2:
@@ -70,7 +71,9 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
           # roots
           parse_structure(value.iteritems())
     parse_structure(structure.iteritems())
-    orm.put_multi(write_data)
+    log('Writing %s categories' % len(write_data))
+    for ent in write_data:
+      ent.write()
 
 
 class CatalogProcessCoverSet(orm.BaseModel):

@@ -47,7 +47,7 @@ class Unit(orm.BaseExpando):
     'positive_separate_by_space': orm.SuperBooleanProperty('20', default=True),
     'negative_separate_by_space': orm.SuperBooleanProperty('21', default=True)
     }
-  
+
   _global_role = GlobalRole(
     permissions=[
       orm.ActionPermission('17', [orm.Action.build_key('17', 'update_currency'),

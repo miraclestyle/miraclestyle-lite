@@ -911,15 +911,15 @@ class _BaseModel(object):
             util.log('--RuleWrite: setattr error: %s' % e)
           except ComputedPropertyError:
             pass
+          except Exception:
+            import traceback
+            traceback.print_stack()
+            raise
       else:
         child_entity = getattr(entity, field_key) # child entity can also be none, same destiny awaits it as with field_value
-        if isinstance(child_entity, PropertyValue):
-          if not child_entity.has_value(): # child entity was not loaded at all, we can skip its validation since user did not supply any value to it
-            return
-          child_entity = child_entity.value
+        child_entity = child_entity.value
         if isinstance(field_value, PropertyValue):
           field_value = field_value.value
-        is_local_structure = isinstance(field, (SuperStructuredProperty, SuperLocalStructuredProperty))
         field_value_mapping = {}  # Here we hold references of every key from original state.
         if child_entity is None and not field._required:
           # if supplied value from user was none, and this field was not required and if user does not have permission
@@ -952,7 +952,7 @@ class _BaseModel(object):
                 to_delete.append(current_value)
             for delete in to_delete:
               child_entity.remove(delete)
-        if not permissions[field_key]['writable'] and not is_local_structure:
+        if not permissions[field_key]['writable']:
           # If we do not have permission and this is not a local structure,
           # all items that got marked with ._state == 'delete' must have their items removed from the list
           # because they won't even get chance to be deleted/updated and sent to datastore again.
@@ -993,9 +993,11 @@ class _BaseModel(object):
               cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key, None))
   
   def rule_write(self):
-    if self._use_rule_engine and hasattr(self, '_field_permissions'):
+    if self._use_rule_engine:
+      if not hasattr(self, '_field_permissions'):
+        raise ValueError('Working without RulePrepare on %s' % self)
       if not hasattr(self, '_original'):
-        raise PropertyError('Working on entity (%r) without _original. entity.make_original() needs to be called.' % self)
+        raise ValueError('Working on entity (%r) without _original. entity.make_original() needs to be called.' % self)
       entity_fields = self.get_fields()
       for field_key, field in entity_fields.iteritems():
         field_value = getattr(self._original, field_key)
@@ -1557,6 +1559,11 @@ class BaseExpando(_BaseModel, Expando):
     if expando_fields:
       prop = expando_fields.get(name)
       if prop:
+        if value is None:
+          if prop._name in self._properties:
+            prop._delete_value(self)
+            del self._properties[prop._name]
+          return
         self._properties[prop._name] = prop
         prop._set_value(self, value)
         return prop
@@ -2005,6 +2012,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       search['ancestor'] = self._entity.key.urlsafe()
       if 'options' not in search:
         search['options'] = {'limit': 10}
+      limit = search['options']['limit']
       search_property = self._property.search
       search_property._cfg.update({'ancestor_kind': self._entity.get_kind()})
       search_arguments = search_property.value_format(search)
@@ -2013,9 +2021,13 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       else:
         options = search_property.build_datastore_query_options(search_arguments)
         query = search_property.build_datastore_query(search_arguments)
-        entities = query.fetch_page_async(options.limit, options=options)
+        if limit == 0:
+          entities = query.fetch_async(options=options)
+        else:
+          entities = query.fetch_page_async(options.limit, options=options)
       if 'property' in search:
         del search['property']
+      search['options']['limit'] = limit
       self._property_value_options['search'] = search
     self._property_value = entities
 
@@ -2785,7 +2797,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
 
   def initialize(self):
     super(SuperRemoteStructuredProperty, self).initialize()
-    default_search_cfg = {'cfg': {'search_arguments': {'kind': self._modelclass.get_kind(), 'options': {'limit': 10}},
+    default_search_cfg = {'cfg': {'search_arguments': {'kind': self._modelclass.get_kind()},
                           'search_by_keys': False,
                           'filters': {},
                           'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
@@ -2940,8 +2952,8 @@ class SuperStringProperty(_BaseProperty, StringProperty):
   
   def get_search_document_field(self, value):
     if self._repeated:
-      value = ' '.join(value)
-    return search.TextField(name=self.search_document_field_name, value=str(value))
+      value = unicode(' ').join(value)
+    return search.TextField(name=self.search_document_field_name, value=unicode(value))
 
 
 class SuperFloatProperty(_BaseProperty, FloatProperty):
@@ -3027,6 +3039,11 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       except:
         value = str(value)
       return search.AtomField(name=self.search_document_field_name, value=value)
+
+  def resolve_search_document_field(self, value):
+    if value == 'None':
+      value = None
+    return super(SuperKeyProperty, self).resolve_search_document_field(value)
     
   def get_meta(self):
     dic = super(SuperKeyProperty, self).get_meta()
@@ -3368,6 +3385,8 @@ class SuperSearchProperty(SuperJsonProperty):
         elif value_key == 'limit':
           if not isinstance(value, (int, long)):
             raise PropertyError('limit_value_incorrect')
+          if value == 0:
+            del options_values[value_key]
         elif value_key in ['batch_size', 'prefetch_size', 'deadline']:
           if not isinstance(value, (int, long)):
             del options_values[value_key]

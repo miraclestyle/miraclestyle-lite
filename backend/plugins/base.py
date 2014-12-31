@@ -4,6 +4,7 @@ Created on Jun 14, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+import copy
 
 import orm
 from tools.base import *
@@ -77,7 +78,7 @@ class Read(orm.BaseModel):
     parent = get_attr(context, parent_path)
     namespace = get_attr(context, namespace_path)
     if isinstance(read_arguments_path, dict):
-      read_arguments = read_arguments_path
+      read_arguments = copy.deepcopy(read_arguments_path)
     else:
       read_arguments = get_attr(context, read_arguments_path, {})
     if parent is not None:

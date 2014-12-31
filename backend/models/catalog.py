@@ -24,10 +24,11 @@ class CatalogProductCategory(orm.BaseModel):
   _kind = 24
   
   _use_record_engine = False
+  _use_search_engine = True
   
-  parent_record = orm.SuperKeyProperty('1', kind='24', indexed=False)
-  name = orm.SuperTextProperty('2', required=True)
-  state = orm.SuperStringProperty('3', repeated=True)
+  parent_record = orm.SuperKeyProperty('1', kind='24', searchable=True, indexed=False)
+  name = orm.SuperStringProperty('2', searchable=True, indexed=False, required=True)
+  state = orm.SuperStringProperty('3', searchable=True, indexed=False, repeated=True)
   
   _global_role = GlobalRole(
     permissions=[
@@ -58,20 +59,19 @@ class CatalogProductCategory(orm.BaseModel):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('24', 'search'),  # @todo Search is very inaccurate when using 'contains' filter. so we will have to use here document search i think.
-      arguments={  # @todo Add default filter to list active ones.
+      key=orm.Action.build_key('24', 'search'),
+      arguments={
         'search': orm.SuperSearchProperty(
-          ## @todo NAME is not INDEXABLE so the sorting wont work, we need to find a way to sort these categories
-          # they should have sequence, or something like that
-          default={'filters': [{'field': 'state', 'value': ['indexable', 'visible'], 'operator': 'ALL_IN'}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
+          default={'filters': [{'field': 'state', 'value': 'indexable visible', 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
             'search_arguments': {'kind': '24', 'options': {'limit': settings.SEARCH_PAGE}},
             'search_by_keys': True,
+            'use_search_engine': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(repeated=True, choices=['indexable', 'visible'])},
-            'indexes': [{'filters': [('state', ['ALL_IN'])],
+                        'state': orm.SuperStringProperty(choices=['indexable visible'])},
+            'indexes': [{'filters': [('state', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['ALL_IN']), ('name', ['==', 'contains', '!='])],
+                        {'filters': [('state', ['==']), ('name', ['==', '!='])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }
           )
