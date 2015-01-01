@@ -4,7 +4,5 @@
 <br ng-if="notEmpty(val.city) || notEmpty(val._region.name) || notEmpty(val.postal_code)" />
 {{val._country.name}}<br ng-if="notEmpty(val._country_name)" />
 <div ng-if="val.default_billing || val.default_shipping">
-    (<span ng-if="val.default_billing">Default Billing</span>
-     <span ng-if="val.default_billing &&  val.default_shipping">&amp;</span>
-     <span ng-if="val.default_shipping">Default Shipping</span>)
+    (<span ng-if="val.default_billing">Default Billing</span><span ng-if="val.default_billing &&  val.default_shipping">&amp;</span><span ng-if="val.default_shipping">Default Shipping</span>)
 </div>

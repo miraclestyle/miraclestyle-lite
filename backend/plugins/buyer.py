@@ -13,7 +13,6 @@ class BuyerUpdateSet(orm.BaseModel):
   
   def run(self, context):
     addresses = context._buyer.addresses.value
-    log('%s' % map(lambda x: [x.name, x._sequence], addresses))
     if addresses:
       default_billing = None
       default_shipping = None
