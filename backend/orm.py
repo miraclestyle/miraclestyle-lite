@@ -1935,16 +1935,17 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   def delete(self):
     if self._property._deleteable:
       self.read()
-      property_value = self._property_value
-      if not self._property._repeated:
-        property_value = [self._property_value]
-      fields = self._property.get_modelclass().get_fields()
-      for value in property_value:
-        for field_key, field in fields.iteritems():
-          if hasattr(field, 'is_structured') and field.is_structured:
-            val = getattr(value, field_key)
-            val.delete()
-        value._state = 'deleted'
+      if self.has_value():
+        property_value = self._property_value
+        if not self._property._repeated:
+          property_value = [self._property_value]
+        fields = self._property.get_modelclass().get_fields()
+        for value in property_value:
+          for field_key, field in fields.iteritems():
+            if hasattr(field, 'is_structured') and field.is_structured:
+              val = getattr(value, field_key)
+              val.delete()
+          value._state = 'deleted'
   
   def duplicate(self):
     values = self.read()

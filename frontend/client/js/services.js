@@ -1540,7 +1540,6 @@ w:                  while (images.length > 0) {
                                     },
                                     '13': function (select, searchArguments) {
                                         var args = info.scope.$eval(info.config.ui.parentArgs);
-                                        console.log(args);
                                         if ((args && args.country)) {
 
                                             return {
@@ -1648,7 +1647,7 @@ w:                  while (images.length > 0) {
                                         }).then(function (response) {
                                             config.ui.specifics.entities = response.data.entities;
                                             if (angular.isDefined(select) && angular.isString(select.selected)) {
-                                                if (!_.findWhere({key: select.selected}, response.data.entities)) {
+                                                if (!_.findWhere(config.ui.specifics.entities, {key: select.selected})) {
                                                     model.actions.search({
                                                         search: {
                                                             keys: [select.selected]
@@ -1656,7 +1655,7 @@ w:                  while (images.length > 0) {
                                                     }, {
                                                         cache: true
                                                     }).then(function (response) {
-                                                        config.ui.specifics.entities.unshift(response.entities[0]);
+                                                        config.ui.specifics.entities.unshift(response.data.entities[0]);
                                                     });
                                                 }
                                             }
@@ -1822,6 +1821,8 @@ w:                  while (images.length > 0) {
                             rootFormSetDirty();
 
                             info.scope.$broadcast('itemOrderChanged');
+
+                            info.scope.$apply();
                         }
                     };
 
@@ -1895,7 +1896,6 @@ w:                  while (images.length > 0) {
                             config.ui.specifics.getScope = function () {
                                 return $scope;
                             };
-
                             $scope.$on('$destroy', function () {
                                 config.ui.specifics.getScope = undefined;
                             });

@@ -16,25 +16,25 @@
     };
 
     Array.prototype.remove = function (val) {
-
         var index = this.indexOf(val);
         this.splice(index, 1);
+        return this;
+    };
 
+    Array.prototype.empty = function (val) {
+        this.splice(0, this.length);
         return this;
     };
 
     Array.prototype.contains = function (value, all) {
         if (angular.isArray(value)) {
             var matches = [];
-
             angular.forEach(value, function (v) {
                 matches.push((this.indexOf(value) > -1));
             });
-
             if (all) {
                 return _.all(matches);
             }
-
             return _.some(matches);
         }
         return this.indexOf(value) > -1;
@@ -45,8 +45,6 @@
         if (!array) {
             return false;
         }
-
-
         // compare lengths - can save a lot of time
         if (this.length !== array.length) {
             return false;

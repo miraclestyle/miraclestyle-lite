@@ -31,7 +31,7 @@ class OrderTax(orm.BaseModel):
   type = orm.SuperStringProperty('2', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
   amount = orm.SuperDecimalProperty('3', required=True, indexed=False)
 
-# Modify this class accordingly!
+
 class OrderProduct(orm.BaseExpando):
 
   _kind = 125
@@ -50,9 +50,9 @@ class OrderProduct(orm.BaseExpando):
   
   _expando_fields = {
     'weight': orm.SuperDecimalProperty('8'),
-    'weight_uom': orm.SuperKeyProperty('9', kind='17'),
+    'weight_uom': orm.SuperLocalStructuredProperty('17', '9'),
     'volume': orm.SuperDecimalProperty('10'),
-    'volume_uom': orm.SuperKeyProperty('11', kind='17')
+    'volume_uom': orm.SuperLocalStructuredProperty('17', '11')
     }
 
 

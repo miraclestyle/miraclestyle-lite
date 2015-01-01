@@ -147,6 +147,8 @@
                                                         skip = false,
                                                         promise;
 
+                                                    $scope.currentVariation.splice(0, $scope.currentVariation.length);
+
                                                     angular.forEach($scope.variants, function (v) {
                                                         var d = {};
                                                         if (v.option === null) {
@@ -292,7 +294,6 @@
                                                             variant_signature: $scope.currentVariation
                                                         });
                                                     }).then(function (response) {
-                                                        console.log(response);
                                                         $scope.productQuantity += 1;
                                                     });
                                                 };
