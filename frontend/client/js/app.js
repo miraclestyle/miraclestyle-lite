@@ -7,7 +7,7 @@
         window.console = {};
     }
 
-    angular.forEach(['log', 'error', 'info'], function (method) {
+    angular.forEach(['log', 'error', 'trace', 'debug', 'info'], function (method) {
         if (!window.console[method]) {
             window.console[method] = angular.noop;
         }

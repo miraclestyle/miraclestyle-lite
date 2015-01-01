@@ -366,23 +366,6 @@ class Reset(BaseTestHandler):
     blobstore.delete(blobstore.BlobInfo.all().fetch(None, keys_only=True))
     mem.flush_all()
 
-      
-class TestAsync(BaseTestHandler):
-  
-  def respond(self):
-    paths = ['http://example.com', 'http://example.com', 'http://example.com']
-    if self.request.get('async'):
-      futures = []
-      ctx = orm.get_context()
-      for path in paths:
-        print 'async', path
-        ctx.urlfetch(path)
-      orm.Future.wait_all(futures)
-    else:
-      from google.appengine.api import urlfetch
-      for path in paths:
-        print 'sync', path
-        urlfetch.fetch(path)
     
 for k,o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):

@@ -1408,13 +1408,13 @@ class _BaseModel(object):
       raise ValueError('Only entities of same kind can be used for populating, got kind %s instead of %s.' % (self.get_kind(), other.get_kind()))
     for field_key, field in self.get_fields().iteritems():
       value = getattr(other, field_key, None)
-      if isinstance(value, PropertyValue):
+      if hasattr(field, 'is_structured') and field.is_structured:
         value = value.value
       if value is None and not field.can_be_none:
         continue
       setattr(self, field_key, value)
     self._state = other._state
-    self._sequence = other._sequence
+    #self._sequence = other._sequence
   
   def add_output(self, names):
     if not isinstance(names, (list, tuple)):
@@ -1735,7 +1735,7 @@ class StructuredPropertyValue(PropertyValue):
               new_list.append(ent)
           del property_value[:] 
           property_value.extend(new_list)
-      self._property_value = property_value
+        self._property_value = property_value
       self._set_parent()
   
   def _deep_read(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
@@ -1930,8 +1930,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           if self._property_value._state == 'deleted':
             delete_structured(self._property_value)
           self._property_value = None  # Comply with expando and virtual fields.
-      self._property._set_value(self._entity, self._property_value, True) # we override default behaviour because if we dont,
-      # the code above is useless, see _set_value in local structured
+      self._property._set_value(self._entity, self._property_value, True)
       
   def delete(self):
     if self._property._deleteable:
@@ -2544,7 +2543,9 @@ class _BaseStructuredProperty(_BaseProperty):
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
-          current_values = sorted(current_values, key=sorting_function, reverse=True)
+          new_sort = sorted(current_values, key=sorting_function, reverse=True)
+          del current_values[:]
+          current_values.extend(new_sort)
       else:
         current_values = value
         if current_values is None:
