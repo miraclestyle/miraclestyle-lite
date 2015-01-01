@@ -107,6 +107,8 @@ class OrderLine(orm.BaseExpando):
 class OrderMessage(orm.BaseExpando):
   
   _kind = 35
+
+  _use_rule_engine = False
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   agent = orm.SuperKeyProperty('2', kind='11', required=True, indexed=False)

@@ -97,7 +97,9 @@
                                                     config: {
                                                         keys: [pricetag.key]
                                                     },
-                                                    _product: {}
+                                                    _product: {
+                                                        _category: {}
+                                                    }
                                                 }
                                             }
                                         };
