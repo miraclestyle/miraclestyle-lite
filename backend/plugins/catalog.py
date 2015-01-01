@@ -39,7 +39,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
     sep = ' > '
     structure = collections.OrderedDict()
     for i, item in enumerate(data):
-      if i == 100 and not production_environment:
+      if i == 100: # all instances now only import 100 items
         break
       full_path = item.split(sep)
       current_structure = structure

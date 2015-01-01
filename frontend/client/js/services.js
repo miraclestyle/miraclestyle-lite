@@ -1442,7 +1442,11 @@ w:                  while (images.length > 0) {
                             search: {
                                 cacheResults: {
                                     'default': true,
-                                    '13': false
+                                    '13': false,
+                                    '24': false
+                                },
+                                cacheQuery: {
+                                    '24': true
                                 },
                                 propsFilterResults: {
                                     'default': '{name: $select.search}',
@@ -1473,17 +1477,17 @@ w:                  while (images.length > 0) {
                                 // this query filter config should be included into places where it's supposed to be
                                 // but for quick access its located here
                                 queryfilter: {
-                                    '24': function (term, searchArguments) {
+                                    '24': function (select, searchArguments) {
                                         var search = angular.copy(searchArguments.search['default']),
                                             args = {
                                                 search: search
                                             };
-                                        if (term) {
-                                            args.search.filters.unshift({field: 'name', operator: '=', value: term});
+                                        if (select.search) {
+                                            args.search.filters.push({field: 'name', operator: '==', value: select.search});
                                         }
-                                        return search;
+                                        return args;
                                     },
-                                    '17': function (term, searchArguments) {
+                                    '17': function (select, searchArguments) {
                                         var search = {
                                                 search: {
                                                     filters: [{
@@ -1534,8 +1538,9 @@ w:                  while (images.length > 0) {
                                         return search;
 
                                     },
-                                    '13': function (term, searchArguments) {
+                                    '13': function (select, searchArguments) {
                                         var args = info.scope.$eval(info.config.ui.parentArgs);
+                                        console.log(args);
                                         if ((args && args.country)) {
 
                                             return {
@@ -1564,6 +1569,7 @@ w:                  while (images.length > 0) {
                         defaultInternalSearch,
                         searchArguments,
                         shouldCache = false,
+                        shouldCacheQuery,
                         searchCommand,
                         cacheOption;
 
@@ -1613,19 +1619,20 @@ w:                  while (images.length > 0) {
 
                             if (searchArguments !== undefined) {
                                 cacheOption = internalConfig.search.cacheResults[config.kind];
+                                shouldCacheQuery = internalConfig.search.cacheQuery[config.kind];
                                 if (cacheOption !== undefined && cacheOption !== false) {
                                     shouldCache = cacheOption;
                                 } else if (cacheOption !== false) {
                                     shouldCache = internalConfig.search.cacheResults['default'];
                                 }
 
-                                searchCommand = function (term) {
+                                searchCommand = function (select) {
                                     var params = searchArguments.search['default'],
                                         fn = internalConfig.search.queryfilter[config.kind],
                                         args = {},
                                         model;
                                     if (angular.isFunction(fn)) {
-                                        args = fn(term, searchArguments);
+                                        args = fn(select, searchArguments);
                                     } else {
                                         args = {
                                             search: params
@@ -1637,9 +1644,22 @@ w:                  while (images.length > 0) {
                                     model = models[config.kind];
                                     if (angular.isDefined(model) && model.actions && angular.isFunction(model.actions.search)) {
                                         model.actions.search(args, {
-                                            cache: shouldCache
+                                            cache: (angular.isUndefined(shouldCacheQuery) ? shouldCache : shouldCacheQuery)
                                         }).then(function (response) {
                                             config.ui.specifics.entities = response.data.entities;
+                                            if (angular.isDefined(select) && angular.isString(select.selected)) {
+                                                if (!_.findWhere({key: select.selected}, response.data.entities)) {
+                                                    model.actions.search({
+                                                        search: {
+                                                            keys: [select.selected]
+                                                        }
+                                                    }, {
+                                                        cache: true
+                                                    }).then(function (response) {
+                                                        config.ui.specifics.entities.unshift(response.entities[0]);
+                                                    });
+                                                }
+                                            }
                                         });
                                     } else {
                                         config.ui.specifics.entities = [];
@@ -1652,8 +1672,8 @@ w:                  while (images.length > 0) {
                                 }
 
                                 if (shouldCache === false) {
-                                    config.ui.specifics.search = function (term) {
-                                        searchCommand(term);
+                                    config.ui.specifics.search = function (select) {
+                                        searchCommand(select);
                                     };
                                 }
 

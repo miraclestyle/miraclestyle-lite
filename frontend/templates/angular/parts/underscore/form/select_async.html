@@ -8,9 +8,9 @@
              
           <ui-select-match search-enabled="{{config.ui.specifics.searchEnabled}}" placeholder="{{config.ui.placeholder}}">{{config.ui.specifics.view(<% if (config.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
           <ui-select-choices
-                   repeat="ent.key as ent in config.ui.specifics.entities <% if (config.ui.specifics.propsFilter) { %> | propsFilter: <%- config.ui.specifics.propsFilter %> <% } %>  track by $index"
+                   repeat="ent.key as ent in config.ui.specifics.entities <% if (config.ui.specifics.propsFilter) { %> | propsFilter: <%- config.ui.specifics.propsFilter %> <% } %> track by $index"
                    <% if (config.ui.specifics.search) { %>
-                   refresh="config.ui.specifics.search($select.search)"
+                   refresh="config.ui.specifics.search($select)"
                    refresh-delay="200"
                    <% } %>>
                    

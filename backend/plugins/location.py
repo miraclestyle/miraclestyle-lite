@@ -67,7 +67,7 @@ class CountryUpdateWrite(orm.BaseModel):
         _country = Country(name=dat['name'], id=dat['id'], code=dat['code'], active=True)
         _country._use_rule_engine = False
         to_put.append(_country)
-        if i == 100 and not production_environment:
+        if i == 100: # all instances now only import 100 items
           break
       processed_keys = {}
       processed_ids = {}
@@ -99,6 +99,6 @@ class CountryUpdateWrite(orm.BaseModel):
         processed_ids[dat['id']] = new_sub_divison
         new_sub_divison._use_rule_engine = False
         to_put.append(new_sub_divison)
-        if i == 100 and not production_environment:
+        if i == 100: # all instances nowonly import 100 items
           break
       orm.put_multi(to_put)

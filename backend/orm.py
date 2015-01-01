@@ -3540,9 +3540,9 @@ class SuperSearchProperty(SuperJsonProperty):
       field = _filter['field']
       op = _filter['operator']
       value = _filter['value']
-      #if field == 'query_string':
-        #filters.append(value)
-        #break
+      if field == 'query_string':
+        filters.append(value)
+        break
       if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
         filters.append('(' + field + '=' + value + ')')
       elif op == '!=':
