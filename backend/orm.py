@@ -1414,7 +1414,7 @@ class _BaseModel(object):
         continue
       setattr(self, field_key, value)
     self._state = other._state
-    #self._sequence = other._sequence
+    self._sequence = other._sequence
   
   def add_output(self, names):
     if not isinstance(names, (list, tuple)):
