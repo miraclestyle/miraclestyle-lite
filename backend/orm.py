@@ -1560,6 +1560,7 @@ class BaseExpando(_BaseModel, Expando):
       prop = expando_fields.get(name)
       if prop:
         if value is None:
+          self._clone_properties()
           if prop._name in self._properties:
             prop._delete_value(self)
             del self._properties[prop._name]
@@ -1574,6 +1575,7 @@ class BaseExpando(_BaseModel, Expando):
     if expando_fields:
       prop = expando_fields.get(name)
       if prop:
+        self._clone_properties()
         prop._delete_value(self)
         prop_name = prop._name
         if prop in self.__class__._properties:
