@@ -677,43 +677,71 @@ li.catalog-new-pricetag {
   border-top: 1px solid #EEEEEE;
 }
 
-.cart-line-details {
-  font-size: 14px;
+.cart-label {
+  color: #777777;
+}
+
+.cart-line-left a {
+  display: block;
+}
+
+.cart-line-left div {
+  padding: 0px 0px 1px;
+}
+
+.cart-line-right table {
+  font-size: 16px;
   display: inline-block;
   padding: 5px;
   vertical-align: top;
 }
 
-.cart-line-details div {
-  padding-bottom: 3px;
+.cart-line-quantity .cart-label,
+.cart-line-discount .cart-label {
+  padding: 0px 0px 10px 5px;
 }
 
-.cart-label {
-  color: #777777;
-  position: relative;
-  text-align: right;
-  width: 70%;
-  float: left;
-  padding-right: 5px;
+.cart-line-quantity .cart-value,
+.cart-line-discount .cart-value {
+  padding: 0px 0px 10px 15px;
 }
 
-.cart-value {
-  float: left;
-  text-align: right;
-  position: relative;
-  width: 30%;
-  padding-left: 5px;
+.cart-line-discount_subtotal .cart-label {
+  padding: 0px 0px 0px 5px;
 }
 
-.cart-line-quantity .cart-label {
-  padding: 5px;
+.cart-line-discount_subtotal .cart-value {
+  padding: 0px 0px 0px 15px;
 }
 
 .cart-totals {
-  margin-top: 10px;
-  text-align: right;
+  margin: 10px 5px;
+  font-size: 18px;
+  line-height: 21px;
 }
 
+.cart-totals .cart-label,
 .cart-totals .cart-value {
-  
+   padding: 0px 0px 5px 15px;
+}
+
+.cart-line-right td,
+.cart-totals td {
+  text-align: right;
+  vertical-align: middle;
+}
+
+.cart-line-product-name {
+  font-size: 28px;
+  line-height: 32px;
+}
+
+.cart-line-product-unit_price {
+  font-size: 18px;
+  line-height: 21px;
+}
+
+.cart-line-quantity input {
+  width: 75px;
+  padding: 10px;
 }
