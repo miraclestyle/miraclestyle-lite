@@ -42,7 +42,11 @@
                         {{line.product.code}}
                       </div>
                       <div class="cart-line-product-variant_signature clearfix" ng-show="line.product.variant_signature">
-                          {{line.product.variant_signature}}
+                          <div ng-repeat="variant in line.product.variant_signature">
+                              <div ng-repeat="(key, value) in variant">
+                                {{key}}: {{value}}
+                              </div>
+                          </div>
                       </div>
                       <div class="cart-line-product-unitprice clearfix">
                           {{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})
