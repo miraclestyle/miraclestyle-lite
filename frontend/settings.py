@@ -111,7 +111,6 @@ ANGULAR_TEMPLATES = (
 
   # common
   ('misc/common/orders.html',),
-  ('misc/common/carts.html',),
 
   ('entity/modal/editor.html',),
   ('entity/modal/editor_default_body.html',),
@@ -204,6 +203,7 @@ ANGULAR_TEMPLATES = (
   
   # buyer
   ('buyer/directive/address_display.html',),
+  ('buyer/carts.html',),
 
   # colleciton
   ('collection/modal/manage_body.html',),
@@ -228,7 +228,7 @@ ANGULAR_TEMPLATES = (
   ('catalog/product/directive/product_instance_display.html',),
 
   # order
-  ('order/modal/cart_view.html',),
+  ('order/modal/view.html',),
 
   # other
   ('home/index.html',),

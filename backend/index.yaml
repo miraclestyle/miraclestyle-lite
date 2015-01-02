@@ -106,3 +106,11 @@ indexes:
   properties:
   - name: '1'
     direction: desc
+
+# Order
+- kind: '34'
+  ancestor: yes
+  properties:
+  - name: '4'
+  - name: __key__
+    direction: desc

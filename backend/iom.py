@@ -115,13 +115,9 @@ class Engine:
     from plugins import account, base, buyer, catalog, location, order, seller, unit
     
     for model_kind, model in orm.Model._kind_map.iteritems():
-      if hasattr(model, 'get_fields'):
-        if model.get_fields.__self__ is model:
-          fields = model.get_fields()
-          for field_key, field in fields.iteritems():
-            if hasattr(field, 'initialize') and not field.initilized: # initialize() can only be called once
-              field.initialize()
-              field.initilized = True
+      if hasattr(model, 'initialize'):
+        if model.initialize.__self__ is model:
+          model.initialize()
   
   @classmethod
   def get_schema(cls):

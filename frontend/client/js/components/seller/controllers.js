@@ -67,12 +67,49 @@
                 $scope.search.pagination.load();
             });
 
-        }).controller('SellOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+        }).controller('SellOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope, $state) {
 
-            $rootScope.pageTitle = 'Seller Orders';
+            var carts = $state.current.name === 'sell-carts';
 
-        }).controller('SellCartsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+            $rootScope.pageTitle = 'Seller ' + (carts ? 'Carts' : 'Orders');
 
-            $rootScope.pageTitle = 'Seller Carts';
+            $scope.search = {
+                results: [],
+                pagination: {}
+            };
+
+            $scope.scrollEnd = {loader: false};
+
+            $scope.view = function (order) {
+                models['34'].viewOrderModal(order._seller, undefined, order.key);
+            };
+
+            models['23'].current().then(function (response) {
+                var sellerEntity = response.data.entity;
+                $scope.search.pagination = models['34'].paginate({
+                    kind: '34',
+                    args: {
+                        search: {
+                            filters: [{field: 'seller_reference', operator: '==', value: sellerEntity.key}, {field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}],
+                            orders: [{field: 'key', operator: 'desc'}]
+                        }
+                    },
+                    config: {
+                        ignoreErrors: true
+                    },
+                    complete: function (response) {
+                        var errors = response.data.errors;
+                        if (errors) {
+                            if (errors['not_found_' + sellerEntity.key]) {
+                                modals.alert('You do not have any seller information yet.');
+                            }
+                        } else {
+                            $scope.search.results.extend(response.data.entities);
+                        }
+                    }
+                });
+                $scope.scrollEnd.loader = $scope.search.pagination;
+                $scope.search.pagination.load();
+            });
         });
 }());
