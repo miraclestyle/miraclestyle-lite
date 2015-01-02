@@ -10,7 +10,7 @@
                     key: config.key,
                     next: {_records: {config: {more: true}}},
                     kind: config.kind,
-                    callback: function (records) {
+                    complete: function (records) {
                         $scope.history.records.extend(records);
                     }
                 };

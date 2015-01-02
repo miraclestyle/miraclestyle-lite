@@ -256,11 +256,10 @@ class AccountLogout(RequestHandler):
             
 class OrderComplete(RequestHandler):
   
-  def respond(self, order_key):
+  def respond(self, payment_method):
     params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
               'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
-    data = {'action_model': '34', 'key': order_key, 'action_id': 'complete', 'request': {},
-            'read_arguments': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}
+    data = {'action_model': '34', 'payment_method': payment_method, 'action_id': 'complete', 'request': {}}
     for param in params:
       data['request'][param] = getattr(self.request, param)
     output = iom.Engine.run(data)
@@ -274,7 +273,7 @@ ROUTES = [('/api/endpoint', Endpoint),
           ('/api/account/login', AccountLogin),
           ('/api/account/login/<provider>', AccountLogin),
           ('/api/account/logout', AccountLogout),
-          ('/api/order/complete/<order_key>', OrderComplete)] # this will be the path on which all orders are marked complete
+          ('/api/order/complete/<payment_method>', OrderComplete)] # this will be the path on which all orders are marked complete
 
 
 # Test Handlers

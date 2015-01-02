@@ -151,7 +151,7 @@
                                     $modalInstance.dismiss('close');
                                 };
 
-                                $scope.notifyUrl = helpers.url.abs('api/order/complete/' + $scope.order.key);
+                                $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
                                 $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
                                 $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
                                 $scope.messagesReader = models[orderKind].reader({
@@ -159,7 +159,7 @@
                                     key: $scope.order.key,
                                     next: $scope.order._next_read_arguments,
                                     access: ['_messages'],
-                                    callback: function (items) {
+                                    complete: function (items) {
                                         $scope.order._messages.extend(items);
                                     }
                                 });

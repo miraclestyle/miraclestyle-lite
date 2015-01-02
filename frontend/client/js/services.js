@@ -463,7 +463,8 @@ w:                  while (images.length > 0) {
             currentAccount: function () {
                 return endpoint.post('current_account', '11', {}, {
                     cache: 'currentAccount',
-                    cacheType: 'memory'
+                    cacheType: 'memory',
+                    ignoreErrors: true
                 }).then(function (response) {
 
                     var currentAccount = $injector.get('currentAccount');
@@ -476,7 +477,8 @@ w:                  while (images.length > 0) {
                 return endpoint.get(null, null, {}, {
                     cache: 'modelsMeta',
                     cacheType: 'memory',
-                    url: GLOBAL_CONFIG.apimodelsMetaPath
+                    url: GLOBAL_CONFIG.apimodelsMetaPath,
+                    ignoreErrors: true
                 }).then(function (response) {
                     var modelsInfo = $injector.get('modelsInfo');
                     $.extend(modelsInfo, response.data);
@@ -1874,7 +1876,7 @@ w:                  while (images.length > 0) {
                                 key: rootArgs.key,
                                 next: rootArgs._next_read_arguments,
                                 access: config.ui.realPath,
-                                callback: function (items) {
+                                complete: function (items) {
                                     config.ui.specifics.parentArgs.extend(items);
                                 }
                             });
@@ -2424,8 +2426,8 @@ w:                  while (images.length > 0) {
                                         promise.then(function (response) {
                                             paginate.more = response.data.more;
                                             paginate.cursor = response.data.cursor;
-                                            if (angular.isFunction(config.callback)) {
-                                                config.callback.call(this, response);
+                                            if (angular.isFunction(config.complete)) {
+                                                config.complete.call(this, response);
                                             }
                                         })['finally'](function () {
                                             paginate.loading = false;
@@ -2522,8 +2524,8 @@ w:                  while (images.length > 0) {
                                         });
                                         items = helpers.getProperty(response.data.entity, getAccess);
 
-                                        if (angular.isFunction(config.callback)) {
-                                            config.callback(items);
+                                        if (angular.isFunction(config.complete)) {
+                                            config.complete(items);
                                         }
 
                                         loadedNext = response.data.entity._next_read_arguments;

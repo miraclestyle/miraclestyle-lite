@@ -48,7 +48,7 @@
                                     key: $scope.catalog.key,
                                     next: {_images: $scope.catalog._next_read_arguments._images},
                                     access: accessImages,
-                                    callback: function (items) {
+                                    complete: function (items) {
                                         $scope.catalog._images.extend(items);
                                     }
                                 });
@@ -487,7 +487,7 @@
                                                 key: $scope.args.key,
                                                 next: $scope.args._next_read_arguments,
                                                 access: accessImages,
-                                                callback: function (items) {
+                                                complete: function (items) {
                                                     $scope.args._images.extend(items);
                                                 }
                                             });

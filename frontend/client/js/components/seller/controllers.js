@@ -52,7 +52,7 @@
                     config: {
                         ignoreErrors: true
                     },
-                    callback: function (response) {
+                    complete: function (response) {
                         var errors = response.data.errors;
                         if (errors) {
                             if (errors['not_found_' + sellerEntity.key]) {

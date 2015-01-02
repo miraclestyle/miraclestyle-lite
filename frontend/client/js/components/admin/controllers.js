@@ -36,7 +36,7 @@
                 pagination: models[kind].paginate({
                     args: args,
                     kind: kind,
-                    callback: function (response) {
+                    complete: function (response) {
                         $scope.search.results.extend(response.data.entities);
                     }
                 })

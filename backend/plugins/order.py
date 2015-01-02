@@ -54,7 +54,6 @@ class OrderInit(orm.BaseModel):
       if 'read_arguments' in context.input:
         override_dict(defaults, context.input.get('read_arguments'))
       order.read(defaults)  # @todo It is possible that we will have to read more stuff here.
-      order.make_original()
     context._order = order
 
 
@@ -470,9 +469,9 @@ class PayPalPayment(PaymentMethod):
       url = settings.PAYPAL_WEBSCR_SANDBOX
     else:
       url = settings.PAYPAL_WEBSCR
-    
     request = context.input['request']
     ipn = request['params']
+    order = context._order
     # validate if the request came from ipn
     result = urlfetch.fetch(url=url,
                             payload='cmd=_notify-validate&%s' % request['body'],
@@ -480,8 +479,9 @@ class PayPalPayment(PaymentMethod):
                             headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection' : 'Close'})
     if result.content != 'VERIFIED':
       raise PluginError('invalid_ipn_message') # log somehow
-    
-    order = context._order
+
+    # begin ipn message validation
+    mismatches = []
     shipping_address = order.shipping_address.value
     order_currency = order.currency.value
     
@@ -499,23 +499,18 @@ class PayPalPayment(PaymentMethod):
         # ipn will be called again until it reaches 200 status response code
         # ipn will retry for x amount of times till it gives up
         # so we might as well use `return` statement to exit silently
-    body = 'Paypal Payment action %s' % ipn_payment_status
+    body = 'Paypal Payment action %s' % ipn_payment_status # @todo modify accordingly
     new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
     new_order_message._clone_properties() # this is a hack, because we put all properties indexed = True
     new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
     new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
-    new_order_message.put()
-    
-    # begin ipn message validation
-    mismatches = []
- 
-    if ipn['custom'] != order.key.urlsafe(): # if the order id is not valid
-      mismatches.append('invalid_order_id')
+    order._messages = [new_order_message] # add this to queue
     
     if (self.reciever_email != ipn['receiver_email']):
       mismatches.append('receiver_email')
-    if (self.business != ipn['business']):
-      mismatches.append('business_email')
+    if 'business' in ipn:
+      if (self.business != ipn['business']):
+        mismatches.append('business_email')
     if (order_currency.code != ipn['mc_currency']):
       mismatches.append('mc_currency')
     if (order.total_amount != format_value(ipn['mc_gross'], order_currency)):
@@ -532,10 +527,8 @@ class PayPalPayment(PaymentMethod):
       mismatches.append('address_city')
     if (shipping_address.name != ipn['address_name']):
       mismatches.append('address_name')
-    
     if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']: # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
       mismatches.append('address_state')
-
     if (shipping_address.street != ipn['address_street']): 
       # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
       # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
@@ -583,7 +576,7 @@ class PayPalPayment(PaymentMethod):
               order.payment_status = ipn_payment_status
     else:
       # log that there were missmatches, where we should log that?
-      log('Found mismatches %s with ipn %s for order: %s' % (mismatches, ipn, order.key))
+      log('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
     log('Set Order state %s' % order.state)
     log('Set Order payment_status %s' % order.payment_status)
     
@@ -889,14 +882,19 @@ class OrderProcessPayment(orm.BaseModel):
   _kind = 118
   
   def run(self, context):
-    order = context._order
+    order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context) # will throw an error if the payment method does not exist
+    context._order = order
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
-    order.make_original()
     payment_plugin = order._payment_method
     if not payment_plugin:
       raise PluginError('no_payment_method_supplied') # @todo generally payment method should always be present
     # payment_plugin => Instance of PaypalPayment for example.
-    payment_plugin.complete(context) # @todo maybe change this?
+    payment_plugin.complete(context)
+
+  def find_order_paypal(self, context):
+    ipn = context.input['request']['params']
+    order_key = orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
+    return order_key.get()
     
     
 class SetMessage(orm.BaseModel):

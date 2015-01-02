@@ -288,7 +288,8 @@ class Order(orm.BaseExpando):
                           and entity._original.state == "checkout" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
-                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")')
+                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
+      orm.FieldPermission('34', ['_messages'], True, True, 'action.key_id_str == "complete"')
       ]
     )
   
@@ -497,7 +498,7 @@ class Order(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('34', 'complete'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True),
+        'payment_method': orm.SuperStringProperty(required=True, choices=settings.AVAILABLE_PAYMENT_METHODS),
         'request': orm.SuperPickleProperty(),
         },
       _plugin_groups=[
