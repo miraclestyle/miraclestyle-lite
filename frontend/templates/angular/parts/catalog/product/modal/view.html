@@ -29,7 +29,7 @@
                             <div class="product-code">{{product.code}}</div>
                             <div class="product-description">{{product.description}}</div>
                             <div class="product-price">
-                                {{product.unit_price|displayCurrency:catalog._seller._currency}}
+                                {{product.unit_price|displayCurrency:catalog._seller._currency}} ({{catalog._seller._currency.code}})
                             </div>
                             <div class="product-availability">{{product.availability}}</div>
                             <div class="product-user-cart-quantity">{{productQuantity}} in your cart.</div>

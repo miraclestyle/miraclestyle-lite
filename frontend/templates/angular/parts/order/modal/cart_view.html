@@ -9,15 +9,12 @@
             <div form-input="fields.carrier"></div>
       </div>
 
-      <div class="shopping-cart">
+      <div class="cart">
       <input type="hidden" name="cmd" value="_cart" />
       <input type="hidden" name="upload" value="1" />
       <input type="hidden" name="charset" value="utf-8" />
-          
       <input type="hidden" name="invoice" value="{{order.key}}" />
-
       <input type="hidden" name="no_shipping" value="2">
-
       <input type="hidden" name="business" value="{{order._payment_method.business}}" />
       <input type="hidden" name="return" value="{{completePath}}" />
       <input type="hidden" name="cancel_return" value="{{cancelPath}}" />
@@ -25,8 +22,6 @@
       <input type="hidden" name="rm" value="1" />
       <input type="hidden" name="currency_code" value="{{order.currency.code}}" />
       <input type="hidden" name="custom" value="{{order.key}}" />
-       
-
       <input type="hidden" name="address_override" value="1" />
       <input type="hidden" name="first_name" value="{{order.shipping_address.name}}" />
       <input type="hidden" name="address1" value="{{order.shipping_address.street}}" />
@@ -38,65 +33,86 @@
       <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
       <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
       <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
-
-      <div class="cart">
-
-              <div class="item-list">
+              <div class="cart-items item-list">
                 <div class="item clearfix" ng-hide="line._state === 'deleted'" ng-repeat="line in order._lines track by $index">
                     <div class="item-left">
-                      <div class="cart-line-detail cart-line-description"><a ng-click="viewProduct(line)">{{line.product.name}}</a></div>
-                      <div class="cart-line-detail cart-line-quantity">
-                        Quantity:  <input ng-disabled="order.state !== 'cart'" type="numeric" style="width:50px;" ng-model="line.quantity"/>
+                      <div class="cart-line-product-name clearfix">
+                        <a ng-click="viewProduct(line)">{{line.product.name}}</a>
                       </div>
-                      <div class="cart-line-detail cart-line-unit">
-                        Unit: {{line.product.uom.name}}
+                      <div class="cart-line-product-code clearfix">
+                        {{line.product.code}}
                       </div>
-                      <div class="cart-line-detail cart-line-tax">
-                        Taxes: {{line.taxes|displayTaxes}}
+                      <div class="cart-line-product-variant_signature clearfix" ng-show="line.product.variant_signature">
+                          {{line.product.variant_signature}}
                       </div>
-                      <div class="cart-line-detail cart-line-unitprice">
-                        Unit Price: {{line.product.unit_price}}
+                      <div class="cart-line-product-unitprice clearfix">
+                          {{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})
                       </div>
-                      <div class="cart-line-detail cart-line-discount">
-                        Discount: {{line.discount}}%
-                      </div>
-                      <div class="cart-line-detail cart-line-subtotal">
-                        Subtotal: {{line.subtotal}}
-                      </div>
-                      <div class="cart-line-detail cart-line-subtotal">
-                        Discount Subtotal: {{line.discount_subtotal}}
-                      </div>
-                      <div class="cart-line-detail cart-line-subtotal">
-                        Tax Subtotal: {{line.tax_subtotal}}
-                      </div>
-                      <div class="cart-line-detail cart-line-subtotal">
-                        Total: {{line.total}}
-                      </div>
-                      <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
-                      <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
-                      <input type="hidden" value="{{line.quantity}}" name="quantity_{{line.sequence}}" />
-                      <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
-                      <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
                     </div>
-
                     <div class="item-right list-actions">
                       <button ng-click="remove(line)" type="button" class="button">Remove</button>
+                      <div class="cart-line-details">
+                        
+                        <div class="cart-line-labels">
+                          <span class="cart-label cart-line-quantity">Quantity ({{line.product.uom.symbol}})</span>
+                          <span class="cart-label cart-line-discount">Discount (%) </span>
+                          <span class="cart-label cart-line-subtotal">Subtotal </span>
+                        </div>
+                        <div class="cart-line-values">
+                          <span class="cart-value cart-line-quantity">
+                            <input ng-disabled="order.state !== 'cart'" type="numeric" style="width:50px;" ng-model="line.quantity"/>
+                          </span>
+                          <span class="cart-value cart-line-discount">{{line.discount}}</span>
+                          <span class="cart-value cart-line-subtotal">{{line.discount_subtotal|displayCurrency:order.currency}}</span>
+                        </div>
+                        <!--
+                        <div class="cart-line-quantity clearfix">
+                          <span class="cart-label">Quantity ({{line.product.uom.symbol}})</span>
+                          <span class="cart-value">
+                            <input ng-disabled="order.state !== 'cart'" type="numeric" style="width:40px;" ng-model="line.quantity"/>
+                          </span>
+                        </div>
+                        <div class="cart-line-discount clearfix" ng-show="line.discount > 0">
+                          <span class="cart-label">Discount (%) </span>
+                          <span class="cart-value">{{line.discount}}</span>
+                        </div>
+                        <div class="cart-line-subtotal clearfix">
+                          <span class="cart-label">Subtotal </span>
+                          <span class="cart-value">{{line.discount_subtotal|displayCurrency:order.currency}}</span>
+                        </div>
+                        -->
+                        <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
+                        <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
+                        <input type="hidden" value="{{line.quantity}}" name="quantity_{{line.sequence}}" />
+                        <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
+                        <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
+                      </div>
                     </div>
 
                 </div>
-            </div>
-
-      </div>
-      
+        </div>
       <div class="cart-totals clearfix">
         <div class="pull-right">
-          <div class="cart-total-stat">Shipping net total: {{order.carrier.subtotal|displayCurrency:order.currency}}</div>
-          <div class="cart-total-stat">Shipping tax: {{order.carrier.tax_subtotal|displayCurrency:order.currency}}</div>
-          <div class="cart-total-stat">Shipping: {{order.carrier.total|displayCurrency:order.currency}}</div>
-
-          <div class="cart-total-stat">Net Total: {{order.untaxed_amount|displayCurrency:order.currency}}</div>
-          <div class="cart-total-stat">Taxes: {{order.tax_amount|displayCurrency:order.currency}}</div>
-          <div class="cart-total-stat">Total: {{order.total_amount|displayCurrency:order.currency}}</div>
+          <div class="cart-total-currency clearfix">
+            <span class="cart-label">Currency </span>
+            <span class="cart-value">{{order.currency.name}} ({{order.currency.code}})</span>
+          </div>
+          <div class="cart-total-shippingnettax clearfix">
+            <span class="cart-label">Shipping & Handling </span>
+            <span class="cart-value">{{order.carrier.subtotal|displayCurrency:order.currency}}</span>
+          </div>
+          <div class="cart-total-nettotal clearfix">
+            <span class="cart-label">Net Total </span>
+            <span class="cart-value">{{order.untaxed_amount|displayCurrency:order.currency}}</span>
+          </div>
+          <div class="cart-total-taxes clearfix">
+            <span class="cart-label">Taxes </span>
+            <span class="cart-value">{{order.tax_amount|displayCurrency:order.currency}}</span>
+          </div>
+          <div class="cart-total-total clearfix">
+            <span class="cart-label">Total </span>
+            <span class="cart-value">{{order.total_amount|displayCurrency:order.currency}}</span>
+            </div>
         </div>
       </div>
 

@@ -608,11 +608,18 @@ li.catalog-new-pricetag {
 
 .catalog-expire-time {
   padding: 0px 0px 5px;
+  color: #777777;
+}
+
+.product-category {
+  margin: 0px;
+  padding: 20px 0px 5px;
+  color: #777777;
 }
 
 .product-name {
   margin: 0px;
-  padding: 20px 0px 5px;
+  padding: 0px 0px 5px;
 }
 
 .product-code {
@@ -634,6 +641,7 @@ li.catalog-new-pricetag {
   padding: 0px 0px 5px;
   font-size: 18px;
   line-height: 21px;
+  color: #777777;
 }
 
 .product-user-cart-quantity {
@@ -664,6 +672,48 @@ li.catalog-new-pricetag {
   padding: 10px 0px;
 }
 
+.cart {
+  margin-top: 10px;
+  border-top: 1px solid #EEEEEE;
+}
+
+.cart-line-details {
+  font-size: 14px;
+  display: inline-block;
+  padding: 5px;
+  vertical-align: top;
+}
+
+.cart-line-details div {
+  padding-bottom: 3px;
+}
+
+.cart-label {
+  color: #777777;
+  position: relative;
+  text-align: right;
+  width: 70%;
+  float: left;
+  padding-right: 5px;
+}
+
+.cart-value {
+  float: left;
+  text-align: right;
+  position: relative;
+  width: 30%;
+  padding-left: 5px;
+}
+
+.cart-line-quantity .cart-label {
+  padding: 5px;
+}
+
 .cart-totals {
   margin-top: 10px;
+  text-align: right;
+}
+
+.cart-totals .cart-value {
+  
 }
