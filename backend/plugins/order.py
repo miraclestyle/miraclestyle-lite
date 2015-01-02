@@ -120,15 +120,6 @@ class ProductToOrderLine(orm.BaseModel):
       new_line.sequence = 1
       if order._lines.value:
         new_line.sequence = order._lines.value[-1].sequence + 1
-      '''
-        reference = orm.SuperKeyProperty('1', kind='28', required=True, indexed=False)
-        category = orm.SuperLocalStructuredProperty('24', '2', required=True)
-        name = orm.SuperStringProperty('3', required=True, indexed=False)
-        uom = orm.SuperLocalStructuredProperty('17', '4', required=True)
-        code = orm.SuperStringProperty('5', required=True, indexed=False)
-        unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
-        variant_signature = orm.SuperJsonProperty('7', required=True, default={}, indexed=False)
-      '''
       copy_product = OrderProduct()
       copy_product.name = product.name
       copy_product.reference = product_key

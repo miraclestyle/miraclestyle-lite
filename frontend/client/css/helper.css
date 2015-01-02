@@ -117,3 +117,15 @@ body .mb15 {
 .relative {
   position:relative;
 }
+
+.as-table {
+  display:table;
+}
+
+.as-table-row {
+  display:table-row;
+}
+
+.as-table-cell {
+  display:table-cell;
+}
