@@ -8,32 +8,31 @@
             <div form-input="fields.shippingAddress"></div>
             <div form-input="fields.carrier"></div>
       </div>
-
       <div class="cart">
-      <input type="hidden" name="cmd" value="_cart" />
-      <input type="hidden" name="upload" value="1" />
-      <input type="hidden" name="charset" value="utf-8" />
-      <input type="hidden" name="invoice" value="{{order.key}}" />
-      <input type="hidden" name="no_shipping" value="2">
-      <input type="hidden" name="business" value="{{order._payment_method.business}}" />
-      <input type="hidden" name="return" value="{{completePath}}" />
-      <input type="hidden" name="cancel_return" value="{{cancelPath}}" />
-      <input type="hidden" name="notify_url" value="{{notifyUrl}}" />
-      <input type="hidden" name="rm" value="1" />
-      <input type="hidden" name="currency_code" value="{{order.currency.code}}" />
-      <input type="hidden" name="custom" value="{{order.key}}" />
-      <input type="hidden" name="address_override" value="1" />
-      <input type="hidden" name="first_name" value="{{order.shipping_address.name}}" />
-      <input type="hidden" name="address1" value="{{order.shipping_address.street}}" />
-      <input ng-if="order.shipping_address.street2" type="hidden" name="address2" value="{{order.shipping_address.street2}}" />
-      <input type="hidden" name="city" value="{{order.shipping_address.city}}" />
-      <input ng-if="order.shipping_address.country_code === 'US'" type="hidden" name="state" value="{{order.shipping_address.region_code|substr:3}}" />
-      <input ng-if="order.shipping_address.postal_code" type="hidden" name="zip" value="{{order.shipping_address.postal_code}}" />
-      <input type="hidden" name="country" value="{{order.shipping_address.country_code}}" />
-      <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
-      <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
-      <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
-              <div class="cart-items item-list">
+        <input type="hidden" name="cmd" value="_cart" />
+        <input type="hidden" name="upload" value="1" />
+        <input type="hidden" name="charset" value="utf-8" />
+        <input type="hidden" name="invoice" value="{{order.key}}" />
+        <input type="hidden" name="no_shipping" value="2">
+        <input type="hidden" name="business" value="{{order._payment_method.business}}" />
+        <input type="hidden" name="return" value="{{completePath}}" />
+        <input type="hidden" name="cancel_return" value="{{cancelPath}}" />
+        <input type="hidden" name="notify_url" value="{{notifyUrl}}" />
+        <input type="hidden" name="rm" value="1" />
+        <input type="hidden" name="currency_code" value="{{order.currency.code}}" />
+        <input type="hidden" name="custom" value="{{order.key}}" />
+        <input type="hidden" name="address_override" value="1" />
+        <input type="hidden" name="first_name" value="{{order.shipping_address.name}}" />
+        <input type="hidden" name="address1" value="{{order.shipping_address.street}}" />
+        <input ng-if="order.shipping_address.street2" type="hidden" name="address2" value="{{order.shipping_address.street2}}" />
+        <input type="hidden" name="city" value="{{order.shipping_address.city}}" />
+        <input ng-if="order.shipping_address.country_code === 'US'" type="hidden" name="state" value="{{order.shipping_address.region_code|substr:3}}" />
+        <input ng-if="order.shipping_address.postal_code" type="hidden" name="zip" value="{{order.shipping_address.postal_code}}" />
+        <input type="hidden" name="country" value="{{order.shipping_address.country_code}}" />
+        <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
+        <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
+        <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
+              <div class="cart-lines item-list">
                 <div class="item clearfix" ng-hide="line._state === 'deleted'" ng-repeat="line in order._lines track by $index">
                     <div class="item-left">
                       <div class="cart-line-product-name clearfix">
@@ -88,7 +87,6 @@
                         <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
                       </div>
                     </div>
-
                 </div>
         </div>
       <div class="cart-totals clearfix">
@@ -97,7 +95,7 @@
             <span class="cart-label">Currency </span>
             <span class="cart-value">{{order.currency.name}} ({{order.currency.code}})</span>
           </div>
-          <div class="cart-total-shippingnettax clearfix">
+          <div class="cart-total-shippingandhandling clearfix">
             <span class="cart-label">Shipping & Handling </span>
             <span class="cart-value">{{order.carrier.subtotal|displayCurrency:order.currency}}</span>
           </div>
@@ -135,27 +133,21 @@
   </div>
 </div>
 <div class="modal-footer">
-    
-     <button loading ng-show="order.ui.rule.action.checkout.executable && order._lines.length" ng-click="checkout()" type="button" class="button">
+    <button loading ng-show="order.ui.rule.action.checkout.executable && order._lines.length" ng-click="checkout()" type="button" class="button">
         Checkout
     </button>
-    
     <button loading ng-show="order.ui.rule.action.update.executable" ng-click="update()" type="button" class="button">
         Update
     </button>
-
     <button loading send-message="sendMessage()" ng-show="order.ui.rule.action.log_message.executable" type="button" class="button">
         Send Message
     </button>
-
     <button loading ng-show="order.ui.rule.action.cancel.executable" type="submit" class="button">
         Pay Now
     </button>
-
     <button loading ng-click="cancel()" ng-show="order.ui.rule.action.cancel.executable" type="button" class="button">
         Cancel Order
     </button>
-    
     <button loading type="button" class="button" ng-click="close()">
         Close
     </button>
