@@ -212,7 +212,7 @@ class OrderLineFormat(orm.BaseModel):
       if product:
         if order.seller_reference._root != product.reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
-        line.discount = format_value(line.discount, Unit(digits=4))
+        line.discount = format_value(line.discount, Unit(digits=2))
         if line.quantity <= Decimal('0'):
           line._state = 'deleted'
         else:
