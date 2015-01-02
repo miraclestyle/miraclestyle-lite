@@ -696,12 +696,22 @@ li.catalog-new-pricetag {
   vertical-align: top;
 }
 
-.cart-line-right .cart-label {
+.cart-line-quantity .cart-label,
+.cart-line-discount .cart-label {
   padding: 0px 0px 10px 5px;
 }
 
-.cart-line-right .cart-value {
+.cart-line-quantity .cart-value,
+.cart-line-discount .cart-value {
   padding: 0px 0px 10px 15px;
+}
+
+.cart-line-discount_subtotal .cart-label {
+  padding: 0px 0px 0px 5px;
+}
+
+.cart-line-discount_subtotal .cart-value {
+  padding: 0px 0px 0px 15px;
 }
 
 .cart-totals {
