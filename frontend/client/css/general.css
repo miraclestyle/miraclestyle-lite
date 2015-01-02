@@ -703,7 +703,7 @@ li.catalog-new-pricetag {
 
 .cart-line-quantity .cart-value,
 .cart-line-discount .cart-value {
-  padding: 0px 0px 10px 15px;
+  padding: 0px 0px 10px 10px;
 }
 
 .cart-line-discount_subtotal .cart-label {
@@ -711,7 +711,7 @@ li.catalog-new-pricetag {
 }
 
 .cart-line-discount_subtotal .cart-value {
-  padding: 0px 0px 0px 15px;
+  padding: 0px 0px 0px 10px;
 }
 
 .cart-totals {
@@ -720,7 +720,10 @@ li.catalog-new-pricetag {
   line-height: 21px;
 }
 
-.cart-totals .cart-label,
+.cart-totals .cart-label {
+   padding: 0px 0px 5px 0px;
+}
+
 .cart-totals .cart-value {
    padding: 0px 0px 5px 15px;
 }
