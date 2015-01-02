@@ -162,7 +162,7 @@ class ProductToOrderLine(orm.BaseModel):
             copy_product.volume_uom = copy.deepcopy(product_instance.volume_uom.get())
       new_line.product = copy_product
       new_line.quantity = format_value('1', copy_product.uom.value)
-      new_line.discount = format_value('0', Unit(digits=4))
+      new_line.discount = format_value('0', Unit(digits=2))
       lines = order._lines.value
       if lines is None:
         lines = []
@@ -223,7 +223,7 @@ class OrderLineFormat(orm.BaseModel):
         if line.taxes.value:
           for tax in line.taxes.value:
             if tax.type == 'percent':
-              tax_amount = format_value(tax.amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
+              tax_amount = format_value(tax.amount, Unit(digits=2)) * format_value('0.01', Unit(digits=2))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.discount_subtotal * tax_amount)
             elif tax.type == 'fixed':
               tax_amount = format_value(tax.amount, order.currency.value)
@@ -248,7 +248,7 @@ class OrderCarrierFormat(orm.BaseModel):
       if carrier.taxes.value:
         for tax in carrier.taxes.value:
           if tax.type == 'percent':
-            tax_amount = format_value(tax.amount, Unit(digits=4)) * format_value('0.01', Unit(digits=4))
+            tax_amount = format_value(tax.amount, Unit(digits=2)) * format_value('0.01', Unit(digits=2))
             tax_subtotal = tax_subtotal + (carrier.subtotal * tax_amount)
           elif tax.type == 'fixed':
             tax_amount = format_value(tax.amount, order.currency.value)
