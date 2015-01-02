@@ -460,6 +460,7 @@ class _BaseModel(object):
   ........ to be continued...
   
   '''
+  _initialized = False # flag if this model was initialized by iom
   _state = None  # This field is used by rule engine!
   _sequence = None # Internally used for repeated properties
   _use_record_engine = True  # All models are by default recorded!
@@ -483,6 +484,21 @@ class _BaseModel(object):
     self._search_documents_delete = []
     for key in self.get_fields():
         self.add_output(key)
+
+  @classmethod
+  def initialize(cls):
+    '''
+      Initilization method for model. It must be called by iom upon loading all models into memory
+    '''
+    fields = cls.get_fields()
+    for field_key, field in fields.iteritems():
+      if hasattr(field, 'initialized') and not field.initialized: # initialize() can only be called once
+        field.initialize()
+        field.initialized = True
+    cls._initialized = True
+    if cls._initialized:
+       return False
+    return True
   
   def __repr__(self):
     original = 'No, '
@@ -730,6 +746,7 @@ class _BaseModel(object):
     new_entity = model(_deepcopy=True)
     new_entity.key = copy.deepcopy(self.key)
     new_entity._state = self._state
+    new_entity._sequence = self._sequence
     for field_key, field in self.get_fields().iteritems():
       has_can_be_copied = hasattr(field, 'can_be_copied')
       if (not has_can_be_copied or (has_can_be_copied and field.can_be_copied)):
@@ -1123,6 +1140,8 @@ class _BaseModel(object):
           value.read_async(field_read_arguments)
           futures.append((value, field_read_arguments)) # we have to pack them all for .read()
     for future, field_read_arguments in futures:
+      if isinstance(future.value, Future) or (isinstance(future.value, list) and len(future.value) and isinstance(future.value[0], Future)):
+        print future.value
       future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
     self.make_original()  # Finalize original before touching anything.
@@ -1718,6 +1737,8 @@ class StructuredPropertyValue(PropertyValue):
         if self.has_value() and self._property_value is not None:
           self._property_value.populate_from(property_value)
         else:
+          if property_value._state is None:
+            property_value._state = 'created'
           self._property_value = property_value
       else:
         if self.has_value() and self._property_value is not None:
@@ -1732,6 +1753,8 @@ class StructuredPropertyValue(PropertyValue):
               exists.populate_from(ent)
               new_list.append(exists)
             else:
+              if ent._state is None:
+                ent._state = 'created'
               new_list.append(ent)
           del property_value[:] 
           property_value.extend(new_list)
@@ -1785,7 +1808,7 @@ class StructuredPropertyValue(PropertyValue):
       util.merge_dicts(read_arguments, self._property._read_arguments)
     config = read_arguments.get('config', {})
     if self._property._readable:
-      if (not self.has_value()) or config.get('force_read'): # it will not attempt to load if there's already value present.
+      if (not self.has_value()) or config.get('force_read'): # it will not attempt to start rpcs if there's already something set in _property_value
         self._read(read_arguments)
   
   def read(self, read_arguments=None):
@@ -2099,9 +2122,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
     for i,entity in enumerate(self._property_value):
-      is_new = not hasattr(entity, '_original')
-      if is_new and entity._state is None:
-        entity._state = 'created'
+      is_new = entity._state == 'created'
       if not self._property._addable and is_new:
         # if property does not allow new values remove it from put queue
         self._property_value.remove(entity)
@@ -2288,7 +2309,7 @@ class _BaseProperty(object):
   _value_filters = None
   _searchable = None
   _search_document_field_name = None
-  initilized = False
+  initialized = False
   
   def __init__(self, *args, **kwargs):
     self._max_size = kwargs.pop('max_size', self._max_size)
@@ -2538,8 +2559,8 @@ class _BaseStructuredProperty(_BaseProperty):
             if generate:
               if not val.key:
                 val.generate_unique_key()
-                if val._state is None:
-                  val._state = 'created'
+              if val._state is None:
+                val._state = 'created'
               current_values.append(val)
           def sorting_function(val):
             return val._sequence
@@ -2554,8 +2575,8 @@ class _BaseStructuredProperty(_BaseProperty):
           for val in current_values:
             if not val.key:
               val.generate_unique_key()
-              if val._state is None:
-                val._state = 'created'
+            if val._state is None:
+              val._state = 'created'
     elif not self._repeated:
       if value is not None:
         current_values = value_instance.value

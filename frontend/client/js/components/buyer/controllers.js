@@ -11,12 +11,54 @@
                 models['18'].manageModal(currentAccount.key);
             };
 
-        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope, $state) {
 
-            $rootScope.pageTitle = 'Buyer Orders';
+            var carts = $state.current.name === 'buy-carts';
 
-        }).controller('BuyCartsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+            $rootScope.pageTitle = 'Buyer ' + (carts ? 'Carts' : 'Orders');
 
-            $rootScope.pageTitle = 'Buyer Carts';
+            $scope.search = {
+                results: [],
+                pagination: {}
+            };
+
+            $scope.scrollEnd = {loader: false};
+
+            $scope.view = function (order) {
+                models['19'].current().then(function (response) {
+                    return response.data.entity;
+                }).then(function (buyer) {
+                    models['34'].viewOrderModal(order._seller, buyer, (!carts ? order.key : undefined));
+                });
+            };
+
+            models['19'].current().then(function (response) {
+                var buyerEntity = response.data.entity;
+                $scope.search.pagination = models['34'].paginate({
+                    kind: '34',
+                    args: {
+                        search: {
+                            ancestor: buyerEntity.key,
+                            filters: [{field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}],
+                            orders: [{field: 'key', operator: 'desc'}]
+                        }
+                    },
+                    config: {
+                        ignoreErrors: true
+                    },
+                    complete: function (response) {
+                        var errors = response.data.errors;
+                        if (errors) {
+                            if (errors['not_found_' + buyerEntity.key]) {
+                                modals.alert('You do not have any buyer information yet.');
+                            }
+                        } else {
+                            $scope.search.results.extend(response.data.entities);
+                        }
+                    }
+                });
+                $scope.scrollEnd.loader = $scope.search.pagination;
+                $scope.search.pagination.load();
+            });
         });
 }());

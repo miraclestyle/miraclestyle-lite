@@ -365,6 +365,11 @@ class Reset(BaseTestHandler):
     blobstore.delete(blobstore.BlobInfo.all().fetch(None, keys_only=True))
     mem.flush_all()
 
+class TestAsync(BaseTestHandler):
+
+  def respond(self):
+    pass
+
     
 for k,o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):

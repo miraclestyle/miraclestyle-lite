@@ -207,25 +207,24 @@ class Order(orm.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart'), orm.Action.build_key('34', 'cart_product_quantity')], True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart'), orm.Action.build_key('34', 'order_line_quantity')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
       orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'read'),
                                   orm.Action.build_key('34', 'log_message')], True,
-                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
-                           or entity._original.seller_reference._root == account.key))'),
+                           'action.key_id_str != "search" and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
+                           or entity._original.seller_reference._root == account.key)))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
                            'not action.key_id_str == "search" and not account._is_guest and ((entity._original.key_root == account.key \
                            and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key \
                            and entity._original.state == "checkout"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
-                           'action.key_id_str == "search" and (account._root_admin or (not account._is_guest and entity._original.key_root == account.key \
-                           and input["search"]["ancestor"] == account.key) or (not account._is_guest \
-                           and entity._original.seller_reference._root == account.key \
-                           and input["search"]["filters"][0]["operator"] == "==" \
-                           and input["search"]["filters"][0]["value"]._root == account.key))'),
+                           'action.key_id_str == "search" and (account._root_admin \
+                            or (not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference" \
+                                and input["search"]["filters"][0]["value"]._root == account.key) \
+                            or (not account._is_guest and input["search"]["ancestor"]._root == account.key))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),
@@ -272,8 +271,8 @@ class Order(orm.BaseExpando):
                           or (action.key_id_str == "complete" and entity.state == "completed")'),
       orm.FieldPermission('34', ['payment_status'], True, True, '(action.key_id_str == "complete")'), # writable when in complete action mode
       orm.FieldPermission('34', ['_messages'], True, True,
-                          'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
-                           or entity._original.seller_reference._root == account.key))'),
+                          'action.key_id_str != "search" and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
+                           or entity._original.seller_reference._root == account.key)))'),
       orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference', '_lines', 'carrier',
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
@@ -330,7 +329,7 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'view_order'),  # @todo Perhaps to figure out other appropriate name??
+      key=orm.Action.build_key('34', 'view_order'),
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
         'seller': orm.SuperKeyProperty(kind='23', required=True),
@@ -413,19 +412,11 @@ class Order(orm.BaseExpando):
           default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
           cfg={
             'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
-            'ancestor_kind': '11',
+            'ancestor_kind': '19',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
-            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
-                        {'orders': [('created', ['asc', 'desc'])]},
-                        {'orders': [('updated', ['asc', 'desc'])]},
-                        {'filters': [('name', ['==', 'contains', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]}]
+                        'state': orm.SuperStringProperty(repeated=True, choices=['checkout', 'cart', 'canceled', 'completed'])},
+            'indexes': [{'ancestor': True, 'filters': [('state', ['==', '!=', 'IN'])], 'orders': [('key', ['asc', 'desc'])]}]
             }
           )
         },
@@ -434,9 +425,9 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            RulePrepare(cfg={'d': {'input': 'input'}}),
+            RulePrepare(),
             RuleExec(),
-            Search(cfg={'d': {'ancestor': 'account.key'}}),
+            Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
@@ -659,7 +650,7 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'cart_product_quantity'),
+      key=orm.Action.build_key('34', 'order_line_quantity'),
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
         'product': orm.SuperKeyProperty(kind='28', required=True),

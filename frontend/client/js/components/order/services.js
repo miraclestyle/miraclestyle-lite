@@ -6,15 +6,31 @@
 
         modelsConfig(function (models) {
             $.extend(models[orderKind], {
-                viewCartModal: function (seller, buyer) {
+                viewOrderModal: function (seller, buyer, orderKey) {
 
-                    models[orderKind].actions.view_order({
+                    var args = {
                         buyer: buyer.key,
                         seller: seller.key,
                         read_arguments: {
                             _messages: {}
                         }
-                    }).then(function (response) {
+                    };
+
+                    if (orderKey) {
+                        args = {
+                            key: orderKey,
+                            read_arguments: {
+                                _lines: {config: {
+                                    options: {
+                                        limit: 0
+                                    }
+                                }},
+                                _messages: {}
+                            }
+                        };
+                    }
+
+                    models[orderKind].actions[!orderKey ? 'view_order' : 'read'](args).then(function (response) {
 
                         if (!response.data.entity.id) {
                             modals.alert('No cart available, please add some products to your cart before you can view it');
@@ -26,13 +42,25 @@
                             controller: function ($scope, $modalInstance) {
                                 var addresses = buyer.addresses, reactOnStateChange,
                                     updateFields = modelsMeta.getActionArguments('34', 'update'),
-                                    logMessageFields = modelsMeta.getActionArguments('34', 'log_message');
+                                    logMessageFields = modelsMeta.getActionArguments('34', 'log_message'),
+                                    displayAddress = function (address) {
+                                        var addr = [];
+                                        angular.forEach(['_country.name', '_region.name', 'city', 'postal_code', 'name', 'email', 'telephone'], function (field) {
+                                            var v = helpers.getProperty(address, field);
+                                            if (v !== null && v !== undefined) {
+                                                addr.push(v);
+                                            }
+                                        });
+                                        return addr.join(', ');
+                                    },
+                                    carriers;
                                 $.extend(logMessageFields.message.ui, {
                                     args: 'newMessage.message',
                                     parentArgs: 'newMessage',
                                     writable: true
                                 });
                                 logMessageFields.message.required = false;
+                                $scope.cartMode = !orderKey;
                                 $scope.order = response.data.entity;
                                 $scope.seller = seller;
                                 $scope.buyer = buyer;
@@ -40,6 +68,23 @@
                                     message: null,
                                     key: $scope.order.key
                                 };
+
+                                carriers = response.data.carriers || ($scope.order.carrier ? [{
+                                    name: $scope.order.carrier.description,
+                                    price: $scope.order.carrier.unit_price,
+                                    key: $scope.order.carrier.reference
+                                }] : []);
+                                carriers = $.map(carriers, function (item) {
+                                    if (!item) {
+                                        return '';
+                                    }
+                                    if (!angular.isDefined(item.original_name)) {
+                                        item.original_name = item.name;
+                                    }
+                                    item.name = item.original_name + ' (' + $filter('displayCurrency')(item.price, $scope.order.currency) + ')';
+                                    return item;
+                                });
+
                                 $scope.order.selectedCarrier = $scope.order.carrier ? $scope.order.carrier.reference : null;
                                 $scope.fields = {
                                     billingAddress: {
@@ -53,6 +98,7 @@
                                             writable: 'order.ui.rule.field.billing_address_reference.writable',
                                             specifics: {
                                                 entities: addresses,
+                                                view: displayAddress
                                             }
                                         }
                                     },
@@ -66,7 +112,8 @@
                                             label: 'Shipping Address',
                                             writable: 'order.ui.rule.field.shipping_address_reference.writable',
                                             specifics: {
-                                                entities: addresses
+                                                entities: addresses,
+                                                view: displayAddress
                                             }
                                         }
                                     },
@@ -80,13 +127,7 @@
                                             label: 'Delivery Method',
                                             writable: 'order.ui.rule.field.shipping_address_reference.writable',
                                             specifics: {
-                                                entities: (response.data.carriers ? $.map(response.data.carriers, function (item) {
-                                                    if (!angular.isDefined(item.original_name)) {
-                                                        item.original_name = item.name;
-                                                    }
-                                                    item.name = item.original_name + ' (' + $filter('displayCurrency')(item.price, $scope.order.currency) + ')';
-                                                    return item;
-                                                }) : [])
+                                                entities: carriers
                                             }
                                         }
                                     },

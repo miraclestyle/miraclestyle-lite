@@ -2,17 +2,15 @@
     'use strict';
     angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q) {
 
-        var catalogKind = '31';
-
         modelsConfig(function (models) {
-            $.extend(models[catalogKind], {
+            $.extend(models['31'], {
                 previewModal: function (key, config) {
                     config = helpers.alwaysObject(config);
                     config.hideAddToCart = true;
                     return this.viewModal(key, config);
                 },
                 viewModal: function (key, config) {
-                    models[catalogKind].actions.read({
+                    models['31'].actions.read({
                         key: key,
                         // 5 rpcs
                         read_arguments: {
@@ -35,7 +33,7 @@
                             windowClass: 'no-overflow',
                             controller: function ($scope, $modalInstance) {
                                 $scope.catalog = entity;
-                                $scope.catalog.action_model = catalogKind;
+                                $scope.catalog.action_model = '31';
                                 $scope.logoImageConfig = {};
                                 var imagesReader,
                                     accessImages,
@@ -43,7 +41,7 @@
                                 accessImages = angular.copy($scope.catalog.ui.access);
                                 accessImages.push('_images');
 
-                                imagesReader = models[catalogKind].reader({
+                                imagesReader = models['31'].reader({
                                     kind: $scope.catalog.kind,
                                     key: $scope.catalog.key,
                                     next: {_images: $scope.catalog._next_read_arguments._images},
@@ -83,7 +81,7 @@
 
                                 $scope.displayCart = function () {
                                     models['19'].current().then(function (response) {
-                                        models['34'].viewCartModal($scope.catalog._seller, response.data.entity);
+                                        models['34'].viewOrderModal($scope.catalog._seller, response.data.entity);
                                     });
                                 };
 
@@ -103,7 +101,7 @@
                                                 }
                                             }
                                         };
-                                    models[catalogKind].actions.read({
+                                    models['31'].actions.read({
                                         key: $scope.catalog.key,
                                         read_arguments: readArguments
                                     }).then(function (response) {
@@ -170,7 +168,7 @@
                                                     }
 
                                                     // rpc to check the instance
-                                                    return models[catalogKind].actions.read({
+                                                    return models['31'].actions.read({
                                                         key: this.catalog.key,
                                                         // 4 rpcs
                                                         read_arguments: {
@@ -240,7 +238,7 @@
 
                                                 $scope.cartProductQuantity = function () {
                                                     models['19'].current().then(function (response) {
-                                                        models['34'].actions.cart_product_quantity({
+                                                        models['34'].actions.order_line_quantity({
                                                             buyer: response.data.entity.key,
                                                             product: $scope.product.key,
                                                             variant_signature: $scope.currentVariation
@@ -321,7 +319,7 @@
                 },
                 manageModal: function (entity, callback) { // modal dialog for managing the catalog
 
-                    var fields = modelsMeta.getActionArguments(catalogKind, 'update'),
+                    var fields = modelsMeta.getActionArguments('31', 'update'),
                         isNew = !angular.isDefined(entity),
                         afterSave = function ($scope) {
                             $scope.setAction('catalog_upload_images');
@@ -382,7 +380,7 @@
                                         modals.confirm('Publish this catalog will make it not editable and visible to the public.' +
                                                        ' Are you sure you want to do this?',
                                             function () {
-                                                models[catalogKind].actions.publish({
+                                                models['31'].actions.publish({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
                                                     modals.alert('Catalog published. It will be public in few minutes.');
@@ -394,7 +392,7 @@
                                         modals.confirm('By discontinuing this catalog you will remove it from public, and it will be delted after 40 days.' +
                                                        ' Are you sure you want to do this?',
                                             function () {
-                                                models[catalogKind].actions.discontinue({
+                                                models['31'].actions.discontinue({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
                                                     modals.alert('Catalog discontinued successfully.');
@@ -405,7 +403,7 @@
                                     duplicate: function () {
                                         modals.confirm('Are you sure you want to duplicate this catalog?',
                                             function () {
-                                                models[catalogKind].actions.catalog_duplicate({
+                                                models['31'].actions.catalog_duplicate({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
                                                     modals.alert('You will be notified when the catalog is duplicated.');
@@ -416,7 +414,7 @@
                                         $modal.open({
                                             templateUrl: 'catalog/modal/administer.html',
                                             controller: function ($scope, $modalInstance) {
-                                                var sudoFields = modelsMeta.getActionArguments(catalogKind, 'sudo');
+                                                var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
                                                 $scope.args = {key: entity.key, state: entity.state};
 
                                                 sudoFields.state.ui.placeholder = 'Set state';
@@ -434,7 +432,7 @@
                                                     if (!$scope.container.form.$valid) {
                                                         return false;
                                                     }
-                                                    models[catalogKind].actions.sudo($scope.args).then(function (response) {
+                                                    models['31'].actions.sudo($scope.args).then(function (response) {
                                                         updateState(response.data.entity);
                                                     });
                                                 };
@@ -482,8 +480,8 @@
                                                 }
                                             };
 
-                                            imagesReader = models[catalogKind].reader({
-                                                kind: catalogKind,
+                                            imagesReader = models['31'].reader({
+                                                kind: '31',
                                                 key: $scope.args.key,
                                                 next: $scope.args._next_read_arguments,
                                                 access: accessImages,
@@ -621,7 +619,7 @@
                                             $scope.manageProduct = function (image, pricetag) {
                                                 setupCurrentPricetag(image, pricetag);
                                                 // perform read catalog.images.0.pricetags.0._product
-                                                models[catalogKind].actions.read({
+                                                models['31'].actions.read({
                                                     key: $scope.entity.key,
                                                     read_arguments: {
                                                         _images: {
@@ -735,7 +733,7 @@
                                                         duplicate: function () {
                                                             modals.confirm('Are you sure you want to duplicate this pricetag?',
                                                                 function () {
-                                                                    models[catalogKind].actions.catalog_pricetag_duplicate({
+                                                                    models['31'].actions.catalog_pricetag_duplicate({
                                                                         key: $scope.entity.key,
                                                                         read_arguments: {
                                                                             _images: {
@@ -852,7 +850,7 @@
 
                                             $scope.save = function () {
                                                 $scope.rootScope.config.prepareReadArguments($scope);
-                                                var promise = models[catalogKind].actions[$scope.args.action_id]($scope.args);
+                                                var promise = models['31'].actions[$scope.args.action_id]($scope.args);
 
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);

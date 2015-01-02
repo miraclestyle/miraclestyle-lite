@@ -1,0 +1,9 @@
+<div autoload-on-vertical-scroll-end="scrollEnd" grid-generator-items="search.results" grid-generator="{fixedHeight:100, square: false, margin:1, maxWidth:240, minWidth:180}" class="grid-wrapper clearfix">
+ 
+        <div ng-repeat="order in search.results track by $index" on-ng-repeat-end class="grid-item grid-generator">
+            <button ng-click="view(order)" class="button-transparent pointable">
+                <img display-image="order._seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
+            </button>
+        </div>
+ 
+</div>
