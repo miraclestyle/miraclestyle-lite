@@ -38,7 +38,7 @@
                         }
 
                         $modal.open({
-                            templateUrl: 'order/modal/cart_view.html',
+                            templateUrl: 'order/modal/view.html',
                             controller: function ($scope, $modalInstance) {
                                 var addresses = buyer.addresses, reactOnStateChange,
                                     updateFields = modelsMeta.getActionArguments('34', 'update'),

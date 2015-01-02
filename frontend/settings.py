@@ -228,7 +228,7 @@ ANGULAR_TEMPLATES = (
   ('catalog/product/directive/product_instance_display.html',),
 
   # order
-  ('order/modal/cart_view.html',),
+  ('order/modal/view.html',),
 
   # other
   ('home/index.html',),
