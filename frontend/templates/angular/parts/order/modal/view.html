@@ -62,7 +62,7 @@
                             <tr class="cart-line-quantity">
                               <td class="cart-label">Quantity ({{line.product.uom.symbol}})</td>
                               <td class="cart-value">
-                                <input ng-disabled="!order.ui.rule.action.update.executable" type="numeric" ng-model="line.quantity"/>
+                                <input ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
                               </td>
                             </tr>
                             <tr class="cart-line-discount" ng-show="line.discount > 0">
@@ -87,7 +87,7 @@
           <table class="pull-right">
             <tbody>
               <tr class="cart-carrier-subtotal">
-                <td class="cart-label">Shipping & Handling</td>
+                <td class="cart-label">Shipping &amp; Handling</td>
                 <td class="cart-value">{{order.carrier.subtotal|displayCurrency:order.currency}}</td>
               </tr>
               <tr class="cart-untaxed_amount">

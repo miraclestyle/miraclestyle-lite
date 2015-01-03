@@ -91,7 +91,7 @@
                     args: {
                         search: {
                             filters: [{field: 'seller_reference', operator: '==', value: sellerEntity.key}, {field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}],
-                            orders: [{field: 'key', operator: 'desc'}]
+                            orders: [{field: 'created', operator: 'desc'}, {field: 'key', operator: 'desc'}]
                         }
                     },
                     config: {

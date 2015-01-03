@@ -57,12 +57,19 @@ class OrderProduct(orm.BaseExpando):
 
   _virtual_fields = {
     '_reference': orm.SuperComputedProperty(lambda self: self._build_reference())
-  }
+    }
 
   def _build_reference(self):
     if not self.reference:
       return None
     return self.reference.structure()
+
+  @classmethod
+  def get_partial_reference_key_path(cls, reference_key):
+    real_product_key = list(reference_key.pairs())
+    real_product_key.pop(3)
+    real_product_key = orm.Key(pairs=real_product_key)
+    return real_product_key
 
 
 class OrderCarrier(orm.BaseExpando):
@@ -104,7 +111,9 @@ class OrderLine(orm.BaseExpando):
   def prepare_key(cls, input, **kwargs):
     parent = kwargs.get('parent')
     product = input.get('product')
-    return cls.build_key(hashlib.md5('%s-%s' % (product.get('reference').urlsafe(), json.dumps(product.get('variant_signature')))).hexdigest(), parent=parent)
+    reference = product.get('reference')
+    rebuilt_reference = OrderProduct.get_partial_reference_key_path(reference)
+    return cls.build_key(hashlib.md5('%s-%s' % (rebuilt_reference.urlsafe(), json.dumps(product.get('variant_signature')))).hexdigest(), parent=parent)
 
   def prepare(self, **kwargs):
     parent = kwargs.get('parent')
@@ -351,7 +360,7 @@ class Order(orm.BaseExpando):
             Context(),
             OrderInit(),
             ProductSpecs(),
-            PluginExec(cfg={'kinds': ['113']}), # carrier plugins
+            PluginExec(cfg={'kinds': ['113', '107']}), # carrier plugins
             RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_order'}})
@@ -419,14 +428,16 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'asc'}]},
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}, {'field': 'key', 'operator': 'desc'}]},
           cfg={
             'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '19',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(repeated=True, choices=['checkout', 'cart', 'canceled', 'completed'])},
-            'indexes': [{'ancestor': True, 'filters': [('state', ['==', '!=', 'IN'])], 'orders': [('key', ['asc', 'desc'])]}]
+                        'state': orm.SuperStringProperty(repeated=True, choices=['checkout', 'cart', 'canceled', 'completed']),
+                        'seller_reference': orm.SuperKeyProperty(kind='23')},
+            'indexes': [{'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('created', ['asc', 'desc']), ('key', ['asc', 'desc'])]},
+                        {'filters': [('seller_reference', ['==']), ('state', ['IN'])], 'orders': [('created', ['asc', 'desc']), ('key', ['asc', 'desc'])]}]
             }
           )
         },
@@ -664,6 +675,7 @@ class Order(orm.BaseExpando):
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
         'product': orm.SuperKeyProperty(kind='28', required=True),
+        'image': orm.SuperKeyProperty(kind='30', required=True),
         'variant_signature': orm.SuperJsonProperty()
         },
       _plugin_groups=[

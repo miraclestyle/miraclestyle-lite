@@ -109,7 +109,7 @@ def _get_parent_entity(self):
 
 def _get_key_structure(self):
   dic = {}
-  dic['urlsafe'] = self.urlsafe()
+  dic['key'] = self.urlsafe()
   dic['id'] = self.id()
   dic['kind'] = self.kind()
   dic['namespace'] = self.namespace()
@@ -121,7 +121,7 @@ def _get_key_structure(self):
       if not parent:
         break
       parent_dic['kind'] = parent.kind()
-      parent_dic['urlsafe'] = parent.urlsafe()
+      parent_dic['key'] = parent.urlsafe()
       parent_dic['id'] = parent.id()
       parent_dic['namespace'] = parent.namespace()
       parent = parent.parent()
@@ -1453,7 +1453,10 @@ class _BaseModel(object):
         value = value.value
       if value is None and not field.can_be_none:
         continue
-      setattr(self, field_key, value)
+      try:
+        setattr(self, field_key, value)
+      except ComputedPropertyError:
+        pass
     self._state = other._state
     self._sequence = other._sequence
   
@@ -1482,23 +1485,7 @@ class _BaseModel(object):
     dic['_state'] = self._state
     dic['_sequence'] = self._sequence
     if self.key:
-      dic['key'] = self.key.urlsafe()
-      dic['id'] = self.key.id()
-      dic['namespace'] = self.key.namespace()
-      dic['parent'] = {}
-      if self.key.parent():
-        parent = self.key.parent()
-        parent_dic = dic['parent']
-        while True:
-          if not parent:
-            break
-          parent_dic['kind'] = parent.kind()
-          parent_dic['key'] = parent.urlsafe()
-          parent_dic['id'] = parent.id()
-          parent_dic['namespace'] = parent.namespace()
-          parent = parent.parent()
-          parent_dic['parent'] = {}
-          parent_dic = parent_dic['parent']
+      dic.update(self.key.structure())
     names = self._output
     try:
       for name in names:

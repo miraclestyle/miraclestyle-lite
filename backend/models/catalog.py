@@ -217,6 +217,15 @@ class CatalogProduct(orm.BaseExpando):
     product_key = self.build_key(parent._id_str, parent=parent)
     self.key = product_key
 
+  @classmethod
+  def get_complete_key_path(cls, image_key, product_key):
+    modified_product_key = None
+    modified_product_key = list(product_key.flat())
+    modifiy_product_key = []
+    modifiy_product_key.extend(image_key.flat())
+    modifiy_product_key.extend(modified_product_key[-4:])
+    modified_product_key = orm.Key(*modifiy_product_key)
+    return modified_product_key
 
 class CatalogPricetag(orm.BaseModel):
   

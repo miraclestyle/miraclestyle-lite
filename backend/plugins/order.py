@@ -89,6 +89,7 @@ class ProductToOrderLine(orm.BaseModel):
   
   def run(self, context):
     OrderProduct = context.models['125']
+    CatalogProduct = context.models['28']
     order = context._order
     product_key = context.input.get('product')
     image_key = context.input.get('image')
@@ -99,7 +100,8 @@ class ProductToOrderLine(orm.BaseModel):
     if order._lines.value:
       for line in order._lines.value:
         product = line.product.value
-        if product and product.reference == product_key \
+        real_product_key = OrderProduct.get_partial_reference_key_path(product.reference)
+        if product and real_product_key == product_key \
         and product.variant_signature == variant_signature:
           line._state = 'modified'
           line.quantity = line.quantity + format_value('1', product.uom.value)
@@ -123,12 +125,7 @@ class ProductToOrderLine(orm.BaseModel):
         new_line.sequence = order._lines.value[-1].sequence + 1
       copy_product = OrderProduct()
       copy_product.name = product.name
-      modified_product_key = None
-      modified_product_key = list(product_key.flat())
-      modifiy_product_key = []
-      modifiy_product_key.extend(image_key.flat())
-      modifiy_product_key.extend(modified_product_key[-4:])
-      modified_product_key = orm.Key(*modifiy_product_key)
+      modified_product_key = CatalogProduct.get_complete_key_path(image_key, product_key)
       copy_product.reference = modified_product_key
       copy_product.variant_signature = variant_signature
       copy_product.category = copy.deepcopy(product._category.value)
@@ -319,7 +316,7 @@ class AddressRule(orm.BaseModel):
       return # inactive plugin
     self.read() # read locals
     order = context._order
-    valid_addresses = collections.OrderedDict()
+    valid_addresses = []
     default_address = None
     address_reference_key = '%s_address_reference' % self.address_type
     address_key = '%s_address' % self.address_type
@@ -333,23 +330,28 @@ class AddressRule(orm.BaseModel):
       raise PluginError('no_address')
     for buyer_address in buyer_addresses.addresses.value:
       if self.validate_address(buyer_address):
-        valid_addresses[buyer_address.key.urlsafe()] = buyer_address
+        if not filter(lambda x: x.key == buyer_address.key, valid_addresses):
+          valid_addresses.append(buyer_address)
         if getattr(buyer_address, default_address_key):
           default_address = buyer_address
     if not len(valid_addresses):
       raise PluginError('no_valid_address')
     context.output[addresses_key] = valid_addresses
     if (default_address is None) and len(valid_addresses):
-      default_address = valid_addresses.values()[0]
-    if input_address_reference in valid_addresses:
-      default_address = valid_addresses[input_address_reference]
-    elif order_address_reference in valid_addresses:
-      default_address = valid_addresses[order_address_reference]
-    if default_address:
+      default_address = valid_addresses[0]
+    input_address_reference_result = filter(lambda x: x.key == input_address_reference, valid_addresses)
+    order_address_reference_result = filter(lambda x: x.key == order_address_reference, valid_addresses)
+    if input_address_reference_result:
+      default_address = input_address_reference_result[0]
+    elif order_address_reference_result:
+      default_address = valid_addresses[0]
+    no_address_set = getattr(order, address_reference_key, None) is None
+    if default_address and (input_address_reference or no_address_set):
       setattr(order, address_reference_key, default_address.key)
       setattr(order, address_key, default_address.get_location())
       context.output[default_address_key] = default_address
-    else:
+      no_address_set = False
+    if no_address_set:
       raise PluginError('no_address_found')
   
   def validate_address(self, address):
@@ -912,7 +914,9 @@ class OrderCartProductQuantity(orm.BaseModel):
   def run(self, context):
     Order = context.models['34']
     OrderLine = context.models['33']
+    CatalogProduct = context.models['28']
     product_key = context.input.get('product')
+    image_key = context.input.get('image')
     variant_signature = context.input.get('variant_signature')
     seller_key = product_key.parent().parent().parent() # go 3 levels up, account->seller->catalog->pricetag->product
     order = Order.query(Order.seller_reference == seller_key,
@@ -920,7 +924,8 @@ class OrderCartProductQuantity(orm.BaseModel):
                         ancestor=context.input.get('buyer')).get()
     quantity = 0
     if order:
-      order_line_key = OrderLine.prepare_key({'product': {'reference': product_key, 'variant_signature': variant_signature}}, parent=order.key)
+      modified_product_key = CatalogProduct.get_complete_key_path(image_key, product_key)
+      order_line_key = OrderLine.prepare_key({'product': {'reference': modified_product_key, 'variant_signature': variant_signature}}, parent=order.key)
       order_line = order_line_key.get()
       if order_line:
         quantity = int(order_line.quantity)

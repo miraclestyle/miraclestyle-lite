@@ -107,10 +107,22 @@ indexes:
   - name: '1'
     direction: desc
 
-# Order
+# Order Buyer
 - kind: '34'
   ancestor: yes
   properties:
   - name: '4'
+  - name: '1'
+    direction: desc
+  - name: __key__
+    direction: desc
+
+# Order Seller
+- kind: '34'
+  properties:
+  - name: '4'
+  - name: '6'
+  - name: '1'
+    direction: desc
   - name: __key__
     direction: desc

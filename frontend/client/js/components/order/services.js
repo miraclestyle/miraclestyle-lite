@@ -40,7 +40,7 @@
                         $modal.open({
                             templateUrl: 'order/modal/view.html',
                             controller: function ($scope, $modalInstance) {
-                                var addresses, reactOnStateChange, reactOnUpdate,
+                                var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate,
                                     updateFields = modelsMeta.getActionArguments('34', 'update'),
                                     logMessageFields = modelsMeta.getActionArguments('34', 'log_message'),
                                     displayAddress = function (address) {
@@ -85,7 +85,8 @@
                                 });
 
                                 if (cart) {
-                                    addresses = buyer.addresses;
+                                    billing_addresses = response.data.billing_addresses;
+                                    shipping_addresses = response.data.shipping_addresses;
                                     $scope.selection.billing_address = $scope.order.billing_address_reference;
                                     $scope.selection.shipping_address = $scope.order.shipping_address_reference;
                                 } else {
@@ -97,7 +98,8 @@
                                             name: $scope.order.billing_address[field]
                                         };
                                     });
-                                    addresses = [$scope.order.billing_address, $scope.order.shipping_address];
+                                    billing_addresses = [$scope.order.billing_address, $scope.order.shipping_address];
+                                    shipping_addresses = billing_addresses;
                                     $scope.selection.billing_address = $scope.order.billing_address.key;
                                     $scope.selection.shipping_address = $scope.order.shipping_address.key;
                                 }
@@ -115,7 +117,7 @@
                                             label: 'Billing Address',
                                             writable: 'order.ui.rule.field.billing_address_reference.writable',
                                             specifics: {
-                                                entities: addresses,
+                                                entities: billing_addresses,
                                                 view: displayAddress
                                             }
                                         }
@@ -130,7 +132,7 @@
                                             label: 'Shipping Address',
                                             writable: 'order.ui.rule.field.shipping_address_reference.writable',
                                             specifics: {
-                                                entities: addresses,
+                                                entities: shipping_addresses,
                                                 view: displayAddress
                                             }
                                         }
@@ -216,6 +218,11 @@
 
                                 $scope.close = function () {
                                     $modalInstance.dismiss('close');
+                                };
+
+                                $scope.viewProduct = function (line) {
+                                    var path = line.product._reference;
+                                    models['31'].viewProductModal(path.parent.parent.parent.key, path.parent.parent.key, path.parent.key);
                                 };
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');

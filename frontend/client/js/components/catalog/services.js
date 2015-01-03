@@ -164,6 +164,7 @@
                                         models['34'].actions.order_line_quantity({
                                             buyer: response.data.entity.key,
                                             product: $scope.product.key,
+                                            image: image_key,
                                             variant_signature: $scope.currentVariation
                                         }).then(function (response) {
                                             $scope.productQuantity = response.data.quantity;
