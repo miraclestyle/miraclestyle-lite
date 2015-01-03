@@ -28,7 +28,9 @@
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
-                    models['34'].viewOrderModal(order._seller, buyer, (!carts ? order.key : undefined));
+                    models['34'].viewOrderModal(order._seller, buyer, order, {
+                        cart: carts
+                    });
                 });
             };
 

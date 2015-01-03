@@ -1140,8 +1140,6 @@ class _BaseModel(object):
           value.read_async(field_read_arguments)
           futures.append((value, field_read_arguments)) # we have to pack them all for .read()
     for future, field_read_arguments in futures:
-      if isinstance(future.value, Future) or (isinstance(future.value, list) and len(future.value) and isinstance(future.value[0], Future)):
-        print future.value
       future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
     self.make_original()  # Finalize original before touching anything.

@@ -81,19 +81,23 @@
 
                                 $scope.displayCart = function () {
                                     models['19'].current().then(function (response) {
-                                        models['34'].viewOrderModal($scope.catalog._seller, response.data.entity);
+                                        models['34'].viewOrderModal($scope.catalog._seller, response.data.entity, undefined, {
+                                            cart: true
+                                        });
                                     });
                                 };
 
                                 $scope.viewProduct = function (image, pricetag) {
-                                    var readArguments = {
+                                    var image_key = image.key,
+                                        pricetag_key = pricetag.key,
+                                        readArguments = {
                                             _images: {
                                                 config: {
-                                                    keys: [image.key]
+                                                    keys: [image_key]
                                                 },
                                                 pricetags: {
                                                     config: {
-                                                        keys: [pricetag.key]
+                                                        keys: [pricetag_key]
                                                     },
                                                     _product: {
                                                         _category: {}
@@ -113,8 +117,6 @@
                                                 $scope.catalog = parentScope.catalog;
                                                 $scope.variants = [];
                                                 $scope.variantSelection = [];
-                                                $scope.image = image;
-                                                $scope.pricetag = pricetag;
                                                 $scope.hideAddToCart = config.hideAddToCart;
                                                 $scope.currentVariation = [];
                                                 angular.forEach($scope.product.variants, function (v, i) {
@@ -173,10 +175,10 @@
                                                         // 4 rpcs
                                                         read_arguments: {
                                                             _images: {
-                                                                config: {keys: [this.image.key]},
+                                                                config: {keys: [image_key]},
                                                                 pricetags: {
                                                                     config: {
-                                                                        keys: [this.pricetag.key]
+                                                                        keys: [pricetag_key]
                                                                     },
                                                                     _product: {
                                                                         _instances: {
@@ -291,6 +293,7 @@
                                                         return models['34'].actions.add_to_cart({
                                                             buyer: response.data.entity.key,
                                                             product: $scope.product.key,
+                                                            image: image_key,
                                                             variant_signature: $scope.currentVariation
                                                         });
                                                     }).then(function (response) {

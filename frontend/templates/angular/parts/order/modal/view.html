@@ -56,13 +56,13 @@
                       </a>
                     </div>
                     <div class="cart-line-right item-right list-actions">
-                      <button ng-click="remove(line)" type="button" class="button">Remove</button>
+                      <button ng-click="remove(line)" loading="!order.ui.rule.action.update.executable" type="button" class="button">Remove</button>
                         <table>
                           <tbody>
                             <tr class="cart-line-quantity">
                               <td class="cart-label">Quantity ({{line.product.uom.symbol}})</td>
                               <td class="cart-value">
-                                <input ng-disabled="order.state !== 'cart'" type="numeric" ng-model="line.quantity"/>
+                                <input ng-disabled="!order.ui.rule.action.update.executable" type="numeric" ng-model="line.quantity"/>
                               </td>
                             </tr>
                             <tr class="cart-line-discount" ng-show="line.discount > 0">

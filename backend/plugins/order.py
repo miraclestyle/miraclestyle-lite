@@ -91,6 +91,7 @@ class ProductToOrderLine(orm.BaseModel):
     OrderProduct = context.models['125']
     order = context._order
     product_key = context.input.get('product')
+    image_key = context.input.get('image')
     if order.state != 'cart':
       raise PluginError('order_not_in_cart_state')
     variant_signature = context.input.get('variant_signature')
@@ -122,7 +123,13 @@ class ProductToOrderLine(orm.BaseModel):
         new_line.sequence = order._lines.value[-1].sequence + 1
       copy_product = OrderProduct()
       copy_product.name = product.name
-      copy_product.reference = product_key
+      modified_product_key = None
+      modified_product_key = list(product_key.flat())
+      modifiy_product_key = []
+      modifiy_product_key.extend(image_key.flat())
+      modifiy_product_key.extend(product_key[-4:])
+      modified_product_key = ndb.Key(**modifiy_product_key)
+      copy_product.reference = modified_product_key
       copy_product.variant_signature = variant_signature
       copy_product.category = copy.deepcopy(product._category.value)
       copy_product.code = product.code

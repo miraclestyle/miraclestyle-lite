@@ -38,7 +38,7 @@ class OrderProduct(orm.BaseExpando):
   
   _use_rule_engine = False
   
-  reference = orm.SuperKeyProperty('1', kind='28', required=True, indexed=False)
+  reference = orm.SuperVirtualKeyProperty('1', kind='28', required=True, indexed=False)
   category = orm.SuperLocalStructuredProperty('24', '2', required=True)
   name = orm.SuperStringProperty('3', required=True, indexed=False)
   uom = orm.SuperLocalStructuredProperty('17', '4', required=True)
@@ -63,7 +63,7 @@ class OrderCarrier(orm.BaseExpando):
   _use_rule_engine = False
 
   description = orm.SuperTextProperty('1', required=True)
-  reference = orm.SuperKeyProperty('2', kind='113', required=True, indexed=False)
+  reference = orm.SuperVirtualKeyProperty('2', kind='113', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('3', required=True, indexed=False)
   taxes = orm.SuperLocalStructuredProperty(OrderTax, '4', repeated=True)
   subtotal = orm.SuperDecimalProperty('5', required=True, indexed=False)
@@ -273,7 +273,7 @@ class Order(orm.BaseExpando):
       orm.FieldPermission('34', ['_messages'], True, True,
                           'action.key_id_str != "search" and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
                            or entity._original.seller_reference._root == account.key)))'),
-      orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference', '_lines', 'carrier',
+      orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference', 'shipping_address', 'billing_address', '_lines', 'carrier',
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str in ["update", "view_order"]'),
@@ -301,6 +301,7 @@ class Order(orm.BaseExpando):
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
         'product': orm.SuperKeyProperty(kind='28', required=True),
+        'image': orm.SuperKeyProperty(kind='30', required=True),
         'variant_signature': orm.SuperJsonProperty()
         },
       _plugin_groups=[
