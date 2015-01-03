@@ -2386,7 +2386,16 @@ w:                  while (images.length > 0) {
                     service = {
                         kind: kind,
                         actions: {},
-                        // shorthands
+                        cacheKey: kind,
+                        getCacheKey: function (key) {
+                            return this.kind + '_' + key;
+                        },
+                        removeCache: function (key) {
+                            return endpoint.invalidateCache(this.getCacheKey(key));
+                        },
+                        getCache: function (key) {
+                            return endpoint.getCache(this.getCacheKey(key));
+                        },
                         get: function (key) {
                             if (angular.isDefined(this.actions.search)) {
                                 return this.actions.search({

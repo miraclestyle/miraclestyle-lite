@@ -9,16 +9,16 @@
                     config.hideAddToCart = true;
                     return this.viewModal(key, config);
                 },
-                viewProductModal: function (catalog_key, image_key, pricetag_key) {
+                viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts) {
                     var readArguments = {
                             _seller: {},
                             _images: {
                                 config: {
-                                    keys: [image_key]
+                                    keys: [imageKey]
                                 },
                                 pricetags: {
                                     config: {
-                                        keys: [pricetag_key]
+                                        keys: [pricetagKey]
                                     },
                                     _product: {
                                         _category: {}
@@ -27,7 +27,7 @@
                             }
                         };
                     this.actions.read({
-                        key: catalog_key,
+                        key: catalogKey,
                         read_arguments: readArguments
                     }).then(function (response) {
                         var catalog = response.data.entity,
@@ -45,7 +45,7 @@
                                     $scope.variants.push({
                                         name: v.name,
                                         options: v.options,
-                                        option: v.options[0],
+                                        option: (variantSignatureAsDicts ? variantSignatureAsDicts[i][v.name] : v.options[0]),
                                     });
 
                                     $scope.variantSelection.push({
@@ -66,7 +66,7 @@
                                 });
 
                                 $scope.changeVariationPromise = function () {
-                                    var variantSignature = [],
+                                    var buildVariantSignature = [],
                                         skip = false,
                                         promise;
 
@@ -78,7 +78,7 @@
                                             skip = true;
                                         }
                                         if (!v.allow_custom_value) {
-                                            variantSignature.push(v.name + ': ' + v.option);
+                                            buildVariantSignature.push(v.name + ': ' + v.option);
                                             d[v.name] = v.option;
                                             $scope.currentVariation.push(d);
                                         }
@@ -89,23 +89,22 @@
                                         promise.resolve();
                                         return promise;
                                     }
-
                                     // rpc to check the instance
                                     return models['31'].actions.read({
                                         key: this.catalog.key,
                                         // 4 rpcs
                                         read_arguments: {
                                             _images: {
-                                                config: {keys: [image_key]},
+                                                config: {keys: [imageKey]},
                                                 pricetags: {
                                                     config: {
-                                                        keys: [pricetag_key]
+                                                        keys: [pricetagKey]
                                                     },
                                                     _product: {
                                                         _instances: {
                                                             config: {
                                                                 search: {
-                                                                    filters: [{field: 'variant_options', operator: 'ALL_IN', value: variantSignature}]
+                                                                    filters: [{field: 'variant_options', operator: 'ALL_IN', value: buildVariantSignature}]
                                                                 }
                                                             }
                                                         }
@@ -157,18 +156,27 @@
                                     });
                                 };
 
+                                $scope.canAddToCart = true;
                                 $scope.productQuantity = 0;
 
                                 $scope.cartProductQuantity = function () {
-                                    models['19'].current().then(function (response) {
-                                        models['34'].actions.order_line_quantity({
-                                            buyer: response.data.entity.key,
-                                            product: $scope.product.key,
-                                            image: image_key,
-                                            variant_signature: $scope.currentVariation
-                                        }).then(function (response) {
-                                            $scope.productQuantity = response.data.quantity;
-                                        });
+                                    models['34'].current($scope.catalog._seller.key).then(function (response) {
+                                        var order = response.data.entity;
+                                        console.log(order);
+                                        $scope.productQuantity = 0;
+                                        if (order.id) {
+                                            angular.forEach(order._lines, function (line) {
+                                                if (line.product._reference.parent.id === $scope.product.parent.id
+                                                        && line.product._reference.id === $scope.product.id
+                                                        && JSON.stringify($scope.currentVariation) === JSON.stringify(line.product.variant_signature)) {
+                                                    $scope.productQuantity = parseInt(line.quantity, 10);
+                                                }
+                                            });
+                                            $scope.canAddToCart = order.ui.rule.action.add_to_cart.executable;
+                                        } else {
+                                            $scope.canAddToCart = true;
+                                        }
+
                                     });
                                 };
 
@@ -215,11 +223,16 @@
                                         return models['34'].actions.add_to_cart({
                                             buyer: response.data.entity.key,
                                             product: $scope.product.key,
-                                            image: image_key,
+                                            image: imageKey,
                                             variant_signature: $scope.currentVariation
                                         });
                                     }).then(function (response) {
                                         $scope.productQuantity += 1;
+                                        if (models['34'].getCache('current' + $scope.catalog._seller.key)) {
+                                            models['34'].current($scope.catalog._seller.key).then(function (cached) {
+                                                $.extend(cached.data.entity, response.data.entity);
+                                            });
+                                        }
                                     });
                                 };
 
@@ -308,6 +321,9 @@
                                         });
                                     });
                                 };
+
+                                // cache current user's cart
+                                models['34'].current($scope.catalog._seller.key);
 
                                 $scope.viewProduct = function (image, pricetag) {
                                     that.viewProductModal($scope.catalog.key, image.key, pricetag.key);

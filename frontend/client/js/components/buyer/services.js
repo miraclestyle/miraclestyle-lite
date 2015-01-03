@@ -4,8 +4,6 @@
 
         modelsConfig(function (models) {
 
-            var cacheCurrentBuyerKey = 'currentBuyer';
-
             $.extend(models['19'], {
                 current: function (args) {
                     if (!args) {
@@ -13,11 +11,11 @@
                     }
                     args.account = currentAccount.key;
                     return this.actions.read(args, {
-                        cache: cacheCurrentBuyerKey,
+                        cache: this.getCacheKey('current'),
                         cacheType: 'memory'
                     });
                 },
-                manageModal: function (account_key) {
+                manageModal: function (accountKey) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         addressFields = fields.addresses.modelclass,
                         config;
@@ -33,19 +31,19 @@
                                 'street', 'name', 'email', 'telephone',
                                 'default_shipping', 'default_billing'],
                             afterSave: function () {
-                                endpoint.invalidateCache(cacheCurrentBuyerKey);
+                                endpoint.invalidateCache(this.getCacheKey('current'));
                             },
                             init: function ($scope) {
-                                $scope.setDefaults = function (updated_address) {
+                                $scope.setDefaults = function (updatedAddress) {
                                     angular.forEach($scope.parentArgs, function (address) {
-                                        if ((updated_address.default_billing || updated_address.default_shipping)) {
-                                            if (updated_address !== address) {
+                                        if ((updatedAddress.default_billing || updatedAddress.default_shipping)) {
+                                            if (updatedAddress !== address) {
 
-                                                if (updated_address.default_billing) {
+                                                if (updatedAddress.default_billing) {
                                                     address.default_billing = false;
                                                 }
 
-                                                if (updated_address.default_shipping) {
+                                                if (updatedAddress.default_shipping) {
                                                     address.default_shipping = false;
                                                 }
                                             }
@@ -65,13 +63,13 @@
                             },
                             beforeSave: function ($scope, info) {
                                 var promises = [],
-                                    updated_address = $scope.args,
+                                    updatedAddress = $scope.args,
                                     promise;
-                                if (updated_address.region && (!updated_address._region || (updated_address.region !== updated_address._region.key))) {
-                                    promise = models['13'].get(updated_address.region);
+                                if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
+                                    promise = models['13'].get(updatedAddress.region);
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
-                                            updated_address._region = response.data.entities[0];
+                                            updatedAddress._region = response.data.entities[0];
                                         }
 
                                     });
@@ -79,17 +77,17 @@
                                     promises.push(promise);
                                 }
 
-                                if (updated_address.country && (!updated_address._country || (updated_address.country !== updated_address._country.key))) {
+                                if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
                                     promise = models['12'].actions.search(undefined, {
                                         cache: true
                                     });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
                                             var country = _.findWhere(response.data.entities, {
-                                                key: updated_address.country
+                                                key: updatedAddress.country
                                             });
                                             if (angular.isDefined(country)) {
-                                                updated_address._country = country;
+                                                updatedAddress._country = country;
                                             }
 
                                         }
@@ -98,7 +96,7 @@
 
                                     promises.push(promise);
                                 }
-                                $scope.setDefaults(updated_address);
+                                $scope.setDefaults(updatedAddress);
                                 if (promises.length) {
                                     return $q.all(promises);
                                 }
@@ -119,7 +117,6 @@
                     addressFields.email.ui.placeholder = 'Type in contact email (e.g., johndoe@example.com). This value is Optional.';
                     addressFields.telephone.ui.placeholder = 'Type in contact telephone number. Prefix phone with plus (+) sign, and all calling codes, starting with country code (e.g., ). This value is Optional.';
 
-
                     config = {
                         fields: [fields.addresses],
                         kind: this.kind,
@@ -127,13 +124,13 @@
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);
-                            args.account = account_key;
+                            args.account = accountKey;
                             return args;
                         }
                     };
 
                     modelsEditor.create(config).read({}, {
-                        account: account_key
+                        account: accountKey
                     });
                 }
             });

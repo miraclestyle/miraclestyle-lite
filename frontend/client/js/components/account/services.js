@@ -110,11 +110,11 @@
                     });
 
                 },
-                logout: function (account_key) {
+                logout: function (accountKey) {
                     var that = this;
                     modals.confirm('Are you sure you want to logout?', function () {
                         that.actions.logout({
-                            key: account_key
+                            key: accountKey
                         }).then(function (response) {
                             endpoint.invalidateCache();
                             $window.location.reload();

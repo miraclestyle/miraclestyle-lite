@@ -511,7 +511,7 @@
                         cacheType: 'memory'
                     });
                 },
-                manageModal: function (account_key) {
+                manageModal: function (accountKey) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'), config;
                     fields._content.ui.label = false;
                     fields._content.modelclass.documents.ui = {
@@ -539,7 +539,7 @@
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);
-                            args.account = account_key;
+                            args.account = accountKey;
                             if (args._content === null) {
                                 args._content = {
                                     kind: '21',
@@ -569,7 +569,7 @@
                     };
 
                     modelsEditor.create(config).read({}, {
-                        account: account_key,
+                        account: accountKey,
                         read_arguments: read_arguments
                     });
 

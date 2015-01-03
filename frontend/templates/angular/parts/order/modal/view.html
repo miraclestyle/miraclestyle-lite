@@ -35,7 +35,7 @@
               <div class="cart-lines item-list">
                 <div class="cart-line item clearfix" ng-hide="line._state === 'deleted'" ng-repeat="line in order._lines track by $index">
                     <div class="cart-line-left item-left">
-                      <a ng-click="viewProduct(line)" class="cart-line-product">
+                      <button loading ng-click="viewProduct(line)" class="button-transparent cart-line-product">
                         <div class="cart-line-product-name">
                           {{line.product.name}}
                         </div>
@@ -53,10 +53,10 @@
                         <div class="cart-line-product-unit_price">
                             {{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})
                         </div>
-                      </a>
+                      </button>
                     </div>
                     <div class="cart-line-right item-right list-actions">
-                      <button ng-click="remove(line)" loading="!order.ui.rule.action.update.executable" type="button" class="button">Remove</button>
+                      <button ng-click="remove(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button">Remove</button>
                         <table>
                           <tbody>
                             <tr class="cart-line-quantity">

@@ -1,12 +1,24 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsMeta, modelsConfig, $modal, modals, helpers, $q, $filter) {
-
+    angular.module('app').run(function (modelsMeta, modelsConfig, $modal, modals, helpers, endpoint, $q, $filter) {
         modelsConfig(function (models) {
             $.extend(models['34'], {
+                current: function (sellerKey) {
+                    var that = this;
+                    return models['19'].current().then(function (response) {
+                        var buyer = response.data.entity;
+                        return that.actions.view_order({
+                            buyer: buyer.key,
+                            seller: sellerKey
+                        }, {
+                            cache: that.getCacheKey('current' + sellerKey),
+                            cacheType: 'memory'
+                        });
+                    });
+                },
                 viewOrderModal: function (seller, buyer, order, config) {
                     config = helpers.alwaysObject(config);
-                    var args, cart = config.cart;
+                    var args, that = this, cart = config.cart, rpc = {};
 
                     if (!cart) {
                         args = {
@@ -30,7 +42,7 @@
                         };
                     }
 
-                    models['34'].actions[cart ? 'view_order' : 'read'](args).then(function (response) {
+                    models['34'].actions[cart ? 'view_order' : 'read'](args, rpc).then(function (response) {
 
                         if (!response.data.entity.id) {
                             modals.alert('No cart available, please add some products to your cart before you can view it');
@@ -182,6 +194,11 @@
                                     if (order) {
                                         $.extend(order, $scope.order);
                                     }
+                                    if (that.getCache('current' + seller.key)) {
+                                        that.current(seller.key).then(function (response) {
+                                            $.extend(response.data.entity, $scope.order);
+                                        });
+                                    }
                                 };
 
                                 $scope.checkout = function () {
@@ -210,6 +227,7 @@
                                                 key: $scope.order.key
                                             }).then(function (response) {
                                                 reactOnStateChange(response);
+                                                models['34'].removeCache('current' + seller.key);
                                                 $scope.close();
                                             });
                                         });
@@ -222,7 +240,9 @@
 
                                 $scope.viewProduct = function (line) {
                                     var path = line.product._reference;
-                                    models['31'].viewProductModal(path.parent.parent.parent.key, path.parent.parent.key, path.parent.key);
+                                    models['31'].viewProductModal(path.parent.parent.parent.key,
+                                                                  path.parent.parent.key, path.parent.key,
+                                                                  line.product.variant_signature);
                                 };
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');

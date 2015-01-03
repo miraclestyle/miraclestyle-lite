@@ -225,7 +225,7 @@ class Order(orm.BaseExpando):
   
   _global_role = GlobalRole(
     permissions=[
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart'), orm.Action.build_key('34', 'order_line_quantity')], True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
       orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
@@ -666,23 +666,6 @@ class Order(orm.BaseExpando):
           plugins=[
             Write(),
             Set(cfg={'d': {'output.entity': '_order'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('34', 'order_line_quantity'),
-      arguments={
-        'buyer': orm.SuperKeyProperty(kind='19', required=True),
-        'product': orm.SuperKeyProperty(kind='28', required=True),
-        'image': orm.SuperKeyProperty(kind='30', required=True),
-        'variant_signature': orm.SuperJsonProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            OrderCartProductQuantity(),
             ]
           )
         ]
