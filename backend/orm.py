@@ -107,6 +107,28 @@ def _get_parent_entity(self):
   else:
     return None
 
+def _get_key_structure(self):
+  dic = {}
+  dic['urlsafe'] = self.urlsafe()
+  dic['id'] = self.id()
+  dic['kind'] = self.kind()
+  dic['namespace'] = self.namespace()
+  dic['parent'] = {}
+  if self.parent():
+    parent = self.parent()
+    parent_dic = dic['parent']
+    while True:
+      if not parent:
+        break
+      parent_dic['kind'] = parent.kind()
+      parent_dic['urlsafe'] = parent.urlsafe()
+      parent_dic['id'] = parent.id()
+      parent_dic['namespace'] = parent.namespace()
+      parent = parent.parent()
+      parent_dic['parent'] = {}
+      parent_dic = parent_dic['parent']
+  return dic
+
 
 Key._id = property(_get_id)
 Key._id_str = property(_get_id_str)
@@ -121,6 +143,8 @@ Key._search_unindex = property(_get_search_unindex)
 Key.entity = property(_get_entity)
 Key.namespace_entity = property(_get_namespace_entity)
 Key.parent_entity = property(_get_parent_entity)
+Key.structure = _get_key_structure
+Key._structure = property(_get_key_structure)
 
 
 #############################################
