@@ -9,8 +9,229 @@
                     config.hideAddToCart = true;
                     return this.viewModal(key, config);
                 },
+                viewProductModal: function (catalog_key, image_key, pricetag_key) {
+                    var readArguments = {
+                            _seller: {},
+                            _images: {
+                                config: {
+                                    keys: [image_key]
+                                },
+                                pricetags: {
+                                    config: {
+                                        keys: [pricetag_key]
+                                    },
+                                    _product: {
+                                        _category: {}
+                                    }
+                                }
+                            }
+                        };
+                    this.actions.read({
+                        key: catalog_key,
+                        read_arguments: readArguments
+                    }).then(function (response) {
+                        var catalog = response.data.entity,
+                            makeFakeScope = function () {
+                                var $scope = {};
+                                $scope.product = catalog._images[0].pricetags[0]._product;
+                                $scope.originalProduct = angular.copy($scope.product);
+                                $scope.catalog = catalog;
+                                $scope.variants = [];
+                                $scope.variantSelection = [];
+                                $scope.hideAddToCart = false;
+                                $scope.currentVariation = [];
+                                angular.forEach($scope.product.variants, function (v, i) {
+
+                                    $scope.variants.push({
+                                        name: v.name,
+                                        options: v.options,
+                                        option: v.options[0],
+                                    });
+
+                                    $scope.variantSelection.push({
+                                        type: 'SuperStringProperty',
+                                        choices: (v.allow_custom_value ? null : v.options),
+                                        code_name: 'option_' + i,
+                                        ui: {
+                                            label: v.name,
+                                            writable: true,
+                                            attrs: {
+                                                'ng-change': 'changeVariation()'
+                                            },
+                                            placeholder: 'Select option...',
+                                            args: 'variants.' + i + '.option'
+                                        }
+                                    });
+
+                                });
+
+                                $scope.changeVariationPromise = function () {
+                                    var variantSignature = [],
+                                        skip = false,
+                                        promise;
+
+                                    $scope.currentVariation.splice(0, $scope.currentVariation.length);
+
+                                    angular.forEach($scope.variants, function (v) {
+                                        var d = {};
+                                        if (v.option === null) {
+                                            skip = true;
+                                        }
+                                        if (!v.allow_custom_value) {
+                                            variantSignature.push(v.name + ': ' + v.option);
+                                            d[v.name] = v.option;
+                                            $scope.currentVariation.push(d);
+                                        }
+                                    });
+
+                                    if (skip) {
+                                        promise = $q.defer().promise;
+                                        promise.resolve();
+                                        return promise;
+                                    }
+
+                                    // rpc to check the instance
+                                    return models['31'].actions.read({
+                                        key: this.catalog.key,
+                                        // 4 rpcs
+                                        read_arguments: {
+                                            _images: {
+                                                config: {keys: [image_key]},
+                                                pricetags: {
+                                                    config: {
+                                                        keys: [pricetag_key]
+                                                    },
+                                                    _product: {
+                                                        _instances: {
+                                                            config: {
+                                                                search: {
+                                                                    filters: [{field: 'variant_options', operator: 'ALL_IN', value: variantSignature}]
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                };
+
+                                return $scope;
+                            },
+                            fakeScope = makeFakeScope();
+                        $modal.open({
+                            resolve: {productInstanceResponse: function () {
+                                return fakeScope.changeVariationPromise().then(function (response) {
+                                    return response;
+                                });
+                            }},
+                            templateUrl: 'catalog/product/modal/view.html',
+                            windowClass: 'no-overflow',
+                            controller: function ($scope, $modalInstance, productInstanceResponse) {
+                                var loadProductInstance;
+                                $.extend($scope, fakeScope);
+                                $scope.resetVariation = function () {
+                                    this.resetVariantProduct();
+                                    $scope.variationApplied = false;
+                                    angular.forEach($scope.variants, function (v) {
+                                        v.option = null;
+                                    });
+                                };
+                                $scope.resetVariantProduct = function () {
+                                    $.extend(this.product, this.originalProduct);
+                                    $scope.productInstance = null;
+                                };
+                                $scope.variationApplied = false;
+                                $scope.viewContent = function (content) {
+                                    $modal.open({
+                                        templateUrl: 'entity/modal/editor.html',
+                                        controller: function ($scope, $modalInstance) {
+                                            $scope.config = {};
+                                            $scope.config.templateBodyUrl = 'misc/modal/content_view_body.html';
+                                            $scope.config.templateFooterUrl = 'misc/modal/content_view_footer.html';
+                                            $scope.content = content;
+                                            $scope.close = function () {
+                                                $modalInstance.dismiss('close');
+                                            };
+                                        }
+                                    });
+                                };
+
+                                $scope.productQuantity = 0;
+
+                                $scope.cartProductQuantity = function () {
+                                    models['19'].current().then(function (response) {
+                                        models['34'].actions.order_line_quantity({
+                                            buyer: response.data.entity.key,
+                                            product: $scope.product.key,
+                                            variant_signature: $scope.currentVariation
+                                        }).then(function (response) {
+                                            $scope.productQuantity = response.data.quantity;
+                                        });
+                                    });
+                                };
+
+                                loadProductInstance = function (response) {
+                                    var product,
+                                        productInstance,
+                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
+                                                         'description', 'contents', 'availability'];
+                                    try {
+                                        product = response.data.entity._images[0].pricetags[0]._product;
+                                    } catch (ignore) { }
+
+                                    if (product) {
+                                        productInstance = product._instances[0];
+                                    }
+                                    if (productInstance) {
+                                        $scope.productInstance = productInstance;
+                                        angular.forEach(toUpdate, function (field) {
+                                            var next = productInstance[field];
+                                            if (next !== null && next.length) {
+                                                $scope.product[field] = next;
+                                            }
+                                        });
+                                    } else {
+                                        $scope.resetVariantProduct();
+                                    }
+
+                                    $scope.variationApplied = true;
+                                };
+
+                                $scope.changeVariation = function () {
+                                    // rpc to check the instance
+                                    this.changeVariationPromise()
+                                        .then(loadProductInstance)
+                                        .then($scope.cartProductQuantity);
+                                };
+
+                                loadProductInstance(productInstanceResponse);
+
+                                $scope.cartProductQuantity();
+
+                                $scope.addToCart = function () {
+                                    models['19'].current().then(function (response) {
+                                        return models['34'].actions.add_to_cart({
+                                            buyer: response.data.entity.key,
+                                            product: $scope.product.key,
+                                            image: image_key,
+                                            variant_signature: $scope.currentVariation
+                                        });
+                                    }).then(function (response) {
+                                        $scope.productQuantity += 1;
+                                    });
+                                };
+
+                                $scope.close = function () {
+                                    $modalInstance.dismiss('close');
+                                };
+                            }
+                        });
+                    });
+                },
                 viewModal: function (key, config) {
-                    models['31'].actions.read({
+                    var that = this;
+                    that.actions.read({
                         key: key,
                         // 5 rpcs
                         read_arguments: {
@@ -88,225 +309,7 @@
                                 };
 
                                 $scope.viewProduct = function (image, pricetag) {
-                                    var image_key = image.key,
-                                        pricetag_key = pricetag.key,
-                                        readArguments = {
-                                            _images: {
-                                                config: {
-                                                    keys: [image_key]
-                                                },
-                                                pricetags: {
-                                                    config: {
-                                                        keys: [pricetag_key]
-                                                    },
-                                                    _product: {
-                                                        _category: {}
-                                                    }
-                                                }
-                                            }
-                                        };
-                                    models['31'].actions.read({
-                                        key: $scope.catalog.key,
-                                        read_arguments: readArguments
-                                    }).then(function (response) {
-                                        var parentScope = $scope,
-                                            makeFakeScope = function () {
-                                                $scope = {};
-                                                $scope.product = response.data.entity._images[0].pricetags[0]._product;
-                                                $scope.originalProduct = angular.copy($scope.product);
-                                                $scope.catalog = parentScope.catalog;
-                                                $scope.variants = [];
-                                                $scope.variantSelection = [];
-                                                $scope.hideAddToCart = config.hideAddToCart;
-                                                $scope.currentVariation = [];
-                                                angular.forEach($scope.product.variants, function (v, i) {
-
-                                                    $scope.variants.push({
-                                                        name: v.name,
-                                                        options: v.options,
-                                                        option: v.options[0],
-                                                    });
-
-                                                    $scope.variantSelection.push({
-                                                        type: 'SuperStringProperty',
-                                                        choices: (v.allow_custom_value ? null : v.options),
-                                                        code_name: 'option_' + i,
-                                                        ui: {
-                                                            label: v.name,
-                                                            writable: true,
-                                                            attrs: {
-                                                                'ng-change': 'changeVariation()'
-                                                            },
-                                                            placeholder: 'Select option...',
-                                                            args: 'variants.' + i + '.option'
-                                                        }
-                                                    });
-
-                                                });
-
-                                                $scope.changeVariationPromise = function () {
-                                                    var variantSignature = [],
-                                                        skip = false,
-                                                        promise;
-
-                                                    $scope.currentVariation.splice(0, $scope.currentVariation.length);
-
-                                                    angular.forEach($scope.variants, function (v) {
-                                                        var d = {};
-                                                        if (v.option === null) {
-                                                            skip = true;
-                                                        }
-                                                        if (!v.allow_custom_value) {
-                                                            variantSignature.push(v.name + ': ' + v.option);
-                                                            d[v.name] = v.option;
-                                                            $scope.currentVariation.push(d);
-                                                        }
-                                                    });
-
-                                                    if (skip) {
-                                                        promise = $q.defer().promise;
-                                                        promise.resolve();
-                                                        return promise;
-                                                    }
-
-                                                    // rpc to check the instance
-                                                    return models['31'].actions.read({
-                                                        key: this.catalog.key,
-                                                        // 4 rpcs
-                                                        read_arguments: {
-                                                            _images: {
-                                                                config: {keys: [image_key]},
-                                                                pricetags: {
-                                                                    config: {
-                                                                        keys: [pricetag_key]
-                                                                    },
-                                                                    _product: {
-                                                                        _instances: {
-                                                                            config: {
-                                                                                search: {
-                                                                                    filters: [{field: 'variant_options', operator: 'ALL_IN', value: variantSignature}]
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    });
-                                                };
-
-                                                return $scope;
-                                            },
-                                            fakeScope = makeFakeScope();
-                                        $modal.open({
-                                            resolve: {productInstanceResponse: function () {
-                                                return fakeScope.changeVariationPromise().then(function (response) {
-                                                    return response;
-                                                });
-                                            }},
-                                            templateUrl: 'catalog/product/modal/view.html',
-                                            windowClass: 'no-overflow',
-                                            controller: function ($scope, $modalInstance, productInstanceResponse) {
-                                                var loadProductInstance;
-                                                $.extend($scope, fakeScope);
-                                                $scope.resetVariation = function () {
-                                                    this.resetVariantProduct();
-                                                    $scope.variationApplied = false;
-                                                    angular.forEach($scope.variants, function (v) {
-                                                        v.option = null;
-                                                    });
-                                                };
-                                                $scope.resetVariantProduct = function () {
-                                                    $.extend(this.product, this.originalProduct);
-                                                    $scope.productInstance = null;
-                                                };
-                                                $scope.variationApplied = false;
-                                                $scope.viewContent = function (content) {
-                                                    $modal.open({
-                                                        templateUrl: 'entity/modal/editor.html',
-                                                        controller: function ($scope, $modalInstance) {
-                                                            $scope.config = {};
-                                                            $scope.config.templateBodyUrl = 'misc/modal/content_view_body.html';
-                                                            $scope.config.templateFooterUrl = 'misc/modal/content_view_footer.html';
-                                                            $scope.content = content;
-                                                            $scope.close = function () {
-                                                                $modalInstance.dismiss('close');
-                                                            };
-                                                        }
-                                                    });
-                                                };
-
-                                                $scope.productQuantity = 0;
-
-                                                $scope.cartProductQuantity = function () {
-                                                    models['19'].current().then(function (response) {
-                                                        models['34'].actions.order_line_quantity({
-                                                            buyer: response.data.entity.key,
-                                                            product: $scope.product.key,
-                                                            variant_signature: $scope.currentVariation
-                                                        }).then(function (response) {
-                                                            $scope.productQuantity = response.data.quantity;
-                                                        });
-                                                    });
-                                                };
-
-                                                loadProductInstance = function (response) {
-                                                    var product,
-                                                        productInstance,
-                                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
-                                                                         'description', 'contents', 'availability'];
-                                                    try {
-                                                        product = response.data.entity._images[0].pricetags[0]._product;
-                                                    } catch (ignore) { }
-
-                                                    if (product) {
-                                                        productInstance = product._instances[0];
-                                                    }
-                                                    if (productInstance) {
-                                                        $scope.productInstance = productInstance;
-                                                        angular.forEach(toUpdate, function (field) {
-                                                            var next = productInstance[field];
-                                                            if (next !== null && next.length) {
-                                                                $scope.product[field] = next;
-                                                            }
-                                                        });
-                                                    } else {
-                                                        $scope.resetVariantProduct();
-                                                    }
-
-                                                    $scope.variationApplied = true;
-                                                };
-
-                                                $scope.changeVariation = function () {
-                                                    // rpc to check the instance
-                                                    this.changeVariationPromise()
-                                                        .then(loadProductInstance)
-                                                        .then($scope.cartProductQuantity);
-                                                };
-
-                                                loadProductInstance(productInstanceResponse);
-
-                                                $scope.cartProductQuantity();
-
-                                                $scope.addToCart = function () {
-                                                    models['19'].current().then(function (response) {
-                                                        return models['34'].actions.add_to_cart({
-                                                            buyer: response.data.entity.key,
-                                                            product: $scope.product.key,
-                                                            image: image_key,
-                                                            variant_signature: $scope.currentVariation
-                                                        });
-                                                    }).then(function (response) {
-                                                        $scope.productQuantity += 1;
-                                                    });
-                                                };
-
-                                                $scope.close = function () {
-                                                    $modalInstance.dismiss('close');
-                                                };
-                                            }
-                                        });
-                                    });
+                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key);
                                 };
 
                                 $scope.sellerDetails = function () {

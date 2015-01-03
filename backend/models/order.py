@@ -38,7 +38,8 @@ class OrderProduct(orm.BaseExpando):
   
   _use_rule_engine = False
   
-  reference = orm.SuperVirtualKeyProperty('1', kind='28', required=True, indexed=False)
+  reference = orm.SuperVirtualKeyProperty('1', kind='28', required=True, indexed=False) # the reference now has catalog->image->pricetag->product key-path
+  _reference = orm.SuperComputedProperty(lambda self: self._build_reference())
   category = orm.SuperLocalStructuredProperty('24', '2', required=True)
   name = orm.SuperStringProperty('3', required=True, indexed=False)
   uom = orm.SuperLocalStructuredProperty('17', '4', required=True)
@@ -54,6 +55,9 @@ class OrderProduct(orm.BaseExpando):
     'volume': orm.SuperDecimalProperty('10'),
     'volume_uom': orm.SuperLocalStructuredProperty('17', '11')
     }
+
+  def _build_reference(self):
+    return {'urlsafe': self.reference._urlsafe, 'id': self.reference._id_str}
 
 
 class OrderCarrier(orm.BaseExpando):

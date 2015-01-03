@@ -127,8 +127,8 @@ class ProductToOrderLine(orm.BaseModel):
       modified_product_key = list(product_key.flat())
       modifiy_product_key = []
       modifiy_product_key.extend(image_key.flat())
-      modifiy_product_key.extend(product_key[-4:])
-      modified_product_key = ndb.Key(**modifiy_product_key)
+      modifiy_product_key.extend(modified_product_key[-4:])
+      modified_product_key = orm.Key(*modifiy_product_key)
       copy_product.reference = modified_product_key
       copy_product.variant_signature = variant_signature
       copy_product.category = copy.deepcopy(product._category.value)
@@ -912,15 +912,15 @@ class OrderCartProductQuantity(orm.BaseModel):
   def run(self, context):
     Order = context.models['34']
     OrderLine = context.models['33']
-    product = context.input.get('product')
+    product_key = context.input.get('product')
     variant_signature = context.input.get('variant_signature')
-    seller_key = product.parent().parent().parent() # go 3 levels up, account->seller->catalog->pricetag->product
+    seller_key = product_key.parent().parent().parent() # go 3 levels up, account->seller->catalog->pricetag->product
     order = Order.query(Order.seller_reference == seller_key,
                         Order.state.IN(['cart', 'checkout']),
                         ancestor=context.input.get('buyer')).get()
     quantity = 0
     if order:
-      order_line_key = OrderLine.prepare_key({'product': {'reference': product, 'variant_signature': variant_signature}}, parent=order.key)
+      order_line_key = OrderLine.prepare_key({'product': {'reference': product_key, 'variant_signature': variant_signature}}, parent=order.key)
       order_line = order_line_key.get()
       if order_line:
         quantity = int(order_line.quantity)
