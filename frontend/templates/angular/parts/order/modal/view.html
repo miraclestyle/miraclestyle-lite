@@ -50,43 +50,33 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="cart-line-product-unit_price">
-                            {{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})
-                        </div>
                       </button>
                     </div>
                     <div class="cart-line-right item-right list-actions">
-                      
-                      
-                      <div class="form-control">
-                        <label class="form-label">Price</label>
-                        <div class="form-input">
-                          {{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})
-                        </div>
-                      </div>
-                      <div class="form-control">
-                        <label class="form-label">Quantity ({{line.product.uom.symbol}})</label>
-                        <div class="form-input">
-                          <input class="text-input" ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
-                          <button ng-click="remove(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button">Remove</button>
-                        </div>
-                      </div>
-                      <div class="form-control" ng-show="line.discount > 0">
-                        <label class="form-label">Discount (%)</label>
-                        <div class="form-input">
-                          {{line.discount}}
-                        </div>
-                      </div>
-                      <div class="form-control">
-                        <label class="form-label">Subtotal</label>
-                        <div class="form-input">
-                          {{line.discount_subtotal|displayCurrency:order.currency}}
-                        </div>
-                      </div>
-                      <!--
-                      <button ng-click="remove(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button">Remove</button>
                         <table>
                           <tbody>
+                            <tr class="cart-label">
+                              <td>Price</td>
+                              <td>Quantity ({{line.product.uom.symbol}})</td>
+                              <td ng-show="line.discount > 0">Discount (%)</td>
+                              <td class="cart-line-discount_subtotal">Subtotal</td>
+                            </tr>
+                            <tr class="cart-value">
+                              <td>{{line.product.unit_price|displayCurrency:order.currency}}</td>
+                              <td>
+                                <button ng-click="decrease(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">-</button>
+                                <input class="cart-input" ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
+                                <button ng-click="increase(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">+</button>
+                              </td>
+                              <td ng-show="line.discount > 0">{{line.discount}}</td>
+                              <td class="cart-line-discount_subtotal">{{line.discount_subtotal|displayCurrency:order.currency}}</td>
+                            </tr>
+                            
+                            <!--
+                            <tr class="cart-line-discount_subtotal">
+                              <td class="cart-label">Price</td>
+                              <td class="cart-value">{{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})</td>
+                            </tr>
                             <tr class="cart-line-quantity">
                               <td class="cart-label">Quantity ({{line.product.uom.symbol}})</td>
                               <td class="cart-value">
@@ -100,9 +90,9 @@
                             <tr class="cart-line-discount_subtotal">
                               <td class="cart-label">Subtotal</td>
                               <td class="cart-value">{{line.discount_subtotal|displayCurrency:order.currency}}</td>
-                            </tr>
+                            </tr> -->
                           </tbody>
-                        </table> -->
+                        </table>
                         <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
                         <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
                         <input type="hidden" value="{{line.quantity}}" name="quantity_{{line.sequence}}" />

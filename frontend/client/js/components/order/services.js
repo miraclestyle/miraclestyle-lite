@@ -186,8 +186,20 @@
                                     $scope.order._messages = messages;
                                 };
 
-                                $scope.remove = function (line) {
+                                $scope.increase = function (line) {
+                                  if (parseInt(line.quantity) === 0) {
                                     line.quantity = 0;
+                                  }
+                                  line.quantity = parseInt(line.quantity) + 1;
+                                };
+
+                                $scope.decrease = function (line) {
+                                  if (parseInt(line.quantity) === 0) {
+                                    line.quantity = 0;
+                                  }
+                                  if (line.quantity > 0) {
+                                    line.quantity = parseInt(line.quantity) - 1;
+                                  }
                                 };
                                 $scope.update = function () {
                                     models['34'].actions.update({
