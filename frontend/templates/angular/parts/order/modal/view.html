@@ -43,8 +43,8 @@
                           {{line.product.code}}
                         </div>
                         <div class="cart-line-product-variant_signature" ng-show="line.product.variant_signature">
-                            <div ng-repeat="variant in line.product.variant_signature">
-                                <div ng-repeat="(key, value) in variant">
+                            <div ng-repeat="variant in line.product.variant_signature track by $index">
+                                <div ng-repeat="(key, value) in variant track by key">
                                   <span class="cart-label">{{key}}:</span>
                                   <span class="cart-value">{{value}}</span>
                                 </div>

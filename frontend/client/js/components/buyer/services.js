@@ -31,7 +31,7 @@
                                 'street', 'name', 'email', 'telephone',
                                 'default_shipping', 'default_billing'],
                             afterSave: function () {
-                                endpoint.invalidateCache(this.getCacheKey('current'));
+                                endpoint.removeCache(this.getCacheKey('current'));
                             },
                             init: function ($scope) {
                                 $scope.setDefaults = function (updatedAddress) {

@@ -33,7 +33,7 @@
         }
 
         $scope.login = function (type) {
-            endpoint.invalidateCache('currentAccount');
+            endpoint.removeCache('currentAccount');
             window.location.href = $scope.authorization_urls[type];
         };
 

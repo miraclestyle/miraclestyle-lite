@@ -162,7 +162,6 @@
                                 $scope.cartProductQuantity = function () {
                                     models['34'].current($scope.catalog._seller.key).then(function (response) {
                                         var order = response.data.entity;
-                                        console.log(order);
                                         $scope.productQuantity = 0;
                                         if (order.id) {
                                             angular.forEach(order._lines, function (line) {

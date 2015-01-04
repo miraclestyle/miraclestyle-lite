@@ -372,7 +372,7 @@ w:                  while (images.length > 0) {
                 });
                 return result;
             },
-            invalidateCache: function (key) {
+            removeCache: function (key) {
 
                 if (!angular.isDefined(key)) {
                     angular.forEach(cacheRegistry, function (cache) {
@@ -382,7 +382,7 @@ w:                  while (images.length > 0) {
                 }
                 if (angular.isArray(key)) {
                     angular.forEach(key, function (k) {
-                        endpoint.invalidateCache(k);
+                        endpoint.removeCache(k);
                     });
 
                     return true;
@@ -2391,7 +2391,7 @@ w:                  while (images.length > 0) {
                             return this.kind + '_' + key;
                         },
                         removeCache: function (key) {
-                            return endpoint.invalidateCache(this.getCacheKey(key));
+                            return endpoint.removeCache(this.getCacheKey(key));
                         },
                         getCache: function (key) {
                             return endpoint.getCache(this.getCacheKey(key));

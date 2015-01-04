@@ -226,7 +226,6 @@
                                             models['34'].actions.cancel({
                                                 key: $scope.order.key
                                             }).then(function (response) {
-                                                reactOnStateChange(response);
                                                 models['34'].removeCache('current' + seller.key);
                                                 $scope.close();
                                             });

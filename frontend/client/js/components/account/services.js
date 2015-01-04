@@ -116,7 +116,7 @@
                         that.actions.logout({
                             key: accountKey
                         }).then(function (response) {
-                            endpoint.invalidateCache();
+                            endpoint.removeCache();
                             $window.location.reload();
                         });
                     });
