@@ -56,6 +56,34 @@
                       </button>
                     </div>
                     <div class="cart-line-right item-right list-actions">
+                      
+                      
+                      <div class="form-control">
+                        <label class="form-label">Price</label>
+                        <div class="form-input">
+                          {{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})
+                        </div>
+                      </div>
+                      <div class="form-control">
+                        <label class="form-label">Quantity ({{line.product.uom.symbol}})</label>
+                        <div class="form-input">
+                          <input class="text-input" ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
+                          <button ng-click="remove(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button">Remove</button>
+                        </div>
+                      </div>
+                      <div class="form-control" ng-show="line.discount > 0">
+                        <label class="form-label">Discount (%)</label>
+                        <div class="form-input">
+                          {{line.discount}}
+                        </div>
+                      </div>
+                      <div class="form-control">
+                        <label class="form-label">Subtotal</label>
+                        <div class="form-input">
+                          {{line.discount_subtotal|displayCurrency:order.currency}}
+                        </div>
+                      </div>
+                      <!--
                       <button ng-click="remove(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button">Remove</button>
                         <table>
                           <tbody>
@@ -74,7 +102,7 @@
                               <td class="cart-value">{{line.discount_subtotal|displayCurrency:order.currency}}</td>
                             </tr>
                           </tbody>
-                        </table>
+                        </table> -->
                         <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
                         <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
                         <input type="hidden" value="{{line.quantity}}" name="quantity_{{line.sequence}}" />
@@ -129,20 +157,20 @@
   </div>
 </div>
 <div class="modal-footer">
+    <button loading send-message="sendMessage()" ng-show="order.ui.rule.action.log_message.executable" type="button" class="button">
+        Send Message
+    </button>
     <button loading ng-show="order.ui.rule.action.checkout.executable && order._lines.length" ng-click="checkout()" type="button" class="button">
         Checkout
     </button>
     <button loading ng-show="order.ui.rule.action.update.executable" ng-click="update()" type="button" class="button">
         Update
     </button>
-    <button loading send-message="sendMessage()" ng-show="order.ui.rule.action.log_message.executable" type="button" class="button">
-        Send Message
+    <button loading ng-click="cancel()" ng-show="order.ui.rule.action.cancel.executable" type="button" class="button">
+        Cancel Order
     </button>
     <button loading ng-show="order.ui.rule.action.cancel.executable" type="submit" class="button">
         Pay Now
-    </button>
-    <button loading ng-click="cancel()" ng-show="order.ui.rule.action.cancel.executable" type="button" class="button">
-        Cancel Order
     </button>
     <button loading type="button" class="button" ng-click="close()">
         Close
