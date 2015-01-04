@@ -52,7 +52,7 @@
                         $modal.open({
                             templateUrl: 'order/modal/view.html',
                             controller: function ($scope, $modalInstance) {
-                                var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate,
+                                var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate, updateLiveEntity,
                                     updateFields = modelsMeta.getActionArguments('34', 'update'),
                                     logMessageFields = modelsMeta.getActionArguments('34', 'log_message'),
                                     displayAddress = function (address) {
@@ -166,6 +166,26 @@
                                     message: logMessageFields.message
                                 };
 
+                                reactOnStateChange = function (response) {
+                                    helpers.update($scope.order, response.data.entity, ['state', 'ui']);
+                                    reactOnUpdate();
+                                };
+                                reactOnUpdate = function () {
+                                    if (order) {
+                                        $.extend(order, $scope.order);
+                                    }
+                                    if (that.getCache('current' + seller.key)) {
+                                        that.current(seller.key).then(function (response) {
+                                            $.extend(response.data.entity, $scope.order);
+                                        });
+                                    }
+                                };
+                                updateLiveEntity = function (response) {
+                                    var messages = $scope.order._messages;
+                                    $.extend($scope.order, response.data.entity);
+                                    $scope.order._messages = messages;
+                                };
+
                                 $scope.remove = function (line) {
                                     line.quantity = 0;
                                 };
@@ -178,27 +198,9 @@
                                         shipping_address_reference: $scope.selection.shipping_address,
                                         _lines: $scope.order._lines
                                     }).then(function (response) {
-                                        var messages = $scope.order._messages;
-                                        $.extend($scope.order, response.data.entity);
-                                        $scope.order._messages = messages;
+                                        updateLiveEntity(response);
                                         reactOnUpdate();
                                     });
-                                };
-
-                                reactOnStateChange = function (response) {
-                                    helpers.update($scope.order, response.data.entity, ['state', 'ui']);
-                                    reactOnUpdate();
-                                };
-
-                                reactOnUpdate = function () {
-                                    if (order) {
-                                        $.extend(order, $scope.order);
-                                    }
-                                    if (that.getCache('current' + seller.key)) {
-                                        that.current(seller.key).then(function (response) {
-                                            $.extend(response.data.entity, $scope.order);
-                                        });
-                                    }
                                 };
 
                                 $scope.checkout = function () {
@@ -241,7 +243,7 @@
                                     var path = line.product._reference;
                                     models['31'].viewProductModal(path.parent.parent.parent.key,
                                                                   path.parent.parent.key, path.parent.key,
-                                                                  line.product.variant_signature);
+                                                                  line.product.variant_signature, {events: {addToCart: updateLiveEntity}});
                                 };
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');

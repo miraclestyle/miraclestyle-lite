@@ -730,7 +730,7 @@
                                 canvasWidth = wrapper.outerWidth(true),
                                 values;
                             if (canvasWidth) {
-                                values = helpers.calculateGrid(canvasWidth,
+                                values = helpers.grid.calculate(canvasWidth,
                                     maxWidth, minWidth, margin);
 
                                 if (wrapper.css('paddingLeft') !== values[2] || wrapper.css('paddingRight') !== values[2]) {

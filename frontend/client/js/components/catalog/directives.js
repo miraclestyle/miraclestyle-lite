@@ -33,7 +33,7 @@
                     var pa = $(element).parents('.image-slider-item:first'),
                         sizes;
 
-                    sizes = helpers.calculatePricetagPosition(
+                    sizes = helpers.pricetag.calculatePosition(
                         pricetag.position_top,
                         pricetag.position_left,
                         pricetag.image_width,

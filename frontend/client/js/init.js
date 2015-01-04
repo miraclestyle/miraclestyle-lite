@@ -16,17 +16,17 @@
             .state('sell-orders', {
                 url: '/sell/orders',
                 controller: 'SellOrdersCtrl',
-                templateUrl: 'misc/common/orders.html'
+                templateUrl: 'order/list.html'
             })
             .state('sell-carts', {
                 url: '/sell/carts',
                 controller: 'SellOrdersCtrl',
-                templateUrl: 'misc/common/orders.html'
+                templateUrl: 'order/list.html'
             })
             .state('buy-orders', {
                 url: '/buy/orders',
                 controller: 'BuyOrdersCtrl',
-                templateUrl: 'misc/common/orders.html'
+                templateUrl: 'order/list.html'
             })
             .state('buy-carts', {
                 url: '/buy/carts',

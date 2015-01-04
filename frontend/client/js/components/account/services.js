@@ -117,7 +117,7 @@
                             key: accountKey
                         }).then(function (response) {
                             endpoint.removeCache();
-                            $window.location.reload();
+                            $window.location.reload(false);
                         });
                     });
 

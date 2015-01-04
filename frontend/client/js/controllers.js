@@ -8,7 +8,16 @@
                 defaultReaderOpts = {
                     access: ['_records'],
                     key: config.key,
-                    next: {_records: {config: {more: true}}},
+                    next: {
+                        _records: {
+                            config: {
+                                more: true,
+                                search: {
+                                    orders: [{field: 'logged', operator: 'desc'}]
+                                }
+                            }
+                        }
+                    },
                     kind: config.kind,
                     complete: function (records) {
                         $scope.history.records.extend(records);

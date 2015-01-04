@@ -22,15 +22,15 @@
                         sortFields: ['country', 'region', 'city', 'postal_code_from', 'postal_code_to'],
                         beforeSave: function ($scope, info) {
                             var promises = [],
-                                updated_address = $scope.args,
+                                updatedAddress = $scope.args,
                                 promise;
 
-                            if (updated_address.region && (!updated_address._region || (updated_address.region !== updated_address._region.key))) {
-                                promise = models['13'].get(updated_address.region);
+                            if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
+                                promise = models['13'].get(updatedAddress.region);
 
                                 promise.then(function (response) {
                                     if (response.data.entities.length) {
-                                        updated_address._region = response.data.entities[0];
+                                        updatedAddress._region = response.data.entities[0];
                                     }
 
                                 });
@@ -38,17 +38,17 @@
                                 promises.push(promise);
                             }
 
-                            if (updated_address.country && ((!updated_address._country) || (updated_address.country !== updated_address._country.key))) {
+                            if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
                                 promise = models['12'].actions.search(undefined, {
                                     cache: true
                                 });
                                 promise.then(function (response) {
                                     if (response.data.entities.length) {
                                         var country = _.findWhere(response.data.entities, {
-                                            key: updated_address.country
+                                            key: updatedAddress.country
                                         });
                                         if (angular.isDefined(country)) {
-                                            updated_address._country = country;
+                                            updatedAddress._country = country;
                                         }
 
                                     }

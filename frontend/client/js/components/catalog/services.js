@@ -9,7 +9,7 @@
                     config.hideAddToCart = true;
                     return this.viewModal(key, config);
                 },
-                viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts) {
+                viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts, config) {
                     var readArguments = {
                             _seller: {},
                             _images: {
@@ -26,6 +26,7 @@
                                 }
                             }
                         };
+                    config = helpers.alwaysObject(config);
                     this.actions.read({
                         key: catalogKey,
                         read_arguments: readArguments
@@ -127,7 +128,7 @@
                             templateUrl: 'catalog/product/modal/view.html',
                             windowClass: 'no-overflow',
                             controller: function ($scope, $modalInstance, productInstanceResponse) {
-                                var loadProductInstance;
+                                var loadProductInstance, sellerKey;
                                 $.extend($scope, fakeScope);
                                 $scope.resetVariation = function () {
                                     this.resetVariantProduct();
@@ -155,12 +156,11 @@
                                         }
                                     });
                                 };
-
                                 $scope.canAddToCart = true;
                                 $scope.productQuantity = 0;
-
+                                sellerKey = $scope.catalog._seller.key;
                                 $scope.cartProductQuantity = function () {
-                                    models['34'].current($scope.catalog._seller.key).then(function (response) {
+                                    models['34'].current(sellerKey).then(function (response) {
                                         var order = response.data.entity;
                                         $scope.productQuantity = 0;
                                         if (order.id) {
@@ -227,8 +227,11 @@
                                         });
                                     }).then(function (response) {
                                         $scope.productQuantity += 1;
-                                        if (models['34'].getCache('current' + $scope.catalog._seller.key)) {
-                                            models['34'].current($scope.catalog._seller.key).then(function (cached) {
+                                        if (config.events && config.events.addToCart) {
+                                            config.events.addToCart.call(this, response);
+                                        }
+                                        if (models['34'].getCache('current' + sellerKey)) {
+                                            models['34'].current(sellerKey).then(function (cached) {
                                                 $.extend(cached.data.entity, response.data.entity);
                                             });
                                         }
@@ -807,7 +810,24 @@
                                                         noComplete: function (fieldScope) {
                                                             fieldScope.setAction('update');
                                                         },
-                                                        sortable: false,
+                                                        sortableOptions: {
+                                                            stop: function () {
+                                                                var field = $scope.fieldProduct.modelclass._instances, total,
+                                                                    currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
+                                                                if (field.ui.specifics.parentArgs.length) {
+                                                                    total = field.ui.specifics.parentArgs[0].sequence;
+                                                                    angular.forEach(field.ui.specifics.parentArgs,
+                                                                        function (ent, i) {
+                                                                            i = ((total + 1) - i);
+                                                                            ent.sequence = i;
+                                                                            ent.ui.access[ent.ui.access.length - 1] = i;
+                                                                        });
+
+                                                                    currentFieldScope.formSetDirty();
+                                                                    currentFieldScope.$broadcast('itemOrderChanged');
+                                                                }
+                                                            }
+                                                        },
                                                         init: function () {
                                                             var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                                 currentArgs = currentFieldScope.args,

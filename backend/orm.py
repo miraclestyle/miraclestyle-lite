@@ -3696,11 +3696,18 @@ class SuperRecordProperty(SuperRemoteStructuredProperty):
     self._modelclass2 = args[0]
     args[0] = Record
     self._repeated = True
-    read_arguments = kwargs.get('read_arguments', {})
-    if 'config' not in read_arguments:
-      read_arguments['config'] = {} # enforce logged and direction.
-    read_arguments['config']['order'] = {'field': 'logged', 'direction': 'desc'}
-    kwargs['read_arguments'] = read_arguments
+    search = kwargs.get('search', {})
+    if 'default' not in search:
+      search['default'] = {'filters': [], 'orders': [{'field': 'logged', 'operator': 'desc'}]}
+    if 'cfg' not in search:
+      search['cfg'] = {
+          'indexes': [{
+            'ancestor': True,
+            'filters': [],
+            'orders': [('logged', ['desc'])]
+          }],
+        }
+    kwargs['search'] = search
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
     # Implicitly state that entities cannot be updated or deleted.
     self._updateable = False
@@ -4032,6 +4039,8 @@ class Record(BaseExpando):
         value = value.value
       elif hasattr(prop, 'is_structured') and prop.is_structured:
         continue # we cannot log structured properties
+      prop = copy.deepcopy(prop)
+      prop._indexed = False
       self._properties[prop._name] = prop
       try:
         prop._set_value(self, value)

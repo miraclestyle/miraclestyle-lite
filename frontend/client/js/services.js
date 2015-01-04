@@ -100,44 +100,46 @@
 
                 return options;
             },
-            calculateGrid: function (canvas_width, max_width, min_width, margin) {
-                /*
-                velicina covera je uvek izmedju 240x360px i 180x270px
-                padding sa svih strana covera je 1px
-                preferirani broj covera u horizontali je 4 ili vise
-                ako je ostatak ekrana izmedju 240px i 360px onda se opet preferira najveci cover
-                sto se tice GAE blobstore-a najbolje je da se uvek radi fetch covera dimenzija 240x360 pa da se ostalo radi na client side.
-                */
-                var loop = max_width - min_width,
-                    values = [],
-                    i,
-                    cover_width,
-                    cover_count_raw,
-                    cover_count,
-                    cover_width_rounded,
-                    sides;
-                for (i = 0; i < loop; i++) {
-                    cover_width = max_width - i;
-                    cover_count_raw = canvas_width / cover_width;
-                    cover_count = Math.floor(cover_count_raw);
-                    cover_width = canvas_width / cover_count;
-                    if (cover_width > max_width) {
-                        cover_count = cover_count + 1;
+            grid: {
+                calculate: function (canvas_width, max_width, min_width, margin) {
+                    /*
+                    velicina covera je uvek izmedju 240x360px i 180x270px
+                    padding sa svih strana covera je 1px
+                    preferirani broj covera u horizontali je 4 ili vise
+                    ako je ostatak ekrana izmedju 240px i 360px onda se opet preferira najveci cover
+                    sto se tice GAE blobstore-a najbolje je da se uvek radi fetch covera dimenzija 240x360 pa da se ostalo radi na client side.
+                    */
+                    var loop = max_width - min_width,
+                        values = [],
+                        i,
+                        cover_width,
+                        cover_count_raw,
+                        cover_count,
+                        cover_width_rounded,
+                        sides;
+                    for (i = 0; i < loop; i++) {
+                        cover_width = max_width - i;
+                        cover_count_raw = canvas_width / cover_width;
+                        cover_count = Math.floor(cover_count_raw);
                         cover_width = canvas_width / cover_count;
-                        if (cover_width < min_width) {
-                            cover_count = cover_count - 1;
-                            cover_width = max_width;
+                        if (cover_width > max_width) {
+                            cover_count = cover_count + 1;
+                            cover_width = canvas_width / cover_count;
+                            if (cover_width < min_width) {
+                                cover_count = cover_count - 1;
+                                cover_width = max_width;
+                            }
+                        }
+                        cover_width_rounded = Math.floor(cover_width);
+                        sides = Math.floor((canvas_width % (cover_width_rounded * cover_count)) / 2);
+                        cover_width_rounded = cover_width_rounded - (margin * 2);
+                        values = [cover_width_rounded, cover_count, sides, cover_width_rounded];
+                        if (cover_count_raw > 4 || cover_count === 1) {
+                            break;
                         }
                     }
-                    cover_width_rounded = Math.floor(cover_width);
-                    sides = Math.floor((canvas_width % (cover_width_rounded * cover_count)) / 2);
-                    cover_width_rounded = cover_width_rounded - (margin * 2);
-                    values = [cover_width_rounded, cover_count, sides, cover_width_rounded];
-                    if (cover_count_raw > 4 || cover_count === 1) {
-                        break;
-                    }
+                    return values;
                 }
-                return values;
             },
             setProperty: function (obj, prop, value) {
                 //console.trace('helpers.setProperty', obj, prop, value);
@@ -211,21 +213,23 @@
                     $.extend(obj1, obj2); // shallow merge
                 }
             },
-            calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
-                /*  
-                ihp - Initial Horizontal Price Tag Position 
-                ivp - Initial Vertical Price Tag Position 
-                iiw - Initial Image Width  
-                iih - Initial Image Height  
+            pricetag: {
+                calculatePosition: function (ihp, ivp, iiw, iih, ciw, cih) {
+                    /*  
+                    ihp - Initial Horizontal Price Tag Position 
+                    ivp - Initial Vertical Price Tag Position 
+                    iiw - Initial Image Width  
+                    iih - Initial Image Height  
 
-                ciw - Current Image Width  
-                cih - Current Image Height  
-                chp - Current Horizontal Price Tag Position  
-                cvp - Current Vertical Price Tag Position  
-                */
-                var chp = (ihp / iiw) * ciw,
-                    cvp = (ivp / iih) * cih;
-                return [chp, cvp];
+                    ciw - Current Image Width  
+                    cih - Current Image Height  
+                    chp - Current Horizontal Price Tag Position  
+                    cvp - Current Vertical Price Tag Position  
+                    */
+                    var chp = (ihp / iiw) * ciw,
+                        cvp = (ivp / iih) * cih;
+                    return [chp, cvp];
+                }
             },
             closestLargestNumber: function (arr, closestTo) {
 
@@ -2386,7 +2390,6 @@ w:                  while (images.length > 0) {
                     service = {
                         kind: kind,
                         actions: {},
-                        cacheKey: kind,
                         getCacheKey: function (key) {
                             return this.kind + '_' + key;
                         },

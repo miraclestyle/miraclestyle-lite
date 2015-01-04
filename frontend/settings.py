@@ -109,8 +109,6 @@ ANGULAR_TEMPLATES = (
   ('misc/search_form.html',),
   ('misc/history.html',),
 
-  # common
-  ('misc/common/orders.html',),
 
   ('entity/modal/editor.html',),
   ('entity/modal/editor_default_body.html',),
@@ -229,6 +227,7 @@ ANGULAR_TEMPLATES = (
 
   # order
   ('order/modal/view.html',),
+  ('order/list.html',),
 
   # other
   ('home/index.html',),

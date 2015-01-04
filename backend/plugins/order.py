@@ -905,28 +905,3 @@ class SetMessage(orm.BaseModel):
     OrderMessage = context.models['35']
     # this could be extended to allow params
     context._order._messages = [OrderMessage(agent=context.account.key, body=context.input['message'])]
-
-
-class OrderCartProductQuantity(orm.BaseModel):
-  
-  _kind = 124
-  
-  def run(self, context):
-    Order = context.models['34']
-    OrderLine = context.models['33']
-    CatalogProduct = context.models['28']
-    product_key = context.input.get('product')
-    image_key = context.input.get('image')
-    variant_signature = context.input.get('variant_signature')
-    seller_key = product_key.parent().parent().parent() # go 3 levels up, account->seller->catalog->pricetag->product
-    order = Order.query(Order.seller_reference == seller_key,
-                        Order.state.IN(['cart', 'checkout']),
-                        ancestor=context.input.get('buyer')).get()
-    quantity = 0
-    if order:
-      modified_product_key = CatalogProduct.get_complete_key_path(image_key, product_key)
-      order_line_key = OrderLine.prepare_key({'product': {'reference': modified_product_key, 'variant_signature': variant_signature}}, parent=order.key)
-      order_line = order_line_key.get()
-      if order_line:
-        quantity = int(order_line.quantity)
-    context.output['quantity'] = quantity
