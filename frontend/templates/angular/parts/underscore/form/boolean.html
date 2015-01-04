@@ -1,10 +1,4 @@
-<div class="form-control">
-    <label class="form-label">
-      <%= config.ui.compiled.label %>
-    </label>
-    <div class="form-input">
-      <div class="form-text">
-         <button toggle class="button <%= config.ui.attrs['class'] %>" type="button" <%= config.ui.compiled.attrs %>></button>
-      </div>
-    </div>
+
+<div form-element-wrapper label="<%= config.ui.compiled.label %>">
+   <button toggle class="button <%= config.ui.attrs['class'] %>" type="button" <%= config.ui.compiled.attrs %>></button>
 </div>
