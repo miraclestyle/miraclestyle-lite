@@ -318,8 +318,8 @@
 
                                 $scope.displayCart = function () {
                                     models['19'].current().then(function (response) {
-                                        models['34'].viewOrderModal($scope.catalog._seller, response.data.entity, undefined, {
-                                            cart: true
+                                        models['34'].viewModal($scope.catalog._seller, response.data.entity, undefined, {
+                                            cartMode: true
                                         });
                                     });
                                 };

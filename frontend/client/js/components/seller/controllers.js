@@ -81,7 +81,9 @@
             $scope.scrollEnd = {loader: false};
 
             $scope.view = function (order) {
-                models['34'].viewOrderModal(order._seller, undefined, order);
+                models['34'].viewModal(order._seller, undefined, order, {
+                    sellerMode: carts
+                });
             };
 
             models['23'].current().then(function (response) {

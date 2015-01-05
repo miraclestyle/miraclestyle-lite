@@ -16,11 +16,11 @@
                         });
                     });
                 },
-                viewOrderModal: function (seller, buyer, order, config) {
+                viewModal: function (seller, buyer, order, config) {
                     config = helpers.alwaysObject(config);
-                    var args, that = this, cart = config.cart, rpc = {};
+                    var args, that = this, cartMode = config.cartMode, sellerMode = config.sellerMode, rpc = {};
 
-                    if (!cart) {
+                    if (!cartMode) {
                         args = {
                             key: order.key,
                             read_arguments: {
@@ -42,7 +42,7 @@
                         };
                     }
 
-                    models['34'].actions[cart ? 'view_order' : 'read'](args, rpc).then(function (response) {
+                    models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
 
                         if (!response.data.entity.id) {
                             modals.alert('No cart available, please add some products to your cart before you can view it');
@@ -73,7 +73,8 @@
                                 });
                                 logMessageFields.message.required = false;
                                 $scope.selection = {};
-                                $scope.cartMode = !order;
+                                $scope.cartMode = cartMode;
+                                $scope.sellerMode = sellerMode;
                                 $scope.order = response.data.entity;
                                 $scope.seller = seller;
                                 $scope.newMessage = {
@@ -96,7 +97,7 @@
                                     return item;
                                 });
 
-                                if (cart) {
+                                if (cartMode) {
                                     billing_addresses = response.data.billing_addresses;
                                     shipping_addresses = response.data.shipping_addresses;
                                     $scope.selection.billing_address = $scope.order.billing_address_reference;
@@ -187,27 +188,27 @@
                                 };
 
                                 $scope.increase = function (line) {
-                                  if (parseInt(line.quantity) === 0) {
-                                    line.quantity = 0;
-                                  }
-                                  line.quantity = parseInt(line.quantity) + 1;
+                                    if (parseInt(line.quantity, 10) === 0) {
+                                        line.quantity = 0;
+                                    }
+                                    line.quantity = parseInt(line.quantity, 10) + 1;
                                 };
 
                                 $scope.decrease = function (line) {
-                                  if (parseInt(line.quantity) === 0) {
-                                    line.quantity = 0;
-                                  }
-                                  if (line.quantity > 0) {
-                                    line.quantity = parseInt(line.quantity) - 1;
-                                  }
+                                    if (parseInt(line.quantity, 10) === 0) {
+                                        line.quantity = 0;
+                                    }
+                                    if (line.quantity > 0) {
+                                        line.quantity = parseInt(line.quantity, 10) - 1;
+                                    }
                                 };
                                 $scope.update = function () {
                                     models['34'].actions.update({
                                         key: $scope.order.key,
                                         payment_method: $scope.selection.payment_method,
                                         carrier: $scope.selection.carrier,
-                                        billing_address_reference: $scope.selection.billing_address,
-                                        shipping_address_reference: $scope.selection.shipping_address,
+                                        billing_address_reference: ((cartMode && !sellerMode) ? $scope.selection.billing_address : $scope.order.billing_address_reference),
+                                        shipping_address_reference: ((cartMode && !sellerMode) ? $scope.selection.shipping_address : $scope.order.shipping_address_reference),
                                         _lines: $scope.order._lines
                                     }).then(function (response) {
                                         updateLiveEntity(response);

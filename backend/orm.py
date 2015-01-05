@@ -3458,7 +3458,7 @@ class SuperSearchProperty(SuperJsonProperty):
     options = values.get('options', {})
     if 'limit' not in options.keys():
       raise PropertyError('limit_value_missing')
-    for value_key, value in options.iteritems():
+    for value_key, value in options.items():
       if value_key == 'limit':
         if not isinstance(value, (int, long)):
           raise PropertyError('limit_value_incorrect')

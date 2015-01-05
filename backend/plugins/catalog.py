@@ -195,8 +195,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     context._catalog._images = [] # dismember images from put queue to avoid too many rpcs
     write_index = True
     if not len(products):
-      # write_index = False  @todo We shall not allow indexing of catalogs without products attached!
-      pass
+      write_index = False # catalogs with no products are not allowed to be indexed
     for product in products:
       if 'indexable' not in product._category.value.state:
         write_index = False

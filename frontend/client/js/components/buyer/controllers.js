@@ -28,8 +28,8 @@
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
-                    models['34'].viewOrderModal(order._seller, buyer, order, {
-                        cart: carts
+                    models['34'].viewModal(order._seller, buyer, order, {
+                        cartMode: carts
                     });
                 });
             };

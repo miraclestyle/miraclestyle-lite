@@ -232,10 +232,10 @@ class Order(orm.BaseExpando):
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'read'),
                                   orm.Action.build_key('34', 'log_message')], True,
-                           'action.key_id_str != "search" and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
+                           'action.key_id_str not in ["search", "public_search"] and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
                            or entity._original.seller_reference._root == account.key)))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
-                           'not action.key_id_str == "search" and not account._is_guest and ((entity._original.key_root == account.key \
+                           'action.key_id_str not in ["search", "public_search"] and not account._is_guest and ((entity._original.key_root == account.key \
                            and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key \
                            and entity._original.state == "checkout"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
@@ -289,7 +289,7 @@ class Order(orm.BaseExpando):
                           or (action.key_id_str == "complete" and entity.state == "completed")'),
       orm.FieldPermission('34', ['payment_status'], True, True, '(action.key_id_str == "complete")'), # writable when in complete action mode
       orm.FieldPermission('34', ['_messages'], True, True,
-                          'action.key_id_str != "search" and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
+                          'action.key_id_str not in ["search", "public_search"] and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
                            or entity._original.seller_reference._root == account.key)))'),
       orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference', 'shipping_address', 'billing_address', '_lines', 'carrier',
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
@@ -306,7 +306,8 @@ class Order(orm.BaseExpando):
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
                           or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
-      orm.FieldPermission('34', ['_messages'], True, True, 'action.key_id_str == "complete"')
+      orm.FieldPermission('34', ['_messages'], True, True, 'action.key_id_str == "complete"'),
+      orm.FieldPermission('34', ['_lines.discount'], True, True, 'action.key_id_str not in ["search", "public_search"] and entity._original.seller_reference._root == account.key and entity._original.state == "checkout"')
       ]
     )
   

@@ -927,7 +927,6 @@
 
                     scope.$on('$destroy', function () {
                         $(window).off('resize', resize);
-                        console.log(steadyScroll);
                         if (steadyScroll) {
                             steadyScroll.stop();
                         }

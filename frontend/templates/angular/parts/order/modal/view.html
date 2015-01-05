@@ -44,7 +44,7 @@
                         </div>
                         <div class="cart-line-product-variant_signature" ng-show="line.product.variant_signature">
                             <div ng-repeat="variant in line.product.variant_signature track by $index">
-                                <div ng-repeat="(key, value) in variant track by key">
+                                <div ng-repeat="(key, value) in variant">
                                   <span class="cart-label">{{key}}:</span>
                                   <span class="cart-value">{{value}}</span>
                                 </div>
@@ -61,7 +61,7 @@
                             <tr class="cart-label">
                               <td>Price</td>
                               <td>Quantity ({{line.product.uom.symbol}})</td>
-                              <td ng-show="line.discount > 0">Discount (%)</td>
+                              <td ng-show="line.discount > 0 || sellerMode">Discount (%)</td>
                               <td class="cart-line-discount_subtotal">Subtotal</td>
                             </tr>
                             <tr class="cart-value">
@@ -73,7 +73,12 @@
                                   <button ng-click="increase(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">+</button>
                                 </div>
                               </td>
-                              <td ng-show="line.discount > 0">{{line.discount}}</td>
+                              <td ng-show="line.discount > 0 || sellerMode">
+                                <span ng-if="sellerMode">
+                                  <input class="cart-input" ng-disabled="!order.ui.rule.field._lines.discount.writable" type="numeric" ng-model="line.discount"/>
+                                </span>
+                                <span ng-if="!sellerMode">{{line.discount}}</span>
+                              </td>
                               <td class="cart-line-discount_subtotal">{{line.discount_subtotal|displayCurrency:order.currency}}</td>
                             </tr>
                           </tbody>

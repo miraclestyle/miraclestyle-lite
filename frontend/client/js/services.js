@@ -2434,7 +2434,7 @@ w:                  while (images.length > 0) {
                                         }
                                         theConfig.args.search.options.start_cursor = this.cursor;
                                         this.loading = true;
-                                        promise = that.actions.search(theConfig.args, theConfig.config);
+                                        promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
                                         promise.then(function (response) {
                                             paginate.more = response.data.more;
                                             paginate.cursor = response.data.cursor;
