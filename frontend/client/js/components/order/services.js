@@ -56,7 +56,7 @@
                                     orderActionsFields = modelsMeta.getActionArguments('34'),
                                     displayAddress = function (address) {
                                         var addr = [];
-                                        angular.forEach(['_country.name', '_region.name', 'city', 'postal_code', 'name', 'email', 'telephone'], function (field) {
+                                        angular.forEach(['name', 'street', 'city', '_region.name', 'postal_code', '_country.name', 'email', 'telephone'], function (field) {
                                             var v = helpers.getProperty(address, field);
                                             if (v !== null && v !== undefined) {
                                                 addr.push(v);
