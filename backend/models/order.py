@@ -131,12 +131,14 @@ class OrderMessage(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   agent = orm.SuperKeyProperty('2', kind='11', required=True, indexed=False)
   body = orm.SuperTextProperty('3', required=True, indexed=False)
+  action = orm.SuperKeyProperty('4', kind='1', required=True)
   
   _default_indexed = True
 
   _virtual_fields = {
     '_agent': orm.SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
                                      format_callback=lambda self, value: self._retrieve_agent_name(value)),
+    '_action': orm.SuperReferenceProperty(callback=lambda self: self._retrieve_action(), format_callback=lambda self, value: value)
     }
   
   def _retrieve_agent_name(self, value):
@@ -144,6 +146,11 @@ class OrderMessage(orm.BaseExpando):
   
   def _retreive_agent(self):
     return self.agent.get_async()
+
+  def _retrieve_action(self):
+    if not self.action:
+      return ''
+    return self.action.id()
 
 
 class Order(orm.BaseExpando):
@@ -230,8 +237,7 @@ class Order(orm.BaseExpando):
                            and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
       orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'read'),
-                                  orm.Action.build_key('34', 'log_message')], True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'read')], True,
                            'action.key_id_str not in ["search", "public_search"] and (account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
                            or entity._original.seller_reference._root == account.key)))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
@@ -246,6 +252,9 @@ class Order(orm.BaseExpando):
       orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'log_message')], True,
+                           'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "checkout"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "checkout"'),
@@ -307,7 +316,7 @@ class Order(orm.BaseExpando):
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
                           or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
       orm.FieldPermission('34', ['_messages'], True, True, 'action.key_id_str == "complete"'),
-      orm.FieldPermission('34', ['_lines.discount'], True, True, 'action.key_id_str not in ["search", "public_search"] and entity._original.seller_reference._root == account.key and entity._original.state == "checkout"')
+      orm.FieldPermission('34', ['_lines.discount'], True, True, 'action.key_id_str not in ["search", "public_search"] and entity._original.seller_reference and entity._original.seller_reference._root == account.key and entity._original.state == "checkout"')
       ]
     )
   
@@ -539,7 +548,7 @@ class Order(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
         'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative']),
-        'message': orm.SuperTextProperty(required=True) # @todo max length?
+        'message': orm.SuperTextProperty(required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(

@@ -53,8 +53,7 @@
                             templateUrl: 'order/modal/view.html',
                             controller: function ($scope, $modalInstance) {
                                 var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate, updateLiveEntity,
-                                    updateFields = modelsMeta.getActionArguments('34', 'update'),
-                                    logMessageFields = modelsMeta.getActionArguments('34', 'log_message'),
+                                    orderActionsFields = modelsMeta.getActionArguments('34'),
                                     displayAddress = function (address) {
                                         var addr = [];
                                         angular.forEach(['_country.name', '_region.name', 'city', 'postal_code', 'name', 'email', 'telephone'], function (field) {
@@ -65,13 +64,34 @@
                                         });
                                         return addr.join(', ');
                                     },
-                                    carriers;
-                                $.extend(logMessageFields.message.ui, {
-                                    args: 'newMessage.message',
-                                    parentArgs: 'newMessage',
-                                    writable: true
-                                });
-                                logMessageFields.message.required = false;
+                                    carriers,
+                                    messageSenderActions = ['log_message', 'leave_feedback', 'review_feedback', 'sudo_feedback'],
+                                    getMessageField = function () {
+                                        var action;
+                                        angular.forEach(messageSenderActions, function (act) {
+                                            if ($scope.order.ui.rule.action[act].executable) {
+                                                action = act;
+                                            }
+                                        });
+                                        if (!action) {
+                                            return false;
+                                        }
+                                        return orderActionsFields[action].message;
+                                    },
+                                    getFeedbackField = function () {
+                                        var action = false;
+                                        if ($scope.order.ui.rule.action.sudo_feedback.executable) {
+                                            action = 'sudo_feedback';
+                                        }
+                                        if ($scope.order.ui.rule.action.leave_feedback.executable) {
+                                            action = 'leave_feedback';
+                                        }
+                                        if (!action) {
+                                            return false;
+                                        }
+                                        return orderActionsFields[action].feedback;
+                                    },
+                                    messageField, feedbackField;
                                 $scope.selection = {};
                                 $scope.cartMode = cartMode;
                                 $scope.sellerMode = sellerMode;
@@ -97,6 +117,26 @@
                                     return item;
                                 });
 
+                                messageField = getMessageField();
+                                feedbackField = getFeedbackField();
+                                if (messageField) {
+                                    $.extend(messageField.ui, {
+                                        args: 'newMessage.message',
+                                        parentArgs: 'newMessage',
+                                        writable: true
+                                    });
+                                    messageField.required = false;
+                                }
+                                if (feedbackField) {
+                                    $.extend(feedbackField.ui, {
+                                        args: 'newMessage.feedback',
+                                        parentArgs: 'newMessage',
+                                        writable: true,
+                                        placeholder: 'Select feedback...'
+                                    });
+                                    feedbackField.required = false;
+                                }
+
                                 if (cartMode) {
                                     billing_addresses = response.data.billing_addresses;
                                     shipping_addresses = response.data.shipping_addresses;
@@ -116,15 +156,14 @@
                                     $scope.selection.billing_address = $scope.order.billing_address.key;
                                     $scope.selection.shipping_address = $scope.order.shipping_address.key;
                                 }
-
                                 $scope.selection.payment_method = $scope.order.payment_method;
                                 $scope.selection.carrier = $scope.order.carrier ? $scope.order.carrier.reference : null;
                                 $scope.fields = {
                                     billingAddress: {
-                                        kind: updateFields.billing_address_reference.kind,
+                                        kind: orderActionsFields.update.billing_address_reference.kind,
                                         type: 'SuperKeyProperty',
                                         code_name: 'selection_billing_address',
-                                        required: updateFields.billing_address_reference.required,
+                                        required: orderActionsFields.update.billing_address_reference.required,
                                         ui: {
                                             args: 'selection.billing_address',
                                             label: 'Billing Address',
@@ -136,10 +175,10 @@
                                         }
                                     },
                                     shippingAddress: {
-                                        kind: updateFields.shipping_address_reference.kind,
+                                        kind: orderActionsFields.update.shipping_address_reference.kind,
                                         type: 'SuperKeyProperty',
                                         code_name: 'selection_shipping_address',
-                                        required: updateFields.shipping_address_reference.required,
+                                        required: orderActionsFields.update.shipping_address_reference.required,
                                         ui: {
                                             args: 'selection.shipping_address',
                                             label: 'Shipping Address',
@@ -151,10 +190,10 @@
                                         }
                                     },
                                     carrier: {
-                                        kind: updateFields.carrier.kind,
+                                        kind: orderActionsFields.update.carrier.kind,
                                         type: 'SuperKeyProperty',
                                         code_name: 'selection_carrier',
-                                        required: updateFields.carrier.required,
+                                        required: orderActionsFields.update.carrier.required,
                                         ui: {
                                             args: 'selection.carrier',
                                             label: 'Delivery Method',
@@ -164,7 +203,8 @@
                                             }
                                         }
                                     },
-                                    message: logMessageFields.message
+                                    feedback: feedbackField,
+                                    message: messageField
                                 };
 
                                 reactOnStateChange = function (response) {
@@ -228,11 +268,39 @@
                                     }
                                 };
 
-                                $scope.sendMessage = function () {
-                                    models['34'].actions.log_message($scope.newMessage).then(function (response) {
-                                        $scope.newMessage.message = '';
-                                        $scope.order._messages.unshift(response.data.entity._messages[0]);
+                                $scope.messaging = {
+                                    send: function (action) {
+                                        models['34'].actions[action]($scope.newMessage).then(function (response) {
+                                            $scope.newMessage.message = '';
+                                            $scope.order._messages.unshift(response.data.entity._messages[0]);
+                                            reactOnStateChange(response);
+                                        });
+                                    },
+                                    logMessage: function () {
+                                        return this.send('log_message');
+                                    },
+                                    reviewFeedback: function () {
+                                        return this.send('review_feedback');
+                                    },
+                                    sudoFeedback: function () {
+                                        return this.send('sudo_feedback');
+                                    },
+                                    leaveFeedback: function () {
+                                        return this.send('leave_feedback');
+                                    },
+                                    reportFeedback: function () {
+                                        return this.send('report_feedback');
+                                    }
+                                };
+
+                                $scope.canShowMessageBox = function () {
+                                    var truth = false;
+                                    angular.forEach(messageSenderActions, function (act) {
+                                        if ($scope.order.ui.rule.action[act].executable) {
+                                            truth = act;
+                                        }
                                     });
+                                    return truth;
                                 };
 
                                 $scope.cancel = function () {

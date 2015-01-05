@@ -905,4 +905,4 @@ class SetMessage(orm.BaseModel):
   def run(self, context):
     OrderMessage = context.models['35']
     # this could be extended to allow params
-    context._order._messages = [OrderMessage(agent=context.account.key, body=context.input['message'])]
+    context._order._messages = [OrderMessage(agent=context.account.key, body=context.input['message'], action=context.action.key)]

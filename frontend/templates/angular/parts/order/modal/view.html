@@ -118,9 +118,10 @@
           </table>
       </div>
 
-      <div ng-if="order.ui.rule.action.log_message.executable">
+      <div ng-if="order.state !== 'cart'">
          <div class="messages-message">
-           <div form-input="fields.message"></div>
+           <div ng-if="fields.feedback" form-input="fields.feedback"></div>
+           <div ng-if="fields.message" form-input="fields.message"></div>
          </div>
          <div class="form-control messages-list">
            <div class="message" ng-repeat="message in order._messages">
@@ -137,8 +138,20 @@
   </div>
 </div>
 <div class="modal-footer">
-    <button loading send-message="sendMessage()" ng-show="order.ui.rule.action.log_message.executable" type="button" class="button">
+    <button loading send-message="messaging.logMessage()" ng-show="order.ui.rule.action.log_message.executable" type="button" class="button">
         Send Message
+    </button>
+    <button loading send-message="messaging.reportFeedback()" ng-show="order.ui.rule.action.report_feedback.executable" type="button" class="button">
+        Report Feedback
+    </button>
+    <button loading send-message="messaging.reviewFeedback()" ng-show="order.ui.rule.action.review_feedback.executable" type="button" class="button">
+        Review Feedback
+    </button>
+    <button loading send-message="messaging.sudoFeedback()" ng-show="order.ui.rule.action.sudo_feedback.executable" type="button" class="button">
+        Sudo Feedback
+    </button>
+    <button loading send-message="messaging.leaveFeedback()" ng-show="order.ui.rule.action.leave_feedback.executable" type="button" class="button">
+        Leave Feedback
     </button>
     <button loading ng-show="order.ui.rule.action.checkout.executable && order._lines.length" ng-click="checkout()" type="button" class="button">
         Checkout

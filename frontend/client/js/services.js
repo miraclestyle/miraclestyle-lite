@@ -625,20 +625,31 @@ w:                  while (images.length > 0) {
         modelsMeta.getActionArguments = function (kind_id, action) {
             var info = this.get(kind_id),
                 getAction,
+                actionArguments = {},
                 fields;
             if (!angular.isDefined(info)) {
                 return undefined;
             }
-            getAction = info.mapped_actions[action];
-            if (!angular.isDefined(getAction)) {
-                console.error('action ' + action + ' not found for kind ' + kind_id);
-                return undefined;
+            if (angular.isDefined(action)) {
+                getAction = info.mapped_actions[action];
+                if (!angular.isDefined(getAction)) {
+                    console.error('action ' + action + ' not found for kind ' + kind_id);
+                    return undefined;
+                }
+                fields = angular.copy(getAction['arguments']);
+
+                standardize(fields);
+                return fields;
             }
-            fields = angular.copy(getAction['arguments']);
 
-            standardize(fields);
+            angular.forEach(info.mapped_actions, function (action) {
+                fields = angular.copy(action['arguments']);
+                standardize(fields);
+                actionArguments[action.id] = fields;
+            });
 
-            return fields;
+            return actionArguments;
+
         };
 
         modelsMeta.getActions = function (kind_id) {
