@@ -213,7 +213,7 @@ class OrderLineFormat(orm.BaseModel):
         else:
           line.quantity = format_value(line.quantity, product.uom.value)
         line.subtotal = format_value((product.unit_price * line.quantity), order.currency.value)
-        if line.discount is not None and line.discount != Decimal('0'): # if its not None and not equal to zero
+        if line.discount is not None and line.discount != Decimal('0'): # Fails spectacularly!
           line.discount_subtotal = format_value((line.subtotal - (line.subtotal * (line.discount/100))), order.currency.value)
         tax_subtotal = format_value('0', order.currency.value)
         if line.taxes.value:
