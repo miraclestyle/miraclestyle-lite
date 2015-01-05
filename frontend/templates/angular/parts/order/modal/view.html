@@ -50,6 +50,9 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- <div class="cart-line-product-unit_price">
+                          {{line.product.unit_price|displayCurrency:order.currency}}
+                        </div> -->
                       </button>
                     </div>
                     <div class="cart-line-right item-right list-actions">
@@ -64,33 +67,15 @@
                             <tr class="cart-value">
                               <td>{{line.product.unit_price|displayCurrency:order.currency}}</td>
                               <td>
-                                <button ng-click="decrease(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">-</button>
-                                <input class="cart-input" ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
-                                <button ng-click="increase(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">+</button>
+                                <div class="cart-controls">
+                                  <button ng-click="decrease(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">-</button>
+                                  <input class="cart-input" ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
+                                  <button ng-click="increase(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">+</button>
+                                </div>
                               </td>
                               <td ng-show="line.discount > 0">{{line.discount}}</td>
                               <td class="cart-line-discount_subtotal">{{line.discount_subtotal|displayCurrency:order.currency}}</td>
                             </tr>
-                            
-                            <!--
-                            <tr class="cart-line-discount_subtotal">
-                              <td class="cart-label">Price</td>
-                              <td class="cart-value">{{line.product.unit_price|displayCurrency:order.currency}} ({{order.currency.code}})</td>
-                            </tr>
-                            <tr class="cart-line-quantity">
-                              <td class="cart-label">Quantity ({{line.product.uom.symbol}})</td>
-                              <td class="cart-value">
-                                <input ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
-                              </td>
-                            </tr>
-                            <tr class="cart-line-discount" ng-show="line.discount > 0">
-                              <td class="cart-label">Discount (%)</td>
-                              <td class="cart-value">{{line.discount}}</td>
-                            </tr>
-                            <tr class="cart-line-discount_subtotal">
-                              <td class="cart-label">Subtotal</td>
-                              <td class="cart-value">{{line.discount_subtotal|displayCurrency:order.currency}}</td>
-                            </tr> -->
                           </tbody>
                         </table>
                         <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />

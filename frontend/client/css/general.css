@@ -686,7 +686,7 @@ li.catalog-new-pricetag {
 }
 
 .cart-line-left .cart-line-product-variant_signature {
-  padding: 5px 0px 0px;
+  padding: 5px 0px;
 }
 
 .cart-line-right table {
@@ -705,12 +705,19 @@ li.catalog-new-pricetag {
   padding: 0px 0px 0px 15px;
 }
 
+.cart-line-right .cart-controls {
+  font-size: 0px;
+}
+
 .cart-line-right .cart-input {
   width: 40px;
   padding: 2px 4px;
   display: inline-block;
   border: 1px solid #BBBBBB;
   background-color: #FFFFFF;
+  font-size: 16px;
+  margin: 0px 5px;
+  float: left;
 }
 
 .cart-line-right .cart-input:focus {
@@ -721,6 +728,8 @@ li.catalog-new-pricetag {
   display: inline-block;
   margin: 0px;
   padding: 5px 15px;
+  font-size: 16px;
+  float: left;
 }
 
 .cart-totals {
@@ -741,6 +750,10 @@ li.catalog-new-pricetag {
 .cart-line-product-name {
   font-size: 18px;
   line-height: 21px;
+}
+
+.cart-line-product-unit_price {
+  font-size: 16px;
 }
 
 .cart-line-discount_subtotal {
