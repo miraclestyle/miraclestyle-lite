@@ -20,6 +20,9 @@
             $scope.search.pagination = models['31'].paginate({
                 kind: '31',
                 args: {},
+                config: {
+                    normalizeEntity: false
+                },
                 action: 'public_search',
                 complete: function (response) {
                     $scope.search.results.extend(response.data.entities);
