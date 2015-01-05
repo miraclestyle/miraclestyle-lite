@@ -214,14 +214,15 @@ class OrderLineFormat(orm.BaseModel):
           line.quantity = format_value(line.quantity, product.uom.value)
         line.subtotal = format_value((product.unit_price * line.quantity), order.currency.value)
         if line.discount is not None:
-          line.discount_subtotal = format_value((line.subtotal - (line.subtotal * (line.discount / 100))), order.currency.value)
+          discount = line.discount * format_value('0.01', Unit(digits=2))  # or "/ format_value('100', Unit(digits=2))"
+          line.discount_subtotal = format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
         else:
           line.discount_subtotal = format_value('0', Unit(digits=2))
         tax_subtotal = format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
             if tax.type == 'percent':
-              tax_amount = format_value(tax.amount, Unit(digits=2)) * format_value('0.01', Unit(digits=2))  # or "/ DecTools.form('100')"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
+              tax_amount = format_value(tax.amount, Unit(digits=2)) * format_value('0.01', Unit(digits=2))  # or "/ format_value('100', Unit(digits=2))"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.discount_subtotal * tax_amount)
             elif tax.type == 'fixed':
               tax_amount = format_value(tax.amount, order.currency.value)
