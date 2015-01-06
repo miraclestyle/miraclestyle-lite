@@ -786,5 +786,5 @@ a.button.sort-handle {
   border:none;
   margin: 0px;
   padding: 0px;
-  display: inline;
+  display: block;
 }
