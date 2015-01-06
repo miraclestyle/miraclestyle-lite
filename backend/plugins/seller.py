@@ -58,7 +58,7 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
         for order in result[0]:
           key = order.key._root
           gets = dataset['accounts'].get(key)
-          month = datetime.datetime(year=order.date.year, month=order.date.month, day=order.date.day)
+          month = datetime.datetime(order.date.year, order.date.month, 1)
           if not gets:
             gets = {'orders': {}}
             dataset['accounts'][key] = gets
@@ -80,14 +80,13 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
               feedbacks[month][state] += count
       run = should_keep_running
 
-    gets = year_end
-    i = 365
-    while i:
+    gets = start_of_this_month
+    for i in xrange(0, 12):
+      gets = datetime.datetime(gets.year, gets.month, 1)
       if gets not in feedbacks:
         feedbacks[gets] = {'positive': 0, 'neutral': 0, 'negative': 0}
-      gets = gets - datetime.timedelta(days=1)
-      i -= 1
-
+      lastMonth = gets - datetime.timedelta(days=1)
+      gets = datetime.datetime(lastMonth.year, lastMonth.month, 1)
     set_feedbacks = []
     for date, counts in feedbacks.iteritems():
       set_feedbacks.append(SellerFeedbackStats(date=date,

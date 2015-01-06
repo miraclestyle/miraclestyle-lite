@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app').run(function ($window, modelsConfig, modelsMeta,
-        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter) {
+        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter) {
 
         modelsConfig(function (models) {
             formInputTypes.SuperPluginStorageProperty = function (info) {
@@ -430,6 +430,7 @@
                     $modal.open({
                         templateUrl: 'entity/modal/editor.html',
                         controller: function ($scope, currentAccount, $modalInstance) {
+                            var cartData;
                             $scope.seller = seller;
                             $scope.config = {
                                 templateBodyUrl: 'seller/modal/view_body.html',
@@ -452,6 +453,79 @@
                                 }
                                 return collection;
                             });
+
+                            if ($scope.seller._feedback && $scope.seller._feedback.feedbacks) {
+                                cartData = [];
+
+                                angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
+                                    cartData.push({
+                                        c: [{
+                                            v: dateFilter(feedback.date, 'MMM')
+                                        }, {
+                                            v: feedback.positive_count
+                                        }, {
+                                            v: feedback.negative_count
+                                        }, {
+                                            v: feedback.neutral_count
+                                        }]
+                                    });
+
+                                });
+
+                                $scope.chartConfig = {
+                                    type: "ColumnChart",
+                                    data: {
+                                        cols: [{
+                                            id: "months",
+                                            label: "Months",
+                                            type: "string"
+                                        }, {
+                                            id: "positive",
+                                            label: "Positive",
+                                            type: "number"
+                                        }, {
+                                            id: "negative",
+                                            label: "Negative",
+                                            type: "number"
+                                        }, {
+                                            id: "neutral",
+                                            label: "Neutral",
+                                            type: "number"
+                                        }],
+                                        rows: cartData
+                                    },
+                                    options: {
+                                        colors: ['green', 'red', 'gray'],
+                                        series: {
+                                            0: {
+                                                axis: 'positive'
+                                            },
+                                            1: {
+                                                axis: 'negative'
+                                            },
+                                            3: {
+                                                axis: 'neutral'
+                                            }
+                                        },
+                                        axes: {
+                                            y: {
+                                                positive: {
+                                                    label: 'Positive'
+                                                },
+                                                negative: {
+                                                    label: 'Negative',
+                                                    side: 'right'
+                                                },
+                                                neutral: {
+                                                    label: 'Neutral',
+                                                    side: 'right'
+                                                }
+                                            }
+                                        }
+                                    }
+                                };
+                            }
+
 
                             $scope.viewContent = function (content) {
                                 $modal.open({
