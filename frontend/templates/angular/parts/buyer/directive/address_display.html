@@ -6,5 +6,5 @@
 {{val.email}}<br ng-if="notEmpty(val.email)" />
 {{val.telephone}}<br ng-if="notEmpty(val.telephone)" />
 <div ng-if="val.default_billing || val.default_shipping">
-    (<span ng-if="val.default_billing">Default Billing</span><span ng-if="val.default_billing &&  val.default_shipping">&amp;</span><span ng-if="val.default_shipping">Default Shipping</span>)
+    (<span ng-if="val.default_billing">Default Billing</span><span ng-if="val.default_billing &&  val.default_shipping"> &amp; </span><span ng-if="val.default_shipping">Default Shipping</span>)
 </div>
