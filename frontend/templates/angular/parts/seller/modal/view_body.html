@@ -2,7 +2,7 @@
     <h1 class="seller-name">{{seller.name}}</h1>
     <div>
         <div class="seller-feedback">
-            <div ng-if="chartConfig" google-chart chart="chartConfig" style="height:600px; width:100%;"></div>
+            <div ng-if="chartConfig" resize-chart google-chart chart="chartConfig"></div>
             <div ng-if="!chartConfig">
                 <h1 class="no-things-available">No feedback stats available</h1>
             </div>

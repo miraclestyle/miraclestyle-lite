@@ -1082,5 +1082,25 @@
                     });
                 }
             };
+        }).directive('resizeChart', function (helpers) {
+            return {
+                priority: 100,
+                link: function (scope, element, attrs) {
+
+                    var resize = function () {
+                        var width = $(element).width(),
+                            newHeight = helpers.newHeightByWidth(640, 260, width);
+                        $(element).height(newHeight);
+                    };
+
+                    resize();
+
+                    $(window).on('resize', resize);
+
+                    scope.$on('$destroy', function () {
+                        $(window).off('resize', resize);
+                    });
+                }
+            };
         });
 }());
