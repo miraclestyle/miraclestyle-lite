@@ -168,9 +168,8 @@ class RemoteStructuredImagePropertyValue(_ImagePropertyValue, orm.RemoteStructur
   def _delete_repeated(self):
     cursor = Cursor()
     limit = 200
-    query = self._property.get_modelclass().query(ancestor=self._entity.key)
     while True:
-      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      _entities, cursor, more = self._property.get_modelclass().query(ancestor=self._entity.key).fetch_page(limit, start_cursor=cursor, use_cache=False, use_memcache=False)
       if len(_entities):
         self._set_parent(_entities)
         for entity in _entities:

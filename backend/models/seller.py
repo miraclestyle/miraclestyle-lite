@@ -124,6 +124,8 @@ class Seller(orm.BaseExpando):
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
                            'not account._is_guest'), #  and entity._original.root_entity._original.state == "active"
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue'),
+      orm.ActionPermission('23', [orm.Action.build_key('23', 'cron_generate_feedback_stats')], True, 'True'),
+      orm.FieldPermission('23', ['_feedback'], True, True, 'action.key_id_str == "cron_generate_feedback_stats"'),
       orm.FieldPermission('23', ['name', 'logo', '_content', '_plugin_group', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key'),
       orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),
@@ -190,8 +192,10 @@ class Seller(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('23', 'cron'),
-      arguments={},
+      key=orm.Action.build_key('23', 'cron_generate_feedback_stats'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='23', required=True),
+      },
       _plugin_groups=[
         orm.PluginGroup(
           plugins=[
@@ -205,7 +209,8 @@ class Seller(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write()
+            Write(),
+            Set(cfg={'d': {'output.entity': '_seller'}})
             ]
           )
         ]

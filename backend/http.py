@@ -368,7 +368,8 @@ class Reset(BaseTestHandler):
 class TestAsync(BaseTestHandler):
 
   def respond(self):
-    pass
+    from models import unit
+    print unit.Unit.query().fetch(10, projection=[unit.Unit.name])
 
     
 for k,o in globals().items():

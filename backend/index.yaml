@@ -67,6 +67,14 @@ indexes:
   properties:
   - name: '1'
 
+# Order
+- kind: '34'
+  properties:
+  - name: '16'
+  - name: '17'
+  - name: '6'
+  - name: '5'
+
 # OrderLine  
 - kind: '33'
   ancestor: yes

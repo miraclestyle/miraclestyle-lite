@@ -525,6 +525,8 @@ class _BaseModel(object):
     return True
   
   def __repr__(self):
+    if self._projection:
+      return super(_BaseModel, self).__repr__()
     original = 'No, '
     if hasattr(self, '_original') and self._original is not None:
       original = '%s, ' % self._original
@@ -637,6 +639,8 @@ class _BaseModel(object):
     entity is being loaded by from_pb or _post_get_hook.
     
     '''
+    if self._projection:
+      return # do not attempt anything if entity is projection
     entity = self
     if entity.key and entity.key.id():
       for field, field_instance in entity.get_fields().iteritems():
@@ -1270,7 +1274,7 @@ class _BaseModel(object):
     and put it into _original field. Again note that only get_fields() key, _state will be copied.
     
     '''
-    if self._use_rule_engine:
+    if self._use_rule_engine and not self._projection:
       self._original = None
       original = copy.deepcopy(self)
       self._original = original
@@ -2158,9 +2162,8 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   def _delete_repeated(self):
     cursor = Cursor()
     limit = 200
-    query = self._property.get_modelclass().query(ancestor=self._entity.key)
     while True:
-      _entities, cursor, more = query.fetch_page(limit, start_cursor=cursor)
+      _entities, cursor, more = self._property.get_modelclass().query(ancestor=self._entity.key).fetch_page(limit, start_cursor=cursor, use_cache=False, use_memcache=False)
       if len(_entities):
         self._set_parent(_entities)
         delete_multi([entity.key for entity in _entities])
