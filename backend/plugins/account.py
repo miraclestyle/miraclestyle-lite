@@ -50,8 +50,8 @@ class AccountLoginInit(orm.BaseModel):
       client.get_token(code)
       if not client.access_token:
         raise OAuth2Error('failed_access_token')
-      accountinfo = oauth2_cfg['accountinfo']
-      info = client.resource_request(url=accountinfo)
+      account_info = oauth2_cfg['accountinfo']
+      info = client.resource_request(url=account_info)
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)

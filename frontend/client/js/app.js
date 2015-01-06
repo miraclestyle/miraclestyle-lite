@@ -20,7 +20,7 @@
             host: host,
             angularModules: ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
                 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'monospaced.elastic',
-                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch', 'timer', 'angulike'], // this will be changed accordingly
+                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch', 'timer', 'angulike', 'googlechart'], // this will be changed accordingly
             apimodelsMetaPath: host + '/api/model_meta',
             apiEndpointPath: host + '/api/endpoint',
             dateFormat: 'yyyy-MM-dd HH:mm:ss Z',

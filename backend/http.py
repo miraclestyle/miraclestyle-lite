@@ -368,8 +368,25 @@ class Reset(BaseTestHandler):
 class TestAsync(BaseTestHandler):
 
   def respond(self):
-    from models import unit
-    print unit.Unit.query().fetch(10, projection=[unit.Unit.name])
+    import mem
+    if self.request.get('set'):
+      mem.temp_set('bar', 1)
+    else:
+      self.response.write(mem.temp_get('bar'))
+
+    if self.request.get('run'):
+      urls = "http://128.65.105.64:9982/api/tests/TestAsync " * 10
+
+      def fetch_url(url):
+          urlHandler = urllib2.urlopen(url)
+          html = urlHandler.read()
+          print "'%s\' fetched in %ss" % (url, (time.time() - start))
+
+      threads = [threading.Thread(target=fetch_url, args=(url,)) for url in urls]
+      for thread in threads:
+          thread.start()
+      for thread in threads:
+          thread.join()
 
     
 for k,o in globals().items():
