@@ -269,6 +269,7 @@ class OrderComplete(RequestHandler):
 ROUTES = [('/api/endpoint', Endpoint),
           ('/api/model_meta', ModelMeta),
           ('/api/task/io_engine_run', IOEngineRun),
+          ('/api/cron/seller', IOEngineRun),
           ('/api/install', Install),
           ('/api/account/login', AccountLogin),
           ('/api/account/login/<provider>', AccountLogin),

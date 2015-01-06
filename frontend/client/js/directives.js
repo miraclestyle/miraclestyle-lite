@@ -319,11 +319,18 @@
                     var run = function () {
 
                         var supplied_config = scope.$eval(attrs.formInput),
-                            name = supplied_config.code_name,
+                            name,
                             label = null,
                             config,
                             tpl,
                             template;
+
+                        if (!angular.isObject(supplied_config)) {
+                            console.warn('config provided is not object.', element);
+                            return;
+                        }
+
+                        name = supplied_config.code_name;
 
                         // use backend defined label if was provided, otherwise the label will be humanized
                         if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined) {

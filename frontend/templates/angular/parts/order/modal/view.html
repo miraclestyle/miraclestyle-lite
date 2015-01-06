@@ -118,10 +118,10 @@
           </table>
       </div>
 
-      <div ng-if="order.state !== 'cart'">
+      <div ng-show="order.state !== 'cart'">
          <div class="messages-message">
-           <div ng-if="fields.feedback" form-input="fields.feedback"></div>
-           <div ng-if="fields.message" form-input="fields.message"></div>
+           <div form-input="fields.feedback"></div>
+           <div form-input="fields.message"></div>
          </div>
          <div class="form-control messages-list">
            <div class="message" ng-repeat="message in order._messages">

@@ -445,6 +445,7 @@
                                     label: 'Feedback'
                                 }]
                             };
+
                             $scope.alreadyInCollection = false;
                             $scope.loadedCollection = models['18'].current().then(function (response) {
                                 var collection = response.data.entity;
@@ -524,6 +525,36 @@
                                         }
                                     }
                                 };
+
+
+                                $scope.feedbackStats = (function () {
+                                    var positive_count = 0,
+                                        neutral_count = 0,
+                                        negative_count = 0,
+                                        positive_average,
+                                        negative_average,
+                                        neutral_average,
+                                        score,
+                                        values = [];
+
+                                    positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
+                                    negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
+                                    neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
+
+                                    if ((positive_count - negative_count) > 0) {
+                                        score = positive_count - negative_count;
+                                    } else {
+                                        score = 0;
+                                    }
+                                    values[0] = positive_count;
+                                    values[1] = neutral_count;
+                                    values[2] = negative_count;
+                                    values[3] = positive_average;
+                                    values[4] = negative_average;
+                                    values[5] = neutral_average;
+                                    values[6] = score;
+                                    return values;
+                                }());
                             }
 
 

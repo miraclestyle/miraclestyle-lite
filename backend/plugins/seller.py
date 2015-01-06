@@ -16,7 +16,7 @@ import orm
 from tools.base import *
 from util import *
 
-__all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats']
+__all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats', 'SellerCron']
 
 # @todo This plugin is pseudo coded, and needs to be rewritten!
 class SellerCronGenerateFeedbackStats(orm.BaseModel):
@@ -143,6 +143,8 @@ class SellerSetupDefaults(orm.BaseModel):
 
 class SellerCron(orm.BaseModel):
 
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
   def run(self, context):
     Seller = context.models['23']
     sellers = Seller.query().fetch_page(4, start_cursor=context.input.get('cursor'))
@@ -154,6 +156,8 @@ class SellerCron(orm.BaseModel):
     cursor = None
     if sellers[2] and sellers[1]:
       cursor = sellers[1]
+    if cursor is None:
+      return
     data = {'action_id': 'cron',
             'action_model': '23',
             'cursor': cursor}
