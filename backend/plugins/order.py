@@ -343,16 +343,13 @@ class AddressRule(orm.BaseModel):
     if input_address_reference_result:
       default_address = input_address_reference_result[0]
     elif order_address_reference_result:
-      default_address = valid_addresses[0]  # @todo What's the deal with the "elif order_address_reference_result:" when not used here ?
+      default_address = order_address_reference_result[0]
     else:
-      default_address = valid_addresses[0]  # @todo Note: Since we don't have default_ address anymore, this naturaly fits here!
-    no_address_set = getattr(order, address_reference_key, None) is None
-    if default_address and (input_address_reference or no_address_set):  # @todo Why don't we check ... or order_address_reference instead of no_address_set?
+      default_address = valid_addresses[0]
+    if default_address:
       setattr(order, address_reference_key, default_address.key)
       setattr(order, address_key, default_address.get_location())
-      context.output['default_%s' % self.address_type] = default_address  # @todo Not sure if client needs this output value anymore!?
-      no_address_set = False
-    if no_address_set:  # @todo Could we go with else: block here if the previous one failed?
+    else:
       raise PluginError('no_address_found')
   
   def validate_address(self, address):
