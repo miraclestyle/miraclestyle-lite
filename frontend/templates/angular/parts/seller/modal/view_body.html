@@ -1,6 +1,5 @@
-<div class="modal-body-inner-padded">
+<div class="seller-detail-content">
     <h1 class="seller-name">{{seller.name}}</h1>
-    <div>
         <div class="seller-feedback">
             <div ng-if="chartConfig" resize-chart google-chart chart="chartConfig"></div>
             <div ng-if="!chartConfig">
@@ -10,7 +9,6 @@
                 Positive feedback in last 12 months: {{feedbackStats[0]}}%
             </div>
         </div>
-    </div>
     <div ng-if="seller._content.documents.length" class="seller-contents">
        <div ng-repeat="content in seller._content.documents track by content.key" class="seller-content-item">
          <button ng-click="viewContent(content)" type="button" class="button">{{content.title}}</button>

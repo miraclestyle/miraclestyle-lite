@@ -240,11 +240,12 @@ class Order(orm.BaseExpando):
       orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'read')], True,
-                           'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
-                           or entity._original.seller_reference._root == account.key))'),
+                           'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
+                           or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
                            'not account._is_guest and ((entity._original.key_root == account.key \
-                           and entity._original.state == "cart") or (entity._original.seller_reference._root == account.key \
+                           and entity._original.state == "cart") or (entity._original.seller_reference \
+                           and entity._original.seller_reference._root == account.key \
                            and entity._original.state == "checkout"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
                            'action.key_id_str == "search" and (account._root_admin \
@@ -255,8 +256,9 @@ class Order(orm.BaseExpando):
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'log_message')], True,
-                           '(account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
-                           or entity._original.seller_reference._root == account.key))) \
+                           '(account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
+                           or (entity._original.seller_reference \
+                           and entity._original.seller_reference._root == account.key)))) \
                            and entity._original.state == "checkout"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
@@ -269,11 +271,13 @@ class Order(orm.BaseExpando):
                            and (entity._original.feedback is None or (entity._original.feedback is not None \
                            and entity._original.feedback_adjustment == "revision"))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'review_feedback')], True,
-                           'not account._is_guest and entity._original.seller_reference._root == account.key \
+                           'not account._is_guest and entity._original.seller_reference and \
+                           entity._original.seller_reference._root == account.key \
                            and entity._original.state == "completed" and entity._is_feedback_allowed \
                            and entity._original.feedback == "negative" and entity._original.feedback_adjustment is None'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'report_feedback')], True,
-                           'not account._is_guest and entity._original.seller_reference._root == account.key \
+                           'not account._is_guest and entity._original.seller_reference \
+                           and entity._original.seller_reference._root == account.key \
                            and entity._original.state == "completed" \
                            and entity._is_feedback_allowed and entity._original.feedback == "negative" \
                            and entity._original.feedback_adjustment not in ["reported", "sudo"]' ),
@@ -287,8 +291,8 @@ class Order(orm.BaseExpando):
                                  'feedback', 'carrier', 'feedback_adjustment', 'payment_status', 'payment_method',
                                  '_lines', '_messages','_payment_method', '_records', '_seller'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
-                          and (entity._original.key_root == account.key \
-                          or entity._original.seller_reference._root == account.key))'),
+                          and (entity._original.key_root == account.key or (entity._original.seller_reference \
+                          and entity._original.seller_reference._root == account.key)))'),
       orm.FieldPermission('34', ['name', 'date', 'seller_reference',
                                  'billing_address_reference', 'shipping_address_reference', 'billing_address',
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
@@ -303,26 +307,29 @@ class Order(orm.BaseExpando):
       orm.FieldPermission('34', ['payment_status', '_messages'], True, True,
                           'account._is_taskqueue and action.key_id_str == "complete"'), # writable when in complete action mode
       orm.FieldPermission('34', ['_messages'], True, True,
-                          'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key \
-                           or entity._original.seller_reference._root == account.key))'),
+                          'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
+                           or (entity._original.seller_reference \
+                           and entity._original.seller_reference._root == account.key)))'),
       orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference',
                                  'shipping_address', 'billing_address', '_lines', 'carrier',
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart" and action.key_id_str == "update"'),
+                           and entity._original.state == "cart" and action.key_id_str in ["view_order", "update"]'),
       orm.FieldPermission('34', ['_lines.sequence', '_lines.product','_lines.discount', '_lines.taxes'], False, None,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['_lines.discount', '_lines.subtotal',
                                  '_lines.discount_subtotal', '_lines.total',
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
-                          'not account._is_guest and entity._original.seller_reference._root == account.key \
+                          'not account._is_guest and entity._original.seller_reference \
+                          and entity._original.seller_reference._root == account.key \
                           and entity._original.state == "checkout" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
                           or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
       orm.FieldPermission('34', ['_lines.discount'], True, True,
-                          'entity._original.seller_reference._root == account.key and entity._original.state == "checkout"')
+                          'entity._original.seller_reference and entity._original.seller_reference._root == account.key \
+                          and entity._original.state == "checkout"')
       ]
     )
   
