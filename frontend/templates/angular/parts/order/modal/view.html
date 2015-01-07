@@ -118,19 +118,20 @@
           </table>
       </div>
 
-      <div ng-show="order.state !== 'cart'">
-         <div class="messages-message">
-           <div form-input="fields.feedback"></div>
-           <div form-input="fields.message"></div>
-         </div>
-         <div class="form-control messages-list">
-           <div class="message" ng-repeat="message in order._messages">
-             <div class="message-agent">{{message._agent}} - {{message|output:'created'}}</div>
-             <div class="message-body">{{message.body}}</div>
-           </div>
-         </div>
-
-         <div load-more-button="messagesReader"></div>
+      <div class="cart-messages" ng-show="order.state !== 'cart'">
+        <div class="clearfix form-inputs">
+          <div form-input="fields.feedback"></div>
+          <div form-input="fields.message"></div>
+        </div>
+        <div class="messages item-list">
+          <div class="message item clearfix" ng-repeat="message in order._messages">
+            <div class="item-left">
+              <div class="message-head">{{message._agent}} - {{message|output:'created'}}</div>
+              <div class="message-body">{{message.body}}</div>
+            </div>
+          </div>
+        </div>
+        <div load-more-button="messagesReader"></div>
       </div>
 
       </div>

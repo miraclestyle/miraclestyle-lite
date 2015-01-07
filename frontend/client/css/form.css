@@ -43,8 +43,14 @@
   background-color: #FFFFFF;
 }
 
+
 .clearfix.buttons {
   padding: 5px 0px;
+  border-bottom: 1px solid #EEEEEE;
+  font-size: 0px;
+}
+
+.clearfix.form-inputs {
   border-bottom: 1px solid #EEEEEE;
   font-size: 0px;
 }
