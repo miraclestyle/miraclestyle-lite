@@ -12,10 +12,10 @@
                 promise = defer.promise;
             $scope.sellerDetail = false;
             if ($stateParams.key) {
-                args.search.filters = [{field: 'ancestor', operator: 'IN', value: $stateParams.key}];
+                args.search.filters = [{field: 'seller_account_key', operator: 'IN', value: $stateParams.key}];
                 $scope.sellerDetail = {};
                 models['23'].actions.read({
-                    key: $stateParams.key,
+                    account: $stateParams.key,
                     read_arguments: {
                         _feedback: {},
                         _content: {}

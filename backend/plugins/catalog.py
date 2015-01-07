@@ -180,6 +180,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     index_name = self.cfg.get('index', None)
     context._catalog.parent_entity.read() # read seller in-memory
     catalog_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
+                      'parent_entity.key._root': orm.SuperKeyProperty(kind='23', search_document_field_name='seller_account_key'),
                       'parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       'cover.value.serving_url': orm.SuperStringProperty(search_document_field_name='cover'),
                       'cover.value.proportion': orm.SuperStringProperty(search_document_field_name='cover_proportion')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback

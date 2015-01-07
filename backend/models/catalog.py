@@ -917,12 +917,15 @@ class Catalog(orm.BaseExpando):
           cfg={
             'search_arguments': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
             'use_search_engine': True,
-            'filters': {'ancestor': orm.SuperStringProperty(repeated=True)},
+            'filters': {'ancestor': orm.SuperStringProperty(repeated=True),
+                        'seller_account_key': orm.SuperStringProperty(repeated=True)},
             'orders': {'created': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}},
                        'updated': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}}},
             'indexes': [{'filters': [],
                          'orders': [('created', ['asc', 'desc'])]},
                         {'filters': [('ancestor', ['IN'])],
+                         'orders': [('created', ['asc', 'desc'])]},
+                        {'filters': [('seller_account_key', ['IN'])],
                          'orders': [('created', ['asc', 'desc'])]}]
             }
           )

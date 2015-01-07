@@ -140,8 +140,6 @@ class Seller(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('23', 'read'),
       arguments={
-        # we have problem when we do not have `account`
-        'key': orm.SuperKeyProperty(kind='23'),
         'account': orm.SuperKeyProperty(kind='11'),
         'read_arguments': orm.SuperJsonProperty()
         },

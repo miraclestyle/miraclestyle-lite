@@ -15,7 +15,7 @@
         <button loading ng-click="view(result.key)" class="button-transparent pointable">
             <img display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
         </button>
-        <button ng-if="!sellerDetail" loading ui-sref="seller-info({key: result.ancestor})" class="button-transparent pointable seller-logo-bellow">
+        <button ng-if="!sellerDetail" loading ui-sref="seller-info({key: result.seller_account_key})" class="button-transparent pointable seller-logo-bellow">
             <img display-image="result._seller_logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
         </button>
     </div>
