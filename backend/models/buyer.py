@@ -11,7 +11,6 @@ from models.base import *
 from plugins.base import *
 
 from models.location import *
-from plugins.buyer import *
 
 __all__ = ['Buyer', 'BuyerAddress', 'BuyerLocation']
 
@@ -48,15 +47,13 @@ class BuyerAddress(orm.BaseExpando):
   city = orm.SuperStringProperty('3', required=True, indexed=False)
   postal_code = orm.SuperStringProperty('4', required=True, indexed=False)
   street = orm.SuperStringProperty('5', required=True, indexed=False)
-  default_shipping = orm.SuperBooleanProperty('6', required=True, default=True, indexed=False)
-  default_billing = orm.SuperBooleanProperty('7', required=True, default=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'region': orm.SuperKeyProperty('8', kind='13'),
-    'email': orm.SuperStringProperty('9'),
-    'telephone': orm.SuperStringProperty('10')
+    'region': orm.SuperKeyProperty('6', kind='13'),
+    'email': orm.SuperStringProperty('7'),
+    'telephone': orm.SuperStringProperty('8')
     }
   
   _virtual_fields = {
@@ -116,7 +113,6 @@ class Buyer(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'d': {'_buyer.addresses': 'input.addresses'}}),
-            BuyerUpdateSet(),
             RulePrepare(),
             RuleExec()
             ]

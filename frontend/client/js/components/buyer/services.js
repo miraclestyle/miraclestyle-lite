@@ -28,36 +28,16 @@
                             }],
                             showListItem: 'buyer-address-display',
                             sortFields: ['country', 'region', 'city', 'postal_code',
-                                'street', 'name', 'email', 'telephone',
-                                'default_shipping', 'default_billing'],
+                                'street', 'name', 'email', 'telephone'],
                             afterSave: function () {
                                 endpoint.removeCache(this.getCacheKey('current'));
                             },
                             init: function ($scope) {
-                                $scope.setDefaults = function (updatedAddress) {
-                                    angular.forEach($scope.parentArgs, function (address) {
-                                        if ((updatedAddress.default_billing || updatedAddress.default_shipping)) {
-                                            if (updatedAddress !== address) {
-
-                                                if (updatedAddress.default_billing) {
-                                                    address.default_billing = false;
-                                                }
-
-                                                if (updatedAddress.default_shipping) {
-                                                    address.default_shipping = false;
-                                                }
-                                            }
-
-                                        }
-
-                                    });
-                                };
 
                                 var remove = $scope.config.ui.specifics.remove;
 
                                 $scope.config.ui.specifics.remove = function () {
                                     remove.apply(this, arguments);
-                                    $scope.setDefaults();
                                 };
 
                             },
@@ -96,7 +76,6 @@
 
                                     promises.push(promise);
                                 }
-                                $scope.setDefaults(updatedAddress);
                                 if (promises.length) {
                                     return $q.all(promises);
                                 }
