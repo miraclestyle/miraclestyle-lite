@@ -8,11 +8,17 @@ Created on Dec 17, 2013
 import cgi
 import inspect
 import json
+import cProfile
+import pstats
+import StringIO
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
-import orm, util, settings, mem
+import orm
+import util
+import settings
+import mem
 
 
 class InputError(Exception):
@@ -197,6 +203,9 @@ class Engine:
   
   @classmethod
   def run(cls, input):
+    if settings.PROFILING:
+      pr = cProfile.Profile()
+      pr.enable()
     context = Context()
     cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
@@ -227,4 +236,11 @@ class Engine:
     finally:
       util.log('Process Blob Output')
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
+      if settings.PROFILING:
+        pr.disable()
+        s = StringIO.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print s.getvalue()
     return context.output

@@ -218,7 +218,9 @@
         // Give it time to appear before focus
         $timeout(function() {
           ctrl.search = initSearchValue || ctrl.search;
-          _searchInput[0].focus();
+          if (ctrl.searchEnabled) {
+            _searchInput[0].focus();
+          }
         });
       }
     };
