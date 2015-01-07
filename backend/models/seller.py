@@ -140,7 +140,7 @@ class Seller(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('23', 'read'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='11'),
+        'account': orm.SuperKeyProperty(kind='11', required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
