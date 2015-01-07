@@ -25,7 +25,7 @@
                 });
             }
         };
-    }).directive('catalogPricetagPosition', function ($timeout, helpers) { // directives that are not used anywhere else other than this context are defined in their own context
+    }).directive('catalogPricetagPosition', function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
         return {
             link: function (scope, element, attr) {
 
@@ -33,7 +33,7 @@
                     var pa = $(element).parents('.image-slider-item:first'),
                         sizes;
 
-                    sizes = helpers.pricetag.calculatePosition(
+                    sizes = models['31'].calculatePricetagPosition(
                         pricetag.position_top,
                         pricetag.position_left,
                         pricetag.image_width,

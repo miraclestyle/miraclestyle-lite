@@ -917,19 +917,13 @@ class Catalog(orm.BaseExpando):
           cfg={
             'search_arguments': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
             'use_search_engine': True,
-            'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(choices=['invited', 'accepted'])},
+            'filters': {'ancestor': orm.SuperStringProperty(repeated=True)},
             'orders': {'created': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}},
                        'updated': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}}},
-            'indexes': [{'orders': [('name', ['asc', 'desc'])]},
-                        {'orders': [('created', ['asc', 'desc'])]},
-                        {'orders': [('updated', ['asc', 'desc'])]},
-                        {'filters': [('name', ['==', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!=']), ('name', ['==', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]}]
+            'indexes': [{'filters': [],
+                         'orders': [('created', ['asc', 'desc'])]},
+                        {'filters': [('ancestor', ['IN'])],
+                         'orders': [('created', ['asc', 'desc'])]}]
             }
           )
         },

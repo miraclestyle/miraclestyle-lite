@@ -122,7 +122,7 @@ class Seller(orm.BaseExpando):
                                   orm.Action.build_key('23', 'prepare')], True,
                            'action.key_id_str not in ["cron", "cron_generate_feedback_stats"] and not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
-                           'not account._is_guest'), #  and entity._original.root_entity._original.state == "active"
+                           'action.key_id_str not in ["cron", "cron_generate_feedback_stats"] and ("key" in input or "account" in input) and not account._is_guest and entity._original.root_entity._original.state == "active"'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron_generate_feedback_stats')], True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue or account._is_cron'),
@@ -140,7 +140,9 @@ class Seller(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('23', 'read'),
       arguments={
-        'account': orm.SuperKeyProperty(kind='11', required=True),
+        # we have problem when we do not have `account`
+        'key': orm.SuperKeyProperty(kind='23'),
+        'account': orm.SuperKeyProperty(kind='11'),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[

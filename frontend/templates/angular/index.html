@@ -29,6 +29,18 @@ This was done for easier maintenance.
     <div ng-controller="MainMenuCtrl" style="display:none;" id="main-menu">
         <div class="menu-inner">
             <div ng-show="currentAccount._root_admin" ng-include="misc/search_form.html"></div>
+
+            <div>
+                <h1 class="fieldset">Explore</h1>
+                <ul class="menu clearfix">
+                   <li ng-show="!currentAccount._is_guest"><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="collections">Collections</button></li>
+                   <li><button type="button"
+                            main-menu-toggler
+                            class="button block" ui-sref="home">All</button></li>
+                </ul>
+            </div>
             
             <div ng-controller="BuyerManagementCtrl" ng-show="!currentAccount._is_guest">
                 <h1 class="fieldset">Buy</h1>

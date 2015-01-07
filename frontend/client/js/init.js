@@ -8,6 +8,16 @@
                 templateUrl: 'home/index.html',
                 controller: 'HomePageCtrl'
             })
+            .state('collections', {
+                url: '/collections',
+                templateUrl: 'home/index.html',
+                controller: 'HomePageCtrl'
+            })
+            .state('seller-info', {
+                url: '/seller/:key',
+                controller: 'HomePageCtrl',
+                templateUrl: 'home/index.html'
+            })
             .state('sell-catalogs', {
                 url: '/sell/catalogs',
                 controller: 'SellCatalogsCtrl',

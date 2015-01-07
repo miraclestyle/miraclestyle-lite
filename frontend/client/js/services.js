@@ -213,24 +213,6 @@
                     $.extend(obj1, obj2); // shallow merge
                 }
             },
-            pricetag: {
-                calculatePosition: function (ihp, ivp, iiw, iih, ciw, cih) {
-                    /*  
-                    ihp - Initial Horizontal Price Tag Position 
-                    ivp - Initial Vertical Price Tag Position 
-                    iiw - Initial Image Width  
-                    iih - Initial Image Height  
-
-                    ciw - Current Image Width  
-                    cih - Current Image Height  
-                    chp - Current Horizontal Price Tag Position  
-                    cvp - Current Vertical Price Tag Position  
-                    */
-                    var chp = (ihp / iiw) * ciw,
-                        cvp = (ivp / iih) * cih;
-                    return [chp, cvp];
-                }
-            },
             closestLargestNumber: function (arr, closestTo) {
 
                 var closest = Math.max.apply(null, arr),

@@ -459,6 +459,9 @@
                                 cartData = [];
 
                                 angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
+                                    feedback.positive_count = _.random(0, 100);
+                                    feedback.negative_count = _.random(0, 100);
+                                    feedback.neutral_count = _.random(0, 100);
                                     cartData.push({
                                         c: [{
                                             v: dateFilter(feedback.date, 'MMM')

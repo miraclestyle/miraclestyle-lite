@@ -1,14 +1,23 @@
+<div ng-if="sellerDetail !== false" class="clearfix buttons">
+  <div class="pull-left">
+      <button loading ng-click="viewSeller()" class="button-transparent pointable">
+            <img display-image="sellerDetail.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
+      </button>
+      
+  </div>
+  <div class="pull-right">
+     <h1>{{sellerDetail.name}}</h1>
+  </div>
+</div>
 
-<div ng-if="unexisting" autoload-on-vertical-scroll-end="scrollEnd" grid-generator-items="search.results" grid-generator="{square:false, margin:1, maxWidth:240, minWidth:180}" class="grid-wrapper clearfix">
+<div autoload-on-vertical-scroll-end="scrollEnd" grid-generator-items="search.results" grid-generator="{square:false, margin:1, maxWidth:240, minWidth:180}" class="grid-wrapper clearfix">
     <div ng-repeat="result in search.results track by $index" on-ng-repeat-end class="grid-item grid-generator">
         <button loading ng-click="view(result.key)" class="button-transparent pointable">
-            <img display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
+            <img display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
         </button>
-        <div class="button-wrapper">
-            <button loading class="button block" ng-click="manage(result)">
-                Edit
-            </button>
-        </div>
+        <button ng-if="!sellerDetail" loading ui-sref="seller-info({key: result.ancestor})" class="button-transparent pointable seller-logo-bellow">
+            <img display-image="result._seller_logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
+        </button>
     </div>
 </div>
 

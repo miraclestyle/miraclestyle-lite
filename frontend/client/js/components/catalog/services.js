@@ -4,6 +4,34 @@
 
         modelsConfig(function (models) {
             $.extend(models['31'], {
+                formatPublicSearchResults: function (results) {
+                    angular.forEach(results, function (result) {
+                        result._cover = {
+                            serving_url: result.cover,
+                            proportion: result.cover_proportion
+                        };
+                        result._seller_logo = {
+                            serving_url: result.seller_logo,
+                            proportion: 2.4
+                        };
+                    });
+                },
+                calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
+                    /*  
+                    ihp - Initial Horizontal Price Tag Position 
+                    ivp - Initial Vertical Price Tag Position 
+                    iiw - Initial Image Width  
+                    iih - Initial Image Height  
+
+                    ciw - Current Image Width  
+                    cih - Current Image Height  
+                    chp - Current Horizontal Price Tag Position  
+                    cvp - Current Vertical Price Tag Position  
+                    */
+                    var chp = (ihp / iiw) * ciw,
+                        cvp = (ivp / iih) * cih;
+                    return [chp, cvp];
+                },
                 previewModal: function (key, config) {
                     config = helpers.alwaysObject(config);
                     config.hideAddToCart = true;
