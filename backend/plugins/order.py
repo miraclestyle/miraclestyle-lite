@@ -290,7 +290,7 @@ class AddressRuleLocation(orm.BaseModel):
   _kind = 106
   
   _use_rule_engine = False
- 
+  
   country = orm.SuperKeyProperty('1', kind='12', required=True, indexed=False)
   region = orm.SuperKeyProperty('2', kind='13', indexed=False)
   postal_code_from = orm.SuperStringProperty('3', indexed=False)
@@ -325,7 +325,6 @@ class AddressRule(orm.BaseModel):
     address_reference_key = '%s_address_reference' % self.address_type
     address_key = '%s_address' % self.address_type
     addresses_key = '%s_addresses' % self.address_type
-    default_address_key = 'default_%s' % self.address_type
     input_address_reference = context.input.get(address_reference_key)
     order_address_reference = getattr(order, address_reference_key, None)
     buyer_addresses = order.key_parent.get()
@@ -336,26 +335,24 @@ class AddressRule(orm.BaseModel):
       if self.validate_address(buyer_address):
         if not filter(lambda x: x.key == buyer_address.key, valid_addresses):
           valid_addresses.append(buyer_address)
-        if getattr(buyer_address, default_address_key):
-          default_address = buyer_address
     if not len(valid_addresses):
       raise PluginError('no_valid_address')
     context.output[addresses_key] = valid_addresses
-    if (default_address is None) and len(valid_addresses):
-      default_address = valid_addresses[0]
     input_address_reference_result = filter(lambda x: x.key == input_address_reference, valid_addresses)
     order_address_reference_result = filter(lambda x: x.key == order_address_reference, valid_addresses)
     if input_address_reference_result:
       default_address = input_address_reference_result[0]
     elif order_address_reference_result:
-      default_address = valid_addresses[0]
+      default_address = valid_addresses[0]  # @todo What's the deal with the "elif order_address_reference_result:" when not used here ?
+    else:
+      default_address = valid_addresses[0]  # @todo Note: Since we don't have default_ address anymore, this naturaly fits here!
     no_address_set = getattr(order, address_reference_key, None) is None
-    if default_address and (input_address_reference or no_address_set):
+    if default_address and (input_address_reference or no_address_set):  # @todo Why don't we check ... or order_address_reference instead of no_address_set?
       setattr(order, address_reference_key, default_address.key)
       setattr(order, address_key, default_address.get_location())
-      context.output[default_address_key] = default_address
+      context.output['default_%s' % self.address_type] = default_address  # @todo Not sure if client needs this output value anymore!?
       no_address_set = False
-    if no_address_set:
+    if no_address_set:  # @todo Could we go with else: block here if the previous one failed?
       raise PluginError('no_address_found')
   
   def validate_address(self, address):
