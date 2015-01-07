@@ -364,6 +364,10 @@ class AddressRule(orm.BaseModel):
     __cmp__(self, other)
       return len(self) > len(other)
       
+      One way to deal with this is to use postal_codes repeated string property on backend, and
+      provide a user with UI tool where he can build a list of postal codes using
+      postal_code_from and postal_code_to integers, or manually specify each individual postal code.
+      Comparison can be much easier than.
     '''
     if self.exclusion:
       # Shipping only at the following locations.
