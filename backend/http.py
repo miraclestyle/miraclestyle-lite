@@ -368,13 +368,11 @@ class Reset(BaseTestHandler):
     blobstore.delete(blobstore.BlobInfo.all().fetch(None, keys_only=True))
     mem.flush_all()
 
-class MakeDefaults(BaseTestHandler):
+class LoginAs(BaseTestHandler):
 
   def respond(self):
-    import iom
     iom.Engine.init()
-    if self.request.get('populate'):
-      pass
+    pass
 
 
 class TestAsync(BaseTestHandler):

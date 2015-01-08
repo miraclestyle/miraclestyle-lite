@@ -53,7 +53,6 @@ FEEDBACK_ALLOWED_DAYS = 7
 HOST_URL = None
 if DEVELOPMENT_SERVER:
   HOST_URL = 'http://128.65.105.64:9982'
-  # HOST_URL = 'http://localhost:9982'
 
 if HOST_URL is None:
   def __discover_host_url():
@@ -76,6 +75,10 @@ PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 # BLOB Handling
 BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 
+OAUTH2_REDIRECT_URI = HOST_URL
+if DEVELOPMENT_SERVER:
+  OAUTH2_REDIRECT_URI = 'http://localhost:9982'
+
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
    'client_id'    : '659759206787-v5nj4qd1k6trkv6kttkc9rt92ojkcvtu.apps.googleusercontent.com',
@@ -83,7 +86,7 @@ GOOGLE_OAUTH2 = {
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : '%s/api/account/login/google' % HOST_URL,
+   'redirect_uri' : '%s/api/account/login/google' % OAUTH2_REDIRECT_URI,
    'type' : 1,
    'accountinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
@@ -94,7 +97,7 @@ FACEBOOK_OAUTH2 = {
    'scope'        : ",".join(['email']),
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : '%s/api/account/login/facebook' % HOST_URL,
+   'redirect_uri' : '%s/api/account/login/facebook' % OAUTH2_REDIRECT_URI,
    'type' : 2,
    'accountinfo' : 'https://graph.facebook.com/me',
 }

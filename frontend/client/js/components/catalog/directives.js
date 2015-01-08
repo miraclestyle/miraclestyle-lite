@@ -81,7 +81,13 @@
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
-                var content = element.find('.catalog-view-menu-content');
+                var root = element.parents('.modal:first'),
+                    content = element.find('.catalog-view-menu-content'),
+                    imagesHolder = root.find('.image-slider-outer'),
+                    viewControls = root.find('.catalog-view-controls'),
+                    cssWidth = imagesHolder.css('width'),
+                    viewControlsRight = parseInt(viewControls.css('right'), 10),
+                    contentWidth = parseInt(content.css('width'), 10);
                 scope.menu = {
                     hide: true,
                     init: false,
@@ -91,13 +97,17 @@
                         var that = this;
                         $timeout(function () {
                             if (!that.hide) {
-                                if (!content.data('width')) {
-                                    content.data('width', parseInt(content.css('width'), 10));
-                                }
-                                var width = content.data('width');
+                                var width = contentWidth;
                                 if (width > $(window).width()) {
                                     width = $(window).width();
+                                } else {
+                                    viewControls.stop().animate({
+                                        right: parseInt(viewControlsRight, 10) + width
+                                    }, 50);
                                 }
+                                imagesHolder.stop().animate({
+                                    width: imagesHolder.width() - width
+                                }, 50);
                                 content.stop().width(0).css('visibility', 'visible').show().animate({
                                     width: width
                                 }, 50, function () {
@@ -105,6 +115,12 @@
                                 });
 
                             } else {
+                                imagesHolder.stop().animate({
+                                    width: cssWidth
+                                }, 50);
+                                viewControls.stop().animate({
+                                    right: viewControlsRight
+                                }, 50);
                                 content.stop().animate({
                                     width: 0
                                 }, 50, function () {
