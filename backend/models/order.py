@@ -163,19 +163,17 @@ class Order(orm.BaseExpando):
   state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'completed', 'canceled'])
   date = orm.SuperDateTimeProperty('5', required=True)
   seller_reference = orm.SuperKeyProperty('6', kind='23', required=True)
-  billing_address_reference = orm.SuperKeyProperty('8', kind='14', required=True, indexed=False)
-  shipping_address_reference = orm.SuperKeyProperty('9', kind='14', required=True, indexed=False)
-  billing_address = orm.SuperLocalStructuredProperty('121', '10', required=True)
-  shipping_address = orm.SuperLocalStructuredProperty('121', '11', required=True)
-  currency = orm.SuperLocalStructuredProperty('17', '12', required=True)
-  untaxed_amount = orm.SuperDecimalProperty('13', required=True, indexed=False)
-  tax_amount = orm.SuperDecimalProperty('14', required=True, indexed=False)
-  total_amount = orm.SuperDecimalProperty('15', required=True, indexed=False)
-  feedback = orm.SuperStringProperty('16', choices=['positive', 'neutral', 'negative'])
-  feedback_adjustment = orm.SuperStringProperty('17', choices=['revision', 'reported', 'sudo'])
-  payment_method = orm.SuperKeyProperty('18', required=False, indexed=False)
-  payment_status = orm.SuperStringProperty('19', required=False, indexed=False)
-  carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '20')
+  billing_address = orm.SuperLocalStructuredProperty('121', '7', required=True)
+  shipping_address = orm.SuperLocalStructuredProperty('121', '8', required=True)
+  currency = orm.SuperLocalStructuredProperty('17', '9', required=True)
+  untaxed_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
+  tax_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
+  total_amount = orm.SuperDecimalProperty('12', required=True, indexed=False)
+  feedback = orm.SuperStringProperty('13', choices=['positive', 'neutral', 'negative'])
+  feedback_adjustment = orm.SuperStringProperty('14', choices=['revision', 'reported', 'sudo'])
+  payment_method = orm.SuperKeyProperty('15', required=False, indexed=False)
+  payment_status = orm.SuperStringProperty('16', required=False, indexed=False)
+  carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '17')
   
   _default_indexed = False
   
@@ -425,8 +423,8 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
-            Set(cfg={'d': {'_order.billing_address_reference': 'input.billing_address_reference',
-                           '_order.shipping_address_reference': 'input.shipping_address_reference',
+            Set(cfg={'d': {'_order.billing_address.reference': 'input.billing_address_reference',
+                           '_order.shipping_address.reference': 'input.shipping_address_reference',
                            '_order.payment_method': 'input.payment_method',
                            '_order._lines': 'input._lines'}}),
             ProductSpecs(),

@@ -10,7 +10,7 @@ import inspect
 import json
 import cProfile
 import pstats
-import StringIO
+import cStringIO
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
@@ -238,7 +238,7 @@ class Engine:
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
       if settings.PROFILING:
         pr.disable()
-        s = StringIO.StringIO()
+        s = cStringIO.StringIO()
         sortby = 'cumulative'
         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
         ps.print_stats()

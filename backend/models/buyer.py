@@ -19,20 +19,21 @@ class BuyerLocation(orm.BaseExpando):
   
   _kind = 121
   
-  name = orm.SuperStringProperty('1', required=True, indexed=False)
-  country = orm.SuperStringProperty('2', required=True, indexed=False)
-  country_code = orm.SuperStringProperty('3', required=True, indexed=False)
-  city = orm.SuperStringProperty('4', required=True, indexed=False)
-  postal_code = orm.SuperStringProperty('5', required=True, indexed=False)
-  street = orm.SuperStringProperty('6', required=True, indexed=False)
+  reference = orm.SuperKeyProperty('1', kind='14', required=True, indexed=False)
+  name = orm.SuperStringProperty('2', required=True, indexed=False)
+  country = orm.SuperStringProperty('3', required=True, indexed=False)
+  country_code = orm.SuperStringProperty('4', required=True, indexed=False)
+  city = orm.SuperStringProperty('5', required=True, indexed=False)
+  postal_code = orm.SuperStringProperty('6', required=True, indexed=False)
+  street = orm.SuperStringProperty('7', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'region': orm.SuperStringProperty('7'),
-    'region_code': orm.SuperStringProperty('8'),
-    'email': orm.SuperStringProperty('9'),
-    'telephone': orm.SuperStringProperty('10')
+    'region': orm.SuperStringProperty('8'),
+    'region_code': orm.SuperStringProperty('9'),
+    'email': orm.SuperStringProperty('10'),
+    'telephone': orm.SuperStringProperty('11')
     }
 
 
@@ -65,7 +66,8 @@ class BuyerAddress(orm.BaseExpando):
     location = self
     location_country = location.country.get()
     location_region = location.region.get()
-    return BuyerLocation(name=location.name,
+    return BuyerLocation(reference=self.key,
+                    name=location.name,
                     country=location_country.name,
                     country_code=location_country.code,
                     region=location_region.name,
