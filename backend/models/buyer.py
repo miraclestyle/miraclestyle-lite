@@ -67,16 +67,16 @@ class BuyerAddress(orm.BaseExpando):
     location_country = location.country.get()
     location_region = location.region.get()
     return BuyerLocation(reference=self.key,
-                    name=location.name,
-                    country=location_country.name,
-                    country_code=location_country.code,
-                    region=location_region.name,
-                    region_code=location_region.code,
-                    city=location.city,
-                    postal_code=location.postal_code,
-                    street=location.street,
-                    email=location.email,
-                    telephone=location.telephone)
+                         name=location.name,
+                         country=location_country.name,
+                         country_code=location_country.code,
+                         region=location_region.name,
+                         region_code=location_region.code,
+                         city=location.city,
+                         postal_code=location.postal_code,
+                         street=location.street,
+                         email=location.email,
+                         telephone=location.telephone)
 
 
 class Buyer(orm.BaseExpando):

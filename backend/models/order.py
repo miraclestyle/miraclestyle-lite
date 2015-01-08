@@ -55,16 +55,16 @@ class OrderProduct(orm.BaseExpando):
     'volume': orm.SuperDecimalProperty('11'),
     'volume_uom': orm.SuperLocalStructuredProperty('17', '12')
     }
-
+  
   _virtual_fields = {
     '_reference': orm.SuperComputedProperty(lambda self: self._build_reference())
     }
-
+  
   def _build_reference(self):
     if not self.reference:
       return None
     return self.reference.structure()
-
+  
   @classmethod
   def get_partial_reference_key_path(cls, reference_key):
     real_product_key = list(reference_key.pairs())
@@ -78,7 +78,7 @@ class OrderCarrier(orm.BaseExpando):
   _kind = 123
   
   _use_rule_engine = False
-
+  
   description = orm.SuperTextProperty('1', required=True)
   reference = orm.SuperVirtualKeyProperty('2', kind='113', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('3', required=True, indexed=False)
@@ -98,7 +98,7 @@ class OrderLine(orm.BaseExpando):
   
   sequence = orm.SuperIntegerProperty('1', required=True)
   product = orm.SuperLocalStructuredProperty(OrderProduct, '2', required=True)
-  taxes = orm.SuperLocalStructuredProperty(OrderTax, '3', repeated=True)
+  taxes = orm.SuperLocalStructuredProperty(OrderTax, '4', repeated=True)
   discount = orm.SuperDecimalProperty('5', required=True, indexed=False)
   subtotal = orm.SuperDecimalProperty('6', required=True, indexed=False)
   discount_subtotal = orm.SuperDecimalProperty('7', required=True, indexed=False)
@@ -106,7 +106,7 @@ class OrderLine(orm.BaseExpando):
   total = orm.SuperDecimalProperty('9', required=True, indexed=False)
   
   _default_indexed = False
-
+  
   @classmethod
   def prepare_key(cls, input, **kwargs):
     parent = kwargs.get('parent')
@@ -114,7 +114,7 @@ class OrderLine(orm.BaseExpando):
     reference = product.get('reference')
     rebuilt_reference = OrderProduct.get_partial_reference_key_path(reference)
     return cls.build_key(hashlib.md5('%s-%s' % (rebuilt_reference.urlsafe(), json.dumps(product.get('variant_signature')))).hexdigest(), parent=parent)
-
+  
   def prepare(self, **kwargs):
     parent = kwargs.get('parent')
     product = self.product.value
@@ -130,11 +130,11 @@ class OrderMessage(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   agent = orm.SuperKeyProperty('2', kind='11', required=True, indexed=False)
-  body = orm.SuperTextProperty('3', required=True, indexed=False)
-  action = orm.SuperKeyProperty('4', kind='1', required=True)
+  action = orm.SuperKeyProperty('3', kind='1', required=True)
+  body = orm.SuperTextProperty('4', required=True, indexed=False)
   
   _default_indexed = True
-
+  
   _virtual_fields = {
     '_agent': orm.SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
                                      format_callback=lambda self, value: self._retrieve_agent_name(value)),
@@ -146,7 +146,7 @@ class OrderMessage(orm.BaseExpando):
   
   def _retreive_agent(self):
     return self.agent.get_async()
-
+  
   def _retrieve_action(self):
     if not self.action:
       return ''
@@ -175,18 +175,6 @@ class Order(orm.BaseExpando):
   carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '16')
   
   _default_indexed = False
-  
-  def _get_payment_method(self):
-    self._seller.read()
-    if self._seller.value:
-      self._seller.value._plugin_group.read()
-      if self._seller.value._plugin_group.value:
-        for plugin in self._seller.value._plugin_group.value.plugins:
-          if plugin.key == self.payment_method:
-            return plugin
-          # values of the payment method must be controlled for public
-          # because we do not have permission system for remoteStructuredProperty (for multiple kinds)
-    return None
   
   _virtual_fields = {
     '_seller': orm.SuperReferenceStructuredProperty('23', target_field='seller_reference', autoload=True),
@@ -240,10 +228,8 @@ class Order(orm.BaseExpando):
                            'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
                            or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
-                           'not account._is_guest and ((entity._original.key_root == account.key \
-                           and entity._original.state == "cart") or (entity._original.seller_reference \
-                           and entity._original.seller_reference._root == account.key \
-                           and entity._original.state == "checkout"))'),
+                           'not account._is_guest and (entity._original.key_root == account.key \
+                           and entity._original.state == "cart")'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
                            'action.key_id_str == "search" and (account._root_admin \
                             or (not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference" \
@@ -282,17 +268,16 @@ class Order(orm.BaseExpando):
                            'account._root_admin and entity._original.state == "completed" \
                            and entity._is_feedback_allowed'),
       # @todo Implement field permissions!
-      orm.FieldPermission('34', ['created', 'updated', 'name', 'state', 'date', 'seller_reference',
-                                 'billing_address_reference', 'shipping_address_reference', 'billing_address',
-                                 'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
-                                 'feedback', 'carrier', 'feedback_adjustment', 'payment_status', 'payment_method',
+      orm.FieldPermission('34', ['created', 'updated', 'state', 'date', 'seller_reference',
+                                 'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
+                                 'tax_amount', 'total_amount', 'feedback', 'carrier',
+                                 'feedback_adjustment', 'payment_status', 'payment_method',
                                  '_lines', '_messages','_payment_method', '_records', '_seller'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and (entity._original.key_root == account.key or (entity._original.seller_reference \
                           and entity._original.seller_reference._root == account.key)))'),
-      orm.FieldPermission('34', ['name', 'date', 'seller_reference',
-                                 'billing_address_reference', 'shipping_address_reference', 'billing_address',
-                                 'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
+      orm.FieldPermission('34', ['date', 'seller_reference', 'billing_address', 'shipping_address',
+                                 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                  'payment_method', '_lines', '_messages', 'carrier', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update_line"'),
@@ -307,8 +292,7 @@ class Order(orm.BaseExpando):
                           'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
                            or (entity._original.seller_reference \
                            and entity._original.seller_reference._root == account.key)))'),
-      orm.FieldPermission('34', ['billing_address_reference', 'shipping_address_reference',
-                                 'shipping_address', 'billing_address', '_lines', 'carrier',
+      orm.FieldPermission('34', ['shipping_address', 'billing_address', '_lines', 'carrier',
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str in ["view_order", "update"]'),
@@ -323,10 +307,7 @@ class Order(orm.BaseExpando):
                           and entity._original.state == "checkout" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
-                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
-      orm.FieldPermission('34', ['_lines.discount'], True, True,
-                          'entity._original.seller_reference and entity._original.seller_reference._root == account.key \
-                          and entity._original.state == "checkout"')
+                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")')
       ]
     )
   
@@ -423,9 +404,7 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
-            Set(cfg={'d': {'_order.billing_address.reference': 'input.billing_address_reference',
-                           '_order.shipping_address.reference': 'input.shipping_address_reference',
-                           '_order.payment_method': 'input.payment_method',
+            Set(cfg={'d': {'_order.payment_method': 'input.payment_method',
                            '_order._lines': 'input._lines'}}),
             ProductSpecs(),
             PluginExec(),
@@ -697,3 +676,15 @@ class Order(orm.BaseExpando):
   def _is_feedback_allowed(self):
     # if the order.date is not older than x days
     return self.date > (datetime.datetime.now() - datetime.timedelta(days=settings.FEEDBACK_ALLOWED_DAYS))
+  
+  def _get_payment_method(self):
+    self._seller.read()
+    if self._seller.value:
+      self._seller.value._plugin_group.read()
+      if self._seller.value._plugin_group.value:
+        for plugin in self._seller.value._plugin_group.value.plugins:
+          if plugin.key == self.payment_method:
+            return plugin
+          # values of the payment method must be controlled for public
+          # because we do not have permission system for remoteStructuredProperty (for multiple kinds)
+    return None

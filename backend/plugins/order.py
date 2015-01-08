@@ -57,6 +57,7 @@ class OrderInit(orm.BaseModel):
     context._order = order
 
 
+# This is system plugin, which means end user can not use it!
 class PluginExec(orm.BaseModel):
   
   _kind = 114
@@ -164,8 +165,9 @@ class UpdateOrderLine(orm.BaseModel):
         lines = []
       lines.append(new_line)
       order._lines = lines
-      
 
+
+# This is system plugin, which means end user can not use it!
 class ProductSpecs(orm.BaseModel):
   
   _kind = 115
@@ -327,7 +329,7 @@ class AddressRule(orm.BaseModel):
     address_key = '%s_address' % self.address_type
     addresses_key = '%s_addresses' % self.address_type
     input_address_reference = context.input.get(address_reference_key)
-    order_address = getattr(order, address_key, None)
+    order_address = getattr(order, address_key)
     order_address = order_address.value
     buyer_addresses = order.key_parent.get()
     buyer_addresses.read() # read locals
@@ -340,14 +342,14 @@ class AddressRule(orm.BaseModel):
     if not len(valid_addresses):
       raise PluginError('no_valid_address')
     context.output[addresses_key] = valid_addresses
-    order_address_reference_result = None
-    input_address_reference_result = filter(lambda x: x.key == input_address_reference, valid_addresses)
+    input_address_value = filter(lambda x: x.key == input_address_reference, valid_addresses)
+    order_address_value = None
     if order_address:
-      order_address_reference_result = filter(lambda x: x.key == order_address.key, valid_addresses)
-    if input_address_reference_result:
-      default_address = input_address_reference_result[0]
-    elif order_address_reference_result:
-      default_address = order_address_reference_result[0]
+      order_address_value = filter(lambda x: x.key == order_address.reference, valid_addresses)
+    if input_address_value:
+      default_address = input_address_value[0]
+    elif order_address_value:
+      default_address = order_address_value[0]
     else:
       default_address = valid_addresses[0]
     if default_address:
@@ -396,7 +398,7 @@ class AddressRule(orm.BaseModel):
           allowed = self.exclusion
           break
     return allowed
-  
+
 
 class OrderCurrency(orm.BaseModel):
   
@@ -418,7 +420,8 @@ class OrderCurrency(orm.BaseModel):
     order = context._order
     # In context of add_to_cart action runner does the following:
     order.currency = copy.deepcopy(self.currency.get())
-    
+
+
 class PaymentMethod(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
@@ -434,11 +437,10 @@ class PaymentMethod(orm.BaseModel):
     if not self.active:
       return # inactive payment
     if 'payment_methods' not in context.output:
-      context.output['payment_methods'] = []  
+      context.output['payment_methods'] = []
     context.output['payment_methods'].append({'key': self.key,
                                               'system_name': self._get_system_name(),
                                               'name': self._get_name()})
-
 
 
 # This plugin is incomplete!
@@ -467,7 +469,7 @@ class PayPalPayment(PaymentMethod):
     super(PayPalPayment, self).run(context)
     # currently we only support paypal, so its enforced by default
     context._order.payment_method = self.key
-    
+  
   def complete(self, context):
     # @todo Remove settings from here, from ALL PLUGINS!!
     if settings.PAYPAL_SANDBOX:
@@ -525,7 +527,7 @@ class PayPalPayment(PaymentMethod):
     if (order.key.urlsafe() != ipn['invoice']): # @todo we do not use order.name here anymore, but we could after we decide on how to uniquely build it
       mismatches.append('invoice')
     if (shipping_address.country != ipn['address_country']):
-      mismatches.append('address_country')    
+      mismatches.append('address_country')
     if (shipping_address.country_code != ipn['address_country_code']):
       mismatches.append('address_country_code')
     if (shipping_address.city != ipn['address_city']):
@@ -584,7 +586,7 @@ class PayPalPayment(PaymentMethod):
       log('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
     log('Set Order state %s' % order.state)
     log('Set Order payment_status %s' % order.payment_status)
-    
+
 
 class Tax(orm.BaseModel):
   
@@ -654,14 +656,15 @@ class Tax(orm.BaseModel):
 
   def validate_tax(self, order):
     address = None
-    address_reference_key = '%s_address_reference' % self.address_type
-    order_address_reference = getattr(order, address_reference_key, None)
-    if order_address_reference is None:
+    address_key = '%s_address' % self.address_type
+    order_address = getattr(order, address_key)
+    order_address = order_address.value
+    if order_address is None:
       return False
     buyer_addresses = order.key_parent.get()
     buyer_addresses.read()
     for buyer_address in buyer_addresses.addresses.value:
-      if buyer_address.key == order_address_reference:
+      if buyer_address.key == order_address.reference:
         address = buyer_address
         break
     if address is None:
@@ -785,7 +788,6 @@ class Carrier(orm.BaseModel):
       context.output['carriers'].append({'name': self.name,
                                          'price': carrier_price,
                                          'key': self.key})
- 
   
   def calculate_lines(self, valid_lines, order):
     if not order._lines.value:
@@ -793,7 +795,7 @@ class Carrier(orm.BaseModel):
     total = Decimal('0')
     for line in order._lines.value:
       product = line.product.value
-      carrier_lines_prices = [] 
+      carrier_lines_prices = []
       for carrier_line in valid_lines:
         rule_line_prices = []
         rules = carrier_line.rules.value
@@ -826,7 +828,7 @@ class Carrier(orm.BaseModel):
   
   def validate_line(self, carrier_line, order):
     address = None
-    order_address = getattr(order, 'shipping_address', None)
+    order_address = getattr(order, 'shipping_address')
     order_address = order_address.value
     if order_address is None:
       return False
@@ -883,8 +885,8 @@ class Carrier(orm.BaseModel):
       else:
         allowed = True # if no rules were provided, its considered truthly
     return allowed
- 
- 
+
+
 class OrderProcessPayment(orm.BaseModel):
   
   _kind = 118
@@ -903,8 +905,8 @@ class OrderProcessPayment(orm.BaseModel):
     ipn = context.input['request']['params']
     order_key = orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
     return order_key.get()
-    
-    
+
+
 class SetMessage(orm.BaseModel):
   
   _kind = 119
