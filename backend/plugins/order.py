@@ -793,9 +793,9 @@ class Carrier(orm.BaseModel):
     total = Decimal('0')
     for line in order._lines.value:
       product = line.product.value
-      carrier_line = [] 
+      carrier_lines_prices = [] 
       for carrier_line in valid_lines:
-        line_prices = []
+        rule_line_prices = []
         rules = carrier_line.rules.value
         if rules:
           for rule in carrier_line.rules.value:
@@ -816,11 +816,11 @@ class Carrier(orm.BaseModel):
                 'price_value': rule.price_value,
               }
               price = safe_eval(price_calculation, price_data)
-              line_prices.append(price)
+              rule_line_prices.append(price)
         else:
-          line_prices.append(Decimal('0'))
-        carrier_lines.append(min(line_prices))
-      total = total + min(carrier_prices)  # Return the lowest price possible of all lines!
+          rule_line_prices.append(Decimal('0'))
+        carrier_lines_prices.append(min(rule_line_prices))
+      total = total + min(carrier_lines_prices)  # Return the lowest price possible of all lines!
     return total
     
   
