@@ -6,26 +6,26 @@ indexes:
   - name: l
     direction: desc
 
-# Country    
+# Country
 - kind: '12'
   properties:
   - name: '3'
   - name: '2'
 
-# CountrySubdivision  
+# CountrySubdivision
 - kind: '13'
   ancestor: yes
   properties:
   - name: '6'
   - name: '3'
 
-# CatalogImage  
+# CatalogImage
 - kind: '30'
   ancestor: yes
   properties:
   - name: '7'
 
-# Catalog Image  
+# Catalog Image
 - kind: '30'
   ancestor: yes
   properties:
@@ -37,7 +37,7 @@ indexes:
   ancestor: yes
   properties:
   - name: '1'
-  
+
 - kind: '31'
   ancestor: yes
   properties:
@@ -49,7 +49,7 @@ indexes:
   properties:
   - name: '8'
   - name: '2'
-  
+
 - kind: '17'
   properties:
   - name: '1'
@@ -61,13 +61,21 @@ indexes:
   - name: '8'
   - name: '1'
 
-# Order  
+# Order
 - kind: '34'
   ancestor: yes
   properties:
   - name: '1'
 
-# Order
+- kind: '34'
+  ancestor: yes
+  properties:
+  - name: '3'
+  - name: '1'
+    direction: desc
+  - name: '__key__'
+    direction: desc
+
 - kind: '34'
   properties:
   - name: '16'
@@ -75,19 +83,26 @@ indexes:
   - name: '6'
   - name: '5'
 
-# OrderLine  
+# OrderLine
 - kind: '33'
   ancestor: yes
   properties:
   - name: '1'
 
-# OrderMessage  
+# OrderMessage
 - kind: '35'
   ancestor: yes
   properties:
   - name: '1'
 
-# CountrySubdivision  
+# OrderMessage
+- kind: '35'
+  ancestor: yes
+  properties:
+  - name: '1'
+    direction: desc
+
+# CountrySubdivision
 - kind: '13'
   properties:
   - name: '6'
@@ -103,13 +118,6 @@ indexes:
 
 # CatalogProductInstance.sequence desc
 - kind: '27'
-  ancestor: yes
-  properties:
-  - name: '1'
-    direction: desc
-
-# OrderMessage
-- kind: '35'
   ancestor: yes
   properties:
   - name: '1'

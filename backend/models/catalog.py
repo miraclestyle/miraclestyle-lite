@@ -10,6 +10,7 @@ import json
 
 import orm, settings, mem
 from models.base import *
+from models.unit import *
 from plugins.base import *
 from plugins.catalog import *
 from util import *
@@ -208,6 +209,7 @@ class CatalogProduct(orm.BaseExpando):
                           {'ancestor': True, 'filters': [], 'orders': [('sequence', ['desc'])]}],
             }}),
     '_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='category'),
+    '_uom': orm.SuperReferenceStructuredProperty('17', target_field='uom', autoload=True),
     '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
     '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom'),
     }

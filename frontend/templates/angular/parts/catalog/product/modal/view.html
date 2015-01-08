@@ -28,27 +28,28 @@
                             <h1 class="product-name">{{product.name}}</h1>
                             <div class="product-code">{{product.code}}</div>
                             <div class="product-description">{{product.description}}</div>
-                            <div class="product-price">
-                                {{product.unit_price|displayCurrency:catalog._seller._currency}} ({{catalog._seller._currency.code}})
-                            </div>
-                            <div class="product-availability">{{product.availability}}</div>
-                            <div class="product-user-cart-quantity">{{productQuantity}} in your cart.</div>
                             <div ng-if="product.contents.length" class="product-contents">
                                 <div ng-repeat="content in product.contents track by content.key" class="product-content-item">
                                     <button ng-click="viewContent(content)" type="button" class="button">{{content.title}}</button>
                                 </div>
                             </div>
+                            <div class="product-price">
+                                {{product.unit_price|displayCurrency:catalog._seller._currency}} ({{catalog._seller._currency.code}})
+                            </div>
+                            <div class="product-availability">{{product.availability}}</div>
                             <div class="product-variant-selection" ng-if="variantSelection.length">
                                 <div form-builder="variantSelection"></div>
                             </div>
-
-
-                          <div class="product-quantity-wrapper clearfix">
+                          <div class="form-control">
+                            <label class="form-label">
+                              Quantity ({{product._uom.name}})
+                            </label>
+                            <div class="form-input">
                               <button ng-click="decreaseQuantity()" loading="!canAddToCart" type="button" class="button product-quantity-button">-</button>
-                              <input class="product-quantity-input" ng-disabled="!canAddToCart" type="numeric" ng-model="productQuantity"/>
+                              <input class="text-input product-quantity-input" ng-disabled="!canAddToCart" type="numeric" ng-model="productQuantity"/>
                               <button ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="button product-quantity-button">+</button>
+                            </div>
                           </div>
-
                         </div>
                     </div>
 

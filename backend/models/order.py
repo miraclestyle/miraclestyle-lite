@@ -212,7 +212,8 @@ class Order(orm.BaseExpando):
         }
       }),
     '_records': orm.SuperRecordProperty('34'),
-    '_payment_method': orm.SuperReferenceProperty(callback=_get_payment_method, format_callback=lambda self, value: value),
+    '_payment_method': orm.SuperReferenceProperty(callback=lambda self: self._get_payment_method(),
+                                                  format_callback=lambda self, value: value),
   }
   
   _global_role = GlobalRole(
@@ -296,15 +297,12 @@ class Order(orm.BaseExpando):
                                  'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str in ["view_order", "update"]'),
-      orm.FieldPermission('34', ['_lines.sequence', '_lines.product','_lines.discount', '_lines.taxes'], False, None,
+      orm.FieldPermission('34', ['_lines.sequence', '_lines.product', '_lines.discount', '_lines.taxes'], False, None,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
-      orm.FieldPermission('34', ['_lines.discount', '_lines.subtotal',
-                                 '_lines.discount_subtotal', '_lines.total',
-                                 'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
-                          'not account._is_guest and entity._original.seller_reference \
-                          and entity._original.seller_reference._root == account.key \
-                          and entity._original.state == "checkout" and action.key_id_str == "update"'),
+      orm.FieldPermission('34', ['_lines.product.quantity'], True, None,
+                          'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
                           or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")')
