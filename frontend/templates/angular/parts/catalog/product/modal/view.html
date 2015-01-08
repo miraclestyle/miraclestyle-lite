@@ -41,6 +41,14 @@
                             <div class="product-variant-selection" ng-if="variantSelection.length">
                                 <div form-builder="variantSelection"></div>
                             </div>
+
+
+                          <div class="product-quantity-wrapper clearfix">
+                              <button ng-click="decreaseQuantity()" loading="!canAddToCart" type="button" class="button product-quantity-button">-</button>
+                              <input class="product-quantity-input" ng-disabled="!canAddToCart" type="numeric" ng-model="productQuantity"/>
+                              <button ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="button product-quantity-button">+</button>
+                          </div>
+
                         </div>
                     </div>
 
@@ -52,7 +60,7 @@
                             Share
                         </button>
                         <button type="button" ng-click="addToCart()" loading="!canAddToCart" class="button">
-                            Add To Cart
+                            Update Cart
                         </button>
                         <button type="button" loading class="button" ng-click="close()">
                             Close

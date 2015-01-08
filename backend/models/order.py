@@ -45,14 +45,15 @@ class OrderProduct(orm.BaseExpando):
   code = orm.SuperStringProperty('5', required=True, indexed=False)
   unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
   variant_signature = orm.SuperJsonProperty('7', required=True, default={}, indexed=False)
+  quantity = orm.SuperDecimalProperty('8', required=True, indexed=False)
   
   _default_indexed = False
   
   _expando_fields = {
-    'weight': orm.SuperDecimalProperty('8'),
-    'weight_uom': orm.SuperLocalStructuredProperty('17', '9'),
-    'volume': orm.SuperDecimalProperty('10'),
-    'volume_uom': orm.SuperLocalStructuredProperty('17', '11')
+    'weight': orm.SuperDecimalProperty('9'),
+    'weight_uom': orm.SuperLocalStructuredProperty('17', '10'),
+    'volume': orm.SuperDecimalProperty('11'),
+    'volume_uom': orm.SuperLocalStructuredProperty('17', '12')
     }
 
   _virtual_fields = {
@@ -98,7 +99,6 @@ class OrderLine(orm.BaseExpando):
   sequence = orm.SuperIntegerProperty('1', required=True)
   product = orm.SuperLocalStructuredProperty(OrderProduct, '2', required=True)
   taxes = orm.SuperLocalStructuredProperty(OrderTax, '3', repeated=True)
-  quantity = orm.SuperDecimalProperty('4', required=True, indexed=False)
   discount = orm.SuperDecimalProperty('5', required=True, indexed=False)
   subtotal = orm.SuperDecimalProperty('6', required=True, indexed=False)
   discount_subtotal = orm.SuperDecimalProperty('7', required=True, indexed=False)
@@ -159,21 +159,20 @@ class Order(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  name = orm.SuperStringProperty('3', required=True)  # @todo Not sure if we need this, or how to use it to construct some unique order name? # possible usage of sharding if we want for example SAJ-<incremented id of order> or just use key.id() ?
-  state = orm.SuperStringProperty('4', required=True, default='cart', choices=['cart', 'checkout', 'completed', 'canceled'])
-  date = orm.SuperDateTimeProperty('5', required=True)
-  seller_reference = orm.SuperKeyProperty('6', kind='23', required=True)
-  billing_address = orm.SuperLocalStructuredProperty('121', '7', required=True)
-  shipping_address = orm.SuperLocalStructuredProperty('121', '8', required=True)
-  currency = orm.SuperLocalStructuredProperty('17', '9', required=True)
-  untaxed_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
-  tax_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
-  total_amount = orm.SuperDecimalProperty('12', required=True, indexed=False)
-  feedback = orm.SuperStringProperty('13', choices=['positive', 'neutral', 'negative'])
-  feedback_adjustment = orm.SuperStringProperty('14', choices=['revision', 'reported', 'sudo'])
-  payment_method = orm.SuperKeyProperty('15', required=False, indexed=False)
-  payment_status = orm.SuperStringProperty('16', required=False, indexed=False)
-  carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '17')
+  state = orm.SuperStringProperty('3', required=True, default='cart', choices=['cart', 'checkout', 'completed', 'canceled'])
+  date = orm.SuperDateTimeProperty('4', required=True)
+  seller_reference = orm.SuperKeyProperty('5', kind='23', required=True)
+  billing_address = orm.SuperLocalStructuredProperty('121', '6', required=True)
+  shipping_address = orm.SuperLocalStructuredProperty('121', '7', required=True)
+  currency = orm.SuperLocalStructuredProperty('17', '8', required=True)
+  untaxed_amount = orm.SuperDecimalProperty('9', required=True, indexed=False)
+  tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
+  total_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
+  feedback = orm.SuperStringProperty('12', choices=['positive', 'neutral', 'negative'])
+  feedback_adjustment = orm.SuperStringProperty('13', choices=['revision', 'reported', 'sudo'])
+  payment_method = orm.SuperKeyProperty('14', required=False, indexed=False)
+  payment_status = orm.SuperStringProperty('15', required=False, indexed=False)
+  carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '16')
   
   _default_indexed = False
   
@@ -232,7 +231,7 @@ class Order(orm.BaseExpando):
     permissions=[
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'add_to_cart')], True,
+      orm.ActionPermission('34', [orm.Action.build_key('34', 'update_line')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
       orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
@@ -296,9 +295,9 @@ class Order(orm.BaseExpando):
                                  'shipping_address', 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                  'payment_method', '_lines', '_messages', 'carrier', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart" and action.key_id_str == "add_to_cart"'),
+                           and entity._original.state == "cart" and action.key_id_str == "update_line"'),
       orm.FieldPermission('34', ['state'], True, True,
-                          '(action.key_id_str == "add_to_cart" and entity.state == "cart") \
+                          '(action.key_id_str == "update_line" and entity.state == "cart") \
                           or (action.key_id_str == "checkout" and entity.state == "checkout") \
                           or (action.key_id_str == "cancel" and entity.state == "canceled") \
                           or (action.key_id_str == "complete" and entity.state == "completed")'),
@@ -336,9 +335,10 @@ class Order(orm.BaseExpando):
     # buyer_search has to be constrained buy ancestor query, ancestor being buyer.
     # seller_search has to be constrained by query filter, with filter Order.seller_reference being seller.
     orm.Action(
-      key=orm.Action.build_key('34', 'add_to_cart'),
+      key=orm.Action.build_key('34', 'update_line'),
       arguments={
         'buyer': orm.SuperKeyProperty(kind='19', required=True),
+        'quantity': orm.SuperDecimalProperty(required=True),
         'product': orm.SuperKeyProperty(kind='28', required=True),
         'image': orm.SuperKeyProperty(kind='30', required=True),
         'variant_signature': orm.SuperJsonProperty()
@@ -349,7 +349,7 @@ class Order(orm.BaseExpando):
             Context(),
             OrderInit(),
             PluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
-            ProductToOrderLine(),
+            UpdateOrderLine(),
             ProductSpecs(),
             PluginExec(),
             OrderLineFormat(),

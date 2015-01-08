@@ -718,7 +718,7 @@ li.catalog-new-pricetag {
   font-size: 0px;
 }
 
-.cart-line-right .cart-input {
+.cart-line-right .cart-input, .product-quantity-wrapper .product-quantity-input {
   width: 50px;
   padding: 2px 4px;
   display: inline-block;
@@ -729,11 +729,11 @@ li.catalog-new-pricetag {
   float: left;
 }
 
-.cart-line-right .cart-input:focus {
+.cart-line-right .cart-input:focus, .product-quantity-input:focus {
   border: 1px solid #999999;
 }
 
-.cart-line-right.list-actions .cart-button {
+.cart-line-right.list-actions .cart-button, .product-quantity-wrapper .product-quantity-button {
   display: inline-block;
   margin: 0px;
   padding: 5px 15px;
@@ -776,4 +776,7 @@ button.cart-line-product, button.cart-line-product:hover, button.cart-line-produ
 
 .cart-messages {
   padding: 10px 0px;
+}
+.product-quantity-wrapper {
+  font-size:0px;
 }

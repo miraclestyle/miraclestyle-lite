@@ -24,7 +24,9 @@ from google.appengine.ext.ndb.model import _BaseValue
 from google.appengine.ext import blobstore
 from google.appengine.api import search, datastore_errors
 
-import mem, util, settings
+import mem
+import util
+import settings
 
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
@@ -2134,7 +2136,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         delete_entities.append(entity)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
-    for i,entity in enumerate(self._property_value):
+    for i, entity in enumerate(self._property_value):
       is_new = entity._state == 'created'
       if not self._property._addable and is_new:
         # if property does not allow new values remove it from put queue

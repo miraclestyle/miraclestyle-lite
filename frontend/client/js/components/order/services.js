@@ -92,6 +92,7 @@
                                         return orderActionsFields[action].feedback;
                                     },
                                     messageField, feedbackField;
+                                $scope.container = {};
                                 $scope.selection = {};
                                 $scope.cartMode = cartMode;
                                 $scope.sellerMode = sellerMode;
@@ -226,22 +227,6 @@
                                     $.extend($scope.order, response.data.entity);
                                     $scope.order._messages = messages;
                                 };
-
-                                $scope.increase = function (line) {
-                                    if (parseInt(line.quantity, 10) === 0) {
-                                        line.quantity = 0;
-                                    }
-                                    line.quantity = parseInt(line.quantity, 10) + 1;
-                                };
-
-                                $scope.decrease = function (line) {
-                                    if (parseInt(line.quantity, 10) === 0) {
-                                        line.quantity = 0;
-                                    }
-                                    if (line.quantity > 0) {
-                                        line.quantity = parseInt(line.quantity, 10) - 1;
-                                    }
-                                };
                                 $scope.update = function () {
                                     models['34'].actions.update({
                                         key: $scope.order.key,
@@ -266,6 +251,23 @@
                                             });
                                         });
                                     }
+                                };
+
+                                $scope.formSetPaypalFormPristine = function () {
+                                    if ($scope.container && $scope.container.paypalForm) {
+                                        $scope.container.paypalForm.$setPristine();
+                                    }
+                                };
+                                $scope.formSetPaypalFormDirty = function () {
+                                    if ($scope.container && $scope.container.paypalForm) {
+                                        $scope.container.paypalForm.$setDirty();
+                                    }
+                                };
+
+
+                                $scope.removeLine = function (line) {
+                                    line.product.quantity = 0;
+                                    $scope.formSetPaypalFormDirty();
                                 };
 
                                 $scope.messaging = {

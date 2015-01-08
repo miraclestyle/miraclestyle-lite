@@ -81,7 +81,7 @@ class PluginExec(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class ProductToOrderLine(orm.BaseModel):
+class UpdateOrderLine(orm.BaseModel):
   
   _kind = 101
   
@@ -93,6 +93,7 @@ class ProductToOrderLine(orm.BaseModel):
     order = context._order
     product_key = context.input.get('product')
     image_key = context.input.get('image')
+    quantity = context.input.get('quantity')
     if order.state != 'cart':
       raise PluginError('order_not_in_cart_state')
     variant_signature = context.input.get('variant_signature')
@@ -104,7 +105,7 @@ class ProductToOrderLine(orm.BaseModel):
         if product and real_product_key == product_key \
         and product.variant_signature == variant_signature:
           line._state = 'modified'
-          line.quantity = line.quantity + format_value('1', product.uom.value)
+          product.quantity = format_value(quantity, product.uom.value)
           line_exists = True
           break
     if not line_exists:
@@ -155,8 +156,8 @@ class ProductToOrderLine(orm.BaseModel):
           if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
             copy_product.volume = product_instance.volume
             copy_product.volume_uom = copy.deepcopy(product_instance.volume_uom.get())
+      copy_product.quantity = format_value(quantity, copy_product.uom.value)
       new_line.product = copy_product
-      new_line.quantity = format_value('1', copy_product.uom.value)
       new_line.discount = format_value('0', Unit(digits=2))
       lines = order._lines.value
       if lines is None:
@@ -187,7 +188,7 @@ class ProductSpecs(orm.BaseModel):
           total_weight = total_weight + convert_value(product.weight, product.weight_uom.value, weight_uom)
         if product.volume is not None:
           total_volume = total_volume + convert_value(product.volume, product.volume_uom.value, volume_uom)
-        total_quantity = total_quantity + convert_value(line.quantity, product.uom.value, unit_uom)
+        total_quantity = total_quantity + convert_value(product.quantity, product.uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume
     order._total_quantity = total_quantity
@@ -208,11 +209,11 @@ class OrderLineFormat(orm.BaseModel):
         if order.seller_reference._root != product.reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
         line.discount = format_value(line.discount, Unit(digits=2))
-        if line.quantity <= Decimal('0'):
+        if product.quantity <= Decimal('0'):
           line._state = 'deleted'
         else:
-          line.quantity = format_value(line.quantity, product.uom.value)
-        line.subtotal = format_value((product.unit_price * line.quantity), order.currency.value)
+          product.quantity = format_value(product.quantity, product.uom.value)
+        line.subtotal = format_value((product.unit_price * product.quantity), order.currency.value)
         if line.discount is not None:
           discount = line.discount * format_value('0.01', Unit(digits=2))  # or "/ format_value('100', Unit(digits=2))"
           line.discount_subtotal = format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
@@ -550,7 +551,7 @@ class PayPalPayment(PaymentMethod):
         mismatches.append('item_number%s' % str(line.sequence))
       if (product.name != ipn['item_name%s' % str(line.sequence)]):
         mismatches.append('item_name%s' % str(line.sequence))
-      if (line.quantity != format_value(ipn['quantity%s' % str(line.sequence)], product.uom.value)):
+      if (product.quantity != format_value(ipn['quantity%s' % str(line.sequence)], product.uom.value)):
         mismatches.append('quantity%s' % str(line.sequence))
       if (line.subtotal != format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
         mismatches.append('mc_gross_%s' % str(line.sequence))
@@ -810,7 +811,7 @@ class Carrier(orm.BaseModel):
               price_data = {
                 'weight': product.weight,
                 'volume': product.volume,
-                'quantity': line.quantity,
+                'quantity': product.quantity,
                 'price_value': rule.price_value,
               }
               price = safe_eval(price_calculation, price_data)

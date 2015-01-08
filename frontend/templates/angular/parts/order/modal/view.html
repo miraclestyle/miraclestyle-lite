@@ -33,9 +33,9 @@
         <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
               <div class="cart-lines item-list">
-                <div class="cart-line item clearfix" ng-hide="line._state === 'deleted'" ng-repeat="line in order._lines track by $index">
+                <div class="cart-line item clearfix" ng-hide="line._state === 'deleted' || line.product.quantity < 1" ng-repeat="line in order._lines track by $index">
                     <div class="cart-line-left item-left">
-                      <button loading ng-click="viewProduct(line)" class="button-transparent cart-line-product">
+                      <div class="button-transparent cart-line-product">
                         <div class="cart-line-product-name">
                           {{line.product.name}}
                         </div>
@@ -50,34 +50,30 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- <div class="cart-line-product-unit_price">
+                        <div class="cart-line-product-unit_price">
                           {{line.product.unit_price|displayCurrency:order.currency}}
-                        </div> -->
-                      </button>
+                        </div>
+                        <div>
+                          Quantity: {{line.product.quantity}}
+                        </div>
+                      </div>
                     </div>
                     <div class="cart-line-right item-right list-actions">
                         <table>
                           <tbody>
                             <tr class="cart-label">
-                              <td>Price</td>
-                              <td>Quantity ({{line.product.uom.symbol}})</td>
-                              <td ng-show="line.discount > 0 || sellerMode">Discount (%)</td>
+                              <td></td>
+                              <td ng-show="line.discount > 0">Discount (%)</td>
                               <td class="cart-line-discount_subtotal">Subtotal</td>
                             </tr>
                             <tr class="cart-value">
-                              <td>{{line.product.unit_price|displayCurrency:order.currency}}</td>
-                              <td>
-                                <div class="cart-controls">
-                                  <button ng-click="decrease(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">-</button>
-                                  <input class="cart-input" ng-disabled="!order.ui.rule.field._lines.quantity.writable" type="numeric" ng-model="line.quantity"/>
-                                  <button ng-click="increase(line)" loading="!order.ui.rule.field._lines.quantity.writable" type="button" class="button cart-button">+</button>
-                                </div>
+                              <td class="cart-line-actions">
+                                <button loading="!order.ui.rule.field._lines.product.quantity.writable" type="button" class="button" ng-click="removeLine(line)">Remove</button>
+                                <button loading type="button" class="button" ng-click="viewProduct(line)">View</button>
                               </td>
-                              <td ng-show="line.discount > 0 || sellerMode">
-                                <span ng-if="sellerMode">
-                                  <input class="cart-input" ng-disabled="!order.ui.rule.field._lines.discount.writable" type="numeric" ng-model="line.discount"/>
-                                </span>
-                                <span ng-if="!sellerMode">{{line.discount}}</span>
+                              
+                              <td ng-show="line.discount > 0">
+                                <span>{{line.discount}}</span>
                               </td>
                               <td class="cart-line-discount_subtotal">{{line.discount_subtotal|displayCurrency:order.currency}}</td>
                             </tr>
@@ -85,7 +81,7 @@
                         </table>
                         <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
                         <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
-                        <input type="hidden" value="{{line.quantity}}" name="quantity_{{line.sequence}}" />
+                        <input type="hidden" value="{{line.product.quantity}}" name="quantity_{{line.sequence}}" />
                         <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
                         <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
                     </div>
@@ -157,7 +153,7 @@
     <button loading ng-show="order.ui.rule.action.checkout.executable && order._lines.length" ng-click="checkout()" type="button" class="button">
         Checkout
     </button>
-    <button loading ng-show="order.ui.rule.action.update.executable" ng-click="update()" type="button" class="button">
+    <button loading="container.form.$pristine && container.paypalForm.$pristine" ng-show="order.ui.rule.action.update.executable" ng-click="update()" type="button" class="button">
         Update
     </button>
     <button loading ng-click="cancel()" ng-show="order.ui.rule.action.cancel.executable" type="button" class="button">

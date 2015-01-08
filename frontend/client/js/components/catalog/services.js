@@ -190,16 +190,15 @@
                                 $scope.cartProductQuantity = function () {
                                     models['34'].current(sellerKey).then(function (response) {
                                         var order = response.data.entity;
-                                        $scope.productQuantity = 0;
                                         if (order.id) {
                                             angular.forEach(order._lines, function (line) {
                                                 if (line.product._reference.parent.id === $scope.product.parent.id
                                                         && line.product._reference.id === $scope.product.id
                                                         && JSON.stringify($scope.currentVariation) === JSON.stringify(line.product.variant_signature)) {
-                                                    $scope.productQuantity = parseInt(line.quantity, 10);
+                                                    $scope.productQuantity = parseInt(line.product.quantity, 10);
                                                 }
                                             });
-                                            $scope.canAddToCart = order.ui.rule.action.add_to_cart.executable;
+                                            $scope.canAddToCart = order.ui.rule.action.update_line.executable;
                                         } else {
                                             $scope.canAddToCart = true;
                                         }
@@ -245,16 +244,27 @@
 
                                 $scope.cartProductQuantity();
 
+                                $scope.increaseQuantity = function () {
+                                    $scope.productQuantity += 1;
+                                };
+
+                                $scope.decreaseQuantity = function () {
+                                    if ($scope.productQuantity === 0) {
+                                        return;
+                                    }
+                                    $scope.productQuantity -= 1;
+                                };
+
                                 $scope.addToCart = function () {
                                     models['19'].current().then(function (response) {
-                                        return models['34'].actions.add_to_cart({
+                                        return models['34'].actions.update_line({
                                             buyer: response.data.entity.key,
                                             product: $scope.product.key,
                                             image: imageKey,
+                                            quantity: $scope.productQuantity,
                                             variant_signature: $scope.currentVariation
                                         });
                                     }).then(function (response) {
-                                        $scope.productQuantity += 1;
                                         if (config.events && config.events.addToCart) {
                                             config.events.addToCart.call(this, response);
                                         }
