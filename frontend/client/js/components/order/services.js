@@ -140,8 +140,8 @@
                                 if (cartMode) {
                                     billing_addresses = response.data.billing_addresses;
                                     shipping_addresses = response.data.shipping_addresses;
-                                    $scope.selection.billing_address = $scope.order.billing_address_reference;
-                                    $scope.selection.shipping_address = $scope.order.shipping_address_reference;
+                                    $scope.selection.billing_address = $scope.order.billing_address.reference;
+                                    $scope.selection.shipping_address = $scope.order.shipping_address.reference;
                                 } else {
                                     angular.forEach(['country', 'region'], function (field) {
                                         $scope.order.billing_address['_' + field] = {
@@ -167,7 +167,7 @@
                                         ui: {
                                             args: 'selection.billing_address',
                                             label: 'Billing Address',
-                                            writable: 'order.ui.rule.field.billing_address_reference.writable',
+                                            writable: 'order.ui.rule.field.billing_address.reference.writable',
                                             specifics: {
                                                 entities: billing_addresses,
                                                 view: displayAddress
@@ -182,7 +182,7 @@
                                         ui: {
                                             args: 'selection.shipping_address',
                                             label: 'Shipping Address',
-                                            writable: 'order.ui.rule.field.shipping_address_reference.writable',
+                                            writable: 'order.ui.rule.field.shipping_address.reference.writable',
                                             specifics: {
                                                 entities: shipping_addresses,
                                                 view: displayAddress
@@ -247,8 +247,8 @@
                                         key: $scope.order.key,
                                         payment_method: $scope.selection.payment_method,
                                         carrier: $scope.selection.carrier,
-                                        billing_address_reference: ((cartMode && !sellerMode) ? $scope.selection.billing_address : $scope.order.billing_address_reference),
-                                        shipping_address_reference: ((cartMode && !sellerMode) ? $scope.selection.shipping_address : $scope.order.shipping_address_reference),
+                                        billing_address_reference: ((cartMode && !sellerMode) ? $scope.selection.billing_address : $scope.order.billing_address.reference),
+                                        shipping_address_reference: ((cartMode && !sellerMode) ? $scope.selection.shipping_address : $scope.order.shipping_address.reference),
                                         _lines: $scope.order._lines
                                     }).then(function (response) {
                                         updateLiveEntity(response);

@@ -13,11 +13,13 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
 
+# Server side config
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True
 DO_LOGS = True
 PROFILING = False
 
+# Notify
 NOTIFY_EMAIL = 'notify-noreply@miraclestyle.com'  # Password: xZa9hv8nbWyzk67boq4Q0
 
 # Task queue settings.
@@ -61,6 +63,8 @@ if HOST_URL is None:
     return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
   HOST_URL = __discover_host_url()
 
+# Configuration files
+
 ETC_DATA_DIR = os.path.join(ROOT_DIR, 'etc', 'data')
 
 UOM_DATA_FILE = os.path.join(ETC_DATA_DIR, 'uom.xml')
@@ -69,7 +73,7 @@ CURRENCY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'currency.xml')
 ORDER_ACCOUNT_CHART_DATA_FILE = os.path.join(ETC_DATA_DIR, 'order_account_chart.xml')
 PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 
-
+# BLOB Handling
 BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
@@ -99,7 +103,15 @@ LOGIN_METHODS = {
     'google': {'oauth2': GOOGLE_OAUTH2},
     'facebook': {'oauth2': FACEBOOK_OAUTH2},
 }
+
+# Payment Methods
 AVAILABLE_PAYMENT_METHODS = ['paypal']
+
+# PAYPAL
 PAYPAL_WEBSCR_SANDBOX = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
 PAYPAL_WEBSCR = 'https://www.paypal.com/cgi-bin/webscr'
 PAYPAL_SANDBOX = True
+
+# HTTP client
+CSRF_TOKEN_KEY = 'csrf_token'
+COOKIE_AUTH_KEY = 'auth'

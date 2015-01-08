@@ -326,7 +326,8 @@ class AddressRule(orm.BaseModel):
     address_key = '%s_address' % self.address_type
     addresses_key = '%s_addresses' % self.address_type
     input_address_reference = context.input.get(address_reference_key)
-    order_address_reference = getattr(order, address_reference_key, None)
+    order_address = getattr(order, address_key, None)
+    order_address = order_address.value
     buyer_addresses = order.key_parent.get()
     buyer_addresses.read() # read locals
     if buyer_addresses is None:
@@ -338,8 +339,10 @@ class AddressRule(orm.BaseModel):
     if not len(valid_addresses):
       raise PluginError('no_valid_address')
     context.output[addresses_key] = valid_addresses
+    order_address_reference_result = None
     input_address_reference_result = filter(lambda x: x.key == input_address_reference, valid_addresses)
-    order_address_reference_result = filter(lambda x: x.key == order_address_reference, valid_addresses)
+    if order_address:
+      order_address_reference_result = filter(lambda x: x.key == order_address.key, valid_addresses)
     if input_address_reference_result:
       default_address = input_address_reference_result[0]
     elif order_address_reference_result:
@@ -347,7 +350,6 @@ class AddressRule(orm.BaseModel):
     else:
       default_address = valid_addresses[0]
     if default_address:
-      setattr(order, address_reference_key, default_address.key)
       setattr(order, address_key, default_address.get_location())
     else:
       raise PluginError('no_address_found')
@@ -821,14 +823,15 @@ class Carrier(orm.BaseModel):
   
   def validate_line(self, carrier_line, order):
     address = None
-    order_address_reference = getattr(order, 'shipping_address_reference', None)
-    if order_address_reference is None:
+    order_address = getattr(order, 'shipping_address', None)
+    order_address = order_address.value
+    if order_address is None:
       return False
     buyer_addresses = order.parent_entity
     if buyer_addresses:
       buyer_addresses.read()
       for buyer_address in buyer_addresses.addresses.value:
-        if buyer_address.key == order_address_reference:
+        if buyer_address.key == order_address.reference:
           address = buyer_address
           break
     if address is None:

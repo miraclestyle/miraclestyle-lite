@@ -119,7 +119,7 @@ class AccountLoginWrite(orm.BaseModel):
       context._session = session
     context.output['entity'] = context._account
     if not context._account._is_guest and hasattr(context, '_session'):
-      context.output['authorization_code'] = '%s|%s' % (context._account.key.urlsafe(), context._session.session_id)
+      context.output['access_token'] = '%s|%s' % (context._account.key.urlsafe(), context._session.session_id)
 
 
 class AccountLogoutOutput(orm.BaseModel):

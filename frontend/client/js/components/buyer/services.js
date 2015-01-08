@@ -18,6 +18,7 @@
                 manageModal: function (accountKey) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         addressFields = fields.addresses.modelclass,
+                        that = this,
                         config;
                     fields.addresses.ui = {
                         label: false,
@@ -30,7 +31,7 @@
                             sortFields: ['country', 'region', 'city', 'postal_code',
                                 'street', 'name', 'email', 'telephone'],
                             afterSave: function () {
-                                endpoint.removeCache(this.getCacheKey('current'));
+                                endpoint.removeCache(that.getCacheKey('current'));
                             },
                             init: function ($scope) {
 

@@ -12,13 +12,14 @@ import copy
 import sys
 import urllib
 
-import orm, mem, iom, settings, util
+import orm
+import mem
+import iom
+import settings
+import util
 
 sys.setrecursionlimit(2147483647) # we need recursion stack because most of our code relies on recursion
 # however, we could rewrite the code to not use recursion in future
-
-CSRF_KEY = '_csrf'
-COOKIE_USER_KEY = 'auth'
 
 
 def json_output(s, **kwargs):
@@ -148,7 +149,7 @@ class RequestHandler(webapp2.RequestHandler):
     '''
     if self.current_account is None and self.autoload_current_account:
       from models.account import Account
-      Account.set_current_account_from_auth_code(self.request.cookies.get(COOKIE_USER_KEY))
+      Account.set_current_account_from_auth_code(self.request.cookies.get(settings.COOKIE_AUTH_KEY))
       current_account = Account.current_account()
       current_account.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
       current_account.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
@@ -157,7 +158,7 @@ class RequestHandler(webapp2.RequestHandler):
   def load_csrf(self):
     if self.current_csrf is None and self.autoload_current_account:
       input = self.get_input()
-      csrf_cookie_value = input.get(CSRF_KEY)
+      csrf_cookie_value = input.get(settings.CSRF_TOKEN_KEY)
       self.current_csrf = csrf_cookie_value
   
   def validate_csrf(self):
@@ -191,6 +192,7 @@ class ModelMeta(RequestHandler):
   
   def respond(self):
     # @todo include cache headers here
+    # @todo implement only the list of kinds that get out by config
     models = iom.Engine.get_schema()
     send = {}
     for kind, model in models.iteritems():
@@ -236,8 +238,8 @@ class AccountLogin(RequestHandler):
     data.update({'action_model' : '11',
                  'action_id' : 'login'})
     output = iom.Engine.run(data)
-    if 'authorization_code' in output:
-      self.response.set_cookie('auth', output.get('authorization_code'), httponly=True)
+    if 'access_token' in output:
+      self.response.set_cookie(settings.COOKIE_AUTH_KEY, output.get('access_token'), httponly=True)
       self.redirect('/login/status?success=true') # we need to see how we can handle continue to link behaviour, generally this needs more work
     elif 'errors' in output:
       self.redirect('/login/status?errors=%s' % urllib.quote(self.json_output(output['errors'])))
@@ -250,7 +252,7 @@ class AccountLogout(RequestHandler):
     data.update({'action_model' : '11',
                  'action_key' : 'logout'})
     output = iom.Engine.run(data)
-    self.response.delete_cookie('auth')
+    self.response.delete_cookie(settings.COOKIE_AUTH_KEY)
     self.redirect('/')
             
             
@@ -365,6 +367,15 @@ class Reset(BaseTestHandler):
     # delete all blobs
     blobstore.delete(blobstore.BlobInfo.all().fetch(None, keys_only=True))
     mem.flush_all()
+
+class MakeDefaults(BaseTestHandler):
+
+  def respond(self):
+    import iom
+    iom.Engine.init()
+    if self.request.get('populate'):
+      pass
+
 
 class TestAsync(BaseTestHandler):
 
