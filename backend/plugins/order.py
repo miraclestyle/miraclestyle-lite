@@ -185,9 +185,9 @@ class ProductSpecs(orm.BaseModel):
       for line in order._lines.value:
         product = line.product.value
         if product.weight is not None:
-          total_weight = total_weight + convert_value(product.weight, product.weight_uom.value, weight_uom)
+          total_weight = total_weight + (convert_value(product.weight, product.weight_uom.value, weight_uom) * product.quantity)
         if product.volume is not None:
-          total_volume = total_volume + convert_value(product.volume, product.volume_uom.value, volume_uom)
+          total_volume = total_volume + (convert_value(product.volume, product.volume_uom.value, volume_uom) * product.quantity)
         total_quantity = total_quantity + convert_value(product.quantity, product.uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume
@@ -790,9 +790,10 @@ class Carrier(orm.BaseModel):
   def calculate_lines(self, valid_lines, order):
     if not order._lines.value:
       return Decimal('0') # if no lines are present return 0
+    total = Decimal('0')
     for line in order._lines.value:
       product = line.product.value
-      carrier_prices = []
+      carrier_line = [] 
       for carrier_line in valid_lines:
         line_prices = []
         rules = carrier_line.rules.value
@@ -809,8 +810,8 @@ class Carrier(orm.BaseModel):
             if safe_eval(condition, condition_data):
               price_calculation = rule.make_price_calculator()
               price_data = {
-                'weight': product.weight,
-                'volume': product.volume,
+                'weight': product.weight * product.quantity,
+                'volume': product.volume * product.quantity,
                 'quantity': product.quantity,
                 'price_value': rule.price_value,
               }
@@ -818,8 +819,9 @@ class Carrier(orm.BaseModel):
               line_prices.append(price)
         else:
           line_prices.append(Decimal('0'))
-        carrier_prices.append(min(line_prices))
-      return min(carrier_prices)  # Return the lowest price possible of all lines!
+        carrier_lines.append(min(line_prices))
+      total = total + min(carrier_prices)  # Return the lowest price possible of all lines!
+    return total
     
   
   def validate_line(self, carrier_line, order):

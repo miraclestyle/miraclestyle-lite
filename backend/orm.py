@@ -1986,6 +1986,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           value._state = 'deleted'
   
   def duplicate(self):
+    if not self._property._duplicable:
+      return
     values = self.read()
     if self._property._repeated:
       entities = []
@@ -2202,6 +2204,8 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
     self._property_value = entities
   
   def duplicate(self):
+    if not self._property._duplicable:
+      return
     if not self._property._repeated:
       self._duplicate_single()
     else:
@@ -2460,6 +2464,7 @@ class _BaseStructuredProperty(_BaseProperty):
   _addable = True
   _deleteable = True
   _autoload = True
+  _duplicable = True
   _format_callback = None
   _value_class = LocalStructuredPropertyValue
   
@@ -2472,6 +2477,7 @@ class _BaseStructuredProperty(_BaseProperty):
     self._addable = kwargs.pop('addable', self._addable)
     self._format_callback = kwargs.pop('format_callback', self._format_callback)
     self._read_arguments = kwargs.pop('read_arguments', {})
+    self._duplicable = kwargs.pop('duplicable', self._duplicable)
     if not kwargs.pop('generic', None): # this is because storage structured property does not need the logic below
       if isinstance(args[0], basestring):
         set_arg = Model._kind_map.get(args[0])
@@ -3696,6 +3702,7 @@ class SuperReferenceProperty(SuperKeyProperty):
 class SuperRecordProperty(SuperRemoteStructuredProperty):
   '''Usage: '_records': SuperRecordProperty(Domain or '6')
   '''
+
   def __init__(self, *args, **kwargs):
     args = list(args)
     self._modelclass2 = args[0]
@@ -3717,6 +3724,7 @@ class SuperRecordProperty(SuperRemoteStructuredProperty):
     # Implicitly state that entities cannot be updated or deleted.
     self._updateable = False
     self._deleteable = False
+    self._duplicable = False
   
   def get_model_fields(self, **kwargs):
     parent = super(SuperRecordProperty, self).get_model_fields(**kwargs)

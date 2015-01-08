@@ -94,6 +94,8 @@ class _ImagePropertyValue(object):
     '''Override duplicate. Parent duplicate method will retrieve all data into self._property_value, and later on,
     here we can finalize duplicate by copying the blob.
     '''
+    if not self._property._duplicable:
+      return
     super(_ImagePropertyValue, self).duplicate()
     @orm.tasklet
     def async(entity):
