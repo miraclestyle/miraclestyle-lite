@@ -163,7 +163,7 @@
                                 productDetails.hide();
                                 productImages.show();
                                 showDetails.show();
-                                productImages.scrollLeft(0);
+                                //productImages.scrollLeft(0);
                             }
                         }
                     };

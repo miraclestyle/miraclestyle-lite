@@ -188,6 +188,7 @@
                                 $scope.productQuantity = 0;
                                 sellerKey = $scope.catalog._seller.key;
                                 $scope.cartProductQuantity = function () {
+                                    $scope.productQuantity = 0;
                                     models['34'].current(sellerKey).then(function (response) {
                                         var order = response.data.entity;
                                         if (order.id) {
