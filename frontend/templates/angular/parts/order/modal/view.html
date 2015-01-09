@@ -106,15 +106,32 @@
           </table>
       </div>
 
-      <div class="order-messages" ng-show="order.state !== 'cart'">
+      <div class="order-messages" ng-if="order.state !== 'cart'">
         <div class="clearfix form-inputs">
           <div form-input="fields.feedback"></div>
           <div form-input="fields.message"></div>
         </div>
         <div class="item-list">
-          <div class="item clearfix" ng-repeat="message in order._messages">
+          <div class="item clearfix" ng-repeat="message in order._messages"
+             ng-init="isYou = message._agent.key === currentAccount.key;
+                      isBuyer = message._agent.key === order.parent.parent.key && !isYou;
+                      isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
+                      ">
             <div class="item-left">
-              <div class="order-message-head">{{message._agent}} - {{message|output:'created'}}</div>
+              <div class="order-message-head">
+              <!--
+              simplified version
+              you see your messages as you
+              admin messages are seen as administrator
+              buyers messages are seen as buyer
+              sellers messages are seen as seller
+              -->
+
+              <span ng-if="isYou">you</span>
+              <span ng-if="isBuyer">buyer</span>
+              <span ng-if="isSeller">seller</span>
+              <span ng-if="message._agent._root_admin && !isYou && !isSeller">administrator</span>
+               - {{message|output:'created'}}</div>
               <div class="order-message-body">{{message.body}}</div>
             </div>
           </div>

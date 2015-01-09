@@ -3969,14 +3969,13 @@ class Record(BaseExpando):
   _virtual_fields = {
     '_agent': SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
                                      format_callback=lambda self, value: self._retrieve_agent_name(value)),
-    '_action': SuperReferenceProperty(callback=lambda self: self._retrieve_action(), format_callback=lambda self, value: value)
+    '_action': SuperComputedProperty(lambda self: self._retrieve_action())
     }
   
   def _retrieve_agent_name(self, value):
     return value._primary_email
   
   def _retreive_agent(self):
-    # We have to involve Domain User here, although ndb should be unavare of external models!
     return self.agent.get_async()
   
   def _retrieve_action(self):
