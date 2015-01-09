@@ -60,8 +60,9 @@
                         <button type="button" ng-click="share()" loading class="button">
                             Share
                         </button>
-                        <button type="button" ng-click="addToCart()" loading="!canAddToCart" class="button">
-                            Update Cart
+                        <button type="button" ng-click="addToCart()" loading="!canAddToCart || disableUpdateCart" class="button">
+                            <span ng-show="hasThisProduct">Update Cart</span>
+                            <span ng-show="!hasThisProduct">Add To Cart</span>
                         </button>
                         <button type="button" loading class="button" ng-click="close()">
                             Close

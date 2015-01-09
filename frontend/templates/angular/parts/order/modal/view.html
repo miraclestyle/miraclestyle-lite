@@ -59,7 +59,10 @@
                     </div>
                     <div class="item-right list-actions">
                       <button loading="!order.ui.rule.field._lines.product.quantity.writable" type="button" class="button" ng-click="removeLine(line)">Remove</button>
-                      <button loading type="button" class="button" ng-click="viewProduct(line)">View</button>
+                      <button loading type="button" class="button" ng-click="viewProduct(line)">
+                        <span ng-show="order.ui.rule.field._lines.writable">Edit</span>
+                        <span ng-show="!order.ui.rule.field._lines.writable">View</span>
+                      </button>
                       <div class="cart-line-discount line-item" ng-show="line.discount > 0">
                         <div class="cart-label">Discount (%)</div>
                         <div class="cart-value">{{line.discount}}</div>

@@ -185,7 +185,10 @@
                                     });
                                 };
                                 $scope.canAddToCart = true;
+                                $scope.hasThisProduct = false;
+                                $scope.disableUpdateCart = false;
                                 $scope.productQuantity = 0;
+
                                 sellerKey = $scope.catalog._seller.key;
                                 $scope.cartProductQuantity = function () {
                                     $scope.productQuantity = 0;
@@ -197,6 +200,10 @@
                                                         && line.product._reference.id === $scope.product.id
                                                         && JSON.stringify($scope.currentVariation) === JSON.stringify(line.product.variant_signature)) {
                                                     $scope.productQuantity = parseInt(line.product.quantity, 10);
+                                                    if ($scope.productQuantity > 0) {
+                                                        $scope.hasThisProduct = true;
+                                                        $scope.disableUpdateCart = true;
+                                                    }
                                                 }
                                             });
                                             $scope.canAddToCart = order.ui.rule.action.update_line.executable;
@@ -246,6 +253,7 @@
                                 $scope.cartProductQuantity();
 
                                 $scope.increaseQuantity = function () {
+                                    $scope.disableUpdateCart = false;
                                     $scope.productQuantity = parseInt($scope.productQuantity, 10) +  1;
                                 };
 
@@ -253,6 +261,7 @@
                                     if (parseInt($scope.productQuantity, 10) === 0) {
                                         return;
                                     }
+                                    $scope.disableUpdateCart = false;
                                     $scope.productQuantity = parseInt($scope.productQuantity, 10) -  1;
                                 };
 
@@ -273,6 +282,13 @@
                                             models['34'].current(sellerKey).then(function (cached) {
                                                 $.extend(cached.data.entity, response.data.entity);
                                             });
+                                        }
+
+                                        if ($scope.productQuantity < 1) {
+                                            $scope.hasThisProduct = false;
+                                        } else {
+                                            $scope.hasThisProduct = true;
+                                            $scope.disableUpdateCart = true;
                                         }
                                     });
                                 };
