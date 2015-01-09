@@ -6,7 +6,7 @@
         </accordion-group>
 
         <accordion-group heading="{{accordions.groups.1.label}}" is-open="accordions.groups.1.open" is-disabled="accordions.groups.1.disabled">
-            <div grid-generator-items="entity._sellers" grid-generator="{fixedHeight:100, square: false, margin:1, maxWidth:240, minWidth:180}" class="grid-wrapper clearfix">
+            <div grid-generator-items="entity._sellers" grid-generator="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}" class="grid-wrapper clearfix">
                 <div ng-repeat="seller in entity._sellers track by $index" on-ng-repeat-end class="grid-item grid-generator">
                     <button ng-click="view(seller)" class="button-transparent pointable">
                         <img display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
