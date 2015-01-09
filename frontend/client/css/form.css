@@ -51,6 +51,7 @@
 }
 
 .clearfix.form-inputs {
+  padding: 0px 0px 10px;
   border-bottom: 1px solid #EEEEEE;
   font-size: 0px;
 }

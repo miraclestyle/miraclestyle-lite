@@ -688,35 +688,35 @@ li.catalog-new-pricetag {
   float: left;
 }
 
-.cart {
+.order {
   margin-top: 10px;
   border-top: 1px solid #EEEEEE;
 }
 
-.cart-label {
+.order-label {
   color: #777777;
 }
 
-.cart-line-product-name {
+.order-line-product-name {
   font-size: 18px;
   line-height: 21px;
   padding: 0px 0px 1px;
 }
 
-.cart-line-product-code {
+.order-line-product-code {
   padding: 0px;
 }
 
-.cart-line-product-unit_price {
+.order-line-product-unit_price {
   font-size: 16px;
   padding: 10px 0px 5px;
 }
 
-.cart-line-product-variant_signature {
+.order-line-product-variant_signature {
   padding: 0px;
 }
 
-.cart-line-product-quantity {
+.order-line-product-quantity {
   padding: 0px;
 }
 
@@ -728,33 +728,33 @@ li.catalog-new-pricetag {
   margin: 5px;
 }
 
-.item-right .cart-line-discount_subtotal {
+.item-right .order-line-discount_subtotal {
   text-align: right;
 }
 
-.item-right .cart-label {
+.item-right .order-label {
   padding: 0px 0px 5px;
 }
 
-.item-right .cart-value {
+.item-right .order-value {
   padding: 0px;
 }
 
-.cart-totals {
+.order-totals {
   padding: 10px 5px;
   font-size: 16px;
   text-align: right;
   vertical-align: middle;
 }
 
-.cart-totals .cart-label {
+.order-totals .order-label {
    padding: 0px 0px 5px 0px;
 }
 
-.cart-totals .cart-value {
+.order-totals .order-value {
    padding: 0px 0px 5px 15px;
 }
 
-.cart-messages {
+.order-messages {
   padding: 10px 0px;
 }
