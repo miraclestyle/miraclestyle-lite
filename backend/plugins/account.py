@@ -71,16 +71,6 @@ class AccountLoginInit(orm.BaseModel):
 class AccountLoginWrite(orm.BaseModel):
   
   def run(self, context):
-    def new_session(entity):
-      AccountSession = context.models['9']
-      session_ids = [session.session_id for session in entity.sessions.value]
-      while True:
-        session_id = hashlib.md5(random_chars(30)).hexdigest()
-        if session_id not in session_ids:
-          break
-      session = AccountSession(session_id=session_id)
-      entity.sessions = [session]
-      return session
     
     if hasattr(context, '_identity_id') and context._identity_id is not None:
       Account = context.models['11']
@@ -92,7 +82,7 @@ class AccountLoginWrite(orm.BaseModel):
         entity.emails = [context._email]
         entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=True)]
         entity.state = 'active'
-        session = new_session(entity)
+        session = entity.new_session()
         # We separate record procedure from write in this case, since we are creating new entity which is record agent at the same time!
         entity._use_rule_engine = False
         entity.write({})
@@ -111,7 +101,7 @@ class AccountLoginWrite(orm.BaseModel):
             break
         if not used_identity:
           entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=False)]
-        session = new_session(entity)
+        session = entity.new_session()
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       context.model.set_current_account(entity, session)
       context._account = entity

@@ -35,10 +35,10 @@ This was done for easier maintenance.
                 <ul class="menu clearfix">
                    <li ng-show="!currentAccount._is_guest"><button type="button"
                             main-menu-toggler
-                            class="button block" ui-sref="collections">Collections</button></li>
+                            class="button block" ui-sref-active="active" ui-sref="collections">Collections</button></li>
                    <li><button type="button"
                             main-menu-toggler
-                            class="button block" ui-sref="home">All</button></li>
+                            class="button block" ui-sref-active="active" ui-sref="home">All</button></li>
                 </ul>
             </div>
             
@@ -46,8 +46,8 @@ This was done for easier maintenance.
                 <h1 class="fieldset">Buy</h1>
                 <ul ng-show="!currentAccount._is_guest" class="menu clearfix">
                     <li><button type="button" class="button block" ng-click="manageCollection()">Collections</button></li>
-                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref="buy-carts">Carts</button></li>
-                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref="buy-orders">Orders</button></li>
+                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref-active="active" ui-sref="buy-carts">Carts</button></li>
+                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref-active="active" ui-sref="buy-orders">Orders</button></li>
                     <li><button type="button" class="button block" ng-click="settings()">Settings</button></li>
                 </ul>
             </div>
@@ -57,13 +57,13 @@ This was done for easier maintenance.
                 <ul class="menu clearfix">
                    <li><button type="button"
                             main-menu-toggler
-                            class="button block" ui-sref="sell-catalogs">Catalogs</button></li>
+                            class="button block" ui-sref-active="active" ui-sref="sell-catalogs">Catalogs</button></li>
                     <li><button type="button"
                             main-menu-toggler
-                            class="button block" ui-sref="sell-carts">Carts</button></li>
+                            class="button block" ui-sref-active="active" ui-sref="sell-carts">Carts</button></li>
                     <li><button type="button"
                             main-menu-toggler
-                            class="button block" ui-sref="sell-orders">Orders</button></li>
+                            class="button block" ui-sref-active="active" ui-sref="sell-orders">Orders</button></li>
                      <li><button type="button"
                             class="button block" ng-click="settings()">Settings</button></li>
                 </ul>

@@ -149,7 +149,7 @@ class RequestHandler(webapp2.RequestHandler):
     '''
     if self.current_account is None and self.autoload_current_account:
       from models.account import Account
-      Account.set_current_account_from_auth_code(self.request.cookies.get(settings.COOKIE_AUTH_KEY))
+      Account.set_current_account_from_access_token(self.request.cookies.get(settings.COOKIE_AUTH_KEY))
       current_account = Account.current_account()
       current_account.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None) # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
       current_account.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
@@ -372,7 +372,17 @@ class LoginAs(BaseTestHandler):
 
   def respond(self):
     iom.Engine.init()
-    pass
+    models = iom.Engine.get_schema()
+    Account = models['11']
+    if self.request.get('email'):
+      account = Account.query(Account.emails == self.request.get('email')).get()
+      if account:
+        account.read()
+        session = account.new_session()
+        account._use_rule_engine = False
+        account.put()
+        Account.set_current_account(account, session)
+        self.response.set_cookie(settings.COOKIE_AUTH_KEY, '%s|%s' % (account.key_urlsafe, session.session_id), httponly=True)
 
 
 class TestAsync(BaseTestHandler):

@@ -372,9 +372,9 @@ class Account(orm.BaseExpando):
     return None
   
   @classmethod
-  def set_current_account_from_auth_code(cls, auth_code):
+  def set_current_account_from_access_token(cls, access_token):
     try:
-      account_key, session_id = auth_code.split('|')
+      account_key, session_id = access_token.split('|')
     except:
       return False # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
     if not session_id:
@@ -389,3 +389,14 @@ class Account(orm.BaseExpando):
       if session:
         cls.set_current_account(account, session)
         return account
+
+  def new_session(self):
+    account = self
+    session_ids = [session.session_id for session in account.sessions.value]
+    while True:
+      session_id = hashlib.md5(random_chars(30)).hexdigest()
+      if session_id not in session_ids:
+        break
+    session = AccountSession(session_id=session_id)
+    account.sessions = [session]
+    return session
