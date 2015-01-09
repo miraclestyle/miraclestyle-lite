@@ -246,14 +246,14 @@
                                 $scope.cartProductQuantity();
 
                                 $scope.increaseQuantity = function () {
-                                    $scope.productQuantity += 1;
+                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) +  1;
                                 };
 
                                 $scope.decreaseQuantity = function () {
-                                    if ($scope.productQuantity === 0) {
+                                    if (parseInt($scope.productQuantity, 10) === 0) {
                                         return;
                                     }
-                                    $scope.productQuantity -= 1;
+                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) -  1;
                                 };
 
                                 $scope.addToCart = function () {

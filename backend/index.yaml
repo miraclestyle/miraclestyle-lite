@@ -62,38 +62,34 @@ indexes:
   - name: '1'
 
 # Order
-- kind: '34'
-  ancestor: yes
-  properties:
-  - name: '1'
 
+# Order Buyer Cart & Order
 - kind: '34'
   ancestor: yes
   properties:
   - name: '3'
   - name: '1'
     direction: desc
-  - name: '__key__'
+  - name: __key__
     direction: desc
 
+
+# Order Seller Cart & Order
 - kind: '34'
   properties:
-  - name: '16'
-  - name: '17'
-  - name: '6'
+  - name: '3'
   - name: '5'
+  - name: '1'
+    direction: desc
+  - name: __key__
+    direction: desc
 
 # OrderLine
 - kind: '33'
   ancestor: yes
   properties:
   - name: '1'
-
-# OrderMessage
-- kind: '35'
-  ancestor: yes
-  properties:
-  - name: '1'
+    direction: asc
 
 # OrderMessage
 - kind: '35'
@@ -121,24 +117,4 @@ indexes:
   ancestor: yes
   properties:
   - name: '1'
-    direction: desc
-
-# Order Buyer
-- kind: '34'
-  ancestor: yes
-  properties:
-  - name: '4'
-  - name: '1'
-    direction: desc
-  - name: __key__
-    direction: desc
-
-# Order Seller
-- kind: '34'
-  properties:
-  - name: '4'
-  - name: '6'
-  - name: '1'
-    direction: desc
-  - name: __key__
     direction: desc
