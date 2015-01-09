@@ -388,44 +388,7 @@ class LoginAs(BaseTestHandler):
 class TestAsync(BaseTestHandler):
 
   def respond(self):
-    import random
-    import threading
-    import urllib2
-    import time
-
-    if self.request.get('set'):
-      mem.temp_set('bar', 1)
-    else:
-      find = mem.temp_get('bar')
-      if find is not None:
-        print 'GOT ----------------  %s' % mem.temp_get('bar')
-
-    if self.request.get('run'):
-      urls = "http://128.65.105.64:9982/api/tests/TestAsync2?v=1"
-      urls2 = "http://128.65.105.64:9982/api/tests/TestAsync2?set=1"
-      alls = []
-      for i in xrange(30):
-        alls.append(urls)
-        alls.append(urls2)
-      random.shuffle(alls)
-      self.response.write('sending')
-      self.response.write(alls)
- 
-      start = time.time()
-      def fetch_url(url):
-          urlHandler = urllib2.urlopen(url)
-          html = urlHandler.read()
-          print "'%s\' fetched in %ss" % (url, (time.time() - start))
-
-      threads = [threading.Thread(target=fetch_url, args=(url,)) for url in alls]
-      for thread in threads:
-          thread.start()
-      for thread in threads:
-          thread.join()
-
-
-class TestAsync2(TestAsync):
-  pass
+    pass
 
     
 for k,o in globals().items():
