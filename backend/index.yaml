@@ -68,7 +68,7 @@ indexes:
   ancestor: yes
   properties:
   - name: '3'
-  - name: '1'
+  - name: '2'
     direction: desc
   - name: __key__
     direction: desc
@@ -79,7 +79,7 @@ indexes:
   properties:
   - name: '3'
   - name: '5'
-  - name: '1'
+  - name: '2'
     direction: desc
   - name: __key__
     direction: desc

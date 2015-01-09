@@ -1,9 +1,40 @@
 <div autoload-on-vertical-scroll-end="scrollEnd">
         <div class="item clearfix" ng-repeat="order in search.results">
                   <div class="item-left">
-                     <div>{{order._seller.name}}</div>
-                     <div>{{order.state}}</div>
-                     <div>{{order|output:'created'}}</div>
+                    <div class="order-reference">
+                      {{order.id}}
+                    </div>
+                    <div class="order-date">
+                      {{order|output:'date'}}
+                    </div>
+                    <div class="order-total">
+                      {{order.total_amount|displayCurrency:order.currency}}
+                    </div>
+                    <div class="order-seller-name">
+                      <span class="order-label">Seller:</span>
+                      <span class="order-value">{{order._seller.name}}</span>
+                    </div>
+                    <div class="order-buyer-id">
+                      <span class="order-label">Buyer:</span>
+                      <span class="order-value">{{order.parent.parent.id}}</span>
+                    </div>
+                    <div class="order-state">
+                      <span class="order-label">State:</span>
+                      <span class="order-value">{{order.state}}</span>
+                    </div>
+                    <div class="order-updated"> <!-- Temporary here -->
+                      <span class="order-label">Updated:</span>
+                      <span class="order-value">{{order|output:'updated'}}</span>
+                    </div>
+                    <div class="order-payment_status" ng-show="order.payment_status">
+                      <span class="order-label">Payment:</span>
+                      <span class="order-value">{{order.payment_status}}</span>
+                    </div>
+                    <div class="order-feedback" ng-show="order.feedback">
+                      <span class="order-label">Feedback:</span>
+                      <span class="order-value">{{order.feedback}}</span>
+                      <span class="order-value" ng-show="order.feedback_adjustment">({{order.feedback_adjustment}})</span>
+                    </div>
                   </div>
                   <div class="item-right list-actions">
                       <button loading ng-click="view(order)" type="button" class="button">View</button>

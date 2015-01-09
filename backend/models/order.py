@@ -426,7 +426,7 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}, {'field': 'key', 'operator': 'desc'}]},
+          default={'filters': [], 'orders': [{'field': 'updated', 'operator': 'desc'}, {'field': 'key', 'operator': 'desc'}]},
           cfg={
             'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '19',
@@ -434,8 +434,8 @@ class Order(orm.BaseExpando):
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(repeated=True, choices=['checkout', 'cart', 'canceled', 'completed']),
                         'seller_reference': orm.SuperKeyProperty(kind='23')},
-            'indexes': [{'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('created', ['asc', 'desc']), ('key', ['asc', 'desc'])]},
-                        {'filters': [('seller_reference', ['==']), ('state', ['IN'])], 'orders': [('created', ['asc', 'desc']), ('key', ['asc', 'desc'])]}]
+            'indexes': [{'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc', 'desc'])]},
+                        {'filters': [('seller_reference', ['==']), ('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc', 'desc'])]}]
             }
           )
         },
