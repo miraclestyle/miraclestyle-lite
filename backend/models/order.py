@@ -297,8 +297,8 @@ class Order(orm.BaseExpando):
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
                           or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
-      orm.FieldPermission('34', ['_messages.'], False, False, 'True'),
-      orm.FieldPermission('34', ['_messages._agent._root_admin'], False, True, 'True'),
+      orm.FieldPermission('34', ['_messages._agent.sessions', '_messages._agent.emails', '_messages._agent._primary_email',
+                                 '_messages._agent.identities', '_messages._agent._records', '_messages._agent._csrf'], False, False, 'True'),
       ]
     )
   
