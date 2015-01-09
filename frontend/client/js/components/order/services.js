@@ -96,6 +96,16 @@
                                         return orderActionsFields[action].feedback;
                                     },
                                     messageField, feedbackField;
+
+                                $scope.canShowMessageBox = function () {
+                                    var truth = false;
+                                    angular.forEach(messageSenderActions, function (act) {
+                                        if ($scope.order.ui.rule.action[act].executable) {
+                                            truth = true;
+                                        }
+                                    });
+                                    return truth;
+                                };
                                 $scope.container = {};
                                 $scope.selection = {};
                                 $scope.cartMode = cartMode;
@@ -122,32 +132,6 @@
                                     item.name = item.original_name + ' (' + $filter('displayCurrency')(item.price, $scope.order.currency) + ')';
                                     return item;
                                 });
-
-                                prepareMessageFields = function () {
-                                    messageField = getMessageField();
-                                    feedbackField = getFeedbackField();
-
-                                    // this must refresh based on state change
-                                    if (messageField) {
-                                        $.extend(messageField.ui, {
-                                            args: 'newMessage.message',
-                                            parentArgs: 'newMessage',
-                                            writable: true
-                                        });
-                                        messageField.required = false;
-                                    }
-                                    if (feedbackField) {
-                                        $.extend(feedbackField.ui, {
-                                            args: 'newMessage.feedback',
-                                            parentArgs: 'newMessage',
-                                            writable: true,
-                                            placeholder: 'Select feedback...'
-                                        });
-                                        feedbackField.required = false;
-                                    }
-                                };
-
-                                prepareMessageFields();
 
                                 if (cartMode) {
                                     billing_addresses = response.data.billing_addresses;
@@ -214,17 +198,39 @@
                                                 entities: carriers
                                             }
                                         }
-                                    },
-                                    feedback: feedbackField,
-                                    message: messageField
+                                    }
+                                };
+
+                                prepareMessageFields = function () {
+                                    messageField = getMessageField();
+                                    feedbackField = getFeedbackField();
+
+                                    // this must refresh based on state change
+                                    if (messageField) {
+                                        $.extend(messageField.ui, {
+                                            args: 'newMessage.message',
+                                            parentArgs: 'newMessage',
+                                            writable: true
+                                        });
+                                        messageField.required = false;
+                                    }
+                                    if (feedbackField) {
+                                        $.extend(feedbackField.ui, {
+                                            args: 'newMessage.feedback',
+                                            parentArgs: 'newMessage',
+                                            writable: true,
+                                            placeholder: 'Select feedback...'
+                                        });
+                                        feedbackField.required = false;
+                                    }
+                                    $scope.fields.feedback = feedbackField;
+                                    $scope.fields.message = messageField;
                                 };
 
                                 reactOnStateChange = function (response) {
                                     helpers.update($scope.order, response.data.entity, ['state', 'ui']);
                                     reactOnUpdate();
                                     prepareMessageFields();
-                                    $scope.fields.feedback = feedbackField;
-                                    $scope.fields.message = messageField;
                                 };
                                 reactOnUpdate = function () {
                                     if (order) {
@@ -355,6 +361,8 @@
                                         $scope.order._messages.extend(items);
                                     }
                                 });
+
+                                prepareMessageFields();
 
                             }
                         });

@@ -326,7 +326,7 @@
                             template;
 
                         if (!angular.isObject(supplied_config)) {
-                            console.warn('config provided is not object.', element);
+                            console.warn('config provided is not object for element: ', element);
                             return;
                         }
 
