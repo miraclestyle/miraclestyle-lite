@@ -1300,6 +1300,406 @@ this repository contains the full copyright notices and license terms. -->
     </data>
     <data skiptest="1" grouped="1">
 
+<record model="country.subdivision" id="us-al">
+            <field name="name">Alabama</field>
+            <field name="code">US-AL</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ak">
+            <field name="name">Alaska</field>
+            <field name="code">US-AK</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-az">
+            <field name="name">Arizona</field>
+            <field name="code">US-AZ</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ar">
+            <field name="name">Arkansas</field>
+            <field name="code">US-AR</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ca">
+            <field name="name">California</field>
+            <field name="code">US-CA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-co">
+            <field name="name">Colorado</field>
+            <field name="code">US-CO</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ct">
+            <field name="name">Connecticut</field>
+            <field name="code">US-CT</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-de">
+            <field name="name">Delaware</field>
+            <field name="code">US-DE</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-fl">
+            <field name="name">Florida</field>
+            <field name="code">US-FL</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ga">
+            <field name="name">Georgia</field>
+            <field name="code">US-GA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-hi">
+            <field name="name">Hawaii</field>
+            <field name="code">US-HI</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-id">
+            <field name="name">Idaho</field>
+            <field name="code">US-ID</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-il">
+            <field name="name">Illinois</field>
+            <field name="code">US-IL</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-in">
+            <field name="name">Indiana</field>
+            <field name="code">US-IN</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ia">
+            <field name="name">Iowa</field>
+            <field name="code">US-IA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ks">
+            <field name="name">Kansas</field>
+            <field name="code">US-KS</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ky">
+            <field name="name">Kentucky</field>
+            <field name="code">US-KY</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-la">
+            <field name="name">Louisiana</field>
+            <field name="code">US-LA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-me">
+            <field name="name">Maine</field>
+            <field name="code">US-ME</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-md">
+            <field name="name">Maryland</field>
+            <field name="code">US-MD</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ma">
+            <field name="name">Massachusetts</field>
+            <field name="code">US-MA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-mi">
+            <field name="name">Michigan</field>
+            <field name="code">US-MI</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-mn">
+            <field name="name">Minnesota</field>
+            <field name="code">US-MN</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ms">
+            <field name="name">Mississippi</field>
+            <field name="code">US-MS</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-mo">
+            <field name="name">Missouri</field>
+            <field name="code">US-MO</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-mt">
+            <field name="name">Montana</field>
+            <field name="code">US-MT</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ne">
+            <field name="name">Nebraska</field>
+            <field name="code">US-NE</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-nv">
+            <field name="name">Nevada</field>
+            <field name="code">US-NV</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-nh">
+            <field name="name">New Hampshire</field>
+            <field name="code">US-NH</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-nj">
+            <field name="name">New Jersey</field>
+            <field name="code">US-NJ</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-nm">
+            <field name="name">New Mexico</field>
+            <field name="code">US-NM</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ny">
+            <field name="name">New York</field>
+            <field name="code">US-NY</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-nc">
+            <field name="name">North Carolina</field>
+            <field name="code">US-NC</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-nd">
+            <field name="name">North Dakota</field>
+            <field name="code">US-ND</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-oh">
+            <field name="name">Ohio</field>
+            <field name="code">US-OH</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ok">
+            <field name="name">Oklahoma</field>
+            <field name="code">US-OK</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-or">
+            <field name="name">Oregon</field>
+            <field name="code">US-OR</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-pa">
+            <field name="name">Pennsylvania</field>
+            <field name="code">US-PA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ri">
+            <field name="name">Rhode Island</field>
+            <field name="code">US-RI</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-sc">
+            <field name="name">South Carolina</field>
+            <field name="code">US-SC</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-sd">
+            <field name="name">South Dakota</field>
+            <field name="code">US-SD</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-tn">
+            <field name="name">Tennessee</field>
+            <field name="code">US-TN</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-tx">
+            <field name="name">Texas</field>
+            <field name="code">US-TX</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-ut">
+            <field name="name">Utah</field>
+            <field name="code">US-UT</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-vt">
+            <field name="name">Vermont</field>
+            <field name="code">US-VT</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-va">
+            <field name="name">Virginia</field>
+            <field name="code">US-VA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-wa">
+            <field name="name">Washington</field>
+            <field name="code">US-WA</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-wv">
+            <field name="name">West Virginia</field>
+            <field name="code">US-WV</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-wi">
+            <field name="name">Wisconsin</field>
+            <field name="code">US-WI</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-wy">
+            <field name="name">Wyoming</field>
+            <field name="code">US-WY</field>
+            <field name="type">state</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-dc">
+            <field name="name">District of Columbia</field>
+            <field name="code">US-DC</field>
+            <field name="type">district</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-as">
+            <field name="name">American Samoa</field>
+            <field name="code">US-AS</field>
+            <field name="type">outlying area</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-gu">
+            <field name="name">Guam</field>
+            <field name="code">US-GU</field>
+            <field name="type">outlying area</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-mp">
+            <field name="name">Northern Mariana Islands</field>
+            <field name="code">US-MP</field>
+            <field name="type">outlying area</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-pr">
+            <field name="name">Puerto Rico</field>
+            <field name="code">US-PR</field>
+            <field name="type">outlying area</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-um">
+            <field name="name">United States Minor Outlying Islands</field>
+            <field name="code">US-UM</field>
+            <field name="type">outlying area</field>
+            <field name="country" ref="us"/>
+        </record>
+
+        <record model="country.subdivision" id="us-vi">
+            <field name="name">Virgin Islands</field>
+            <field name="code">US-VI</field>
+            <field name="type">outlying area</field>
+            <field name="country" ref="us"/>
+        </record>
+
+
         <record model="country.subdivision" id="ad-07">
             <field name="name">Andorra la Vella</field>
             <field name="code">AD-07</field>
@@ -25947,405 +26347,7 @@ this repository contains the full copyright notices and license terms. -->
             <field name="country" ref="um"/>
         </record>
 
-        <record model="country.subdivision" id="us-al">
-            <field name="name">Alabama</field>
-            <field name="code">US-AL</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ak">
-            <field name="name">Alaska</field>
-            <field name="code">US-AK</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-az">
-            <field name="name">Arizona</field>
-            <field name="code">US-AZ</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ar">
-            <field name="name">Arkansas</field>
-            <field name="code">US-AR</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ca">
-            <field name="name">California</field>
-            <field name="code">US-CA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-co">
-            <field name="name">Colorado</field>
-            <field name="code">US-CO</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ct">
-            <field name="name">Connecticut</field>
-            <field name="code">US-CT</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-de">
-            <field name="name">Delaware</field>
-            <field name="code">US-DE</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-fl">
-            <field name="name">Florida</field>
-            <field name="code">US-FL</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ga">
-            <field name="name">Georgia</field>
-            <field name="code">US-GA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-hi">
-            <field name="name">Hawaii</field>
-            <field name="code">US-HI</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-id">
-            <field name="name">Idaho</field>
-            <field name="code">US-ID</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-il">
-            <field name="name">Illinois</field>
-            <field name="code">US-IL</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-in">
-            <field name="name">Indiana</field>
-            <field name="code">US-IN</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ia">
-            <field name="name">Iowa</field>
-            <field name="code">US-IA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ks">
-            <field name="name">Kansas</field>
-            <field name="code">US-KS</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ky">
-            <field name="name">Kentucky</field>
-            <field name="code">US-KY</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-la">
-            <field name="name">Louisiana</field>
-            <field name="code">US-LA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-me">
-            <field name="name">Maine</field>
-            <field name="code">US-ME</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-md">
-            <field name="name">Maryland</field>
-            <field name="code">US-MD</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ma">
-            <field name="name">Massachusetts</field>
-            <field name="code">US-MA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-mi">
-            <field name="name">Michigan</field>
-            <field name="code">US-MI</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-mn">
-            <field name="name">Minnesota</field>
-            <field name="code">US-MN</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ms">
-            <field name="name">Mississippi</field>
-            <field name="code">US-MS</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-mo">
-            <field name="name">Missouri</field>
-            <field name="code">US-MO</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-mt">
-            <field name="name">Montana</field>
-            <field name="code">US-MT</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ne">
-            <field name="name">Nebraska</field>
-            <field name="code">US-NE</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-nv">
-            <field name="name">Nevada</field>
-            <field name="code">US-NV</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-nh">
-            <field name="name">New Hampshire</field>
-            <field name="code">US-NH</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-nj">
-            <field name="name">New Jersey</field>
-            <field name="code">US-NJ</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-nm">
-            <field name="name">New Mexico</field>
-            <field name="code">US-NM</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ny">
-            <field name="name">New York</field>
-            <field name="code">US-NY</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-nc">
-            <field name="name">North Carolina</field>
-            <field name="code">US-NC</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-nd">
-            <field name="name">North Dakota</field>
-            <field name="code">US-ND</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-oh">
-            <field name="name">Ohio</field>
-            <field name="code">US-OH</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ok">
-            <field name="name">Oklahoma</field>
-            <field name="code">US-OK</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-or">
-            <field name="name">Oregon</field>
-            <field name="code">US-OR</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-pa">
-            <field name="name">Pennsylvania</field>
-            <field name="code">US-PA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ri">
-            <field name="name">Rhode Island</field>
-            <field name="code">US-RI</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-sc">
-            <field name="name">South Carolina</field>
-            <field name="code">US-SC</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-sd">
-            <field name="name">South Dakota</field>
-            <field name="code">US-SD</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-tn">
-            <field name="name">Tennessee</field>
-            <field name="code">US-TN</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-tx">
-            <field name="name">Texas</field>
-            <field name="code">US-TX</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-ut">
-            <field name="name">Utah</field>
-            <field name="code">US-UT</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-vt">
-            <field name="name">Vermont</field>
-            <field name="code">US-VT</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-va">
-            <field name="name">Virginia</field>
-            <field name="code">US-VA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-wa">
-            <field name="name">Washington</field>
-            <field name="code">US-WA</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-wv">
-            <field name="name">West Virginia</field>
-            <field name="code">US-WV</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-wi">
-            <field name="name">Wisconsin</field>
-            <field name="code">US-WI</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-wy">
-            <field name="name">Wyoming</field>
-            <field name="code">US-WY</field>
-            <field name="type">state</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-dc">
-            <field name="name">District of Columbia</field>
-            <field name="code">US-DC</field>
-            <field name="type">district</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-as">
-            <field name="name">American Samoa</field>
-            <field name="code">US-AS</field>
-            <field name="type">outlying area</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-gu">
-            <field name="name">Guam</field>
-            <field name="code">US-GU</field>
-            <field name="type">outlying area</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-mp">
-            <field name="name">Northern Mariana Islands</field>
-            <field name="code">US-MP</field>
-            <field name="type">outlying area</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-pr">
-            <field name="name">Puerto Rico</field>
-            <field name="code">US-PR</field>
-            <field name="type">outlying area</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-um">
-            <field name="name">United States Minor Outlying Islands</field>
-            <field name="code">US-UM</field>
-            <field name="type">outlying area</field>
-            <field name="country" ref="us"/>
-        </record>
-
-        <record model="country.subdivision" id="us-vi">
-            <field name="name">Virgin Islands</field>
-            <field name="code">US-VI</field>
-            <field name="type">outlying area</field>
-            <field name="country" ref="us"/>
-        </record>
-
+        
         <record model="country.subdivision" id="uy-ar">
             <field name="name">Artigas</field>
             <field name="code">UY-AR</field>
