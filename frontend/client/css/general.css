@@ -693,6 +693,7 @@ li.catalog-new-pricetag {
   border-top: 1px solid #EEEEEE;
 }
 
+.order-message-head,
 .order-label {
   color: #777777;
 }
@@ -757,4 +758,7 @@ li.catalog-new-pricetag {
 
 .order-messages {
   padding: 10px 0px;
+}
+
+.order-message-head {
 }

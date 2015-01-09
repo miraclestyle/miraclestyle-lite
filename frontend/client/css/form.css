@@ -87,12 +87,12 @@
   width: 100%;
 }
 
-.text-textarea {
-  min-height: 60px;
-}
-
 .text-input:focus {
   border: 1px solid #999999;
+}
+
+textarea.text-input {
+  min-height: 100px;
 }
 
 .form-control {
