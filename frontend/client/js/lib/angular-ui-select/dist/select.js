@@ -437,7 +437,7 @@
       if (!ctrl.multiple){
         $timeout(function(){
           ctrl.focusser.prop('disabled', false);
-          if (!skipFocusser) ctrl.focusser[0].focus();
+          //if (!skipFocusser) ctrl.focusser[0].focus();
         },0,false);
       }
     };

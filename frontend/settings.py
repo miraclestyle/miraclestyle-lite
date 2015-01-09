@@ -160,16 +160,6 @@ ANGULAR_TEMPLATES = (
    'lib/angular-bootstrap/tooltip/tooltip-popup.html'),
 
   # 3rd party select2
-  ('bootstrap/choices.tpl.html',
-   'lib/angular-ui-select/bootstrap/choices.tpl.html'),
-  ('bootstrap/match-multiple.tpl.html',
-   'lib/angular-ui-select/bootstrap/match-multiple.tpl.html'),
-  ('bootstrap/match.tpl.html',
-   'lib/angular-ui-select/bootstrap/match.tpl.html'),
-  ('bootstrap/select-multiple.tpl.html',
-   'lib/angular-ui-select/bootstrap/select-multiple.tpl.html'),
-  ('bootstrap/select.tpl.html',
-   'lib/angular-ui-select/bootstrap/select.tpl.html'),
   ('select2/choices.tpl.html',
    'lib/angular-ui-select/select2/choices.tpl.html'),
   ('select2/match-multiple.tpl.html',
@@ -180,12 +170,6 @@ ANGULAR_TEMPLATES = (
    'lib/angular-ui-select/select2/select-multiple.tpl.html'),
   ('select2/select.tpl.html',
    'lib/angular-ui-select/select2/select.tpl.html'),
-  ('selectize/choices.tpl.html',
-   'lib/angular-ui-select/selectize/choices.tpl.html'),
-  ('selectize/match.tpl.html',
-   'lib/angular-ui-select/selectize/match.tpl.html'),
-  ('selectize/select.tpl.html',
-   'lib/angular-ui-select/selectize/select.tpl.html'),
 
 
   # account
