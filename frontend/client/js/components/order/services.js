@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsMeta, modelsConfig, $modal, modals, helpers, endpoint, $q, $filter) {
+    angular.module('app').run(function (modelsMeta, modelsConfig, $modal, modals, helpers, endpoint, $q, $filter, currentAccount) {
         modelsConfig(function (models) {
             $.extend(models['34'], {
                 current: function (sellerKey) {
@@ -29,7 +29,9 @@
                                         limit: 0
                                     }
                                 }},
-                                _messages: {}
+                                _messages: {
+                                    _agent: {}
+                                }
                             }
                         };
                     } else {
@@ -37,7 +39,9 @@
                             buyer: buyer.key,
                             seller: seller.key,
                             read_arguments: {
-                                _messages: {}
+                                _messages: {
+                                    _agent: {}
+                                }
                             }
                         };
                     }
@@ -53,7 +57,7 @@
                             templateUrl: 'order/modal/view.html',
                             controller: function ($scope, $modalInstance) {
                                 var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate, updateLiveEntity,
-                                    orderActionsFields = modelsMeta.getActionArguments('34'),
+                                    orderActionsFields = modelsMeta.getActionArguments('34'), prepareMessageFields,
                                     displayAddress = function (address) {
                                         var addr = [];
                                         angular.forEach(['name', 'street', 'city', '_region.name', 'postal_code', '_country.name', 'email', 'telephone'], function (field) {
@@ -92,12 +96,23 @@
                                         return orderActionsFields[action].feedback;
                                     },
                                     messageField, feedbackField;
+
+                                $scope.canShowMessageBox = function () {
+                                    var truth = false;
+                                    angular.forEach(messageSenderActions, function (act) {
+                                        if ($scope.order.ui.rule.action[act].executable) {
+                                            truth = true;
+                                        }
+                                    });
+                                    return truth;
+                                };
                                 $scope.container = {};
                                 $scope.selection = {};
                                 $scope.cartMode = cartMode;
                                 $scope.sellerMode = sellerMode;
                                 $scope.order = response.data.entity;
                                 $scope.seller = seller;
+                                $scope.currentAccount = currentAccount;
                                 $scope.newMessage = {
                                     message: null,
                                     key: $scope.order.key
@@ -117,26 +132,6 @@
                                     item.name = item.original_name + ' (' + $filter('displayCurrency')(item.price, $scope.order.currency) + ')';
                                     return item;
                                 });
-
-                                messageField = getMessageField();
-                                feedbackField = getFeedbackField();
-                                if (messageField) {
-                                    $.extend(messageField.ui, {
-                                        args: 'newMessage.message',
-                                        parentArgs: 'newMessage',
-                                        writable: true
-                                    });
-                                    messageField.required = false;
-                                }
-                                if (feedbackField) {
-                                    $.extend(feedbackField.ui, {
-                                        args: 'newMessage.feedback',
-                                        parentArgs: 'newMessage',
-                                        writable: true,
-                                        placeholder: 'Select feedback...'
-                                    });
-                                    feedbackField.required = false;
-                                }
 
                                 if (cartMode) {
                                     billing_addresses = response.data.billing_addresses;
@@ -203,14 +198,39 @@
                                                 entities: carriers
                                             }
                                         }
-                                    },
-                                    feedback: feedbackField,
-                                    message: messageField
+                                    }
+                                };
+
+                                prepareMessageFields = function () {
+                                    messageField = getMessageField();
+                                    feedbackField = getFeedbackField();
+
+                                    // this must refresh based on state change
+                                    if (messageField) {
+                                        $.extend(messageField.ui, {
+                                            args: 'newMessage.message',
+                                            parentArgs: 'newMessage',
+                                            writable: true
+                                        });
+                                        messageField.required = false;
+                                    }
+                                    if (feedbackField) {
+                                        $.extend(feedbackField.ui, {
+                                            args: 'newMessage.feedback',
+                                            parentArgs: 'newMessage',
+                                            writable: true,
+                                            placeholder: 'Select feedback...'
+                                        });
+                                        feedbackField.required = false;
+                                    }
+                                    $scope.fields.feedback = feedbackField;
+                                    $scope.fields.message = messageField;
                                 };
 
                                 reactOnStateChange = function (response) {
                                     helpers.update($scope.order, response.data.entity, ['state', 'ui']);
                                     reactOnUpdate();
+                                    prepareMessageFields();
                                 };
                                 reactOnUpdate = function () {
                                     if (order) {
@@ -341,6 +361,8 @@
                                         $scope.order._messages.extend(items);
                                     }
                                 });
+
+                                prepareMessageFields();
 
                             }
                         });

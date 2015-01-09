@@ -59,6 +59,7 @@ class Account(orm.BaseExpando):
   _virtual_fields = {
     'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
+    '_csrf': orm.SuperComputedProperty(lambda self: self.get_csrf()),
     '_records': orm.SuperRecordProperty('11')
     }
   
@@ -293,8 +294,7 @@ class Account(orm.BaseExpando):
   
   def get_output(self):
     dic = super(Account, self).get_output()
-    dic.update({'_csrf': self._csrf,  # We will need the csrf but it has to be incorporated into security mechanism (http://en.wikipedia.org/wiki/Cross-site_request_forgery).
-                '_is_guest': self._is_guest,
+    dic.update({'_is_guest': self._is_guest,
                 '_root_admin': self._root_admin})
     return dic
   
@@ -324,9 +324,8 @@ class Account(orm.BaseExpando):
       if identity.primary == True:
         return identity.email
     return identity.email
-  
-  @property
-  def _csrf(self):
+
+  def get_csrf(self):
     session = self.current_account_session()
     if not session:
       return hashlib.md5(os.environ['REMOTE_ADDR']).hexdigest()

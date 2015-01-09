@@ -57,13 +57,8 @@ class OrderProduct(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_reference': orm.SuperComputedProperty(lambda self: self._build_reference())
+    '_reference': orm.SuperComputedProperty(lambda self: self.reference.structure() if self.reference else None)
     }
-  
-  def _build_reference(self):
-    if not self.reference:
-      return None
-    return self.reference.structure()
   
   @classmethod
   def get_partial_reference_key_path(cls, reference_key):
@@ -136,21 +131,16 @@ class OrderMessage(orm.BaseExpando):
   _default_indexed = True
   
   _virtual_fields = {
-    '_agent': orm.SuperReferenceProperty(callback=lambda self: self._retreive_agent(),
-                                     format_callback=lambda self, value: self._retrieve_agent_name(value)),
-    '_action': orm.SuperReferenceProperty(callback=lambda self: self._retrieve_action(), format_callback=lambda self, value: value)
+    '_agent': orm.SuperReferenceStructuredProperty('11', callback=lambda self: self._retrieve_agent(),
+                                     format_callback=lambda self, value: self._retrieve_agent_details(value)),
+    '_action': orm.SuperComputedProperty(lambda self: self.action.id() if self.action else '')
     }
-  
-  def _retrieve_agent_name(self, value):
-    return value._primary_email
-  
-  def _retreive_agent(self):
+
+  def _retrieve_agent(self):
     return self.agent.get_async()
-  
-  def _retrieve_action(self):
-    if not self.action:
-      return ''
-    return self.action.id()
+
+  def _retrieve_agent_details(self, entity):
+    return entity
 
 
 class Order(orm.BaseExpando):
@@ -214,6 +204,7 @@ class Order(orm.BaseExpando):
     '_records': orm.SuperRecordProperty('34'),
     '_payment_method': orm.SuperReferenceProperty(callback=lambda self: self._get_payment_method(),
                                                   format_callback=lambda self, value: value),
+    '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference.structure() if self.seller_reference else None),
   }
   
   _global_role = GlobalRole(
@@ -271,7 +262,7 @@ class Order(orm.BaseExpando):
       # @todo Implement field permissions!
       orm.FieldPermission('34', ['created', 'updated', 'state', 'date', 'seller_reference',
                                  'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
-                                 'tax_amount', 'total_amount', 'feedback', 'carrier',
+                                 'tax_amount', 'total_amount', 'feedback', 'carrier', '_seller_reference',
                                  'feedback_adjustment', 'payment_status', 'payment_method',
                                  '_lines', '_messages','_payment_method', '_records', '_seller'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
@@ -305,7 +296,9 @@ class Order(orm.BaseExpando):
                            and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
                           '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
-                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")')
+                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
+      orm.FieldPermission('34', ['_messages._agent.sessions', '_messages._agent.emails', '_messages._agent._primary_email',
+                                 '_messages._agent.identities', '_messages._agent._records', '_messages._agent._csrf'], False, False, 'True'),
       ]
     )
   
