@@ -96,7 +96,7 @@
                     toggle: function () {
                         this.init = true;
                         this.hide = !this.hide;
-                        var that = this, animate = false;
+                        var that = this;
                         $timeout(function () {
                             if (!that.hide) {
                                 width = contentWidth;
@@ -108,13 +108,7 @@
                                         right: parseInt(viewControlsRight, 10) + width
                                     }, 50);
                                 }
-                                if (animate) {
-                                    imagesHolder.stop().animate({
-                                        width: imagesHolder.width() - width
-                                    }, 50);
-                                } else {
-                                    imagesHolder.width(imagesHolder.width() - width);
-                                }
+                                imagesHolder.width(imagesHolder.width() - width);
                                 content.stop().width(0).css('visibility', 'visible').show().animate({
                                     width: width
                                 }, 50, function () {
@@ -122,13 +116,7 @@
                                 });
 
                             } else {
-                                if (animate) {
-                                    imagesHolder.stop().animate({
-                                        width: cssWidth
-                                    }, 50);
-                                } else {
-                                    imagesHolder.css('width', cssWidth);
-                                }
+                                imagesHolder.css('width', cssWidth);
                                 viewControls.stop().animate({
                                     right: viewControlsRight
                                 }, 50);
