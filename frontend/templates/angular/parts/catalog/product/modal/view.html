@@ -1,6 +1,6 @@
 <div fit-in-dialog>
 
-    <form ng-submit="save()" name="container.main">
+    <form ng-submit="save()" name="container.form">
 
         <div class="modal-body min-height no-footer">
 
@@ -46,7 +46,7 @@
                             </label>
                             <div class="form-input">
                               <button ng-click="decreaseQuantity()" loading="!canAddToCart" type="button" class="button product-quantity-button">-</button>
-                              <input class="text-input product-quantity-input" ng-disabled="!canAddToCart" type="numeric" ng-model="productQuantity"/>
+                              <input class="text-input product-quantity-input" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="numeric" ng-model="productQuantity"/>
                               <button ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="button product-quantity-button">+</button>
                             </div>
                           </div>

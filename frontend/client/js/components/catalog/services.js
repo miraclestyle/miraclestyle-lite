@@ -266,6 +266,14 @@
                                 };
 
                                 $scope.addToCart = function () {
+                                    if (!$scope.hasThisProduct && $scope.productQuantity < 1) {
+                                        var productQuantityField = $scope.container.form.productQuantity;
+                                        productQuantityField.$setViewValue(productQuantityField.$viewValue !== undefined ? productQuantityField.$viewValue : '');
+                                        productQuantityField.$dirty = true;
+                                        productQuantityField.$pristine = false;
+                                        productQuantityField.$setValidity('required', false);
+                                        return;
+                                    }
                                     models['19'].current().then(function (response) {
                                         return models['34'].actions.update_line({
                                             buyer: response.data.entity.key,
