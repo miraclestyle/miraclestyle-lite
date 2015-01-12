@@ -818,6 +818,7 @@
                                                         remove: function (product, close) {
                                                             // removing the actual product removes the pricetag actually
                                                             $scope.pricetag._state = 'deleted';
+                                                            $scope.formSetDirty();
                                                             close();
                                                         },
                                                         duplicate: function () {
@@ -892,6 +893,15 @@
                                                                     currentFieldScope.$broadcast('itemOrderChanged');
                                                                 }
                                                             }
+                                                        },
+                                                        create: function () {
+                                                            var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
+                                                                currentArgs = currentFieldScope.args;
+                                                            if (!currentArgs.variants.length) {
+                                                                modals.alert('Please create some variants first.');
+                                                                return false;
+                                                            }
+                                                            this.manage.apply(this, arguments);
                                                         },
                                                         init: function () {
                                                             var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),

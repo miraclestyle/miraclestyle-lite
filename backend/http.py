@@ -176,9 +176,7 @@ class RequestHandler(webapp2.RequestHandler):
       super(RequestHandler, self).dispatch()
       self.after()
     finally:
-      # support our memcache wrapper lib temporary variables, and release them upon request complete
-      util.log('Release In-memory Cache')
-      mem._local.__release_local__()
+      pass
       
 
 class Endpoint(RequestHandler):
@@ -305,22 +303,14 @@ class Reset(BaseTestHandler):
     from google.appengine.ext import blobstore
     # @todo THIS DELETES EVERYTHING FROM DATASTORE AND BLOBSTORE, AND CURRENTLY EXISTS ONLY FOR TESTING PURPOSES!
     models = iom.Engine.get_schema()
-    kinds = [str(i) for i in range(50)]
+    kinds = [str(i) for i in xrange(200)]
     namespaces = metadata.get_namespaces()
     indexes = []
     keys_to_delete = []
     if self.request.get('kinds'):
       kinds = self.request.get('kinds').split(',')
-    if self.request.get('all_kinds'):
-      kinds = []
-      for kind_id in models:
-        if len(kind_id) < 4 and not kind_id.startswith('__'):
-          try:
-            kinds.append(str(int(kind_id)))
-          except ValueError:
-            pass
     util.log('DELETE KINDS %s' % kinds)
-    ignore = []  #['15', '16', '17', '18', '19']
+    ignore = []
     if self.request.get('ignore'):
       ignore = self.request.get('ignore')
     @orm.tasklet
@@ -329,7 +319,7 @@ class Reset(BaseTestHandler):
       @orm.tasklet
       def generator():
         model = models.get(kind)
-        if model and not kind.startswith('__'):
+        if model:
           keys = yield model.query().fetch_async(keys_only=True)
           keys_to_delete.extend(keys)
           indexes.append(search.Index(name=kind))
@@ -345,7 +335,7 @@ class Reset(BaseTestHandler):
         if kind not in ignore:
           futures.append(wipe(kind))
       orm.Future.wait_all(futures)
-    if self.request.get('and_system'):
+    if self.request.get('and_ignored'):
       futures = []
       for kind in kinds:
         if kind in ignore:

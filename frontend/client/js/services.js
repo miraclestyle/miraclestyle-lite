@@ -1410,6 +1410,7 @@ w:                  while (images.length > 0) {
                     if (config.choices) {
                         return this._SelectBox(info);
                     }
+                    config.ui.attrs['check-numeric'] = '';
                     return this.SuperStringProperty(info);
                 },
                 SuperIntegerProperty: function (info) {
@@ -1419,6 +1420,8 @@ w:                  while (images.length > 0) {
                         return this._SelectBox(info);
                     }
 
+                    config.ui.attrs['check-numeric'] = '';
+
                     return this.SuperFloatProperty(info);
                 },
                 SuperDecimalProperty: function (info) {
@@ -1426,6 +1429,7 @@ w:                  while (images.length > 0) {
                     if (config.choices) {
                         return this._SelectBox(info);
                     }
+                    config.ui.attrs['check-numeric'] = '';
                     return this.SuperFloatProperty(info);
                 },
                 SuperBooleanProperty: function (info) {

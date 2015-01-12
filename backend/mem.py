@@ -8,8 +8,8 @@ Created on Oct 8, 2013
 from webapp2_extras import local
 from google.appengine.api import memcache
 
-# Local memory for the app instance. _local must be released upon request completion.
-_local = local.Local()
+# Local memory for the app instance. storage must be released upon request completion.
+storage = local.Local()
 
 '''
 Wrapper for google memcache library, combined with in-memory cache (per-request and expiration after request execution)
@@ -56,20 +56,20 @@ def delete(k):
 
 
 def temp_get(k, d=None):
-  return getattr(_local, k, d)
+  return getattr(storage, k, d)
 
 
 def tmp_exists(k):
-  return hasattr(_local, k)
+  return hasattr(storage, k)
 
 
 def temp_set(k, v):
-  setattr(_local, k, v)
+  setattr(storage, k, v)
 
 
 def temp_delete(k):
   try:
-    del _local[k]
+    del storage[k]
   except:
     pass
 
@@ -102,14 +102,12 @@ def tempcached(func, k=None, d=None):
   '''
   if k == None:
     k = func.__name__
-  
   def dec(*args, **kwargs):
     v = temp_get(k, d)
     if v == d:
       v = func()
       temp_set(k, v)
       return v
-  
   return dec
 
 

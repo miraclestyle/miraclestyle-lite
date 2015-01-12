@@ -8,6 +8,7 @@ Created on Jun 14, 2014
 import cgi
 import cloudstorage
 import copy
+from urlparse import urlparse
 
 from google.appengine.ext import blobstore
 from google.appengine.api import images, urlfetch
@@ -388,7 +389,9 @@ class _BaseImageProperty(_BaseBlobProperty):
       values = values[0]
     return values
   
-  def value_format(self, value):
+  def value_format(self, value, path=None):
+    if path is None:
+      path = self._code_name
     value = self._property_value_format(value)
     if value is Nonexistent:
       return value
@@ -400,11 +403,11 @@ class _BaseImageProperty(_BaseBlobProperty):
       if not self._upload:
         if not isinstance(v, dict) and not self._required:
           continue
-        out.append(self._structured_property_format(v))
+        out.append(self._structured_property_format(v, path))
       else:
         if not isinstance(v, cgi.FieldStorage):
           if self._required:
-            raise orm.PropertyError('invalid_input')
+            raise orm.FormatError('invalid_input')
           else:
             continue
         # These will throw errors if the 'v' is not cgi.FileStorage and it does not have compatible blob-key.
@@ -412,7 +415,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         blob_info = blobstore.parse_blob_info(v)
         meta_required = ('image/jpeg', 'image/jpg', 'image/png')  # We only accept jpg/png. This list can be and should be customizable on the property option itself?
         if file_info.content_type not in meta_required:
-          raise orm.PropertyError('invalid_image_type')  # First line of validation based on meta data from client.
+          raise orm.FormatError('invalid_image_type')  # First line of validation based on meta data from client.
         new_image = self.get_modelclass()(**{'size': file_info.size,
                                              'content_type': file_info.content_type,
                                              'gs_object_name': file_info.gs_object_name,
@@ -423,7 +426,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       if not self._required: # if field is not required, and there isnt any processed return non existent
         return Nonexistent
       else:
-        raise PropertyError('required') # otherwise required
+        raise FormatError('required') # otherwise required
     if self._upload:
       if self._process_config.get('transform') or self._process_config.get('copy'):
         self.process(out)

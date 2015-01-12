@@ -52,7 +52,7 @@ class TerminateAction(Exception):
   pass
 
 
-class PropertyError(Exception):
+class FormatError(Exception):
   pass
 
 
@@ -1747,7 +1747,7 @@ class StructuredPropertyValue(PropertyValue):
         property_value_copy = [property_value_copy]
       for property_value_item in property_value_copy:
         if not isinstance(property_value_item, self._property.get_modelclass()):
-          raise PropertyError('Expected %s, got %s' % (self._property.get_modelclass().get_kind(), property_value_item.get_kind()))
+          raise ValueError('Expected %s, got %s' % (self._property.get_modelclass().get_kind(), property_value_item.get_kind()))
       if not self._property._repeated:
         if self.has_value() and self._property_value is not None:
           self._property_value.populate_from(property_value)
@@ -2046,7 +2046,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       supplied_keys = SuperVirtualKeyProperty(kind=model.get_kind(), repeated=True).value_format(supplied_keys)
       for supplied_key in supplied_keys:
         if supplied_key.parent() != self._entity.key:
-          raise PropertyError('invalid_parent_for_key_%s' % supplied_key.urlsafe())
+          raise ValueError('invalid_parent_for_key_%s' % supplied_key.urlsafe())
       entities = get_multi_async(supplied_keys)
       self._property_value_options.update(config)
     else:
@@ -2244,9 +2244,9 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
         self._property_value = None
         return
       if not isinstance(field, Key):
-        raise PropertyError('Targeted field value must be instance of Key. Got %s' % field)
+        raise ValueError('Targeted field value must be instance of Key. Got %s' % field)
       if self._property.get_modelclass().get_kind() != field.kind():
-        raise PropertyError('Kind must be %s, got %s' % (self._property.get_modelclass().get_kind(), field.kind()))
+        raise ValueError('Kind must be %s, got %s' % (self._property.get_modelclass().get_kind(), field.kind()))
       self._property_value = field.get_async()
   
   def _read_sync(self, read_arguments):
@@ -2290,9 +2290,9 @@ class ReferencePropertyValue(PropertyValue):
         self._property_value = None
         return self.value
       if not isinstance(field, Key):
-        raise PropertyError('Targeted field value must be instance of Key. Got %s' % field)
+        raise ValueError('Targeted field value must be instance of Key. Got %s' % field)
       if self._property._kind != None and field.kind() != self._property._kind:
-        raise PropertyError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
+        raise ValueError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
       self._property_value = field.get_async()
   
   def read_async(self):
@@ -2373,13 +2373,13 @@ class _BaseProperty(object):
         if k in ('name', 'verbose_name', 'search_document_field_name'):
           v = unicode(v)
           if len(v) > limits[k]:
-            raise PropertyError('property_%s_too_long' % k)
+            raise FormatError('property_%s_too_long' % k)
         elif k in ('indexed', 'required', 'repeated', 'searchable'):
           v = bool(v)
         elif k == 'choices':
           if v is not None:
             if not isinstance(v, list):
-              raise PropertyError('expected_list_for_choices')
+              raise FormatError('expected_list_for_choices')
         elif k == 'default':
           if v is not None:
             v = self.value_format(v) # default value must be acceptable by property value format standards
@@ -2391,12 +2391,12 @@ class _BaseProperty(object):
   def _property_value_validate(self, value):
     if self._max_size:
       if len(value) > self._max_size:
-        raise PropertyError('max_size_exceeded')
+        raise FormatError('max_size_exceeded')
     if value is None and self._required:
-      raise PropertyError('required')
+      raise FormatError('required')
     if hasattr(self, '_choices') and self._choices:
       if value not in self._choices:
-        raise PropertyError('not_in_specified_choices')
+        raise FormatError('not_in_specified_choices')
   
   def _property_value_filter(self, value):
     if self._value_filters:
@@ -2412,7 +2412,7 @@ class _BaseProperty(object):
       if self._default is not None:
         value = copy.deepcopy(self._default)
       elif self._required:
-        raise PropertyError('required')
+        raise FormatError('required')
       else:
         return value  # Returns util.Nonexistent
     if self._repeated:
@@ -2496,7 +2496,7 @@ class _BaseStructuredProperty(_BaseProperty):
       # model must be scanned when it reaches this call
       find = Model._kind_map.get(self._modelclass)
       if find is None:
-        raise PropertyError('Could not locate model with kind %s' % self._modelclass)
+        raise ValueError('Could not locate model with kind %s' % self._modelclass)
       else:
         self._modelclass = find
     return self._modelclass
@@ -2519,14 +2519,14 @@ class _BaseStructuredProperty(_BaseProperty):
     if 'modelclass' not in skip_kwds:
       model = Model._kind_map.get(kwds['modelclass_kind'])
       if model is None:
-        raise PropertyError('invalid_kind')
+        raise FormatError('invalid_kind')
       kwds['modelclass'] = model
     '''
     What to do with this?
     if 'managerclass' not in skip_kwds:
       possible_managers = dict((manager.__name__, manager) for manager in PROPERTY_MANAGERS)
       if kwds['managerclass'] not in possible_managers:
-        raise PropertyError('invalid_manager_supplied')
+        raise FormatError('invalid_manager_supplied')
       else:
         kwds['managerclass'] = possible_managers.get(kwds['managerclass'])
     '''
@@ -2534,7 +2534,9 @@ class _BaseStructuredProperty(_BaseProperty):
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
   
-  def value_format(self, value):
+  def value_format(self, value, path=None):
+    if path is None:
+      path = self._code_name
     source_value = value
     value = self._property_value_format(value)
     if value is util.Nonexistent:
@@ -2547,7 +2549,7 @@ class _BaseStructuredProperty(_BaseProperty):
     elif source_value is None:
       return util.Nonexistent
     for v in value:
-      ent = self._structured_property_format(v)
+      ent = self._structured_property_format(v, path)
       out.append(ent)
     if not self._repeated:
       try:
@@ -2627,16 +2629,36 @@ class _BaseStructuredProperty(_BaseProperty):
       entity._values[value_name] = value_instance
     return value_instance
   
-  def _structured_property_field_format(self, fields, values):
+  def _structured_property_field_format(self, fields, values, path):
     _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
     key = values.get('key')
     kind = values.get('kind')
+    errors = {}
     for value_key, value in values.items():
       field = fields.get(value_key)
       if field:
         if hasattr(field, 'value_format'):
-          val = field.value_format(value)
+          new_path = '%s.%s' % (path, field._code_name)
+          try:
+            if hasattr(field, '_structured_property_field_format'):
+              val = field.value_format(value, new_path)
+            else:
+              val = field.value_format(value)
+          except FormatError as e:
+            if isinstance(e.message, dict):
+              for k, v in e.message.iteritems():
+                if k not in errors:
+                  errors[k] = []
+                if isinstance(v, (list, tuple)):
+                  errors[k].extend(v)
+                else:
+                  errors[k].append(v)
+            else:
+              if e.message not in errors:
+                errors[e.message] = []
+              errors[e.message].append(new_path)
+            continue
           if val is util.Nonexistent:
             del values[value_key]
           else:
@@ -2645,17 +2667,22 @@ class _BaseStructuredProperty(_BaseProperty):
           del values[value_key]
       else:
         del values[value_key]
+    if len(errors):
+      raise FormatError(errors)
     if key:
       values['key'] = SuperVirtualKeyProperty(kind=kind, required=True).value_format(key)
     values['_state'] = _state  # Always keep track of _state for rule engine!
     if _sequence is not None:
       values['_sequence'] = _sequence
   
-  def _structured_property_format(self, entity_as_dict):
+  def _structured_property_format(self, entity_as_dict, path):
     provided_kind_id = entity_as_dict.get('kind')
     fields = self.get_model_fields(kind=provided_kind_id)
     entity_as_dict.pop('class_', None)  # Never allow class_ or any read-only property to be set for that matter.
-    self._structured_property_field_format(fields, entity_as_dict)
+    try:
+      self._structured_property_field_format(fields, entity_as_dict, path)
+    except FormatError as e:
+      raise FormatError(e.message)
     modelclass = self.get_modelclass(kind=provided_kind_id)
     return modelclass(**entity_as_dict)
   
@@ -2786,7 +2813,7 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
             _the_kind = other
           _kinds.append(_the_kind)
         if kind not in _kinds:
-          raise PropertyError('Expected Kind to be one of %s, got %s' % (_kinds, kind))
+          raise ValueError('Expected Kind to be one of %s, got %s' % (_kinds, kind))
         model = Model._kind_map.get(kind)
         return model
     return super(SuperMultiLocalStructuredProperty, self).get_modelclass()
@@ -3062,14 +3089,14 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
       else:
         out = [Key(urlsafe=value)]
     except ValueError:
-      raise PropertyError('malformed_key_%s' % value)
+      raise FormatError('malformed_key')
     for key in out:
       if self._kind and key.kind() != self._kind:
-        raise PropertyError('invalid_kind')
+        raise FormatError('invalid_kind')
     entities = get_multi(out)
     for i, entity in enumerate(entities):
       if entity is None:
-        raise PropertyError('not_found_%s' % out[i].urlsafe())
+        raise FormatError('not_found')
     if not self._repeated:
       try:
         out = out[0]
@@ -3119,7 +3146,7 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
       out = [Key(urlsafe=value)]
     for key in out:
       if self._kind and key.kind() != self._kind:
-        raise PropertyError('invalid_kind')
+        raise FormatError('invalid_kind')
     if not self._repeated:
       try:
         out = out[0]
@@ -3150,12 +3177,12 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
               pass
             key = Key(*key_path[0], **kwds)
             if self._kind and key.kind() != self._kind:
-              raise PropertyError('invalid_kind')
+              raise FormatError('invalid_kind')
             out.append(key)
           entities = get_multi(out)
           for i, entity in enumerate(entities):
             if entity is None:
-              raise PropertyError('not_found_%s' % out[i].urlsafe())
+              raise FormatError('not_found')
       else:
         try:
           kwds = value[1]
@@ -3163,10 +3190,10 @@ class SuperKeyFromPathProperty(SuperKeyProperty):
           pass
         out = Key(*value[0], **kwds)
         if self._kind and out.kind() != self._kind:
-          raise PropertyError('invalid_kind')
+          raise FormatError('invalid_kind')
         entity = out.get()
         if entity is None:
-          raise PropertyError('not_found_%s' % out.urlsafe())
+          raise FormatError('not_found')
       return out
 
 
@@ -3243,11 +3270,21 @@ class SuperDecimalProperty(SuperStringProperty):
     if (value is None or (isinstance(value, basestring) and not len(value))) and not self._required:
       return util.Nonexistent
     if self._repeated:
-      value = [decimal.Decimal(v) for v in value]
+      i = 0
+      try:
+        out = []
+        for i, v in enumerate(value):
+          out.append(decimal.Decimal(v))
+        value = out
+      except:
+        raise FormatError('invalid_number_on_sequence_%s' % i)
     else:
-      value = decimal.Decimal(value)
+      try:
+        value = decimal.Decimal(value)
+      except:
+        raise FormatError('invalid_number')
     if value is None:
-      raise PropertyError('invalid_number')
+      raise FormatError('invalid_number')
     return value
   
   def get_search_document_field(self, value):
@@ -3261,7 +3298,7 @@ class SuperDecimalProperty(SuperStringProperty):
   
   def _validate(self, value):
     if not isinstance(value, decimal.Decimal):
-      raise PropertyError('expected_decimal')  # Perhaps, here should be some other type of exception?
+      raise ValueError('expected_decimal')
   
   def _to_base_type(self, value):
     return str(value)
@@ -3325,7 +3362,7 @@ class SuperSearchProperty(SuperJsonProperty):
     kind = values.get('kind')
     model = Model._kind_map.get(kind)
     if not model:
-      raise PropertyError('invalid_model_kind_%s' % kind)
+      raise FormatError('invalid_model_kind')
   
   def _ancestor_format(self, values):
     ancestor = values.get('ancestor')
@@ -3349,7 +3386,7 @@ class SuperSearchProperty(SuperJsonProperty):
   def _projection_group_by_format(self, values):
     def list_format(list_values):
       if not isinstance(list_values, (tuple, list)):
-        raise PropertyError('not_list')
+        raise FormatError('not_list')
       remove_list_values = []
       for value in list_values:
         if not isinstance(value, str):
@@ -3375,13 +3412,13 @@ class SuperSearchProperty(SuperJsonProperty):
       # cfg_orders = [('name', ['asc'])]
       # input_orders = [{'field': 'name', 'operator': 'asc'}]
       if len(cfg_values) != len(input_values):
-        raise PropertyError('%s_values_mismatch' % method)  # @todo Write this error correctly!
+        raise FormatError('%s_values_mismatch' % method)  # @todo Write this error correctly!
       for i, input_value in enumerate(input_values):  # @todo If input_values length is 0, and above validation passes, than there should not be any errors!?
         cfg_value = cfg_values[i]
         if input_value['field'] != cfg_value[0]:
-          raise PropertyError('expected_field_%s_%s_%s' % (method, cfg_value[0], i))
+          raise FormatError('expected_%s_field_%s_at_%s' % (method, cfg_value[0], i))
         if input_value['operator'] not in cfg_value[1]:
-          raise PropertyError('expected_operator_%s_%s_%s' % (method, cfg_value[1], i))
+          raise FormatError('expected_%s_operator_%s_at_%s' % (method, cfg_value[1], i))
     
     if self._cfg.get('search_by_keys') and 'keys' in values:
       return values
@@ -3407,7 +3444,7 @@ class SuperSearchProperty(SuperJsonProperty):
         cfg_index_orders = cfg_index.get('orders', [])
         if ancestor is not None:
           if not cfg_index_ancestor:  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
-            raise PropertyError('ancestor_not_allowed')
+            raise FormatError('ancestor_not_allowed')
         _validate(cfg_index_filters, filters, 'filter')
         _validate(cfg_index_orders, orders, 'order')
         for input_filter in filters:
@@ -3422,7 +3459,7 @@ class SuperSearchProperty(SuperJsonProperty):
     if success is not True:
       if isinstance(e, Exception):
         e = e.message
-      raise PropertyError(e)
+      raise FormatError(e)
   
   def _datastore_query_options_format(self, values):
     def options_format(options_values):
@@ -3432,7 +3469,7 @@ class SuperSearchProperty(SuperJsonProperty):
             del options_values[value_key]
         elif value_key == 'limit':
           if not isinstance(value, (int, long)):
-            raise PropertyError('limit_value_incorrect')
+            raise FormatError('limit_value_incorrect')
           if value == 0:
             del options_values[value_key]
         elif value_key in ['batch_size', 'prefetch_size', 'deadline']:
@@ -3454,7 +3491,7 @@ class SuperSearchProperty(SuperJsonProperty):
       options_format(default_options)
     options = values.get('options', {})
     if 'limit' not in options.keys():
-      raise PropertyError('limit_value_missing')
+      raise FormatError('limit_value_missing')
     options_format(options)
   
   def _search_query_orders_format(self, values):
@@ -3468,11 +3505,11 @@ class SuperSearchProperty(SuperJsonProperty):
   def _search_query_options_format(self, values):
     options = values.get('options', {})
     if 'limit' not in options.keys():
-      raise PropertyError('limit_value_missing')
+      raise FormatError('limit_value_missing')
     for value_key, value in options.items():
       if value_key == 'limit':
         if not isinstance(value, (int, long)):
-          raise PropertyError('limit_value_incorrect')
+          raise FormatError('limit_value_incorrect')
       elif value_key in ['cursor']:
         try:
           options[value_key] = search.Cursor(web_safe_string=value)
@@ -3658,9 +3695,9 @@ class SuperReferenceProperty(SuperKeyProperty):
     self._autoload = kwargs.pop('autoload', True)
     self._store_key = kwargs.pop('store_key', False)
     if self._callback != None and not callable(self._callback):
-      raise PropertyError('"callback" must be a callable, got %s' % self._callback)
+      raise ValueError('callback must be a callable, got %s' % self._callback)
     if self._format_callback is None or not callable(self._format_callback):
-      raise PropertyError('"format_callback" must be provided and callable, got %s' % self._format_callback)
+      raise ValueError('format_callback must be provided and callable, got %s' % self._format_callback)
     super(SuperReferenceProperty, self).__init__(*args, **kwargs)
   
   def _set_value(self, entity, value):
@@ -3736,7 +3773,7 @@ class SuperRecordProperty(SuperRemoteStructuredProperty):
     if isinstance(self._modelclass2, basestring):
       set_modelclass2 = Model._kind_map.get(self._modelclass2)
       if set_modelclass2 is None:
-        raise PropertyError('Could not locate model with kind %s' % self._modelclass2)
+        raise ValueError('Could not locate model with kind %s' % self._modelclass2)
       else:
         self._modelclass2 = set_modelclass2
 
@@ -3799,19 +3836,19 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
           field = the_field
           break
       if field is None:
-        raise PropertyError('invalid_field_type_provided')
+        raise FormatError('invalid_field_type_provided')
       possible_kwargs = tuple(field.get_meta().keys())
       if required_kwargs is None:
         required_kwargs = possible_kwargs
       for name in required_kwargs:
         if name not in kwds and name not in bogus_kwds:
-          raise PropertyError('missing_keyword_%s' % name)
+          raise FormatError('missing_keyword_%s' % name)
       for name in kwds.iterkeys():
         if name not in possible_kwargs:
-          raise PropertyError('unexpected_keyword_%s' % name)
+          raise FormatError('unexpected_keyword_%s' % name)
       kwds['name'] = kwds.get('name') # @todo prefix for name
       if kwds['name'] in parsed:
-        raise PropertyError('duplicate_property_name_%s' % kwds['name'])
+        raise FormatError('duplicate_property_name_%s' % kwds['name'])
       parsed[kwds['name']] = 1
       field.property_keywords_format(kwds, skip_kwargs)
       for bogus in bogus_kwds:
@@ -3858,18 +3895,20 @@ class SuperPluginStorageProperty(SuperPickleProperty):
           structured.pre_update()
     return super(SuperPluginStorageProperty, self)._set_value(entity, value)
   
-  def value_format(self, value):
+  def value_format(self, value, path=None):
+    if path is None:
+      path = self._code_name
     value = self._property_value_format(value)
     if value is util.Nonexistent:
       return value
     out = []
     if not isinstance(value, list):
-      raise PropertyError('expected_list')
+      raise FormatError('expected_list')
     for v in value:
-      out.append(self._structured_property_format(v))
+      out.append(self._structured_property_format(v, path))
     return out
   
-  def _structured_property_field_format(self, fields, values):
+  def _structured_property_field_format(self, fields, values, path):
     _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
     key = values.get('key')
@@ -3877,7 +3916,26 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       field = fields.get(value_key)
       if field:
         if hasattr(field, 'value_format'):
-          val = field.value_format(value)
+          new_path = '%s.%s' % (path, field._code_name)
+          try:
+            if hasattr(field, '_structured_property_field_format'):
+              val = field.value_format(value, new_path)
+            else:
+              val = field.value_format(value)
+          except FormatError as e:
+            if isinstance(e.message, dict):
+              for k, v in e.message.iteritems():
+                if k not in errors:
+                  errors[k] = []
+                if isinstance(v, (list, tuple)):
+                  errors[k].extend(v)
+                else:
+                  errors[k].append(v)
+            else:
+              if e.message not in errors:
+                errors[e.message] = []
+              errors[e.message].append(new_path)
+            continue
           if val is util.Nonexistent:
             del values[value_key]
           else:
@@ -3892,11 +3950,14 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     if _sequence is not None:
       values['_sequence'] = _sequence
   
-  def _structured_property_format(self, entity_as_dict):
+  def _structured_property_format(self, entity_as_dict, path):
     provided_kind_id = entity_as_dict.get('kind')
     fields = self.get_model_fields(kind=provided_kind_id)
     entity_as_dict.pop('class_', None)  # Never allow class_ or any read-only property to be set for that matter.
-    self._structured_property_field_format(fields, entity_as_dict)
+    try:
+      self._structured_property_field_format(fields, entity_as_dict, path)
+    except FormatError as e:
+      raise FormatError(e.message)
     modelclass = self.get_modelclass(kind=provided_kind_id)
     return modelclass(**entity_as_dict)
   
@@ -3911,7 +3972,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
             _the_kind = other
           _kinds.append(_the_kind)
         if kind not in _kinds:
-          raise PropertyError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
+          raise ValueError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
         model = Model._kind_map.get(kind)
         return model
   

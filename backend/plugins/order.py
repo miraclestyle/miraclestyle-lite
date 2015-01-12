@@ -21,7 +21,7 @@ from models.unit import *
 class PluginError(Exception):
   
   def __init__(self, plugin_error):
-    self.message = plugin_error
+    self.message = {'plugin_error': plugin_error}
 
 
 # This is system plugin, which means end user can not use it!
@@ -483,7 +483,7 @@ class PayPalPayment(PaymentMethod):
     result = urlfetch.fetch(url=url,
                             payload='cmd=_notify-validate&%s' % request['body'],
                             method=urlfetch.POST,
-                            headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection' : 'Close'})
+                            headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
     if result.content != 'VERIFIED':
       raise PluginError('invalid_ipn_message') # log somehow
 

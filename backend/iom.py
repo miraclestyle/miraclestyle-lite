@@ -156,6 +156,8 @@ class Engine:
   def process_action_input(cls, context, input):
     input_error = {}
     for key, argument in context.action.arguments.items():
+      if argument._code_name is None:
+        argument._code_name = key
       value = input.get(key, util.Nonexistent)
       if argument and hasattr(argument, 'value_format'):
         try:
@@ -165,11 +167,20 @@ class Engine:
           if hasattr(argument, '_validator') and argument._validator:  # _validator is a custom function that is available by orm.
             argument._validator(argument, value)
           context.input[key] = value
-        except orm.PropertyError as e:
-          util.log(e, 'exception')
-          if e.message not in input_error:
-            input_error[e.message] = []
-          input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
+        except orm.FormatError as e:
+          print e.message
+          if isinstance(e.message, dict):
+            for key, value in e.message.iteritems():
+              if key not in input_error:
+                input_error[key] = []
+              if isinstance(value, (list, tuple)):
+                input_error[key].extend(value)
+              else:
+                input_error[key].append(value)
+          else:
+            if e.message not in input_error:
+              input_error[e.message] = []
+            input_error[e.message].append(key)  # We group argument exceptions based on exception messages.
         except Exception as e:
           # If this is not defined it throws an error.
           if 'non_property_error' not in input_error:
@@ -231,11 +242,13 @@ class Engine:
       if isinstance(e, datastore_errors.TransactionFailedError):
         context.error('transaction', 'failed')
         throw = False
-      if throw:
+      if throw and settings.DEBUG:
         raise  # Here we raise all other unhandled exceptions!
     finally:
       util.log('Process Blob Output')
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
+      util.log('Release In-memory Cache')
+      mem.storage.__release_local__()
       if settings.PROFILING:
         pr.disable()
         s = cStringIO.StringIO()
