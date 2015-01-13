@@ -4111,7 +4111,7 @@ class Record(BaseExpando):
       if isinstance(value, LocalStructuredPropertyValue): # we can only log locally structured data
         value = value.value
       elif hasattr(prop, 'is_structured') and prop.is_structured:
-        continue # we cannot log structured properties
+        continue # we cannot log remote structured properties
       prop = copy.deepcopy(prop)
       prop._indexed = False
       self._properties[prop._name] = prop

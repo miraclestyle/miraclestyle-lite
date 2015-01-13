@@ -78,10 +78,13 @@ angular.module('ngUpload', [])
             }
 
             return {
+                require: 'form',
                 restrict: 'AC',
-                link: function (scope, element, attrs) {
+                link: function (scope, element, attrs, ctrl) {
                     // Give each directive instance a new id
                     iframeID++;
+
+                    var formController = ctrl;
 
                     function setLoadingState(state) {
                         scope.$isUploading = state;
@@ -146,7 +149,6 @@ angular.module('ngUpload', [])
                     setLoadingState(false);
                     // Start upload
                     element.bind('submit', function uploadStart() {
-                        var formController = scope[attrs.name];
                         // if form is invalid don't submit (e.g. keypress 13)
                         if (formController && formController.$invalid) return false;
                         // perform check before submit file

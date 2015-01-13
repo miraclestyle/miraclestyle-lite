@@ -108,6 +108,8 @@ ANGULAR_TEMPLATES = (
   ('misc/load_more_button.html',),
   ('misc/search_form.html',),
   ('misc/history.html',),
+  ('misc/modal/history_view_body.html',),
+  ('misc/modal/history_view_footer.html',),
 
 
   ('entity/modal/editor.html',),

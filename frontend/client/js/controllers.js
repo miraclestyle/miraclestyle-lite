@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('HistoryListingCtrl', function ($scope, models) {
+        .controller('HistoryListingCtrl', function ($scope, models, $modal) {
 
             var config = $scope.historyConfig,
                 loaded = false,
@@ -28,7 +28,21 @@
 
             $scope.history = {
                 records: [],
-                reader: models[config.kind].reader(defaultReaderOpts)
+                reader: models[config.kind].reader(defaultReaderOpts),
+                view: function (record) {
+                    $modal.open({
+                        templateUrl: 'entity/modal/editor.html',
+                        controller: function ($scope, $modalInstance) {
+                            $scope.record = record;
+                            $scope.config = {};
+                            $scope.config.templateBodyUrl = 'misc/modal/history_view_body.html';
+                            $scope.config.templateFooterUrl = 'misc/modal/history_view_footer.html';
+                            $scope.close = function () {
+                                $modalInstance.dismiss('close');
+                            };
+                        }
+                    });
+                }
             };
 
             $scope.$watch('accordion.open', function (opened, oldState) {

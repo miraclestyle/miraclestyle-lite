@@ -6,11 +6,14 @@
                     action_denied: function (reason) {
                         return 'You do not have permission to perform this action.';
                     },
-                    invalid_image_type: 'You have supplied incorrect type of image format',
-                    invalid_model: 'You have requested access to resource that does not exist',
-                    invalid_action: 'You have requested access to the action that does not exist',
+                    not_found: function (fields) {
+                        return 'Requested data ' + fields.join(', ') + 'could not be found in database.';
+                    },
+                    invalid_image_type: 'You have supplied incorrect type of image format.',
+                    invalid_model: 'You have requested access to resource that does not exist,',
+                    invalid_action: 'You have requested access to the action that does not exist.',
                     required: function (fields) {
-                        return 'Some values are missing: ' + fields.join(', ');
+                        return 'Some values are missing: ' + fields.join(', ') + '.';
                     },
                     traceback: function (trace) {
                         var parse = $.parseHTML(trace);

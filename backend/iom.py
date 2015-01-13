@@ -168,7 +168,6 @@ class Engine:
             argument._validator(argument, value)
           context.input[key] = value
         except orm.FormatError as e:
-          print e.message
           if isinstance(e.message, dict):
             for key, value in e.message.iteritems():
               if key not in input_error:
@@ -234,7 +233,11 @@ class Engine:
       if isinstance(e.message, dict):
         # Here we handle our exceptions.
         for key, value in e.message.iteritems():
-          context.error(key, value)
+          if isinstance(value, (list, tuple)):
+            for v in value:
+              context.error(key, v)
+          else:
+            context.error(key, value)
           throw = False
       if isinstance(e, datastore_errors.Timeout):
         context.error('transaction', 'timeout')

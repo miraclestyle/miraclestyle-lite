@@ -1111,51 +1111,41 @@
             };
         }).directive('checkNumeric', function () {
             return {
-                require: 'ngModel',
-                link: function (scope, element, attrs, ctrl) {
-                    ctrl.$parsers.push(function (inputValue) {
-                        // this next if is necessary for when using ng-required on your input. 
-                        // In such cases, when a letter is typed first, this parser will be called
-                        // again, and the 2nd time, the value will be undefined
-                        if (inputValue === undefined) { return ''; }
-                        var transformedInput = inputValue.replace(/[^0-9+.]/g, '');
-                        if (transformedInput !== inputValue) {
-                            ctrl.$setViewValue(transformedInput);
-                            ctrl.$render();
-                        }
-
-                        return transformedInput;
-                    });
-                    return;
+                require: ['ngModel', '^form'],
+                link: function (scope, element, attrs, ctrls) {
                     var checkNumeric = function (value) {
                         var valid = !isNaN(parseInt(value, 10));
                         if (!valid) {
                             valid = !isNaN(parseFloat(value, 10));
                         }
                         return valid;
-                    };
-                    ctrl.$parsers.unshift(function (value) {
+                    }, required = element.attr('required') === 'required';
+                    ctrls[0].$parsers.unshift(function (value) {
                         var valid = checkNumeric(value), out;
-                        ctrl.$setValidity('checkNumeric', valid);
+                        if (!required && (!valid || angular.isUndefined(value) || !value.length || !value.replace(/[^0-9+.]/g, ''))) {
+                            valid = true;
+                        }
+                        ctrls[0].$setValidity('checkNumeric', valid);
                         // if it's valid, return the value to the model, 
                         // otherwise return undefined.
                         if (angular.isDefined(value)) {
                             out = value.replace(/[^0-9+.]/g, '');
                             if (out !== value) {
-                                ctrl.$setViewValue(out);
-                                ctrl.$render();
+                                ctrls[0].$setViewValue(out);
+                                ctrls[0].$render();
                             }
                             return out;
                         }
 
                         return valid ? value : undefined;
                     });
-                    ctrl.$formatters.unshift(function (value) {
+                    /*
+                    ctrls[0].$formatters.unshift(function (value) {
                         // validate.
-                        ctrl.$setValidity('checkNumeric', checkNumeric(value));
+                        ctrls[0].$setValidity('checkNumeric', checkNumeric(value));
                         // return the value or nothing will be written to the DOM.
                         return value;
-                    });
+                    });*/
                 }
             };
         });
