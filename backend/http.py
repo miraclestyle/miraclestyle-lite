@@ -176,7 +176,8 @@ class RequestHandler(webapp2.RequestHandler):
       super(RequestHandler, self).dispatch()
       self.after()
     finally:
-      pass
+      util.log('Release In-memory Cache')
+      mem.storage.__release_local__()
       
 
 class Endpoint(RequestHandler):

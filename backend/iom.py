@@ -250,8 +250,6 @@ class Engine:
     finally:
       util.log('Process Blob Output')
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
-      util.log('Release In-memory Cache')
-      mem.storage.__release_local__()
       if settings.PROFILING:
         pr.disable()
         s = cStringIO.StringIO()
