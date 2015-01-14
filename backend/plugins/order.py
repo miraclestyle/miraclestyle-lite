@@ -959,7 +959,7 @@ class Discount(orm.BaseModel):
         product = line.product.value
         for discount_line in self.lines.value:
           satisfy = False
-          if product.category.key in discount_line.product_categories:
+          if product.category.value.key in discount_line.product_categories:
             satisfy = True
           if not satisfy and product.code in discount_line.product_codes:
             satisfy = True
