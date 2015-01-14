@@ -323,7 +323,8 @@
                             label = null,
                             config,
                             tpl,
-                            template;
+                            template,
+                            info;
 
                         if (!angular.isObject(supplied_config)) {
                             console.warn('config provided is not object for element: ', element);
@@ -365,6 +366,24 @@
                         helpers.mergeDeep(supplied_config, config);
                         config = supplied_config;
 
+                        if (!config.ui.init) {
+                            config.ui.init = {callbacks: [], add: function (name, callback) {
+                                var theObj = null;
+                                angular.forEach(this.callbacks, function (obj, i) {
+                                    if (angular.isDefined(obj[name])) {
+                                        theObj = obj;
+                                    }
+                                });
+                                if (theObj !== null) {
+                                    theObj[name] = callback;
+                                } else {
+                                    theObj = {};
+                                    theObj[name] = callback;
+                                    this.callbacks.push(theObj);
+                                }
+                            }};
+                        }
+
                         if (!angular.isDefined(config.ui.path)) {
                             config.ui.path = [name];
                         }
@@ -383,21 +402,23 @@
 
                         if (types[config.type] !== undefined) {
                             // reference main locals to type builder
-                            tpl = types[config.type]({
+                            info = {
                                 config: config,
                                 element: element,
                                 scope: scope,
                                 attrs: attrs
-                            });
+                            };
+                            tpl = types[config.type](info);
 
                             // compiled variables for the template
                             config.ui.compiled = {
                                 attrs: utils.attrs(config),
                                 label: utils.label(config)
                             };
-
-                            angular.forEach(config.ui.preRender, function (callback) {
-                                callback.call(config);
+                            angular.forEach(config.ui.init.callbacks, function (obj) {
+                                angular.forEach(obj, function (callback) {
+                                    callback(info);
+                                });
                             });
 
                             if (config.ui.render === false) {

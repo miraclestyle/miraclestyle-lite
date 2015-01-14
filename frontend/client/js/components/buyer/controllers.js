@@ -11,7 +11,7 @@
                 models['18'].manageModal(currentAccount.key);
             };
 
-        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope, $state) {
+        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $rootScope, $state) {
 
             var carts = $state.current.name === 'buy-carts';
 

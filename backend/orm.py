@@ -2902,7 +2902,7 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
     self._updateable = False
     self._deleteable = False
 
-  def value_format(self, value):
+  def value_format(self, value, path=None):
     # reference type properties can never be updated by the client
     return util.Nonexistent
 

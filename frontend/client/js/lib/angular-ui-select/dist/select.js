@@ -861,6 +861,9 @@
               locals = {};
               locals[$select.parserResult.itemName] = $select.selected[j];
               result = $select.parserResult.modelMapper(scope, locals);
+              if (!angular.isDefined(result)) {
+                result = locals[$select.parserResult.itemName];
+              }
               resultMultiple.unshift(result);
             }
             return resultMultiple;

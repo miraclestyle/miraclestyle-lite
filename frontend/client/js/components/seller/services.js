@@ -163,7 +163,9 @@
                             type: 'SuperKeyProperty',
                             ui: {
                                 specifics: {
-                                    entities: kinds
+                                    entities: function () {
+                                        return kinds;
+                                    },
                                 },
                                 args: 'info.kind',
                                 label: 'Plugins',
@@ -315,6 +317,17 @@
                                     $scope.parentArgs = config.ui.specifics.parentArgs;
                                     // entity.addresses
                                     $scope.entity = config.ui.specifics.entity;
+                                    $scope.rootFormSetDirty = rootFormSetDirty;
+                                    $scope.formSetDirty = function () {
+                                        if ($scope.container && $scope.container.form) {
+                                            return $scope.container.form.$setDirty();
+                                        }
+                                    };
+                                    $scope.formSetPristine = function () {
+                                        if ($scope.container && $scope.container.form) {
+                                            return $scope.container.form.$setPristine();
+                                        }
+                                    };
 
                                     if ($scope.args && $scope.args.kind) {
                                         $scope.info.kind = $scope.args.kind;
@@ -373,7 +386,6 @@
                                         };
 
                                         rootFormSetDirty();
-
                                         if (promise && promise.then) {
                                             promise.then(complete);
 

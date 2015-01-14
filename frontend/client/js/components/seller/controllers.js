@@ -8,7 +8,7 @@
                 models['23'].manageModal(currentAccount.key);
             };
 
-        }).controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope) {
+        }).controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
 
             $rootScope.pageTitle = 'Sell Catalogs';
 
@@ -67,7 +67,7 @@
                 $scope.search.pagination.load();
             });
 
-        }).controller('SellOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, visualAid, $rootScope, $state) {
+        }).controller('SellOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $rootScope, $state) {
 
             var carts = $state.current.name === 'sell-carts';
 

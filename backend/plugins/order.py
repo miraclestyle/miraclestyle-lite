@@ -471,6 +471,8 @@ class PayPalPayment(PaymentMethod):
     context._order.payment_method = self.key
   
   def complete(self, context):
+    if not self.active:
+      return
     # @todo Remove settings from here, from ALL PLUGINS!!
     if settings.PAYPAL_SANDBOX:
       url = settings.PAYPAL_WEBSCR_SANDBOX
@@ -600,9 +602,10 @@ class Tax(orm.BaseModel):
   amount = orm.SuperDecimalProperty('4', required=True, indexed=False)
   carriers = orm.SuperVirtualKeyProperty('5', kind='113', repeated=True, indexed=False)
   product_categories = orm.SuperKeyProperty('6', kind='24', repeated=True, indexed=False)
-  address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
-  exclusion = orm.SuperBooleanProperty('8', required=True, default=False, indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '9', repeated=True)
+  product_codes = orm.SuperStringProperty('7', repeated=True, indexed=False)
+  address_type = orm.SuperStringProperty('8', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  exclusion = orm.SuperBooleanProperty('9', required=True, default=False, indexed=False)
+  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '10', repeated=True)
   
   def run(self, context):
     if not self.active:
@@ -619,7 +622,8 @@ class Tax(orm.BaseModel):
         if tax.key_id_str == self.key_id_str:
           tax._state = 'deleted'
       if (self.product_categories and self.product_categories.count(copy_product.category.key)) \
-      or (not self.carriers and not self.product_categories):
+      or (self.product_codes and self.product_codes.count(copy_product.code)) \
+      or (not self.carriers and not self.product_categories and not self.product_codes):
         if allowed:
           tax_exists = False
           for tax in taxes:
@@ -915,3 +919,59 @@ class SetMessage(orm.BaseModel):
     OrderMessage = context.models['35']
     # this could be extended to allow params
     context._order._messages = [OrderMessage(agent=context.account.key, _agent=context.account, body=context.input['message'], action=context.action.key)]
+
+class DiscountLine(orm.BaseModel):
+
+  _kind = 124
+
+  _use_rule_engine = False
+
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  product_categories = orm.SuperKeyProperty('3', kind='24', repeated=True, indexed=False)
+  product_codes = orm.SuperStringProperty('4', repeated=True, indexed=False)
+  condition_type = orm.SuperStringProperty('5', required=True, default='quantity', choices=('price', 'quantity'), indexed=False)
+  condition_operator = orm.SuperStringProperty('6', required=True, default='=', choices=('==', '>', '<', '>=', '<='), indexed=False)
+  condition_value = orm.SuperDecimalProperty('7', required=True, indexed=False)
+  discount_value = orm.SuperDecimalProperty('8', required=True, indexed=False)
+
+  def make_condition(self):
+    condition = '%s %s condition_value' % (self.condition_type, self.condition_operator)
+    return condition
+
+
+class Discount(orm.BaseModel):
+
+  _kind = 126
+
+  _use_rule_engine = False
+
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  lines = orm.SuperLocalStructuredProperty(DiscountLine, '3', repeated=True)
+
+  def run(self, context):
+    if not self.active:
+      return # is inactive
+    order = context._order
+    if order._lines.value and self.lines.value:
+      for line in order._lines.value:
+        product = line.product.value
+        for discount_line in self.lines.value:
+          satisfy = False
+          if product.category.key in discount_line.product_categories:
+            satisfy = True
+          if not satisfy and product.code in discount_line.product_codes:
+            satisfy = True
+          if not satisfy and (not discount_line.product_codes and not discount_line.product_categories): # if no products or product codes are set, try passing the cond
+            satisfy = True
+          if satisfy:
+            price_calculation = discount_line.make_condition()
+            price_data = {
+              'quantity': product.quantity,
+              'price': product.unit_price,
+              'condition_value': discount_line.condition_value
+            }
+            if safe_eval(price_calculation, price_data):
+              line.discount = discount_line.discount_value
+              break
