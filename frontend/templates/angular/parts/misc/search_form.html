@@ -11,7 +11,7 @@
 
     <div ng-show="search.indexID != null && search.send.filters.length">
         <div class="form-input">
-            <div class="filter-entry" ng-repeat="fields in search.fields.filters track by $index">
+            <div class="filter-entry" ng-repeat="fields in search.fields.filters">
                 <div class="filter-value">
                     <div form-input="fields[1]"></div>
                 </div>
@@ -24,7 +24,7 @@
 
 
     <div ng-show="search.indexID != null">
-        <div ng-repeat="order in search.fields.orders track by order.code_name">
+        <div ng-repeat="order in search.fields.orders">
             <div form-input="order"></div>
         </div>
     </div>

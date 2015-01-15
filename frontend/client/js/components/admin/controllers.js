@@ -20,7 +20,7 @@
             $rootScope.pageTitle = 'Administer ' + $scope.config.titles[kind];
 
             $scope.manage = function (entity) {
-                models[kind].manageModal(entity);
+                models[kind].adminManageModal(entity);
             };
             $scope.search = searchBuilder.create();
             $.extend($scope.search, {

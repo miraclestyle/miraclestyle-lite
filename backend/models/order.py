@@ -224,9 +224,9 @@ class Order(orm.BaseExpando):
                            and entity._original.state == "cart")'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
                            'action.key_id_str == "search" and (account._root_admin \
-                            or (not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference" \
+                            or ((not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference" \
                                 and input["search"]["filters"][0]["value"]._root == account.key) \
-                            or (not account._is_guest and input["search"]["ancestor"]._root == account.key))'),
+                                or (not account._is_guest and "ancestor" in input["search"] and input["search"]["ancestor"]._root == account.key)))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart"'),
@@ -421,16 +421,21 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'search'),
       arguments={
         'search': orm.SuperSearchProperty(
-          default={'filters': [], 'orders': [{'field': 'updated', 'operator': 'desc'}, {'field': 'key', 'operator': 'desc'}]},
+          default={'filters': [], 'orders': [{'field': 'updated', 'operator': 'desc'}]},
           cfg={
             'search_arguments': {'kind': '34', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '19',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
+                        'key': orm.SuperVirtualKeyProperty(kind='34', searchable=False),
                         'state': orm.SuperStringProperty(repeated=True, choices=('checkout', 'cart', 'canceled', 'completed')),
-                        'seller_reference': orm.SuperKeyProperty(kind='23')},
-            'indexes': [{'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc', 'desc'])]},
-                        {'filters': [('seller_reference', ['==']), ('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc', 'desc'])]}]
+                        'seller_reference': orm.SuperKeyProperty(kind='23', searchable=False)},
+            'indexes': [{'orders': [('updated', ['asc', 'desc'])]},
+                        {'orders': [('created', ['asc', 'desc'])]},
+                        {'filters': [('key', ['=='])]},
+                        {'filters': [('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc'])]},
+                        {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('updated', ['desc']), ('key', ['asc'])]},
+                        {'filters': [('seller_reference', ['==']), ('state', ['IN'])], 'orders': [('updated', ['desc']), ('key', ['asc'])]}]
             }
           )
         },

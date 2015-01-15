@@ -28,7 +28,7 @@
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
-                    models['34'].viewModal(order._seller, buyer, order, {
+                    models['34'].manageModal(order, order._seller, buyer, {
                         cartMode: carts
                     });
                 });
@@ -42,7 +42,7 @@
                         search: {
                             ancestor: buyerEntity.key,
                             filters: [{field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}],
-                            orders: [{field: 'updated', operator: 'desc'}, {field: 'key', operator: 'desc'}]
+                            orders: [{field: 'updated', operator: 'desc'}, {field: 'key', operator: 'asc'}]
                         }
                     },
                     config: {

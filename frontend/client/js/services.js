@@ -404,7 +404,7 @@ w:                  while (images.length > 0) {
                 });
 
             },
-            url: GLOBAL_CONFIG.apiEndpointPath,
+            url: GLOBAL_CONFIG.api.endpoint.path,
             cached: function (key, action, model, data, config) {
                 var cacheEngine = getCache(config ? config.cacheType : undefined),
                     cache_key = cache_prefix + key,
@@ -488,7 +488,7 @@ w:                  while (images.length > 0) {
                 return endpoint.get(null, null, {}, {
                     cache: 'modelsMeta',
                     cacheType: 'memory',
-                    url: GLOBAL_CONFIG.apimodelsMetaPath,
+                    url: GLOBAL_CONFIG.api.modelsMeta.path,
                     ignoreErrors: true
                 }).then(function (response) {
                     var modelsInfo = $injector.get('modelsInfo');
@@ -871,13 +871,7 @@ w:                  while (images.length > 0) {
                                             kind: field.modelclass_kind
                                         };
                                         entity[field.code_name] = value;
-                                    } else {
-                                        /*value = {
-                                            kind: field.modelclass_kind
-                                        };
-                                        entity[field.code_name] = value;*/
                                     }
-
                                 }
 
                                 if (!(value === undefined || value === null)) {
@@ -2405,7 +2399,7 @@ w:                  while (images.length > 0) {
         var outputTypes = {
             SuperDateTimeProperty: function (input, field) {
                 var date = new Date(input);
-                return dateFilter(date, GLOBAL_CONFIG.dateFormat);
+                return dateFilter(date, GLOBAL_CONFIG.date.format);
             }
         };
         return outputTypes;
@@ -2784,6 +2778,7 @@ w:                  while (images.length > 0) {
                 resetFilters: function () {
                     this.send.filters = [];
                     this.send.orders = [];
+                    delete this.send.ancestor;
                 },
                 changeKindUI: function () {
                     this.changeKind();
@@ -2834,13 +2829,13 @@ w:                  while (images.length > 0) {
                     }
 
                     if (reset) {
-                        that.send.filters = [];
-                        that.send.orders = [];
+                        this.resetFilters();
                     }
                     that.fields.filters = [];
                     that.fields.orders = [];
 
                     indx = that.indexes[that.indexID];
+
 
                     angular.forEach(indx.filters, function (filter, i) {
                         field = that.filters[filter[0]];
@@ -2907,14 +2902,18 @@ w:                  while (images.length > 0) {
 
                 },
                 discoverIndexID: function () {
-
                     var that = this,
                         filters = this.send.filters,
+                        ancestor = this.send.ancestor,
                         orders = this.send.orders;
 
                     angular.forEach(this.indexes, function (index, indexID) {
 
-                        var got_filters = true;
+                        if ((ancestor && !index.ancestor) || (!ancestor && index.ancestor)) {
+                            return;
+                        }
+
+                        var got_filters = true, matchCount = 0, orderMatchCount = 0;
 
                         if (index.filters) {
                             got_filters = false;
@@ -2924,10 +2923,14 @@ w:                  while (images.length > 0) {
                                         field: filter[0]
                                     });
                                     if (gets && $.inArray(gets.operator, filter[1]) !== -1) {
-                                        got_filters = true;
-                                        that.indexID = indexID;
+                                        matchCount += 1;
                                     }
                                 });
+
+                                if (filters.length === matchCount && index.filters.length === filters.length) {
+                                    got_filters = true;
+                                    that.indexID = indexID;
+                                }
                             }
 
                         }
@@ -2940,10 +2943,14 @@ w:                  while (images.length > 0) {
                             });
 
                             if (got_filters && gets && $.inArray(gets.operator, order[1]) !== -1) {
-                                that.indexID = indexID;
+                                orderMatchCount += 1;
                                 gets._index = oi;
                             }
                         });
+
+                        if (got_filters && orderMatchCount === orders.length && index.orders.length === orders.length) {
+                            that.indexID = indexID;
+                        }
 
                     });
 

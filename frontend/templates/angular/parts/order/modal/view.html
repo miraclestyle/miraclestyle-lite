@@ -33,7 +33,7 @@
         <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
               <div class="item-list">
-                <div class="item clearfix" ng-if="line._state === 'deleted' || line.product.quantity < 1" ng-repeat="line in order._lines track by $index">
+                <div class="item clearfix" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
                     <div class="item-left">
                         <div class="order-line-product-name">
                           {{line.product.name}}

@@ -1170,13 +1170,6 @@
 
                         return valid ? value : undefined;
                     });
-                    /*
-                    ctrls[0].$formatters.unshift(function (value) {
-                        // validate.
-                        ctrls[0].$setValidity('checkNumeric', checkNumeric(value));
-                        // return the value or nothing will be written to the DOM.
-                        return value;
-                    });*/
                 }
             };
         });

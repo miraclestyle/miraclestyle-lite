@@ -19,6 +19,7 @@ import orm
 import util
 import settings
 import mem
+import errors
 
 
 class InputError(Exception):
@@ -27,16 +28,14 @@ class InputError(Exception):
     self.message = input_error
 
 
-class InvalidAction(Exception):
-  
-  def __init__(self, action_key):
-    self.message = {'invalid_action': action_key}
+class InvalidAction(errors.BaseKeyValueError):
+
+  KEY = 'invalid_action'
 
 
-class InvalidModel(Exception):
-  
-  def __init__(self, model_key):
-    self.message = {'invalid_model': model_key}
+class InvalidModel(errors.BaseKeyValueError):
+
+  KEY = 'invalid_model'
 
 
 class Context():
@@ -111,7 +110,7 @@ class Engine:
             if blob in delete_blobs:
               delete_blobs.remove(blob)
         if delete_blobs:
-          util.log('DELETED %s BLOBS.' % len(delete_blobs))
+          util.log.debug('DELETED %s BLOBS.' % len(delete_blobs))
           blobstore.delete(delete_blobs)
   
   @classmethod
@@ -185,16 +184,16 @@ class Engine:
           if 'non_property_error' not in input_error:
             input_error['non_property_error'] = []
           input_error['non_property_error'].append(key)  # Or perhaps, 'non_specific_error', or something simmilar.
-          util.log(e, 'exception')
+          util.log.exception(e)
     if len(input_error):
       raise InputError(input_error)
   
   @classmethod
   def execute_action(cls, context, input):
-    util.log('Execute Action: %s.%s' % (context.model.__name__, context.action.key_id_str))
+    util.log.debug('Execute Action: %s.%s' % (context.model.__name__, context.action.key_id_str))
     def execute_plugins(plugins):
       for plugin in plugins:
-        util.log('Running Plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
+        util.log.debug('Running Plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
         plugin.run(context)
     if hasattr(context.model, 'get_plugin_groups') and callable(context.model.get_plugin_groups):
       try:
@@ -207,7 +206,7 @@ class Engine:
               else:
                 execute_plugins(group.plugins)
       except orm.TerminateAction as e:
-        util.log('Action terminated with code: %s' % e.message)
+        util.log.debug('Action terminated with code: %s' % e.message)
       except Exception as e:
         raise
   
@@ -226,7 +225,7 @@ class Engine:
       cls.process_action_input(context, input)
       cls.execute_action(context, input)
       cls.process_blob_state('success')  # Delete and/or save all blobs that have to be deleted and/or saved on success.
-      util.log('Action Completed')
+      util.log.debug('Action Completed')
     except Exception as e:
       cls.process_blob_state('error')  # Delete and/or save all blobs that have to be deleted and/or saved or error.
       throw = True
@@ -248,13 +247,12 @@ class Engine:
       if throw and settings.DEBUG:
         raise  # Here we raise all other unhandled exceptions!
     finally:
-      util.log('Process Blob Output')
+      util.log.debug('Process Blob Output')
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
       if settings.PROFILING:
         pr.disable()
         s = cStringIO.StringIO()
-        sortby = 'cumulative'
-        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps = pstats.Stats(pr, stream=s).sort_stats(*settings.PROFILING_SORT)
         ps.print_stats()
-        print s.getvalue()
+        util.log.debug(s.getvalue())
     return context.output

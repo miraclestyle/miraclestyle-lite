@@ -16,7 +16,12 @@
                         });
                     });
                 },
-                viewModal: function (seller, buyer, order, config) {
+                adminManageModal: function (order) {
+                    return this.manageModal(order, order._seller, undefined, {
+                        sellerMode: true
+                    });
+                },
+                manageModal: function (order, seller, buyer, config) {
                     config = helpers.alwaysObject(config);
                     var args, that = this, cartMode = config.cartMode, sellerMode = config.sellerMode, rpc = {};
 

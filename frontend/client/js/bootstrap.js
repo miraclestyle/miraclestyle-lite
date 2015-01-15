@@ -3,16 +3,19 @@
     'use strict';
     angular.element(document).ready(function () {
         var injector = angular.injector(['app']),
-            endpoint = injector.get('endpoint');
-
+            endpoint = injector.get('endpoint'),
+            failure = function () {
+                var choice = prompt('Could not start application. Reload your browser and try again?');
+                if (choice) {
+                    window.location.reload(true);
+                }
+            };
         // models meta must be loaded first above all things because entire application depends on it
         endpoint.modelsMeta().then(function () {
             return endpoint.currentAccount();
-        }).then(function () {
+        }).then(function (response) {
             angular.bootstrap(document, ['app']);
-        }, function () {
-            alert('Could not bootstrap the application. Please reload the browser.');
-        });
+        }, failure);
 
     });
 }());

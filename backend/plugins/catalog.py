@@ -71,7 +71,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
           # roots
           parse_structure(value.iteritems())
     parse_structure(structure.iteritems())
-    log('Writing %s categories' % len(write_data))
+    log.debug('Writing %s categories' % len(write_data))
     for ent in write_data:
       ent.write()
 

@@ -81,7 +81,7 @@
             $scope.scrollEnd = {loader: false};
 
             $scope.view = function (order) {
-                models['34'].viewModal(order._seller, undefined, order, {
+                models['34'].manageModal(order, order._seller, undefined, {
                     sellerMode: carts
                 });
             };
@@ -93,7 +93,7 @@
                     args: {
                         search: {
                             filters: [{field: 'seller_reference', operator: '==', value: sellerEntity.key}, {field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}],
-                            orders: [{field: 'updated', operator: 'desc'}, {field: 'key', operator: 'desc'}]
+                            orders: [{field: 'updated', operator: 'desc'}, {field: 'key', operator: 'asc'}]
                         }
                     },
                     config: {

@@ -18,8 +18,30 @@ import sys
 from decimal import Decimal, ROUND_HALF_EVEN
 
 import settings
+import errors
 
 # @todo __all__ is needed for everything that gets wildcard imported
+
+class UnitConversionError(errors.BaseKeyValueError):
+
+    KEY = 'unit_convert_value'
+
+
+class UnitRoundingError(errors.BaseKeyValueError):
+
+    KEY = 'unit_round_value'
+
+
+class UnitFormatError(errors.BaseKeyValueError):
+
+    KEY = 'unit_format_value'
+
+
+class SafeEvalError(errors.BaseKeyValueError):
+
+    LOG = True
+
+    KEY = 'safe_eval_error'
 
 
 class Meaning(object):
@@ -300,15 +322,15 @@ def _compile_source(source):
 
 def safe_eval(source, data=None):
     if '__subclasses__' in source:
-        raise ValueError('__subclasses__ not allowed')
+        raise SafeEvalError('__subclasses__ not allowed')
     comp = _compile_source(source)
     try:
         return eval(comp, {'__builtins__': {'True': True, 'False': False, 'str': str,
                                             'globals': locals, 'locals': locals, 'bool': bool,
                                             'dict': dict, 'round': round, 'Decimal': Decimal}}, data)
     except Exception as e:
-        raise Exception(
-            'Failed to process code: "%s" | error: %s | data: %s' % (source, e, data))
+        raise SafeEvalError(
+            'Failed to process code: "%s" ---- error was: %s' % (source, e))
 
 
 def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits):
@@ -327,11 +349,31 @@ def partition_list(complete_list, partition_length):
         yield complete_list[i:i + partition_length]
 
 
-def log(message, level=None):
-    if level == None:
-        level = 'info'
-    if settings.DO_LOGS:
-        getattr(logging, level)(message)
+def noop(*args, **kwargs):
+    pass
+
+class LoggingWrapper(object):
+
+    def _decide(self, exc):
+        logger = getattr(logging, name)
+        if hasattr(exc, 'LOG'):
+            if exc.LOG:
+                return logger
+            else:
+                return noop
+        return logger # always log exceptions that do not have `LOG` constant
+
+    def __getattr__(self, name, default=None):
+        if name and name.startswith('_'):
+            return super(LoggingWrapper, self).__getattr__(self, name, default)
+        if settings.DO_LOGS:
+            if name == 'exception':
+                return self._decide
+            return getattr(logging, name)
+        else:
+            return noop
+
+log = LoggingWrapper()
 
 ### DEBUG ###
 def dbg():
@@ -349,24 +391,24 @@ def convert_value(value, value_uom, conversion_uom):
     if not isinstance(value, Decimal):
         value = Decimal(value)
     if not hasattr(value_uom, 'measurement'):
-        raise Exception('no_measurement_in_value_uom')
+        raise UnitConversionError('no_measurement_in_value_uom')
     if not hasattr(conversion_uom, 'measurement'):
-        raise Exception('no_measurement_in_conversion_uom')
+        raise UnitConversionError('no_measurement_in_conversion_uom')
     if not hasattr(value_uom, 'rate') or not isinstance(value_uom.rate, Decimal):
-        raise Exception('no_rate_in_value_uom')
+        raise UnitConversionError('no_rate_in_value_uom')
     if not hasattr(conversion_uom, 'rate') or not isinstance(conversion_uom.rate, Decimal):
-        raise Exception('no_rate_in_conversion_uom')
+        raise UnitConversionError('no_rate_in_conversion_uom')
     if (value_uom.measurement == conversion_uom.measurement):
         return (value / value_uom.rate) * conversion_uom.rate
     else:
-        raise Exception('incompatible_units')
+        raise UnitConversionError('incompatible_units')
 
 
 def round_value(value, uom, rounding=ROUND_HALF_EVEN):
     if not isinstance(value, Decimal):
         value = Decimal(value)
     if not hasattr(uom, 'rounding') or not isinstance(uom.rounding, Decimal):
-        raise Exception('no_rounding_in_uom')
+        raise UnitRoundingError('no_rounding_in_uom')
     return (value / uom.rounding).quantize(Decimal('1.'), rounding=rounding) * uom.rounding
 
 
@@ -374,6 +416,6 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
     if not isinstance(value, Decimal):
         value = Decimal(value)
     if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
-        raise Exception('no_digits_in_uom, got %s' % uom)
+        raise UnitFormatError('no_digits_in_uom, got %s' % uom)
     places = Decimal(10) ** -uom.digits
     return value.quantize(places, rounding=rounding)

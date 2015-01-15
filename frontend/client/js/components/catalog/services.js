@@ -383,7 +383,7 @@
 
                                 $scope.displayCart = function () {
                                     models['19'].current().then(function (response) {
-                                        models['34'].viewModal($scope.catalog._seller, response.data.entity, undefined, {
+                                        models['34'].manageModal(undefined, $scope.catalog._seller, response.data.entity, {
                                             cartMode: true
                                         });
                                     });
@@ -407,10 +407,13 @@
                         });
                     });
                 },
-                manageModal: function (entity, callback) { // modal dialog for managing the catalog
+                adminManageModal: function (catalog) {
+                    return this.manageModal(catalog);
+                },
+                manageModal: function (catalog, callback) { // modal dialog for managing the catalog
 
                     var fields = modelsMeta.getActionArguments('31', 'update'),
-                        isNew = !angular.isDefined(entity),
+                        isNew = !angular.isDefined(catalog),
                         afterSave = function ($scope) {
                             $scope.setAction('catalog_upload_images');
                             callback($scope.entity);
@@ -505,7 +508,7 @@
                                             templateUrl: 'catalog/modal/administer.html',
                                             controller: function ($scope, $modalInstance) {
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
-                                                $scope.args = {key: entity.key, state: entity.state};
+                                                $scope.args = {key: catalog.key, state: catalog.state};
 
                                                 sudoFields.state.ui.placeholder = 'Set state';
                                                 sudoFields.index_state.ui.placeholder = 'Index action';
@@ -1015,8 +1018,8 @@
                         });
 
                     } else {
-                        modelsEditor.create(config).read(entity, {
-                            key: entity.key,
+                        modelsEditor.create(config).read(catalog, {
+                            key: catalog.key,
                             read_arguments: {
                                 _images: {}
                             }

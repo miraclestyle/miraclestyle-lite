@@ -198,6 +198,7 @@ ANGULAR_TEMPLATES = (
   ('admin/directive/list/default.html',),
   ('admin/directive/list/31.html',), # display directive template for catalog
   ('admin/directive/list/11.html',), # display directive template for account
+  ('admin/directive/list/34.html',), # display directive template for order
 
   # catalog
   ('catalog/quick_info.html',),

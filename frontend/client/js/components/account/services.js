@@ -5,6 +5,9 @@
         modelsConfig(function (models) {
 
             $.extend(models['11'], {
+                adminManageModal: function (account) {
+                    return this.manageModal(account);
+                },
                 manageModal: function (account) {
                     var that = this,
                         config = {

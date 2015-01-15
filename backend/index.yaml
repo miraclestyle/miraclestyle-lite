@@ -90,8 +90,6 @@ indexes:
   - name: '3'
   - name: '2'
     direction: desc
-  - name: __key__
-    direction: desc
 
 
 # Order Seller Cart & Order
@@ -101,7 +99,33 @@ indexes:
   - name: '5'
   - name: '2'
     direction: desc
-  - name: __key__
+
+# Admin Order state and order by created ASC
+- kind: '34'
+  properties:
+  - name: '3'
+  - name: '2'
+
+# Admin Order state and order by created DESC
+- kind: '34'
+  properties:
+  - name: '3'
+  - name: '2'
+    direction: desc
+
+# Admin Order seller reference and state and order by created ASC
+- kind: '34'
+  properties:
+  - name: '3'
+  - name: '5'
+  - name: '2'
+
+# Admin Order seller reference and state and order by created DESC
+- kind: '34'
+  properties:
+  - name: '3'
+  - name: '5'
+  - name: '2'
     direction: desc
 
 # OrderLine

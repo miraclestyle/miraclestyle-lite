@@ -27,7 +27,7 @@ from google.appengine.api import search, datastore_errors
 import mem
 import util
 import settings
-
+import errors
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
 # For details see: https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
@@ -42,7 +42,9 @@ ctx.set_memcache_policy(False)
 #############################################
 
 
-class ActionDenied(Exception):
+class ActionDenied(errors.BaseKeyValueError):
+
+  KEY = 'action_denied'
   
   def __init__(self, action):
     self.message = {'action_denied': action}
@@ -955,7 +957,7 @@ class _BaseModel(object):
           try:
             setattr(entity, field_key, field_value)
           except TypeError as e:
-            util.log('--RuleWrite: setattr error: %s' % e)
+            util.log.debug('--RuleWrite: setattr error: %s' % e)
           except ComputedPropertyError:
             pass
           except Exception:
@@ -1498,7 +1500,7 @@ class _BaseModel(object):
         value = getattr(self, name, None)
         dic[name] = value
     except Exception as e:
-      util.log(e, 'exception')
+      util.log.exception(e)
     self._set_next_read_arguments()
     if hasattr(self, '_next_read_arguments'):
       dic['_next_read_arguments'] = self._next_read_arguments
@@ -2016,7 +2018,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           for ent in entities:
             ent._sequence += last_sequence
     else:
-      util.log('cannot use .add() on non repeated property', 'warn')
+      util.log.warn('cannot use .add() on non repeated property')
     # Always trigger setattr on the property itself
     setattr(self._entity, self.property_name, entities)
 

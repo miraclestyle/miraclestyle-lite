@@ -11,6 +11,7 @@ import re
 import copy
 
 import orm
+import errors
 from tools.base import *
 from util import *
 
@@ -18,10 +19,9 @@ from models.location import *
 from models.unit import *
 
 
-class PluginError(Exception):
+class PluginError(errors.BaseKeyValueError):
   
-  def __init__(self, plugin_error):
-    self.message = {'plugin_error': plugin_error}
+  KEY = 'plugin_error'
 
 
 # This is system plugin, which means end user can not use it!
@@ -555,7 +555,7 @@ class PayPalPayment(PaymentMethod):
         
     for line in order._lines.value:
       product = line.product.value
-      log('Order sequence %s' % line.sequence)
+      log.info('Order sequence %s' % line.sequence)
       # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
       if (str(line.sequence) != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
         mismatches.append('item_number%s' % str(line.sequence))
@@ -591,9 +591,9 @@ class PayPalPayment(PaymentMethod):
               order.payment_status = ipn_payment_status
     else:
       # log that there were missmatches, where we should log that?
-      log('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
-    log('Set Order state %s' % order.state)
-    log('Set Order payment_status %s' % order.payment_status)
+      log.error('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
+    log.info('Set Order state %s' % order.state)
+    log.info('Set Order payment_status %s' % order.payment_status)
 
 
 class Tax(orm.BaseModel):

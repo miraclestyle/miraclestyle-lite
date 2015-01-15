@@ -17,16 +17,26 @@
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
+            debug: true, // debug mode
             host: host,
-            angularModules: ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
-                'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector', 'monospaced.elastic',
-                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch', 'timer', 'angulike', 'googlechart'], // this will be changed accordingly
-            apimodelsMetaPath: host + '/api/model_meta',
-            apiEndpointPath: host + '/api/endpoint',
-            dateFormat: 'yyyy-MM-dd HH:mm:ss Z',
+            modules: ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
+                'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector',
+                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch',
+                'timer', 'angulike', 'googlechart', 'monospaced.elastic'], // this will be changed accordingly
+            api: {
+                modelsMeta: {
+                    path: host + '/api/model_meta'
+                },
+                endpoint: {
+                    path: host + '/api/endpoint'
+                }
+            },
+            date: {
+                format: 'yyyy-MM-dd HH:mm:ss Z'
+            },
             defaultImage: 'http://placehold.it/240x100',
             defaultLogo: 'http://placehold.it/240x100',
-            defaultCatalogCover: 'http://placehold.it/240x360',
+            defaultCatalogCover: 'http://placehold.it/240x240',
             grid: {
                 maxWidth: 240,
                 minWidth: 180,
@@ -40,16 +50,17 @@
             },
             admin: {
                 listTemplates: {},
-                menu: [{name: 'Catalogs', kind: 31}, {name: 'Users', kind: 11}], // admin paths shown in the menu
-                listDisplayDirective: ['31', '11'],
+                menu: [{name: 'Catalogs', kind: 31}, {name: 'Users', kind: 11}, {name: 'Orders', kind: '34'}], // admin paths shown in the menu
+                listDisplayDirective: ['31', '11', '34'],
                 listTitles: {
                     '31': 'Catalogs',
-                    '11': 'Users'
+                    '11': 'Users',
+                    '34': 'Orders'
                 }
             }
         };
 
-    angular.module('app', GLOBAL_CONFIG.angularModules)
+    angular.module('app', GLOBAL_CONFIG.modules)
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function ($httpProvider, $locationProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');

@@ -5,6 +5,7 @@ Created on Jul 8, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import logging
 import os
 
 ''' Settings file for backend module '''
@@ -16,8 +17,9 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input an
 # Server side config
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True
-DO_LOGS = True
-PROFILING = False
+DO_LOGS = True # logging on application level
+PROFILING = False # profiling of every function call using cProfile. Debug must be on
+PROFILING_SORT = ('cumulative', ) # 'time'
 
 # Notify
 NOTIFY_EMAIL = 'notify-noreply@miraclestyle.com'  # Password: xZa9hv8nbWyzk67boq4Q0
@@ -36,9 +38,6 @@ ROOT_ADMINS = ('elvinkosova@gmail.com', 'edis.sehalic@gmail.com')
 # Record settings.
 RECORDS_PAGE = 10
 SEARCH_PAGE = 10
-
-# Blob cloud storage settings.
-BUCKET_PATH = 'x-arcanum-801.appspot.com'
 
 # Catalog settings.
 CATALOG_PAGE = 10
@@ -63,17 +62,17 @@ if HOST_URL is None:
   HOST_URL = __discover_host_url()
 
 # Configuration files
-
 ETC_DATA_DIR = os.path.join(ROOT_DIR, 'etc', 'data')
 
 UOM_DATA_FILE = os.path.join(ETC_DATA_DIR, 'uom.xml')
 LOCATION_DATA_FILE = os.path.join(ETC_DATA_DIR, 'location.xml')
 CURRENCY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'currency.xml')
-ORDER_ACCOUNT_CHART_DATA_FILE = os.path.join(ETC_DATA_DIR, 'order_account_chart.xml')
 PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 
 # BLOB Handling
 BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
+# Cloud storage path settings.
+BUCKET_PATH = 'x-arcanum-801.appspot.com'
 
 OAUTH2_REDIRECT_URI = HOST_URL
 if DEVELOPMENT_SERVER:
@@ -111,10 +110,11 @@ LOGIN_METHODS = {
 AVAILABLE_PAYMENT_METHODS = ['paypal']
 
 # PAYPAL
-PAYPAL_WEBSCR_SANDBOX = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
-PAYPAL_WEBSCR = 'https://www.paypal.com/cgi-bin/webscr'
 PAYPAL_SANDBOX = True
+PAYPAL_WEBSCR = 'https://www.paypal.com/cgi-bin/webscr'
+if PAYPAL_SANDBOX:
+  PAYPAL_WEBSCR = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
 
-# HTTP client
+# HTTP client related configs
 CSRF_TOKEN_KEY = 'csrf_token'
 COOKIE_AUTH_KEY = 'auth'

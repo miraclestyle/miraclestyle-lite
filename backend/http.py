@@ -7,6 +7,7 @@ Created on Sep 22, 2014
 import webapp2
 import json
 import datetime
+import time
 import inspect
 import copy
 import sys
@@ -94,7 +95,6 @@ class RequestHandler(webapp2.RequestHandler):
         try:
           dicts = json.loads(special_data)
         except Exception as e:
-          util.log('error parsing __body__ %s' % e, 'error')
           dicts = {}
       else:
         dicts = {}
@@ -168,6 +168,7 @@ class RequestHandler(webapp2.RequestHandler):
   
   @orm.toplevel
   def dispatch(self):
+    start = time.time()
     self.load_current_account()
     self.load_csrf()
     self.validate_csrf()
@@ -176,8 +177,10 @@ class RequestHandler(webapp2.RequestHandler):
       super(RequestHandler, self).dispatch()
       self.after()
     finally:
-      util.log('Release In-memory Cache')
+      util.log.debug('Release In-memory Cache')
       mem.storage.__release_local__()
+      total = (time.time() - start) * 1000
+      util.log.debug('Finished request in %s ms' % total)
       
 
 class Endpoint(RequestHandler):
@@ -221,10 +224,10 @@ class Install(RequestHandler):
 class IOEngineRun(RequestHandler):
   
   def respond(self):
-    util.log('Begin IOEngineRun execute')
+    util.log.debug('Begin IOEngineRun execute')
     input = self.get_input()
     iom.Engine.run(input)
-    util.log('End IOEngineRun execute')
+    util.log.debug('End IOEngineRun execute')
   
 
 class AccountLogin(RequestHandler):
@@ -310,13 +313,13 @@ class Reset(BaseTestHandler):
     keys_to_delete = []
     if self.request.get('kinds'):
       kinds = self.request.get('kinds').split(',')
-    util.log('DELETE KINDS %s' % kinds)
+    util.log.debug('DELETE KINDS %s' % kinds)
     ignore = []
     if self.request.get('ignore'):
       ignore = self.request.get('ignore')
     @orm.tasklet
     def wipe(kind):
-      util.log('DELETE ENTITY KIND %s' % kind)
+      util.log.debug('DELETE ENTITY KIND %s' % kind)
       @orm.tasklet
       def generator():
         model = models.get(kind)
@@ -325,7 +328,7 @@ class Reset(BaseTestHandler):
           keys_to_delete.extend(keys)
           indexes.append(search.Index(name=kind))
           for namespace in namespaces:
-            util.log('DELETE NAMESPACE %s' % namespace)
+            util.log.debug('DELETE NAMESPACE %s' % namespace)
             keys = yield model.query(namespace=namespace).fetch_async(keys_only=True)
             keys_to_delete.extend(keys)
             indexes.append(search.Index(name=kind, namespace=namespace))
