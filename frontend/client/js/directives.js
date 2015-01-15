@@ -324,7 +324,8 @@
                             config,
                             tpl,
                             template,
-                            info;
+                            info,
+                            constructor;
 
                         if (!angular.isObject(supplied_config)) {
                             console.warn('config provided is not object for element: ', element);
@@ -366,6 +367,11 @@
                         helpers.mergeDeep(supplied_config, config);
                         config = supplied_config;
 
+                        if (angular.isFunction(config.ui.init)) {
+                            constructor = config.ui.init;
+                            config.ui.init = undefined;
+                        }
+
                         if (!config.ui.init) {
                             config.ui.init = {callbacks: [], add: function (name, callback) {
                                 var theObj = null;
@@ -382,6 +388,10 @@
                                     this.callbacks.push(theObj);
                                 }
                             }};
+                        }
+
+                        if (constructor) {
+                            config.ui.init.add('init', constructor);
                         }
 
                         if (!angular.isDefined(config.ui.path)) {

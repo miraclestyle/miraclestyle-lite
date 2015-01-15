@@ -192,6 +192,28 @@
                 });
                 return dst;
             },
+            extend: function (dst) {
+                angular.forEach(arguments, function (obj) {
+                    if (obj !== dst) {
+                        angular.forEach(obj, function (value, key) {
+                            dst[key] = value;
+                        });
+                    }
+                });
+                return dst;
+            },
+            merge: function (dst) {
+                angular.forEach(arguments, function (obj) {
+                    if (obj !== dst) {
+                        angular.forEach(obj, function (value, key) {
+                            if (!angular.isDefined(dst[key])) {
+                                dst[key] = value;
+                            }
+                        });
+                    }
+                });
+                return dst;
+            },
             mergeDeep: function (dst) {
                 angular.forEach(arguments, function (obj) {
                     if (obj !== dst) {
@@ -1437,6 +1459,9 @@ w:                  while (images.length > 0) {
                     return this.SuperKeyProperty(info);
                 },
                 SuperKeyProperty: function (info) {
+                    if (info.config.searchable === false) {
+                        return this.SuperStringProperty(info);
+                    }
                     var config = info.config,
                         internalConfig = info.config.ui.specifics.internalConfig,
                         defaultInternalConfig = {
@@ -1590,7 +1615,6 @@ w:                  while (images.length > 0) {
                         config.ui.specifics.propsFilter = propsFilter;
 
                     }
-
                     config.ui.specifics.view = function (result) {
                         var fn = internalConfig.search.view[config.kind];
                         if (!fn) {
@@ -2463,7 +2487,8 @@ w:                  while (images.length > 0) {
                                 };
                             theConfig.args.search = searchAction.search['default'];
                             if (angular.isDefined(config.args)) {
-                                helpers.extendDeep(theConfig, config);
+                                helpers.merge(config.args, theConfig.args);
+                                helpers.extend(theConfig, config);
                             }
                             return paginate;
                         },
@@ -2716,15 +2741,15 @@ w:                  while (images.length > 0) {
                 hide: false,
                 filters: {},
                 indexes: [],
-                index_id: null,
+                indexID: null,
                 fields: {
-                    index_id: {
+                    indexID: {
                         type: 'SuperStringProperty',
                         choices: [],
-                        code_name: 'index_id',
+                        code_name: 'indexID',
                         required: true,
                         ui: {
-                            args: 'search.index_id',
+                            args: 'search.indexID',
                             label: 'Search Options',
                             placeholder: 'Select index',
                             writable: true,
@@ -2735,6 +2760,17 @@ w:                  while (images.length > 0) {
                                 choiceFilter: 'showFriendlyIndexName',
                                 repeatAs: 'choice._index as '
                             }
+                        }
+                    },
+                    ancestor: {
+                        type: 'SuperStringProperty',
+                        code_name: 'ancestor',
+                        required: 'search.indexes[search.indexID].ancestor',
+                        ui: {
+                            args: 'search.send.ancestor',
+                            label: 'Ancestor',
+                            placeholder: 'Type the ancestor key',
+                            writable: true
                         }
                     },
                     filters: [],
@@ -2774,25 +2810,25 @@ w:                  while (images.length > 0) {
                         }
 
                         cfg = searchField.cfg;
+                        this.cfg = cfg;
                         this.send.kind = this.kind;
                         this.filters = cfg.filters || {};
                         this.indexes = cfg.indexes || [];
-                        this.index_id = null;
+                        this.indexID = null;
                         this.mapIndexes(cfg.indexes);
-                        this.fields.index_id.choices = cfg.indexes;
+                        this.fields.indexID.choices = cfg.indexes;
 
                     }
 
                 },
                 changeOrderBy: function (e) {
-                    e.field = this.indexes[this.index_id].orders[e._index][0];
+                    e.field = this.indexes[this.indexID].orders[e._index][0];
                 },
                 makeFilters: function (reset) {
                     var that = this,
                         indx,
                         field,
                         operator;
-
                     if (!angular.isDefined(reset)) {
                         reset = true;
                     }
@@ -2804,11 +2840,11 @@ w:                  while (images.length > 0) {
                     that.fields.filters = [];
                     that.fields.orders = [];
 
-                    indx = that.indexes[that.index_id];
+                    indx = that.indexes[that.indexID];
 
                     angular.forEach(indx.filters, function (filter, i) {
                         field = that.filters[filter[0]];
-                        field.required = 'search.index_id != null && search.send.filters.length';
+                        field.required = 'search.indexID != null && search.send.filters.length';
                         field.code_name = 'filter_' + filter[0];
                         field.ui = {
                             placeholder: 'Select value...',
@@ -2854,7 +2890,7 @@ w:                  while (images.length > 0) {
                             type: 'SuperStringProperty',
                             choices: order[1],
                             code_name: 'order_by_' + order[0],
-                            required: 'search.index_id != null && search.send.filters.length',
+                            required: 'search.indexID != null && search.send.filters.length',
                             ui: {
                                 placeholder: 'Select direction',
                                 writable: true,
@@ -2865,6 +2901,10 @@ w:                  while (images.length > 0) {
                         that.fields.orders.push(field);
                     });
 
+                    if (!indx.orders) {
+                        that.send.orders = [];
+                    }
+
                 },
                 discoverIndexID: function () {
 
@@ -2872,7 +2912,7 @@ w:                  while (images.length > 0) {
                         filters = this.send.filters,
                         orders = this.send.orders;
 
-                    angular.forEach(this.indexes, function (index, index_id) {
+                    angular.forEach(this.indexes, function (index, indexID) {
 
                         var got_filters = true;
 
@@ -2885,7 +2925,7 @@ w:                  while (images.length > 0) {
                                     });
                                     if (gets && $.inArray(gets.operator, filter[1]) !== -1) {
                                         got_filters = true;
-                                        that.index_id = index_id;
+                                        that.indexID = indexID;
                                     }
                                 });
                             }
@@ -2900,7 +2940,7 @@ w:                  while (images.length > 0) {
                             });
 
                             if (got_filters && gets && $.inArray(gets.operator, order[1]) !== -1) {
-                                that.index_id = index_id;
+                                that.indexID = indexID;
                                 gets._index = oi;
                             }
                         });

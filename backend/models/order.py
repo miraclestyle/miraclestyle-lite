@@ -321,8 +321,9 @@ class Order(orm.BaseExpando):
             Context(),
             OrderInit(),
             PluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
-            UpdateOrderLine(),
             ProductSpecs(),
+            UpdateOrderLine(),
+            OrderLineRemovals(),
             PluginExec(),
             OrderLineFormat(),
             OrderCarrierFormat(),
@@ -397,6 +398,7 @@ class Order(orm.BaseExpando):
             Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
             Set(cfg={'d': {'_order.payment_method': 'input.payment_method',
                            '_order._lines': 'input._lines'}}),
+            OrderLineRemovals(),
             ProductSpecs(),
             PluginExec(),
             OrderLineFormat(),

@@ -184,12 +184,12 @@ class Account(orm.BaseExpando):
           cfg={
             'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'emails': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty()},
+                        'key': orm.SuperVirtualKeyProperty(kind='11', searchable=False),
+                        'state': orm.SuperStringProperty(choices=('active', 'suspended', 'su_suspended'))},
             'indexes': [{'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('updated', ['asc', 'desc'])]},
                         {'filters': [('key', ['==', '!='])]},
-                        {'filters': [('emails', ['==', '!='])],
-                         'orders': [('created', ['asc', 'desc'])]},
+                        {'filters': [('emails', ['==', '!='])]},
                         {'filters': [('state', ['==', '!='])],
                          'orders': [('created', ['asc', 'desc'])]}]
             }

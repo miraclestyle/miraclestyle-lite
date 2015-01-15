@@ -182,6 +182,7 @@ ANGULAR_TEMPLATES = (
   # seller
   ('seller/directive/carrier_line_rule_display.html',),
   ('seller/directive/address_rule_location_display.html',),
+  ('seller/directive/default_line_display.html',),
   ('seller/modal/view_body.html',),
   ('seller/modal/view_footer.html',),
   

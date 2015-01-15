@@ -609,6 +609,7 @@ class Catalog(orm.BaseExpando):
             'ancestor_kind': '23',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
+                        'key': orm.SuperVirtualKeyProperty(kind='31', searchable=False),
                         'state': orm.SuperStringProperty(choices=('published', 'draft'))},
             'indexes': [{'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('created', ['asc', 'desc'])]},

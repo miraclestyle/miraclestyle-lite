@@ -185,6 +185,8 @@ class ProductSpecs(orm.BaseModel):
     total_quantity = format_value('0', unit_uom)
     if order._lines.value:
       for line in order._lines.value:
+        if line._state == 'deleted':
+          continue
         product = line.product.value
         if product.weight is not None:
           total_weight = total_weight + (convert_value(product.weight, product.weight_uom.value, weight_uom) * product.quantity)
@@ -206,15 +208,14 @@ class OrderLineFormat(orm.BaseModel):
   def run(self, context):
     order = context._order
     for line in order._lines.value:
+      if line._state == 'deleted':
+        continue
       product = line.product.value
       if product:
         if order.seller_reference._root != product.reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
         line.discount = format_value(line.discount, Unit(digits=2))
-        if product.quantity <= Decimal('0'):
-          line._state = 'deleted'
-        else:
-          product.quantity = format_value(product.quantity, product.uom.value)
+        product.quantity = format_value(product.quantity, product.uom.value)
         line.subtotal = format_value((product.unit_price * product.quantity), order.currency.value)
         if line.discount is not None:
           discount = line.discount * format_value('0.01', Unit(digits=2))  # or "/ format_value('100', Unit(digits=2))"
@@ -271,7 +272,12 @@ class OrderFormat(orm.BaseModel):
     untaxed_amount = format_value('0', order.currency.value)
     tax_amount = format_value('0', order.currency.value)
     total_amount = format_value('0', order.currency.value)
+    i = 0
     for line in order._lines.value:
+      if line._state == 'deleted':
+        continue
+      i += 1
+      line.sequence = i
       product = line.product.value
       if product:
         untaxed_amount = untaxed_amount + line.discount_subtotal
@@ -615,6 +621,8 @@ class Tax(orm.BaseModel):
     order = context._order
     allowed = self.validate_tax(order)
     for line in order._lines.value:
+      if line._state == 'deleted':
+        continue
       taxes = line.taxes.value
       if not taxes:
         taxes = []
@@ -707,6 +715,8 @@ class Tax(orm.BaseModel):
       elif self.product_categories:
         allowed = False
         for line in order._lines.value:
+          if line._state == 'deleted':
+            continue
           product = line.product.value
           if self.product_categories.count(product.category.value.key):
             allowed = True
@@ -798,6 +808,8 @@ class Carrier(orm.BaseModel):
       return Decimal('0') # if no lines are present return 0
     total = Decimal('0')
     for line in order._lines.value:
+      if line._state == 'deleted':
+        continue
       product = line.product.value
       carrier_lines_prices = []
       for carrier_line in valid_lines:
@@ -956,6 +968,8 @@ class Discount(orm.BaseModel):
     order = context._order
     if order._lines.value and self.lines.value:
       for line in order._lines.value:
+        if line._state == 'deleted':
+          continue
         product = line.product.value
         for discount_line in self.lines.value:
           satisfy = False
@@ -973,5 +987,20 @@ class Discount(orm.BaseModel):
               'condition_value': discount_line.condition_value
             }
             if safe_eval(price_calculation, price_data):
-              line.discount = discount_line.discount_value
+              line.discount = format_value(discount_line.discount_value, Unit(digits=2))
               break
+
+class OrderLineRemovals(orm.BaseModel):
+  
+  _kind = 127
+  
+  _use_rule_engine = False
+  
+  def run(self, context):
+    order = context._order
+    lines = order._lines.value
+    if lines:
+      for line in lines:
+        product = line.product.value
+        if product.quantity <= Decimal('0'):
+          line._state = 'deleted'

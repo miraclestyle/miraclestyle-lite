@@ -2138,7 +2138,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         delete_entities.append(entity)
     for delete_entity in delete_entities:
       self._property_value.remove(delete_entity)
-    for i, entity in enumerate(self._property_value):
+    for i, entity in enumerate(self._property_value[:]):
       is_new = entity._state == 'created'
       if not self._property._addable and is_new:
         # if property does not allow new values remove it from put queue
@@ -3883,7 +3883,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     # plugin storage needs just to generate key if its non existant, it cannot behave like local struct and remote struct
     # because generally its not in its nature to behave like that
     # its just pickling of data with validation.
-    for i, val in enumerate(value):
+    for val in value[:]:
       if val._state == 'deleted':
         value.remove(val)
         continue

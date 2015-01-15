@@ -55,7 +55,7 @@ class AccountLoginInit(orm.BaseModel):
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)
-        context._email = info['email']
+        context._email = info['email'].lower() # we lowercase the email because datastore data searches are case sensetive
         account = context.model.query(context.model.identities.identity == context._identity_id).get()
         if not account:
           account = context.model.query(context.model.emails == context._email).get()

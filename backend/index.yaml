@@ -1,67 +1,87 @@
 indexes:
-# Record
+# Record ancestor and order by logged DESC
 - kind: '0'
   ancestor: yes
   properties:
   - name: l
     direction: desc
 
-# Country
+# Country active and order by name ASC
 - kind: '12'
   properties:
   - name: '3'
   - name: '2'
 
-# CountrySubdivision
+# CountrySubdivision ancestor and active and order by name ASC
 - kind: '13'
   ancestor: yes
   properties:
   - name: '6'
   - name: '3'
 
-# CatalogImage
+# CountrySubdivision active and order by name ASC
+- kind: '13'
+  properties:
+  - name: '6'
+  - name: '3'
+
+# CatalogImage ancestor and order by sequence ASC
 - kind: '30'
   ancestor: yes
   properties:
   - name: '7'
 
-# Catalog Image
+# Catalog Image ancestor and order by sequence DESC
 - kind: '30'
   ancestor: yes
   properties:
   - name: '7'
     direction: desc
 
-# Catalog
+# Catalog ancestor and order by created ASC
 - kind: '31'
   ancestor: yes
   properties:
   - name: '1'
 
+# Catalog ancestor and order by created DESC
 - kind: '31'
   ancestor: yes
   properties:
   - name: '1'
     direction: desc
 
-# Unit
+# Catalog state and order by created ASC
+- kind: '31'
+  properties:
+  - name: '6'
+  - name: '1'
+
+# Catalog state and order by created DESC
+- kind: '31'
+  properties:
+  - name: '6'
+  - name: '1'
+    direction: desc
+
+# Unit active and order by name ASC
 - kind: '17'
   properties:
   - name: '8'
   - name: '2'
 
+# Unit measurement and active order by name ASC
 - kind: '17'
   properties:
   - name: '1'
   - name: '8'
   - name: '2'
 
+# Unit active and order by measurement ASC
 - kind: '17'
   properties:
   - name: '8'
   - name: '1'
-
-# Order
 
 # Order Buyer Cart & Order
 - kind: '34'
@@ -98,12 +118,6 @@ indexes:
   - name: '1'
     direction: desc
 
-# CountrySubdivision
-- kind: '13'
-  properties:
-  - name: '6'
-  - name: '3'
-
 # CatalogProductInstance.variant_options == 'thing', sequence desc
 - kind: '27'
   ancestor: yes
@@ -116,5 +130,18 @@ indexes:
 - kind: '27'
   ancestor: yes
   properties:
+  - name: '1'
+    direction: desc
+
+# User state and order by created ASC
+- kind: '11'
+  properties:
+  - name: '5'
+  - name: '1'
+
+# User state and order by created DESC
+- kind: '11'
+  properties:
+  - name: '5'
   - name: '1'
     direction: desc

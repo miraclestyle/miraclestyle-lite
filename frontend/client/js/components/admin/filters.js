@@ -6,6 +6,9 @@
             if (!input || !angular.isObject(input)) {
                 return input;
             }
+            if (input.ancestor) {
+                out += 'Ancestor and ';
+            }
 
             if (input.filters) {
                 out += 'Filter by ';

@@ -14,6 +14,12 @@
                         };
                     }),
                     rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
+                    lineSpec = {
+                        showListItem: 'default-line-display',
+                        listFields: [{
+                            label: 'Line'
+                        }],
+                    },
                     locationSpec = {
                         showListItem: 'address-rule-location-display',
                         listFields: [{
@@ -89,9 +95,7 @@
                             '113': {
                                 lines: {
                                     ui: {
-                                        specifics: {
-                                            onlyListFields: ['name', 'active']
-                                        }
+                                        specifics: lineSpec
                                     },
                                     modelclass: {
                                         rules: {
@@ -120,6 +124,13 @@
                                 locations: {
                                     ui: {
                                         specifics: locationSpec
+                                    }
+                                }
+                            },
+                            '126': {
+                                lines: {
+                                    ui: {
+                                        specifics: lineSpec
                                     }
                                 }
                             },
@@ -678,11 +689,11 @@
                                     key: 'general',
                                     fields: ['name', 'logo'],
                                 }, {
-                                    label: 'Plugins',
-                                    fields: ['_plugin_group'],
-                                },  {
                                     label: 'Contents',
                                     fields: ['_content']
+                                }, {
+                                    label: 'Plugins',
+                                    fields: ['_plugin_group'],
                                 }]
                             }
                         }

@@ -123,17 +123,11 @@ class CountrySubdivision(orm.BaseModel):
             'search_arguments': {'kind': '13', 'options': {'limit': settings.SEARCH_PAGE}},
             'ancestor_kind': '12',
             'search_by_keys': True,
-            'filters': {'name': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()]),
-                        'active': orm.SuperBooleanProperty(choices=(True,))},
+            'filters': {'active': orm.SuperBooleanProperty(choices=(True,))},
             'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
                         {'ancestor': True,
                          'filters': [('active', ['=='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('active', ['==']), ('name', ['==', '!=', 'contains'])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'ancestor': True,
-                         'filters': [('active', ['==']), ('name', ['==', '!=', 'contains'])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }
           )

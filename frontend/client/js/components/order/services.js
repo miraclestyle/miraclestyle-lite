@@ -163,10 +163,14 @@
                                         ui: {
                                             args: 'selection.billing_address',
                                             label: 'Billing Address',
+                                            init: function (info) {
+                                                info.config.ui.specifics.view = displayAddress;
+                                            },
                                             writable: 'order.ui.rule.field.billing_address.reference.writable',
                                             specifics: {
-                                                entities: billing_addresses,
-                                                view: displayAddress
+                                                entities: function () {
+                                                    return billing_addresses;
+                                                }
                                             }
                                         }
                                     },
@@ -179,9 +183,13 @@
                                             args: 'selection.shipping_address',
                                             label: 'Shipping Address',
                                             writable: 'order.ui.rule.field.shipping_address.reference.writable',
+                                            init: function (info) {
+                                                info.config.ui.specifics.view = displayAddress;
+                                            },
                                             specifics: {
-                                                entities: shipping_addresses,
-                                                view: displayAddress
+                                                entities: function () {
+                                                    return shipping_addresses;
+                                                }
                                             }
                                         }
                                     },
@@ -195,7 +203,9 @@
                                             label: 'Delivery Method',
                                             writable: 'order.ui.rule.field.carrier.writable',
                                             specifics: {
-                                                entities: carriers
+                                                entities: function () {
+                                                    return carriers;
+                                                }
                                             }
                                         }
                                     }
