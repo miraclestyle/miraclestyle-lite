@@ -1,53 +1,39 @@
 <form name="container.main" ng-show="!search.hide" ng-submit="search.submitSearch()">
-    
-<div ng-show="search.kind != null">    
- 
-    <div form-input="search.fields.indexID"></div>
- 
-</div>
 
-<div ng-show="search.indexes[search.indexID].ancestor">
-    <div form-input="search.fields.ancestor"></div>
-</div>
+    <div ng-show="search.kind != null">
+        <div form-input="search.fields.indexID"></div>
+    </div>
+
+    <div ng-show="search.indexes[search.indexID].ancestor">
+        <div form-input="search.fields.ancestor"></div>
+    </div>
 
 
-<div ng-show="search.indexID != null && search.send.filters.length">
-    <label class="form-label">Filters</label>
-    <div class="form-input">
- 
-                <div class="filter-entry" ng-repeat="fields in search.fields.filters track by $index">
-                    <div class="filter-value">
-                        <div form-input="fields[1]"></div>
-                    </div>
-                    <div class="filter-operator">
-                        <div form-input="fields[0]"></div>
-                    </div>
-                    
-                 
+    <div ng-show="search.indexID != null && search.send.filters.length">
+        <div class="form-input">
+            <div class="filter-entry" ng-repeat="fields in search.fields.filters track by $index">
+                <div class="filter-value">
+                    <div form-input="fields[1]"></div>
                 </div>
-    
-     
+                <div class="filter-operator">
+                    <div form-input="fields[0]"></div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
 
-<div ng-show="search.indexID != null">
-    
-    <div ng-repeat="order in search.fields.orders track by order.code_name">
-     
-        <div form-input="order"></div>
-    
+    <div ng-show="search.indexID != null">
+        <div ng-repeat="order in search.fields.orders track by order.code_name">
+            <div form-input="order"></div>
+        </div>
     </div>
-</div>
-
  
-
-
-<div class="form-control">
-    <label class="form-label"></label>
-    <div class="form-input">
-        <button class="button block" type="submit">Search</button>
+    <div class="form-control">
+        <label class="form-label"></label>
+        <div class="form-input">
+            <button class="button block" type="submit">Search</button>
+        </div>
     </div>
-</div>
- 
+
 </form>
