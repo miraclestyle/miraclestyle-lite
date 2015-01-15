@@ -51,7 +51,7 @@ class Account(orm.BaseExpando):
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   identities = orm.SuperStructuredProperty(AccountIdentity, '3', repeated=True)  # Soft limit 100 instances.
   emails = orm.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances.
-  state = orm.SuperStringProperty('5', required=True, default='active', choices=['active', 'suspended', 'su_suspended'])  # @todo Not sure what to do here? Shall we disable indexing here?
+  state = orm.SuperStringProperty('5', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))  # @todo Not sure what to do here? Shall we disable indexing here?
   sessions = orm.SuperLocalStructuredProperty(AccountSession, '6', repeated=True)  # Soft limit 100 instances.
   
   _default_indexed = False
@@ -185,9 +185,9 @@ class Account(orm.BaseExpando):
             'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
             'filters': {'emails': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty()},
-            'indexes': [{'orders': [('emails', ['asc', 'desc'])]},
-                        {'orders': [('created', ['asc', 'desc'])]},
+            'indexes': [{'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('updated', ['asc', 'desc'])]},
+                        {'filters': [('key', ['==', '!='])]},
                         {'filters': [('emails', ['==', '!='])],
                          'orders': [('created', ['asc', 'desc'])]},
                         {'filters': [('state', ['==', '!='])],
@@ -217,7 +217,7 @@ class Account(orm.BaseExpando):
       key=orm.Action.build_key('11', 'sudo'),
       arguments={
         'key': orm.SuperKeyProperty(kind='11', required=True),
-        'state': orm.SuperStringProperty(required=True, choices=['active', 'suspended']),
+        'state': orm.SuperStringProperty(required=True, choices=('active', 'suspended')),
         'message': orm.SuperStringProperty(required=True),
         'note': orm.SuperStringProperty()
         },

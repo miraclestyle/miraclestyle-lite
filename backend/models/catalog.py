@@ -294,7 +294,7 @@ class Catalog(orm.BaseExpando):
   _expando_fields = {
     'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover',
                                                                                   'transform': True, 'width': 240,
-                                                                                  'height': 360, 'crop_to_fit': True}),
+                                                                                  'height': 240, 'crop_to_fit': True}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
@@ -610,18 +610,12 @@ class Catalog(orm.BaseExpando):
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
                         'state': orm.SuperStringProperty(choices=['published', 'draft'])},
-            'indexes': [{'ancestor': True, 'orders': [('name', ['asc', 'desc'])]},
-                        {'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
-                        {'ancestor': True, 'orders': [('updated', ['asc', 'desc'])]},
-                        {'orders': [('name', ['asc', 'desc'])]},
+            'indexes': [{'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('updated', ['asc', 'desc'])]},
-                        {'filters': [('name', ['==', 'contains', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
                         {'filters': [('state', ['==', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'filters': [('state', ['==', '!=']), ('name', ['==', 'contains', '!='])],
-                         'orders': [('name', ['asc', 'desc'])]}]
+                         'orders': [('created', ['asc', 'desc'])]},
+                        {'filters': [('key', ['=='])]]
             }
           )
         },
