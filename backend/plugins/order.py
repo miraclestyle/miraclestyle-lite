@@ -315,7 +315,7 @@ class AddressRule(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   exclusion = orm.SuperBooleanProperty('3', required=True, default=False, indexed=False)
-  address_type = orm.SuperStringProperty('4', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  address_type = orm.SuperStringProperty('4', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
   locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '5', repeated=True, indexed=False)
   
   def run(self, context):
@@ -598,12 +598,12 @@ class Tax(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  type = orm.SuperStringProperty('3', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
+  type = orm.SuperStringProperty('3', required=True, default='percent', choices=('percent', 'fixed'), indexed=False)
   amount = orm.SuperDecimalProperty('4', required=True, indexed=False)
   carriers = orm.SuperVirtualKeyProperty('5', kind='113', repeated=True, indexed=False)
   product_categories = orm.SuperKeyProperty('6', kind='24', repeated=True, indexed=False)
   product_codes = orm.SuperStringProperty('7', repeated=True, indexed=False)
-  address_type = orm.SuperStringProperty('8', required=True, default='billing', choices=['billing', 'shipping'], indexed=False)
+  address_type = orm.SuperStringProperty('8', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
   exclusion = orm.SuperBooleanProperty('9', required=True, default=False, indexed=False)
   locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '10', repeated=True)
   
@@ -721,11 +721,11 @@ class CarrierLineRule(orm.BaseModel):
   
   _use_rule_engine = False
   
-  condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=['weight', 'volume', 'weight*volume', 'price', 'quantity'], indexed=False)
-  condition_operator = orm.SuperStringProperty('2', required=True, default='=', choices=['==', '>', '<', '>=', '<='], indexed=False)
+  condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
+  condition_operator = orm.SuperStringProperty('2', required=True, default='=', choices=('==', '>', '<', '>=', '<='), indexed=False)
   condition_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
-  price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=['fixed', 'variable'], indexed=False)
-  price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=['weight', 'volume', 'weight*volume', 'price', 'quantity'], indexed=False)
+  price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=('fixed', 'variable'), indexed=False)
+  price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
   price_value = orm.SuperDecimalProperty('6', required=True, indexed=False)
   
   def make_condition(self):

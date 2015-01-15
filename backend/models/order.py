@@ -28,7 +28,7 @@ class OrderTax(orm.BaseModel):
   _use_rule_engine = False
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
-  type = orm.SuperStringProperty('2', required=True, default='percent', choices=['percent', 'fixed'], indexed=False)
+  type = orm.SuperStringProperty('2', required=True, default='percent', choices=('percent', 'fixed'), indexed=False)
   amount = orm.SuperDecimalProperty('3', required=True, indexed=False)
 
 
@@ -149,7 +149,7 @@ class Order(orm.BaseExpando):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  state = orm.SuperStringProperty('3', required=True, default='cart', choices=['cart', 'checkout', 'completed', 'canceled'])
+  state = orm.SuperStringProperty('3', required=True, default='cart', choices=('cart', 'checkout', 'completed', 'canceled'))
   date = orm.SuperDateTimeProperty('4', required=True)
   seller_reference = orm.SuperKeyProperty('5', kind='23', required=True)
   billing_address = orm.SuperLocalStructuredProperty('121', '6', required=True)
@@ -158,8 +158,8 @@ class Order(orm.BaseExpando):
   untaxed_amount = orm.SuperDecimalProperty('9', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
-  feedback = orm.SuperStringProperty('12', choices=['positive', 'neutral', 'negative'])
-  feedback_adjustment = orm.SuperStringProperty('13', choices=['revision', 'reported', 'sudo'])
+  feedback = orm.SuperStringProperty('12', choices=('positive', 'neutral', 'negative'))
+  feedback_adjustment = orm.SuperStringProperty('13', choices=('revision', 'reported', 'sudo'))
   payment_method = orm.SuperKeyProperty('14', required=False, indexed=False)
   payment_status = orm.SuperStringProperty('15', required=False, indexed=False)
   carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '16')
@@ -425,7 +425,7 @@ class Order(orm.BaseExpando):
             'ancestor_kind': '19',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(repeated=True, choices=['checkout', 'cart', 'canceled', 'completed']),
+                        'state': orm.SuperStringProperty(repeated=True, choices=('checkout', 'cart', 'canceled', 'completed')),
                         'seller_reference': orm.SuperKeyProperty(kind='23')},
             'indexes': [{'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc', 'desc'])]},
                         {'filters': [('seller_reference', ['==']), ('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc', 'desc'])]}]
@@ -528,7 +528,7 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'leave_feedback'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative']),
+        'feedback': orm.SuperStringProperty(required=True, choices=('positive', 'neutral', 'negative')),
         'message': orm.SuperTextProperty(required=True)
         },
       _plugin_groups=[
@@ -611,7 +611,7 @@ class Order(orm.BaseExpando):
       key=orm.Action.build_key('34', 'sudo_feedback'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
-        'feedback': orm.SuperStringProperty(required=True, choices=['positive', 'neutral', 'negative']),
+        'feedback': orm.SuperStringProperty(required=True, choices=('positive', 'neutral', 'negative')),
         'message': orm.SuperTextProperty(required=True) # @todo max length?
       },
       _plugin_groups=[

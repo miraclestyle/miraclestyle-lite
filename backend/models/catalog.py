@@ -69,7 +69,7 @@ class CatalogProductCategory(orm.BaseModel):
             'search_by_keys': True,
             'use_search_engine': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(choices=['indexable visible'])},
+                        'state': orm.SuperStringProperty(choices=('indexable visible',))},
             'indexes': [{'filters': [('state', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
                         {'filters': [('state', ['==']), ('name', ['==', '!='])],
@@ -133,7 +133,7 @@ class CatalogProductInstance(orm.BaseExpando):
     'code': orm.SuperStringProperty('3'),
     'description': orm.SuperTextProperty('4'),
     'unit_price': orm.SuperDecimalProperty('5'),
-    'availability': orm.SuperStringProperty('6', default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder']),
+    'availability': orm.SuperStringProperty('6', default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder')),
     'weight': orm.SuperDecimalProperty('7'),
     'weight_uom': orm.SuperKeyProperty('8', kind='17'),
     'volume': orm.SuperDecimalProperty('9'),
@@ -185,7 +185,7 @@ class CatalogProduct(orm.BaseExpando):
   code = orm.SuperStringProperty('4', required=True, indexed=False, searchable=True)
   description = orm.SuperTextProperty('5', required=True, searchable=True)  # Soft limit 64kb.
   unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  availability = orm.SuperStringProperty('7', required=True, indexed=False, default='in stock', choices=['in stock', 'available for order', 'out of stock', 'preorder'])
+  availability = orm.SuperStringProperty('7', required=True, indexed=False, default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder'))
   
   _default_indexed = False
   
@@ -287,7 +287,7 @@ class Catalog(orm.BaseExpando):
   published = orm.SuperDateTimeProperty('4', required=False, searchable=True)  # @todo This field is currently not required however, it could be beneficial for search, sorting, ranking, etc.! It can be renamed to published. In the future it could be used for scheduling publishing (with name publish_date)!
   discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)  # @todo On client side this field should be labeled Expiration Date, so not sure if it's smart to name the property expiration_date?
   state = orm.SuperStringProperty('6', required=True, default='draft',
-                                  choices=['draft', 'published', 'discontinued'], searchable=True)
+                                  choices=('draft', 'published', 'discontinued'), searchable=True)
   
   _default_indexed = False
   
@@ -609,13 +609,13 @@ class Catalog(orm.BaseExpando):
             'ancestor_kind': '23',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(),
-                        'state': orm.SuperStringProperty(choices=['published', 'draft'])},
+                        'state': orm.SuperStringProperty(choices=('published', 'draft'))},
             'indexes': [{'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('created', ['asc', 'desc'])]},
                         {'orders': [('updated', ['asc', 'desc'])]},
                         {'filters': [('state', ['==', '!='])],
                          'orders': [('created', ['asc', 'desc'])]},
-                        {'filters': [('key', ['=='])]]
+                        {'filters': [('key', ['=='])]}]
             }
           )
         },
@@ -711,8 +711,8 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'sudo'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        'state': orm.SuperStringProperty(required=True, choices=['published', 'discontinued']),
-        'index_state': orm.SuperStringProperty(choices=['index', 'unindex']),
+        'state': orm.SuperStringProperty(required=True, choices=('published', 'discontinued')),
+        'index_state': orm.SuperStringProperty(choices=('index', 'unindex')),
         'message': orm.SuperTextProperty(required=True),
         'note': orm.SuperTextProperty(required=True)
         },

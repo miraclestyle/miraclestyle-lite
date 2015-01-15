@@ -64,7 +64,7 @@ class Country(orm.BaseModel):
           cfg={
             'search_arguments': {'kind': '12', 'options': {'limit': 1000}},
             'search_by_keys': True,
-            'filters': {'active': orm.SuperBooleanProperty(choices=[True])},
+            'filters': {'active': orm.SuperBooleanProperty(choices=(True,))},
             'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }
@@ -124,7 +124,7 @@ class CountrySubdivision(orm.BaseModel):
             'ancestor_kind': '12',
             'search_by_keys': True,
             'filters': {'name': orm.SuperStringProperty(value_filters=[lambda p, s: s.capitalize()]),
-                        'active': orm.SuperBooleanProperty(choices=[True])},
+                        'active': orm.SuperBooleanProperty(choices=(True,))},
             'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
                         {'ancestor': True,
