@@ -91,15 +91,6 @@ indexes:
   - name: '2'
     direction: desc
 
-
-# Order Seller Cart & Order
-- kind: '34'
-  properties:
-  - name: '3'
-  - name: '5'
-  - name: '2'
-    direction: desc
-
 # Admin Order state and order by created ASC
 - kind: '34'
   properties:
@@ -113,17 +104,9 @@ indexes:
   - name: '2'
     direction: desc
 
-# Admin Order seller reference and state and order by created ASC
+# Admin Order and seller Orders
 - kind: '34'
   properties:
-  - name: '3'
-  - name: '5'
-  - name: '2'
-
-# Admin Order seller reference and state and order by created DESC
-- kind: '34'
-  properties:
-  - name: '3'
   - name: '5'
   - name: '2'
     direction: desc

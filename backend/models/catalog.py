@@ -8,7 +8,11 @@ Created on May 6, 2014
 import datetime
 import json
 
-import orm, settings, mem
+import orm
+import settings
+import mem
+import notifications
+
 from models.base import *
 from models.unit import *
 from plugins.base import *
@@ -657,7 +661,11 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Write(),
             RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_catalog'}})
+            Set(cfg={'d': {'output.entity': '_catalog'}}),
+            # notify when user publishes to gets mail
+            Notify(cfg={'s': {'subject': notifications.CATALOG_PUBLISH_SUBJECT,
+                              'body': notifications.CATALOG_PUBLISH_BODY, 'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_catalog.root_entity._primary_email'}})
             ]
           )
         ]
@@ -683,6 +691,10 @@ class Catalog(orm.BaseExpando):
             Write(),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
+            # notify owner when catalog gets discontinued
+            Notify(cfg={'s': {'subject': notifications.CATALOG_DISCONTINUE_SUBJECT,
+                              'body': notifications.CATALOG_DISCONTINUE_BODY, 'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_catalog.root_entity._primary_email'}}),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'unindex', 'action_model': '31'},
                                {'key': '_catalog.key_urlsafe'})])
@@ -733,24 +745,21 @@ class Catalog(orm.BaseExpando):
             Write(),  # 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
-            Notify(cfg={'condition': 'entity.state == "discontinued"',
-                        's': {'subject': 'Catalog Discontinued by Admin.', 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_catalog.root_entity._primary_email',
-                              'body': 'input.message'}}),
-            Notify(cfg={'condition': '"index_state" in input and input["index_state"] == "index"',
-                        's': {'subject': 'Catalog indexed by Admin.', 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_catalog.root_entity._primary_email',
-                              'body': 'input.message'}}),
-            Notify(cfg={'condition': '"index_state" in input and input["index_state"] == "unindex"',
-                        's': {'subject': 'Catalog unindexed by Admin.', 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_catalog.root_entity._primary_email',
-                              'body': 'input.message'}}),
-            Notify(cfg={'s': {'subject': 'Admin Note', 'recipient': settings.ROOT_ADMINS,
-                              'sender': settings.NOTIFY_EMAIL},
-                        'd': {'body': 'input.note'}}),
+            # use 1 notify plugin with dynamic email
+            Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
+                              'body': notifications.CATALOG_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_catalog.root_entity._primary_email'}}),
+            Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
+                              'body': notifications.CATALOG_SUDO_BODY,
+                              'admin': True,
+                              'recipient': settings.ROOT_ADMINS, 'sender': settings.NOTIFY_EMAIL}}),
             CallbackExec(cfg=[('callback',
                                {'action_model': '31'},
                                {'action_id': 'input.index_state', 'key': '_catalog.key_urlsafe'})])  # @todo What happens if input.index_state is not supplied (e.g. None)?
+            # @answer if the index_state is none, then the callback will attempt at calling
+            # action.id = None
+            # action.model = '31'
+            # and iom will yield with status 200 error that action does not exist.
             ]
           )
         ]
@@ -861,7 +870,12 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Duplicate(),
             Set(cfg={'s': {'_catalog.state': 'draft'}, 'rm': ['_catalog.created']}),
-            Write()
+            Write(),
+            # notify duplication process complete via channel
+            Notify(cfg={'s': {'subject': notifications.CATALOG_CATALOG_PROCESS_DUPLICATE_SUBJECT,
+                              'body': notifications.CATALOG_CATALOG_PROCESS_DUPLICATE_BODY, 'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_catalog.root_entity._channel_token'},
+                        'method': 'channel'})
             ]
           )
         ]
@@ -907,12 +921,16 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Duplicate(cfg={'duplicate_path': '_images.value.0.pricetags.read_value.0'}),
             CatalogPricetagSetDuplicatedPosition(),
-            Write()
+            Write(),
+            # notify duplication process complete via channel
+            Notify(cfg={'s': {'subject': notifications.CATALOG_PRICETAG_PROCESS_DUPLICATE_SUBJECT,
+                              'body': notifications.CATALOG_PRICETAG_PROCESS_DUPLICATE_BODY, 'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_catalog.root_entity._channel_token'},
+                        'method': 'channel'})
             ]
           )
         ]
       ),
-    # @todo 'indexes' will need optimization!
     orm.Action(
       key=orm.Action.build_key('31', 'public_search'),
       arguments={

@@ -6,7 +6,9 @@ Created on Aug 30, 2014
 '''
 import datetime
 import hashlib
-import orm, settings
+import orm
+import settings
+import notifications
 
 from models.base import *
 from plugins.base import *
@@ -305,9 +307,6 @@ class Order(orm.BaseExpando):
     )
   
   _actions = [
-    # @todo Two of the search actions should be merged if possible! However, they have different forced contrains!
-    # buyer_search has to be constrained buy ancestor query, ancestor being buyer.
-    # seller_search has to be constrained by query filter, with filter Order.seller_reference being seller.
     orm.Action(
       key=orm.Action.build_key('34', 'update_line'),
       arguments={
@@ -437,7 +436,7 @@ class Order(orm.BaseExpando):
                         {'filters': [('key', ['=='])]},
                         {'filters': [('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc'])]},
                         {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('updated', ['desc']), ('key', ['asc'])]},
-                        {'filters': [('seller_reference', ['==']), ('state', ['IN'])], 'orders': [('updated', ['desc']), ('key', ['asc'])]}]
+                        {'filters': [('seller_reference', ['=='])], 'orders': [('updated', ['desc'])]}]
             }
           )
         },
@@ -483,7 +482,7 @@ class Order(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('34', 'cancel'), # should we consider introducing cancel on cart state as well?
+      key=orm.Action.build_key('34', 'cancel'),
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True)
         },
@@ -529,13 +528,12 @@ class Order(orm.BaseExpando):
             Write(),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_order'}}),
-            # @todo dont know what should be here too, maybe checking for payment_status == 'pending'
-            # @todo helpers are a must in notify case because d and s args behave as getters and setters, they do not have any dynamic
+            # both seller and buyer must get the message
             Notify(cfg={'condition': 'entity.state == "completed"',
-                        's': {'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_order.root_entity._primary_email',
-                              'subject': '_order.notify_complete_subject',
-                              'body': '_order.notify_complete_body'}})
+                        's': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_COMPLETE_SUBJECT,
+                              'body': notifications.ORDER_COMPLETE_BODY},
+                        'd': {'recipient': '_order.seller_and_buyer_emails'}})
             ]
           )
         ]
@@ -565,11 +563,12 @@ class Order(orm.BaseExpando):
             Write(),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_order'}}),
-            # @todo should you also notify the buyer that he successfully left the feedback? or its just annoying?
-            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_order.seller_reference._root.entity._primary_email',
-                              'subject': '_order.notify_leave_feedback_subject',
-                              'body': '_order.notify_leave_feedback_body'}})
+            # notify seller that buyer left feedback
+            # @todo cron to send buyer a message when he is ready to leave feedback because there is wait time
+            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_COMPLETE_SUBJECT,
+                              'body': notifications.ORDER_COMPLETE_BODY},
+                        'd': {'recipient': '_order.seller_email'}})
             ]
           )
         ]
@@ -597,10 +596,11 @@ class Order(orm.BaseExpando):
             Write(),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_order'}}),
-            # @todo should you also notify the buyer that he successfully left the feedback? or its just annoying?
-            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL, 'recipient': settings.ROOT_ADMINS},
-                        'd': {'subject': '_order.notify_review_feedback_subject',
-                              'body': '_order.notify_review_feedback_body'}})
+            # buyer needs to get a message so he must leave feedback again
+            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_REVIEW_FEEDBACK_SUBJECT,
+                              'body': notifications.ORDER_REVIEW_FEEDBACK_BODY},
+                        'd': {'recipient': '_order.buyer_email'}})
             ]
           )
         ]
@@ -626,6 +626,11 @@ class Order(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
+            # admin and buyer gets message
+            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_REPORT_FEEDBACK_SUBJECT,
+                              'body': notifications.ORDER_REPORT_FEEDBACK_BODY},
+                        'd': {'recipient': '_order.admin_and_buyer_email'}}),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_order'}})
             ]
@@ -655,6 +660,11 @@ class Order(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
+            # buyer and seller get message
+            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_SUDO_FEEDBACK_SUBJECT,
+                              'body': notifications.ORDER_SUDO_FEEDBACK_BODY},
+                        'd': {'recipient': '_order.seller_and_buyer_emails'}}),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_order'}})
             ]
@@ -681,30 +691,51 @@ class Order(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
+            # send message to either seller or buyer depending on who sent it
+            # if admin sends message, both buyer and seller must get it too
+            Notify(cfg={'condition': 'account._root_admin',
+                        's': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
+                              'body': notifications.ORDER_LOG_MESSAGE_BODY},
+                        'd': {'recipient': '_order.seller_and_buyer_emails'}}),
+            Notify(cfg={'condition': 'not account._root_admin and account.key == entity._root',
+                        's': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
+                              'body': notifications.ORDER_LOG_MESSAGE_BODY},
+                        'd': {'recipient': '_order.seller_email'}}),
+            Notify(cfg={'condition': 'not account._root_admin and account.key == entity.seller_reference._root',
+                        's': {'sender': settings.NOTIFY_EMAIL,
+                              'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
+                              'body': notifications.ORDER_LOG_MESSAGE_BODY},
+                        'd': {'recipient': '_order.buyer_email'}}),
             Set(cfg={'d': {'output.entity': '_order'}})
             ]
           )
         ]
       )
     ]
+  
+  @property
+  def seller_email(self):
+    return self.root_entity._primary_email
 
   @property
-  def notify_leave_feedback_subject(self):
-    return 'You got %s feedback from order %s.' % (self.feedback, self.key_id_str)
+  def buyer_email(self):
+    return self.seller_reference._root.entity._primary_email
 
   @property
-  def notify_leave_feedback_body(self):
-    # @todo this would have to be maybe jinja rendering engine because we will need html structure for formatting
-    return 'Order #%s got %s feedback...' % (self.key_id_str, self.feedback)
-
+  def seller_and_buyer_emails(self):
+    emails = []
+    emails.append(self.seller_email)
+    emails.append(self.buyer_email)
+    return emails
+  
   @property
-  def notify_complete_subject(self):
-    return 'Your order #%s is completed.' % self.key_id_str
-
-  @property
-  def notify_complete_body(self):
-    # @todo this would have to be maybe jinja rendering engine because we will need html structure for formatting
-    return 'Your order #%s was successfully marked complete. And bellow you can see your data...' % self.key_id_str
+  def admin_and_buyer_email(self):
+    emails = []
+    emails.extend(settings.ROOT_ADMINS)
+    emails.append(self.buyer_email)
+    return emails
   
   @property
   def _is_feedback_allowed(self):

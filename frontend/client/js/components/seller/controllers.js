@@ -92,8 +92,9 @@
                     kind: '34',
                     args: {
                         search: {
-                            filters: [{field: 'seller_reference', operator: '==', value: sellerEntity.key}, {field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}],
-                            orders: [{field: 'updated', operator: 'desc'}, {field: 'key', operator: 'asc'}]
+                            // {field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}
+                            filters: [{field: 'seller_reference', operator: '==', value: sellerEntity.key}],
+                            orders: [{field: 'updated', operator: 'desc'}]
                         }
                     },
                     config: {

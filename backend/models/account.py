@@ -8,7 +8,10 @@ Created on Jan 6, 2014
 import hashlib
 import os
 
-import orm, mem, settings
+import orm
+import mem
+import settings
+import notifications
 
 from models.base import *
 from plugins.base import *
@@ -59,6 +62,7 @@ class Account(orm.BaseExpando):
   _virtual_fields = {
     'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
+    '_channel_token': orm.SuperComputedProperty(lambda self: self.channel_token()),
     '_csrf': orm.SuperComputedProperty(lambda self: self.get_csrf()),
     '_records': orm.SuperRecordProperty('11')
     }
@@ -211,8 +215,7 @@ class Account(orm.BaseExpando):
           )
         ]
       ),
-    # @todo Treba obratiti paznju na to da suspenzija accounta ujedno znaci
-    # i izuzimanje svih negativnih i neutralnih feedbackova koje je account ostavio dok je bio aktivan.
+    # @todo call catalog.account_discontinue if the account is suspended
     orm.Action(
       key=orm.Action.build_key('11', 'sudo'),
       arguments={
@@ -236,12 +239,13 @@ class Account(orm.BaseExpando):
           plugins=[
             Write(),
             Set(cfg={'d': {'output.entity': '_account'}}),
-            Notify(cfg={'condition': 'entity.state == "suspended"',
-                        's': {'subject': 'Account Suspended.', 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_account._primary_email',
-                              'body': 'input.message'}}),
-            Notify(cfg={'s': {'subject': 'Admin Note.', 'recipient': settings.ROOT_ADMINS, 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'body': 'input.note'}})
+            Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
+                              'body': notifications.ACCOUNT_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_account._primary_email'}}),
+            Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
+                              'body': notifications.ACCOUNT_SUDO_BODY,
+                              'admin': True,
+                              'recipient': settings.ROOT_ADMINS, 'sender': settings.NOTIFY_EMAIL}})
             ]
           )
         ]
@@ -313,6 +317,16 @@ class Account(orm.BaseExpando):
   
   def set_cron(self, is_it):
     return mem.temp_set('_current_request_is_cron', is_it)
+
+  def channel_token(self):
+    if not self.key:
+      return None
+    sessions = self.sessions.value
+    hasher = self.key_urlsafe
+    if sessions:
+      for session in sessions:
+        hasher += session.session_id
+    return hashlib.md5(hasher).hexdigest()
   
   def primary_email(self):
     self.identities.read() # implicitly call read on identities
@@ -326,7 +340,7 @@ class Account(orm.BaseExpando):
   def get_csrf(self):
     session = self.current_account_session()
     if not session:
-      return hashlib.md5(os.environ['REMOTE_ADDR']).hexdigest()
+      return hashlib.md5(os.environ['REMOTE_ADDR'] + settings.CSRF_SALT).hexdigest()
     return hashlib.md5(session.session_id).hexdigest()
   
   @property

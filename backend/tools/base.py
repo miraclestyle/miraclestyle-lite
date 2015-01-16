@@ -11,6 +11,7 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import blobstore
 from google.appengine.api import mail
 from google.appengine.api import urlfetch
+from google.appengine.api import channel
 
 from jinja2.sandbox import SandboxedEnvironment
 
@@ -76,10 +77,18 @@ def mail_send(**kwargs):
   message.sender = message_sender
   message.bcc = kwargs['recipient']
   message.subject = render_template(kwargs['subject'], kwargs)
+  message.headers = {'Content-Type': 'text/html;charset=utf8'} # @todo test out
   message.body = render_template(kwargs['body'], kwargs) # We can add html argument in addition to body if we want to send html version!
   message.check_initialized()
   message.send()
 
 
 def http_send(**kwargs):
+  kwargs['subject'] = render_template(kwargs['subject'], kwargs)
+  kwargs['body'] = render_template(kwargs['body'], kwargs)
   urlfetch.fetch(kwargs['recipient'], json.dumps(kwargs), method=urlfetch.POST)
+
+
+def channel_send(**kwargs):
+  message = {'body': render_template(kwargs['body'], kwargs), 'subject': render_template(kwargs['subject'], kwargs)}
+  return channel.send_message(kwargs['recipient'], json.dumps(message))

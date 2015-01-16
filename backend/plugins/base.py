@@ -324,7 +324,9 @@ class Notify(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    method = self.cfg.get('method', 'mail')
+    method = self.cfg.get('method', ['mail'])
+    if not isinstance(method, (list, tuple)):
+      method = [method]
     condition = self.cfg.get('condition', 'True')
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
@@ -334,7 +336,9 @@ class Notify(orm.BaseModel):
     for key, value in dynamic_values.iteritems():
       values[key] = get_attr(context, value)
     if safe_eval(condition, values):
-      if method == 'mail':
+      if 'mail' in method:
         mail_send(**values)
-      elif method == 'http':
+      if 'http' in method:
         http_send(**values)
+      if 'channel' in method:
+        channel_send(**values)
