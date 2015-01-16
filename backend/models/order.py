@@ -146,6 +146,8 @@ class OrderMessage(orm.BaseExpando):
 class Order(orm.BaseExpando):
   
   _kind = 34
+
+  # key path account->buyer->order
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
@@ -526,7 +528,14 @@ class Order(orm.BaseExpando):
           plugins=[
             Write(),
             RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_order'}})
+            Set(cfg={'d': {'output.entity': '_order'}}),
+            # @todo dont know what should be here too, maybe checking for payment_status == 'pending'
+            # @todo helpers are a must in notify case because d and s args behave as getters and setters, they do not have any dynamic
+            Notify(cfg={'condition': 'entity.state == "completed"',
+                        's': {'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_order.root_entity._primary_email',
+                              'subject': '_order.notify_complete_subject',
+                              'body': '_order.notify_complete_body'}})
             ]
           )
         ]
@@ -555,7 +564,12 @@ class Order(orm.BaseExpando):
           plugins=[
             Write(),
             RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_order'}})
+            Set(cfg={'d': {'output.entity': '_order'}}),
+            # @todo should you also notify the buyer that he successfully left the feedback? or its just annoying?
+            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_order.seller_reference._root.entity._primary_email',
+                              'subject': '_order.notify_leave_feedback_subject',
+                              'body': '_order.notify_leave_feedback_body'}})
             ]
           )
         ]
@@ -582,7 +596,11 @@ class Order(orm.BaseExpando):
           plugins=[
             Write(),
             RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_order'}})
+            Set(cfg={'d': {'output.entity': '_order'}}),
+            # @todo should you also notify the buyer that he successfully left the feedback? or its just annoying?
+            Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL, 'recipient': settings.ROOT_ADMINS},
+                        'd': {'subject': '_order.notify_review_feedback_subject',
+                              'body': '_order.notify_review_feedback_body'}})
             ]
           )
         ]
@@ -669,6 +687,24 @@ class Order(orm.BaseExpando):
         ]
       )
     ]
+
+  @property
+  def notify_leave_feedback_subject(self):
+    return 'You got %s feedback from order %s.' % (self.feedback, self.key_id_str)
+
+  @property
+  def notify_leave_feedback_body(self):
+    # @todo this would have to be maybe jinja rendering engine because we will need html structure for formatting
+    return 'Order #%s got %s feedback...' % (self.key_id_str, self.feedback)
+
+  @property
+  def notify_complete_subject(self):
+    return 'Your order #%s is completed.' % self.key_id_str
+
+  @property
+  def notify_complete_body(self):
+    # @todo this would have to be maybe jinja rendering engine because we will need html structure for formatting
+    return 'Your order #%s was successfully marked complete. And bellow you can see your data...' % self.key_id_str
   
   @property
   def _is_feedback_allowed(self):

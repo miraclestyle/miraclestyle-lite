@@ -329,7 +329,7 @@ class Notify(orm.BaseModel):
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
     entity = get_attr(context, '_' + context.model.__name__.lower())
-    values = {'account': context.account.key, 'action': context.action.key, 'entity': entity}
+    values = {'account': context.account.key, 'input': context.input, 'action': context.action.key, 'entity': entity}
     values.update(static_values)
     for key, value in dynamic_values.iteritems():
       values[key] = get_attr(context, value)
