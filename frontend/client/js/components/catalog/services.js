@@ -496,10 +496,13 @@
                                     duplicate: function () {
                                         modals.confirm('Are you sure you want to duplicate this catalog?',
                                             function () {
-                                                models['31'].actions.catalog_duplicate({
-                                                    key: $scope.entity.key
-                                                }).then(function (response) {
-                                                    modals.alert('You will be notified when the catalog is duplicated.');
+                                                models['11'].channelNotifications().then(function (response) {
+                                                    models['31'].actions.catalog_duplicate({
+                                                        key: $scope.entity.key,
+                                                        channel: response.token
+                                                    }).then(function (response) {
+                                                        modals.alert('You will be notified when the duplication is done.');
+                                                    });
                                                 });
                                             });
                                     },
@@ -775,6 +778,14 @@
                                             $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
                                             $.extend($scope.fieldProduct, {
                                                 ui: {
+                                                    init: function (field) {
+                                                        field.config.ui.specifics.remove = function (product, close) {
+                                                            // removing the actual product removes the pricetag actually
+                                                            $scope.pricetag._state = 'deleted';
+                                                            $scope.formSetDirty();
+                                                            close();
+                                                        };
+                                                    },
                                                     args: 'pricetag._product',
                                                     parentArgs: 'pricetag',
                                                     path: ['_images', 'pricetags', '_product'],
@@ -818,31 +829,28 @@
                                                             // hook for no complete event - complete event only fires if there are images to be uploaded
                                                             fieldScope.setAction('update');
                                                         },
-                                                        remove: function (product, close) {
-                                                            // removing the actual product removes the pricetag actually
-                                                            $scope.pricetag._state = 'deleted';
-                                                            $scope.formSetDirty();
-                                                            close();
-                                                        },
                                                         duplicate: function () {
                                                             modals.confirm('Are you sure you want to duplicate this pricetag?',
                                                                 function () {
-                                                                    models['31'].actions.catalog_pricetag_duplicate({
-                                                                        key: $scope.entity.key,
-                                                                        read_arguments: {
-                                                                            _images: {
-                                                                                config: {
-                                                                                    keys: [$scope.image.key]
-                                                                                },
-                                                                                pricetags: {
+                                                                    models['11'].channelNotifications().then(function (response) {
+                                                                        models['31'].actions.catalog_pricetag_duplicate({
+                                                                            key: $scope.entity.key,
+                                                                            channel: response.token,
+                                                                            read_arguments: {
+                                                                                _images: {
                                                                                     config: {
-                                                                                        keys: [$scope.pricetag.key]
+                                                                                        keys: [$scope.image.key]
+                                                                                    },
+                                                                                    pricetags: {
+                                                                                        config: {
+                                                                                            keys: [$scope.pricetag.key]
+                                                                                        }
                                                                                     }
                                                                                 }
                                                                             }
-                                                                        }
-                                                                    }).then(function (response) {
-                                                                        modals.alert('Pricetag is getting duplicated. You will get notified by e-mail.');
+                                                                        }).then(function (response) {
+                                                                            modals.alert('You will be notified when the duplication is done.');
+                                                                        });
                                                                     });
                                                                 });
                                                         }

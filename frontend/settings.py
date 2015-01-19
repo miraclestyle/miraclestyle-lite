@@ -44,6 +44,7 @@ ANGULAR_JS_PATHS = (
   'vendor/Steady.js/Steady.js',
   'vendor/jquery.scrollTo/jquery.scrollTo.js',
   'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
+  'vendor/jquery-cookie/jquery.cookie.js',
   'vendor/underscore/underscore.js',
   'vendor/underscore.string/lib/underscore.string.js',
   'vendor/angular/angular.js',

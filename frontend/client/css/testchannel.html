@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+    <script type="text/javascript">
+        cb = function () {
+            d = new goog.appengine.Channel('eb843a6d0cd891bfe12dddfc5ed43686-channel-1949732309-1421672835-776ac71f1cd28b7f28fc1b8fcda3e0a6-channel-2701770278-1421672023-br');
+            soc = d.open();
+            get = function () {return d;};
+            gets = function () {return soc;};
+            var dd = ['onopen', 'onmessage', 'onerror', 'onclose'];
+            for (var i = 0; i < dd.length; i++) {
+                soc[dd[i]] = function () {
+                    console.log(arguments);
+                };
+            };
+        };
+    </script>
+</head>
+<body onload="cb()">
+
+</body>
+</html>

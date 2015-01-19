@@ -7,6 +7,8 @@ Created on Jun 14, 2014
 import copy
 
 import orm
+import mem
+
 from tools.base import *
 from util import *
 
@@ -315,6 +317,22 @@ class BlobURL(orm.BaseModel):
     if upload_url and gs_bucket:
       gs_bucket_name = gs_bucket + sufix
       context._blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
+
+
+class CreateChannel(orm.BaseModel):
+
+  _kind = 128
+
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
+  def run(self, context):
+    token = 'channel_%s' % context.account.key_urlsafe
+    existing = mem.get(token)
+    if existing and existing[1] > time.time():
+      context._token = existing[0]
+    else:
+      context._token = channel_create(token)
+      mem.set(token, [context._token, time.time() + 6000], 9600)
 
 
 class Notify(orm.BaseModel):

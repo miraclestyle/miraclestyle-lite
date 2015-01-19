@@ -834,7 +834,8 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('31', 'catalog_duplicate'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='31', required=True)
+        'key': orm.SuperKeyProperty(kind='31', required=True),
+        'channel': orm.SuperStringProperty(required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -846,7 +847,8 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'catalog_process_duplicate', 'action_model': '31'},
-                               {'key': '_catalog.key_urlsafe'})])
+                               {'key': '_catalog.key_urlsafe', 
+                                'channel': 'input.channel'})])
             ]
           )
         ]
@@ -854,7 +856,8 @@ class Catalog(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('31', 'catalog_process_duplicate'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='31', required=True)
+        'key': orm.SuperKeyProperty(kind='31', required=True),
+        'channel': orm.SuperStringProperty(required=True)
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -874,7 +877,7 @@ class Catalog(orm.BaseExpando):
             # notify duplication process complete via channel
             Notify(cfg={'s': {'subject': notifications.CATALOG_CATALOG_PROCESS_DUPLICATE_SUBJECT,
                               'body': notifications.CATALOG_CATALOG_PROCESS_DUPLICATE_BODY, 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_catalog.root_entity._channel_token'},
+                        'd': {'recipient': 'input.channel'},
                         'method': 'channel'})
             ]
           )
@@ -884,6 +887,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'catalog_pricetag_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
+        'channel': orm.SuperStringProperty(required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -896,7 +900,9 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             CallbackExec(cfg=[('callback',
                                {'action_id': 'catalog_pricetag_process_duplicate', 'action_model': '31'},
-                               {'key': '_catalog.key_urlsafe', 'read_arguments': 'input.read_arguments'})])
+                               {'key': '_catalog.key_urlsafe', 
+                                'channel': 'input.channel',
+                                'read_arguments': 'input.read_arguments'})])
             ]
           )
         ]
@@ -905,6 +911,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'catalog_pricetag_process_duplicate'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
+        'channel': orm.SuperStringProperty(required=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -925,7 +932,7 @@ class Catalog(orm.BaseExpando):
             # notify duplication process complete via channel
             Notify(cfg={'s': {'subject': notifications.CATALOG_PRICETAG_PROCESS_DUPLICATE_SUBJECT,
                               'body': notifications.CATALOG_PRICETAG_PROCESS_DUPLICATE_BODY, 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_catalog.root_entity._channel_token'},
+                        'd': {'recipient': 'input.channel'},
                         'method': 'channel'})
             ]
           )

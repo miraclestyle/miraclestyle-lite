@@ -62,7 +62,6 @@ class Account(orm.BaseExpando):
   _virtual_fields = {
     'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
     '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
-    '_channel_token': orm.SuperComputedProperty(lambda self: self.channel_token()),
     '_csrf': orm.SuperComputedProperty(lambda self: self.get_csrf()),
     '_records': orm.SuperRecordProperty('11')
     }
@@ -77,7 +76,8 @@ class Account(orm.BaseExpando):
                                   orm.Action.build_key('11', 'update'),
                                   orm.Action.build_key('11', 'logout')], True,
                            'not account._is_guest and account.key == entity._original.key'),
-      orm.ActionPermission('11', [orm.Action.build_key('11', 'blob_upload_url')], True, # it just needs true when the user is not guest
+      orm.ActionPermission('11', [orm.Action.build_key('11', 'blob_upload_url'),
+                                  orm.Action.build_key('11', 'create_channel')], True, # it just needs true when the user is not guest
                            'not account._is_guest'),
       orm.FieldPermission('11', ['created', 'updated', 'state', '_records'], False, True,
                           'not account._is_guest and account.key == entity._original.key'),
@@ -291,6 +291,22 @@ class Account(orm.BaseExpando):
             ]
           )
         ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'create_channel'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            CreateChannel(),
+            Set(cfg={'d': {'output.token': '_token'}})
+            ]
+          )
+        ]
       )
     ]
   
@@ -317,16 +333,6 @@ class Account(orm.BaseExpando):
   
   def set_cron(self, is_it):
     return mem.temp_set('_current_request_is_cron', is_it)
-
-  def channel_token(self):
-    if not self.key:
-      return None
-    sessions = self.sessions.value
-    hasher = self.key_urlsafe
-    if sessions:
-      for session in sessions:
-        hasher += session.session_id
-    return hashlib.md5(hasher).hexdigest()
   
   def primary_email(self):
     self.identities.read() # implicitly call read on identities

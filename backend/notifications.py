@@ -4,6 +4,8 @@ Created on Jan 16, 2015
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+# Jinja2 flavored notification templates
+
 ACCOUNT_SUDO_SUBJECT = ''
 ACCOUNT_SUDO_BODY = ''
 
@@ -13,11 +15,11 @@ CATALOG_PUBLISH_BODY = ''
 CATALOG_SUDO_SUBJECT = ''
 CATALOG_SUDO_BODY = ''
 
-CATALOG_CATALOG_PROCESS_DUPLICATE_SUBJECT = ''
-CATALOG_CATALOG_PROCESS_DUPLICATE_BODY = ''
+CATALOG_CATALOG_PROCESS_DUPLICATE_SUBJECT = 'Catalog sucessfully duplicated.'
+CATALOG_CATALOG_PROCESS_DUPLICATE_BODY = 'Your catalog has been sucessfully duplicated.'
 
-CATALOG_PRICETAG_PROCESS_DUPLICATE_SUBJECT = ''
-CATALOG_PRICETAG_PROCESS_DUPLICATE_BODY = ''
+CATALOG_PRICETAG_PROCESS_DUPLICATE_SUBJECT = 'Pricetag successfully duplicated.'
+CATALOG_PRICETAG_PROCESS_DUPLICATE_BODY = 'Your pricetag has been successfully duplicated.'
 
 CATALOG_DISCONTINUE_SUBJECT = ''
 CATALOG_DISCONTINUE_BODY = ''

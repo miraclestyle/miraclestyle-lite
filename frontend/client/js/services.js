@@ -60,7 +60,7 @@
                 };
 
             return errorHandling;
-        }).factory('helpers', function () {
+        }).factory('helpers', function (GLOBAL_CONFIG) {
 
         var helpers = {
             callable: function (fn) {
@@ -339,9 +339,9 @@ w:                  while (images.length > 0) {
                 }
             }
         };
-
-        window._helpers = helpers; // @todo remove on production
-
+        if (GLOBAL_CONFIG.debug) {
+            window._helpers = helpers;
+        }
         return helpers;
     }).factory('endpoint', function ($http, generalLocalCache, GLOBAL_CONFIG,
         helpers, modelsUtil, $rootScope, $q, $cacheFactory, $injector) {
@@ -480,7 +480,9 @@ w:                  while (images.length > 0) {
 
                     var currentAccount = $injector.get('currentAccount');
                     $.extend(currentAccount, response.data.entity);
-                    window._currentAccount = currentAccount; // delete in production
+                    if (GLOBAL_CONFIG.debug) {
+                        window._currentAccount = currentAccount; // delete in production
+                    }
 
                 });
             },
@@ -497,7 +499,9 @@ w:                  while (images.length > 0) {
             }
         };
 
-        window._endpoint = endpoint; // @todo remove on production
+        if (GLOBAL_CONFIG.debug) {
+            window._endpoint = endpoint;
+        }
 
         return endpoint;
 
@@ -559,7 +563,7 @@ w:                  while (images.length > 0) {
 
         $http.defaults.cache = generalLocalCache;
 
-    }).factory('modelsMeta', function ($injector) {
+    }).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {
 
         var modelsMeta = {},
             standardize = function (fields) {
@@ -718,7 +722,9 @@ w:                  while (images.length > 0) {
         };
 
         // expose this to global intentionally, this is used mostly for console debugging @todo remove in production
-        window._modelsMeta = modelsMeta;
+        if (GLOBAL_CONFIG.debug) {
+            window._modelsMeta = modelsMeta;
+        }
 
         return modelsMeta;
 
@@ -770,7 +776,7 @@ w:                  while (images.length > 0) {
         };
 
         return ruleEngine;
-    }).factory('modelsUtil', function (modelsMeta, ruleEngine) {
+    }).factory('modelsUtil', function (modelsMeta, ruleEngine, GLOBAL_CONFIG) {
         // Service used for normalizing entity data that gets retrieved from datastore
         var modelsUtil = {
                 normalizeMultiple: function (entities) {
@@ -887,7 +893,9 @@ w:                  while (images.length > 0) {
                 }
             };
 
-        window._modelsUtil = modelsUtil;
+        if (GLOBAL_CONFIG.debug) {
+            window._modelsUtil = modelsUtil;
+        }
         return modelsUtil;
     }).factory('underscoreTemplate', function () {
 
@@ -2412,7 +2420,7 @@ w:                  while (images.length > 0) {
             }
             callbacks.push(callback);
         };
-    }).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig, helpers, $q) {
+    }).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig, helpers, $q, GLOBAL_CONFIG) {
         // models depency should never be included directly or indirectly, because its depency on modelsMeta
         var models = {}, // all model instances
             modelCreate = function (kind) {
@@ -2653,7 +2661,9 @@ w:                  while (images.length > 0) {
         };
 
         // expose models to window for debugging @todo remove when in production
-        window._models = models;
+        if (GLOBAL_CONFIG.debug) {
+            window._models = models;
+        }
 
         return models;
 
@@ -3018,5 +3028,112 @@ w:                  while (images.length > 0) {
                 });
             }
         };
+    }).factory('channelApi', function (GLOBAL_CONFIG) {
+        // low level channel api
+        var channelApi = {
+                instances: {},
+                create: function (token) {
+                    if (!channelApi.instances[token]) {
+                        var instance;
+                        instance = {
+                            callbacks: {},
+                            events: {},
+                            signals: [],
+                            socket: null,
+                            channel: new goog.appengine.Channel(token),
+                            open: function (config) {
+                                var that = this;
+                                angular.forEach(config, function (callback, type) {
+                                    that[type](callback);
+                                });
+                                if (that.socket !== null) {
+                                    return that;
+                                }
+                                that.socket = that.channel.open(that.events);
+                                return that;
+                            },
+                            destroy: function () {
+                                delete channelApi.instances[token];
+                            },
+                            queue: function (type, cb) {
+                                var id = this.signals.length;
+                                this.signals.push(id);
+                                this.callbacks[type].push([cb, id]);
+                            },
+                            dispatch: function (type, args) {
+                                var that = this,
+                                    terminate = [];
+                                angular.forEach(this.callbacks[type], function (data) {
+                                    if ($.inArray(data[1], that.signals) === -1) {
+                                        terminate.push(data);
+                                        return;
+                                    }
+                                    args = _.toArray(args);
+                                    args.push(function () {
+                                        that.signals.remove(data[1]);
+                                    });
+                                    data[0].apply(that.socket, args);
+                                });
+
+                                if (terminate) {
+                                    angular.forEach(terminate, function (data) {
+                                        that.callbacks[type].remove(data);
+                                    });
+                                    terminate = [];
+                                }
+
+                                if (!that.signals || that.signals.length === 1 && type !== 'onclose') {
+                                    that.socket.close();
+                                }
+                            }
+                        };
+                        angular.forEach(['onopen', 'onmessage', 'onerror', 'onclose'], function (type) {
+                            instance.callbacks[type] = [];
+                            instance[type] = function (cb) {
+                                this.queue(type, cb);
+                            };
+                            instance.events[type] = function () {
+                                instance.dispatch(type, arguments);
+                            };
+                        });
+                        instance.onclose(function () {
+                            instance.destroy();
+                        });
+                        channelApi.instances[token] = instance;
+                    }
+                    return channelApi.instances[token];
+                }
+            };
+
+        if (GLOBAL_CONFIG.debug) {
+            window._channelApi = channelApi;
+        }
+        return channelApi;
+    }).factory('channelNotifications', function (channelApi, modals) {
+        var channelNotifications = {
+            instances: {},
+            create: function (token) {
+                var out;
+                if (!channelNotifications.instances[token]) {
+                    out = channelApi.create(token);
+                    channelNotifications.instances[token] = out;
+                    out.open({
+                        onmessage: function (message, destroy) {
+                            destroy();
+                            if (angular.isObject(message) && message.data) {
+                                try {
+                                    var response = angular.fromJson(message.data);
+                                    modals.alert(response.body);
+                                } catch (ignore) {}
+                            }
+                        }
+                    });
+                } else {
+                    out = channelNotifications.instances[token];
+                }
+                return out;
+            }
+        };
+        return channelNotifications;
     });
 }());

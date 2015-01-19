@@ -67,6 +67,9 @@ def render_template(template_as_string, values={}):
   from_string_template = sandboxed_jinja.from_string(template_as_string)
   return from_string_template.render(values)
 
+def channel_create(token):
+  return channel.create_channel(token)
+
 
 # @todo We have to consider http://sendgrid.com/partner/google
 def mail_send(**kwargs):
@@ -90,5 +93,5 @@ def http_send(**kwargs):
 
 
 def channel_send(**kwargs):
-  message = {'body': render_template(kwargs['body'], kwargs), 'subject': render_template(kwargs['subject'], kwargs)}
+  message = {'action_id': kwargs['action']._id_str, 'body': render_template(kwargs['body'], kwargs), 'subject': render_template(kwargs['subject'], kwargs)}
   return channel.send_message(kwargs['recipient'], json.dumps(message))

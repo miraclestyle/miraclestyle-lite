@@ -1,10 +1,24 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers, modals) {
+    angular.module('app').run(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers, modals, $q) {
 
         modelsConfig(function (models) {
 
             $.extend(models['11'], {
+                channel: function () {
+                    var promise = this.actions.create_channel(undefined, {cache: 'accountChannel', cacheType: 'memory'});
+                    return promise.then(function (response) {
+                        var token = response.data.token;
+                        return {token: token, channel: channelApi.create(token)};
+                    });
+                },
+                channelNotifications: function (config) {
+                    var promise = this.channel();
+                    return promise.then(function (response) {
+                        var token = response.token;
+                        return {token: token, channel: channelNotifications.create(token)};
+                    });
+                },
                 adminManageModal: function (account) {
                     return this.manageModal(account);
                 },
