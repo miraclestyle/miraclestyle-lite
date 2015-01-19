@@ -14,6 +14,7 @@ import collections
 import string
 import time
 import re
+import sys
 import uuid
 import inspect
 
@@ -28,6 +29,8 @@ import mem
 import util
 import settings
 import errors
+
+sys.setrecursionlimit(2147483647)
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
 # For details see: https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
@@ -686,7 +689,7 @@ class _BaseModel(object):
     entity.write_search_document()
     if self._root is self: # make_original will only be called on root entity, because make_original logic will handle substructures
       entity.make_original() # in post put hook we override the instance of original with the self, because the entity is now saved and passed the rule engine
-    # @todo General problem with documents is that they are not transactional, and upon failure of transaction
+    # @todo problem with documents is that they are not transactional, and upon failure of transaction
     # they might end up being stored anyway.
   
   @classmethod
@@ -771,7 +774,7 @@ class _BaseModel(object):
     entity = super(Entity, self).__deepcopy__()
     entity._my_unexisting_field = self._my_unexisting_field
     return entity
-    We cannot copy self.__dict__ because it does not contain all values, because most of them are not initiated yet.
+    We cannot copy self.__dict__ because it does not contain all values that are available later
     
     '''
     model = self.__class__
@@ -788,8 +791,6 @@ class _BaseModel(object):
           if not value.has_value():
             continue # if there's no value to copy skip it
           value = value.value
-        if isinstance(value, Future):
-          continue
         value = copy.deepcopy(value)
         if is_property_value_type:
           new_entity_value = getattr(new_entity, field_key)
@@ -798,10 +799,8 @@ class _BaseModel(object):
           continue
         try:
           setattr(new_entity, field_key, value)
-        except ComputedPropertyError as e:
+        except (ComputedPropertyError, TypeError) as e:
           pass  # This is intentional
-        except Exception as e:
-          pass
     return new_entity
   
   @property
@@ -958,12 +957,8 @@ class _BaseModel(object):
             setattr(entity, field_key, field_value)
           except TypeError as e:
             util.log.debug('--RuleWrite: setattr error: %s' % e)
-          except ComputedPropertyError:
+          except (ComputedPropertyError, TypeError) as e:
             pass
-          except Exception:
-            import traceback
-            traceback.print_stack()
-            raise
       else:
         child_entity = getattr(entity, field_key) # child entity can also be none, same destiny awaits it as with field_value
         child_entity = child_entity.value
@@ -1275,7 +1270,7 @@ class _BaseModel(object):
   
   def make_original(self):
     '''This function will make a copy of the current state of the entity
-    and put it into _original field. Again note that only get_fields() key, _state will be copied.
+    and put that data into _original. Again note that only get_fields() key, _state will be copied.
     
     '''
     if self._use_rule_engine and not self._projection:
@@ -1463,7 +1458,7 @@ class _BaseModel(object):
         continue
       try:
         setattr(self, field_key, value)
-      except ComputedPropertyError:
+      except (ComputedPropertyError, TypeError) as e:
         pass
     self._state = other._state
     self._sequence = other._sequence

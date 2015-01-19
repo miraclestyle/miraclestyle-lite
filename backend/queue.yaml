@@ -21,6 +21,3 @@ queue:
   
 - name: callback
   rate: 20/s
- 
-- name: setup
-  rate: 20/s

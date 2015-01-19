@@ -111,6 +111,14 @@ indexes:
   - name: '2'
     direction: desc
 
+# Seller cron that queries orders
+- kind: '34'
+  properties:
+  - name: '12'
+  - name: '13'
+  - name: '5'
+  - name: '4'
+
 # OrderLine
 - kind: '33'
   ancestor: yes

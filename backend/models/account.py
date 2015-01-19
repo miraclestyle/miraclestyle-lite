@@ -245,7 +245,8 @@ class Account(orm.BaseExpando):
             Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
                               'body': notifications.ACCOUNT_SUDO_BODY,
                               'admin': True,
-                              'recipient': settings.ROOT_ADMINS, 'sender': settings.NOTIFY_EMAIL}})
+                              'recipient': settings.ROOT_ADMINS, 'sender': settings.NOTIFY_EMAIL}}),
+            # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
             ]
           )
         ]
@@ -322,17 +323,17 @@ class Account(orm.BaseExpando):
   
   @property
   def _is_taskqueue(self):
-    return mem.temp_get('_current_request_is_taskqueue')
+    return mem.temp_get('current_request_is_taskqueue')
   
   @property
   def _is_cron(self):
-    return mem.temp_get('_current_request_is_cron')
+    return mem.temp_get('current_request_is_cron')
   
   def set_taskqueue(self, is_it):
-    return mem.temp_set('_current_request_is_taskqueue', is_it)
+    return mem.temp_set('current_request_is_taskqueue', is_it)
   
   def set_cron(self, is_it):
-    return mem.temp_set('_current_request_is_cron', is_it)
+    return mem.temp_set('current_request_is_cron', is_it)
   
   def primary_email(self):
     self.identities.read() # implicitly call read on identities
@@ -355,12 +356,12 @@ class Account(orm.BaseExpando):
   
   @classmethod
   def set_current_account(cls, account, session=None):
-    mem.temp_set('_current_account', account)
-    mem.temp_set('_current_account_session', session)
+    mem.temp_set('current_account', account)
+    mem.temp_set('current_account_session', session)
   
   @classmethod
   def current_account(cls):
-    current_account = mem.temp_get('_current_account')
+    current_account = mem.temp_get('current_account')
     if not current_account:
       current_account = cls()
       cls.set_current_account(current_account)
@@ -380,7 +381,7 @@ class Account(orm.BaseExpando):
   
   @classmethod
   def current_account_session(cls):
-    return mem.temp_get('_current_account_session')
+    return mem.temp_get('current_account_session')
   
   def session_by_id(self, session_id):
     for session in self.sessions.value:

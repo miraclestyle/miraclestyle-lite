@@ -10,7 +10,6 @@ import datetime
 import time
 import inspect
 import copy
-import sys
 import urllib
 
 import orm
@@ -18,9 +17,6 @@ import mem
 import iom
 import settings
 import util
-
-sys.setrecursionlimit(2147483647) # we need recursion stack because most of our code relies on recursion
-# however, we could rewrite the code to not use recursion in future
 
 
 def json_output(s, **kwargs):

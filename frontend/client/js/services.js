@@ -2958,7 +2958,7 @@ w:                  while (images.length > 0) {
                             }
                         });
 
-                        if (got_filters && orderMatchCount === orders.length && index.orders.length === orders.length) {
+                        if (got_filters && index.orders && orderMatchCount === orders.length && index.orders.length === orders.length) {
                             that.indexID = indexID;
                         }
 

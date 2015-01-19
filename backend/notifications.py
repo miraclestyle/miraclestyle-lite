@@ -3,11 +3,41 @@
 Created on Jan 16, 2015
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
-'''
-# Jinja2 flavored notification templates
 
-ACCOUNT_SUDO_SUBJECT = ''
-ACCOUNT_SUDO_BODY = ''
+Jinja2 flavored notification templates
+
+variables available for every template ['account', 'sender', 'entity', 'input', 'action', 'subject', 'body']
++ dynamic and static data
+'''
+
+ACCOUNT_SUDO_SUBJECT = '''
+{% if admin %}
+    Account {{entity._primary_email}} has been {% if entity.state == "suspended" %}suspended{% else %}activated{% endif %} by {{account._primary_email}}
+{% else %}
+    {% if entity.state == "suspended" %}
+    Your account {{entity._primary_email}} has been suspended.
+    {% else %}
+    Your account {{entity._primary_email}} has been activated.
+    {% endif %}
+{% endif %}
+'''
+
+ACCOUNT_SUDO_BODY = '''
+{% if admin %}
+    Note: <br />
+    {{input.note|safe|nl2br}}
+{% else %}
+    {% if entity.state == "suspended" %}
+    Your account {{entity._primary_email}} has been suspended.<br />
+    Message from admin:<br />
+    {{input.message|safe|nl2br}}
+    {% else %}
+    Your account {{entity._primary_email}} has been activated.<br />
+    Message from admin:<br />
+    {{input.message|safe|nl2br}}
+    {% endif %}
+{% endif %}
+'''
 
 CATALOG_PUBLISH_SUBJECT = ''
 CATALOG_PUBLISH_BODY = ''

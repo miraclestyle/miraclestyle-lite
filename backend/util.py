@@ -354,29 +354,28 @@ def noop(*args, **kwargs):
 
 class LoggingWrapper(object):
 
-    def _decide(self, exc):
-        logger = getattr(logging, name)
-        if hasattr(exc, 'LOG'):
-            if exc.LOG:
-                return logger
-            else:
-                return noop
-        return logger # always log exceptions that do not have `LOG` constant
-
     def __getattr__(self, name, default=None):
         if name and name.startswith('_'):
             return super(LoggingWrapper, self).__getattr__(self, name, default)
         if settings.DO_LOGS:
+            logger = getattr(logging, name)
             if name == 'exception':
-                return self._decide
-            return getattr(logging, name)
+                def decide(exc):
+                    if hasattr(exc, 'LOG'):
+                        if exc.LOG:
+                            return logger
+                        else:
+                            return noop
+                    return logger # always log exceptions that do not have `LOG` constant
+                return decide
+            return logger
         else:
             return noop
 
 log = LoggingWrapper()
 
 ### DEBUG ###
-def dbg():
+def debug():
     """ Enter pdb in App Engine
 
     Renable system streams for it.
