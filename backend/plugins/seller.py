@@ -18,7 +18,7 @@ from util import *
 
 __all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats', 'SellerCron']
 
-# @todo This plugin is pseudo coded, and needs to be rewritten!
+
 class SellerCronGenerateFeedbackStats(orm.BaseModel):
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
