@@ -105,5 +105,5 @@ def http_send(**kwargs):
 
 
 def channel_send(**kwargs):
-  message = {'action_id': kwargs['action']._id_str, 'body': render_template(kwargs['body'], kwargs).strip(), 'subject': render_template(kwargs['subject'], kwargs).strip()}
+  message = {'action_id': kwargs['action'].key_id_str, 'body': render_template(kwargs['body'], kwargs).strip(), 'subject': render_template(kwargs['subject'], kwargs).strip()}
   return channel.send_message(kwargs['recipient'], json.dumps(message))

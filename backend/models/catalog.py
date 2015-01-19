@@ -160,6 +160,8 @@ class CatalogProductInstance(orm.BaseExpando):
     parent = kwargs.get('parent')
     if not self.key_id:
       self.key = self.prepare_key({}, parent=parent)
+    else:
+      self.key = self.build_key(self.key_id, parent=parent)
     if self.key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
       sequence = mem.temp_get(key, Nonexistent)

@@ -1985,7 +1985,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
   def duplicate(self):
     if not self._property._duplicable:
       return
-    values = self.read()
+    self.read()
+    values = self.value
     if self._property._repeated:
       entities = []
       for entity in values:
@@ -2182,9 +2183,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
   
   def _duplicate_single(self):
     self.read()
-    self._property_value.read()
     duplicated = self._property_value.duplicate()
-    duplicated.set_key(self._entity.key_id_str, parent=self._entity.key)
     self._property_value = duplicated
   
   def _duplicate_repeated(self):

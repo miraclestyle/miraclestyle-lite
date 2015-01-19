@@ -111,8 +111,10 @@ class Unit(orm.BaseExpando):
                         'active': orm.SuperBooleanProperty(choices=(True,))},
             'indexes': [{'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]},
-                         {'filters': [('measurement', ['==', '!=']), ('active', ['==', '!='])],
-                         'orders': [('measurement', ['asc', 'desc']), ('key', ['asc'])]}]
+                        {'filters': [('active', ['==']), ('measurement', ['=='])],
+                         'orders': [('name', ['asc', 'desc'])]},
+                        {'filters': [('measurement', ['!=']), ('active', ['=='])],
+                         'orders': [('measurement', ['asc', 'desc']), ('key', ['asc', 'desc'])]}]
             }
           )
         },

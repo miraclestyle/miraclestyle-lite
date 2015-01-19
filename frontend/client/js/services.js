@@ -3040,6 +3040,10 @@ w:                  while (images.length > 0) {
                             events: {},
                             signals: [],
                             socket: null,
+                            afterOnclose: [],
+                            onclose: function (cb) {
+                                this.afterOnclose.unshift(cb);
+                            },
                             channel: new goog.appengine.Channel(token),
                             open: function (config) {
                                 var that = this;
@@ -3050,6 +3054,11 @@ w:                  while (images.length > 0) {
                                     return that;
                                 }
                                 that.socket = that.channel.open(that.events);
+                                that.socket.onclose = function () {
+                                    angular.forEach(that.afterOnclose, function (cb) {
+                                        cb();
+                                    });
+                                };
                                 return that;
                             },
                             destroy: function () {
@@ -3081,13 +3090,12 @@ w:                  while (images.length > 0) {
                                     });
                                     terminate = [];
                                 }
-
-                                if (!that.signals || that.signals.length === 1 && type !== 'onclose') {
+                                if (!that.signals.length) {
                                     that.socket.close();
                                 }
                             }
                         };
-                        angular.forEach(['onopen', 'onmessage', 'onerror', 'onclose'], function (type) {
+                        angular.forEach(['onopen', 'onmessage', 'onerror'], function (type) {
                             instance.callbacks[type] = [];
                             instance[type] = function (cb) {
                                 this.queue(type, cb);
@@ -3096,7 +3104,8 @@ w:                  while (images.length > 0) {
                                 instance.dispatch(type, arguments);
                             };
                         });
-                        instance.onclose(function () {
+
+                        instance.afterOnclose.push(function () {
                             instance.destroy();
                         });
                         channelApi.instances[token] = instance;
@@ -3118,6 +3127,9 @@ w:                  while (images.length > 0) {
                     out = channelApi.create(token);
                     channelNotifications.instances[token] = out;
                     out.open({
+                        onclose: function () {
+                            delete channelNotifications.instances[token];
+                        },
                         onmessage: function (message, destroy) {
                             destroy();
                             if (angular.isObject(message) && message.data) {
