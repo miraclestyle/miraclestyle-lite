@@ -513,10 +513,12 @@
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
                                                 $scope.args = {key: catalog.key, state: catalog.state};
 
+                                                /*
                                                 sudoFields.state.ui.placeholder = 'Set state';
                                                 sudoFields.index_state.ui.placeholder = 'Index action';
                                                 sudoFields.message.ui.placeholder = 'Message for the user';
                                                 sudoFields.note.ui.placeholder = 'Note for administrators';
+                                                */
 
                                                 $scope.fields = [sudoFields.state, sudoFields.index_state, sudoFields.message, sudoFields.note];
                                                 angular.forEach($scope.fields, function (field) {

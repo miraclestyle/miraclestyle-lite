@@ -73,7 +73,12 @@ a:visited {
   line-height: 32px;
   margin: 0px;
   padding-top: 10px;
-  padding-bottom: 8px;
+  padding-bottom: 3px;
+}
+
+#logo-img {
+  height:30px;
+  width:auto;
 }
 
 #main-menu {

@@ -1,3 +1,8 @@
-<div form-element-wrapper label="<%= config.ui.compiled.label %>">
+<!-- <div form-element-wrapper label="<%= config.ui.compiled.label %>">
          <datetimepicker name="<%= config.ui.formName %>" datepicker-disable="<%= config.ui.writableCompiled %>"  show-meridian="false" <%= config.ui.compiled.attrs %> ></datetimepicker>
-</div>
+</div> -->
+
+<md-input-container>
+    <label><%= config.ui.compiled.label %></label>
+    <input type="date" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.formName %>" <%= config.ui.compiled.attrs %>>
+</md-input-container>

@@ -93,7 +93,7 @@
   width: 100%;
   background: #FFFFFF;
   z-index: 9;
-  font-size: 0px;
+  /*font-size: 0px;*/
 }
 
 .modal-footer .button {

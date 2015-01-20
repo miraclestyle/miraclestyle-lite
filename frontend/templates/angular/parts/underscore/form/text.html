@@ -1,5 +1,12 @@
-<div form-element-wrapper label="<%= config.ui.compiled.label %>">
+<!--<div form-element-wrapper label="<%= config.ui.compiled.label %>">
   <textarea msd-elastic class="text-input <%= config.ui.attrs['class'] %>"
             name="<%= config.ui.formName %>" 
             <%= config.ui.compiled.attrs %> ></textarea>
-</div>
+</div>-->
+
+<md-input-container>
+    <label><%= config.ui.compiled.label %></label>
+    <textarea class="<%= config.ui.attrs['class'] %>"
+            name="<%= config.ui.formName %>" 
+            <%= config.ui.compiled.attrs %> ></textarea>
+</md-input-container>
