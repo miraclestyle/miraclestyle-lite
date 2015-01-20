@@ -57,10 +57,14 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-cookie/angular-cookie.js',
   'vendor/angular-touch/angular-touch.js',
   'vendor/angular-gestures/gestures.min.js',
+  'vendor/angular-animate/angular-animate.js',
+  'vendor/angular-aria/angular-aria.js',
+  'vendor/angular-messages/angular-messages.js',
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
   'vendor/angular-elastic/elastic.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js',
+  'vendor/angular-material/angular-material.js',
   'lib/angular-ui-select/dist/select.js',
   'lib/angulike/angulike.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
@@ -71,8 +75,8 @@ ANGULAR_JS_PATHS = (
 
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
 
-ANGULAR_CSS_PATHS = ('fonts/sawasdee/stylesheet.css',
-                     'js/lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
+ANGULAR_CSS_PATHS = ('js/lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
+                     'js/vendor/angular-material/angular-material.css',
                      'css/style.css')
 
 class Structured():

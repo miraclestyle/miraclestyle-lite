@@ -1,7 +1,7 @@
 <div accordion-on-open="accordions">
     <accordion close-others="accordions.closeOthers">
 
-        <accordion-group heading="{{accordions.groups.0.label}}" is-open="accordions.groups.0.open" is-disabled="accordions.groups.0.disabled">
+        <accordion-group heading="{{accordions.groups[0].label}}" is-open="accordions.groups[0].open" is-disabled="accordions.groups[0].disabled">
 
             <div form-element-wrapper label="ID">
                 <span>{{entity.id}}</span>
@@ -18,7 +18,7 @@
 
         </accordion-group>
 
-        <accordion-group heading="{{accordions.groups.1.label}}" is-open="accordions.groups.1.open" is-disabled="accordions.groups.1.disabled">
+        <accordion-group heading="{{accordions.groups[1].label}}" is-open="accordions.groups[1].open" is-disabled="accordions.groups[1].disabled">
            <div class="item-list">
                 <div ng-repeat="ident in entity.identities" class="item clearfix">
                   <div class="item-left">
@@ -36,7 +36,7 @@
         </accordion-group>
 
 
-        <accordion-group ng-if="accordions.groups.2" heading="{{accordions.groups.2.label}}" is-open="accordions.groups.2.open" is-disabled="accordions.groups.2.disabled" ng-init="accordion = accordions.groups.2">
+        <accordion-group ng-if="accordions.groups[2]" heading="{{accordions.groups[2].label}}" is-open="accordions.groups[2].open" is-disabled="accordions.groups[2].disabled" ng-init="accordion = accordions.groups[2]">
           <div ng-if="accordion.include" ng-include="accordion.include"></div>
         </accordion-group>
 

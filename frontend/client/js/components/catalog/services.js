@@ -88,7 +88,7 @@
                                                 'ng-change': 'changeVariation()'
                                             },
                                             placeholder: 'Select option...',
-                                            args: 'variants.' + i + '.option'
+                                            args: 'variants[' + i + '].option'
                                         }
                                     });
 
@@ -269,10 +269,10 @@
 
                                 $scope.addToCart = function () {
                                     if (!$scope.hasThisProduct && $scope.productQuantity < 1) {
+                                        $scope.container.form.$setDirty();
                                         var productQuantityField = $scope.container.form.productQuantity;
                                         productQuantityField.$setViewValue(productQuantityField.$viewValue !== undefined ? productQuantityField.$viewValue : '');
-                                        productQuantityField.$dirty = true;
-                                        productQuantityField.$pristine = false;
+                                        productQuantityField.$setDirty();
                                         productQuantityField.$setValidity('required', false);
                                         return;
                                     }

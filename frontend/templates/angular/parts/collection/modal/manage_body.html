@@ -1,11 +1,11 @@
 <div accordion-on-open="accordions">
     <accordion close-others="accordions.closeOthers">
 
-        <accordion-group heading="{{accordions.groups.0.label}}" is-open="accordions.groups.0.open" is-disabled="accordions.groups.0.disabled">
+        <accordion-group heading="{{accordions.groups[0].label}}" is-open="accordions.groups[0].open" is-disabled="accordions.groups[0].disabled">
             <div form-input="config.keyedFields.notify" />
         </accordion-group>
 
-        <accordion-group heading="{{accordions.groups.1.label}}" is-open="accordions.groups.1.open" is-disabled="accordions.groups.1.disabled">
+        <accordion-group heading="{{accordions.groups[1].label}}" is-open="accordions.groups[1].open" is-disabled="accordions.groups[1].disabled">
             <div grid-generator-items="entity._sellers" grid-generator="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}" class="grid-wrapper clearfix">
                 <div ng-repeat="seller in entity._sellers track by $index" on-ng-repeat-end class="grid-item grid-generator">
                     <button ng-click="view(seller)" class="button-transparent pointable">

@@ -65,6 +65,31 @@
                 $scope.search.pagination.load();
             });
 
+        }).controller('DemoCtrl', function ($scope) {
+            $scope.user = {
+                title: 'Developer',
+                email: 'ipsum@lorem.com',
+                firstName: '',
+                lastName: '',
+                company: 'Google',
+                address: '1600 Amphitheatre Pkwy',
+                city: 'Mountain View',
+                state: 'CA',
+                biography: 'Loves kittens, snowboarding, and can type at 130 WPM.\n\nAnd rumor has it she bouldered up Castle Craig!',
+                postalCode: '94043'
+            };
+        }).controller('AppCtrl', function ($scope) {
+            $scope.title1 = 'Button';
+            $scope.title4 = 'Warn';
+            $scope.isDisabled = true;
+            $scope.googleUrl = 'http://google.com';
+            $scope.project = {
+                description: 'Nuclear Missile Defense System',
+                clientName: 'Bill Clinton',
+                rate: 500,
+              };
         });
+
+
 
 }());

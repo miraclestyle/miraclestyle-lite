@@ -664,7 +664,7 @@
                     if (accordions) {
 
                         angular.forEach(accordions.groups, function (accordion, i) {
-                            scope.$watch(attrs.accordionOnOpen + '.groups.' + i + '.open', function (neww, old) {
+                            scope.$watch(attrs.accordionOnOpen + '.groups[' + i + '].open', function (neww, old) {
                                 var which = accordions.groups[i];
                                 if (neww) {
                                     scope.$broadcast('accordionOpened', which, i);
@@ -874,8 +874,7 @@
                                         accordion.open = true;
                                         form.$setDirty();
                                         formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
-                                        formElement.$dirty = true;
-                                        formElement.$pristine = false;
+                                        formElement.$setDirty();
                                         if (!scope.$$phase) {
                                             scope.$apply();
                                         }
@@ -950,8 +949,13 @@
                                 return;
                             }
                             var p = parent.get(0),
-                                maxscroll = p.scrollWidth - p.clientWidth,
+                                maxscroll,
                                 sense = maxscroll - parent.scrollLeft();
+                            if (!p) {
+                                steadyScroll.stop();
+                                return;
+                            }
+                            maxscroll = p.scrollWidth - p.clientWidth;
                             if (sense < 300) {
                                 return true;
                             }
@@ -967,6 +971,7 @@
                         $(window).off('resize', resize);
                         if (steadyScroll) {
                             steadyScroll.stop();
+                            steadyScroll = undefined;
                         }
                     });
                 }

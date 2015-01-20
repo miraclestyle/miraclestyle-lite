@@ -19,10 +19,10 @@
         GLOBAL_CONFIG = {
             debug: true, // debug mode
             host: host,
-            modules: ['ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
+            modules: ['ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
                 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector',
                 'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch',
-                'timer', 'angulike', 'googlechart', 'monospaced.elastic'], // this will be changed accordingly
+                'timer', 'angulike', 'googlechart', 'monospaced.elastic', 'ngMaterial'], // this will be changed accordingly
             api: {
                 modelsMeta: {
                     path: host + '/api/model_meta'
@@ -66,8 +66,6 @@
             $locationProvider.hashPrefix('!');
             $locationProvider.html5Mode(true);
         });
-
-
 }());
 
 $(function () {
