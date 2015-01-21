@@ -1,10 +1,5 @@
-
-<!--
-<div form-element-wrapper label="<%= config.ui.compiled.label %>">
-   <button toggle class="button <%= config.ui.attrs['class'] %>" type="button" <%= config.ui.compiled.attrs %>></button>
-</div>-->
 <md-input-container>
-     <md-checkbox class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
+     <md-checkbox ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
        <%= config.ui.compiled.label %>
      </md-checkbox>
- </md-input-container>
+</md-input-container>

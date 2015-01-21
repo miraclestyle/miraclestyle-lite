@@ -936,7 +936,9 @@ w:                  while (images.length > 0) {
 
                         if (rejection.status > 200) {
                             errorHandling.modal(angular.isString(rejection.data) ? {traceback: rejection.data} : rejection.data.errors);
-                            enableUI();
+                            if (shouldDisable) {
+                                enableUI();
+                            }
                             return $q.reject(rejection);
                         }
                         if (data && data.errors) {
@@ -945,7 +947,7 @@ w:                  while (images.length > 0) {
                             if (data.errors.action_denied) {
                                 reject = true;
                             }
-                            if (reject) {
+                            if (reject && shouldDisable) {
                                 enableUI();
                                 return $q.reject(rejection);
                             }
@@ -1455,6 +1457,7 @@ w:                  while (images.length > 0) {
                     return this.SuperFloatProperty(info);
                 },
                 SuperBooleanProperty: function (info) {
+                    info.config.required = false;
                     return 'boolean';
                 },
                 SuperVirtualKeyProperty: function (info) {
@@ -1690,7 +1693,7 @@ w:                  while (images.length > 0) {
                                                 selectedIsString = angular.isString(select.selected);
                                                 if ((selectedIsArray || selectedIsString)) {
 
-                                                    fetchedEntities = config.ui.specifics.entities;
+                                                    fetchedEntities = config.ui.specifics.entities.concat();
                                                     config.ui.specifics.entities = undefined;
 
                                                     model.actions.search({
@@ -1701,12 +1704,12 @@ w:                  while (images.length > 0) {
                                                         cache: true
                                                     }).then(function (response) {
                                                         if (selectedIsString) {
-                                                            if (!_.findWhere(config.ui.specifics.entities, {key: select.selected})) {
+                                                            if (!_.findWhere(fetchedEntities, {key: select.selected})) {
                                                                 fetchedEntities.unshift(response.data.entities[0]);
                                                             }
                                                         } else {
                                                             angular.forEach(response.data.entities, function (ent) {
-                                                                if (!_.findWhere(config.ui.specifics.entities, {key: ent.key})) {
+                                                                if (!_.findWhere(fetchedEntities, {key: ent.key})) {
                                                                     fetchedEntities.push(ent);
                                                                 }
                                                             });
@@ -2397,6 +2400,9 @@ w:                  while (images.length > 0) {
                     return this.SuperTextProperty(info);
                 },
                 SuperDateTimeProperty: function (info) {
+                    info.config.ui.specifics.options = {
+                        datepickerPopup: 'yyy-MM-dd'
+                    };
                     return 'datetime';
                 }
             };
@@ -2490,7 +2496,7 @@ w:                  while (images.length > 0) {
                             theConfig.args.search = searchAction.search['default'];
                             if (angular.isDefined(config.args)) {
                                 helpers.merge(config.args, theConfig.args);
-                                helpers.extend(theConfig, config);
+                                $.extend(theConfig, config);
                             }
                             return paginate;
                         },

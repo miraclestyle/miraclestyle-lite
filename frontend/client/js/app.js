@@ -65,6 +65,11 @@
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
             $locationProvider.html5Mode(true);
+        }).config(function ($mdThemingProvider) {
+            $mdThemingProvider.theme('default')
+                .primaryColor('grey')
+                .accentColor('grey')
+                .warnColor('grey');
         });
 }());
 
