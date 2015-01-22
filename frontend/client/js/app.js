@@ -69,7 +69,7 @@
             $mdThemingProvider.theme('default')
                 .primaryColor('grey')
                 .accentColor('grey')
-                .warnColor('grey');
+                .warnColor('red');
         });
 }());
 

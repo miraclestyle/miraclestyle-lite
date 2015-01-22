@@ -221,6 +221,13 @@
                                             $scope.formBuilder = {
                                                 '0': [config.ui.specifics.selectKinds]
                                             };
+                                        },
+                                        getPluginFieldOverrides = function (kind_id, field) {
+                                            var gets = defaultSpecifics.pluginFieldOverrides[kind_id];
+                                            if (angular.isDefined(gets) && angular.isDefined(gets[field])) {
+                                                return gets[field];
+                                            }
+                                            return {};
                                         };
 
                                     if (!arg) {
@@ -271,7 +278,7 @@
                                         }
 
                                         angular.forEach(fields, function (field) {
-                                            field.ui.formName = 'plugin_' + field.code_name;
+                                            field.ui.name = 'plugin.' + field.code_name;
                                             field.ui.writable = true;
                                             var extra = getPluginFieldOverrides(kind, field.code_name),
                                                 next;
@@ -410,13 +417,6 @@
                                 }
                             });
                         }
-                    },
-                    getPluginFieldOverrides = function (kind_id, field) {
-                        var gets = defaultSpecifics.pluginFieldOverrides[kind_id];
-                        if (angular.isDefined(gets) && angular.isDefined(gets[field])) {
-                            return gets[field];
-                        }
-                        return {};
                     };
 
                 config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);

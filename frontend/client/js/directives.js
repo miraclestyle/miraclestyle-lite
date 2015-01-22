@@ -328,7 +328,7 @@
                             constructor;
 
                         if (!angular.isObject(supplied_config)) {
-                            console.warn('config provided is not object for element: ', element);
+                            console.warn('Config provided is not object for element: ', element);
                             return;
                         }
 
@@ -342,7 +342,7 @@
                         }
 
                         if (!name) {
-                            console.error('Your field config', supplied_config, 'has no name defined defined.');
+                            console.error('Your field config', supplied_config, 'has no name defined defined. element: ', element);
                             return;
                         }
 
@@ -354,13 +354,27 @@
                                 model: 'entity',
                                 autoLabel: label,
                                 specifics: {}, // used for property specific configurations
+                                systemName: name,
                                 name: name,
-                                formName: name,
+                                form: {
+                                    root: ctrl,
+                                    field: function () {
+                                        return this.root[config.ui.name];
+                                    },
+                                    hasErrors: function () {
+                                        return Object.keys(this.field().$error).length;
+                                    },
+                                    messages: function () {
+                                        return ((this.field().$dirty && this.hasErrors()) ? this.field().$error : false) || config.ui;
+                                    },
+                                    shouldShowMessages: function () {
+                                        return this.field().$dirty || config.ui.help;
+                                    }
+                                },
                                 writable: [name],
                                 path: undefined,
                                 realPath: undefined,
-                                attrs: {},
-                                preRender: [] // holds list of callbacks to execute prior to rendering of the directive
+                                attrs: {}
                             }
                         };
 
@@ -398,12 +412,8 @@
                             config.ui.path = [name];
                         }
 
-                        if (angular.isDefined(config.ui.writableName)) {
-                            config.ui.writable = [config.ui.writableName];
-                        } else {
-                            if (angular.isArray(config.ui.writable)) {
-                                config.ui.writable = angular.copy(config.ui.path);
-                            }
+                        if (angular.isArray(config.ui.writable)) {
+                            config.ui.writable = angular.copy(config.ui.path);
                         }
 
                         if (!angular.isDefined(config.ui.realPath)) {

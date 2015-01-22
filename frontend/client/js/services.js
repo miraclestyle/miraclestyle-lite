@@ -20,16 +20,13 @@
                         return $(parse).filter('pre').text();
                     },
                     transaction: function (reason) {
-
                         if (reason === 'timeout') {
                             return 'Transaction was not completed due timeout. Please try again.';
                         }
                         if (reason === 'failed') {
                             return 'Transaction was not completed due failure. Please try again.';
                         }
-
                         return reason;
-
                     }
                 },
                 errorHandling = {
@@ -1910,8 +1907,8 @@ w:                  while (images.length > 0) {
                             field.ui.realPath = [];
                             field.ui.realPath.extend(config.ui.realPath);
                             field.ui.realPath.push(field.code_name);
-                            if (!angular.isDefined(field.ui.formName)) {
-                                field.ui.formName = config.ui.formName + '_' + field.code_name;
+                            if (!angular.isDefined(field.ui.name)) {
+                                field.ui.name = config.ui.name + '.' + field.code_name;
                             }
                             field.ui.writable = copyWritable;
                             config.ui.specifics.formBuilder.push(field);

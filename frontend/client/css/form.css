@@ -765,22 +765,6 @@ html[dir="rtl"] .select2-search-choice-close {
   color: #999999;
 }
 
-::-webkit-input-placeholder {
-  color: #999999;
-}
-
-:-moz-placeholder {
-  color: #999999;
-}
-
-::-moz-placeholder {
-  color: #999999;
-}
-
-:-ms-input-placeholder {
-  color: #999999;
-}
-
 a.button.sort-handle {
   cursor: move;
 }

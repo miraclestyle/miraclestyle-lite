@@ -8,7 +8,7 @@
         <span class="fieldset-button">
            <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span class="selected-total">(Selected: :total)</span> <span ng-show="$isUploading">(Uploading...)</span></span>
-               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
+               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
                        multiple
                        show-number-of-selected-files=".selected-total"
                        generate-upload-url="true"
@@ -24,7 +24,7 @@
         <div class="pull-right">
            <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
                <span>Add Images <span class="selected-total">(Selected: :total)</span> <span ng-show="$isUploading">(Uploading...)</span></span>
-               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
+               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
                        multiple
                        show-number-of-selected-files=".selected-total"
                        generate-upload-url="true"
@@ -64,7 +64,7 @@
         <div form-element-wrapper label="">
            <div loading="!<%= config.ui.writableCompiled %>" class="button fake-button">
                <span><%=config.ui.compiled.label %> <span ng-show="$isUploading">(Uploading...)</span></span>
-               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.formName %>"
+               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
                        generate-upload-url
                        type="file" />
            </div>
