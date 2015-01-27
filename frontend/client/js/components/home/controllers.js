@@ -6,7 +6,7 @@
             $scope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $scope.JSON = JSON;
         })
-        .controller('HomePageCtrl', function ($scope, models, modals, $state, $stateParams, $q) {
+        .controller('HomePageCtrl', function ($scope, models, modals, $state, $stateParams, $q, $mdAdialog) {
             var args = {search: {}},
                 defer = $q.defer(),
                 promise = defer.promise;
@@ -65,8 +65,42 @@
                 $scope.search.pagination.load();
             });
 
+            $scope.open = function () {
+                $mdAdialog.show({
+                    controller: function ($scope) {
+                        $scope.hide = function () {
+                            $mdAdialog.hide();
+                        };
+
+                        $scope.open = function ($event) {
+                            $mdAdialog.show({
+                                templateUrl: 'tests/select.html',
+                                targetEvent: $event,
+                                parent: $($event.target).parents('md-content:first'),
+                                controller: function ($scope) {
+                                    $scope.todos = [];
+                                    models['12'].actions.search().then(function (response) {
+                                        $scope.todos = response.data.entities;
+                                    });
+                                }
+                            });
+                        };
+
+                        $scope.cancel = function () {
+                            $mdAdialog.cancel();
+                        };
+                        $scope.answer = function (answer) {
+                            $mdAdialog.hide(answer);
+                        };
+                    },
+                    fullScreen: true,
+                    templateUrl: 'tests/dialog1.html',
+                    inDirection: 'left',
+                    outDirection: 'right',
+                    targetEvent: undefined,
+                });
+            };
+
         });
-
-
 
 }());

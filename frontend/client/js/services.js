@@ -474,24 +474,12 @@ w:                  while (images.length > 0) {
                     cacheType: 'memory',
                     ignoreErrors: true
                 }).then(function (response) {
-
                     var currentAccount = $injector.get('currentAccount');
                     $.extend(currentAccount, response.data.entity);
                     if (GLOBAL_CONFIG.debug) {
                         window._currentAccount = currentAccount; // delete in production
                     }
 
-                });
-            },
-            modelsMeta: function () {
-                return endpoint.get(null, null, {}, {
-                    cache: 'modelsMeta',
-                    cacheType: 'memory',
-                    url: GLOBAL_CONFIG.api.modelsMeta.path,
-                    ignoreErrors: true
-                }).then(function (response) {
-                    var modelsInfo = $injector.get('modelsInfo');
-                    $.extend(modelsInfo, response.data);
                 });
             }
         };
@@ -982,7 +970,7 @@ w:                  while (images.length > 0) {
             }
             ]);
 
-    }]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
+    }]).factory('modelsEditor', function ($modal, $mdAdialog, endpoint, $q, helpers,
         modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordAccordion) {
 
         var modelsEditor = {
@@ -1123,253 +1111,270 @@ w:                  while (images.length > 0) {
                     },
                     open: function (entity, args) {
 
-                        $modal.open({
-                            templateUrl: 'entity/modal/editor.html',
-                            controller: function ($scope, $modalInstance) {
-                                var inflector = $filter('inflector'),
-                                    field,
-                                    done = {},
-                                    found = false,
-                                    realTotal = 0,
-                                    madeHistory = false,
-                                    makeHistory = function () {
-                                        if (madeHistory || !$scope.entity.id) {
+                        var opener = $modal,
+                            fn = 'open',
+                            ctrl;
+                        ctrl = function ($scope, $modalInstance) {
+                            var inflector = $filter('inflector'),
+                                field,
+                                done = {},
+                                found = false,
+                                realTotal = 0,
+                                madeHistory = false,
+                                makeHistory = function () {
+                                    if (madeHistory || !$scope.entity.id) {
+                                        return false;
+                                    }
+                                    if (!angular.isDefined($scope.historyConfig)) {
+                                        $scope.historyConfig = false;
+                                    }
+                                    if ($scope.historyConfig === true) {
+                                        $scope.historyConfig = {
+                                            kind: config.kind,
+                                            key: $scope.entity.key
+                                        };
+                                    } else {
+                                        if ($scope.historyConfig === false) {
                                             return false;
                                         }
-                                        if (!angular.isDefined($scope.historyConfig)) {
-                                            $scope.historyConfig = false;
-                                        }
-                                        if ($scope.historyConfig === true) {
-                                            $scope.historyConfig = {
-                                                kind: config.kind,
-                                                key: $scope.entity.key
-                                            };
-                                        } else {
-                                            if ($scope.historyConfig === false) {
-                                                return false;
-                                            }
-                                        }
-                                        madeHistory = true;
-                                        $scope.historyConfig.key = $scope.entity.key;
-                                        if ($scope.args.ui.rule.field._records.visible) {
-                                            recordAccordion.attach($scope.accordions);
-                                        }
-                                    };
-                                modelsUtil.normalize(entity);
-                                $scope.container = {
-                                    action: endpoint.url
-                                };
-
-                                config.getScope = function () {
-                                    return $scope;
-                                };
-
-                                $scope.withArgs = args;
-                                $scope.config = config;
-                                $scope.entity = entity;
-                                $scope.$modalInstance = $modalInstance;
-                                $scope.args = config.argumentLoader($scope);
-                                $scope.rootScope = $scope;
-                                $scope.formSetPristine = function () {
-                                    if ($scope.container && $scope.container.form) {
-                                        $scope.container.form.$setPristine();
+                                    }
+                                    madeHistory = true;
+                                    $scope.historyConfig.key = $scope.entity.key;
+                                    if ($scope.args.ui.rule.field._records.visible) {
+                                        recordAccordion.attach($scope.accordions);
                                     }
                                 };
-                                $scope.formSetDirty = function () {
-                                    if ($scope.container && $scope.container.form) {
-                                        $scope.container.form.$setDirty();
-                                    }
-                                };
+                            modelsUtil.normalize(entity);
+                            $scope.container = {
+                                action: endpoint.url
+                            };
 
-                                $scope.setAction = function (action) {
-                                    $scope.args.action_id = action;
-                                    config.action = action;
-                                };
-                                console.log('modelsEditor.init', $scope);
+                            config.getScope = function () {
+                                return $scope;
+                            };
 
-                                $scope.validateForm = function () {
-                                    if (!$scope.container.form.$valid) {
-                                        $scope.$broadcast('invalidForm');
-                                        return false;
-                                    }
-                                    return true;
-                                };
+                            $scope.withArgs = args;
+                            $scope.config = config;
+                            $scope.entity = entity;
+                            $scope.$modalInstance = $modalInstance;
+                            $scope.args = config.argumentLoader($scope);
+                            $scope.rootScope = $scope;
+                            $scope.formSetPristine = function () {
+                                if ($scope.container && $scope.container.form) {
+                                    $scope.container.form.$setPristine();
+                                }
+                            };
+                            $scope.formSetDirty = function () {
+                                if ($scope.container && $scope.container.form) {
+                                    $scope.container.form.$setDirty();
+                                }
+                            };
 
-                                $scope.save = function () {
-                                    if (!$scope.validateForm()) {
-                                        return false;
-                                    }
-                                    config.prepareReadArguments($scope);
-                                    var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
+                            $scope.setAction = function (action) {
+                                $scope.args.action_id = action;
+                                config.action = action;
+                            };
+                            console.log('modelsEditor.init', $scope);
 
-                                    promise.then(function (response) {
-                                        $.extend($scope.entity, response.data.entity);
-                                        var new_args = config.argumentLoader($scope);
-                                        $.extend($scope.args, new_args);
-                                        makeHistory();
-                                        if (angular.isDefined(config.afterSave)) {
-                                            config.afterSave($scope);
-                                        }
-                                        $scope.formSetPristine();
-                                    }, function (response) {
-                                        // here handle error...
-                                        if (angular.isDefined(config.afterSaveError)) {
-                                            config.afterSaveError($scope, response);
-                                        }
+                            $scope.validateForm = function () {
+                                if (!$scope.container.form.$valid) {
+                                    $scope.$broadcast('invalidForm');
+                                    return false;
+                                }
+                                return true;
+                            };
 
-                                    });
+                            $scope.save = function () {
+                                if (!$scope.validateForm()) {
+                                    return false;
+                                }
+                                config.prepareReadArguments($scope);
+                                var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
 
-                                    return promise;
-                                };
-
-                                $scope.complete = function (response) {
-
+                                promise.then(function (response) {
                                     $.extend($scope.entity, response.data.entity);
-                                    var newArgs = config.argumentLoader($scope);
-                                    $.extend($scope.args, newArgs);
+                                    var new_args = config.argumentLoader($scope);
+                                    $.extend($scope.args, new_args);
                                     makeHistory();
-                                    if (angular.isDefined(config.afterComplete)) {
-                                        config.afterComplete($scope);
+                                    if (angular.isDefined(config.afterSave)) {
+                                        config.afterSave($scope);
                                     }
-
-                                    if (config.closeAfterSave) {
-                                        $timeout(function () {
-                                            $scope.close();
-                                        });
-                                    }
-
                                     $scope.formSetPristine();
-
-                                    console.log('modelsEditor.complete', $scope);
-
-                                };
-
-                                $scope.noComplete = function () {
-                                    if (angular.isDefined(config.noComplete)) {
-                                        config.noComplete($scope);
+                                }, function (response) {
+                                    // here handle error...
+                                    if (angular.isDefined(config.afterSaveError)) {
+                                        config.afterSaveError($scope, response);
                                     }
-                                };
 
-                                $scope.completeError = function (response) {
-                                    if (angular.isDefined(config.afterCompleteError)) {
-                                        config.afterCompleteError($scope, response);
-                                    }
-                                };
-
-                                $scope.close = function () {
-                                    $modalInstance.dismiss('close');
-                                    if (config.afterClose) {
-                                        config.afterClose($scope);
-                                    }
-                                };
-
-                                $scope.$on('$destroy', function () {
-                                    config.getScope = undefined;
                                 });
 
-                                if (angular.isDefined(config.scope)) {
-                                    $.extend($scope, config.scope);
-                                    delete config.scope;
+                                return promise;
+                            };
+
+                            $scope.complete = function (response) {
+
+                                $.extend($scope.entity, response.data.entity);
+                                var newArgs = config.argumentLoader($scope);
+                                $.extend($scope.args, newArgs);
+                                makeHistory();
+                                if (angular.isDefined(config.afterComplete)) {
+                                    config.afterComplete($scope);
                                 }
 
-                                $scope.formBuilder = {
-                                    '0': []
+                                if (config.closeAfterSave) {
+                                    $timeout(function () {
+                                        $scope.close();
+                                    });
+                                }
+
+                                $scope.formSetPristine();
+
+                                console.log('modelsEditor.complete', $scope);
+
+                            };
+
+                            $scope.noComplete = function () {
+                                if (angular.isDefined(config.noComplete)) {
+                                    config.noComplete($scope);
+                                }
+                            };
+
+                            $scope.completeError = function (response) {
+                                if (angular.isDefined(config.afterCompleteError)) {
+                                    config.afterCompleteError($scope, response);
+                                }
+                            };
+
+                            $scope.close = function () {
+                                if ($modalInstance.dismiss) {
+                                    $modalInstance.dismiss('close');
+                                } else {
+                                    $modalInstance.hide();
+                                }
+                                if (config.afterClose) {
+                                    config.afterClose($scope);
+                                }
+                            };
+
+                            $scope.$on('$destroy', function () {
+                                config.getScope = undefined;
+                            });
+
+                            if (angular.isDefined(config.scope)) {
+                                $.extend($scope, config.scope);
+                                delete config.scope;
+                            }
+
+                            $scope.formBuilder = {
+                                '0': []
+                            };
+
+                            // if no accordions are defined, use the auto-builder
+                            if (!angular.isDefined($scope.accordions)) {
+                                $scope.accordions = {
+                                    closeOthers: true,
+                                    groups: [{
+                                        label: 'General',
+                                        disabled: true,
+                                        open: true
+                                    }]
                                 };
 
-                                // if no accordions are defined, use the auto-builder
-                                if (!angular.isDefined($scope.accordions)) {
-                                    $scope.accordions = {
-                                        closeOthers: true,
-                                        groups: [{
-                                            label: 'General',
-                                            disabled: true,
-                                            open: true
-                                        }]
-                                    };
+                                angular.forEach(config.fields, function (field) {
+                                    if (field.is_structured && formInputTypes[field.type]) {
 
-                                    angular.forEach(config.fields, function (field) {
-                                        if (field.is_structured && formInputTypes[field.type]) {
-
-                                            if (!field.ui.initialLabel) {
-                                                field.ui.initialLabel = field.ui.label;
-                                            }
-                                            $scope.accordions.groups.push({
-                                                label: inflector((field.ui.initialLabel || field.code_name), 'humanize'),
-                                                disabled: false,
-                                                open: false
-                                            });
-
-                                            field.ui.label = false;
-
-                                            var next = $scope.accordions.groups.length - 1;
-
-                                            if (!angular.isDefined($scope.formBuilder[next])) {
-                                                $scope.formBuilder[next] = [];
-                                                $scope.formBuilder[next].push(field);
-                                            }
-
-                                            $scope.accordions.groups[0].disabled = false;
-                                        } else {
-                                            $scope.formBuilder['0'].push(field);
+                                        if (!field.ui.initialLabel) {
+                                            field.ui.initialLabel = field.ui.label;
                                         }
-                                    });
+                                        $scope.accordions.groups.push({
+                                            label: inflector((field.ui.initialLabel || field.code_name), 'humanize'),
+                                            disabled: false,
+                                            open: false
+                                        });
 
-                                    angular.forEach($scope.accordions.groups, function (group, i) {
-                                        if ($scope.formBuilder[i].length) {
-                                            realTotal += 1;
-                                        }
-                                        if (found !== false) {
-                                            return;
-                                        }
-                                        if ($scope.formBuilder[i].length) {
-                                            group.open = true;
-                                            found = group;
-                                        } else {
-                                            group.open = false;
-                                        }
-                                    });
+                                        field.ui.label = false;
 
-                                    if (realTotal === 1) {
-                                        found.disabled = true;
+                                        var next = $scope.accordions.groups.length - 1;
+
+                                        if (!angular.isDefined($scope.formBuilder[next])) {
+                                            $scope.formBuilder[next] = [];
+                                            $scope.formBuilder[next].push(field);
+                                        }
+
+                                        $scope.accordions.groups[0].disabled = false;
+                                    } else {
+                                        $scope.formBuilder['0'].push(field);
                                     }
+                                });
 
-                                } else {
-                                    angular.forEach($scope.accordions.groups, function (group, i) {
-                                        $scope.formBuilder[i] = [];
-                                        if (!angular.isDefined(group.fields)) {
-                                            var wait = false;
-                                            angular.forEach(config.fields, function (field) {
-                                                if (wait) {
-                                                    return;
-                                                }
-                                                if (!done[field.code_name]) {
-                                                    done[field.code_name] = 1;
-                                                    if (field.is_structured) {
-                                                        wait = true;
-                                                    }
+                                angular.forEach($scope.accordions.groups, function (group, i) {
+                                    if ($scope.formBuilder[i].length) {
+                                        realTotal += 1;
+                                    }
+                                    if (found !== false) {
+                                        return;
+                                    }
+                                    if ($scope.formBuilder[i].length) {
+                                        group.open = true;
+                                        found = group;
+                                    } else {
+                                        group.open = false;
+                                    }
+                                });
 
-                                                    $scope.formBuilder[i].push(field);
-                                                }
-                                            });
-                                        } else {
-                                            angular.forEach(group.fields, function (field_key) {
-                                                if (!done[field_key]) {
-                                                    field = config.keyedFields[field_key];
-                                                    $scope.formBuilder[i].push(field);
-                                                    done[field_key] = 1;
-                                                }
-                                            });
-                                        }
-                                    });
+                                if (realTotal === 1) {
+                                    found.disabled = true;
                                 }
 
-                                // call config constructor, needed for posible after variable setup configurations
-                                config.defaultInit($scope);
-                                config.init($scope);
-                                console.log('modelsEditor.scope', $scope);
-                                makeHistory();
+                            } else {
+                                angular.forEach($scope.accordions.groups, function (group, i) {
+                                    $scope.formBuilder[i] = [];
+                                    if (!angular.isDefined(group.fields)) {
+                                        var wait = false;
+                                        angular.forEach(config.fields, function (field) {
+                                            if (wait) {
+                                                return;
+                                            }
+                                            if (!done[field.code_name]) {
+                                                done[field.code_name] = 1;
+                                                if (field.is_structured) {
+                                                    wait = true;
+                                                }
 
+                                                $scope.formBuilder[i].push(field);
+                                            }
+                                        });
+                                    } else {
+                                        angular.forEach(group.fields, function (field_key) {
+                                            if (!done[field_key]) {
+                                                field = config.keyedFields[field_key];
+                                                $scope.formBuilder[i].push(field);
+                                                done[field_key] = 1;
+                                            }
+                                        });
+                                    }
+                                });
                             }
+
+                            // call config constructor, needed for posible after variable setup configurations
+                            config.defaultInit($scope);
+                            config.init($scope);
+                            console.log('modelsEditor.scope', $scope);
+                            makeHistory();
+
+                        };
+
+                        if (config.material) {
+                            ctrl.$inject = ['$scope', '$mdAdialog'];
+                        } else {
+                            ctrl.$inject = ['$scope', '$modalInstance'];
+                        }
+
+                        opener[fn]({
+                            templateUrl: 'entity/modal/editor.html',
+                            controller: ctrl,
+                            inDirection: 'left',
+                            outDirection: 'right'
                         });
 
                         return this;

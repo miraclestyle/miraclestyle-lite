@@ -666,6 +666,7 @@
                     config = {
                         kind: this.kind,
                         action: 'update',
+                        material: true,
                         fields: _.toArray(fields),
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {

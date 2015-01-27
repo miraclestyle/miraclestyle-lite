@@ -67,7 +67,10 @@
                 controller: 'AdminListCtrl'
             });
 
-    }).run(function (models) {
+    }).run(function (modelsInfo, endpoint, models) {
+        $.extend(modelsInfo, window.MODELS_META);
+        endpoint.currentAccount();
         models.init();
+        delete window.MODELS_META;
     });
 }());

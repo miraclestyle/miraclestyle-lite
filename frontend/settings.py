@@ -64,7 +64,7 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-elastic/elastic.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js',
-  'vendor/angular-material/angular-material.js',
+  'lib/angular-material/angular-material.js',
   'lib/angular-ui-select/dist/select.js',
   'lib/angulike/angulike.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
@@ -76,7 +76,7 @@ ANGULAR_JS_PATHS = (
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
 
 ANGULAR_CSS_PATHS = ('js/lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
-                     'js/vendor/angular-material/angular-material.css',
+                     'js/lib/angular-material/angular-material.css',
                      'css/style.css')
 
 class Structured():
@@ -224,4 +224,6 @@ ANGULAR_TEMPLATES = (
 
   # other
   ('home/index.html',),
+  ('tests/dialog1.html',),
+  ('tests/select.html',)
 )

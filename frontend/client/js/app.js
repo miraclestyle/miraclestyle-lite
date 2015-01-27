@@ -24,9 +24,6 @@
                 'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch',
                 'timer', 'angulike', 'googlechart', 'monospaced.elastic', 'ngMaterial'], // this will be changed accordingly
             api: {
-                modelsMeta: {
-                    path: host + '/api/model_meta'
-                },
                 endpoint: {
                     path: host + '/api/endpoint'
                 }
@@ -61,22 +58,21 @@
         };
 
     angular.module('app', GLOBAL_CONFIG.modules)
-        .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function ($httpProvider, $locationProvider) {
+        .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function ($httpProvider, $locationProvider, $mdThemingProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
             $locationProvider.html5Mode(true);
-        }).config(function ($mdThemingProvider) {
             $mdThemingProvider.theme('default')
-                .primaryColor('grey')
-                .accentColor('grey')
-                .warnColor('red');
+                .primaryPalette('grey')
+                .accentPalette('grey')
+                .warnPalette('red');
         });
 }());
 
 $(function () {
     'use strict';
-    var container = $("<div>").css({ height: 1, overflow: "scroll" }).appendTo("body"),
-        child = $("<div>").css({ height: 2 }).appendTo(container);
+    var container = $('<div>').css({ height: 1, overflow: 'scroll' }).appendTo('body'),
+        child = $('<div>').css({ height: 2 }).appendTo(container);
     window.SCROLLBAR_WIDTH = container.width() - child.width();
     if (Modernizr.touch) {
         window.SCROLLBAR_WIDTH = 0;
