@@ -17,7 +17,9 @@
 
     Array.prototype.remove = function (val) {
         var index = this.indexOf(val);
-        this.splice(index, 1);
+        if (index !== -1) {
+            this.splice(index, 1);
+        }
         return this;
     };
 
