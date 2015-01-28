@@ -23,8 +23,7 @@
     }).controller('LoginLinksCtrl', function ($scope, endpoint, currentAccount, models) {
 
         $scope.authorization_urls = {};
-
-        if (currentAccount._is_guest) {
+        if (currentAccount._is_guest === undefined || currentAccount._is_guest) {
             models['11'].actions.login({
                 login_method: 'google'
             }).then(function (response) {
