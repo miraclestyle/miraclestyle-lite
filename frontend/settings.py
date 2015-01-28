@@ -104,6 +104,8 @@ for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
 ANGULAR_TEMPLATES = (
   # core
   ('form/builder.html',),
+  ('form/select.html',),
+  ('form/dialog/select.html',),
   ('misc/form_wrapper.html',),
   ('misc/modal/alert.html',),
   ('misc/modal/errors.html',),

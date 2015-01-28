@@ -368,6 +368,9 @@
                                         return ((this.field().$dirty && this.hasErrors()) ? this.field().$error : false) || config.ui;
                                     },
                                     shouldShowMessages: function () {
+                                        if (!this.field()) {
+                                            return false;
+                                        }
                                         return this.field().$dirty || config.ui.help;
                                     }
                                 },
@@ -1187,5 +1190,86 @@
                     });
                 }
             };
+        })
+        .directive('mdAselect', function ($mdAdialog) {
+            return {
+                replace: true,
+                transclude: true,
+                require: ['ngModel'],
+                templateUrl: 'form/select.html',
+                scope: true,
+                link: function (scope, element, attrs, ctrls) {
+                    var ngModel = ctrls[0],
+                        items = scope.$eval(attrs.items),
+                        view = scope.$eval(attrs.viewItem),
+                        $select = {};
+                    $select.items = [];
+                    $select.find = function (value) {
+                        var active;
+                        if (!angular.isObject($select.items[0])) {
+                            return $select.items[$select.items.indexOf(value)];
+                        }
+                        angular.forEach($select.items, function (item) {
+                            if (item.key === value) {
+                                active = item;
+                            }
+                        });
+                        return active;
+                    };
+                    $select.getActive = function () {
+                        return $select.find(ngModel.$modelValue);
+                    };
+                    $select.setItems = function (items) {
+                        $select.items = items;
+                    };
+                    if (angular.isFunction(items)) {
+                        items().then(function (items) {
+                            $select.setItems(items);
+                        });
+                    } else {
+                        $select.setItems(items);
+                    }
+                    $select.isSelected = function (item) {
+                        return ngModel.$modelValue === (angular.isObject(item) ? item.key : item);
+                    };
+                    $select.selected = function (item) {
+                        if (!item) {
+                            return attrs.placeholder;
+                        }
+                        return $select.view(item);
+                    };
+                    $select.select = function (item) {
+                        var val = item;
+                        if (angular.isObject(item)) {
+                            val = item.key;
+                        }
+                        ngModel.$setViewValue(val);
+                        $select.item = item;
+                        $mdAdialog.hide();
+                    };
+                    $select.open = function ($event) {
+                        $mdAdialog.show({
+                            targetEvent: $event,
+                            templateUrl: 'form/dialog/select.html',
+                            controller: function ($scope) {
+                                $scope.$select = $select;
+                            }
+                        });
+                    };
+                    $select.view = view;
+                    if (!view) {
+                        $select.view = function (item) {
+                            return angular.isObject(item) ? item.name : item;
+                        };
+                    }
+                    scope.$select = $select;
+
+                    ngModel.$formatters.push(function (value) {
+                        $select.item = $select.find(value);
+                        return value;
+                    });
+                }
+            };
         });
+
 }());

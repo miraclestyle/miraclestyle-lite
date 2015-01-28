@@ -76,7 +76,6 @@
                             $mdAdialog.show({
                                 templateUrl: 'tests/select.html',
                                 targetEvent: $event,
-                                parent: $($event.target).parents('md-content:first'),
                                 controller: function ($scope) {
                                     $scope.todos = [];
                                     models['12'].actions.search().then(function (response) {

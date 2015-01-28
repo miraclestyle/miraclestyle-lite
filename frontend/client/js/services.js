@@ -1364,17 +1364,11 @@ w:                  while (images.length > 0) {
 
                         };
 
-                        if (config.material) {
-                            ctrl.$inject = ['$scope', '$mdAdialog'];
-                        } else {
-                            ctrl.$inject = ['$scope', '$modalInstance'];
-                        }
+                        ctrl.$inject = ['$scope', '$modalInstance'];
 
                         opener[fn]({
                             templateUrl: 'entity/modal/editor.html',
-                            controller: ctrl,
-                            inDirection: 'left',
-                            outDirection: 'right'
+                            controller: ctrl
                         });
 
                         return this;
