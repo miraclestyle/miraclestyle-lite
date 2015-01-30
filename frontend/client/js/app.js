@@ -22,7 +22,7 @@
             modules: ['ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
                 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector',
                 'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch',
-                'timer', 'angulike', 'googlechart', 'monospaced.elastic', 'ngMaterial'], // this will be changed accordingly
+                'timer', 'angulike', 'googlechart', 'ngMaterial'], // this will be changed accordingly
             api: {
                 endpoint: {
                     path: host + '/api/endpoint'

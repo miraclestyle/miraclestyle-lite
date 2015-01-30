@@ -1,15 +1,13 @@
-<md-adialog>
+<md-asimple-dialog>
     <md-content class="md-padding">
      <md-list>
-          <md-item ng-click="$select.select(item)" ng-repeat="item in $select.items">
+          <md-item class="md-asimple-dialog-option" ng-class="{'md-item-active': select.isSelected(item)}" ng-click="select.select(item)" ng-repeat="item in select.items">
             <md-item-content>
               <div class="md-tile-content">
-                <p>
-                  {{$select.view(item)}}
-                </p>
+                {{select.view(item)}}
               </div>
             </md-item-content>
           </md-item>
         </md-list>
     </md-content>
-</md-adialog>
+</md-asimple-dialog>

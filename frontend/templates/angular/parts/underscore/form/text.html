@@ -3,4 +3,8 @@
     <textarea class="<%= config.ui.attrs['class'] %>"
             name="<%= config.ui.name %>" 
             <%= config.ui.compiled.attrs %> ></textarea>
+    <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
+      <div ng-message="help"><%= config.ui.help %></div>
+      <div ng-message="required">The field is required.</div>
+    </div>
 </md-input-container>

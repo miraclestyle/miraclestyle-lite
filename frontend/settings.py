@@ -61,7 +61,6 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-aria/angular-aria.js',
   'vendor/angular-messages/angular-messages.js',
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
-  'vendor/angular-elastic/elastic.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js',
   'lib/angular-material/angular-material.js',

@@ -1191,7 +1191,7 @@
                 }
             };
         })
-        .directive('mdAselect', function ($mdAdialog) {
+        .directive('mdAselect', function ($mdAdialog, $window, $mdAsimpleDialog, $mdTheming, $mdInkRipple, $$rAF, $mdConstant) {
             return {
                 replace: true,
                 transclude: true,
@@ -1202,70 +1202,176 @@
                     var ngModel = ctrls[0],
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.viewItem),
-                        $select = {};
-                    $select.items = [];
-                    $select.find = function (value) {
-                        var active;
-                        if (!angular.isObject($select.items[0])) {
-                            return $select.items[$select.items.indexOf(value)];
+                        select = {};
+                    select.items = [];
+                    select.find = function (value, index) {
+                        var active,
+                            i;
+                        if (!angular.isObject(select.items[0])) {
+                            i = select.items.indexOf(value);
+                            active = select.items[i];
+                            if (angular.isUndefined(active)) {
+                                return undefined;
+                            }
+                            return (index ? [active, i] : active);
                         }
-                        angular.forEach($select.items, function (item) {
+                        angular.forEach(select.items, function (item, nexti) {
                             if (item.key === value) {
                                 active = item;
+                                i = nexti;
                             }
                         });
+                        if (index && angular.isDefined(active)) {
+                            return [active, i];
+                        }
                         return active;
                     };
-                    $select.getActive = function () {
-                        return $select.find(ngModel.$modelValue);
+                    select.getActive = function (index) {
+                        return select.find(ngModel.$modelValue, index);
                     };
-                    $select.setItems = function (items) {
-                        $select.items = items;
+                    select.setItems = function (items) {
+                        select.items = items;
                     };
                     if (angular.isFunction(items)) {
                         items().then(function (items) {
-                            $select.setItems(items);
+                            select.setItems(items);
                         });
                     } else {
-                        $select.setItems(items);
+                        select.setItems(items);
                     }
-                    $select.isSelected = function (item) {
+                    select.isSelected = function (item) {
                         return ngModel.$modelValue === (angular.isObject(item) ? item.key : item);
                     };
-                    $select.selected = function (item) {
+                    select.selected = function (item) {
                         if (!item) {
                             return attrs.placeholder;
                         }
-                        return $select.view(item);
+                        return select.view(item);
                     };
-                    $select.select = function (item) {
+                    select.select = function (item) {
                         var val = item;
                         if (angular.isObject(item)) {
                             val = item.key;
                         }
                         ngModel.$setViewValue(val);
-                        $select.item = item;
-                        $mdAdialog.hide();
+                        select.item = item;
+
+                        select.close();
                     };
-                    $select.open = function ($event) {
-                        $mdAdialog.show({
-                            targetEvent: $event,
+                    select.close = angular.noop;
+                    select.open = function ($event) {
+                        $mdAsimpleDialog.show({
                             templateUrl: 'form/dialog/select.html',
+                            targetEvent: $event,
+                            parent: element.parents('md-content:first'),
+                            onBeforeHide: function (dialogEl, options) {
+                                $(window).off('resize', options.resize);
+                                dialogEl.removeClass('md-aselect-in');
+                            },
+                            onBeforeShow: function (dialogEl, options) {
+                                var animateSelect = function () {
+                                    var target = element.parents('.as-md-input-container:first');
+                                    options.resize = function () {
+                                        var targetOffset = target.offset(),
+                                            targetNode = target.get(0),
+                                            targetRect = targetNode.getBoundingClientRect(),
+                                            elementNode = element.get(0),
+                                            elementRect = elementNode.getBoundingClientRect(),
+                                            elementOffset = element.offset(),
+                                            parent = options.parent,
+                                            parentNode = parent.get(0),
+                                            parentRect = parentNode.getBoundingClientRect(),
+                                            paddingTop = parseInt(parent.css('padding-top'), 10),
+                                            paddingBottom = parseInt(parent.css('padding-bottom'), 10),
+                                            parentHeight = options.parent.height(),
+                                            scrollElement = dialogEl.find('md-content'),
+                                            scrollElementNode = scrollElement.get(0),
+                                            top = parentRect.top + paddingTop,
+                                            activeOffset,
+                                            active = dialogEl.find('.md-item-active md-item-content'),
+                                            activeNode = active.get(0),
+                                            activeRect,
+                                            buffer,
+                                            spaceAvailable;
+                                        if (active.length) {
+                                            activeOffset = active.offset();
+                                            activeRect = activeNode.getBoundingClientRect();
+                                        }
+                                        console.log(activeRect, activeOffset, elementOffset, elementRect);
+                                        dialogEl.width(target.outerWidth());
+                                        if (dialogEl.height() > parentHeight || scrollElement.prop('scrollHeight') > parentHeight) {
+                                            dialogEl.css({
+                                                top: top,
+                                                left: targetOffset.left
+                                            }).height(options.parent.height() - paddingBottom + paddingTop);
+                                            if (active.length) {
+                                                buffer = scrollElement.height() / 2;
+                                                scrollElement.get(0).scrollTop = activeOffset.top + active.height() / 2 - buffer;
+                                                spaceAvailable = {
+                                                    top: targetRect.top - parentRect.top,
+                                                    left: targetRect.left - parentRect.left,
+                                                    bottom: parentRect.bottom - targetRect.bottom,
+                                                    right: parentRect.right - targetRect.right
+                                                };
+                                                if (spaceAvailable.top < buffer) {
+                                                    scrollElementNode.scrollTop = Math.min(activeOffset.top, scrollElementNode.scrollTop + buffer - spaceAvailable.top);
+                                                } else if (spaceAvailable.bottom < buffer) {
+                                                    scrollElementNode.scrollTop = Math.max(
+                                                        activeOffset.top + active.height() - scrollElement.height(),
+                                                        scrollElementNode.scrollTop - buffer + spaceAvailable.bottom
+                                                    );
+                                                }
+                                            }
+                                        } else {
+                                            dialogEl.css(targetOffset);
+                                            activeOffset = active.offset();
+                                            if (active.length) {
+                                                // position the selection at center
+                                                targetOffset.top = (targetOffset.top - (activeOffset.top - elementOffset.top)) - ((active.height() - element.height()) / 2);
+                                                if (targetOffset.top > top) {
+                                                    dialogEl.css('top', targetOffset.top);
+                                                }
+                                            } else {
+                                                // position at center
+                                                // when no item is selected
+                                            }
+                                        }
+                                    };
+                                    options.resize();
+                                    $(window).on('resize', options.resize);
+
+                                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
+                                        Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
+                                        Math.min(target.height() / dialogEl.height(), 1.0) + ')');
+                                    $$rAF(function () {
+                                        dialogEl.addClass('transition-in');
+                                        dialogEl.css($mdConstant.CSS.TRANSFORM, '');
+                                    });
+
+                                };
+
+                                $$rAF(function () {
+                                    $$rAF(animateSelect);
+                                });
+                            },
                             controller: function ($scope) {
-                                $scope.$select = $select;
+                                $scope.select = select;
+
+                                select.close = function () {
+                                    $mdAsimpleDialog.hide();
+                                };
                             }
                         });
                     };
-                    $select.view = view;
+                    select.view = view;
                     if (!view) {
-                        $select.view = function (item) {
+                        select.view = function (item) {
                             return angular.isObject(item) ? item.name : item;
                         };
                     }
-                    scope.$select = $select;
-
+                    scope.select = select;
                     ngModel.$formatters.push(function (value) {
-                        $select.item = $select.find(value);
+                        select.item = select.find(value);
                         return value;
                     });
                 }

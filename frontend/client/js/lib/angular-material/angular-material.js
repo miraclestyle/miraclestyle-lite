@@ -4,7 +4,7 @@
  * @license MIT
  * v0.7.0
  */
-angular.module('ngMaterial', ["ng","ngAnimate","ngAria","material.core","material.core.theming.palette","material.core.theming","material.components.adialog","material.components.backdrop","material.components.bottomSheet","material.components.button","material.components.card","material.components.checkbox","material.components.content","material.components.dialog","material.components.divider","material.components.icon","material.components.input","material.components.list","material.components.progressCircular","material.components.progressLinear","material.components.radioButton","material.components.sidenav","material.components.slider","material.components.sticky","material.components.subheader","material.components.swipe","material.components.switch","material.components.tabs","material.components.textField","material.components.toast","material.components.toolbar","material.components.tooltip","material.components.whiteframe"]);
+angular.module('ngMaterial', ["ng","ngAnimate","ngAria","material.core","material.core.theming.palette","material.core.theming","material.components.adialog","material.components.backdrop","material.components.bottomSheet","material.components.button","material.components.card","material.components.checkbox","material.components.content","material.components.asimpledialog","material.components.dialog","material.components.divider","material.components.icon","material.components.input","material.components.list","material.components.progressCircular","material.components.progressLinear","material.components.radioButton","material.components.select","material.components.sidenav","material.components.slider","material.components.sticky","material.components.subheader","material.components.swipe","material.components.switch","material.components.tabs","material.components.textField","material.components.toast","material.components.toolbar","material.components.tooltip","material.components.whiteframe"]);
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -18,15 +18,13 @@ angular.module('ngMaterial', ["ng","ngAnimate","ngAria","material.core","materia
  * Initialization function that validates environment
  * requirements.
  */
-angular.module('material.core', ['material.core.theming'])
-  .run(MdCoreInitialize)
+angular
+  .module('material.core', ['material.core.theming'])
   .config(MdCoreConfigure);
 
-function MdCoreInitialize() {
-}
 
 function MdCoreConfigure($provide, $mdThemingProvider) {
-  $provide.decorator('$$rAF', rAFDecorator);
+  $provide.decorator('$$rAF', ["$delegate", rAFDecorator]);
 
   $mdThemingProvider.theme('default')
     .primaryPalette('indigo')
@@ -36,7 +34,7 @@ function MdCoreConfigure($provide, $mdThemingProvider) {
 }
 MdCoreConfigure.$inject = ["$provide", "$mdThemingProvider"];
 
-function rAFDecorator($delegate, $rootScope) {
+function rAFDecorator( $delegate ) {
   /**
    * Use this to throttle events that come in often.
    * The throttled function will always use the *last* invocation before the
@@ -66,7 +64,6 @@ function rAFDecorator($delegate, $rootScope) {
   };
   return $delegate;
 }
-rAFDecorator.$inject = ["$delegate", "$rootScope"];
 
 })();
 
@@ -106,6 +103,7 @@ function MdConstantFactory($$rAF, $sniffer) {
 
       TRANSFORM: vendorProperty('transform'),
       TRANSITION: vendorProperty('transition'),
+      TRANSFORM_ORIGIN: vendorProperty('transform-origin'),
       TRANSITION_DURATION: vendorProperty('transitionDuration'),
       ANIMATION_PLAY_STATE: vendorProperty('animationPlayState'),
       ANIMATION_DURATION: vendorProperty('animationDuration'),
@@ -379,7 +377,7 @@ angular.module('material.core')
  * @example $mdMedia('(min-width: 1200px)') == true if device-width >= 1200px
  * @example $mdMedia('max-width: 300px') == true if device-width <= 300px (sanitizes input, adding parens)
  */
-function mdMediaFactory($mdConstant, $rootScope, $window, $cacheFactory) {
+function mdMediaFactory($mdConstant, $rootScope, $window) {
   var queries = {};
   var results = {};
 
@@ -418,7 +416,7 @@ function mdMediaFactory($mdConstant, $rootScope, $window, $cacheFactory) {
   }
 
 }
-mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window", "$cacheFactory"];
+mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
 
 /*!
  * Angular Material Design
@@ -881,16 +879,23 @@ document.contains || (document.contains = function(node) {
   return document.body.contains(node);
 });
 
-document.addEventListener('click', function(ev) {
-  // Space/enter on a button, and submit events, can send clicks
-  var isKeyClick = ev.clientX === 0 && ev.clientY === 0 && 
-    ev.x === 0 && ev.y === 0;
-  if (isKeyClick || ev.$material) return;
+// TODO add windows phone to this
+var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+var isIos = userAgent.match(/iPad/i) || userAgent.match(/iPhone/i) || userAgent.match(/iPod/i);
+var isAndroid = userAgent.match(/Android/i);
+var shouldHijackClicks = isIos || isAndroid;
 
-  // Prevent clicks unless they're sent by material
-  ev.preventDefault();
-  ev.stopPropagation();
-}, true);
+if (shouldHijackClicks) {
+  document.addEventListener('click', function(ev) {
+    // Space/enter on a button, and submit events, can send clicks
+    var isKeyClick = ev.clientX === 0 && ev.clientY === 0;
+    if (isKeyClick || ev.$material) return;
+
+    // Prevent clicks unless they're sent by material
+    ev.preventDefault();
+    ev.stopPropagation();
+  }, true);
+}
 
 angular.element(document)
   .on(START_EVENTS, gestureStart)
@@ -1002,16 +1007,18 @@ angular.module('material.core')
 .factory('$mdGesture', ["$$MdGestureHandler", "$$rAF", "$timeout", function($$MdGestureHandler, $$rAF, $timeout) {
   HANDLERS = {};
 
-  addHandler('click', {
-    options: {
-      maxDistance: 6
-    },
-    onEnd: function(ev, pointer) {
-      if (pointer.distance < this.state.options.maxDistance) {
-        this.dispatchEvent(ev, 'click');
+  if (shouldHijackClicks) {
+    addHandler('click', {
+      options: {
+        maxDistance: 6
+      },
+      onEnd: function(ev, pointer) {
+        if (pointer.distance < this.state.options.maxDistance) {
+          this.dispatchEvent(ev, 'click', null, ev);
+        }
       }
-    }
-  });
+    });
+  }
 
   addHandler('press', {
     onStart: function(ev, pointer) {
@@ -1222,16 +1229,19 @@ angular.module('material.core')
   /*
    * NOTE: dispatchEvent is very performance sensitive. 
    */
-  function dispatchEvent(srcEvent, eventType, eventPointer) {
+  function dispatchEvent(srcEvent, eventType, eventPointer, /*original DOMEvent */ev) {
     eventPointer = eventPointer || pointer;
     var eventObj;
 
     if (eventType === 'click') {
       eventObj = document.createEvent('MouseEvents');
-      eventObj.initMouseEvent('click', true, true, window, {},
-                              eventPointer.x, eventPointer.y,
-                              eventPointer.x, eventPointer.y,
-                              false, false, false, false, 0, null);
+      eventObj.initMouseEvent(
+        'click', true, true, window, ev.detail,
+        ev.screenX, ev.screenY, ev.clientX, ev.clientY, 
+        ev.ctrlKey, ev.altKey, ev.shiftKey, ev.metaKey,
+        ev.button, ev.relatedTarget || null
+      );
+
     } else {
       eventObj = document.createEvent('CustomEvent');
       eventObj.initCustomEvent(eventType, true, true, {});
@@ -1536,6 +1546,417 @@ function InterimElementProvider() {
       /*
        * @ngdoc method
        * @name $$interimElement.$service#cancel
+       * @kind function
+       *
+       * @description
+       * Removes the `$interimElement` from the DOM and rejects the promise returned from `show`
+       *
+       * @param {*} reason Data to reject the promise with
+       * @returns Promise that will be rejected after the element has been removed.
+       *
+       */
+      function cancel(reason, interimElementAt) {
+        var interimElement;
+        if (interimElementAt !== undefined) {
+          interimElement = interimElementAt;
+          stack.splice(stack.indexOf(interimElementAt), 1);
+        } else {
+          interimElement = stack.shift();
+        }
+        interimElement && interimElement.remove().then(function() {
+          interimElement.deferred.reject(reason);
+        });
+
+        return interimElement ? interimElement.deferred.promise : $q.reject(reason);
+      }
+
+
+      /*
+       * Internal Interim Element Object
+       * Used internally to manage the DOM element and related data
+       */
+      function InterimElement(options) {
+        var self;
+        var hideTimeout, element;
+
+        options = options || {};
+        options = angular.extend({
+          scope: options.scope || $rootScope.$new(options.isolateScope),
+          onShow: function(scope, element, options) {
+            return $animate.enter(element, options.parent);
+          },
+          onRemove: function(scope, element, options) {
+            // Element could be undefined if a new element is shown before
+            // the old one finishes compiling.
+            return element && $animate.leave(element) || $q.when();
+          }
+        }, options);
+
+        if (options.template) {
+          options.template = processTemplate(options.template);
+        }
+
+        self = {
+          options: options,
+          deferred: $q.defer(),
+          show: function() {
+            return $mdCompiler.compile(options).then(function(compileData) {
+              angular.extend(compileData.locals, self.options);
+
+              // Search for parent at insertion time, if not specified
+              if (angular.isString(options.parent)) {
+                options.parent = angular.element($document[0].querySelector(options.parent));
+              } else if (!options.parent) {
+                options.parent = $rootElement.find('body');
+                if (!options.parent.length) options.parent = $rootElement;
+              }
+
+              element = compileData.link(options.scope);
+              element.css('z-index', options.zIndex);
+              if (options.themable) $mdTheming(element);
+              var ret = options.onShow(options.scope, element, options);
+              return $q.when(ret)
+                .then(function(){
+                  // Issue onComplete callback when the `show()` finishes
+                  (options.onComplete || angular.noop)(options.scope, element, options);
+                  startHideTimeout();
+                });
+
+              function startHideTimeout() {
+                if (options.hideDelay) {
+                  hideTimeout = $timeout(service.cancel, options.hideDelay) ;
+                }
+              }
+            });
+          },
+          cancelTimeout: function() {
+            if (hideTimeout) {
+              $timeout.cancel(hideTimeout);
+              hideTimeout = undefined;
+            }
+          },
+          remove: function() {
+            self.cancelTimeout();
+            var ret = options.onRemove(options.scope, element, options);
+            return $q.when(ret).then(function() {
+              options.scope.$destroy();
+            });
+          }
+        };
+
+        options.interimElement = self;
+        options.stack = stack;
+
+        return self;
+      }
+    };
+
+    /*
+     * Replace `{{` and `}}` in a string (usually a template) with the actual start-/endSymbols used
+     * for interpolation. This allows pre-defined templates (for components such as dialog, toast etc)
+     * to continue to work in apps that use custom interpolation start-/endSymbols.
+     *
+     * @param {string} text The text in which to replace `{{` / `}}`
+     * @returns {string} The modified string using the actual interpolation start-/endSymbols
+     */
+    function replaceInterpolationSymbols(text) {
+      if (!text || !angular.isString(text)) return text;
+      return text.replace(/\{\{/g, startSymbol).replace(/}}/g, endSymbol);
+    }
+  }
+
+}
+
+})();
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.0
+ */
+(function() {
+'use strict';
+
+angular.module('material.core')
+  .provider('$$interimStackableElement', InterimElementProvider);
+
+/*
+ * @ngdoc service
+ * @name $$interimStackableElement
+ * @module material.core
+ *
+ * @description
+ *
+ * Factory that contructs `$$interimStackableElement.$service` services.
+ * Used internally in material design for elements that appear on screen temporarily.
+ * The service provides a promise-like API for interacting with the temporary
+ * elements.
+ *
+ * ```js
+ * app.service('$mdToast', function($$interimStackableElement) {
+ *   var $mdToast = $$interimStackableElement(toastDefaultOptions);
+ *   return $mdToast;
+ * });
+ * ```
+ * @param {object=} defaultOptions Options used by default for the `show` method on the service.
+ *
+ * @returns {$$interimStackableElement.$service}
+ *
+ */
+
+function InterimElementProvider() {
+  createInterimElementProvider.$get = InterimElementFactory;
+  InterimElementFactory.$inject = ["$document", "$q", "$rootScope", "$timeout", "$rootElement", "$animate", "$interpolate", "$mdCompiler", "$mdTheming"];
+  return createInterimElementProvider;
+
+  /**
+   * Returns a new provider which allows configuration of a new interimElement
+   * service. Allows configuration of default options & methods for options,
+   * as well as configuration of 'preset' methods (eg dialog.basic(): basic is a preset method)
+   */
+  function createInterimElementProvider(interimFactoryName) {
+    var EXPOSED_METHODS = ['onHide', 'onShow', 'onRemove'];
+    var providerConfig = {
+      presets: {}
+    };
+    var provider = {
+      setDefaults: setDefaults,
+      addPreset: addPreset,
+      $get: factory
+    };
+
+    /**
+     * all interim elements will come with the 'build' preset
+     */
+    provider.addPreset('build', {
+      methods: ['controller', 'controllerAs', 'resolve',
+        'template', 'templateUrl', 'themable', 'transformTemplate', 'parent']
+    });
+
+    factory.$inject = ["$$interimStackableElement", "$animate", "$injector"];
+    return provider;
+
+    /**
+     * Save the configured defaults to be used when the factory is instantiated
+     */
+    function setDefaults(definition) {
+      providerConfig.optionsFactory = definition.options;
+      providerConfig.methods = (definition.methods || []).concat(EXPOSED_METHODS);
+      return provider;
+    }
+
+    /**
+     * Save the configured preset to be used when the factory is instantiated
+     */
+    function addPreset(name, definition) {
+      definition = definition || {};
+      definition.methods = definition.methods || [];
+      definition.options = definition.options || function() { return {}; };
+
+      if (/^cancel|hide|show$/.test(name)) {
+        throw new Error("Preset '" + name + "' in " + interimFactoryName + " is reserved!");
+      }
+      if (definition.methods.indexOf('_options') > -1) {
+        throw new Error("Method '_options' in " + interimFactoryName + " is reserved!");
+      }
+      providerConfig.presets[name] = {
+        methods: definition.methods.concat(EXPOSED_METHODS),
+        optionsFactory: definition.options,
+        argOption: definition.argOption
+      };
+      return provider;
+    }
+
+    /**
+     * Create a factory that has the given methods & defaults implementing interimElement
+     */
+    /* @ngInject */
+    function factory($$interimStackableElement, $animate, $injector) {
+      var defaultMethods;
+      var defaultOptions;
+      var interimElementService = $$interimStackableElement();
+
+      /*
+       * publicService is what the developer will be using.
+       * It has methods hide(), cancel(), show(), build(), and any other
+       * presets which were set during the config phase.
+       */
+      var publicService = {
+        hide: interimElementService.hide,
+        cancel: interimElementService.cancel,
+        show: showInterimElement
+      };
+
+      defaultMethods = providerConfig.methods || [];
+      // This must be invoked after the publicService is initialized
+      defaultOptions = invokeFactory(providerConfig.optionsFactory, {});
+
+      angular.forEach(providerConfig.presets, function(definition, name) {
+        var presetDefaults = invokeFactory(definition.optionsFactory, {});
+        var presetMethods = (definition.methods || []).concat(defaultMethods);
+
+        // Every interimElement built with a preset has a field called `$type`,
+        // which matches the name of the preset.
+        // Eg in preset 'confirm', options.$type === 'confirm'
+        angular.extend(presetDefaults, { $type: name });
+
+        // This creates a preset class which has setter methods for every
+        // method given in the `.addPreset()` function, as well as every
+        // method given in the `.setDefaults()` function.
+        //
+        // @example
+        // .setDefaults({
+        //   methods: ['hasBackdrop', 'clickOutsideToClose', 'escapeToClose', 'targetEvent'],
+        //   options: dialogDefaultOptions
+        // })
+        // .addPreset('alert', {
+        //   methods: ['title', 'ok'],
+        //   options: alertDialogOptions
+        // })
+        //
+        // Set values will be passed to the options when interimElemnt.show() is called.
+        function Preset(opts) {
+          this._options = angular.extend({}, presetDefaults, opts);
+        }
+        angular.forEach(presetMethods, function(name) {
+          Preset.prototype[name] = function(value) {
+            this._options[name] = value;
+            return this;
+          };
+        });
+
+        // Create shortcut method for one-linear methods
+        if (definition.argOption) {
+          var methodName = 'show' + name.charAt(0).toUpperCase() + name.slice(1);
+          publicService[methodName] = function(arg) {
+            var config = publicService[name](arg);
+            return publicService.show(config);
+          };
+        }
+
+        // eg $mdDialog.alert() will return a new alert preset
+        publicService[name] = function(arg) {
+          // If argOption is supplied, eg `argOption: 'content'`, then we assume
+          // if the argument is not an options object then it is the `argOption` option.
+          //
+          // @example `$mdToast.simple('hello')` // sets options.content to hello
+          //                                     // because argOption === 'content'
+          if (arguments.length && definition.argOption && !angular.isObject(arg) &&
+              !angular.isArray(arg)) {
+            return (new Preset())[definition.argOption](arg);
+          } else {
+            return new Preset(arg);
+          }
+
+        };
+      });
+
+      return publicService;
+
+      function showInterimElement(opts) {
+        // opts is either a preset which stores its options on an _options field,
+        // or just an object made up of options
+        if (opts && opts._options) opts = opts._options;
+        return interimElementService.show(
+          angular.extend({}, defaultOptions, opts)
+        );
+      }
+
+      /**
+       * Helper to call $injector.invoke with a local of the factory name for
+       * this provider.
+       * If an $mdDialog is providing options for a dialog and tries to inject
+       * $mdDialog, a circular dependency error will happen.
+       * We get around that by manually injecting $mdDialog as a local.
+       */
+      function invokeFactory(factory, defaultVal) {
+        var locals = {};
+        locals[interimFactoryName] = publicService;
+        return $injector.invoke(factory || function() { return defaultVal; }, {}, locals);
+      }
+
+    }
+
+  }
+
+  /* @ngInject */
+  function InterimElementFactory($document, $q, $rootScope, $timeout, $rootElement, $animate,
+                                 $interpolate, $mdCompiler, $mdTheming ) {
+    var startSymbol = $interpolate.startSymbol(),
+        endSymbol = $interpolate.endSymbol(),
+        usesStandardSymbols = ((startSymbol === '{{') && (endSymbol === '}}')),
+        processTemplate  = usesStandardSymbols ? angular.identity : replaceInterpolationSymbols;
+
+    return function createInterimElementService() {
+      /*
+       * @ngdoc service
+       * @name $$interimStackableElement.$service
+       *
+       * @description
+       * A service used to control inserting and removing an element into the DOM.
+       *
+       */
+      var stack = [];
+      var service;
+      return service = {
+        show: show,
+        hide: hide,
+        cancel: cancel
+      };
+
+      /*
+       * @ngdoc method
+       * @name $$interimStackableElement.$service#show
+       * @kind function
+       *
+       * @description
+       * Adds the `$interimElement` to the DOM and returns a promise that will be resolved or rejected
+       * with hide or cancel, respectively.
+       *
+       * @param {*} options is hashMap of settings
+       * @returns a Promise
+       *
+       */
+      function show(options) {
+        options.zIndex = 80 + stack.length;
+        var interimElement = new InterimElement(options);
+
+        stack.unshift(interimElement);
+        return interimElement.show().then(function() {
+          return interimElement.deferred.promise;
+        });
+      }
+
+      /*
+       * @ngdoc method
+       * @name $$interimStackableElement.$service#hide
+       * @kind function
+       *
+       * @description
+       * Removes the `$interimElement` from the DOM and resolves the promise returned from `show`
+       *
+       * @param {*} resolveParam Data to resolve the promise with
+       * @returns a Promise that will be resolved after the element has been removed.
+       *
+       */
+      function hide(response, interimElementAt) {
+        var interimElement;
+        if (interimElementAt !== undefined) {
+          interimElement = interimElementAt;
+          stack.splice(stack.indexOf(interimElementAt), 1);
+        } else {
+          interimElement = stack.shift();
+        }
+        interimElement && interimElement.remove().then(function() {
+          interimElement.deferred.resolve(response);
+        });
+
+        return interimElement ? interimElement.deferred.promise : $q.when(response);
+      }
+
+      /*
+       * @ngdoc method
+       * @name $$interimStackableElement.$service#cancel
        * @kind function
        *
        * @description
@@ -2894,8 +3315,9 @@ function ThemingProvider($mdColorPalette) {
       }
 
       function changeTheme(theme) {
-        if (!registered(name)) {
-          $log.warn('attempted to use unregistered theme \'' + theme + '\'');
+        if (!registered(theme)) {
+          $log.warn('Attempted to use unregistered theme \'' + theme + '\'. ' +
+                    'Register it with $mdThemingProvider.theme().');
         }
         var oldTheme = el.data('$mdThemeName');
         if (oldTheme) el.removeClass('md-' + oldTheme +'-theme');
@@ -3076,7 +3498,7 @@ function generateThemes($injector) {
 
     // These colors are provided as space-separated lists
     if (typeof lightColors === 'string') lightColors = lightColors.split(' ');
-    if (typeof strongLongColors === 'string') strongLightColors = strongLightColors.split(' ');
+    if (typeof strongLightColors === 'string') strongLightColors = strongLightColors.split(' ');
     if (typeof darkColors === 'string') darkColors = darkColors.split(' ');
 
     // Cleanup after ourselves
@@ -3185,6 +3607,7 @@ function rgba(rgbArray, opacity) {
      */
     angular.module('material.components.adialog', ['material.core', 'material.components.backdrop'])
         .directive('mdAdialog', MdAdialogDirective)
+        .directive('mdAsimpleDialog', MdAdialogDirective)
         .provider('$mdAdialog', MdAdialogProvider);
 
     function MdAdialogDirective($$rAF, $mdTheming) {
@@ -3497,6 +3920,15 @@ function rgba(rgbArray, opacity) {
                 }
             };
 
+            function discoverDirective(options) {
+                return options.simple ? 'md-asimple-dialog' : 'md-adialog';
+            }
+
+            function discoverContainerClass(container, options) {
+                if (options.simple) {
+                    container.removeClass('md-adialog-container').addClass('md-asimple-dialog-container');
+                }
+            }
 
             // On show method for dialogs
             function onShow(scope, element, options) {
@@ -3505,7 +3937,8 @@ function rgba(rgbArray, opacity) {
 
                 options.popInTarget = angular.element((options.targetEvent || {}).target);
                 var closeButton = findCloseButton(),
-                    dialogEl = element.find('md-adialog');
+                    directive = discoverDirective(options),
+                    dialogEl = element.find(directive);
 
                 configureAria(dialogEl);
 
@@ -3514,7 +3947,7 @@ function rgba(rgbArray, opacity) {
                 }
 
                 if (options.hasBackdrop) {
-                    options.backdrop = angular.element('<md-backdrop class="md-adialog-backdrop md-opaque" style="z-index: ' + options.zIndex + '">');
+                    options.backdrop = angular.element('<md-backdrop class="md-adialog-backdrop ' + (!options.simple ? 'md-opaque' : '') + '" style="z-index: ' + options.zIndex + '">');
                     $mdTheming.inherit(options.backdrop, options.parent);
                     $animate.enter(options.backdrop, options.parent);
                 }
@@ -3540,6 +3973,9 @@ function rgba(rgbArray, opacity) {
 
                         if (!bindRoot) {
                             $rootElement.on('keyup', function(e) {
+                                 if (e.keyCode !== $mdConstant.KEY_CODE.ESCAPE) {
+                                    return;
+                                 }
                                  angular.forEach(escKeyups.concat(), function (cb) {
                                     if (cb && cb()) {
                                         var index = escKeyups.indexOf(cb);
@@ -3624,7 +4060,8 @@ function rgba(rgbArray, opacity) {
             }
 
             function dialogPopIn(container, options) {
-                var dialogEl = container.find('md-adialog'),
+                discoverContainerClass(container, options);
+                var dialogEl = container.find(discoverDirective(options)),
                     parentElement = options.parent,
                     clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget,
                     defer = $q.defer();
@@ -3649,7 +4086,8 @@ function rgba(rgbArray, opacity) {
             }
 
             function dialogPopOut(container, options) {
-                var dialogEl = container.find('md-adialog'),
+                discoverContainerClass(container, options);
+                var dialogEl = container.find(discoverDirective(options)),
                     parentElement = options.parent,
                     type,
                     clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget;
@@ -3931,13 +4369,14 @@ function MdBottomSheetProvider($$interimElementProvider) {
     function onRemove(scope, element, options) {
       var bottomSheet = options.bottomSheet;
 
-      if (options.disableParentScroll) {
-        options.parent.css('overflow', options.lastOverflow);
-        delete options.lastOverflow;
-      }
 
       $animate.leave(backdrop);
       return $animate.leave(bottomSheet.element).then(function() {
+        if (options.disableParentScroll) {
+          options.parent.css('overflow', options.lastOverflow);
+          delete options.lastOverflow;
+        }
+
         bottomSheet.cleanup();
 
         // Restore focus
@@ -4247,7 +4686,7 @@ function MdCheckboxDirective(inputDirective, $mdInkRipple, $mdAria, $mdConstant,
       var checked = false;
       $mdTheming(element);
 
-      $mdAria.expectWithText(tElement, 'aria-label');
+      $mdAria.expectWithText(element, 'aria-label');
 
       // Reuse the original input[type=checkbox] directive from Angular core.
       // This is a bit hacky as we need our own event listener and own render
@@ -4376,6 +4815,503 @@ function iosScrollFix(node) {
     }
   });
 }
+})();
+
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.0
+ */
+(function() {
+    'use strict';
+
+    /**
+     * @ngdoc module
+     * @name material.components.asimpledialog
+     */
+    angular.module('material.components.asimpledialog', ['material.core', 'material.components.backdrop'])
+        .directive('mdAsimpleDialog', MdAsimpleDialogDirective)
+        .provider('$mdAsimpleDialog', MdAsimpleDialogProvider);
+
+    function MdAsimpleDialogDirective($$rAF, $mdTheming) {
+        return {
+            restrict: 'E',
+            link: function(scope, element, attr) {
+                $mdTheming(element);
+                $$rAF(function() {
+                    var content = element[0].querySelector('md-content');
+                    if (content && content.scrollHeight > content.clientHeight) {
+                        element.addClass('md-content-overflow');
+                    }
+                });
+            }
+        };
+    }
+    MdAsimpleDialogDirective.$inject = ["$$rAF", "$mdTheming"];
+
+    /**
+     * @ngdoc service
+     * @name $mdAsimpleDialog
+     * @module material.components.asimpledialog
+     *
+     * @description
+     * `$mdAsimpleDialog` opens a dialog over the app and provides a simple promise API.
+     *
+     * ### Restrictions
+     *
+     * - The dialog is always given an isolate scope.
+     * - The dialog's template must have an outer `<md-asimpledialog>` element.
+     *   Inside, use an `<md-content>` element for the dialog's content, and use
+     *   an element with class `md-actions` for the dialog's actions.
+     *
+     * @usage
+     * ##### HTML
+     *
+     * <hljs lang="html">
+     * <div  ng-app="demoApp" ng-controller="EmployeeController">
+     *   <md-button ng-click="showAlert()" class="md-raised md-warn">
+     *     Employee Alert!
+     *   </md-button>
+     *   <md-button ng-click="closeAlert()" ng-disabled="!hasAlert()" class="md-raised">
+     *     Close Alert
+     *   </md-button>
+     *   <md-button ng-click="showGreeting($event)" class="md-raised md-primary" >
+     *     Greet Employee
+     *   </md-button>
+     * </div>
+     * </hljs>
+     *
+     * ##### JavaScript
+     *
+     * <hljs lang="js">
+     * (function(angular, undefined){
+     *   "use strict";
+     *
+     *   angular
+     *     .module('demoApp', ['ngMaterial'])
+     *     .controller('EmployeeController', EmployeeEditor)
+     *     .controller('GreetingController', GreetingController);
+     *
+     *   // Fictitious Employee Editor to show how to use simple and complex dialogs.
+     *
+     *   function EmployeeEditor($scope, $mdAsimpleDialog) {
+     *     var alert;
+     *
+     *     $scope.showAlert = showAlert;
+     *     $scope.closeAlert = closeAlert;
+     *     $scope.showGreeting = showCustomGreeting;
+     *
+     *     $scope.hasAlert = function() { return !!alert };
+     *     $scope.userName = $scope.userName || 'Bobby';
+     *
+     *     // Dialog #1 - Show simple alert dialog and cache
+     *     // reference to dialog instance
+     *
+     *     function showAlert() {
+     *       alert = $mdAsimpleDialog.alert()
+     *         .title('Attention, ' + $scope.userName)
+     *         .content('This is an example of how easy dialogs can be!')
+     *         .ok('Close');
+     *
+     *       $mdAsimpleDialog
+     *           .show( alert )
+     *           .finally(function() {
+     *             alert = undefined;
+     *           });
+     *     }
+     *
+     *     // Close the specified dialog instance and resolve with 'finished' flag
+     *     // Normally this is not needed, just use '$mdAsimpleDialog.hide()' to close
+     *     // the most recent dialog popup.
+     *
+     *     function closeAlert() {
+     *       $mdAsimpleDialog.hide( alert, "finished" );
+     *       alert = undefined;
+     *     }
+     *
+     *     // Dialog #2 - Demonstrate more complex dialogs construction and popup.
+     *
+     *     function showCustomGreeting($event) {
+     *         $mdAsimpleDialog.show({
+     *           targetEvent: $event,
+     *           template:
+     *             '<md-asimpledialog>' +
+     *
+     *             '  <md-content>Hello {{ employee }}!</md-content>' +
+     *
+     *             '  <div class="md-actions">' +
+     *             '    <md-button ng-click="closeDialog()">' +
+     *             '      Close Greeting' +
+     *
+     *             '    </md-button>' +
+     *             '  </div>' +
+     *             '</md-asimpledialog>',
+     *           controller: 'GreetingController',
+     *           onComplete: afterShowAnimation,
+     *           locals: { employee: $scope.userName }
+     *         });
+     *
+     *         // When the 'enter' animation finishes...
+     *
+     *         function afterShowAnimation(scope, element, options) {
+     *            // post-show code here: DOM element focus, etc.
+     *         }
+     *     }
+     *   }
+     *
+     *   // Greeting controller used with the more complex 'showCustomGreeting()' custom dialog
+     *
+     *   function GreetingController($scope, $mdAsimpleDialog, employee) {
+     *     // Assigned from construction <code>locals</code> options...
+     *     $scope.employee = employee;
+     *
+     *     $scope.closeDialog = function() {
+     *       // Easily hides most recent dialog shown...
+     *       // no specific instance reference is needed.
+     *       $mdAsimpleDialog.hide();
+     *     };
+     *   }
+     *
+     * })(angular);
+     * </hljs>
+     */
+
+    /**
+     * @ngdoc method
+     * @name $mdAsimpleDialog#alert
+     *
+     * @description
+     * Builds a preconfigured dialog with the specified message.
+     *
+     * @returns {obj} an `$mdAsimpleDialogPreset` with the chainable configuration methods:
+     *
+     * - $mdAsimpleDialogPreset#title(string) - sets title to string
+     * - $mdAsimpleDialogPreset#content(string) - sets content / message to string
+     * - $mdAsimpleDialogPreset#ok(string) - sets okay button text to string
+     *
+     */
+
+    /**
+     * @ngdoc method
+     * @name $mdAsimpleDialog#confirm
+     *
+     * @description
+     * Builds a preconfigured dialog with the specified message. You can call show and the promise returned
+     * will be resolved only if the user clicks the confirm action on the dialog.
+     *
+     * @returns {obj} an `$mdAsimpleDialogPreset` with the chainable configuration methods:
+     *
+     * Additionally, it supports the following methods:
+     *
+     * - $mdAsimpleDialogPreset#title(string) - sets title to string
+     * - $mdAsimpleDialogPreset#content(string) - sets content / message to string
+     * - $mdAsimpleDialogPreset#ok(string) - sets okay button text to string
+     * - $mdAsimpleDialogPreset#cancel(string) - sets cancel button text to string
+     *
+     */
+
+    /**
+     * @ngdoc method
+     * @name $mdAsimpleDialog#show
+     *
+     * @description
+     * Show a dialog with the specified options.
+     *
+     * @param {object} optionsOrPreset Either provide an `$mdAsimpleDialogPreset` returned from `alert()`,
+     * `confirm()` or an options object with the following properties:
+     *   - `templateUrl` - `{string=}`: The url of a template that will be used as the content
+     *   of the dialog.
+     *   - `template` - `{string=}`: Same as templateUrl, except this is an actual template string.
+     *   - `targetEvent` - `{DOMClickEvent=}`: A click's event object. When passed in as an option,
+     *     the location of the click will be used as the starting point for the opening animation
+     *     of the the dialog.
+     *   - `disableParentScroll` - `{boolean=}`: Whether to disable scrolling while the dialog is open.
+     *     Default true.
+     *   - `hasBackdrop` - `{boolean=}`: Whether there should be an opaque backdrop behind the dialog.
+     *     Default true.
+     *   - `clickOutsideToClose` - `{boolean=}`: Whether the user can click outside the dialog to
+     *     close it. Default true.
+     *   - `escapeToClose` - `{boolean=}`: Whether the user can press escape to close the dialog.
+     *     Default true.
+     *   - `controller` - `{string=}`: The controller to associate with the dialog. The controller
+     *     will be injected with the local `$hideDialog`, which is a function used to hide the dialog.
+     *   - `locals` - `{object=}`: An object containing key/value pairs. The keys will be used as names
+     *     of values to inject into the controller. For example, `locals: {three: 3}` would inject
+     *     `three` into the controller, with the value 3. If `bindToController` is true, they will be
+     *     copied to the controller instead.
+     *   - `bindToController` - `bool`: bind the locals to the controller, instead of passing them in
+     *   - `resolve` - `{object=}`: Similar to locals, except it takes promises as values, and the
+     *     dialog will not open until all of the promises resolve.
+     *   - `controllerAs` - `{string=}`: An alias to assign the controller to on the scope.
+     *   - `parent` - `{element=}`: The element to append the dialog to. Defaults to appending
+     *     to the root element of the application.
+     *   - `onComplete` `{function=}`: Callback function used to announce when the show() action is
+     *     finished.
+     *
+     * @returns {promise} A promise that can be resolved with `$mdAsimpleDialog.hide()` or
+     * rejected with `mdAdialog.cancel()`.
+     */
+
+    /**
+     * @ngdoc method
+     * @name $mdAsimpleDialog#hide
+     *
+     * @description
+     * Hide an existing dialog and resolve the promise returned from `$mdAsimpleDialog.show()`.
+     *
+     * @param {*=} response An argument for the resolved promise.
+     */
+
+    /**
+     * @ngdoc method
+     * @name $mdAsimpleDialog#cancel
+     *
+     * @description
+     * Hide an existing dialog and reject the promise returned from `$mdAsimpleDialog.show()`.
+     *
+     * @param {*=} response An argument for the rejected promise.
+     */
+
+    function MdAsimpleDialogProvider($$interimElementProvider) {
+
+        var alertDialogMethods = ['title', 'content', 'ariaLabel', 'ok'],
+            escKeyups = [],
+            bindRoot;
+
+        dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$mdTheming", "$$rAF", "$q", "$mdAsimpleDialog"];
+        return $$interimElementProvider('$mdAsimpleDialog')
+            .setDefaults({
+                methods: ['disableParentScroll', 'hasBackdrop', 'clickOutsideToClose', 'escapeToClose', 'targetEvent'],
+                options: dialogDefaultOptions
+            });
+
+
+        /* @ngInject */
+        function dialogDefaultOptions($timeout, $rootElement, $compile, $animate, $mdAria, $document,
+            $mdUtil, $mdConstant, $mdTheming, $$rAF, $q, $mdAsimpleDialog) {
+            return {
+                hasBackdrop: true,
+                isolateScope: true,
+                onShow: onShow,
+                onRemove: onRemove,
+                clickOutsideToClose: true,
+                escapeToClose: true,
+                targetEvent: null,
+                disableParentScroll: true,
+                transformTemplate: function(template) {
+                    return '<div class="md-asimple-dialog-container">' + template + '</div>';
+                }
+            };
+
+            function discoverDirective(options) {
+                return 'md-asimple-dialog';
+            }
+
+            function discoverContainerClass(container, options) {
+            }
+
+            // On show method for dialogs
+            function onShow(scope, element, options) {
+                // Incase the user provides a raw dom element, always wrap it in jqLite
+                options.parent = angular.element(options.parent);
+
+                options.popInTarget = angular.element((options.targetEvent || {}).target);
+                var closeButton = findCloseButton(),
+                    directive = discoverDirective(options),
+                    dialogEl = element.find(directive);
+
+                configureAria(dialogEl);
+
+                if (options.fullScreen) {
+                    dialogEl.addClass('full-screen');
+                }
+
+                if (options.hasBackdrop) {
+                    options.backdrop = angular.element('<md-backdrop class="md-asimple-dialog-backdrop" style="z-index: ' + options.zIndex + '">');
+                    $mdTheming.inherit(options.backdrop, options.parent);
+                    $animate.enter(options.backdrop, options.parent);
+                }
+
+                if (options.disableParentScroll) {
+                    options.oldOverflowStyle = options.parent.css('overflow');
+                    options.parent.css('overflow', 'hidden');
+                }
+
+                return dialogPopIn(element, options)
+                    .then(function() {
+                        if (options.escapeToClose) {
+                            options.rootElementKeyupCallback = function(e) {
+                                if (options.stack.indexOf(options.interimElement) === 0) {
+                                    $timeout(function() {
+                                        $mdAsimpleDialog.cancel('esc', options.interimElement);
+                                    });
+                                    return true;
+                                }
+                            };
+                            escKeyups.push(options.rootElementKeyupCallback);
+                        }
+
+                        if (!bindRoot) {
+                            $rootElement.on('keyup', function(e) {
+                                 if (e.keyCode !== $mdConstant.KEY_CODE.ESCAPE) {
+                                    return;
+                                 }
+                                 angular.forEach(escKeyups.concat(), function (cb) {
+                                    if (cb && cb()) {
+                                        var index = escKeyups.indexOf(cb);
+                                        if (index !== -1) {
+                                            escKeyups.splice(index, 1);
+                                        }
+                                    }
+                                 });
+                             });
+                            bindRoot = true;
+                        }
+                        if (options.clickOutsideToClose) {
+                            options.dialogClickOutsideCallback = function(e) {
+                                // Only close if we click the flex container outside the backdrop
+                                if (e.target === element[0]) {
+                                    $timeout($mdAsimpleDialog.cancel);
+                                }
+                            };
+                            element.on('click', options.dialogClickOutsideCallback);
+                        }
+                        closeButton.focus();
+                    });
+
+
+                function findCloseButton() {
+                    //If no element with class dialog-close, try to find the last
+                    //button child in md-actions and assume it is a close button
+                    var closeButton = element[0].querySelector('.dialog-close');
+                    if (!closeButton) {
+                        var actionButtons = element[0].querySelectorAll('.md-actions button');
+                        closeButton = actionButtons[actionButtons.length - 1];
+                    }
+                    return angular.element(closeButton);
+                }
+
+            }
+
+            // On remove function for all dialogs
+            function onRemove(scope, element, options) {
+
+                if (options.backdrop) {
+                    $animate.leave(options.backdrop);
+                }
+                if (options.disableParentScroll) {
+                    options.parent.css('overflow', options.oldOverflowStyle);
+                    $document[0].removeEventListener('scroll', options.captureScroll, true);
+                }
+                if (options.escapeToClose) {
+                    var index = escKeyups.indexOf(options.rootElementKeyupCallback);
+                    if (index !== -1) {
+                        escKeyups.splice(index, 1);
+                    }
+                }
+                if (options.clickOutsideToClose) {
+                    element.off('click', options.dialogClickOutsideCallback);
+                }
+                return dialogPopOut(element, options).then(function() {
+                    options.scope.$destroy();
+                    element.remove();
+                    options.popInTarget && options.popInTarget.focus();
+                });
+
+            }
+
+            /**
+             * Inject ARIA-specific attributes appropriate for Dialogs
+             */
+            function configureAria(element) {
+                element.attr({
+                    'role': 'dialog'
+                });
+
+                var dialogContent = element.find('md-content');
+                if (dialogContent.length === 0) {
+                    dialogContent = element;
+                }
+                $mdAria.expectAsync(element, 'aria-label', function () {
+                    var words = dialogContent.text().split(/\s+/);
+                    if (words.length > 3) {
+                        words = words.slice(0, 3).concat('...');
+                    }
+                    return words.join(' ');
+                });
+            }
+
+            function dialogPopIn(container, options) {
+                discoverContainerClass(container, options);
+                var dialogEl = container.find(discoverDirective(options)),
+                    parentElement = options.parent,
+                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget,
+                    defer = $q.defer();
+                parentElement.append(container);
+                var promise = defer.promise;
+                promise.then(function () {
+                    if (options.onBeforeShow) {
+                        options.onBeforeShow(dialogEl, options);
+                    }
+                });
+                defer.resolve();
+                return promise;
+            }
+
+            function dialogPopOut(container, options) {
+                discoverContainerClass(container, options);
+                var dialogEl = container.find(discoverDirective(options)),
+                    parentElement = options.parent,
+                    type,
+                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget;
+                if (options.onBeforeHide) {
+                    options.onBeforeHide(dialogEl, options);
+                }
+                dialogEl.addClass('transition-out').removeClass('transition-in');
+                var promise = dialogTransitionEnd(dialogEl);
+                promise.then(function () {
+                    if (options.onAfterHide) {
+                        options.onAfterHide(dialogEl, options);
+                    }
+                });
+                return promise;
+            }
+
+            function transformToClickElement(dialogEl, clickElement) {
+                if (clickElement) {
+                    var clickRect = clickElement[0].getBoundingClientRect();
+                    var dialogRect = dialogEl[0].getBoundingClientRect();
+
+                    var scaleX = Math.min(0.5, clickRect.width / dialogRect.width);
+                    var scaleY = Math.min(0.5, clickRect.height / dialogRect.height);
+
+                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
+                        (-dialogRect.left + clickRect.left + clickRect.width / 2 - dialogRect.width / 2) + 'px,' +
+                        (-dialogRect.top + clickRect.top + clickRect.height / 2 - dialogRect.height / 2) + 'px,' +
+                        '0) scale(' + scaleX + ',' + scaleY + ')'
+                    );
+                }
+            }
+
+            function dialogTransitionEnd(dialogEl) {
+                var deferred = $q.defer();
+                dialogEl.on($mdConstant.CSS.TRANSITIONEND, finished);
+
+                function finished(ev) {
+                    //Make sure this transitionend didn't bubble up from a child
+                    if (ev.target === dialogEl[0]) {
+                        dialogEl.off($mdConstant.CSS.TRANSITIONEND, finished);
+                        deferred.resolve();
+                    }
+                }
+                return deferred.promise;
+            }
+
+        }
+    }
+    MdAsimpleDialogProvider.$inject = ["$$interimElementProvider"];
+
 })();
 
 /*!
@@ -5992,6 +6928,503 @@ mdRadioButtonDirective.$inject = ["$mdAria", "$mdUtil", "$mdTheming"];
 (function() {
 'use strict';
 
+var SELECT_EDGE_MARGIN = 8;
+var SELECT_PADDING = 8;
+var selectNextId = 0;
+
+/*
+<md-select ng-model="choice" ng-model-options="{ trackBy: 'choice.id' }">
+  <md-option ng-repeat="opt in options">
+  </md-option>
+</md-select>
+*/
+
+// TODO
+// <md-select in markup will turn into:
+// <div class=“md-select-button-container”> <md-button /> <ul role=“menu /> </div>
+//
+// In rendered select:
+// <md-select> should have role="menu"
+// <md-option> should have role="menuitem"
+// <md-optgroup should have role="menu"
+//
+// TODO fix positioning when not scrollable
+
+angular.module('material.components.select', [
+  'material.core',
+  'material.components.backdrop'
+])
+.directive('mdSelect', SelectDirective)
+.directive('mdSelectMenu', SelectMenuDirective)
+.directive('mdLabel', LabelDirective)
+.directive('mdOption', OptionDirective)
+.directive('mdOptgroup', OptgroupDirective)
+.provider('$mdSelect', SelectProvider);
+
+function SelectDirective($mdSelect) {
+  return {
+    restrict: 'E',
+    compile: compile
+  };
+
+  function compile(element, attr) {
+    var label = element.find('md-label').remove();
+    var html = '<md-select-menu ng-model="' + attr.ngModel + '">' + element.html() + '</md-select-menu>';
+    element.empty();
+
+    var button = angular.element('<button class="md-button" md-select-button>').append(label);
+    var menu = angular.element('<ul role="menu">');
+
+    element.append(button);
+    element.append(menu);
+
+    return function postLink(scope, element, attr) {
+      element.on('click', function() {
+        scope.$apply(function() {
+          $mdSelect.show({
+            template: html,
+            scope: scope,
+            target: button[0]
+          });
+        });
+      });
+    };
+
+  }
+}
+SelectDirective.$inject = ["$mdSelect"];
+
+function SelectMenuDirective($parse, $timeout) {
+
+  SelectMenuController.$inject = ["$scope", "$element", "$attrs"];
+  return {
+    restrict: 'E',
+    require: ['mdSelectMenu', 'ngModel'],
+    controller: SelectMenuController,
+    link: { 
+      pre: preLink
+    }
+  };
+
+  // We use preLink instead of postLink to ensure that selectCtrl.init()
+  // is called before the child md-options run their postLink.
+  function preLink(scope, element, attr, ctrls) {
+    var selectCtrl = ctrls[0];
+    var ngModel = ctrls[1];
+    var selectNode = element[0];
+
+    $timeout(checkOverflow, 0, false);
+    element.on('click', clickListener);
+    selectCtrl.init(ngModel);
+
+    function checkOverflow() {
+      var isScrollable = selectNode.scrollHeight > selectNode.offsetHeight;
+      if (isScrollable) {
+        element.addClass('md-overflow');
+      }
+    }
+    
+    function clickListener(ev) {
+      // Get the md-option parent of the click's target, if it exists
+      var option = filterParent(ev.target, function(node) { 
+        return (node.tagName || '').indexOf('MD-OPTION') !== -1; 
+      });
+      var optionCtrl = option && angular.element(option).controller('mdOption');
+      if (!option || !optionCtrl) return;
+
+      var optionHashKey = selectCtrl.hashGetter(optionCtrl.value);
+      var isSelected = angular.isDefined(selectCtrl.selected[optionHashKey]);
+
+      scope.$apply(function() {
+        if (selectCtrl.isMultiple) {
+          if (isSelected) {
+            selectCtrl.deselect(optionHashKey);
+          } else {
+            selectCtrl.select(optionHashKey, optionCtrl.value);
+          }
+        } else {
+          if (!isSelected) {
+            selectCtrl.deselect( Object.keys(selectCtrl.selected)[0] );
+            selectCtrl.select( optionHashKey, optionCtrl.value );
+          }
+        }
+        selectCtrl.refreshViewValue();
+      });
+    }
+  }
+
+  function SelectMenuController($scope, $element, $attrs) {
+    var self = this;
+    self.options = {};
+    self.selected = {};
+    self.isMultiple = angular.isDefined($attrs.mdMultiple) || angular.isDefined($attrs.multiple);
+
+    self.init = function(ngModel) {
+      var ngModelExpr = $attrs.ngModel;
+      self.ngModel = ngModel;
+
+      if (ngModel.$options && ngModel.$options.trackBy) {
+        var trackByLocals = {};
+        var trackByParsed = $parse(ngModel.$options.trackBy);
+        self.hashGetter = function(value, valueScope) {
+          trackByLocals.$value = value;
+          return trackByParsed(valueScope || $scope, trackByLocals);
+        };
+      } else {
+        self.hashGetter = function getHashValue(value) {
+          if (angular.isObject(value)) {
+            return value.$$mdSelectId || (value.$$mdSelectId = ++selectNextId);
+          }
+          return value;
+        };
+      }
+      if (self.isMultiple) {
+        ngModel.$validators['md-multiple'] = validateArray;
+        ngModel.$render = renderMultiple;
+
+        // By default ngModel only watches a change in reference, but this allows the
+        // developer to also push and pop from their array.
+        $scope.$watchCollection(ngModelExpr, function(value) {
+          if (validateArray(value)) renderMultiple(value);
+        });
+      } else {
+        ngModel.$render = renderSingular;
+      }
+
+      function validateArray(modelValue, viewValue) {
+        return angular.isArray(modelValue || viewValue || []);
+      }
+    };
+
+    self.select = function(hashKey, hashedValue) {
+      var option = self.options[hashKey];
+      option && option.setSelected(true);
+      self.selected[hashKey] = hashedValue;
+    };
+    self.deselect = function(hashKey) {
+      var option = self.options[hashKey];
+      option && option.setSelected(false);
+      delete self.selected[hashKey];
+    };
+
+    self.addOption = function(hashKey, optionCtrl) {
+      if (angular.isDefined(self.options[hashKey])) {
+        throw new Error('Duplicate!');
+      }
+      self.options[hashKey] = optionCtrl;
+      if (angular.isDefined(self.selected[hashKey])) {
+        self.select(hashKey, optionCtrl.value);
+        self.refreshViewValue();
+      }
+    };
+    self.removeOption = function(hashKey, optionCtrl) {
+      delete self.options[hashKey];
+    };
+
+    self.refreshViewValue = function() {
+      var values = [];
+      var option;
+      for (var hashKey in self.selected) {
+         // If this hashKey has an associated option, push that option's value to the model.
+         if ((option = self.options[hashKey])) {
+           values.push(option.value);
+         } else {
+           // Otherwise, the given hashKey has no associated option, and we got it
+           // from an ngModel value at an earlier time. Push the unhashed value of 
+           // this hashKey to the model.
+           // This allows the developer to put a value in the model that doesn't yet have
+           // an associated option. 
+           values.push(self.selected[hashKey]);
+         }
+      }
+      self.ngModel.$setViewValue(self.isMultiple ? values : values[0]);
+    };
+
+    function renderMultiple() {
+      var newSelectedValues = self.ngModel.$modelValue || self.ngModel.$viewValue || [];
+      if (!angular.isArray(newSelected)) return;
+
+      var oldSelected = Object.keys(self.selected);
+
+      var newSelectedHashes = newSelected.map(self.hashGetter);
+      var deselected = oldSelected.filter(function(hash) {
+        return newSelectedHashes.indexOf(hash) === -1;
+      });
+      deselected.forEach(self.deselect);
+      newSelectedHashes.forEach(function(hashKey, i) {
+        self.select(hashKey, newSelectedValues[i]);
+      });
+    }
+    function renderSingular() {
+      var value = self.ngModel.$viewValue || self.ngModel.$modelValue;
+      Object.keys(self.selected).forEach(self.deselect);
+      self.select( self.hashGetter(value), value );
+    }
+  }
+
+}
+SelectMenuDirective.$inject = ["$parse", "$timeout"];
+
+function LabelDirective() {
+  return {
+    restrict: 'E'
+  };
+}
+
+function OptionDirective($mdInkRipple) {
+
+  OptionController.$inject = ["$scope", "$element"];
+  return {
+    restrict: 'E',
+    require: ['mdOption', '^^mdSelectMenu'],
+    template: '<div class="md-text" ng-transclude></div>',
+    transclude: true,
+    controller: OptionController,
+    link: postLink
+  };
+
+  function postLink(scope, element, attr, ctrls) {
+    var optionCtrl = ctrls[0];
+    var selectCtrl = ctrls[1];
+
+    if (angular.isDefined(attr.ngValue)) {
+      scope.$watch(attr.ngValue, changeOptionValue);
+    } else if (angular.isDefined(attr.value)) {
+      changeOptionValue(attr.value);
+    } else {
+      throw new Error("Expected either ngValue or value attr");
+    }
+
+    $mdInkRipple.attachButtonBehavior(scope, element);
+
+    function changeOptionValue(newValue, oldValue) {
+      var oldHashKey = selectCtrl.hashGetter(oldValue, scope);
+      var newHashKey = selectCtrl.hashGetter(newValue, scope);
+
+      optionCtrl.hashKey = newHashKey;
+      optionCtrl.value = newValue;
+
+      selectCtrl.removeOption(oldHashKey, optionCtrl);
+      selectCtrl.addOption(newHashKey, optionCtrl);
+    }
+
+    scope.$on('$destroy', function() {
+      selectCtrl.removeOption(optionCtrl.hashKey, optionCtrl);
+    });
+  }
+
+  function OptionController($scope, $element) {
+    this.selected = false;
+    this.setSelected = function(isSelected) {
+      if (isSelected && !this.selected) {
+        $element.attr('selected', 'selected');
+      } else if (!isSelected && this.selected) {
+        $element.removeAttr('selected');
+      }
+      this.selected = isSelected;
+    };
+  }
+
+}
+OptionDirective.$inject = ["$mdInkRipple"];
+
+function OptgroupDirective() {
+}
+
+function SelectProvider($$interimElementProvider) {
+  selectDefaultOptions.$inject = ["$animate", "$mdSelect", "$mdConstant", "$$rAF", "$mdUtil", "$mdTheming"];
+  return $$interimElementProvider('$mdSelect')
+    .setDefaults({
+      methods: ['target'],
+      options: selectDefaultOptions
+    });
+
+  /* @ngInject */
+  function selectDefaultOptions($animate, $mdSelect, $mdConstant, $$rAF, $mdUtil, $mdTheming) {
+    return {
+      transformTemplate: transformTemplate,
+      parent: getParent,
+      onShow: onShow,
+      onRemove: onRemove,
+      themable: true
+    };
+
+    function transformTemplate(template) {
+      return '<div class="md-select-menu-container">' + template + '</div>';
+    }
+
+    function getParent(scope, element, options) {
+      if (!options.target) return;
+      var contentParent = angular.element(options.target).controller('mdContent');
+      // If no return value, interimElement will use the default parent ($rootElement)
+      return contentParent && contentParent.$element;
+    }
+
+    function onShow(scope, element, options) {
+      if (!options.target) throw new Error("We need a target, man.");
+      var targetEl = angular.element(options.target);
+      var selectEl = element.find('md-select-menu');
+      var selectNode = selectEl[0];
+      options.parent = targetEl;
+      options.backdrop = angular.element('<md-backdrop>');
+      $mdTheming.inherit(options.backdrop, targetEl);
+
+      options.parent.append(options.backdrop);
+      options.parent.append(element);
+
+
+
+      options.backdrop.on('click', function() { 
+        scope.$apply($mdSelect.cancel); 
+      });
+      
+      // Give the select two frames to 'initialize' in the DOM, 
+      // so we can read its height/width/position
+      $$rAF(function() {
+        $$rAF(animateSelect);
+      });
+
+      return $mdUtil.transitionEndPromise(selectEl);
+      
+      // TODO make sure calculations work when there's fixed content at the top 
+      // (eg search bar) and a separate container for options
+      function animateSelect() {
+        var parentRect = options.parent[0].getBoundingClientRect();
+        var maxWidth = parentRect.width - SELECT_EDGE_MARGIN * 2;
+
+        if (selectNode.offsetWidth > maxWidth) {
+          selectEl.css('max-width', maxWidth + 'px');
+        }
+
+        var isScrollable = selectEl.hasClass('md-overflow');
+        var selectRect = selectNode.getBoundingClientRect();
+        var targetRect = targetEl[0].getBoundingClientRect();
+        var selectedOption = selectNode.querySelector('md-option[selected]');
+        var spaceAvailable = {
+          top: targetRect.top - parentRect.top - SELECT_EDGE_MARGIN,
+          left: targetRect.left - parentRect.left - SELECT_EDGE_MARGIN,
+          bottom: parentRect.bottom - targetRect.bottom - SELECT_EDGE_MARGIN,
+          right: parentRect.right - targetRect.right - SELECT_EDGE_MARGIN
+        };
+        var left;
+        var top;
+        var transformOrigin;
+
+        // If we have an md-option[selected], scroll to it and try use available space 
+        // to center it
+        if (selectedOption) {
+          var activeOptionRect = {
+            left: selectedOption.offsetLeft,
+            top: selectedOption.offsetTop,
+            height: selectedOption.offsetHeight,
+            width: selectedOption.offsetWidth
+          };
+
+          if (isScrollable) {
+            var buffer = selectRect.height / 2;
+            selectNode.scrollTop = activeOptionRect.top + activeOptionRect.height / 2 - buffer;
+
+            if (spaceAvailable.top < buffer) {
+              selectNode.scrollTop = Math.min(
+                activeOptionRect.top, 
+                selectNode.scrollTop + buffer - spaceAvailable.top 
+              );
+            } else if (spaceAvailable.bottom < buffer) {
+              selectNode.scrollTop = Math.max(
+                activeOptionRect.top + activeOptionRect.height - selectRect.height,
+                selectNode.scrollTop - buffer + spaceAvailable.bottom
+              );
+            }
+          }
+
+          left = targetRect.left + activeOptionRect.left;
+          top = targetRect.top + targetRect.height / 2 - activeOptionRect.height / 2 -
+              activeOptionRect.top + selectNode.scrollTop;
+          transformOrigin = (activeOptionRect.left + activeOptionRect.width / 2) + 'px ' +
+              (activeOptionRect.top + activeOptionRect.height / 2 - selectNode.scrollTop) + 'px';
+
+        // If nothing's selected, just center the select over the target
+        // and keep the select's scrollTop at 0
+        } else {
+          var optionNodes = selectNode.querySelectorAll('md-option');
+          var firstOption = optionNodes[0];
+          var optionRect = firstOption ? {
+            left: firstOption.offsetLeft,
+            top: firstOption.offsetTop,
+            height: firstOption.offsetHeight,
+            width: firstOption.offsetWidth
+          } : { left: 0, top: 0, height: 0, width: 0 };
+
+          left = targetRect.left + optionRect.left;
+          top = targetRect.top + targetRect.height / 2 - optionRect.height / 2 - optionRect.top;
+
+          // Offset the select by the height of half of its options
+          if (firstOption) {
+            top -= optionRect.height * Math.floor(optionNodes.length / 2);
+          }
+          transformOrigin = '0 ' + selectRect.height / 2 + 'px';
+        }
+
+        // Make sure it's within the window
+        left = Math.min(
+          parentRect.right - selectRect.width - SELECT_EDGE_MARGIN, 
+          Math.max(left, SELECT_EDGE_MARGIN)
+        );
+        top = Math.min(
+          parentRect.bottom - selectRect.height - SELECT_EDGE_MARGIN, 
+          Math.max(top, SELECT_EDGE_MARGIN)
+        );
+
+        selectEl.css({
+          left: left + 'px',
+          top: top + 'px'
+        });
+        selectEl.css($mdConstant.CSS.TRANSFORM, 'scale(' + 
+          Math.min(targetRect.width / selectRect.width, 1.0) + ',' +
+          Math.min(targetRect.height / selectRect.height, 1.0) + 
+        ')');
+        selectEl.css($mdConstant.CSS.TRANSFORM_ORIGIN, transformOrigin);
+
+        $$rAF(function() {
+          element.addClass('md-enter');
+          selectEl.css($mdConstant.CSS.TRANSFORM, '');
+        });
+
+      }
+    }
+
+    function onRemove(scope, element, options) {
+      element.removeClass('md-enter').addClass('md-leave');
+
+      return $mdUtil.transitionEndPromise(element).then(function() {
+        element.remove();
+        options.backdrop.remove();
+      });
+    }
+  }
+}
+SelectProvider.$inject = ["$$interimElementProvider"];
+
+function filterParent(element, filterFn, limit) {
+  if (!limit) limit = 15;
+  var currentNode = element.hasOwnProperty(0) ? element[0] : element;
+  while (currentNode && limit--) {
+    if (filterFn(currentNode)) return currentNode;
+    currentNode = currentNode.parentNode;
+  }
+}
+
+})();
+
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.0
+ */
+(function() {
+'use strict';
+
 /**
  * @ngdoc module
  * @name material.components.sidenav
@@ -7145,7 +8578,7 @@ var module = angular.module('material.components.swipe',[]);
   var directiveName = 'md' + name;
   var eventName = '$md.' + name.toLowerCase();
 
-  module.directive(directiveName, function($parse) {
+  module.directive(directiveName, /*@ngInject*/ ["$parse", function($parse) {
     return {
       restrict: 'A',
       link: postLink
@@ -7163,7 +8596,7 @@ var module = angular.module('material.components.swipe',[]);
       });
 
     }
-  });
+  }]);
 });
 
 })();
@@ -7575,7 +9008,7 @@ function MdToastDirective() {
  * app.controller('MyController', function($scope, $mdToast) {
  *   $scope.openToast = function($event) {
  *     $mdToast.show($mdToast.simple().content('Hello!'));
- *     // Could also do $mdtoast.showSimple('Hello');
+ *     // Could also do $mdToast.showSimple('Hello');
  *   };
  * });
  * </hljs>

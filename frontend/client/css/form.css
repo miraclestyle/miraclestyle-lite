@@ -205,6 +205,16 @@ textarea.text-input {
   top: 0px !important;
 }
 
+/* Select2 theme */
+
+/* Mark invalid Select2 */
+.ng-dirty.ng-invalid > a.select2-choice {
+    border-color: #D44950;
+}
+
+.select2-result-single {
+  padding-left: 0;
+}
 
 
 a.button.sort-handle {
