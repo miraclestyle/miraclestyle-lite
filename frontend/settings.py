@@ -51,12 +51,9 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-ui-sortable/sortable.js',
   'vendor/angular-ui-utils/ui-utils.js',
   'vendor/angular-sanitize/angular-sanitize.js',
-  'vendor/hammerjs/hammer.js',
-  'vendor/jquery-hammerjs/jquery.hammer.js',
   'vendor/angular-ui-router/release/angular-ui-router.js',
   'vendor/angular-cookie/angular-cookie.js',
   'vendor/angular-touch/angular-touch.js',
-  'vendor/angular-gestures/gestures.min.js',
   'vendor/angular-animate/angular-animate.js',
   'vendor/angular-aria/angular-aria.js',
   'vendor/angular-messages/angular-messages.js',
@@ -64,7 +61,6 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js',
   'lib/angular-material/angular-material.js',
-  'lib/angular-ui-select/dist/select.js',
   'lib/angulike/angulike.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
   'lib/angular-cache/dist/angular-cache.js',
@@ -76,6 +72,8 @@ ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives',
 
 ANGULAR_CSS_PATHS = ('js/lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
                      'js/lib/angular-material/angular-material.css',
+                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
+                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
                      'css/style.css')
 
 class Structured():
@@ -106,21 +104,21 @@ ANGULAR_TEMPLATES = (
   ('form/select.html',),
   ('form/dialog/select.html',),
   ('misc/form_wrapper.html',),
-  ('misc/modal/alert.html',),
-  ('misc/modal/errors.html',),
-  ('misc/modal/confirm.html',),
-  ('misc/modal/content_view_body.html',),
-  ('misc/modal/content_view_footer.html',),
+  ('misc/dialog/alert.html',),
+  ('misc/dialog/errors.html',),
+  ('misc/dialog/confirm.html',),
+  ('misc/dialog/content_view_body.html',),
+  ('misc/dialog/content_view_footer.html',),
   ('misc/load_more_button.html',),
   ('misc/search_form.html',),
   ('misc/history.html',),
-  ('misc/modal/history_view_body.html',),
-  ('misc/modal/history_view_footer.html',),
+  ('misc/dialog/history_view_body.html',),
+  ('misc/dialog/history_view_footer.html',),
 
 
-  ('entity/modal/editor.html',),
-  ('entity/modal/editor_default_body.html',),
-  ('entity/modal/editor_default_footer.html',),
+  ('entity/dialog/editor.html',),
+  ('entity/dialog/editor_default_body.html',),
+  ('entity/dialog/editor_default_footer.html',),
   
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
@@ -131,8 +129,8 @@ ANGULAR_TEMPLATES = (
   ('underscore/form/image.html',),
   ('underscore/form/string.html',),
   ('underscore/form/plugins.html',),
-  ('underscore/form/modal/plugins.html',),
-  ('underscore/form/modal/structured.html',),
+  ('underscore/form/dialog/plugins.html',),
+  ('underscore/form/dialog/structured.html',),
  
   # 3rd party                   
   ('template/accordion/accordion-group.html',
@@ -153,51 +151,27 @@ ANGULAR_TEMPLATES = (
    'lib/angular-bootstrap/modal/backdrop.html'),
   ('template/modal/window.html',
    'lib/angular-bootstrap/modal/window.html'),
-  ('template/popover/popover.html',
-   'lib/angular-bootstrap/popover/popover.html'),
-  ('template/progressbar/progress.html',
-   'lib/angular-bootstrap/progressbar/progress.html'),
-  ('template/progressbar/progressbar.html',
-   'lib/angular-bootstrap/progressbar/progressbar.html'),
   ('template/timepicker/timepicker.html',
    'lib/angular-bootstrap/timepicker/timepicker.html'),
-  ('template/tooltip/tooltip-html-unsafe-popup.html',
-   'lib/angular-bootstrap/tooltip/tooltip-html-unsafe-popup.html'
-   ),
-  ('template/tooltip/tooltip-popup.html',
-   'lib/angular-bootstrap/tooltip/tooltip-popup.html'),
-
-  # 3rd party select2
-  ('select2/choices.tpl.html',
-   'lib/angular-ui-select/select2/choices.tpl.html'),
-  ('select2/match-multiple.tpl.html',
-   'lib/angular-ui-select/select2/match-multiple.tpl.html'),
-  ('select2/match.tpl.html',
-   'lib/angular-ui-select/select2/match.tpl.html'),
-  ('select2/select-multiple.tpl.html',
-   'lib/angular-ui-select/select2/select-multiple.tpl.html'),
-  ('select2/select.tpl.html',
-   'lib/angular-ui-select/select2/select.tpl.html'),
-
-
+  
   # account
-  ('account/modal/manage_body.html',),
-  ('account/modal/manage_footer.html',),
-  ('account/modal/administer.html',),
+  ('account/dialog/manage_body.html',),
+  ('account/dialog/manage_footer.html',),
+  ('account/dialog/administer.html',),
   
   # seller
   ('seller/directive/carrier_line_rule_display.html',),
   ('seller/directive/address_rule_location_display.html',),
   ('seller/directive/default_line_display.html',),
-  ('seller/modal/view_body.html',),
-  ('seller/modal/view_footer.html',),
+  ('seller/dialog/view_body.html',),
+  ('seller/dialog/view_footer.html',),
   
   # buyer
   ('buyer/directive/address_display.html',),
   ('buyer/carts.html',),
 
   # colleciton
-  ('collection/modal/manage_body.html',),
+  ('collection/dialog/manage_body.html',),
 
   # admin area
   ('admin/list.html',),
@@ -208,19 +182,19 @@ ANGULAR_TEMPLATES = (
 
   # catalog
   ('catalog/quick_info.html',),
-  ('catalog/modal/manage_footer.html',),
-  ('catalog/modal/administer.html',),
-  ('catalog/modal/products.html',),
-  ('catalog/modal/view.html',),
-  ('catalog/product/modal/manage_footer.html',),
-  ('catalog/product/modal/view.html',),
-  ('catalog/product/modal/variant_choices.html',),
+  ('catalog/dialog/manage_footer.html',),
+  ('catalog/dialog/administer.html',),
+  ('catalog/dialog/products.html',),
+  ('catalog/dialog/view.html',),
+  ('catalog/product/dialog/manage_footer.html',),
+  ('catalog/product/dialog/view.html',),
+  ('catalog/product/dialog/variant_choices.html',),
   ('catalog/list.html',),
   ('catalog/underscore/form/image.html',),
   ('catalog/product/directive/product_instance_display.html',),
 
   # order
-  ('order/modal/view.html',),
+  ('order/dialog/view.html',),
   ('order/list.html',),
 
   # other

@@ -28,7 +28,7 @@
                         kind: this.kind,
                         action: 'update',
                         fields: _.toArray(fields),
-                        templateBodyUrl: 'collection/modal/manage_body.html',
+                        templateBodyUrl: 'collection/dialog/manage_body.html',
                         excludeFields: ['account', 'read_arguments'],
                         afterComplete: function ($scope) {
                             $scope.entity._sellers.iremove(function (seller) {

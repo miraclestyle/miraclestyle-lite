@@ -20,7 +20,7 @@
 
 
         })
-        .controller('HomePageCtrl', function ($scope, models, modals, $state, $stateParams, $q, $mdAdialog) {
+        .controller('HomePageCtrl', function ($scope, models, modals, $state, $stateParams, $q, $mdAdialog, modelsMeta) {
             var args = {search: {}},
                 defer = $q.defer(),
                 promise = defer.promise;
@@ -93,7 +93,10 @@
                     "parentArgs": "bar",
                     "rootScope": "rootScope",
                     "model": "entity",
-                    "name": "order_by_created"
+                    "name": "order_by_created",
+                    "specifics": {
+                        "search": true
+                    }
                 }
             };
 
@@ -112,6 +115,9 @@
                     "name": "order_by_created2"
                 }
             };
+
+            $scope.selectTest3 = modelsMeta.get('19').mapped_actions.update['arguments'].addresses.modelclass.country;
+            $scope.selectTest4 = modelsMeta.get('31').mapped_actions.update['arguments']._images.modelclass.pricetags.modelclass._product.modelclass.category;
 
 
             $scope.open = function () {

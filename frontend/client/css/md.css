@@ -1,0 +1,57 @@
+/* All material design related adjustments */
+
+.svg-icon-small {
+    width: 24px;
+    height: 24px;
+}
+.md-asimple-dialog-option {
+    cursor: pointer;
+}
+.selected-item {
+    float: left;
+}
+.select-icon {
+    float: right;
+}
+.as-md-input-container .md-input {
+    position: relative;
+}
+
+md-content.md-padding.has-search {
+    margin-top:51px;
+}
+
+.select-search-input input[type="search"] {
+    border: none;
+    padding: 12px;
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    padding-left:36px;
+    padding-right:36px;
+
+}
+
+.select-search {
+    position: absolute;
+    background: white;
+    width: 100%;
+    z-index: 11;
+}
+
+.select-search md-input-container {
+    padding-bottom:0px;
+}
+
+.select-search-cancel-icon {
+    position: absolute;
+    right: 6px;
+    top: 10px;
+}
+
+.select-search-search-icon {
+    position: absolute;
+    left: 6px;
+    top: 10px;
+}

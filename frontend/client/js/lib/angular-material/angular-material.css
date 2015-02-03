@@ -2,7 +2,7 @@
  * Angular Material Design
  * https://github.com/angular/material
  * @license MIT
- * v0.7.0
+ * v0.7.1
  */
 *, *:before, *:after {
   box-sizing: border-box; }
@@ -2793,14 +2793,14 @@ md-adialog {
     max-height: none;
     width: 100%;
     height: 100%; }
-  md-adialog md-content, md-adialog md-select-menu {
+  md-adialog md-content {
     -webkit-order: 1;
         -ms-flex-order: 1;
             order: 1;
     padding: 24px;
     overflow: auto;
     -webkit-overflow-scrolling: touch; }
-    md-adialog md-content *:first-child, md-adialog md-select-menu *:first-child {
+    md-adialog md-content *:first-child {
       margin-top: 0px; }
   md-adialog .md-actions {
     display: -webkit-flex;
@@ -3167,7 +3167,7 @@ md-card {
           flex-direction: column;
   margin: 8px;
   box-shadow: 0px 2px 5px 0 rgba(0, 0, 0, 0.26); }
-  md-card > img, md-card :not(md-card-content) img {
+  md-card > img, md-card > :not(md-card-content) img {
     -webkit-order: 0;
         -ms-flex-order: 0;
             order: 0;
@@ -3251,22 +3251,22 @@ md-checkbox {
         -ms-user-select: text;
             user-select: text; }
 
-md-content, md-select-menu {
+md-content {
   display: block;
   position: relative;
   overflow: auto;
   -webkit-overflow-scrolling: touch; }
-  md-content[md-scroll-y], md-select-menu[md-scroll-y] {
+  md-content[md-scroll-y] {
     overflow-y: auto;
     overflow-x: hidden; }
-  md-content[md-scroll-x], md-select-menu[md-scroll-x] {
+  md-content[md-scroll-x] {
     overflow-x: auto;
     overflow-y: hidden; }
-  md-content.md-padding, md-select-menu.md-padding {
+  md-content.md-padding {
     padding: 8px; }
 
 @media (min-width: 600px) {
-  md-content.md-padding, md-select-menu.md-padding {
+  md-content.md-padding {
     padding: 16px; }
  }
 
@@ -3427,14 +3427,14 @@ md-asimple-dialog {
             transform: translate3d(0, -6px, 0);
     transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
     transition-duration: 250ms; }
-  md-asimple-dialog md-content, md-asimple-dialog md-select-menu {
+  md-asimple-dialog md-content {
     -webkit-order: 1;
         -ms-flex-order: 1;
             order: 1;
     padding: 24px;
     overflow: auto;
     -webkit-overflow-scrolling: touch; }
-    md-asimple-dialog md-content *:first-child, md-asimple-dialog md-select-menu *:first-child {
+    md-asimple-dialog md-content *:first-child {
       margin-top: 0px; }
   md-asimple-dialog .md-actions {
     display: -webkit-flex;
@@ -3459,6 +3459,55 @@ md-asimple-dialog {
 
 .md-aselect-in {
   transition: opacity 0.2s linear 0s; }
+
+.md-adialog {
+  opacity: 0;
+  overflow: hidden;
+  box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2); }
+  .md-adialog.transition-in {
+    opacity: 1;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    -webkit-transform: translate3d(0, 0, 0) scale(1);
+            transform: translate3d(0, 0, 0) scale(1); }
+  .md-adialog.visible {
+    opacity: 1; }
+  .md-adialog.transition-out {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    -webkit-transform: translate3d(0, 100%, 0) scale(0.2);
+            transform: translate3d(0, 100%, 0) scale(0.2); }
+  .md-adialog.transition-out-right, .md-adialog.transition-out-left {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
+  .md-adialog.transition-in-right, .md-adialog.transition-in-left {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
+  .md-adialog md-content {
+    -webkit-order: 1;
+        -ms-flex-order: 1;
+            order: 1;
+    padding: 24px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch; }
+    .md-adialog md-content *:first-child {
+      margin-top: 0px; }
+  .md-adialog .md-actions {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-order: 2;
+        -ms-flex-order: 2;
+            order: 2;
+    box-sizing: border-box;
+    -webkit-align-items: center;
+        -ms-flex-align: center;
+            align-items: center;
+    -webkit-justify-content: flex-end;
+        -ms-flex-pack: end;
+            justify-content: flex-end;
+    padding: 16px 16px;
+    min-height: 40px; }
+    .md-adialog .md-actions > * {
+      margin-left: 8px; }
+  .md-adialog.md-content-overflow .md-actions {
+    border-top: 1px solid; }
 
 .md-dialog-container {
   display: -webkit-flex;
@@ -3500,14 +3549,14 @@ md-dialog {
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     -webkit-transform: translate3d(0, 100%, 0) scale(0.2);
             transform: translate3d(0, 100%, 0) scale(0.2); }
-  md-dialog md-content, md-dialog md-select-menu {
+  md-dialog md-content {
     -webkit-order: 1;
         -ms-flex-order: 1;
             order: 1;
     padding: 24px;
     overflow: auto;
     -webkit-overflow-scrolling: touch; }
-    md-dialog md-content:not([layout=row]) > *:first-child, md-dialog md-select-menu:not([layout=row]) > *:first-child {
+    md-dialog md-content:not([layout=row]) > *:first-child {
       margin-top: 0px; }
   md-dialog .md-actions {
     display: -webkit-flex;
@@ -5525,71 +5574,6 @@ md-radio-group {
   border: 1px dotted transparent;
   display: block;
   outline: none; }
-
-.md-select-menu-container {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 99;
-  opacity: 0;
-  -webkit-transform: translate3d(0, 0, 0);
-          transform: translate3d(0, 0, 0); }
-  .md-select-menu-container.md-enter {
-    opacity: 1; }
-    .md-select-menu-container.md-enter md-select-menu {
-      transition: -webkit-transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-      transition: transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-      transition-duration: 400ms;
-      background: white; }
-    .md-select-menu-container.md-enter md-option {
-      opacity: 1;
-      transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
-      transition-duration: 250ms;
-      transition-delay: 150ms; }
-  .md-select-menu-container.md-leave {
-    opacity: 0;
-    -webkit-transform: translate3d(0, -6px, 0);
-            transform: translate3d(0, -6px, 0);
-    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
-    transition-duration: 250ms; }
-    .md-select-menu-container.md-leave md-select-menu {
-      background: white; }
-    .md-select-menu-container.md-leave md-option {
-      opacity: 1; }
-
-md-select-menu {
-  box-shadow: 0px 2px 5px 0 rgba(0, 0, 0, 0.26);
-  min-width: 136px;
-  -webkit-transform-origin: 0 0;
-          transform-origin: 0 0;
-  -webkit-transform: scale(1);
-          transform: scale(1);
-  opacity: 1;
-  max-height: 240px;
-  background: transparent; }
-  md-select-menu:not(.md-overflow) {
-    padding: 16px 0 16px 0; }
-
-md-option {
-  cursor: pointer;
-  position: relative;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-align-items: center;
-      -ms-flex-align: center;
-          align-items: center;
-  width: auto;
-  padding: 0 16px 0 16px;
-  height: 48px;
-  opacity: 0; }
-  md-option .md-text {
-    width: auto;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; }
-  md-option[selected] {
-    background: #f0f0f0; }
 
 md-sidenav {
   position: absolute;

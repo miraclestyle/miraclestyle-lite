@@ -19,7 +19,7 @@
         GLOBAL_CONFIG = {
             debug: true, // debug mode
             host: host,
-            modules: ['ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ui.select', 'ngUpload',
+            modules: ['ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ngUpload',
                 'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector',
                 'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch',
                 'timer', 'angulike', 'googlechart', 'ngMaterial'], // this will be changed accordingly
@@ -64,7 +64,7 @@
             $locationProvider.html5Mode(true);
             $mdThemingProvider.theme('default')
                 .primaryPalette('grey')
-                .accentPalette('grey')
+                .accentPalette('blue-grey')
                 .warnPalette('red');
         });
 }());

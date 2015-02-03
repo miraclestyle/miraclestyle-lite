@@ -42,7 +42,7 @@
                     },
                     modal: function (errors) {
                         $modal.open({
-                            templateUrl: 'misc/modal/errors.html',
+                            templateUrl: 'misc/dialog/errors.html',
                             controller: function ($scope, $modalInstance) {
                                 $scope.errors = [];
                                 angular.forEach(errors, function (error, key) {
@@ -980,8 +980,8 @@ w:                  while (images.length > 0) {
                     showClose: true,
                     closeAfterSave: false,
                     action: 'update',
-                    templateBodyUrl: 'entity/modal/editor_default_body.html',
-                    templateFooterUrl: 'entity/modal/editor_default_footer.html',
+                    templateBodyUrl: 'entity/dialog/editor_default_body.html',
+                    templateFooterUrl: 'entity/dialog/editor_default_footer.html',
                     scope: {},
                     fields: [],
                     init: angular.noop,
@@ -1367,7 +1367,7 @@ w:                  while (images.length > 0) {
                         ctrl.$inject = ['$scope', '$modalInstance'];
 
                         opener[fn]({
-                            templateUrl: 'entity/modal/editor.html',
+                            templateUrl: 'entity/dialog/editor.html',
                             controller: ctrl
                         });
 
@@ -1463,6 +1463,169 @@ w:                  while (images.length > 0) {
                     if (info.config.searchable === false) {
                         return this.SuperStringProperty(info);
                     }
+                    var config = info.config,
+                        defaults = {
+                            cache: {
+                                results: {
+                                    'default': true,
+                                    '13': false,
+                                    '24': false
+                                },
+                                query: {
+                                    '24': true
+                                }
+                            },
+                            view: {
+                                'default': function (result) {
+                                    if (!result) {
+                                        return '';
+                                    }
+                                    return result.name;
+                                }
+                            },
+                            init: {
+                                '13': function (info) {
+                                    info.scope.$watch(info.config.ui.parentArgs +
+                                        '.country',
+                                        function (neww, old) {
+                                            if (neww !== old) {
+                                                var args = info.scope.$eval(info.config.ui.parentArgs);
+                                                args.region = null;
+                                                config.ui.specifics.search();
+                                            }
+                                        });
+                                }
+                            },
+                            queryFilter: {
+                                '24': function (term, searchArguments) {
+                                    console.log(term, searchArguments);
+                                    var searchDefaults = angular.copy(searchArguments.search['default']),
+                                        args = {
+                                            search: searchDefaults
+                                        };
+                                    if (term) {
+                                        args.search.filters.push({field: 'name', operator: '==', value: term});
+                                    }
+                                    return args;
+                                },
+                                '17': function (term, searchArguments) {
+                                    var searchDefaults = {
+                                            search: {
+                                                filters: [{
+                                                    value: true,
+                                                    field: 'active',
+                                                    operator: '=='
+                                                }],
+                                                orders: [{
+                                                    field: 'name',
+                                                    operator: 'asc'
+                                                }],
+                                            }
+                                        },
+                                        argument = searchDefaults.search;
+
+                                    if (config.code_name === 'weight_uom') {
+                                        argument.filters.push({
+                                            value: 'Weight',
+                                            field: 'measurement',
+                                            operator: '=='
+                                        });
+                                    }
+
+                                    if (config.code_name === 'volume_uom') {
+                                        argument.filters.push({
+                                            value: 'Volume',
+                                            field: 'measurement',
+                                            operator: '=='
+                                        });
+                                    }
+
+                                    if (config.code_name === 'product_uom') {
+                                        argument.filters.unshift({
+                                            value: 'Currency',
+                                            field: 'measurement',
+                                            operator: '!='
+                                        });
+
+                                        argument.orders = [{
+                                            field: 'measurement',
+                                            operator: 'asc'
+                                        }, {
+                                            field: 'key',
+                                            operator: 'asc'
+                                        }];
+                                    }
+
+                                    return searchDefaults;
+
+                                },
+                                '13': function (term, searchArguments) {
+                                    var args = info.scope.$eval(info.config.ui.parentArgs);
+                                    if ((args && args.country)) {
+                                        return {
+                                            search: {
+                                                ancestor: args.country,
+                                                filters: [{
+                                                    value: true,
+                                                    field: 'active',
+                                                    operator: '=='
+                                                }],
+                                                orders: [{
+                                                    field: 'name',
+                                                    operator: 'asc'
+                                                }],
+                                            }
+                                        };
+                                    }
+                                    return false;
+                                }
+                            }
+                        },
+                        init,
+                        model = models[config.kind],
+                        search = {},
+                        args,
+                        opts = {},
+                        actionArguments = modelsMeta.getActionArguments(config.kind, 'search'),
+                        response = function (response) {
+                            config.ui.specifics.entities = response.data.entities;
+                        },
+                        findArgs;
+                    config.ui.specifics.view = function (result) {
+                        var fn = defaults.view[config.kind];
+                        if (!fn) {
+                            fn = defaults.view['default'];
+                        }
+                        return fn(result);
+                    };
+                    init = defaults.init[config.kind];
+                    if (angular.isDefined(init)) {
+                        init(info);
+                    }
+                    $.extend(search, config.ui.specifics.search);
+                    config.ui.specifics.search = search;
+
+                    if (angular.isUndefined(config.ui.specifics.entities)) {
+                        config.ui.specifics.entities = [];
+                    }
+
+                    if (model) {
+                        if (model.actions.search) {
+                            args = defaults.queryFilter[config.kind];
+                            if (!args) {
+                                args = actionArguments.search['default'];
+                            } else {
+                                findArgs = args;
+                                args = findArgs(null, actionArguments);
+                                config.ui.specifics.search.find = function (term) {
+                                    model.actions.search(findArgs(term, actionArguments), opts).then(response);
+                                };
+                            }
+                            opts.cache = defaults.cache.query[config.kind];
+                            model.actions.search(args, opts).then(response);
+                        }
+                    }
+                    return 'select_async';
                     var config = info.config,
                         internalConfig = info.config.ui.specifics.internalConfig,
                         defaultInternalConfig = {
@@ -1963,7 +2126,7 @@ w:                  while (images.length > 0) {
                             buildPaths();
 
                             $modal.open({
-                                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/modal/structured.html')({
+                                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'underscore/form/dialog/structured.html')({
                                     config: config
                                 }),
                                 controller: function ($scope, $modalInstance, modelsUtil) {
@@ -2722,7 +2885,7 @@ w:                  while (images.length > 0) {
                 helpers.extendDeep(config, extraConfig);
                 return $modal.open({
                     windowClass: 'modal-medium',
-                    templateUrl: 'misc/modal/' + config.type + '.html',
+                    templateUrl: 'misc/dialog/' + config.type + '.html',
                     controller: function ($scope, $modalInstance) {
                         var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
                         config.dismiss = function () {

@@ -1,10 +1,27 @@
 <md-asimple-dialog>
-    <md-content class="md-padding">
+     <% if (select.search) { %>
+     <div class="select-search" ng-form="select.search.form">
+       <div class="select-search-input">
+       <div class="icon-action-grey600 icon-action-grey600-ic_search_grey600_24dp select-search-search-icon"></div>
+         <input tabindex="1" type="search" name="search" ng-change="select.search.doFind()" ng-model="<%= select.search.model %>" />
+         <div ng-click="<%= select.search.model %> = '';" ng-show="<%= select.search.model %>.length" class="icon-navigation-grey600 icon-navigation-grey600-ic_cancel_grey600_24dp select-search-cancel-icon"></div>
+       </div>
+       <md-divider></md-divider>
+    </div>
+    <% } %>
+    <md-content ng-class="{'has-search': select.search}" class="md-padding">
      <md-list>
-          <md-item class="md-asimple-dialog-option" ng-class="{'md-item-active': select.isSelected(item)}" ng-click="select.select(item)" ng-repeat="item in select.items">
-            <md-item-content>
-              <div class="md-tile-content">
-                {{select.view(item)}}
+          <md-item ng-if="select.loading">
+            <md-item-content tabindex="-1">
+              Loading...
+            </md-item-content>
+          </md-item>
+          <md-item class="md-asimple-dialog-option" ng-class="{'md-item-active': select.isSelected(item)}"
+              ng-click="select.select(item)"
+              ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>">
+            <md-item-content tabindex="{{$index + 2}}">
+              <div md-ink-ripple class="md-tile-content md-menu-item">
+                <div ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></div>
               </div>
             </md-item-content>
           </md-item>

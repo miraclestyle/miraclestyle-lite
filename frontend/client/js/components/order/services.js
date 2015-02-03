@@ -59,7 +59,7 @@
                         }
 
                         $modal.open({
-                            templateUrl: 'order/modal/view.html',
+                            templateUrl: 'order/dialog/view.html',
                             controller: function ($scope, $modalInstance) {
                                 var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate, updateLiveEntity,
                                     orderActionsFields = modelsMeta.getActionArguments('34'), prepareMessageFields,

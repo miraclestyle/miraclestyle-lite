@@ -153,7 +153,7 @@
                                     return response;
                                 });
                             }},
-                            templateUrl: 'catalog/product/modal/view.html',
+                            templateUrl: 'catalog/product/dialog/view.html',
                             windowClass: 'no-overflow',
                             controller: function ($scope, $modalInstance, productInstanceResponse) {
                                 var loadProductInstance, sellerKey;
@@ -172,11 +172,11 @@
                                 $scope.variationApplied = false;
                                 $scope.viewContent = function (content) {
                                     $modal.open({
-                                        templateUrl: 'entity/modal/editor.html',
+                                        templateUrl: 'entity/dialog/editor.html',
                                         controller: function ($scope, $modalInstance) {
                                             $scope.config = {};
-                                            $scope.config.templateBodyUrl = 'misc/modal/content_view_body.html';
-                                            $scope.config.templateFooterUrl = 'misc/modal/content_view_footer.html';
+                                            $scope.config.templateBodyUrl = 'misc/dialog/content_view_body.html';
+                                            $scope.config.templateFooterUrl = 'misc/dialog/content_view_footer.html';
                                             $scope.content = content;
                                             $scope.close = function () {
                                                 $modalInstance.dismiss('close');
@@ -331,7 +331,7 @@
                             return;
                         }
                         $modal.open({
-                            templateUrl: 'catalog/modal/view.html',
+                            templateUrl: 'catalog/dialog/view.html',
                             windowClass: 'no-overflow',
                             controller: function ($scope, $modalInstance) {
                                 $scope.catalog = entity;
@@ -428,7 +428,7 @@
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
                             fields: _.toArray(fields),
-                            templateFooterUrl: 'catalog/modal/manage_footer.html',
+                            templateFooterUrl: 'catalog/dialog/manage_footer.html',
                             afterSave: afterSave,
                             afterSaveError: afterSave,
                             afterComplete: afterComplete,
@@ -508,7 +508,7 @@
                                     },
                                     sudo: function () {
                                         $modal.open({
-                                            templateUrl: 'catalog/modal/administer.html',
+                                            templateUrl: 'catalog/dialog/administer.html',
                                             controller: function ($scope, $modalInstance) {
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
                                                 $scope.args = {key: catalog.key, state: catalog.state};
@@ -554,7 +554,7 @@
                                         return false;
                                     }
                                     $modal.open({
-                                        templateUrl: 'catalog/modal/products.html',
+                                        templateUrl: 'catalog/dialog/products.html',
                                         windowClass: 'no-overflow',
                                         controller: function ($scope, $modalInstance, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
@@ -804,7 +804,7 @@
                                                                 price: fieldScope.args.unit_price
                                                             };
                                                         },
-                                                        templateFooterUrl: 'catalog/product/modal/manage_footer.html',
+                                                        templateFooterUrl: 'catalog/product/dialog/manage_footer.html',
                                                         addText: 'Add Product',
                                                         getRootArgs: function () {
                                                             // root args is data that gets sent with rpc

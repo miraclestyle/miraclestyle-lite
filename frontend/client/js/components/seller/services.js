@@ -199,7 +199,7 @@
                         manage: function (arg) {
 
                             if (!angular.isDefined(config.ui.specifics.templateUrl)) {
-                                config.ui.specifics.templateUrl = 'underscore/form/modal/plugins.html';
+                                config.ui.specifics.templateUrl = 'underscore/form/dialog/plugins.html';
                             }
 
                             $modal.open({
@@ -451,13 +451,13 @@
             $.extend(models['23'], {
                 viewModal: function (seller, removedOrAdded) {
                     $modal.open({
-                        templateUrl: 'entity/modal/editor.html',
+                        templateUrl: 'entity/dialog/editor.html',
                         controller: function ($scope, currentAccount, $modalInstance) {
                             var cartData;
                             $scope.seller = seller;
                             $scope.config = {
-                                templateBodyUrl: 'seller/modal/view_body.html',
-                                templateFooterUrl: 'seller/modal/view_footer.html'
+                                templateBodyUrl: 'seller/dialog/view_body.html',
+                                templateFooterUrl: 'seller/dialog/view_footer.html'
                             };
                             $scope.accordions = {
                                 closeOthers: true,
@@ -586,11 +586,11 @@
 
                             $scope.viewContent = function (content) {
                                 $modal.open({
-                                    templateUrl: 'entity/modal/editor.html',
+                                    templateUrl: 'entity/dialog/editor.html',
                                     controller: function ($scope, $modalInstance) {
                                         $scope.config = {};
-                                        $scope.config.templateBodyUrl = 'misc/modal/content_view_body.html';
-                                        $scope.config.templateFooterUrl = 'misc/modal/content_view_footer.html';
+                                        $scope.config.templateBodyUrl = 'misc/dialog/content_view_body.html';
+                                        $scope.config.templateFooterUrl = 'misc/dialog/content_view_footer.html';
                                         $scope.content = content;
                                         $scope.close = function () {
                                             $modalInstance.dismiss('close');

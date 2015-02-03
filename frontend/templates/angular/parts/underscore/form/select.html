@@ -1,6 +1,6 @@
 <div class="as-md-input-container md-input-has-value">
     <label><%= config.ui.compiled.label %></label>
-    <md-aselect view-item="config.ui.specifics.view" items="config.choices" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></md-aselect>
+    <md-aselect search="config.ui.specifics.search" view="config.ui.specifics.view" items="config.choices" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></md-aselect>
    
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
       <div ng-message="help"><%= config.ui.help %></div>

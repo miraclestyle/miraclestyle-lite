@@ -1191,7 +1191,8 @@
                 }
             };
         })
-        .directive('mdAselect', function ($mdAdialog, $window, $mdAsimpleDialog, $mdTheming, $mdInkRipple, $$rAF, $mdConstant) {
+        .directive('mdAselect', function ($mdAdialog, $window, $mdAsimpleDialog, $mdTheming,
+            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, helpers) {
             return {
                 replace: true,
                 transclude: true,
@@ -1201,8 +1202,15 @@
                 link: function (scope, element, attrs, ctrls) {
                     var ngModel = ctrls[0],
                         items = scope.$eval(attrs.items),
-                        view = scope.$eval(attrs.viewItem),
-                        select = {};
+                        view = scope.$eval(attrs.view),
+                        search = scope.$eval(attrs.search),
+                        multiple = scope.$eval(attrs.multiple),
+                        strings,
+                        select = {},
+                        timeout;
+
+                    select.loading = false;
+                    select.multiple = multiple;
                     select.items = [];
                     select.find = function (value, index) {
                         var active,
@@ -1230,15 +1238,11 @@
                         return select.find(ngModel.$modelValue, index);
                     };
                     select.setItems = function (items) {
+                        if (angular.isString(items[0])) {
+                            strings = true;
+                        }
                         select.items = items;
                     };
-                    if (angular.isFunction(items)) {
-                        items().then(function (items) {
-                            select.setItems(items);
-                        });
-                    } else {
-                        select.setItems(items);
-                    }
                     select.isSelected = function (item) {
                         return ngModel.$modelValue === (angular.isObject(item) ? item.key : item);
                     };
@@ -1255,13 +1259,12 @@
                         }
                         ngModel.$setViewValue(val);
                         select.item = item;
-
                         select.close();
                     };
                     select.close = angular.noop;
                     select.open = function ($event) {
                         $mdAsimpleDialog.show({
-                            templateUrl: 'form/dialog/select.html',
+                            template: underscoreTemplate.get('form/dialog/select.html')({select: select}),
                             targetEvent: $event,
                             parent: element.parents('md-content:first'),
                             onBeforeHide: function (dialogEl, options) {
@@ -1292,12 +1295,13 @@
                                             activeNode = active.get(0),
                                             activeRect,
                                             buffer,
-                                            spaceAvailable;
+                                            spaceAvailable,
+                                            scrollElementTopMargin = parseInt(scrollElement.css('margin-top'), 10),
+                                            newTop;
                                         if (active.length) {
                                             activeOffset = active.offset();
                                             activeRect = activeNode.getBoundingClientRect();
                                         }
-                                        console.log(activeRect, activeOffset, elementOffset, elementRect);
                                         dialogEl.width(target.outerWidth());
                                         if (dialogEl.height() > parentHeight || scrollElement.prop('scrollHeight') > parentHeight) {
                                             dialogEl.css({
@@ -1306,7 +1310,7 @@
                                             }).height(options.parent.height() - paddingBottom + paddingTop);
                                             if (active.length) {
                                                 buffer = scrollElement.height() / 2;
-                                                scrollElement.get(0).scrollTop = activeOffset.top + active.height() / 2 - buffer;
+                                                scrollElementNode.scrollTop = activeOffset.top + active.height() / 2 - buffer;
                                                 spaceAvailable = {
                                                     top: targetRect.top - parentRect.top,
                                                     left: targetRect.left - parentRect.left,
@@ -1321,19 +1325,28 @@
                                                         scrollElementNode.scrollTop - buffer + spaceAvailable.bottom
                                                     );
                                                 }
+
+                                                if (select.search) {
+                                                    scrollElementNode.scrollTop = scrollElementNode.scrollTop - scrollElementTopMargin;
+                                                }
                                             }
                                         } else {
                                             dialogEl.css(targetOffset);
                                             activeOffset = active.offset();
                                             if (active.length) {
-                                                // position the selection at center
-                                                targetOffset.top = (targetOffset.top - (activeOffset.top - elementOffset.top)) - ((active.height() - element.height()) / 2);
-                                                if (targetOffset.top > top) {
-                                                    dialogEl.css('top', targetOffset.top);
+                                                // position the selection at center of active item
+                                                newTop = (targetOffset.top - (activeOffset.top - elementOffset.top)) - ((active.height() - element.height()) / 2);
+                                                if (newTop > top) {
+                                                    dialogEl.css('top', newTop);
                                                 }
                                             } else {
-                                                // position at center
-                                                // when no item is selected
+                                                // position the div at the center if no item is selected
+                                                newTop = (elementOffset.top + element.height()) - (dialogEl.height() / 2) - parseInt(scrollElement.css('paddingTop'), 10) - 3;
+                                                if (newTop > top) {
+                                                    dialogEl.css('top', newTop);
+                                                } else {
+                                                    dialogEl.css('top', top);
+                                                }
                                             }
                                         }
                                     };
@@ -1356,9 +1369,11 @@
                             },
                             controller: function ($scope) {
                                 $scope.select = select;
-
                                 select.close = function () {
                                     $mdAsimpleDialog.hide();
+                                    if (select.search) {
+                                        select.search.query = {};
+                                    }
                                 };
                             }
                         });
@@ -1374,6 +1389,47 @@
                         select.item = select.find(value);
                         return value;
                     });
+
+                    select.setItems(items);
+
+                    scope.$watch(attrs.items, function (neww, old) {
+                        if (neww !== old || neww.length !== old.length) {
+                            select.setItems(neww);
+                            $timeout(function () {
+                                $(window).triggerHandler('resize');
+                            });
+                        }
+                    });
+
+                    select.getFindTerm = function () {
+                        return helpers.getProperty(select.search.query, select.search.filterProp);
+                    };
+
+                    if (search) {
+                        select.search = {
+                            query: {},
+                            delay: 200,
+                            doFind: function () {
+                                var term = select.getFindTerm();
+                                if (timeout) {
+                                    clearTimeout(timeout);
+                                }
+                                if (select.search.find) {
+                                    timeout = setTimeout(function () {
+                                        select.search.find(term);
+                                    }, select.search.delay);
+                                }
+                            }
+                        };
+                        $.extend(select.search, search);
+                        select.search.filterProp = (select.search.filterProp ? select.search.filterProp : 'name');
+                        if (!select.search.model) {
+                            select.search.model = 'select.search.query' + ('.' + select.search.filterProp);
+                        }
+                        if (!select.search.filter) {
+                            select.search.filter = '| filter:select.search.query' + (strings ? ('.' + select.search.filterProp) : '');
+                        }
+                    }
                 }
             };
         });

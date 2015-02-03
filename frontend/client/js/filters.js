@@ -6,7 +6,8 @@
 
             if (angular.isArray(items)) {
                 items.forEach(function (item) {
-                    var itemMatches = false, keys = Object.keys(props),
+                    var itemMatches = false,
+                        keys = Object.keys(props),
                         i, prop, text;
                     for (i = 0; i < keys.length; i++) {
                         prop = keys[i];
@@ -41,7 +42,8 @@
 
         return function (obj, key, args) {
 
-            var input = obj[key], fields, field, format;
+            var input = obj[key],
+                fields, field, format;
 
             if (obj.kind) {
                 fields = getFields(obj.kind);
@@ -77,7 +79,9 @@
         formats.DEFAULT_PRECISION = angular.isUndefined(formats.DEFAULT_PRECISION) ? 2 : formats.DEFAULT_PRECISION;
         return function (amount, currency) {
             amount = parseFloat(amount, 10);
-            if (!angular.isNumber(amount) || isNaN(amount)) { return ''; }
+            if (!angular.isNumber(amount) || isNaN(amount)) {
+                return '';
+            }
             var isNegative = amount < 0,
                 parts = [],
                 number;
@@ -176,6 +180,14 @@
             if (input !== void 0) {
                 return input.replace(/\n/g, '<br />');
             }
+        };
+    }).filter('highlight', function () {
+        function escapeRegexp(queryToEscape) {
+            return queryToEscape.replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1');
+        }
+
+        return function (matchItem, query) {
+            return query && matchItem ? matchItem.replace(new RegExp(escapeRegexp(query), 'gi'), '<span class="ui-select-highlight">$&</span>') : matchItem;
         };
     });
 

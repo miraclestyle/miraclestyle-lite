@@ -49,23 +49,6 @@
   filter: alpha(opacity=90);
 }
 
-.modal-header .close {
-  margin-top: -2px;
-}
-
-.modal-title {
-  margin: 0;
-  /*float: left;
-  color: #777777;
-  font-size: 24px;
-  line-height: 28px;
-  padding: 7px 0px;
-  overflow: hidden;
-  text-align: center;
-  vertical-align: middle;
-  display: block;*/
-}
-
 .modal-body {
   position: relative;
   padding: 0px;

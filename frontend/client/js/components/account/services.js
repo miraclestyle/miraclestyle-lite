@@ -26,8 +26,8 @@
                     var that = this,
                         config = {
                             kind: this.kind,
-                            templateBodyUrl: 'account/modal/manage_body.html',
-                            templateFooterUrl: 'account/modal/manage_footer.html',
+                            templateBodyUrl: 'account/dialog/manage_body.html',
+                            templateFooterUrl: 'account/dialog/manage_footer.html',
                             argumentLoader: function ($scope) {
                                 var disassociate = [],
                                     entity = $scope.entity,
@@ -59,7 +59,7 @@
                                     };
                                 $scope.actions.sudo = function () {
                                     $modal.open({
-                                        templateUrl: 'account/modal/administer.html',
+                                        templateUrl: 'account/dialog/administer.html',
                                         controller: function ($scope, $modalInstance) {
                                             var sudoFields = modelsMeta.getActionArguments(that.kind, 'sudo');
                                             $scope.args = {key: entity.key, state: entity.state};
