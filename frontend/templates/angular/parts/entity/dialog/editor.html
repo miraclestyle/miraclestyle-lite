@@ -1,17 +1,47 @@
 <div fit-in-dialog>
-<form name="container.form" ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}">
-  <input type="hidden" compatibility-maker="args" name="__body__" />
-  <div class="modal-body fixed-height overflow-hidden has-footer">
-    <div class="fixed-height include-footer-height overflow-y">
-          <div class="modal-body-inner">
-              <div ng-include="config.templateBodyUrl"></div>
-          </div>
+  <md-toolbar md-scroll-shrink>
+
+
+    <div class="md-toolbar-tools" ng-click="openMenu()">
+
+      <div layout="row" flex class="fill-height">
+        <div class="md-toolbar-item md-breadcrumb">
+
+          <span style="display: inline-block;" >Angular Material</span>
+        </div>
+
+        <span flex></span> <!-- use up the empty space -->
+
+        <div class="md-toolbar-item md-tools" layout="row">
+
+          <md-button style="position: relative; padding-left: 30px; margin-right: 15px;">
+            <md-icon icon="/img/icons/ic_play_arrow_24px.svg" style="
+                height: 36px;
+                position: absolute;
+                left: 0px;
+                top: -3px;"></md-icon>
+            <span>View Demo</span>
+          </md-button>
+
+        </div>
+      </div>
     </div>
-  </div>
-  
-  <div class="modal-footer">
-     <div ng-include="config.templateFooterUrl"></div>
-  </div>
-  
-</form>
+
+  </md-toolbar>
+
+  <form name="container.form" ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}">
+    <input type="hidden" compatibility-maker="args" name="__body__" />
+    <div class="modal-body fixed-height overflow-hidden has-footer">
+      <div class="fixed-height include-footer-height overflow-y">
+            <div class="modal-body-inner">
+                <div ng-include="config.templateBodyUrl"></div>
+            </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+       <div ng-include="config.templateFooterUrl"></div>
+    </div>
+    
+  </form>
 </div>

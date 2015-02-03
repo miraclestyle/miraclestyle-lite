@@ -1303,7 +1303,8 @@
                                             activeRect = activeNode.getBoundingClientRect();
                                         }
                                         dialogEl.width(target.outerWidth());
-                                        if (dialogEl.height() > parentHeight || scrollElement.prop('scrollHeight') > parentHeight) {
+                                        if ((dialogEl.height() > parentHeight)
+                                                || (scrollElement.prop('scrollHeight') > parentHeight)) {
                                             dialogEl.css({
                                                 top: top,
                                                 left: targetOffset.left
@@ -1336,17 +1337,14 @@
                                             if (active.length) {
                                                 // position the selection at center of active item
                                                 newTop = (targetOffset.top - (activeOffset.top - elementOffset.top)) - ((active.height() - element.height()) / 2);
-                                                if (newTop > top) {
-                                                    dialogEl.css('top', newTop);
-                                                }
                                             } else {
                                                 // position the div at the center if no item is selected
                                                 newTop = (elementOffset.top + element.height()) - (dialogEl.height() / 2) - parseInt(scrollElement.css('paddingTop'), 10) - 3;
-                                                if (newTop > top) {
-                                                    dialogEl.css('top', newTop);
-                                                } else {
-                                                    dialogEl.css('top', top);
-                                                }
+                                            }
+                                            if (newTop > top) {
+                                                dialogEl.css('top', newTop);
+                                            } else {
+                                                dialogEl.css('top', top);
                                             }
                                         }
                                     };

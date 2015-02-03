@@ -3736,6 +3736,8 @@ class SuperRecordProperty(SuperRemoteStructuredProperty):
   '''Usage: '_records': SuperRecordProperty(Domain or '6')
   '''
 
+  can_be_copied = False
+
   def __init__(self, *args, **kwargs):
     args = list(args)
     self._modelclass2 = args[0]
