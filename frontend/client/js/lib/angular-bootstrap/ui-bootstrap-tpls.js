@@ -1626,20 +1626,6 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
             }
         }
 
-        var esc = function (e) {
-            var modal;
-            modal = openedWindows.top();
-            if (modal && modal.value.keyboard) {
-                e.preventDefault();
-                $rootScope.$apply(function () {
-                    $modalStack.dismiss(modal.key, 'escape key press');
-                });
-            }
-            return true;
-        };
-
-        mdEscFactory.queue(esc);
-
         $modalStack.open = function (modalInstance, modal) {
 
             openedWindows.add(modalInstance, {
@@ -1681,6 +1667,20 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
             openedWindows.top().value.modalDomEl = modalDomEl;
             body.append(modalDomEl);
             body.addClass(OPENED_MODAL_CLASS);
+
+            if (modal.keyboard) {
+                var esc = function (e) {
+                    e.preventDefault();
+                    $rootScope.$apply(function () {
+                        modalInstance.withEscape = true;
+                        $modalStack.dismiss(modalInstance, 'escape key press');
+                    });
+                    return true;
+                };
+                modalInstance.esc = esc;
+                mdEscFactory.queue(esc);
+            }
+            
         };
 
         $modalStack.close = function (modalInstance, result) {
@@ -1693,7 +1693,9 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
 
         $modalStack.dismiss = function (modalInstance, reason) {
             var modalWindow = openedWindows.get(modalInstance);
-            mdEscFactory.dequeue(esc);
+            if (!modalInstance.withEscape) {
+                mdEscFactory.dequeue(modalInstance.esc);
+            }
             if (modalWindow) {
                 modalWindow.value.deferred.reject(reason);
                 removeModalWindow(modalInstance);

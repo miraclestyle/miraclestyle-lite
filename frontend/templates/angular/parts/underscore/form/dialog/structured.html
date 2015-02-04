@@ -1,4 +1,5 @@
 <div fit-in-dialog>
+    <div ng-include="config.ui.specifics.templateToolbarUrl || 'entity/dialog/toolbar.html'"></div>
     <form name="container.form" <% if (config.ui.specifics.remote) { %>
         ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}"
         <% } else {%>ng-submit="save()"
@@ -6,33 +7,20 @@
                 <% if (config.ui.specifics.remote) { %>
                     <input type="hidden" compatibility-maker="sendRootArgs" name="__body__" />
                     <% } %>
-                        <div class="modal-body fixed-height has-footer overflow-hidden">
-                           <div class="fixed-height include-footer-height overflow-y">
+                        <div class="modal-body fixed-height has-toolbar overflow-hidden">
+                            <div class="fixed-height has-toolbar overflow-y">
                                 <div class="modal-body-inner">
-                                <div accordion-on-open="accordions">
-                                    <accordion close-others="accordions.closeOthers">
-                                        <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                                            <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
-                                        </accordion-group>
-                                    </accordion>
+                                    <div accordion-on-open="accordions">
+                                        <accordion close-others="accordions.closeOthers">
+                                            <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
+                                                <md-content>
+                                                    <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
+                                                </md-content>
+                                            </accordion-group>
+                                        </accordion>
+                                    </div>
                                 </div>
                             </div>
-                           </div>
-                        </div>
-
-                        <div class="modal-footer">
-                            <% if (config.ui.specifics.templateFooterUrl) { %>
-                            <span ng-include="config.ui.specifics.templateFooterUrl"></span>
-                            <% } else { %>
-                            <button <% if (config.ui.specifics.remote) { %>
-                                 submit-if-files-no-complete="noComplete()" submit-if-files="save()"
-                                <% } else { %>type="submit"
-                                    <% } %>loading="container.form.$pristine" class="button"> Save
-                            </button>
-                            <button type="button" loading class="button" ng-click="close()">
-                                Close
-                            </button>
-                            <% } %>
                         </div>
     </form>
 </div>

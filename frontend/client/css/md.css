@@ -1,5 +1,4 @@
-/* All material design related adjustments */
-
+/* All material design related adjustments, for now */
 .svg-icon-small {
     width: 24px;
     height: 24px;
@@ -54,4 +53,8 @@ md-content.md-padding.has-search {
     position: absolute;
     left: 6px;
     top: 10px;
+}
+
+.md-item-active md-item-content {
+    background:#eee;
 }

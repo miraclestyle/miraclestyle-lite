@@ -120,13 +120,11 @@ class CountrySubdivision(orm.BaseModel):
         'search': orm.SuperSearchProperty(
           default={'filters': [{'field': 'active', 'value': True, 'operator': '=='}], 'orders': [{'field': 'name', 'operator': 'asc'}]},
           cfg={
-            'search_arguments': {'kind': '13', 'options': {'limit': settings.SEARCH_PAGE}},
+            'search_arguments': {'kind': '13', 'options': {'limit': 100}},
             'ancestor_kind': '12',
             'search_by_keys': True,
             'filters': {'active': orm.SuperBooleanProperty(choices=(True,))},
-            'indexes': [{'filters': [('active', ['=='])],
-                         'orders': [('name', ['asc', 'desc'])]},
-                        {'ancestor': True,
+            'indexes': [{'ancestor': True,
                          'filters': [('active', ['=='])],
                          'orders': [('name', ['asc', 'desc'])]}]
             }

@@ -970,7 +970,7 @@ w:                  while (images.length > 0) {
             }
             ]);
 
-    }]).factory('modelsEditor', function ($modal, $mdAdialog, endpoint, $q, helpers,
+    }]).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
         modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordAccordion) {
 
         var modelsEditor = {
@@ -1475,6 +1475,9 @@ w:                  while (images.length > 0) {
                                     '24': true
                                 }
                             },
+                            finder: {
+                                '24': true
+                            },
                             view: {
                                 'default': function (result) {
                                     if (!result) {
@@ -1491,14 +1494,13 @@ w:                  while (images.length > 0) {
                                             if (neww !== old) {
                                                 var args = info.scope.$eval(info.config.ui.parentArgs);
                                                 args.region = null;
-                                                config.ui.specifics.search();
+                                                config.ui.specifics.initial(); // refresh results
                                             }
                                         });
                                 }
                             },
                             queryFilter: {
                                 '24': function (term, searchArguments) {
-                                    console.log(term, searchArguments);
                                     var searchDefaults = angular.copy(searchArguments.search['default']),
                                         args = {
                                             search: searchDefaults
@@ -1586,19 +1588,30 @@ w:                  while (images.length > 0) {
                         search = {},
                         args,
                         opts = {},
+                        override = config.ui.specifics.override || {},
                         actionArguments = modelsMeta.getActionArguments(config.kind, 'search'),
                         response = function (response) {
                             config.ui.specifics.entities = response.data.entities;
+                            return config.ui.specifics.entities;
                         },
-                        findArgs;
+                        findArgs,
+                        finder,
+                        initialDefer = $q.defer(),
+                        initialPromise = initialDefer.promise;
                     config.ui.specifics.view = function (result) {
                         var fn = defaults.view[config.kind];
                         if (!fn) {
                             fn = defaults.view['default'];
                         }
+                        if (override.view) {
+                            fn = override.view;
+                        }
                         return fn(result);
                     };
                     init = defaults.init[config.kind];
+                    if (override.init) {
+                        init = override.init;
+                    }
                     if (angular.isDefined(init)) {
                         init(info);
                     }
@@ -1609,314 +1622,67 @@ w:                  while (images.length > 0) {
                         config.ui.specifics.entities = [];
                     }
 
+                    finder = defaults.finder[config.kind];
+                    if (override.finder) {
+                        finder = override.finder;
+                    }
+
+                    config.ui.specifics.search.ready = initialPromise;
+
                     if (model) {
                         if (model.actions.search) {
-                            args = defaults.queryFilter[config.kind];
-                            if (!args) {
-                                args = actionArguments.search['default'];
-                            } else {
-                                findArgs = args;
-                                args = findArgs(null, actionArguments);
-                                config.ui.specifics.search.find = function (term) {
-                                    model.actions.search(findArgs(term, actionArguments), opts).then(response);
-                                };
-                            }
                             opts.cache = defaults.cache.query[config.kind];
-                            model.actions.search(args, opts).then(response);
-                        }
-                    }
-                    return 'select_async';
-                    var config = info.config,
-                        internalConfig = info.config.ui.specifics.internalConfig,
-                        defaultInternalConfig = {
-                            search: {
-                                cacheResults: {
-                                    'default': true,
-                                    '13': false,
-                                    '24': false
-                                },
-                                cacheQuery: {
-                                    '24': true
-                                },
-                                propsFilterResults: {
-                                    'default': '{name: $select.search}',
-                                    '12': '{name: $select.search, code: $select.search}'
-                                },
-                                view: {
-                                    'default': function (result) {
-                                        if (!result) {
-                                            return '';
-                                        }
-                                        return result.name;
-                                    }
-                                },
-                                init: {
-                                    '13': function () {
-                                        info.scope.$watch(info.config.ui.parentArgs +
-                                            '.country',
-                                            function (neww, old) {
-                                                if (neww !== old) {
-                                                    var args = info.scope.$eval(info.config.ui.parentArgs);
-                                                    args.region = null;
-                                                    config.ui.specifics.search();
-                                                }
-                                            });
-                                    }
-                                },
-                                query: {},
-                                // this query filter config should be included into places where it's supposed to be
-                                // but for quick access its located here
-                                queryfilter: {
-                                    '24': function (select, searchArguments) {
-                                        var search = angular.copy(searchArguments.search['default']),
-                                            args = {
-                                                search: search
-                                            };
-                                        if (select.search) {
-                                            args.search.filters.push({field: 'name', operator: '==', value: select.search});
-                                        }
-                                        return args;
-                                    },
-                                    '17': function (select, searchArguments) {
-                                        var search = {
-                                                search: {
-                                                    filters: [{
-                                                        value: true,
-                                                        field: 'active',
-                                                        operator: '=='
-                                                    }],
-                                                    orders: [{
-                                                        field: 'name',
-                                                        operator: 'asc'
-                                                    }],
-                                                }
-                                            },
-                                            argument = search.search;
-
-                                        if (config.code_name === 'weight_uom') {
-                                            argument.filters.push({
-                                                value: 'Weight',
-                                                field: 'measurement',
-                                                operator: '=='
-                                            });
-                                        }
-
-                                        if (config.code_name === 'volume_uom') {
-                                            argument.filters.push({
-                                                value: 'Volume',
-                                                field: 'measurement',
-                                                operator: '=='
-                                            });
-                                        }
-
-                                        if (config.code_name === 'product_uom') {
-                                            argument.filters.unshift({
-                                                value: 'Currency',
-                                                field: 'measurement',
-                                                operator: '!='
-                                            });
-
-                                            argument.orders = [{
-                                                field: 'measurement',
-                                                operator: 'asc'
-                                            }, {
-                                                field: 'key',
-                                                operator: 'asc'
-                                            }];
-                                        }
-
-                                        return search;
-
-                                    },
-                                    '13': function (select, searchArguments) {
-                                        var args = info.scope.$eval(info.config.ui.parentArgs);
-                                        if ((args && args.country)) {
-                                            return {
-                                                search: {
-                                                    ancestor: args.country,
-                                                    filters: [{
-                                                        value: true,
-                                                        field: 'active',
-                                                        operator: '=='
-                                                    }],
-                                                    orders: [{
-                                                        field: 'name',
-                                                        operator: 'asc'
-                                                    }],
-                                                }
-                                            };
-                                        }
-
-                                        return false;
-                                    }
-                                }
+                            if (override.cache && angular.isDefined(override.cache.query)) {
+                                opts.cache = override.cache.query;
                             }
-                        },
-                        propsFilter,
-                        init,
-                        defaultInternalSearch,
-                        searchArguments,
-                        shouldCache = false,
-                        shouldCacheQuery,
-                        searchCommand,
-                        cacheOption,
-                        getEntities = config.ui.specifics._entities || config.ui.specifics.entities,
-                        originalEntities,
-                        fetchedEntities;
-
-                    if (!angular.isDefined(internalConfig)) {
-                        internalConfig = defaultInternalConfig;
-                    } else {
-                        helpers.extendDeep(defaultInternalConfig, internalConfig);
-                    }
-
-                    if (config.kind) {
-
-                        propsFilter = internalConfig.search.propsFilterResults[config.kind];
-                        if (!propsFilter) {
-                            propsFilter = internalConfig.search.propsFilterResults['default'];
-                        }
-                        config.ui.specifics.propsFilter = propsFilter;
-
-                    }
-                    config.ui.specifics.view = function (result) {
-                        var fn = internalConfig.search.view[config.kind];
-                        if (!fn) {
-                            fn = internalConfig.search.view['default'];
-                        }
-
-                        return fn(result);
-                    };
-                    init = internalConfig.search.init[config.kind];
-                    if (angular.isDefined(init)) {
-                        init();
-                    }
-
-                    if (!angular.isFunction(getEntities)) {
-                        config.ui.specifics.entities = undefined;
-                        defaultInternalSearch = internalConfig.search[config.kind];
-                        if (defaultInternalSearch !== undefined) {
-                            config.ui.specifics.search = defaultInternalSearch;
-
-                        } else {
-
-                            searchArguments = modelsMeta.getActionArguments(config.kind, 'search');
-
-                            if (searchArguments !== undefined) {
-                                cacheOption = internalConfig.search.cacheResults[config.kind];
-                                shouldCacheQuery = internalConfig.search.cacheQuery[config.kind];
-                                if (cacheOption !== undefined && cacheOption !== false) {
-                                    shouldCache = cacheOption;
-                                } else if (cacheOption !== false) {
-                                    shouldCache = internalConfig.search.cacheResults['default'];
+                            config.ui.specifics.initial = function () {
+                                args = defaults.queryFilter[config.kind];
+                                if (override.queryFilter) {
+                                    args = override.queryFilter;
                                 }
-
-                                searchCommand = function (select) {
-                                    var params = searchArguments.search['default'],
-                                        fn = internalConfig.search.queryfilter[config.kind],
-                                        args = {},
-                                        model;
-                                    if (angular.isFunction(fn)) {
-                                        args = fn(select, searchArguments);
-                                    } else {
-                                        args = {
-                                            search: params
+                                if (!args) {
+                                    args = actionArguments.search['default'];
+                                } else {
+                                    findArgs = args;
+                                    args = findArgs(null, actionArguments);
+                                    if (finder) {
+                                        config.ui.specifics.search.find = function (term) {
+                                            return model.actions.search(findArgs(term, actionArguments), opts).then(response);
                                         };
                                     }
-                                    if (args === false) {
-                                        return false;
-                                    }
-                                    model = models[config.kind];
-                                    if (angular.isDefined(model) && model.actions && angular.isFunction(model.actions.search)) {
-                                        model.actions.search(args, {
-                                            cache: (angular.isUndefined(shouldCacheQuery) ? shouldCache : shouldCacheQuery)
+                                    config.ui.specifics.search.missing = function (id) {
+                                        if (id === null || id === undefined || !id.length) {
+                                            return;
+                                        }
+                                        var selectedIsArray = angular.isArray(id);
+                                        model.actions.search({
+                                            search: {
+                                                keys: (selectedIsArray ? id : [id])
+                                            }
+                                        }, {
+                                            cache: true
                                         }).then(function (response) {
-                                            var selectedIsArray,
-                                                selectedIsString;
-                                            if (originalEntities) {
-                                                angular.forEach(originalEntities, function (ent) {
-                                                    var finds = _.findWhere(response.data.entities, {key: ent.key});
-                                                    if (!finds) {
-                                                        response.data.entities.push(ent);
-                                                    } else {
-                                                        response.data.entities.remove(finds);
+                                            var fetchedEntities = response.data.entities;
+                                            if (!selectedIsArray) {
+                                                if (!_.findWhere(config.ui.specifics.entities, {key: id})) {
+                                                    config.ui.specifics.entities.unshift(response.data.entities[0]);
+                                                }
+                                            } else {
+                                                angular.forEach(fetchedEntities, function (ent) {
+                                                    if (!_.findWhere(config.ui.specifics.entities, {key: ent.key})) {
+                                                        config.ui.specifics.entities.push(ent);
                                                     }
                                                 });
                                             }
-                                            config.ui.specifics.entities = response.data.entities;
-                                            if (!originalEntities) {
-                                                originalEntities = config.ui.specifics.entities.concat();
-                                            }
-                                            if (angular.isDefined(select)) {
-                                                selectedIsArray = (angular.isArray(select.selected) && angular.isString(select.selected[0]));
-                                                selectedIsString = angular.isString(select.selected);
-                                                if ((selectedIsArray || selectedIsString)) {
-
-                                                    fetchedEntities = config.ui.specifics.entities.concat();
-                                                    config.ui.specifics.entities = undefined;
-
-                                                    model.actions.search({
-                                                        search: {
-                                                            keys: (selectedIsArray ? select.selected : [select.selected])
-                                                        }
-                                                    }, {
-                                                        cache: true
-                                                    }).then(function (response) {
-                                                        if (selectedIsString) {
-                                                            if (!_.findWhere(fetchedEntities, {key: select.selected})) {
-                                                                fetchedEntities.unshift(response.data.entities[0]);
-                                                            }
-                                                        } else {
-                                                            angular.forEach(response.data.entities, function (ent) {
-                                                                if (!_.findWhere(fetchedEntities, {key: ent.key})) {
-                                                                    fetchedEntities.push(ent);
-                                                                }
-                                                            });
-                                                        }
-
-                                                        config.ui.specifics.entities = fetchedEntities;
-                                                    });
-                                                }
-                                            }
                                         });
-                                    } else {
-                                        config.ui.specifics.entities = [];
-                                    }
-
-                                };
-
-                                if (config.ui.specifics.entities === undefined && shouldCache !== false) {
-                                    searchCommand();
-                                }
-
-                                if (shouldCache === false) {
-                                    config.ui.specifics.search = function (select) {
-                                        return searchCommand(select);
                                     };
                                 }
-
-                            } else {
-                                console.error('No search action found in kind: ' + config.kind);
-                            }
-
+                                return model.actions.search(args, opts).then(response);
+                            };
+                            config.ui.specifics.initial().then(function () {
+                                initialDefer.resolve();
+                            });
                         }
-                    }
-                    if (angular.isFunction(getEntities)) {
-                        config.ui.specifics._entities = getEntities;
-                        config.ui.specifics.entities = getEntities();
-                    }
-
-                    if (angular.isDefined(config.ui.specifics.entities) && config.ui.specifics.entities.length < 10) {
-                        if (!angular.isDefined(config.ui.specifics.searchEnabled)) {
-                            config.ui.specifics.searchEnabled = false;
-                        }
-                    }
-
-                    if (!angular.isDefined(config.ui.placeholder)) {
-                        config.ui.placeholder = 'Select...';
-                    }
-                    if (!angular.isDefined(config.ui.specifics.searchEnabled)) {
-                        config.ui.specifics.searchEnabled = true;
                     }
                     return 'select_async';
                 },

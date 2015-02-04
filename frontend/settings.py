@@ -117,6 +117,7 @@ ANGULAR_TEMPLATES = (
 
 
   ('entity/dialog/editor.html',),
+  ('entity/dialog/toolbar.html',),
   ('entity/dialog/editor_default_body.html',),
   ('entity/dialog/editor_default_footer.html',),
   

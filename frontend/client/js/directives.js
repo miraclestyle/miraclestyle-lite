@@ -487,18 +487,19 @@
             return {
                 link: function (scope, element, attrs) {
                     var fn = function () {
-
                         var modalDialog = $(element).parents('.modal-dialog:first'),
                             height = $(window).height();
-
                         height -= parseInt(modalDialog.css('margin-top'), 10) + parseInt(modalDialog.css('margin-bottom'), 10);
 
                         modalDialog.find('.modal-body.min-height').css('min-height', height);
                         modalDialog.find('.fixed-height, .modal-body.scrollable, .modal-body.unscrollable').each(function () {
-                            var newHeight = height, footerClass = '.modal-footer';
+                            var newHeight = height, footerClass = '.modal-footer', toolbar = 'md-toolbar';
                             if ($(this).hasClass('include-footer-height')) {
                                 footerClass = $(this).data('footer_element') || footerClass;
                                 newHeight -= modalDialog.find(footerClass).outerHeight();
+                            }
+                            if ($(this).hasClass('has-toolbar')) {
+                                newHeight -= modalDialog.find(toolbar).outerHeight();
                             }
                             $(this).height(newHeight);
                         });
@@ -1191,7 +1192,7 @@
                 }
             };
         })
-        .directive('mdAselect', function ($mdAdialog, $window, $mdAsimpleDialog, $mdTheming,
+        .directive('mdAselect', function ($mdAsimpleDialog, $mdTheming,
             $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, helpers) {
             return {
                 replace: true,
@@ -1205,9 +1206,10 @@
                         view = scope.$eval(attrs.view),
                         search = scope.$eval(attrs.search),
                         multiple = scope.$eval(attrs.multiple),
-                        strings,
                         select = {},
                         timeout;
+
+                    $mdTheming(element);
 
                     select.loading = false;
                     select.multiple = multiple;
@@ -1232,15 +1234,19 @@
                         if (index && angular.isDefined(active)) {
                             return [active, i];
                         }
+                        if (angular.isUndefined(active) && select.search.ready) {
+                            select.search.ready.then(function () {
+                                if (select.search.missing) {
+                                    select.search.missing(value);
+                                }
+                            });
+                        }
                         return active;
                     };
                     select.getActive = function (index) {
                         return select.find(ngModel.$modelValue, index);
                     };
                     select.setItems = function (items) {
-                        if (angular.isString(items[0])) {
-                            strings = true;
-                        }
                         select.items = items;
                     };
                     select.isSelected = function (item) {
@@ -1263,6 +1269,9 @@
                     };
                     select.close = angular.noop;
                     select.open = function ($event) {
+                        if (element.attr('disabled')) {
+                            return;
+                        }
                         $mdAsimpleDialog.show({
                             template: underscoreTemplate.get('form/dialog/select.html')({select: select}),
                             targetEvent: $event,
@@ -1297,7 +1306,8 @@
                                             buffer,
                                             spaceAvailable,
                                             scrollElementTopMargin = parseInt(scrollElement.css('margin-top'), 10),
-                                            newTop;
+                                            newTop,
+                                            totalHeight;
                                         if (active.length) {
                                             activeOffset = active.offset();
                                             activeRect = activeNode.getBoundingClientRect();
@@ -1342,6 +1352,13 @@
                                                 newTop = (elementOffset.top + element.height()) - (dialogEl.height() / 2) - parseInt(scrollElement.css('paddingTop'), 10) - 3;
                                             }
                                             if (newTop > top) {
+                                                totalHeight = newTop + dialogEl.height();
+                                                if (totalHeight > parentHeight) {
+                                                    newTop = newTop - (totalHeight - parentHeight);
+                                                    if (newTop < top) {
+                                                        newTop = top;
+                                                    }
+                                                }
                                                 dialogEl.css('top', newTop);
                                             } else {
                                                 dialogEl.css('top', top);
@@ -1357,6 +1374,12 @@
                                     $$rAF(function () {
                                         dialogEl.addClass('transition-in');
                                         dialogEl.css($mdConstant.CSS.TRANSFORM, '');
+                                    });
+
+                                    dialogEl.on($mdConstant.CSS.TRANSITIONEND, function (ev) {
+                                        if (ev.target === dialogEl[0] && select.search) {
+                                            dialogEl.find('input[type="search"]').focus();
+                                        }
                                     });
 
                                 };
@@ -1388,17 +1411,6 @@
                         return value;
                     });
 
-                    select.setItems(items);
-
-                    scope.$watch(attrs.items, function (neww, old) {
-                        if (neww !== old || neww.length !== old.length) {
-                            select.setItems(neww);
-                            $timeout(function () {
-                                $(window).triggerHandler('resize');
-                            });
-                        }
-                    });
-
                     select.getFindTerm = function () {
                         return helpers.getProperty(select.search.query, select.search.filterProp);
                     };
@@ -1425,9 +1437,19 @@
                             select.search.model = 'select.search.query' + ('.' + select.search.filterProp);
                         }
                         if (!select.search.filter) {
-                            select.search.filter = '| filter:select.search.query' + (strings ? ('.' + select.search.filterProp) : '');
+                            select.search.filter = '| filter:select.search.query' + ((items && angular.isString(items[0])) ? ('.' + select.search.filterProp) : '');
                         }
                     }
+                    select.setItems(items);
+                    scope.$watchGroup([attrs.items + '.length', attrs.items], function (neww, old) {
+                        if (neww[0] !== old[0] || neww[1] !== old[1]) {
+                            select.setItems(scope.$eval(attrs.items));
+                            select.item = select.getActive();
+                            $timeout(function () {
+                                $(window).triggerHandler('resize');
+                            });
+                        }
+                    });
                 }
             };
         });
