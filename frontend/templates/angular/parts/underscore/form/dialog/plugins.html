@@ -6,7 +6,9 @@
                 <div accordion-on-open="accordions">
                     <accordion close-others="accordions.closeOthers">
                         <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                            <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
+                            <md-content>
+                               <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
+                            </md-content>
                         </accordion-group>
                     </accordion>
                 </div>

@@ -3172,9 +3172,9 @@ md-asimple-dialog {
     background: white; }
     md-asimple-dialog.transition-in .md-asimple-dialog-option {
       opacity: 1;
-      transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
+      /*transition: $swift-ease-in;
       transition-duration: 250ms;
-      transition-delay: 150ms; }
+      transition-delay: 150ms;*/ }
   md-asimple-dialog.visible {
     opacity: 1; }
   md-asimple-dialog.transition-out {
@@ -3235,15 +3235,6 @@ md-asimple-dialog {
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
   .md-adialog.transition-in-right, .md-adialog.transition-in-left {
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
-  .md-adialog md-content {
-    -webkit-order: 1;
-        -ms-flex-order: 1;
-            order: 1;
-    padding: 24px;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch; }
-    .md-adialog md-content *:first-child {
-      margin-top: 0px; }
   .md-adialog .md-actions {
     display: -webkit-flex;
     display: -ms-flexbox;

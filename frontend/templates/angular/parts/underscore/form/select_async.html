@@ -1,31 +1,9 @@
 <div md-themable class="as-md-input-container md-input-has-value">
     <label><%= config.ui.compiled.label %></label>
-    <md-aselect search="config.ui.specifics.search" view="config.ui.specifics.view" items="config.ui.specifics.entities" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></md-aselect>
+    <md-aselect multiple="config.repeated" search="config.ui.specifics.search" view="config.ui.specifics.view" items="config.ui.specifics.entities" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></md-aselect>
    
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
       <div ng-message="help"><%= config.ui.help %></div>
       <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
     </div>
 </div>
-<!--<div form-element-wrapper label="<%= config.ui.compiled.label %>">
-         
-         <ui-select
-             theme="select2"
-             name="<%= config.ui.name %>"
-             search-enabled="{{config.ui.specifics.searchEnabled}}"
-             <%= config.ui.compiled.attrs %>
-             <% if (config.repeated) { %>multiple<% } %>>
-             
-          <ui-select-match placeholder="{{config.ui.placeholder}}">{{config.ui.specifics.view(<% if (config.repeated) { %>$item<% } else { %>$select.selected<% } %>)}}</ui-select-match>
-          <ui-select-choices
-                   repeat="ent.key as ent in config.ui.specifics.entities <% if (config.ui.specifics.propsFilter) { %> | propsFilter: <%- config.ui.specifics.propsFilter %> <% } %> track by $index"
-                   <% if (config.ui.specifics.search) { %>
-                   refresh="config.ui.specifics.search($select)"
-                   refresh-delay="200"
-                   <% } %>>
-                   
-            <div ng-bind-html="config.ui.specifics.view(ent) | highlight: $select.search"></div>
-          </ui-select-choices>
-        </ui-select>
- 
-</div>-->

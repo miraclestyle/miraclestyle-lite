@@ -1208,70 +1208,128 @@
                         multiple = scope.$eval(attrs.multiple),
                         select = {},
                         timeout;
-
                     $mdTheming(element);
-
+                    select.getHash = function (item) {
+                        return (angular.isObject(item) ? item.key : item);
+                    };
                     select.loading = false;
                     select.multiple = multiple;
                     select.items = [];
-                    select.find = function (value, index) {
+                    select.find = function (value) {
                         var active,
-                            i;
-                        if (!angular.isObject(select.items[0])) {
-                            i = select.items.indexOf(value);
-                            active = select.items[i];
+                            missing,
+                            get = function (val) {
+                                var i,
+                                    found;
+                                if (!angular.isObject(select.items[0])) {
+                                    i = select.items.indexOf(val);
+                                    if (i !== -1) {
+                                        found = select.items[i];
+                                    }
+                                } else {
+                                    found = _.findWhere(select.items, {key: val});
+                                }
+                                return found;
+                            };
+                        if (select.multiple) {
+                            missing = [];
+                            if (value && value.length) {
+                                angular.forEach(value, function (val) {
+                                    active = get(val);
+                                    if (angular.isUndefined(active)) {
+                                        missing.push(val);
+                                    }
+                                });
+                            }
+                        } else {
+                            active = get(value);
                             if (angular.isUndefined(active)) {
-                                return undefined;
+                                missing = value;
                             }
-                            return (index ? [active, i] : active);
                         }
-                        angular.forEach(select.items, function (item, nexti) {
-                            if (item.key === value) {
-                                active = item;
-                                i = nexti;
-                            }
-                        });
-                        if (index && angular.isDefined(active)) {
-                            return [active, i];
-                        }
-                        if (angular.isUndefined(active) && select.search.ready) {
+                        if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing) {
-                                    select.search.missing(value);
+                                    select.search.missing(missing);
                                 }
                             });
                         }
                         return active;
                     };
-                    select.getActive = function (index) {
-                        return select.find(ngModel.$modelValue, index);
+                    select.getActive = function () {
+                        select.item = select.find(ngModel.$modelValue);
+                        return select.item;
                     };
                     select.setItems = function (items) {
                         select.items = items;
+                        select.collectActive();
                     };
                     select.isSelected = function (item) {
-                        return ngModel.$modelValue === (angular.isObject(item) ? item.key : item);
+                        var hash = select.getHash(item);
+                        if (select.multiple) {
+                            return $.inArray(hash, ngModel.$modelValue) !== -1;
+                        }
+                        return ngModel.$modelValue === hash;
                     };
-                    select.selected = function (item) {
+                    select.selected = function () {
+                        var item = select.item;
                         if (!item) {
                             return attrs.placeholder;
                         }
-                        return select.view(item);
+                        if (angular.isArray(item)) {
+                            var out = [];
+                            angular.forEach(item, function (it) {
+                                out.push(it.name);
+                            });
+                            return out.join(', ');
+                        }
+                        return angular.isObject(item) ? item.name : item;
+                    };
+                    select.anyChecks = function () {
+                        return ((select.item && select.item.length) || _.some(select.multipleSelection));
+                    };
+                    select.multipleSelection = {};
+                    select.multipleSelect = function () {
+                        var selected = [],
+                            founds = [];
+                        angular.forEach(select.items, function (item) {
+                            var hash = select.getHash(item);
+                            if (select.multipleSelection[hash]) {
+                                selected.push(hash);
+                                founds.push(item);
+                            }
+                        });
+                        ngModel.$setViewValue(selected);
+                        select.item = founds;
+                        select.close();
+                    };
+
+                    select.collectActive = function () {
+                        angular.forEach(select.items, function (item) {
+                            var hash = select.getHash(item);
+                            if (angular.isUndefined(select.multipleSelection[hash])
+                                    && $.inArray(hash, ngModel.$modelValue) !== -1) {
+                                select.multipleSelection[hash] = true;
+                            }
+                        });
+                    };
+
+                    select.isChecked = function (item) {
+                        return select.multipleSelection[select.getHash(item)];
                     };
                     select.select = function (item) {
-                        var val = item;
-                        if (angular.isObject(item)) {
-                            val = item.key;
-                        }
+                        var val = select.getHash(item);
                         ngModel.$setViewValue(val);
                         select.item = item;
                         select.close();
                     };
                     select.close = angular.noop;
+                    select.opened = false;
                     select.open = function ($event) {
                         if (element.attr('disabled')) {
                             return;
                         }
+                        select.collectActive();
                         $mdAsimpleDialog.show({
                             template: underscoreTemplate.get('form/dialog/select.html')({select: select}),
                             targetEvent: $event,
@@ -1391,10 +1449,13 @@
                             controller: function ($scope) {
                                 $scope.select = select;
                                 select.close = function () {
-                                    $mdAsimpleDialog.hide();
-                                    if (select.search) {
-                                        select.search.query = {};
-                                    }
+                                    $mdAsimpleDialog.hide().then(function () {
+                                        select.multipleSelection = {};
+                                        if (select.search) {
+                                            select.search.query = {};
+                                        }
+                                        select.opened = false;
+                                    });
                                 };
                             }
                         });
@@ -1402,6 +1463,13 @@
                     select.view = view;
                     if (!view) {
                         select.view = function (item) {
+                            if (angular.isArray(item)) {
+                                var out = [];
+                                angular.forEach(item, function (it) {
+                                    out.push(it.name);
+                                });
+                                return out.join(", ");
+                            }
                             return angular.isObject(item) ? item.name : item;
                         };
                     }
@@ -1444,10 +1512,12 @@
                     scope.$watchGroup([attrs.items + '.length', attrs.items], function (neww, old) {
                         if (neww[0] !== old[0] || neww[1] !== old[1]) {
                             select.setItems(scope.$eval(attrs.items));
-                            select.item = select.getActive();
-                            $timeout(function () {
-                                $(window).triggerHandler('resize');
-                            });
+                            select.getActive();
+                            if (select.opened) {
+                                $timeout(function () {
+                                    $(window).triggerHandler('resize');
+                                });
+                            }
                         }
                     });
                 }

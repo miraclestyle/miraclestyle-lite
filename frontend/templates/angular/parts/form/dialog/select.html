@@ -1,5 +1,6 @@
 <md-asimple-dialog>
      <% if (select.search) { %>
+     <!-- rework this top for the flex maybe -->
      <div class="select-search" ng-form="select.search.form">
        <div class="select-search-input">
        <div class="icon-action-grey600 icon-action-grey600-ic_search_grey600_24dp select-search-search-icon"></div>
@@ -16,15 +17,49 @@
               Loading...
             </md-item-content>
           </md-item>
-          <md-item class="md-asimple-dialog-option" ng-class="{'md-item-active': select.isSelected(item)}"
+          <% if (select.multiple) { %>
+            <md-item class="md-asimple-dialog-option"
+                ng-repeat="item in select.items"
+                ng-show="select.isChecked(item)">
+                <md-item-content tabindex="{{$index + 2}}">
+                    <md-checkbox ng-model="select.multipleSelection[item.key]" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                       <span ng-bind-html="select.view(item)"></span>
+                    </md-checkbox>
+                </md-item-content>
+            </md-item>
+
+            <md-divider ng-show="select.anyChecks()"></md-divider>
+
+            <md-item class="md-asimple-dialog-option"
+                ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
+                ng-show="!select.isChecked(item)">
+                <md-item-content tabindex="{{$index + 2}}">
+                    <md-checkbox ng-model="select.multipleSelection[item.key]" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                       <span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span>
+                    </md-checkbox>
+                </md-item-content>
+            </md-item>
+            <% } else { %>
+             <md-item class="md-asimple-dialog-option" ng-class="{'md-item-active': select.isSelected(item)}"
               ng-click="select.select(item)"
               ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>">
-            <md-item-content tabindex="{{$index + 2}}">
-              <div md-ink-ripple class="md-tile-content md-menu-item">
-                <div ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></div>
-              </div>
-            </md-item-content>
-          </md-item>
+                <md-item-content tabindex="{{$index + 2}}">
+                  <div md-ink-ripple class="md-tile-content md-menu-item">
+                    <span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span>
+                  </div>
+                </md-item-content>
+            </md-item>
+            <% } %>
         </md-list>
     </md-content>
+    <% if (select.multiple) { %>
+    <div class="md-actions" layout="row">
+        <md-button ng-click="select.close()">
+         Cancel
+        </md-button>
+        <md-button ng-click="select.multipleSelect()" class="md-primary">
+          Select
+        </md-button>
+    </div>
+    <% } %>
 </md-asimple-dialog>

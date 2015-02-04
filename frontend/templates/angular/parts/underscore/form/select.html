@@ -1,29 +1,9 @@
 <div md-themable class="as-md-input-container md-input-has-value">
     <label><%= config.ui.compiled.label %></label>
-    <md-aselect search="config.ui.specifics.search" view="config.ui.specifics.view" items="config.choices" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></md-aselect>
+    <md-aselect multiple="config.repeated" search="config.ui.specifics.search" view="config.ui.specifics.view" items="config.choices" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></md-aselect>
    
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
       <div ng-message="help"><%= config.ui.help %></div>
       <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
     </div>
 </div>
-<!--<div class="as-md-input-container md-input-has-value">
-      <label><%= config.ui.compiled.label %></label>
-       <ui-select search-enabled="{{config.ui.specifics.searchEnabled}}" name="<%= config.ui.name %>" theme="select2" 
-          <%= config.ui.compiled.attrs %> <% if (config.repeated) { %>multiple="true"<% } %>>
-          <ui-select-match placeholder="{{config.ui.placeholder}}">
-          <% if (config.repeated) { %>
-            {{$item<% if (config.ui.specifics.choiceFilter) { %>|<%=config.ui.specifics.choiceFilter %><% } %>}}
-          <% } else { %>
-            {{$select.selected<% if (config.ui.specifics.choiceFilter) { %>|<%=config.ui.specifics.choiceFilter %><% } %>}}
-          <% } %>
-          </ui-select-match>
-          <ui-select-choices repeat="<%=config.ui.specifics.repeatAs %>choice in config.choices | filter:$select.search track by $index">
-            {{choice<% if (config.ui.specifics.choiceFilter) { %>|<%=config.ui.specifics.choiceFilter %><% } %>}}
-          </ui-select-choices>
-        </ui-select>
-        <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
-          <div ng-message="help"><%= config.ui.help %></div>
-          <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
-        </div>
-</div> -->

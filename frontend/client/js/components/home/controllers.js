@@ -81,7 +81,7 @@
 
             $scope.bar = {};
 
-            $scope.args = {category: 'ahFkZXZ-eC1hcmNhbnVtLTgwMXIoCxICMjQiIDE5MTk4ZDk4YjI1ZTZjYWQ2OTliNGY3ZTNhZmRlNzljDA'};
+            $scope.args = {category: ['ahFkZXZ-eC1hcmNhbnVtLTgwMXIoCxICMjQiIDE5MTk4ZDk4YjI1ZTZjYWQ2OTliNGY3ZTNhZmRlNzljDA']};
 
             $scope.selectTest = {
                 "type": "SuperStringProperty",
@@ -121,7 +121,7 @@
             $scope.selectTest3 = modelsMeta.get('19').mapped_actions.update['arguments'].addresses.modelclass.country;
             $scope.selectTest5 = modelsMeta.get('19').mapped_actions.update['arguments'].addresses.modelclass.region;
             $scope.selectTest4 = modelsMeta.get('31').mapped_actions.update['arguments']._images.modelclass.pricetags.modelclass._product.modelclass.category;
-
+            $scope.selectTest4.repeated = true;
             angular.forEach(['selectTest3', 'selectTest4', 'selectTest5'], function (t) {
                 $scope[t].ui.writable = true;
             });

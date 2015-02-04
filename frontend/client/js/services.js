@@ -1618,6 +1618,11 @@ w:                  while (images.length > 0) {
                     $.extend(search, config.ui.specifics.search);
                     config.ui.specifics.search = search;
 
+                    if (angular.isFunction(config.ui.specifics.entities)) {
+                        config.ui.specifics.getEntities = config.ui.specifics.entities;
+                        config.ui.specifics.entities = config.ui.specifics.entities();
+                    }
+
                     if (angular.isUndefined(config.ui.specifics.entities)) {
                         config.ui.specifics.entities = [];
                     }
@@ -1629,7 +1634,7 @@ w:                  while (images.length > 0) {
 
                     config.ui.specifics.search.ready = initialPromise;
 
-                    if (model) {
+                    if (model && !config.ui.specifics.getEntities) {
                         if (model.actions.search) {
                             opts.cache = defaults.cache.query[config.kind];
                             if (override.cache && angular.isDefined(override.cache.query)) {
@@ -1647,7 +1652,14 @@ w:                  while (images.length > 0) {
                                     args = findArgs(null, actionArguments);
                                     if (finder) {
                                         config.ui.specifics.search.find = function (term) {
-                                            return model.actions.search(findArgs(term, actionArguments), opts).then(response);
+                                            return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
+                                                var entities = response.data.entities;
+                                                angular.forEach(entities, function (ent) {
+                                                    if (!_.findWhere(config.ui.specifics.entities, {key: ent.key})) { // this is pretty slow. however can be sped up with key-value monitoring
+                                                        config.ui.specifics.entities.push(ent);
+                                                    }
+                                                });
+                                            });
                                         };
                                     }
                                     config.ui.specifics.search.missing = function (id) {
@@ -1664,12 +1676,12 @@ w:                  while (images.length > 0) {
                                         }).then(function (response) {
                                             var fetchedEntities = response.data.entities;
                                             if (!selectedIsArray) {
-                                                if (!_.findWhere(config.ui.specifics.entities, {key: id})) {
+                                                if (!_.findWhere(config.ui.specifics.entities, {key: id})) { // slow
                                                     config.ui.specifics.entities.unshift(response.data.entities[0]);
                                                 }
                                             } else {
                                                 angular.forEach(fetchedEntities, function (ent) {
-                                                    if (!_.findWhere(config.ui.specifics.entities, {key: ent.key})) {
+                                                    if (!_.findWhere(config.ui.specifics.entities, {key: ent.key})) { // slow
                                                         config.ui.specifics.entities.push(ent);
                                                     }
                                                 });
