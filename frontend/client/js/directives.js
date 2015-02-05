@@ -1283,18 +1283,26 @@
                         return _.some(select.multipleSelection);
                     };
                     select.multipleSelection = {};
-                    select.multipleSelect = function () {
-                        var selected = [],
-                            founds = [];
-                        angular.forEach(select.items, function (item) {
-                            var hash = select.getHash(item);
-                            if (select.multipleSelection[hash]) {
-                                selected.push(hash);
-                                founds.push(item);
+                    select.multipleSelect = function (item) {
+                        var hash = select.getHash(item),
+                            hasIt = select.multipleSelection[hash],
+                            already = ngModel.$modelValue || [],
+                            selected = $.inArray(hash, ngModel.$modelValue) !== -1;
+                        if (!angular.isArray(select.item)) {
+                            select.item = [];
+                        }
+                        if (hasIt) {
+                            if (!selected) {
+                                already.push(hash);
+                                select.item.push(item);
                             }
-                        });
-                        ngModel.$setViewValue(selected);
-                        select.item = founds;
+                        } else {
+                            if (selected) {
+                                already.remove(hash);
+                                select.item.remove(item);
+                            }
+                        }
+                        ngModel.$setViewValue(already);
                     };
 
                     select.collectActive = function () {
@@ -1327,10 +1335,17 @@
                         }
                         select.multipleSelection = {};
                         select.collectActive();
+
+                        var attachTo = element.parents('md-content:first');
+
+                        if (!attachTo.length) {
+                            attachTo = element.parents('.fixed-height:first');
+                        }
+
                         $mdAsimpleDialog.show({
                             template: underscoreTemplate.get('form/dialog/select.html')({select: select}),
                             targetEvent: $event,
-                            parent: element.parents('md-content:first'),
+                            parent: attachTo,
                             onBeforeHide: function (dialogEl, options) {
                                 $(window).off('resize', options.resize);
                                 dialogEl.removeClass('md-aselect-in');
@@ -1348,8 +1363,8 @@
                                             parent = options.parent,
                                             parentNode = parent.get(0),
                                             parentRect = parentNode.getBoundingClientRect(),
-                                            paddingTop = parseInt(parent.css('padding-top'), 10),
-                                            paddingBottom = parseInt(parent.css('padding-bottom'), 10),
+                                            paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
+                                            paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
                                             parentHeight = options.parent.height(),
                                             scrollElement = dialogEl.find('md-content'),
                                             scrollElementNode = scrollElement.get(0),
@@ -1373,7 +1388,7 @@
                                             dialogEl.css({
                                                 top: top,
                                                 left: targetOffset.left
-                                            }).height(options.parent.height() - paddingBottom + paddingTop);
+                                            }).height(options.parent.height() - (paddingBottom + paddingTop));
                                             if (active.length && !select.multiple) {
                                                 buffer = scrollElement.height() / 2;
                                                 scrollElementNode.scrollTop = activeOffset.top + active.height() / 2 - buffer;

@@ -1,9 +1,5 @@
 /* All material design related adjustments, for now */
 
-.svg-icon-small {
-    width: 24px;
-    height: 24px;
-}
 .md-asimple-dialog-option {
     cursor: pointer;
 }
@@ -19,8 +15,6 @@
 .as-md-input-container .md-input {
     position: relative;
 }
-md-content.md-padding.has-search {
-}
 .select-search-input input[type="search"] {
     border: none;
     padding: 12px;
@@ -32,10 +26,6 @@ md-content.md-padding.has-search {
     padding-right: 36px;
 }
 .select-search {
-    /*position: absolute;
-    background: white;
-    width: 100%;
-    z-index: 11;*/
     background: white;
     width: 100%;
     z-index: 11;
@@ -74,4 +64,35 @@ span.select-item-multiple {
     padding: 2px;
     padding-left: 6px;
     padding-right: 6px;
+}
+md-item-content md-checkbox {
+    margin: 0px;
+}
+.button-transparent {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    position: relative;
+    outline: none;
+    border: 0;
+    padding: 6px;
+    margin: 0;
+    background: transparent;
+    white-space: nowrap;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-style: inherit;
+    font-variant: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.md-input {
+    border-style: solid;
 }

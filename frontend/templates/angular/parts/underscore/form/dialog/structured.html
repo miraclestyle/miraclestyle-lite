@@ -1,9 +1,33 @@
 <div fit-in-dialog>
-    <div ng-include="config.ui.specifics.templateToolbarUrl || 'entity/dialog/toolbar.html'"></div>
+
     <form name="container.form" <% if (config.ui.specifics.remote) { %>
         ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}"
         <% } else {%>ng-submit="save()"
             <% } %>>
+               <div ng-include="config.ui.specifics.templateToolbarUrl"></div>
+                <md-toolbar ng-if="!config.ui.specifics.templateToolbarUrl">
+                    <div class="md-toolbar-tools">
+                      <div layout="row" flex class="fill-height">
+                        <div layout="row" class="md-toolbar-item md-tools">
+                          <span ng-include="config.ui.specifics.templateToolbarLeft"></span>
+                          <md-button ng-if="!config.ui.specifics.templateToolbarLeft" type="button" loading ng-click="close()">
+                            <div class="icon-navigation-grey600 icon-navigation-grey600-ic_close_grey600_24dp"></div>
+                          </md-button>
+                        </div>
+                        <div class="md-toolbar-item md-breadcrumb">
+                          <span style="display: inline-block;" >{{title}}</span>
+                        </div>
+                        <span flex></span>
+                        <div class="md-toolbar-item md-tools" layout="row">
+                          <span ng-include="config.ui.specifics.templateToolbarRight"></span>
+                          <md-button ng-if="!config.ui.specifics.templateToolbarRight" <% if (config.ui.specifics.remote) { %>
+                                 submit-if-files-no-complete="noComplete()" submit-if-files="save()"
+                                <% } else { %>type="submit"
+                                    <% } %>loading="container.form.$pristine">Save</md-button>
+                        </div>
+                      </div>
+                    </div>
+                </md-toolbar>
                 <% if (config.ui.specifics.remote) { %>
                     <input type="hidden" compatibility-maker="sendRootArgs" name="__body__" />
                     <% } %>
@@ -13,9 +37,7 @@
                                     <div accordion-on-open="accordions">
                                         <accordion close-others="accordions.closeOthers">
                                             <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                                                <md-content>
                                                     <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
-                                                </md-content>
                                             </accordion-group>
                                         </accordion>
                                     </div>

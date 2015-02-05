@@ -3019,12 +3019,7 @@ md-content {
     overflow-x: auto;
     overflow-y: hidden; }
   md-content.md-padding {
-    padding: 8px; }
-
-@media (min-width: 600px) {
-  md-content.md-padding {
     padding: 16px; }
- }
 
 .as-md-input-container {
   display: -webkit-flex;
@@ -3187,11 +3182,8 @@ md-asimple-dialog {
     -webkit-order: 1;
         -ms-flex-order: 1;
             order: 1;
-    padding: 24px;
     overflow: auto;
     -webkit-overflow-scrolling: touch; }
-    md-asimple-dialog md-content *:first-child {
-      margin-top: 0px; }
   md-asimple-dialog .md-actions {
     display: -webkit-flex;
     display: -ms-flexbox;
@@ -5557,8 +5549,8 @@ md-toolbar {
           flex-direction: column;
   position: relative;
   z-index: 2;
-  font-size: 1.3em;
-  min-height: 64px;
+  font-size: 20px;
+  min-height: 54px;
   width: 100%;
   box-shadow: 0px 2px 5px 0 rgba(0, 0, 0, 0.26); }
   md-toolbar.md-tall {
@@ -5574,7 +5566,7 @@ md-toolbar {
       min-height: 48px;
       max-height: 48px; }
   md-toolbar .md-indent {
-    margin-left: 64px; }
+    margin-left: 54px; }
 
 .md-toolbar-tools {
   display: -webkit-flex;
@@ -5587,8 +5579,8 @@ md-toolbar {
       -ms-flex-direction: row;
           flex-direction: row;
   width: 100%;
-  height: 64px;
-  max-height: 64px;
+  height: 54px;
+  max-height: 54px;
   font-size: inherit;
   font-weight: normal;
   padding: 0 16px;

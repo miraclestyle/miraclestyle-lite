@@ -1,6 +1,6 @@
 <div fit-in-dialog>
-  <div ng-include="config.templateToolbarUrl || 'entity/dialog/toolbar.html'"></div>
   <form name="container.form" ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}">
+   <div ng-include="config.templateToolbarUrl || 'entity/dialog/toolbar.html'"></div>
     <input type="hidden" compatibility-maker="args" name="__body__" />
     <div class="modal-body fixed-height overflow-hidden has-toolbar">
       <div class="fixed-height overflow-y has-toolbar">

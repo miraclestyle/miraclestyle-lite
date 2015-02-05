@@ -45,7 +45,8 @@
 }
 
 .panel-body {
-  padding: 10px;
+  padding-top:16px;
+  padding-bottom:16px;
 }
 
 .panel-title {
@@ -72,4 +73,19 @@
 
 .accordion-toggle {
   cursor: pointer;
+}
+
+.accordion-arrow {
+  height: 24px;
+  margin: auto 0 auto auto;
+  speak: none;
+  width: 24px;
+  display: inline-block;
+  transition: transform 0.3s ease-in-out;
+  -webkit-transition: -webkit-transform 0.3s ease-in-out;
+}
+
+.accordion-arrow-toggled {
+  transform: rotate(180deg);
+  -webkit-transform: rotate(180deg);
 }

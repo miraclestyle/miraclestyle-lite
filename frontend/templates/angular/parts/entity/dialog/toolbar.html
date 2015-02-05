@@ -1,15 +1,25 @@
  <md-toolbar>
-    <div class="md-toolbar-tools" ng-click="openMenu()">
+    <div class="md-toolbar-tools">
       <div layout="row" flex class="fill-height">
-        <div class="md-toolbar-item md-breadcrumb">
-          <span style="display: inline-block;" >Angular Material</span>
+        <div layout="row" class="md-toolbar-item md-tools">
+          <span ng-include="config.templateToolbarRight"></span>
+          <button md-ink-ripple ng-if="!config.templateToolbarRight" type="button" ng-show="config.showClose" class="button-transparent" loading ng-click="close()">
+            <div class="icon-navigation-grey600 icon-navigation-grey600-ic_close_grey600_24dp"></div>
+          </button>
         </div>
-        <span flex></span> <!-- use up the empty space -->
+        <div class="md-toolbar-item md-breadcrumb">
+          <span style="display: inline-block;" >{{title}}</span>
+        </div>
+        <span flex></span>
         <div class="md-toolbar-item md-tools" layout="row">
-          <md-button style="position: relative; padding-left: 30px; margin-right: 15px;">
-            <span>View Demo</span>
-          </md-button>
+          <span ng-include="config.templateToolbarRight"></span>
+          <md-button ng-if="!config.templateToolbarRight" loading="container.form.$pristine" submit-if-valid="validateForm()"
+            type="submit">Save</md-button>
+          <span ng-include="config.templateToolbarLeft"></span>
+          <button md-ink-ripple ng-if="!config.templateToolbarLeft" type="button" class="button-transparent" loading>
+            <div class="icon-navigation-grey600 icon-navigation-grey600-ic_more_vert_grey600_24dp"></div>
+          </button>
         </div>
       </div>
     </div>
-  </md-toolbar>
+</md-toolbar>

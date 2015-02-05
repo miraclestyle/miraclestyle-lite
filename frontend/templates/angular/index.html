@@ -30,38 +30,38 @@ This was done for easier maintenance.
     <md-toolbar>
       <h1 class="md-toolbar-tools">
         <a ng-href="/" layout="row" flex>
-          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve" style="
-              width: 40px; height: 40px;">
-            <path d="M 50 0 L 100 14 L 92 80 L 50 100 L 8 80 L 0 14 Z" fill="#b2b2b2"></path>
-            <path d="M 50 5 L 6 18 L 13.5 77 L 50 94 Z" fill="#E42939"></path>
-            <path d="M 50 5 L 94 18 L 86.5 77 L 50 94 Z" fill="#B72833"></path>
-            <path d="M 50 7 L 83 75 L 72 75 L 65 59 L 50 59 L 50 50 L 61 50 L 50 26 Z" fill="#b2b2b2"></path>
-            <path d="M 50 7 L 17 75 L 28 75 L 35 59 L 50 59 L 50 50 L 39 50 L 50 26 Z" fill="#fff"></path>
-          </svg>
-          <div style="line-height:40px; text-indent: 15px;">Material Design</div>
+          <span class="logo">
+              <img src="/client/css/images/logo_480_cut.png" />
+            </span>
         </a>
       </h1>
     </md-toolbar>
     <md-content>
-            <div>
-                <h1 class="fieldset">Explore</h1>
-                <ul class="menu clearfix">
-                   <li ng-show="!currentAccount._is_guest"><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref-active="active" ui-sref="collections">Collections</button></li>
-                   <li><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref-active="active" ui-sref="home">All</button></li>
-                </ul>
-            </div>
+            
+            <md-list>
+              <md-item>
+                  <md-item-content>
+                    <button type="button"
+                              md-ink-ripple
+                              class="main-menu-item md-tile-content block" ui-sref-active="active" ui-sref="collections">Collections</button>
+                  </md-item-content>
+              </md-item>
+              <md-item>
+                  <md-item-content>
+                      <button type="button"
+                          md-ink-ripple
+                          class="main-menu-item md-tile-content block" ui-sref-active="active" ui-sref="home">All</button>
+                  </md-item-content>
+              </md-item>
+            </md-list> 
             
             <div ng-controller="BuyerManagementCtrl" ng-show="!currentAccount._is_guest">
                 <h1 class="fieldset">Buy</h1>
                 <ul ng-show="!currentAccount._is_guest" class="menu clearfix">
-                    <li><button type="button" class="button block" ng-click="manageCollection()">Collections</button></li>
-                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref-active="active" ui-sref="buy-carts">Carts</button></li>
-                    <li><button type="button" class="button block" main-menu-toggler class="button block" ui-sref-active="active" ui-sref="buy-orders">Orders</button></li>
-                    <li><button type="button" class="button block" ng-click="settings()">Settings</button></li>
+                    <li><button type="button" class="md-menu-item block" ng-click="manageCollection()">Collections</button></li>
+                    <li><button type="button" class="md-menu-item block" md-ink-ripple class="md-menu-item block" ui-sref-active="active" ui-sref="buy-carts">Carts</button></li>
+                    <li><button type="button" class="md-menu-item block" md-ink-ripple class="md-menu-item block" ui-sref-active="active" ui-sref="buy-orders">Orders</button></li>
+                    <li><button type="button" class="md-menu-item block" ng-click="settings()">Settings</button></li>
                 </ul>
             </div>
             
@@ -69,32 +69,32 @@ This was done for easier maintenance.
                 <h1 class="fieldset">Sell</h1>
                 <ul class="menu clearfix">
                    <li><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref-active="active" ui-sref="sell-catalogs">Catalogs</button></li>
+                            md-ink-ripple
+                            class="md-menu-item block" ui-sref-active="active" ui-sref="sell-catalogs">Catalogs</button></li>
                     <li><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref-active="active" ui-sref="sell-orders">Orders</button></li>
+                            md-ink-ripple
+                            class="md-menu-item block" ui-sref-active="active" ui-sref="sell-orders">Orders</button></li>
                      <li><button type="button"
-                            class="button block" ng-click="settings()">Settings</button></li>
+                            class="md-menu-item block" ng-click="settings()">Settings</button></li>
                 </ul>
             </div>
             
             <h1 class="fieldset">Account</h1>
             <ul ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest" class="menu clearfix">
-                <li><button type="button" class="button block" ng-click="logout()">Logout</button></li>
-                <li><button type="button" class="button block" ng-click="settings()">Settings</button></li>
+                <li><button type="button" class="md-menu-item block" ng-click="logout()">Logout</button></li>
+                <li><button type="button" class="md-menu-item block" ng-click="settings()">Settings</button></li>
             </ul>
           
             <ul ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest" class="menu clearfix">
-                <li><button ng-click="login(1)" type="button" class="button block">Login with Google</button></li>
+                <li><button ng-click="login(1)" type="button" class="md-menu-item block">Login with Google</button></li>
             </ul>
             <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
                 <h1 class="fieldset">Administration</h1>
                 <ul class="menu clearfix">
                      <li ng-repeat="item in GLOBAL_CONFIG.admin.menu">
-                         <button type="button" main-menu-toggler
+                         <button type="button" md-ink-ripple
                                 ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" 
-                                ui-sref-active="active" class="button block" ng-bind="item.name"></button></li>
+                                ui-sref-active="active" class="md-menu-item block" ng-bind="item.name"></button></li>
                 </ul>
             </div>
             
@@ -102,69 +102,67 @@ This was done for easier maintenance.
                 <h1 class="fieldset">Support</h1>
                 <ul class="menu clearfix">
                    <li><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref="about">About</button></li>
+                            md-ink-ripple
+                            class="md-menu-item block" ui-sref="about">About</button></li>
                     <li><button type="button"
                             ng-click="beginTour()" 
-                            class="button block">Tour</button></li>
+                            class="md-menu-item block">Tour</button></li>
                     <li><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref="terms">Privacy &amp; Terms</button></li>
+                            md-ink-ripple
+                            class="md-menu-item block" ui-sref="terms">Privacy &amp; Terms</button></li>
                     <li><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref="trademark">Copyright &amp; Trademark</button></li>
+                            md-ink-ripple
+                            class="md-menu-item block" ui-sref="trademark">Copyright &amp; Trademark</button></li>
                      <li><button type="button"
-                            main-menu-toggler
-                            class="button block" ui-sref="support">Support</button></li>
+                            md-ink-ripple
+                            class="md-menu-item block" ui-sref="support">Support</button></li>
                 </ul>
             </div>
     </md-content>
   </md-sidenav>
 
-      <div layout="column" layout-fill tabIndex="-1" role="main">
-        <md-toolbar>
-          <div class="md-toolbar-tools" ng-click="openMenu()">
-            <button class="menu-icon" aria-label="Toggle Menu">
-              Menu
-            </button>
-
-            <div layout="row" flex class="fill-height">
-              <div class="md-toolbar-item md-breadcrumb">
-                <span style="display: inline-block;">Angular Material</span>
-              </div>
-
-              <span flex></span> <!-- use up the empty space -->
-
-              <div class="md-toolbar-item md-tools" layout="row">
-               
-              </div>
-            </div>
+  <div layout="column" layout-fill tabIndex="-1" role="main">
+    <md-toolbar>
+      <div class="md-toolbar-tools" ng-click="openMenu()">
+        <div layout="row" flex class="fill-height">
+          <div class="md-toolbar-item md-breadcrumb">
+            <span class="logo">
+              <img src="/client/css/images/logo_480_cut.png" />
+            </span>
           </div>
-        </md-toolbar>
-        <md-content ui-view md-scroll-y flex class="md-padding"></md-content>
+
+          <span flex></span> <!-- use up the empty space -->
+
+          <div class="md-toolbar-item md-tools" layout="row">
+           
+          </div>
+        </div>
       </div>
-    <script type="text/javascript" src="/_ah/channel/jsapi"></script>
-    {# 
-        Compile all templates based on the settings.py
-    #}
-    {% for tpl in settings.ANGULAR_TEMPLATES %}
-    <script id="{{tpl[0]}}" type="{% if len(tpl) > 2 %}{{tpl[2]}}{% else %}text/ng-template{% endif %}">{% if not len(tpl) > 1 %}{{angular_include_template(tpl[0])|safe}}{% else %}{{angular_include_template(tpl[1])|safe}}{% endif %}</script>
-    {% endfor %}
-     
-    {% for js in settings.ANGULAR_JS_PATHS %}
-    <script type="text/javascript" src="{{static_dir('js/%s' % js)}}"></script>
-    {% endfor %}
-    
-    <!-- angular globals -->
-    {% for g in settings.ANGULAR_GLOBAL_JS_PATHS %}
-    <script type="text/javascript" src="{{static_dir('js/%s.js' % g)}}"></script>
-    {% endfor %}
+    </md-toolbar>
+    <md-content ui-view md-scroll-y flex class="md-padding"></md-content>
+  </div>
+  <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+  {# 
+      Compile all templates based on the settings.py
+  #}
+  {% for tpl in settings.ANGULAR_TEMPLATES %}
+  <script id="{{tpl[0]}}" type="{% if len(tpl) > 2 %}{{tpl[2]}}{% else %}text/ng-template{% endif %}">{% if not len(tpl) > 1 %}{{angular_include_template(tpl[0])|safe}}{% else %}{{angular_include_template(tpl[1])|safe}}{% endif %}</script>
+  {% endfor %}
+   
+  {% for js in settings.ANGULAR_JS_PATHS %}
+  <script type="text/javascript" src="{{static_dir('js/%s' % js)}}"></script>
+  {% endfor %}
   
-    {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
-    <script type="text/javascript" src="{{static_dir('js/components/%s.js' % module)}}"></script>
-    {% endfor %}
-    
-    <script type="text/javascript" src="{{static_dir('js/init.js')}}"></script>
+  <!-- angular globals -->
+  {% for g in settings.ANGULAR_GLOBAL_JS_PATHS %}
+  <script type="text/javascript" src="{{static_dir('js/%s.js' % g)}}"></script>
+  {% endfor %}
+
+  {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
+  <script type="text/javascript" src="{{static_dir('js/components/%s.js' % module)}}"></script>
+  {% endfor %}
+  
+  <script type="text/javascript" src="{{static_dir('js/init.js')}}"></script>
     
   </body> 
 </html>

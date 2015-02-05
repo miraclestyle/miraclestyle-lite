@@ -1,10 +1,8 @@
 <div accordion-on-open="accordions">
     <accordion close-others="accordions.closeOthers">
         <accordion-group ng-if="formBuilder[$index].length || accordion.include" ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-            <md-content>
                 <div ng-if="accordion.include" ng-include="accordion.include"></div>
                 <div ng-if="!accordion.include" monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
-            </md-content>
         </accordion-group>
     </accordion>
 </div>

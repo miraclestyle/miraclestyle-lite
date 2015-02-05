@@ -5,9 +5,9 @@
     <span class="fieldset-text"><%= config.ui.compiled.label %></span>
     <% if (config.repeated) { %>
     <span class="fieldset-button">
-      <button loading="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.create()">
+      <md-button loading="!<%= config.ui.writableCompiled %>" type="button" ng-click="config.ui.specifics.create()">
        <%=config.ui.specifics.addText %>
-      </button>
+      </md-button>
     </span>
     <% } %>
   </h2>
@@ -16,17 +16,15 @@
 
 <div class="clearfix buttons">
   <div class="pull-right">
-    <button loading="!<%= config.ui.writableCompiled %>" type="button" class="button" ng-click="config.ui.specifics.create()">
+    <md-button loading="!<%= config.ui.writableCompiled %>" type="button" ng-click="config.ui.specifics.create()">
       <%=config.ui.specifics.addText %>
-    </button>
+    </md-button>
   </div>
 </div>
  
 <% } %>
 
 <% if (config.repeated) { %>
-
-
      <div <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
                  ui-sortable="config.ui.specifics.sortableOptions" 
                  <% } %> 
@@ -46,9 +44,9 @@
  
           </div>
           <div class="item-right list-actions">
-              <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-              <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
-              <a ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable" ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
+              <md-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button">Remove</md-button>
+              <md-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button">Edit</md-button>
+              <md-button ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable" ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="sort-handle">Sort</md-button>
           </div>
         </div>
     </div>
