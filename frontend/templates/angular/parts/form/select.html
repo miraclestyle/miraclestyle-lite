@@ -1,5 +1,18 @@
 <div ng-click="select.open($event)" md-ink-ripple class="md-input clearfix md-menu-item">
-    <div class="selected-item">{{select.selected()}}</div>
+    <div class="selected-item">
+        <span ng-if="select.item && !select.multiple">
+            <span class="selected-item">{{select.view(select.item)}}</span>
+        </span>
+
+        <span ng-if="select.item && select.multiple">
+            <span class="select-item-multiple" ng-repeat="it in select.item">{{select.view(it)}}</span>
+        </span>
+        
+        <span ng-if="!select.item">
+            <span class="select-item-placeholder">{{select.placeholder}}</span>
+        </span>
+
+    </div>
     <div class="select-icon">
     <div class="icon-navigation-grey600 icon-navigation-grey600-ic_arrow_drop_down_grey600_24dp"></div>
     </div>

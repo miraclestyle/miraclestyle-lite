@@ -1,4 +1,5 @@
 /* All material design related adjustments, for now */
+
 .svg-icon-small {
     width: 24px;
     height: 24px;
@@ -7,19 +8,19 @@
     cursor: pointer;
 }
 .selected-item {
-    float: left;
+    padding-right: 30px;
+    min-height: 26px;
 }
 .select-icon {
-    float: right;
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
 }
 .as-md-input-container .md-input {
     position: relative;
 }
-
 md-content.md-padding.has-search {
-    margin-top:51px;
 }
-
 .select-search-input input[type="search"] {
     border: none;
     padding: 12px;
@@ -27,34 +28,50 @@ md-content.md-padding.has-search {
     display: block;
     box-sizing: border-box;
     -webkit-box-sizing: border-box;
-    padding-left:36px;
-    padding-right:36px;
-
+    padding-left: 36px;
+    padding-right: 36px;
 }
-
 .select-search {
-    position: absolute;
+    /*position: absolute;
+    background: white;
+    width: 100%;
+    z-index: 11;*/
     background: white;
     width: 100%;
     z-index: 11;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-height: 44px;
 }
-
 .select-search md-input-container {
-    padding-bottom:0px;
+    padding-bottom: 0px;
 }
-
 .select-search-cancel-icon {
     position: absolute;
-    right: 6px;
-    top: 10px;
+    right: 10px;
+    top: 11px;
 }
-
 .select-search-search-icon {
     position: absolute;
-    left: 6px;
-    top: 10px;
+    left: 10px;
+    top: 11px;
 }
-
 .md-item-active md-item-content {
-    background:#eee;
+    background: #eee;
+}
+span.select-item-multiple {
+    display: inline-block;
+    background: #EEE;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding: 2px;
+    padding-left: 6px;
+    padding-right: 6px;
 }

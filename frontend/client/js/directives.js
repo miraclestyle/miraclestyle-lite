@@ -1193,7 +1193,7 @@
             };
         })
         .directive('mdAselect', function ($mdAsimpleDialog, $mdTheming,
-            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, helpers) {
+            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers) {
             return {
                 replace: true,
                 transclude: true,
@@ -1206,16 +1206,21 @@
                         view = scope.$eval(attrs.view),
                         search = scope.$eval(attrs.search),
                         multiple = scope.$eval(attrs.multiple),
+                        placeholder = attrs.placeholder,
                         select = {},
                         timeout;
                     $mdTheming(element);
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
+                    select.placeholder = placeholder;
                     select.loading = false;
                     select.multiple = multiple;
                     select.items = [];
                     select.find = function (value) {
+                        if (value === null) {
+                            return undefined;
+                        }
                         var active,
                             missing,
                             get = function (val) {
@@ -1233,11 +1238,14 @@
                             };
                         if (select.multiple) {
                             missing = [];
+                            active = [];
                             if (value && value.length) {
                                 angular.forEach(value, function (val) {
-                                    active = get(val);
-                                    if (angular.isUndefined(active)) {
+                                    var gets = get(val);
+                                    if (angular.isUndefined(gets)) {
                                         missing.push(val);
+                                    } else {
+                                        active.push(gets);
                                     }
                                 });
                             }
@@ -1271,22 +1279,8 @@
                         }
                         return ngModel.$modelValue === hash;
                     };
-                    select.selected = function () {
-                        var item = select.item;
-                        if (!item) {
-                            return attrs.placeholder;
-                        }
-                        if (angular.isArray(item)) {
-                            var out = [];
-                            angular.forEach(item, function (it) {
-                                out.push(it.name);
-                            });
-                            return out.join(', ');
-                        }
-                        return angular.isObject(item) ? item.name : item;
-                    };
                     select.anyChecks = function () {
-                        return ((select.item && select.item.length) || _.some(select.multipleSelection));
+                        return _.some(select.multipleSelection);
                     };
                     select.multipleSelection = {};
                     select.multipleSelect = function () {
@@ -1301,7 +1295,6 @@
                         });
                         ngModel.$setViewValue(selected);
                         select.item = founds;
-                        select.close();
                     };
 
                     select.collectActive = function () {
@@ -1329,6 +1322,10 @@
                         if (element.attr('disabled')) {
                             return;
                         }
+                        if (select.search) {
+                            select.search.query = {};
+                        }
+                        select.multipleSelection = {};
                         select.collectActive();
                         $mdAsimpleDialog.show({
                             template: underscoreTemplate.get('form/dialog/select.html')({select: select}),
@@ -1377,7 +1374,7 @@
                                                 top: top,
                                                 left: targetOffset.left
                                             }).height(options.parent.height() - paddingBottom + paddingTop);
-                                            if (active.length) {
+                                            if (active.length && !select.multiple) {
                                                 buffer = scrollElement.height() / 2;
                                                 scrollElementNode.scrollTop = activeOffset.top + active.height() / 2 - buffer;
                                                 spaceAvailable = {
@@ -1428,59 +1425,47 @@
 
                                     dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
                                         Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
-                                        Math.min(target.height() / dialogEl.height(), 1.0) + ')');
+                                        Math.min(target.height() / dialogEl.height(), 1.0) + ')')
+                                        .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
+                                            if (ev.target === dialogEl[0]) {
+                                                select.opened = true;
+                                                if (select.search) {
+                                                    dialogEl.find('input[type="search"]').focus();
+                                                }
+                                            }
+                                        });
                                     $$rAF(function () {
                                         dialogEl.addClass('transition-in');
                                         dialogEl.css($mdConstant.CSS.TRANSFORM, '');
                                     });
 
-                                    dialogEl.on($mdConstant.CSS.TRANSITIONEND, function (ev) {
-                                        if (ev.target === dialogEl[0] && select.search) {
-                                            dialogEl.find('input[type="search"]').focus();
-                                        }
-                                    });
-
                                 };
 
-                                $$rAF(function () {
-                                    $$rAF(animateSelect);
-                                });
+                                $$rAF(animateSelect);
                             },
                             controller: function ($scope) {
-                                $scope.select = select;
                                 select.close = function () {
                                     $mdAsimpleDialog.hide().then(function () {
-                                        select.multipleSelection = {};
-                                        if (select.search) {
-                                            select.search.query = {};
-                                        }
                                         select.opened = false;
                                     });
                                 };
+                                $scope.select = select;
                             }
                         });
                     };
                     select.view = view;
                     if (!view) {
                         select.view = function (item) {
-                            if (angular.isArray(item)) {
-                                var out = [];
-                                angular.forEach(item, function (it) {
-                                    out.push(it.name);
-                                });
-                                return out.join(", ");
-                            }
                             return angular.isObject(item) ? item.name : item;
                         };
                     }
-                    scope.select = select;
                     ngModel.$formatters.push(function (value) {
                         select.item = select.find(value);
                         return value;
                     });
 
                     select.getFindTerm = function () {
-                        return helpers.getProperty(select.search.query, select.search.filterProp);
+                        return $parse(select.search.filterProp)(select.search.query);
                     };
 
                     if (search) {
@@ -1497,6 +1482,10 @@
                                         select.search.find(term);
                                     }, select.search.delay);
                                 }
+
+                                $timeout(function () {
+                                    $(window).triggerHandler('resize');
+                                });
                             }
                         };
                         $.extend(select.search, search);
@@ -1520,6 +1509,8 @@
                             }
                         }
                     });
+
+                    scope.select = select;
                 }
             };
         });

@@ -22,7 +22,7 @@
                 ng-repeat="item in select.items"
                 ng-show="select.isChecked(item)">
                 <md-item-content tabindex="{{$index + 2}}">
-                    <md-checkbox ng-model="select.multipleSelection[item.key]" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                    <md-checkbox ng-model="select.multipleSelection[item.key]" ng-change="select.multipleSelect()" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
                        <span ng-bind-html="select.view(item)"></span>
                     </md-checkbox>
                 </md-item-content>
@@ -34,7 +34,7 @@
                 ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                 ng-show="!select.isChecked(item)">
                 <md-item-content tabindex="{{$index + 2}}">
-                    <md-checkbox ng-model="select.multipleSelection[item.key]" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                    <md-checkbox ng-model="select.multipleSelection[item.key]" ng-change="select.multipleSelect()" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
                        <span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span>
                     </md-checkbox>
                 </md-item-content>
@@ -52,7 +52,8 @@
             <% } %>
         </md-list>
     </md-content>
-    <% if (select.multiple) { %>
+    <!-- for now its hidden -->
+    <% if (select.multiple && false) { %>
     <div class="md-actions" layout="row">
         <md-button ng-click="select.close()">
          Cancel
