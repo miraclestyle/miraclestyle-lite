@@ -1,0 +1,28 @@
+<md-asimple-dialog>
+    <md-content>
+        <ul class="list">
+            <li ng-show="parent.args.ui.rule.action.sudo.executable" class="list-row list-row--is-clickable">
+                <div class="list-content-tile list-content-tile--one-line">
+                    <button md-ink-ripple loading type="button" ng-click="parent.actions.sudo()" class="button-transparent md-tile-content">Administer</button>
+                </div>
+            </li>
+            <li ng-show="args.ui.rule.action.publish.executable && args.action_id != 'create'" class="list-row list-row--is-clickable">
+                <div class="list-content-tile list-content-tile--one-line">
+                    <button md-ink-ripple loading type="button" ng-click="actions.publish()" class="button-transparent md-tile-content">Publish</button>
+                </div>
+            </li>
+
+            <li ng-show="args.ui.rule.action.discontinue.executable" class="list-row list-row--is-clickable">
+                <div class="list-content-tile list-content-tile--one-line">
+                    <button md-ink-ripple loading type="button" ng-click="actions.discontinue()" class="button-transparent md-tile-content">Discontinue</button>
+                </div>
+            </li>
+
+            <li ng-show="args.ui.rule.action.catalog_duplicate.executable" class="list-row list-row--is-clickable">
+                <div class="list-content-tile list-content-tile--one-line">
+                    <button md-ink-ripple loading type="button" ng-click="actions.duplicate()" class="button-transparent md-tile-content">Duplicate</button>
+                </div>
+            </li>
+        </ul>
+    </md-content>
+</md-asimple-dialog>

@@ -27,7 +27,7 @@
                         config = {
                             kind: this.kind,
                             templateBodyUrl: 'account/dialog/manage_body.html',
-                            templateFooterUrl: 'account/dialog/manage_footer.html',
+                            templateActions: 'account/dialog/manage_actions.html',
                             argumentLoader: function ($scope) {
                                 var disassociate = [],
                                     entity = $scope.entity,

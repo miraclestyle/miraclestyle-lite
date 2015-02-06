@@ -1,91 +1,76 @@
 .panel {
-  margin-bottom: 0;
-  /*overflow: hidden;*/
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    margin-bottom: 0;
+    /*overflow: hidden;*/
+    
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
-
 .panel-default > .panel-heading {
-  color: #333333;
-  background-color: #FFFFFF;
+    color: #333333;
+    background-color: #FFFFFF;
 }
-
 .panel .panel-heading {
-  border-bottom: 0;
+    border-bottom: 0;
 }
-
 .panel .panel-footer {
-  border-top: 0;
+    border-top: 0;
 }
-
 .panel-is-not-open .panel-title > a:hover {
-  background-color: #F9F9F9;
+    background-color: #F9F9F9;
 }
-
 .panel-is-not-open .panel-title > a:active {
-  background-color: #F9F9F9;
+    background-color: #F9F9F9;
 }
-
 .panel-is-open .panel-title > a {
-  box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.26);
 }
-
 .panel-is-open .panel-title > a:hover {
-  background-color: #F9F9F9;
+    background-color: #F9F9F9;
 }
-
 .panel-is-open .panel-title > a:active {
-  background-color: #F9F9F9;
+    background-color: #F9F9F9;
 }
-
-.panel-heading {
+.panel-heading {} .panel-heading > .dropdown .dropdown-toggle {
+    color: inherit;
 }
-
-.panel-heading > .dropdown .dropdown-toggle {
-  color: inherit;
-}
-
 .panel-body {
-  padding-top:16px;
-  padding-bottom:16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
 }
-
 .panel-title {
-  margin-top: 0;
-  margin-bottom: 0;
-  color: inherit;
-  font-size: 24px;
-  line-height: 28px;
-  color: #777777;
+    margin-top: 0;
+    margin-bottom: 0;
+    color: inherit;
+    font-size: 24px;
+    line-height: 28px;
+    color: #777777;
 }
-
 .panel-title > a {
-  color: inherit;
-  display: block;
-  padding: 10px 16px;
-  text-align: center;
+    color: inherit;
+    display: block;
+    padding: 10px 16px;
+    text-align: center;
 }
-
 .panel-scroller {
-  max-height: 200px;
-  overflow-y: auto;
-  overflow-x: hidden;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
-
 .accordion-toggle {
-  cursor: pointer;
+    cursor: pointer;
 }
-
 .accordion-arrow {
-  height: 24px;
-  margin: auto 0 auto auto;
-  speak: none;
-  width: 24px;
-  display: inline-block;
-  transition: transform 0.3s ease-in-out;
-  -webkit-transition: -webkit-transform 0.3s ease-in-out;
+    height: 24px;
+    speak: none;
+    width: 24px;
+    display: block;
+    transition: transform 0.3s ease-in-out;
+    -webkit-transition: -webkit-transform 0.3s ease-in-out;
+    float: right;
 }
-
+.accordion-title {
+    float: left;
+}
 .accordion-arrow-toggled {
-  transform: rotate(180deg);
-  -webkit-transform: rotate(180deg);
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
 }

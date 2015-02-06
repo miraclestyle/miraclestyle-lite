@@ -114,12 +114,12 @@ ANGULAR_TEMPLATES = (
   ('misc/history.html',),
   ('misc/dialog/history_view_body.html',),
   ('misc/dialog/history_view_footer.html',),
+  ('misc/dropdown.html',),
 
 
   ('entity/dialog/editor.html',),
   ('entity/dialog/toolbar.html',),
   ('entity/dialog/editor_default_body.html',),
-  ('entity/dialog/editor_default_footer.html',),
   
   ('underscore/form/select.html',),
   ('underscore/form/select_async.html',),
@@ -157,7 +157,7 @@ ANGULAR_TEMPLATES = (
   
   # account
   ('account/dialog/manage_body.html',),
-  ('account/dialog/manage_footer.html',),
+  ('account/dialog/manage_actions.html',),
   ('account/dialog/administer.html',),
   
   # seller
@@ -183,7 +183,7 @@ ANGULAR_TEMPLATES = (
 
   # catalog
   ('catalog/quick_info.html',),
-  ('catalog/dialog/manage_footer.html',),
+  ('catalog/dialog/manage_actions.html',),
   ('catalog/dialog/administer.html',),
   ('catalog/dialog/products.html',),
   ('catalog/dialog/view.html',),

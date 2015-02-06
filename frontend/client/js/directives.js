@@ -1192,6 +1192,94 @@
                 }
             };
         })
+        .directive('mdAdropdown', function ($mdAsimpleDialog, $mdTheming,
+            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers) {
+            return {
+                replace: true,
+                transclude: true,
+                templateUrl: 'misc/dropdown.html',
+                scope: true,
+                link: function (scope, element, attrs) {
+                    var dropdown = {},
+                        template = scope.$eval(attrs.template);
+                    if (!template) {
+                        return;
+                    }
+                    dropdown.open = function ($event) {
+                        $mdAsimpleDialog.show({
+                            templateUrl: template,
+                            targetEvent: $event,
+                            parent: element.parents(attrs.parent),
+                            onBeforeHide: function (dialogEl, options) {
+                                $(window).off('resize', options.resize);
+                                dialogEl.removeClass('md-aselect-in');
+                            },
+                            onBeforeShow: function (dialogEl, options) {
+                                var animateSelect = function () {
+                                    var target = element;
+                                    options.resize = function () {
+                                        var targetOffset = target.offset(),
+                                            targetNode = target.get(0),
+                                            targetRect = targetNode.getBoundingClientRect(),
+                                            parent = options.parent,
+                                            parentNode = parent.get(0),
+                                            parentRect = parentNode.getBoundingClientRect(),
+                                            paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
+                                            paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
+                                            newTop = targetOffset.top,
+                                            newLeft = (targetOffset.left - (dialogEl.width() - target.outerWidth())) - 12,
+                                            height = parent.height() - (paddingBottom + paddingTop);
+                                        newTop = targetOffset.top;
+                                        if (newTop < 16) {
+                                            newTop = 16;
+                                        }
+                                        if (newLeft < 16) {
+                                            newLeft = 16;
+                                        }
+                                        dialogEl.css({
+                                            top: newTop,
+                                            left: newLeft
+                                        });
+                                        if (dialogEl.height() > height) {
+                                            dialogEl.height(height);
+                                        }
+                                    };
+                                    options.resize();
+                                    $(window).on('resize', options.resize);
+
+                                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
+                                        Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
+                                        Math.min(target.height() / dialogEl.height(), 1.0) + ')')
+                                        .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
+                                            if (ev.target === dialogEl[0]) {
+                                                dropdown.opened = true;
+                                            }
+                                        });
+                                    $$rAF(function () {
+                                        dialogEl.addClass('transition-in');
+                                        dialogEl.css($mdConstant.CSS.TRANSFORM, '');
+                                    });
+
+                                };
+
+                                $$rAF(animateSelect);
+
+                                dialogEl.on('click', dropdown.close);
+                            },
+                            controller: function ($scope) {
+                                $scope.parent = scope;
+                            }
+                        });
+                    };
+                    dropdown.close = function () {
+                        $mdAsimpleDialog.hide().then(function () {
+                            dropdown.opened = false;
+                        });
+                    };
+                    scope.dropdown = dropdown;
+                }
+            };
+        })
         .directive('mdAselect', function ($mdAsimpleDialog, $mdTheming,
             $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers) {
             return {
@@ -1382,7 +1470,7 @@
                                             activeOffset = active.offset();
                                             activeRect = activeNode.getBoundingClientRect();
                                         }
-                                        dialogEl.width(target.outerWidth());
+                                        dialogEl.width(target.width());
                                         if ((dialogEl.height() > parentHeight)
                                                 || (scrollElement.prop('scrollHeight') > parentHeight)) {
                                             dialogEl.css({

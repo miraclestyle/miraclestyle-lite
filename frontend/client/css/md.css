@@ -76,7 +76,6 @@ md-item-content md-checkbox {
     position: relative;
     outline: none;
     border: 0;
-    padding: 6px;
     margin: 0;
     background: transparent;
     white-space: nowrap;
@@ -93,6 +92,27 @@ md-item-content md-checkbox {
     overflow: hidden;
 }
 
+.with-actions .button-transparent {
+    padding:12px;
+    margin:4px;
+}
+
+.md-toolbar-tools.with-actions {
+    padding: 0px;
+}
+
+.md-toolbar-tools.with-left-action {
+    padding-left:0px;
+}
+
+.md-toolbar-tools.with-right-action {
+    padding-right:0px;
+} 
+
 .md-input {
     border-style: solid;
+}
+
+.no-right-actions .md-toolbar-tools{
+    padding-right:16px;
 }

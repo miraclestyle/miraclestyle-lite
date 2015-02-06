@@ -1,9 +1,11 @@
 <div ng-class="{panel: true, 'panel-default' : true, 'panel-is-not-open' : !isOpen, 'panel-is-open' : isOpen}" class="panel panel-default">
   <div class="panel-heading">
     <h4 class="panel-title">
-      <a class="accordion-toggle" ng-click="toggleOpen()" accordion-transclude="heading">
-            <span ng-class="{'text-muted': isDisabled}">{{heading}}</span>
-            <span ng-class="{'accordion-arrow-toggled': isOpen}" class="accordion-arrow"></span>
+      <a class="accordion-toggle clearfix" ng-click="toggleOpen()" accordion-transclude="heading">
+            <span class="accordion-title" ng-class="{'text-muted': isDisabled}">{{heading}}</span>
+            <span ng-class="{'accordion-arrow-toggled': isOpen}" class="accordion-arrow icon-navigation-grey600 icon-navigation-grey600-ic_expand_more_grey600_24dp">
+         
+            </span>
       </a>
     </h4>
   </div>
