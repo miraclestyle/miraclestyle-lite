@@ -805,7 +805,6 @@
                                                             };
                                                         },
                                                         templateFooterUrl: 'catalog/product/dialog/manage_footer.html',
-                                                        addText: 'Add Product',
                                                         getRootArgs: function () {
                                                             // root args is data that gets sent with rpc
                                                             return $scope.args;
@@ -937,7 +936,6 @@
 
                                                             variantOptions.choices = choices;
                                                         },
-                                                        addText: 'Add Product Instance',
                                                         listFields: [{
                                                             label: 'Variant Signature',
                                                             key: 'variant_signature'
@@ -950,7 +948,6 @@
                                             $.extend($scope.fieldProduct.modelclass.contents, {
                                                 ui: {
                                                     specifics: {
-                                                        addText: 'Add Content',
                                                         listFields: [{
                                                             label: 'Title',
                                                             key: 'title'
@@ -969,7 +966,6 @@
                                             $.extend($scope.fieldProduct.modelclass.variants, {
                                                 ui: {
                                                     specifics: {
-                                                        addText: 'Add Variant',
                                                         listFields: [{
                                                             label: 'Name',
                                                             key: 'name'

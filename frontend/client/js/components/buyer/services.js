@@ -23,7 +23,6 @@
                     fields.addresses.ui = {
                         label: false,
                         specifics: {
-                            addText: 'Add Address',
                             listFields: [{
                                 label: 'Address'
                             }],

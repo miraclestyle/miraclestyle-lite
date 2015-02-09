@@ -116,3 +116,7 @@ md-item-content md-checkbox {
 .no-right-actions .md-toolbar-tools{
     padding-right:16px;
 }
+
+.ui-select-highlight {
+    display:inline;
+}

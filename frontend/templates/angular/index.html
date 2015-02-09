@@ -41,11 +41,11 @@ This was done for easier maintenance.
                   <div class="list-subheader">Explore</div>
                   <button type="button"
                               md-ink-ripple
-                              class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="collections">Collections</button>
+                              loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="collections">Collections</button>
 
                   <button type="button"
                               md-ink-ripple
-                              class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="home">All</button>
+                              loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="home">All</button>
 
                 
                   <div ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
@@ -53,14 +53,14 @@ This was done for easier maintenance.
                     <div class="list-subheader">Buy</div>
                      <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="buy-carts">Carts</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="buy-carts">Carts</button>
 
                     <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="buy-orders">Orders</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="buy-orders">Orders</button>
                     <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ng-click="settings()">Settings</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="settings()">Settings</button>
                 </div>
 
 
@@ -69,28 +69,28 @@ This was done for easier maintenance.
                     <div class="list-subheader">Sell</div>
                       <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="sell-catalogs">Catalogs</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="sell-catalogs">Catalogs</button>
 
                     <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="sell-orders">Orders</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="sell-orders">Orders</button>
                     <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ng-click="settings()">Settings</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="settings()">Settings</button>
                 </div>
 
             </div>
 
-            <div ng-controller="SellerManagementCtrl" ng-show="!currentAccount._is_guest">
+            <div ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
                     <div class="list-divider"></div>
                     <div class="list-subheader">Account</div>
                       <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ng-click="logout()">Logout</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="logout()">Logout</button>
 
                     <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ng-click="settings()">Settings</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="settings()">Settings</button>
                 </div>
 
             </div>
@@ -100,7 +100,7 @@ This was done for easier maintenance.
               <div class="list-subheader">Login</div>
               <button type="button"
                                 md-ink-ripple
-                                class="list-row list-row--is-clickable main-menu-item list-content-tile block" ng-click="login(1)">Login with Google</button>
+                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="login(1)">Login with Google</button>
             </div>
              
             <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
@@ -108,7 +108,7 @@ This was done for easier maintenance.
                 <div class="list-subheader">Administration</div>
                 <button type="button"
                           md-ink-ripple
-                          class="list-row list-row--is-clickable main-menu-item list-content-tile block" ng-repeat="item in GLOBAL_CONFIG.admin.menu"
+                          loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-repeat="item in GLOBAL_CONFIG.admin.menu"
                           ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" 
                           ui-sref-active="list-row--is-active" ng-bind="item.name"></button>
             </div>
@@ -118,20 +118,20 @@ This was done for easier maintenance.
                 <div class="list-subheader">Support</div>
                   <button type="button"
                                   md-ink-ripple
-                                  class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref="about">About</button>
+                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="about">About</button>
                   <button type="button"
                                   md-ink-ripple
-                                  class="list-row list-row--is-clickable main-menu-item list-content-tile block">Tour</button>
+                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block">Tour</button>
                   <button type="button"
                                   md-ink-ripple
-                                  class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref="terms">Privacy &amp; Terms</button>
+                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="terms">Privacy &amp; Terms</button>
 
                   <button type="button"
                                   md-ink-ripple
-                                  class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref="trademark">Copyright &amp; Trademark</button>
+                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="trademark">Copyright &amp; Trademark</button>
                   <button type="button"
                                   md-ink-ripple
-                                  class="list-row list-row--is-clickable main-menu-item list-content-tile block" ui-sref="support">Support</button>
+                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="support">Support</button>
             </div>
     </md-content>
   </md-sidenav>

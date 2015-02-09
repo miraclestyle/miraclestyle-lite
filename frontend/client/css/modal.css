@@ -9,7 +9,6 @@
   bottom: 0;
   left: 0;
   z-index: 1040;
-  display: none;
   overflow: hidden;
   background: #FFFFFF;
 }
@@ -39,14 +38,8 @@
   z-index: 1030;
 }
 
-.modal-backdrop.fade {
-  opacity: 0;
-  filter: alpha(opacity=0);
-}
-
-.modal-backdrop.in {
-  opacity: 0.9;
-  filter: alpha(opacity=90);
+.modal-backdrop.opaque {
+  background-color: rgba(0,0,0,0.12);
 }
 
 .modal-body {
@@ -71,7 +64,6 @@
   position: absolute;
   bottom: 0px;
   width: 100%;
-  background: #FFFFFF;
   z-index: 9;
 }
 
@@ -118,7 +110,6 @@
 }
 
 .modal-small, .modal-medium, .modal-large {
-  top: 10%;
   background: none;
   overflow: visible;
 }
@@ -129,9 +120,10 @@
 
 .modal-medium .modal-dialog {
   background: #FFFFFF;
-  -webkit-box-shadow: 1px 1px 6px #333333;
-  box-shadow: 1px 1px 6px #333333;
+  -webkit-box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2);
+  box-shadow:0px 27px 24px 0 rgba(0, 0, 0, 0.2);
   background-clip: padding-box;
+
 }
 
 .modal-medium .modal-body {
@@ -139,7 +131,7 @@
 }
 
 .modal-body-inner-padded {
-  padding: 10px;
+  padding:24px;
 }
 
 .modal-small .modal-dialog {
@@ -148,11 +140,42 @@
 }
 
 .modal-medium .modal-dialog {
-  width: 60%;
-  margin: auto;
+  min-width: 240px;
+  max-width: 80%;
+  max-height: 80%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2);
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  border-radius: 4px;
 }
 
-.modal-large .modal-dialog {
-  width: 60%;
-  margin: auto;
+.md-adialog.modal-medium {
+  -webkit-box-shadow:none;
+  box-shadow:none;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }

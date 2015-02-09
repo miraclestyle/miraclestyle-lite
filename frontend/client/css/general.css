@@ -8,7 +8,7 @@ a.block, .block, button.block {
     width: auto;
     height: 14px;
 }
-.main-menu-item {
+.menu-item {
   position:relative;
   width:100%;
   border:none;
@@ -186,9 +186,6 @@ img.vertical, .vertical {
     background-color: rgba(0, 0, 0, 0.75);
     color: rgba(255, 255, 255, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.75);
-}
-.modal-alert .alert-message, .modal-confirm .confirm-message {
-    padding: 40px;
 }
 .menu-active {
     overflow: hidden;

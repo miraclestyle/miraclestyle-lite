@@ -1,11 +1,7 @@
 <md-asimple-dialog>
     <md-content>
-        <ul class="list">
-            <li ng-show="parent.args.ui.rule.action.sudo.executable" class="list-row list-row--is-clickable">
-                <div class="list-content-tile list-content-tile--one-line">
-                    <button md-ink-ripple loading type="button" ng-click="parent.actions.sudo()" class="button-transparent md-tile-content">Administer</button>
-                </div>
-            </li>
-        </ul>
+        <div class="list">
+            <button ng-show="parent.args.ui.rule.action.sudo.executable" md-ink-ripple loading type="button" ng-click="parent.actions.sudo()" class="list-row list-row--is-clickable menu-item list-content-tile block">Administer</button>
+        </div>
     </md-content>
 </md-asimple-dialog>

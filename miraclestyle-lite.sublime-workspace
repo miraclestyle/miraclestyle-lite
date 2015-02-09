@@ -4,6 +4,478 @@
 		"selected_items":
 		[
 			[
+				"multiple",
+				"multipleSelection"
+			],
+			[
+				"specific",
+				"specifics"
+			],
+			[
+				"selectedI",
+				"selectedIsArray"
+			],
+			[
+				"searchA",
+				"searchArguments"
+			],
+			[
+				"getActionA",
+				"getDefaultActionArguments"
+			],
+			[
+				"underscore",
+				"underscoreTemplate"
+			],
+			[
+				"$$",
+				"$$rAF"
+			],
+			[
+				"dropdown",
+				"dropdownMenu"
+			],
+			[
+				"datepic",
+				"datepickerPopup"
+			],
+			[
+				"isD",
+				"angular.isDate"
+			],
+			[
+				"should",
+				"shouldDisable"
+			],
+			[
+				"steady",
+				"steadyScroll"
+			],
+			[
+				"for",
+				"for	for (…) {…}"
+			],
+			[
+				"property",
+				"proeprty"
+			],
+			[
+				"seller",
+				"seller_reference"
+			],
+			[
+				"true",
+				"True"
+			],
+			[
+				"selectedIS",
+				"selectedIsString"
+			],
+			[
+				"discount",
+				"discount_line"
+			],
+			[
+				"disco",
+				"discount_line"
+			],
+			[
+				"tru",
+				"True"
+			],
+			[
+				"product",
+				"product_categories"
+			],
+			[
+				"SuperStructured",
+				"SuperReferenceStructuredProperty"
+			],
+			[
+				"_root",
+				"_root_admin"
+			],
+			[
+				"copy",
+				"copy_product"
+			],
+			[
+				"cron",
+				"cron_generate_feedback_stats"
+			],
+			[
+				"sor",
+				"sorted_and_sequenced"
+			],
+			[
+				"Ac",
+				"ActionPermission"
+			],
+			[
+				"feed",
+				"feedback_state"
+			],
+			[
+				"feedbac_stat",
+				"feedback_states"
+			],
+			[
+				"reactON",
+				"reactOnStateChange"
+			],
+			[
+				"feedbak",
+				"feedbackField"
+			],
+			[
+				"ship",
+				"shipping_address_reference"
+			],
+			[
+				"bill",
+				"billing_address_reference"
+			],
+			[
+				"variantS",
+				"variantSignatureAsDicts"
+			],
+			[
+				"current",
+				"currentVariation"
+			],
+			[
+				"get",
+				"get_partial_reference_key_path"
+			],
+			[
+				"input",
+				"input_address_reference"
+			],
+			[
+				"_get_K",
+				"_get_key_structure"
+			],
+			[
+				"modif",
+				"modifiy_product_key"
+			],
+			[
+				"modified",
+				"modified_product_key"
+			],
+			[
+				"payment",
+				"payment_method"
+			],
+			[
+				"addres",
+				"addresses"
+			],
+			[
+				"Prop",
+				"PropertyError"
+			],
+			[
+				"yei",
+				"yielder"
+			],
+			[
+				"new_",
+				"new_order_message"
+			],
+			[
+				"curre",
+				"current_values"
+			],
+			[
+				"isDefined",
+				"angular.isUndefined"
+			],
+			[
+				"read_Ar",
+				"read_arguments_path"
+			],
+			[
+				"Va",
+				"ValueError"
+			],
+			[
+				"resolve",
+				"resolve_search_document_field"
+			],
+			[
+				"all",
+				"ALL_IN"
+			],
+			[
+				"Key",
+				"KeyFormatter"
+			],
+			[
+				"PRo",
+				"PropertyError"
+			],
+			[
+				"default",
+				"default_shipping"
+			],
+			[
+				"variant",
+				"variant_options"
+			],
+			[
+				"volume",
+				"volume_uom"
+			],
+			[
+				"formSet",
+				"formSetPristine"
+			],
+			[
+				"ORder",
+				"OrderLine"
+			],
+			[
+				"order",
+				"order_line"
+			],
+			[
+				"filter",
+				"filter	.filter()"
+			],
+			[
+				"tax",
+				"taxes"
+			],
+			[
+				"bases",
+				"basestring"
+			],
+			[
+				"searchAction",
+				"searchActionArguments"
+			],
+			[
+				"steadY",
+				"steadyScroll"
+			],
+			[
+				"produ",
+				"productDetails"
+			],
+			[
+				"Seller",
+				"seller"
+			],
+			[
+				"loaded",
+				"loadedCollection"
+			],
+			[
+				"discont",
+				"discontinue_date"
+			],
+			[
+				"make",
+				"makeFilters"
+			],
+			[
+				"$s",
+				"$scope	AngularJS"
+			],
+			[
+				"_",
+				"_images"
+			],
+			[
+				"trace",
+				"traceback"
+			],
+			[
+				"perpare",
+				"prepare_key"
+			],
+			[
+				"_get_c",
+				"_get_currency_format"
+			],
+			[
+				"SuperRefe",
+				"SuperReferenceStructuredProperty"
+			],
+			[
+				"cover_width",
+				"cover_width_rounded"
+			],
+			[
+				"writable",
+				"writableCompiled"
+			],
+			[
+				"_ac",
+				"_action_permissions"
+			],
+			[
+				"disconi",
+				"discontinue_date"
+			],
+			[
+				"models",
+				"modelsMeta"
+			],
+			[
+				"duplic",
+				"duplicated_child_entity"
+			],
+			[
+				"_prod",
+				"_product_category"
+			],
+			[
+				"message",
+				"messageOrConfig"
+			],
+			[
+				"angular",
+				"angular.bind"
+			],
+			[
+				"_proper",
+				"_property_value"
+			],
+			[
+				"auto_",
+				"auto_now_add"
+			],
+			[
+				"current_",
+				"current_values"
+			],
+			[
+				"generate",
+				"generate_unique_key"
+			],
+			[
+				"value",
+				"value_instance"
+			],
+			[
+				"as_list",
+				"as_list_current_values"
+			],
+			[
+				"Stru",
+				"StructuredProperty"
+			],
+			[
+				"Proper",
+				"PropertyValue"
+			],
+			[
+				"priceta",
+				"pricetag_set"
+			],
+			[
+				"catalog",
+				"catalog_images"
+			],
+			[
+				"_property",
+				"_property_value_by_read_arguments"
+			],
+			[
+				"_B",
+				"_BaseStructuredProperty"
+			],
+			[
+				"_prop",
+				"_property_value_by_read_arguments"
+			],
+			[
+				"tr",
+				"try	Try/Except"
+			],
+			[
+				"supplied",
+				"supplied_key"
+			],
+			[
+				"_property_value",
+				"_property_value_read_arguments"
+			],
+			[
+				"allowed_",
+				"allowed_state"
+			],
+			[
+				"vari",
+				"variantSelection"
+			],
+			[
+				"field",
+				"fieldProduct"
+			],
+			[
+				"varian",
+				"variant_signature"
+			],
+			[
+				"$modal",
+				"$modalInstance"
+			],
+			[
+				"posit",
+				"position"
+			],
+			[
+				"_position",
+				"_position_left"
+			],
+			[
+				"position",
+				"position_left"
+			],
+			[
+				"fieldP",
+				"fieldProducts"
+			],
+			[
+				"fieldPR",
+				"fieldProductsAfterSave"
+			],
+			[
+				"SuperIm",
+				"SuperImageRemoteStructuredProperty"
+			],
+			[
+				"SuperR",
+				"SuperRemoteStructuredProperty"
+			],
+			[
+				"accord",
+				"accordion"
+			],
+			[
+				"accordin",
+				"accordion-group"
+			],
+			[
+				"Non",
+				"Nonexistent"
+			],
+			[
+				"ang",
+				"angular.copy"
+			],
+			[
+				"eq",
+				"angular.equals"
+			],
+			[
+				"sortable",
+				"sortableOptions"
+			],
+			[
 				"access",
 				"accessPath"
 			],
@@ -13,10 +485,6 @@
 			],
 			[
 				"_prope",
-				"_property_value"
-			],
-			[
-				"_prop",
 				"_property_value"
 			],
 			[
@@ -30,10 +498,6 @@
 			[
 				"accordion",
 				"accordionKey"
-			],
-			[
-				"supplied",
-				"supplied_key"
 			],
 			[
 				"prepare",
@@ -50,46 +514,6 @@
 			[
 				"extra",
 				"extraConfig"
-			],
-			[
-				"i",
-				"ifmain	if __name__ == '__main__'"
-			],
-			[
-				"URL",
-				"URL-getRequest	URL-getRequest"
-			],
-			[
-				"isD",
-				"angular.isDefined"
-			],
-			[
-				"cover_cou",
-				"cover_count"
-			],
-			[
-				"cover_count",
-				"cover_count_raw"
-			],
-			[
-				"Auth",
-				"Auth-user	Auth-user"
-			],
-			[
-				"URL-",
-				"URL-current	URL-current"
-			],
-			[
-				"M",
-				"Mail-send	Mail-send"
-			],
-			[
-				"App",
-				"App-isLocal	App-isLocal"
-			],
-			[
-				"js",
-				"json_encode"
 			]
 		]
 	},
@@ -99,7 +523,7 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 203.0,
+		"height": 225.0,
 		"selected_items":
 		[
 			[
@@ -115,12 +539,92 @@
 				"Git: Add..."
 			],
 			[
-				"pull",
-				"Git: Pull"
+				"git:diff",
+				"Git: Diff Tool Current File"
+			],
+			[
+				"diff",
+				"Git: Diff Current File"
+			],
+			[
+				"diff current",
+				"Git: Diff Current File"
+			],
+			[
+				"git add",
+				"Git: Add..."
 			],
 			[
 				"status",
 				"Git: Status"
+			],
+			[
+				"pull",
+				"Git: Pull"
+			],
+			[
+				"git status",
+				"Git: Status"
+			],
+			[
+				"Push",
+				"Git: Push"
+			],
+			[
+				"comit",
+				"Git: Commit"
+			],
+			[
+				"comm",
+				"Git: Commit"
+			],
+			[
+				"sattus",
+				"Git: Status"
+			],
+			[
+				"reset",
+				"Git: Reset (unstage) Current File"
+			],
+			[
+				"unstage",
+				"Git: Reset (unstage) Current File"
+			],
+			[
+				"git:res",
+				"Git: Reset (unstage) Current File"
+			],
+			[
+				"git",
+				"Git: Status"
+			],
+			[
+				"co",
+				"Git: Commit"
+			],
+			[
+				"pu",
+				"Git: Pull"
+			],
+			[
+				"ADD",
+				"Git: Add..."
+			],
+			[
+				"statu",
+				"Git: Status"
+			],
+			[
+				"comi",
+				"Git: Commit"
+			],
+			[
+				"cmmi",
+				"Git: Commit"
+			],
+			[
+				"commi",
+				"Git: Commit"
 			],
 			[
 				"branch",
@@ -291,10 +795,6 @@
 				"Snippet: Eloquent-unguard"
 			],
 			[
-				"git",
-				"Git: Pull"
-			],
-			[
 				"pack",
 				"Package Control: List Packages"
 			],
@@ -328,153 +828,175 @@
 	"expanded_folders":
 	[
 		"/Users/admin/Dev/py/miraclestyle-lite",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/etc",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/etc/data",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/tools",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/account",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/catalog",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/home",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/order",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-bootstrap",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer/directive",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/dialog",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/dialog",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form/dialog",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/home",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap/accordion",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form"
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/dialog"
 	],
 	"file_history":
 	[
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/general.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/directives.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/directives.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/products.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/buyer/directive/buyer_address_display.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/index.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form/dialog/select.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/structured.html",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/miraclestyle-lite.sublime-project",
-		"/Users/admin/Dev/py/miraclestyle-lite/.jsbeautifyrc",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeLinter.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/HTMLPrettify.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/dialog/manage_actions.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog/toolbar.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/dialog/structured.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/dialog/manage_actions.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/general.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/md.css",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/plugins.html",
-		"/Users/admin/Dev/php/localhost/artwinlive2/artwinlive2.sublime-project",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/.jsbeautifyrc",
-		"/Users/admin/Dev/php/localhost/aufberg/ftpsync.settings",
-		"/Users/admin/Dev/php/localhost/aufberg/wp-content/themes/aufberg/handlers/booking.php",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/modal/structured.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/services.js",
-		"/Users/admin/Dev/php/localhost/talbot_press/err_log.log",
-		"/Users/admin/Dev/php/localhost/talbot_press/ftpsync.settings",
-		"/Users/admin/Dev/php/localhost/talbot_press/wp-content/plugins/press-core/model/item.php",
-		"/Users/admin/Dev/php/localhost/talbot_press/wp-content/plugins/press-core/ResetSql.sql",
-		"/Users/admin/Dev/php/localhost/talbot_press/wp-config.php",
-		"/Users/admin/Dev/php/localhost/talbot_press/wp-content/plugins/press-core/controller/public/download.php",
-		"/Users/admin/Dev/php/localhost/talbot_press/wp-config-sample.php",
-		"/Users/admin/Dev/php/localhost/talbot_press/php.php",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/catalog.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal_editor.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/seller/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/modal/plugins.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal_editor_default_body.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/seller/settings.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/manage.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/settings.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/LICENSE",
-		"/Users/admin/Dev/php/localhost/hl_arch/wp-admin/link.php",
-		"/Users/admin/Dev/php/localhost/artwinlive2/application/classes/model/invoice/lines.php",
-		"/Users/admin/Dev/php/localhost/artwinlive2/application/cache/94/94ed803e148c277fbefb879986b931104515cd5e.cache",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/settings.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/vendor/angular/angular.js",
-		"/Users/admin/Dev/php/localhost/artwinlive2/ftpsync.settings",
-		"/Users/admin/Dev/php/localhost/artwinlive2/.gitignore",
-		"/Users/admin/Dev/php/localhost/hl_arch/ftpsync.settings",
-		"/Users/admin/Dev/php/localhost/hl_arch/wp-content/themes/hl/functions.php",
-		"/Users/admin/Dev/php/localhost/hl_arch/wp-content/themes/hl/tpl-all-projects.php",
-		"/Users/admin/Dev/php/localhost/hl_arch/wp-content/themes/hl/ftpsync.settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/services.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Package Control.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/underscore/image.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/modal.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css/form.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modals/alert.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/order.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/notice.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/list.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/tests.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/manage_footer.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal_editor_default_footer.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/vendor/angular-bootstrap/ui-bootstrap.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/controllers.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeCodeIntel.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/tests.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/handler/base.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/app.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/README",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/SublimeREPL.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/SublimeLinter/SublimeLinter.sublime-settings",
-		"/Users/admin/Dev/php/localhost/laravel/server.php",
-		"/Users/admin/Dev/php/localhost/laravel/tests.php",
-		"/Users/admin/Dev/php/localhost/laravel/app/routes.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/barryvdh/laravel-debugbar/src/Facade.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/laravel/framework/src/Illuminate/Support/Facades/URL.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/laravel/framework/src/Illuminate/Auth/Guard.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/symfony/http-foundation/Symfony/Component/HttpFoundation/Request.php",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/seller.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/home/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/location/controllers.js",
-		"/Users/admin/Closure.sublime-snippet",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/directives.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/dialog/manage_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/buyer/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/catalog/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/settings.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/home/index.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap/accordion/accordion-group.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/accordion.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/account/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/dropdown.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/style.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/form.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/select.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/modal.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form/select.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/home/controllers.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/select.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog/editor_default_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/dialog/plugins.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog/editor.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/select_async.html",
+		"/Users/admin/Dev/js/material/src/components/select/select.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-bootstrap/ui-bootstrap-tpls.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material/angular-material.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/location.py",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/.jsbeautifyrc",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/controllers.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap/modal/window.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/filters.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/app.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/iom.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/unit.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/catalog/directives.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor/material-design-icons/sprites/css-sprite/sprite-hardware-grey600.png",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/order/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/collection/services.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material/angular-material.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/test.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/shim.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-ui-select/dist/select.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/string.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal/editor_default_footer.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/text.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/search_form.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/account/controllers.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/tests/select.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/tests/dialog1.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/overrides.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/bootstrap.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/init.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material/readme.txt",
+		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/variables.scss",
+		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/structure.scss",
+		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/components/sidenav/sidenav.scss",
+		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/components/subheader/subheader.scss",
+		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/layout.scss",
+		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/mixins.scss",
+		"/Users/admin/Downloads/material-master/dist/docs/docs.js",
+		"/Users/admin/Downloads/material-master/dist/docs/index.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/image.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/datetime.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/underscore/form/image.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/load_more_button.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/helper.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/boolean.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/table.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/testchannel.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor/angular-animate/angular-animate.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/modal/manage_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/collection/modal/manage_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-cache/.bower.json",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/tools/base.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/base.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/catalog.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/seller.py",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/catalog.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/init.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/shim.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/overrides.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/filters.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/bootstrap.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/bh_core.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/BracketHighlighter/bh_core.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/BracketHighlighter/bh_wrapping.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/seller/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/seller/directives.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/ClosureSnippet",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/location/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/directives.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/catalog/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/buyer/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components/account/filters.js",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/LiveReload/LiveReload.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Python PEP8 Autoformat/pep8_autoformat.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/pep8_autoformat.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/.project",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/account.py",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/util.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/test.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/_old/js/lib/angular/modal.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/lib/ngUpload/ng-upload.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/http.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/index.yaml",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/account.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications.py",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/http.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/INSTALL",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/JavascriptBeautify.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Terminal/Terminal.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/CSScomb/CSScomb.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Side Bar.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Git/Git.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Git.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Distraction Free.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/Python.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/queue.yaml",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/CSS3/CSS3.sublime-settings",
+		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/CSS3.sublime-settings",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/settings.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/order.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller/controllers.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/errors.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/buyer/controllers.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/admin/directive/list/34.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/admin/filters.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/order.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/admin/controllers.js",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/base.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/cloudstorage/api_utils.py",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/Javascript Beautify/JavascriptBeautify.sublime-settings",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/laravel/framework/src/Illuminate/Console/Command.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/maximebf/debugbar/src/DebugBar/Bridge/PropelCollector.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/monolog/monolog/src/Monolog/Logger.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/psr/log/Psr/Log/AbstractLogger.php",
-		"/Users/admin/Dev/php/localhost/laravel/vendor/psr/log/Psr/Log/LoggerInterface.php"
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/tools/oauth2.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/order/modal/view.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/INSTALL",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller/directives.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/seller/directive/default_line_display.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/http.pyc",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/seller.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modal/content_view_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/history.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modal/history_view_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/ngUpload/ng-upload.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/modal/administer.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/modal/administer.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modal/history_view_footer.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/cloudstorage/storage_api.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/mem.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/location.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/etc/data/location.xml"
 	],
 	"find":
 	{
@@ -485,27 +1007,134 @@
 		"height": 95.0,
 		"where_history":
 		[
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/css",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/static/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-ui-select",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-ui-select",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor/angular-material",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/documentation",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
 			"/Users/admin/Dev/py/miraclestyle-lite",
 			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/cloudstorage",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/handler",
+			"/Users/admin/Dev/py/miraclestyle-lite,*.css,*.js,*.py",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/account.py",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-ui-select/select2",
+			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
-			""
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/usr/local/google_appengine/google/appengine/ext/ndb",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/usr/local/google_appengine/google/appengine/ext/ndb",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client"
 		]
 	},
 	"find_state":
@@ -513,134 +1142,134 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"reader",
-			".item",
-			"showListItem",
-			"default",
-			".item",
-			".itemcatalog-slider",
-			".item",
-			"structured",
-			"showListItem",
-			"show",
-			"directive",
-			"<table",
-			"startsWith",
-			"startswith",
-			"reader:",
-			"reader",
-			".reader(",
-			"isNan",
-			"callback",
-			"modelsEditorScope",
-			"modelsEditor",
-			"rootScope",
-			"modelsEditorScope",
-			".key",
-			"['keys']",
-			"read_arguments",
-			"tmpdir",
-			"file_path =",
-			"delete_filepath",
-			"file_path",
-			"delete_filepath",
-			"sortableOptions",
-			"_sequence",
-			"_sequence =",
-			"def read",
-			"_sequence",
-			"PropertyValue",
-			"def add",
-			"formName",
-			"remote",
-			"console.log",
-			"save =",
-			"setProperty",
-			"setProperty:",
-			"setProperty",
-			"setProperty:",
-			"setAction",
-			"$scope.noComplete",
-			".complete =",
-			"before",
-			"submit-if",
-			"container",
-			"newArgs",
-			"excludeFields",
-			"argumentLoader",
-			"arugmentLoader",
-			"setPRoperty",
-			"helpers",
-			"is_new",
-			"modelsEditorScope",
-			"save",
-			"modalEditorScope",
-			"complete = ",
-			"getPluginFieldOverrides",
-			".path",
-			"path:",
-			".path",
-			"modelsEditor",
-			"formBuilder",
-			"accordions.contents",
-			"accordions.plugins",
-			"accordions.general",
-			"accordions",
-			"general",
-			"h2",
-			"formBuilder",
-			"$scope.args =",
-			"plugin",
-			"<h2",
-			"General</h2",
-			"<h2",
-			"modals",
-			"keys",
-			"prepare_key",
-			"editor",
-			"modelEditor",
-			"modalEditor",
-			"modelsUtil.normalize",
-			"fields",
-			"argumentLoader",
-			"ngrepeat",
-			"itemOrderStarted",
-			"itemOrderChanged",
-			"itemorder",
-			"sortable",
-			"model:",
-			"modalEditor",
-			"setE",
-			"argumentLoader",
-			"argumentLoader:",
-			"argumentLoader()",
-			"argumentLoader()\nargumentLoader()",
-			"argumentLoader:",
-			"rootArgs",
-			"scope.set",
-			"argumentLoader",
-			"remote",
-			"prepareReadArguments",
-			"var i =",
-			"var i",
-			"referenceArgs",
-			"modalutil",
-			"model:",
-			".remote",
-			"variants",
-			".save =",
-			".manage",
+			"class=\"list-row ",
+			"main-menu-item",
+			"settings(",
+			"<button",
+			"addText",
+			"addNewText",
+			"addText",
+			"target.",
+			".main-menu-item",
+			"md-list",
+			"<md",
+			"md-list",
+			".accordion-arrow",
+			"md-padding",
+			"currentAccount",
+			"form-element-wrapper",
+			"templateActions",
+			"manage_footer",
+			"'accordion",
+			"font-size: 0px",
+			"font-size:",
+			"addText",
+			".panel-body",
+			"options.parent.height()",
+			"paddingTop",
+			"md-asimple-dialog md-content",
+			"<button",
+			".height",
+			"md-content",
+			"71px",
+			"helpers.getProperty(",
+			".getProperty",
+			"select.find",
+			"collectActive",
+			"missing.length",
+			"triggerHandler",
+			"resize",
+			"select.opened",
+			"opened",
+			"select.find",
+			"search.find",
+			".find(",
+			".selected",
+			"isChecked",
+			"collectActive",
+			"getActive",
+			".item =",
+			"selected",
+			"select",
+			".getActive",
+			"index",
+			"select.find",
+			"getActive",
+			"gethash",
+			"hashGetter",
+			".entities",
+			"items",
+			"entities",
+			"$mdA",
+			"$window",
+			"$windowž",
+			"$window",
+			"mdAdialog",
+			"strings =",
+			"strings",
+			"as-md-input-container",
+			"entity",
+			"include-footer-height",
+			"parentHeight",
+			"parent.height",
+			"limit",
+			"firstWatch",
+			"getActive",
+			"select.item =",
+			"opts",
+			"find =",
+			"select.find",
+			".item =",
+			"mdEscFactory",
+			".add(",
+			"key: ",
+			"modal.key",
+			"esc",
+			"escFactory",
+			"/modal/",
+			"_updateable",
+			"._updateable",
+			"class Record",
+			"hammer",
+			"highlight",
+			"removeAfterAnimate",
+			"attrs.inDirec",
+			"inDirection",
+			"inDirection: '",
 			"animate",
-			"complete",
-			"console.log",
-			"post:",
-			"actions",
-			"search.",
-			".search.then",
-			".search",
-			"search",
-			".fake-button input.upload",
-			"<button loading"
+			"\"animate\"",
+			"animate",
+			"scope",
+			".animate =",
+			"inDirection",
+			"inDirection: ",
+			"transc",
+			"modalStack.open",
+			"inDirection",
+			"modalScope",
+			"scope.inDirection",
+			"scope.left",
+			"left:",
+			"left",
+			"left =",
+			"left:",
+			"inDirection",
+			"scope.right",
+			"scope.left",
+			"exitRight",
+			"scope ",
+			"scope.animate",
+			"scope",
+			"removeAfterAnimate(",
+			"removeAfterAnimate",
+			".animate =",
+			"exitDirection",
+			".direction",
+			"direction:",
+			"scope.direction",
+			"clickElement",
+			"trigger(",
+			"scope.animate"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -648,6 +1277,42 @@
 		"regex": false,
 		"replace_history":
 		[
+			"loading class=\"list-row ",
+			"outDirection",
+			"scope.inDirection",
+			"/dialog/",
+			".name",
+			"[2].",
+			"[1].",
+			"[0].",
+			"indexID",
+			"choices=($1)",
+			"storage",
+			"FormatError",
+			"autoload",
+			"deleteable",
+			"updateable",
+			"readable",
+			"addable",
+			"search_document_field_name",
+			"searchable",
+			"value_filters",
+			"max_size",
+			"updatedAddress",
+			"updated_address",
+			"'34'",
+			"'31'",
+			"category",
+			"imagesReader",
+			"subParentScope",
+			"$subParentScope",
+			"parentScope",
+			"published",
+			".getName",
+			".getFields",
+			"variant_signature",
+			"$.extend",
+			"_.deepExtend",
 			"accordions.groups.2",
 			"accordions.groups.1",
 			"accordions.groups.0",
@@ -708,12 +1373,12 @@
 	},
 	"output.git":
 	{
-		"height": 100.0
+		"height": 102.0
 	},
 	"project": "miraclestyle-lite.sublime-project",
 	"replace":
 	{
-		"height": 42.0
+		"height": 66.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -721,6 +1386,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"",
+				"backend/orm.py"
+			]
 		],
 		"width": 0.0
 	},
@@ -748,7 +1417,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 270.0,
+	"side_bar_width": 346.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

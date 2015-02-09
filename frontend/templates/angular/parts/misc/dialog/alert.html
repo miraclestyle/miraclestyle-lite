@@ -4,8 +4,11 @@
               <div ng-bind="config.message" class="alert-message"></div>
           </div>
        </div>
-          
-       <div class="modal-footer">
-           <button type="button" class="button" ng-click="config.dismiss()">Ok</button>
-       </div>
+ 
+      <div class="md-actions" layout="row">
+
+        <md-button ng-click="config.dismiss()" class="md-primary">
+          Ok
+        </md-button>
+    </div>
 </div>

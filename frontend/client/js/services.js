@@ -1772,7 +1772,7 @@ w:                  while (images.length > 0) {
                     defaults = {
                         listFields: listFields,
                         fields: fields,
-                        addNewText: 'Add ' + inflector(config.code_name, 'humanize'),
+                        addNewText: 'Add',
                         addText: '{{config.ui.specifics.addNewText}}'
                     };
 
@@ -1796,8 +1796,10 @@ w:                  while (images.length > 0) {
                         start: function (e, ui) {
                             info.scope.$broadcast('itemOrderStarted');
                         },
-                        whatSortMeans: function () {
-                            modals.alert('Grab the button to start sorting.');
+                        whatSortMeans: function ($event) {
+                            modals.alert('Grab the button to start sorting.', {
+                                targetEvent: $event
+                            });
                         },
                         handle: '.sort-handle',
                         sort: function (e, ui) {
@@ -2663,6 +2665,10 @@ w:                  while (images.length > 0) {
                 helpers.extendDeep(config, extraConfig);
                 return $modal.open({
                     windowClass: 'modal-medium',
+                    fullScreen: false,
+                    targetEvent: extraConfig && extraConfig.targetEvent,
+                    inDirection: false,
+                    outDirection: false,
                     templateUrl: 'misc/dialog/' + config.type + '.html',
                     controller: function ($scope, $modalInstance) {
                         var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));

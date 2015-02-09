@@ -4,13 +4,13 @@
 
         <div layout="row" class="md-toolbar-item md-tools actions-left">
           <span ng-include="config.templateToolbarRight"></span>
-          <button md-ink-ripple ng-if="!config.templateToolbarRight" type="button" ng-show="config.showClose" class="button-transparent" loading ng-click="close()">
+          <button md-ink-ripple ng-if="!config.templateToolbarRight" type="button" class="button-transparent" loading ng-click="close()">
             <div class="icon-navigation-grey600 icon-navigation-grey600-ic_close_grey600_24dp"></div>
           </button>
         </div>
 
         <div class="md-toolbar-item md-breadcrumb">
-          <span style="display: inline-block;" >{{title}}</span>
+          <span class="md-toolbar-title">{{title}}</span>
         </div>
 
         <span flex></span>

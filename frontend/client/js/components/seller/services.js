@@ -648,7 +648,6 @@
                     fields._content.modelclass.documents.ui = {
                         label: false,
                         specifics: {
-                            addText: 'Add Content',
                             listFields: [{
                                 label: 'Title',
                                 key: 'title'

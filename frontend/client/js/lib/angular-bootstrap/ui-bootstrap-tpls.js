@@ -1397,7 +1397,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                 index: '@',
                 animate: '=',
                 inDirection: '=',
-                outDirection: '='
+                outDirection: '=',
+                targetEvent: '='
             },
             replace: true,
             transclude: true,
@@ -1405,7 +1406,10 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                 return tAttrs.templateUrl || 'template/modal/window.html';
             },
             link: function (scope, element, attrs) {
-                var clickElement; // how to pass $event? .data() ?
+                var clickElement = scope.targetEvent && scope.targetEvent.target;
+                if (clickElement) {
+                    clickElement = $(clickElement);
+                }
                 element.addClass(attrs.windowClass || '');
                 scope.size = attrs.size;
                 $timeout(function () {
@@ -1437,20 +1441,24 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                             element.addClass('transition-in')
                                 .css($mdConstant.CSS.TRANSFORM, '');
                         };
-                    }
-
-                    $$rAF(cb);
-
+                    } 
                     var deferred = $q.defer();
-                    element.on($mdConstant.CSS.TRANSITIONEND, finished);
+                    deferred.promise.then(function () {
+                        if (!element[0].querySelectorAll('[autofocus]').length) {
+                            element[0].focus();
+                        }
+                        $(window).triggerHandler('modal.visible');
+                    });
 
-                    function finished(ev) {
+                    element.on($mdConstant.CSS.TRANSITIONEND, function finished(ev) {
                         //Make sure this transitionend didn't bubble up from a child
                         if (ev.target === element[0]) {
                             element.off($mdConstant.CSS.TRANSITIONEND, finished);
                             deferred.resolve();
                         }
-                    }
+                    });
+
+                    $$rAF(cb);
 
                     $(window).triggerHandler('modal.open');
 
@@ -1462,12 +1470,6 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                      * the onscreen keyboard. Fixed by updated the focusing logic to only autofocus
                      * the modal element if the modal does not contain an autofocus element.
                      */
-                    deferred.promise.then(function () {
-                        if (!element[0].querySelectorAll('[autofocus]').length) {
-                            element[0].focus();
-                        }
-                        $(window).triggerHandler('modal.visible');
-                    });
 
                 });
 
@@ -1531,6 +1533,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
             openedWindows.remove(modalInstance);
 
             //remove window DOM element
+            backdropDomEl.removeClass('opaque');
             removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, 300, function () {
                 modalWindow.modalScope.$destroy();
                 body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
@@ -1547,6 +1550,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                     backdropScopeRef.$destroy();
                     backdropScopeRef = null;
                 });
+
                 backdropDomEl = undefined;
                 backdropScope = undefined;
             }
@@ -1587,7 +1591,10 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
         function removeAfterAnimate(domEl, scope, emulateTime, done) {
             // Closing animation
             var dialogEl = domEl,
-                clickElement;
+                clickElement = scope.targetEvent && scope.targetEvent.target;
+            if (clickElement) {
+                clickElement = $(clickElement);
+            }
 
             if (!clickElement && scope.inDirection) {
                 dialogEl.addClass('transition-out-' + scope.outDirection).removeClass('transition-in-' + scope.inDirection)
@@ -1637,6 +1644,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
 
             modal.scope.inDirection = modal.inDirection;
             modal.scope.outDirection = modal.outDirection;
+            modal.scope.targetEvent = modal.targetEvent;
 
             var body = $document.find('body').eq(0),
                 currBackdropIndex = backdropIndex();
@@ -1650,6 +1658,10 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                 body.append(backdropDomEl);
             }
 
+            if (!modal.fullScreen) {
+                backdropDomEl.addClass('opaque');
+            }
+
             var angularDomEl = angular.element('<div modal-window></div>');
 
             angularDomEl.attr({
@@ -1660,6 +1672,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                 'in-direction': 'inDirection',
                 'out-direction': 'outDirection',
                 'animate': 'animate',
+                'target-event': 'targetEvent',
                 'exiting': 'exiting'
             }).html(modal.content);
 
@@ -1725,7 +1738,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
             backdrop: true, //can be also false or 'static'
             keyboard: true,
             inDirection: 'right',
-            outDirection: 'left'
+            outDirection: 'left',
+            fullScreen: true
         },
         $get: ['$injector', '$rootScope', '$q', '$http', '$templateCache', '$controller', '$modalStack',
             function ($injector, $rootScope, $q, $http, $templateCache, $controller, $modalStack) {
@@ -1815,7 +1829,9 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                             windowTemplateUrl: modalOptions.windowTemplateUrl,
                             size: modalOptions.size,
                             inDirection: modalOptions.inDirection,
-                            outDirection: modalOptions.outDirection
+                            outDirection: modalOptions.outDirection,
+                            fullScreen: modalOptions.fullScreen,
+                            targetEvent: modalOptions.targetEvent
                         });
 
                     }, function resolveError(reason) {

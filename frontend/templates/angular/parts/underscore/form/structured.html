@@ -1,11 +1,10 @@
 <div ng-class="{'structured-field-repeated' : config.repeated, 'field-with-label': config.ui.label}" class="structured-field">
 <% if (config.ui.label !== false) { %>
     <h2 ng-class="{'with-button': config.repeated}" class="fieldset">
-
     <span class="fieldset-text"><%= config.ui.compiled.label %></span>
     <% if (config.repeated) { %>
     <span class="fieldset-button">
-      <md-button loading="!<%= config.ui.writableCompiled %>" type="button" ng-click="config.ui.specifics.create()">
+      <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create()">
        <%=config.ui.specifics.addText %>
       </md-button>
     </span>
@@ -16,7 +15,7 @@
 
 <div class="clearfix buttons">
   <div class="pull-right">
-    <md-button loading="!<%= config.ui.writableCompiled %>" type="button" ng-click="config.ui.specifics.create()">
+    <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create()">
       <%=config.ui.specifics.addText %>
     </md-button>
   </div>
@@ -28,26 +27,26 @@
      <div <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
                  ui-sortable="config.ui.specifics.sortableOptions" 
                  <% } %> 
-          ng-model="config.ui.specifics.parentArgs" ng-class="{'no-items': !config.ui.specifics.parentArgs.length}" class="item-list">
-        <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="no-move item clearfix">
-          <div class="item-left">
- 
-              <% if (config.ui.specifics.showListItem) { %>
-                <div ng-repeat="field in config.ui.specifics.listFields">
-                 <span <%=config.ui.specifics.showListItem %>="ent" <%=config.ui.specifics.showListItem %>-field="field"></span>
-               </div>
-              <% } else { %>
-              <div ng-repeat="field in config.ui.specifics.listFields">
-                <span ng-if="$index > 1">(</span>{{ent|output:field.key}}<span ng-if="$index > 1">)</span>
-              </div>
-              <% } %>
- 
-          </div>
-          <div class="item-right list-actions">
-              <md-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button">Remove</md-button>
-              <md-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button">Edit</md-button>
-              <md-button ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable" ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="sort-handle">Sort</md-button>
-          </div>
+          ng-model="config.ui.specifics.parentArgs" ng-class="{'no-items': !config.ui.specifics.parentArgs.length}" class="list">
+
+        <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" 
+             class="no-move list-row list-row--has-secondary clearfix">
+                <button loading ng-click="config.ui.specifics.manage(ent)" class="list-row--is-clickable menu-item list-content-tile block list-content-tile--one-line">
+                       <% if (config.ui.specifics.showListItem) { %>
+                          <div ng-repeat="field in config.ui.specifics.listFields">
+                           <span <%=config.ui.specifics.showListItem %>="ent" <%=config.ui.specifics.showListItem %>-field="field"></span>
+                         </div>
+                        <% } else { %>
+                        <div ng-repeat="field in config.ui.specifics.listFields">
+                          <span ng-if="$index > 1">(</span>{{ent|output:field.key}}<span ng-if="$index > 1">)</span>
+                        </div>
+                        <% } %>
+                </button>
+
+                <div class="list-secondary-tile">
+                      <a ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable" ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="md-button sort-handle">Sort</a>
+                </div>
+     
         </div>
     </div>
  

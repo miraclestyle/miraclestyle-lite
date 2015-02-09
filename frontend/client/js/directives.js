@@ -1,67 +1,7 @@
 (function () {
     'use strict';
     angular.module('app').config(function (datepickerConfig) { datepickerConfig.showWeeks = false; })
-        .directive('mainMenuToggler', function ($rootScope) {
-            return {
-                link: function (scope, element) {
-                    var activeClass = 'menu-active',
-                        click = function (e, cmd) {
-                            var height = ($(window).height() - $('#top-bar').height()),
-                                mm = $('#main-menu'),
-                                visible = mm.is(':visible');
-
-                            if ((visible || cmd === 1) && cmd !== 2) {
-                                mm.stop().animate({
-                                    height: 0
-                                }, 100, function () {
-                                    $(this).hide();
-                                    $('body').removeClass(activeClass);
-                                    $(window).trigger('mainMenu.hide');
-                                });
-                            } else if (!visible || cmd === 2) {
-                                mm.css('top', $(document).scrollTop() + $('#top-bar').height());
-                                mm.height(0).show();
-                                mm.stop().animate({
-                                    height: height
-                                }, 100, function () {
-                                    mm.scrollTop(0);
-                                    $('body').addClass(activeClass);
-                                    $(window).trigger('mainMenu.show');
-                                });
-                            }
-                        },
-                        resize = function () {
-                            var mm = $('#main-menu'),
-                                visible = mm.is(':visible');
-
-                            if (visible) {
-                                mm.stop().animate({
-                                    height: ($(window).height() - $('#top-bar').height())
-                                }, 100);
-
-                            }
-
-                        };
-
-                    element.on('click', click);
-                    $(window).on('resize', resize);
-
-                    scope.$on('$destroy', function () {
-                        element.off('click', click);
-                        $(window).off('resize', resize);
-                    });
-
-                    $rootScope.$on('hide_menu', function () {
-                        click(null, 1);
-                    });
-
-                    $rootScope.$on('show_menu', function () {
-                        click(null, 2);
-                    });
-
-                }
-            };
-        }).directive('toggle', function () {
+        .directive('toggle', function () {
             return {
                 require: ['^form', '^ngModel'],
                 scope: {
@@ -1439,6 +1379,7 @@
                                 dialogEl.removeClass('md-aselect-in');
                             },
                             onBeforeShow: function (dialogEl, options) {
+                                options.parent.css('overflow-wrap', options.parent.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
                                 var animateSelect = function () {
                                     var target = element.parents('.as-md-input-container:first');
                                     options.resize = function () {
@@ -1458,7 +1399,7 @@
                                             scrollElementNode = scrollElement.get(0),
                                             top = parentRect.top + paddingTop,
                                             activeOffset,
-                                            active = dialogEl.find('.md-item-active md-item-content'),
+                                            active = dialogEl.find('.list-row--is-active'),
                                             activeNode = active.get(0),
                                             activeRect,
                                             buffer,
