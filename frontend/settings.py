@@ -59,7 +59,7 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js',
-  'vendor/md-date-time/dist/md-date-time.js',
+  'lib/md-date-time/dist/md-date-time.js',
   'lib/angular-material/angular-material.js',
   'lib/angulike/angulike.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
@@ -70,7 +70,7 @@ ANGULAR_JS_PATHS = (
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'bootstrap']
 
 ANGULAR_CSS_PATHS = ('js/lib/angular-material/angular-material.css',
-                     'js/vendor/md-date-time/dist/md-date-time.css',
+                     'js/lib/md-date-time/dist/md-date-time.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
                      'css/style.css')
