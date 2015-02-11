@@ -199,7 +199,7 @@
                         manage: function (arg) {
 
                             if (!angular.isDefined(config.ui.specifics.templateUrl)) {
-                                config.ui.specifics.templateUrl = 'core/underscore/form/plugins.html';
+                                config.ui.specifics.templateUrl = 'core/underscore/form/manage_plugin.html';
                             }
 
                             $modal.open({
@@ -451,7 +451,7 @@
             $.extend(models['23'], {
                 viewModal: function (seller, removedOrAdded) {
                     $modal.open({
-                        templateUrl: 'core/entity/editor.html',
+                        templateUrl: 'core/form/manage_entity.html',
                         controller: function ($scope, currentAccount, $modalInstance) {
                             var cartData;
                             $scope.seller = seller;
@@ -586,7 +586,7 @@
 
                             $scope.viewContent = function (content) {
                                 $modal.open({
-                                    templateUrl: 'core/entity/editor.html',
+                                    templateUrl: 'core/form/manage_entity.html',
                                     controller: function ($scope, $modalInstance) {
                                         $scope.config = {};
                                         $scope.config.templateBodyUrl = 'core/misc/content_view_body.html';

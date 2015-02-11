@@ -31,7 +31,7 @@
                 reader: models[config.kind].reader(defaultReaderOpts),
                 view: function (record) {
                     $modal.open({
-                        templateUrl: 'core/entity/editor.html',
+                        templateUrl: 'core/form/manage_entity.html',
                         controller: function ($scope, $modalInstance) {
                             $scope.record = record;
                             $scope.config = {};

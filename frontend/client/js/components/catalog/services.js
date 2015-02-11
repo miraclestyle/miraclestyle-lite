@@ -172,7 +172,7 @@
                                 $scope.variationApplied = false;
                                 $scope.viewContent = function (content) {
                                     $modal.open({
-                                        templateUrl: 'core/entity/editor.html',
+                                        templateUrl: 'core/form/manage_entity.html',
                                         controller: function ($scope, $modalInstance) {
                                             $scope.config = {};
                                             $scope.config.templateBodyUrl = 'core/misc/content_view_body.html';

@@ -966,7 +966,7 @@ w:                  while (images.length > 0) {
                     showClose: true,
                     closeAfterSave: false,
                     action: 'update',
-                    templateBodyUrl: 'core/entity/editor_default_body.html',
+                    templateBodyUrl: 'core/form/manage_entity_default_body.html',
                     scope: {},
                     fields: [],
                     init: angular.noop,
@@ -1349,7 +1349,7 @@ w:                  while (images.length > 0) {
                         ctrl.$inject = ['$scope', '$modalInstance'];
 
                         opener[fn]({
-                            templateUrl: 'core/entity/editor.html',
+                            templateUrl: 'core/form/manage_entity.html',
                             controller: ctrl
                         });
 
@@ -1899,7 +1899,7 @@ w:                  while (images.length > 0) {
                             buildPaths();
 
                             $modal.open({
-                                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/underscore/form/editor_structured.html')({
+                                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/underscore/form/manage_structured.html')({
                                     config: config
                                 }),
                                 controller: function ($scope, $modalInstance, modelsUtil) {

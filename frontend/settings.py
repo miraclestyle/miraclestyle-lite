@@ -59,6 +59,7 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js',
+  'vendor/md-date-time/dist/md-date-time.js',
   'lib/angular-material/angular-material.js',
   'lib/angulike/angulike.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
@@ -69,6 +70,7 @@ ANGULAR_JS_PATHS = (
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'bootstrap']
 
 ANGULAR_CSS_PATHS = ('js/lib/angular-material/angular-material.css',
+                     'js/vendor/md-date-time/dist/md-date-time.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
                      'css/style.css')
@@ -122,11 +124,11 @@ ANGULAR_TEMPLATES = (
   ('core/underscore/form/image.html',),
   ('core/underscore/form/string.html',),
   ('core/underscore/form/plugins.html',),
-  ('core/underscore/form/editor_plugin.html',),
-  ('core/underscore/form/editor_structured.html',),
+  ('core/underscore/form/manage_plugin.html',),
+  ('core/underscore/form/manage_structured.html',),
   
-  ('core/entity/editor.html',),
-  ('core/entity/editor_default_body.html',),
+  ('core/form/manage_entity.html',),
+  ('core/form/manage_entity_default_body.html',),
 
  
   # 3rd party                   

@@ -72,6 +72,8 @@
                 $scope.search.pagination.load();
             });
 
+            $scope.datetime = new Date();
+
 
         });
 

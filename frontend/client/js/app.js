@@ -21,7 +21,7 @@
             host: host,
             modules: ['config', 'ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ngUpload',
                 'ui.bootstrap', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop',
-                'timer', 'angulike', 'googlechart', 'ngMaterial'], // this will be changed accordingly
+                'timer', 'angulike', 'googlechart', 'ngMaterial', 'mdDateTime'], // this will be changed accordingly
             api: {
                 endpoint: {
                     path: host + '/api/endpoint'
