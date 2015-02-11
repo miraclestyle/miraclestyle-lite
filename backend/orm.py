@@ -1884,8 +1884,10 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           for i,val in enumerate(self._property_value_by_read_arguments):
             matches = filter(lambda x: x.key == val.key, values)
             if matches:
-              for match in matches:
-                self._property_value_by_read_arguments[i] = match
+              self._property_value_by_read_arguments[i] = matches[0]
+          self._property_value_by_read_arguments.sort(key=lambda x: x._sequence, reverse=True)
+    if self.property_name == 'addresses':
+      print [(p.name, p._sequence) for p in self.value], [(p.name, p._sequence) for p in self._property_value_by_read_arguments]
 
   def _read(self, read_arguments):
     property_value = self._property._get_user_value(self._entity)
@@ -2580,11 +2582,7 @@ class _BaseStructuredProperty(_BaseProperty):
               if val._state is None:
                 val._state = 'created'
               current_values.append(val)
-          def sorting_function(val):
-            return val._sequence
-          new_sort = sorted(current_values, key=sorting_function, reverse=True)
-          del current_values[:]
-          current_values.extend(new_sort)
+          current_values.sort(key=lambda x: x._sequence, reverse=True)
       else:
         current_values = value
         if current_values is None:

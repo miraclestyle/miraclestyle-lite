@@ -69,7 +69,7 @@
                 val: '=productInstanceDisplay',
                 field: '=productInstanceDisplayField'
             },
-            templateUrl: 'catalog/product/directive/product_instance_display.html'
+            templateUrl: 'catalog/product/product_instance_display.html'
         };
     }).directive('catalogButtonBottomFloaterPosition', function () {
         return {

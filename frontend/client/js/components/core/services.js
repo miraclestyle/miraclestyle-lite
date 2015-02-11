@@ -42,7 +42,7 @@
                     },
                     modal: function (errors) {
                         $modal.open({
-                            templateUrl: 'core/misc/dialog/errors.html',
+                            templateUrl: 'core/misc/errors.html',
                             controller: function ($scope, $modalInstance) {
                                 $scope.errors = [];
                                 angular.forEach(errors, function (error, key) {
@@ -966,7 +966,7 @@ w:                  while (images.length > 0) {
                     showClose: true,
                     closeAfterSave: false,
                     action: 'update',
-                    templateBodyUrl: 'core/entity/dialog/editor_default_body.html',
+                    templateBodyUrl: 'core/entity/editor_default_body.html',
                     scope: {},
                     fields: [],
                     init: angular.noop,
@@ -1205,15 +1205,12 @@ w:                  while (images.length > 0) {
                                 if (angular.isDefined(config.afterComplete)) {
                                     config.afterComplete($scope);
                                 }
-
                                 if (config.closeAfterSave) {
                                     $timeout(function () {
                                         $scope.close();
                                     });
                                 }
-
                                 $scope.formSetPristine();
-
                                 console.log('modelsEditor.complete', $scope);
 
                             };
@@ -1352,12 +1349,12 @@ w:                  while (images.length > 0) {
                         ctrl.$inject = ['$scope', '$modalInstance'];
 
                         opener[fn]({
-                            templateUrl: 'core/entity/dialog/editor.html',
+                            templateUrl: 'core/entity/editor.html',
                             controller: ctrl
                         });
 
                         return this;
-                    },
+                    }
                 };
 
                 return modelsEditorInstance;
@@ -1902,7 +1899,7 @@ w:                  while (images.length > 0) {
                             buildPaths();
 
                             $modal.open({
-                                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/underscore/form/dialog/structured.html')({
+                                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/underscore/form/editor_structured.html')({
                                     config: config
                                 }),
                                 controller: function ($scope, $modalInstance, modelsUtil) {
@@ -2663,7 +2660,7 @@ w:                  while (images.length > 0) {
                     windowClass: 'modal-medium',
                     fullScreen: false,
                     targetEvent: extraConfig && extraConfig.targetEvent,
-                    templateUrl: 'core/misc/dialog/' + config.type + '.html',
+                    templateUrl: 'core/misc/' + config.type + '.html',
                     controller: function ($scope, $modalInstance) {
                         var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
                         config.dismiss = function () {

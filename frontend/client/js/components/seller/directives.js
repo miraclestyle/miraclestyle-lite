@@ -9,7 +9,7 @@
                 val: '=addressRuleLocationDisplay',
                 field: '=addressRuleLocationDisplayField'
             },
-            templateUrl: 'seller/directive/address_rule_location_display.html',
+            templateUrl: 'seller/address_rule_location_display.html',
             controller: function ($scope) {
                 $scope.notEmpty = notEmpty;
 
@@ -21,7 +21,7 @@
                 val: '=defaultLineDisplay',
                 field: '=defaultLineDisplay'
             },
-            templateUrl: 'seller/directive/default_line_display.html'
+            templateUrl: 'seller/default_line_display.html'
         };
     }).directive('carrierLineRuleDisplay', function () {
         return {
@@ -29,7 +29,7 @@
                 val: '=carrierLineRuleDisplay',
                 field: '=carrierLineRuleDisplayField'
             },
-            templateUrl: 'seller/directive/carrier_line_rule_display.html',
+            templateUrl: 'seller/carrier_line_rule_display.html',
             controller: function ($scope) {
                 $scope.notEmpty = notEmpty;
 

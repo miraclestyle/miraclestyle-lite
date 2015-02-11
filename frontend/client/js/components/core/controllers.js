@@ -31,11 +31,11 @@
                 reader: models[config.kind].reader(defaultReaderOpts),
                 view: function (record) {
                     $modal.open({
-                        templateUrl: 'core/entity/dialog/editor.html',
+                        templateUrl: 'core/entity/editor.html',
                         controller: function ($scope, $modalInstance) {
                             $scope.record = record;
                             $scope.config = {};
-                            $scope.config.templateBodyUrl = 'core/misc/dialog/history_view_body.html';
+                            $scope.config.templateBodyUrl = 'core/misc/history_view_body.html';
                             $scope.config.hideSave = true;
                             $scope.close = function () {
                                 $modalInstance.dismiss('close');

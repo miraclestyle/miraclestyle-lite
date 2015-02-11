@@ -1,0 +1,20 @@
+<div class="fitter" fit-in-modal>
+<form name="container.form" method="post" action="{{container.action}}">
+ 
+  <div class="modal-body scrollable has-footer">
+  <div class="modal-body-inner-padded">
+        <div form-builder="fields"></div>
+    </div>
+ 
+  </div>
+
+  <div class="modal-footer">
+      <button loading="container.form.$pristine" type="button" ng-click="save()" class="button">Save</button>
+      <button loading type="button" class="button" ng-click="close()">Close</button>
+ 
+  </div>
+  
+  </div>
+ 
+</form>
+</div>

@@ -6,7 +6,7 @@
                 val: '=buyerAddressDisplay',
                 field: '=buyerAddressDisplayField'
             },
-            templateUrl: 'buyer/directive/address_display.html',
+            templateUrl: 'buyer/address_display.html',
             controller: function ($scope) {
                 $scope.notEmpty = function (val) {
                     return angular.isString(val) || angular.isNumber(val);

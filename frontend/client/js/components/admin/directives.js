@@ -8,9 +8,9 @@
             restrict: 'A',
             template: '<span ng-include="template"></span>',
             link: function (scope, element, attrs) {
-                var template = 'admin/directive/list/default.html';
+                var template = 'admin/list_display/default.html';
                 if ($.inArray(attrs.adminDisplayListKind, GLOBAL_CONFIG.admin.listDisplayDirective) !== -1) {
-                    template = 'admin/directive/list/' + attrs.adminDisplayListKind + '.html';
+                    template = 'admin/list_display/' + attrs.adminDisplayListKind + '.html';
                 }
                 scope.template = template;
             }

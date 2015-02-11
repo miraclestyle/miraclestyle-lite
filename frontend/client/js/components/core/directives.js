@@ -167,7 +167,7 @@
             return {
                 restrict: 'A',
                 require: '^form',
-                templateUrl: 'form/builder.html',
+                templateUrl: 'core/form/builder.html',
                 controller: function ($scope, $element, $attrs) {
                     $scope.configurations = $scope.$eval($attrs.formBuilder);
                 }
@@ -412,7 +412,7 @@
                 }
             };
         })
-        .directive('fitInDialog', function () {
+        .directive('fitInModal', function () {
             return {
                 link: function (scope, element, attrs) {
                     var fn = function () {
@@ -543,10 +543,14 @@
                         files,
                         submit = $parse(attrs.submitIfFiles),
                         complete = $parse(attrs.submitIfFilesNoComplete),
+                        check = $parse(attrs.submitIf),
                         execute,
                         click = function () {
+                            if (check && !check(scope)) {
+                                return false;
+                            }
                             var promise = submit(scope);
-                            if (promise) {
+                            if (promise && angular.isObject(promise) && promise.then) {
                                 promise.then(function () {
                                     files = form.find('input[type="file"]');
                                     if (files.length) {
@@ -758,7 +762,7 @@
                     val: '=defaultFieldDisplay',
                     field: '=defaultFieldDisplayField'
                 },
-                templateUrl: 'buyer/directive/address_display.html',
+                templateUrl: 'buyer/address_display.html',
                 controller: function ($scope) {
                     $scope.notEmpty = function (val) {
                         return angular.isString(val) || angular.isNumber(val);
@@ -1120,13 +1124,18 @@
                     });
                 }
             };
-        })
-        .directive('dropdown', function ($simpleDialog, $mdTheming,
+        }).directive('actionDropdownList', function () {
+            return {
+                templateUrl: 'core/action/dropdown_list.html',
+                transclude: true,
+                replace: true
+            };
+        }).directive('actionDropdown', function ($simpleDialog, $mdTheming,
             $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers) {
             return {
                 replace: true,
                 transclude: true,
-                templateUrl: 'core/dropdown.html',
+                templateUrl: 'core/action/dropdown.html',
                 scope: true,
                 link: function (scope, element, attrs) {
                     var dropdown = {},
@@ -1208,13 +1217,13 @@
                 }
             };
         })
-        .directive('selectDialog', function ($simpleDialog, $mdTheming,
+        .directive('selectInput', function ($simpleDialog, $mdTheming,
             $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers) {
             return {
                 replace: true,
                 transclude: true,
                 require: ['ngModel'],
-                templateUrl: 'form/select.html',
+                templateUrl: 'core/select/input.html',
                 scope: true,
                 link: function (scope, element, attrs, ctrls) {
                     var ngModel = ctrls[0],
@@ -1363,7 +1372,7 @@
                         });
 
                         $simpleDialog.show({
-                            template: underscoreTemplate.get('form/dialog/select.html')({select: select}),
+                            template: underscoreTemplate.get('core/select/underscore/choices.html')({select: select}),
                             targetEvent: $event,
                             parent: attachTo,
                             onBeforeHide: function (dialogEl, options) {
@@ -1532,19 +1541,7 @@
             };
         }).directive('mainMenuItem', function () {
             return {
-                templateUrl: 'home/directive/main-menu-item.html',
-                transclude: true,
-                replace: true
-            };
-        }).directive('listDropdown', function () {
-            return {
-                templateUrl: 'core/list/dropdown.html',
-                transclude: true,
-                replace: true
-            };
-        }).directive('listDropdownItem', function () {
-            return {
-                templateUrl: 'core/list/dropdown-item.html',
+                templateUrl: 'home/main_menu_item.html',
                 transclude: true,
                 replace: true
             };
@@ -1558,13 +1555,20 @@
             return {
                 link: function (scope, element, attrs) {
                     $mdInkRipple.attach(scope, element, {
-                        isFAB: element.hasClass('md-fab'),
-                        isMenuItem: element.hasClass('md-menu-item'),
-                        center: false,
                         dimBackground: true,
                         multiplier: 0.1,
                         moveToCenter: false
                     });
+                }
+            };
+        }).directive('actionToolbar', function ($mdInkRipple) {
+            return {
+                transclude: true,
+                replace: true,
+                scope: true,
+                templateUrl: 'core/action/toolbar.html',
+                link: function (scope, element, attrs) {
+                    scope.spec = scope.$eval(attrs.spec);
                 }
             };
         }).directive('mdInkRippleAction', function ($mdInkRipple) {

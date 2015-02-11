@@ -1,0 +1,49 @@
+<div accordion-on-open="accordions">
+    <accordion close-others="accordions.closeOthers">
+        <accordion-group heading="{{accordions.groups[0].label}}" is-open="accordions.groups[0].open" is-disabled="accordions.groups[0].disabled">
+            <ul class="list">
+                  <li class="list-row">
+                        <div class="list-content-tile list-content-tile--two-lines">
+                              <strong class="first">ID</strong>
+                              <span class="second">{{entity.id}}</span>
+                        </div>
+                  </li>
+                  <li class="list-row">
+                      <div class="list-content-tile list-content-tile--two-lines">
+                          <strong class="first">Registered</strong>
+                          <span class="second">{{entity|output:'created'}}</span>
+                      </div>
+                  </li>
+                  <li class="list-row">
+                      <div class="list-content-tile list-content-tile--two-lines">
+                          <strong class="first">State</strong>
+                          <span class="second">{{entity.state}}</span>
+                      </div>
+                  </li>
+            </ul>
+            
+        </accordion-group>
+
+        <accordion-group heading="{{accordions.groups[1].label}}" is-open="accordions.groups[1].open" is-disabled="accordions.groups[1].disabled">
+           <div class="item-list">
+                <div ng-repeat="ident in entity.identities" class="item clearfix">
+                  <div class="item-left">
+                    {{ident.email}}<br />({{ident.identity|displayProvider}}<span ng-if="ident.identity == args.primary_identity">, Primary</span>)
+                  </div>
+                  <div class="item-right list-actions">
+                     <button loading type="button" ng-disabled="!entity.ui.rule.field.identities.writable" class="button" ng-click="disassociate(ident)">
+                            <span ng-show="!isAssociated(ident)">Associate</span>
+                            <span ng-show="isAssociated(ident)">Disassociate</span>
+                      </button>
+                      <button ng-disabled="ident.identity == args.primary_identity" ng-click="setPrimary(ident)" type="button" class="button">Primary</button>
+                  </div>
+                </div>
+            </div>
+        </accordion-group>
+
+
+        <accordion-group ng-if="accordions.groups[2]" heading="{{accordions.groups[2].label}}" is-open="accordions.groups[2].open" is-disabled="accordions.groups[2].disabled" ng-init="accordion = accordions.groups[2]">
+          <div ng-if="accordion.include" ng-include="accordion.include"></div>
+        </accordion-group>
+    </accordion>
+ </div>

@@ -96,22 +96,22 @@ for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
 # ('Alias', 'Full path to the template in the app'), something to read https://cloud.google.com/appengine/docs/python/config/appconfig#application_readable
 ANGULAR_TEMPLATES = (
   # core
-  ('form/builder.html',),
-  ('form/select.html',),
-  ('form/dialog/select.html',),
-  ('core/misc/dialog/alert.html',),
-  ('core/misc/dialog/errors.html',),
-  ('core/misc/dialog/confirm.html',),
-  ('core/misc/dialog/content_view_body.html',),
-  ('core/misc/dialog/content_view_footer.html',),
+  ('core/form/builder.html',),
+  ('core/misc/alert.html',),
+  ('core/misc/errors.html',),
+  ('core/misc/confirm.html',),
+  ('core/misc/content_view_body.html',),
+  ('core/misc/content_view_footer.html',),
   ('core/misc/load_more_button.html',),
   ('core/misc/search_form.html',),
   ('core/misc/history.html',),
-  ('core/misc/dialog/history_view_body.html',),
+  ('core/misc/history_view_body.html',),
 
-  ('core/dropdown.html',),
-  ('core/list/dropdown.html',),
-  ('core/list/dropdown-item.html',),
+  ('core/action/dropdown.html',),
+  ('core/action/dropdown_list.html',),
+  ('core/action/toolbar.html',),
+  ('core/select/input.html',),
+  ('core/select/underscore/choices.html',),
   ('core/list/button.html',),
   ('core/underscore/form/select.html',),
   ('core/underscore/form/select_async.html',),
@@ -122,17 +122,16 @@ ANGULAR_TEMPLATES = (
   ('core/underscore/form/image.html',),
   ('core/underscore/form/string.html',),
   ('core/underscore/form/plugins.html',),
-  ('core/underscore/form/dialog/plugins.html',),
-  ('core/underscore/form/dialog/structured.html',),
+  ('core/underscore/form/editor_plugin.html',),
+  ('core/underscore/form/editor_structured.html',),
   
-  ('core/entity/dialog/editor.html',),
-  ('core/entity/dialog/toolbar.html',),
-  ('core/entity/dialog/editor_default_body.html',),
+  ('core/entity/editor.html',),
+  ('core/entity/editor_default_body.html',),
 
  
   # 3rd party                   
-  ('template/accordion/accordion-group.html',
-   'lib/angular-bootstrap/accordion/accordion-group.html'),
+  ('template/accordion/accordion_group.html',
+   'lib/angular-bootstrap/accordion/accordion_group.html'),
   ('template/accordion/accordion.html',
    'lib/angular-bootstrap/accordion/accordion.html'),
   ('template/modal/backdrop.html',
@@ -141,49 +140,49 @@ ANGULAR_TEMPLATES = (
    'lib/angular-bootstrap/modal/window.html'),
   
   # account
-  ('account/dialog/manage_body.html',),
-  ('account/dialog/manage_actions.html',),
-  ('account/dialog/administer.html',),
+  ('account/manage_body.html',),
+  ('account/manage_actions.html',),
+  ('account/administer.html',),
   
   # seller
-  ('seller/directive/carrier_line_rule_display.html',),
-  ('seller/directive/address_rule_location_display.html',),
-  ('seller/directive/default_line_display.html',),
-  ('seller/dialog/view_body.html',),
-  ('seller/dialog/view_footer.html',),
+  ('seller/carrier_line_rule_display.html',),
+  ('seller/address_rule_location_display.html',),
+  ('seller/default_line_display.html',),
+  ('seller/view_body.html',),
+  ('seller/view_footer.html',),
   
   # buyer
-  ('buyer/directive/address_display.html',),
+  ('buyer/address_display.html',),
   ('buyer/carts.html',),
 
   # colleciton
-  ('collection/dialog/manage_body.html',),
+  ('collection/manage_body.html',),
 
   # admin area
   ('admin/list.html',),
-  ('admin/directive/list/default.html',),
-  ('admin/directive/list/31.html',), # display directive template for catalog
-  ('admin/directive/list/11.html',), # display directive template for account
-  ('admin/directive/list/34.html',), # display directive template for order
+  ('admin/list_display/default.html',),
+  ('admin/list_display/31.html',), # display directive template for catalog
+  ('admin/list_display/11.html',), # display directive template for account
+  ('admin/list_display/34.html',), # display directive template for order
 
   # catalog
   ('catalog/quick_info.html',),
-  ('catalog/dialog/manage_actions.html',),
-  ('catalog/dialog/administer.html',),
-  ('catalog/dialog/products.html',),
-  ('catalog/dialog/view.html',),
-  ('catalog/product/dialog/manage_footer.html',),
-  ('catalog/product/dialog/view.html',),
-  ('catalog/product/dialog/variant_choices.html',),
+  ('catalog/manage_actions.html',),
+  ('catalog/administer.html',),
+  ('catalog/products.html',),
+  ('catalog/view.html',),
+  ('catalog/product/manage_footer.html',),
+  ('catalog/product/view.html',),
+  ('catalog/product/variant_choices.html',),
   ('catalog/list.html',),
   ('catalog/underscore/form/image.html',),
-  ('catalog/product/directive/product_instance_display.html',),
+  ('catalog/product/product_instance_display.html',),
 
   # order
-  ('order/dialog/view.html',),
+  ('order/view.html',),
   ('order/list.html',),
 
   # other
   ('home/index.html',),
-  ('home/directive/main-menu-item.html',),
+  ('home/main_menu_item.html',),
 )

@@ -1,8 +1,0 @@
-<simple-dialog>
-    <list-dropdown>
-        <list-dropdown-item ng-click="parent.actions.sudo()" ng-show="parent.args.ui.rule.action.sudo.executable">Administer</list-dropdown-item>
-        <list-dropdown-item ng-click="parent.actions.publish()" ng-show="args.ui.rule.action.publish.executable && args.action_id != 'create'">Publish</list-dropdown-item>
-        <list-dropdown-item ng-click="parent.actions.discontinue()" ng-show="args.ui.rule.action.discontinue.executable">Discontinue</list-dropdown-item>
-        <list-dropdown-item ng-click="parent.actions.duplicate()" ng-show="args.ui.rule.action.catalog_duplicate.executable">Duplicate</list-dropdown-item>
-    </list-dropdown>
-</simple-dialog>

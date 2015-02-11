@@ -1,0 +1,13 @@
+<div fit-in-modal>
+  <form name="container.form" ng-upload-error="completeError(content)" ng-upload="complete(content)" method="post" action="{{container.action}}">
+    <action-toolbar spec="config.toolbar"></action-toolbar>
+    <input type="hidden" compatibility-maker="args" name="__body__" />
+    <div class="modal-body">
+      <div class="fixed-height overflow-y has-toolbar">
+            <div class="modal-body-inner">
+                <div ng-include="config.templateBodyUrl"></div>
+            </div>
+      </div>
+    </div>
+  </form>
+</div>

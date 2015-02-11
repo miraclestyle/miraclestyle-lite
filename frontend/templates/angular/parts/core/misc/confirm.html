@@ -1,0 +1,16 @@
+<div class="modal-confirm">
+      <div class="modal-body">
+          <div class="modal-body-inner-padded">
+              <div ng-if="!config.templateUrl" ng-bind="config.message" class="confirm-message"></div>
+              <div class="alert-message" ng-if="config.templateUrl">
+                 <span ng-include="config.templateUrl"></span>
+              </div>
+          </div>
+       </div>
+
+      <div class="md-actions" layout="row"> 
+           <md-button type="button" class="button" ng-click="config.dismiss()">Cancel</md-button>
+           <md-button type="button" class="button" ng-click="config.confirm()">Yes</md-button>
+      </div>
+
+</div>
