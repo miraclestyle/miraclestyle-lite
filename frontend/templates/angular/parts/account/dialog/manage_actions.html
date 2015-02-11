@@ -1,7 +1,5 @@
-<md-asimple-dialog>
-    <md-content>
-        <div class="list">
-            <button ng-show="parent.args.ui.rule.action.sudo.executable" md-ink-ripple loading type="button" ng-click="parent.actions.sudo()" class="list-row list-row--is-clickable menu-item list-content-tile block">Administer</button>
-        </div>
-    </md-content>
-</md-asimple-dialog>
+<simple-dialog>
+    <list-dropdown>
+        <list-dropdown-item ng-show="parent.args.ui.rule.action.sudo.executable" ng-click="parent.actions.sudo()">Administer</list-dropdown-item>
+    </list-dropdown>
+</simple-dialog>

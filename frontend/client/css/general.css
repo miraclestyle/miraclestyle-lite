@@ -8,19 +8,20 @@ a.block, .block, button.block {
     width: auto;
     height: 14px;
 }
-.menu-item {
-  position:relative;
-  width:100%;
-  border:none;
-  background:none;
-  text-align: left;
-  line-height:1;
-}
 
-/* unverified css bellow */
-.login-buttons .button {
-    padding-top: 14px;
-    padding-bottom: 14px;
+.bar-logo {
+    margin:16px;
+}
+.bar-logo img {
+    width:100%;
+}
+.menu-item {
+    position: relative;
+    width: 100%;
+    border: none;
+    background: none;
+    text-align: left;
+    line-height: 1;
 }
 .image-image {
     display: block;
@@ -32,11 +33,11 @@ a.block, .block, button.block {
     width: 100%;
     height: auto;
 }
+.load-more {
+    width:100%;
+}
 .image-image .img {
     display: block;
-}
-.text-muted {
-    color: gray;
 }
 .image-image-placeholder .img {
     border: 1px dashed #CCC;
@@ -44,15 +45,6 @@ a.block, .block, button.block {
 }
 [ui-sortable] > *:not(.no-move) {
     cursor: move;
-}
-.timepicker {
-    width: 60%;
-}
-.timepicker tr td {
-    width: auto;
-    padding-right: 10px;
-    min-width: none;
-    max-width: none;
 }
 .t60 {
     width: 60%;
@@ -106,27 +98,8 @@ a.block, .block, button.block {
     height: auto;
     display: block;
 }
-.frontpage {
-    float: left;
-    overflow: hidden;
-}
-.frontpage .inner {
-    padding: 5px;
-    display: block;
-}
 .image-image img {
     width: 100%;
-}
-.more-hr-space hr {
-    border-color: #bbb;
-    border-style: solid;
-    border-width: 1px;
-    margin-bottom: 15px;
-    margin-top: 15px;
-    border-bottom: none;
-}
-.table tr td {
-    vertical-align: top;
 }
 .pointable {
     cursor: pointer;
@@ -156,62 +129,6 @@ img.vertical, .vertical {
 .image-slider .image-slider-item {
     float: left;
     position: relative;
-}
-.button-wrapper {
-    position: absolute;
-    width: 100%;
-    bottom: 0px;
-    left: 0px;
-    padding-bottom: 5px;
-    padding-left: 5px;
-    padding-right: 5px;
-}
-.button-wrapper .button {
-    width: 100%;
-    display: block;
-    padding: 15px 5px;
-    /*-webkit-box-shadow: 0px 0px;
-  box-shadow: 0px 0px;*/
-    
-    margin-top: 5px;
-}
-.button-wrapper .button, .catalog-view-controls .button, .catalog-product-show-details-wrapper .button {
-    background-color: rgba(0, 0, 0, 0.5);
-    color: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.75);
-    -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.75);
-    box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.75);
-}
-.button-wrapper .button[disabled]:hover, .button-wrapper .button:hover, .button-wrapper .button[disabled]:focus, .button-wrapper .button:focus, .button-wrapper .button[disabled]:active, .button-wrapper .button:active, .catalog-view-controls .button[disabled]:hover, .catalog-view-controls .button:hover, .catalog-view-controls .button[disabled]:focus, .catalog-view-controls .button:focus, .catalog-view-controls .button[disabled]:active, .catalog-view-controls .button:active, .catalog-product-show-details-wrapper .button[disabled]:hover, .catalog-product-show-details-wrapper .button:hover, .catalog-product-show-details-wrapper .button[disabled]:focus, .catalog-product-show-details-wrapper .button:focus, .catalog-product-show-details-wrapper .button[disabled]:active, .catalog-product-show-details-wrapper .button:active {
-    background-color: rgba(0, 0, 0, 0.75);
-    color: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.75);
-}
-.menu-active {
-    overflow: hidden;
-}
-.item-left {
-    float: left;
-    padding: 5px;
-}
-.item-right {
-    float: right;
-}
-.item {
-    border-bottom: 1px solid #EEEEEE;
-    width: 100%;
-    padding: 5px 0px;
-    background: white;
-}
-.ui-sortable-helper {
-    border-top: 1px solid #EEEEEE;
-}
-.list-inline-block, .list-inline-block li {
-    display: inline-block;
-}
-.list-inline-block {
-    margin: 0px;
-    padding: 0px;
 }
 div.catalog-pricetag {
     position: absolute;

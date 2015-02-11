@@ -1,13 +1,8 @@
-<md-asimple-dialog>
-    <md-content>
-        <div class="list">
-            <button ng-show="parent.args.ui.rule.action.sudo.executable" md-ink-ripple loading type="button" ng-click="parent.actions.sudo()" class="list-row list-row--is-clickable menu-item list-content-tile block">Administer</button>
-
-            <button ng-show="args.ui.rule.action.publish.executable && args.action_id != 'create'" md-ink-ripple loading type="button" ng-click="actions.publish()" class="list-row list-row--is-clickable menu-item list-content-tile block">Publish</button>
-
-            <button ng-show="args.ui.rule.action.discontinue.executable" md-ink-ripple loading type="button" ng-click="actions.discontinue()" class="list-row list-row--is-clickable menu-item list-content-tile block">Discontinue</button>
-
-            <button ng-show="args.ui.rule.action.catalog_duplicate.executable" md-ink-ripple loading type="button" ng-click="actions.duplicate()" class="list-row list-row--is-clickable menu-item list-content-tile block">Duplicate</button>
-        </div>
-    </md-content>
-</md-asimple-dialog>
+<simple-dialog>
+    <list-dropdown>
+        <list-dropdown-item ng-click="parent.actions.sudo()" ng-show="parent.args.ui.rule.action.sudo.executable">Administer</list-dropdown-item>
+        <list-dropdown-item ng-click="parent.actions.publish()" ng-show="args.ui.rule.action.publish.executable && args.action_id != 'create'">Publish</list-dropdown-item>
+        <list-dropdown-item ng-click="parent.actions.discontinue()" ng-show="args.ui.rule.action.discontinue.executable">Discontinue</list-dropdown-item>
+        <list-dropdown-item ng-click="parent.actions.duplicate()" ng-show="args.ui.rule.action.catalog_duplicate.executable">Duplicate</list-dropdown-item>
+    </list-dropdown>
+</simple-dialog>

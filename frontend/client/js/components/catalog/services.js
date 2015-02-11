@@ -172,11 +172,11 @@
                                 $scope.variationApplied = false;
                                 $scope.viewContent = function (content) {
                                     $modal.open({
-                                        templateUrl: 'entity/dialog/editor.html',
+                                        templateUrl: 'core/entity/dialog/editor.html',
                                         controller: function ($scope, $modalInstance) {
                                             $scope.config = {};
-                                            $scope.config.templateBodyUrl = 'misc/dialog/content_view_body.html';
-                                            $scope.config.templateFooterUrl = 'misc/dialog/content_view_footer.html';
+                                            $scope.config.templateBodyUrl = 'core/misc/dialog/content_view_body.html';
+                                            $scope.config.templateFooterUrl = 'core/misc/dialog/content_view_footer.html';
                                             $scope.content = content;
                                             $scope.close = function () {
                                                 $modalInstance.dismiss('close');

@@ -67,10 +67,14 @@
                 controller: 'AdminListCtrl'
             });
 
-    }).run(function (modelsInfo, endpoint, models) {
+    }).run(function (modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
         $.extend(modelsInfo, window.MODELS_META);
-        endpoint.currentAccount();
+        $.extend(currentAccount, window.CURRENT_ACCOUNT);
+        modelsUtil.normalize(currentAccount);
         models.init();
-        delete window.MODELS_META;
+        if (!GLOBAL_CONFIG.debug) {
+            delete window.MODELS_META;
+            delete window.CURRENT_ACCOUNT;
+        }
     });
 }());

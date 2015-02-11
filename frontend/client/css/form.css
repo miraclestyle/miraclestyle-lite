@@ -1,65 +1,3 @@
-.button {
-  border: 1px solid #BBBBBB;
-  background-color: #FFFFFF;
-  padding: 15px 20px;
-  outline: none;
-  text-align: center;
-  vertical-align: middle;
-  line-height: 18px;
-  text-decoration: none;
-  cursor:pointer;
-  display: inline-block;
-  -webkit-box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
-  box-shadow: 1px 1px 3px 0px rgba(0, 0, 0, 0.25);
-  font-size: 16px;
-  color: #777777;
-}
-
-.button:hover {
-  border: 1px solid #999999;
-  background-color: #F9F9F9;
-}
-
-.button:active, .button.active, li.active .button, .button-active {
-  -webkit-box-shadow: 0px 0px;
-  box-shadow: 0px 0px;
-  background-color: #FFFFFF;
-}
-
-.button:focus {
-  border: 1px solid #999999;
-  background-color: #FFFFFF;
-}
-
-.button[disabled] {
-  color: #CCCCCC;
-  border-color: #CCCCCC;
-  -webkit-box-shadow: 0px 0px;
-  box-shadow: 0px 0px;
-}
-
-.button[disabled]:hover {
-  border: 1px solid #CCCCCC;
-  background-color: #FFFFFF;
-}
-
-
-.clearfix.buttons {
-  padding: 5px 0px;
-  border-bottom: 1px solid #EEEEEE;
-  /*font-size: 0px;*/
-}
-
-.clearfix.form-inputs {
-  padding: 0px 0px 10px;
-  border-bottom: 1px solid #EEEEEE;
-  font-size: 0px;
-}
-
-.clearfix.grid-wrapper {
-  padding: 10px 0px;
-}
-
 .panel-body  .clearfix.grid-wrapper {
   border-bottom: 1px solid #EEEEEE;
 }
@@ -67,93 +5,6 @@
 .panel-body  .clearfix.grid-wrapper.grid-no-items {
   border-bottom: none;
 }
-
-.list-actions {
-  text-align: right;
-  font-size: 0px;
-}
-
-.clearfix.buttons .button,
-.list-actions .button {
-  margin: 5px;
-}
-
-.text-input {
-  border: 1px solid #BBBBBB;
-  background-color: #FFFFFF;
-  outline: none;
-  padding: 10px;
-  display: block;
-  width: 100%;
-}
-
-.text-input:focus {
-  border: 1px solid #999999;
-}
-
-textarea.text-input {
-  min-height: 100px;
-}
-
-.form-control {
-  padding: 10px 5px;
-  font-size: 16px;
-}
-
-.form-control:after {
-  clear: both;
-  content: " ";
-  display: table;
-}
-
-.form-label {
-  color: #777777;
-  display: block;
-  float: none;
-  text-align: left;
-  width: 100%;
-}
-
-.form-input {
-  float: none;
-  width: 100%;
-  display: block;
-  min-height: 1px;
-  padding-top: 2px;
-}
-
-.fieldset {
-  font-size: 24px;
-  line-height: 27px;
-  border-bottom: 1px solid #EEEEEE;
-  padding-bottom: 5px;
-  margin: 20px 0px 10px;
-  color: #777777;
-}
-
-.fieldset-text {
-  float:left;
-}
-
-.fieldset-button {
-  float:right;
-}
-
-.fieldset:after {
-  clear:both;
-}
-
-.fieldset:before,
-.fieldset:after {
-  display: table;
-  content: " ";
-}
-
-.fieldset.with-button span.fieldset-text {
-  /*margin-top: 16px;*/
-  padding: 11px 0px 5px;
-}
-
 /* validation colors */
 
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
@@ -177,46 +28,15 @@ textarea.text-input {
   filter: alpha(opacity=0);
 }
 
-.button-block {
-  width: 100%;
-  display:block;
-}
-
-.button-sm {
-  padding: 5px 15px;
-}
-
-
 .ui-select-highlight {
   font-weight: bold;
 }
 
-.ui-select-offscreen {
-  clip: rect(0 0 0 0) !important;
-  width: 1px !important;
-  height: 1px !important;
-  border: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  position: absolute !important;
-  outline: 0 !important;
-  left: 0px !important;
-  top: 0px !important;
-}
-
-/* Select2 theme */
-
-/* Mark invalid Select2 */
-.ng-dirty.ng-invalid > a.select2-choice {
-    border-color: #D44950;
-}
-
-.select2-result-single {
-  padding-left: 0;
-}
-
-
-a.button.sort-handle {
+a.sort-handle {
   cursor: move;
+}
+
+.structured-field-actions {
+  padding-left:16px;
+  padding-right:16px;
 }

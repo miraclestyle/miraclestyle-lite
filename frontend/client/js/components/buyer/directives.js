@@ -11,7 +11,6 @@
                 $scope.notEmpty = function (val) {
                     return angular.isString(val) || angular.isNumber(val);
                 };
-
             }
         };
     });

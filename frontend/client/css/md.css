@@ -1,6 +1,6 @@
 /* All material design related adjustments, for now */
 
-.md-asimple-dialog-option {
+.simple-dialog-option {
     cursor: pointer;
 }
 .selected-item {
@@ -117,6 +117,6 @@ md-item-content md-checkbox {
     padding-right:16px;
 }
 
-.ui-select-highlight {
+li .ui-select-highlight {
     display:inline;
 }

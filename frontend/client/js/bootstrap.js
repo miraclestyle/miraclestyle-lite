@@ -7,17 +7,23 @@
                 if (choice) {
                     window.location.reload(true);
                 }
-            };
-        $.ajax({
-            cache: true,
-            dataType: 'json',
-            url: '/api/model_meta',
-            success: function (data) {
-                window.MODELS_META = data;
-                angular.bootstrap(document, ['app']);
             },
-            error: failure
-        });
+            injector = angular.injector(['config']),
+            $http = injector.get('$http'),
+            $q = injector.get('$q'),
+            GLOBAL_CONFIG = injector.get('GLOBAL_CONFIG'),
+            promises = [$http.get(GLOBAL_CONFIG.api.modelsMeta), $http.get(GLOBAL_CONFIG.api.endpoint.path + '?action_id=current_account&action_model=11')];
+
+        $q.all(promises).then(function (response) {
+            var d1 = response[0].data, d2 = response[1].data;
+            window.MODELS_META = d1;
+            window.CURRENT_ACCOUNT = d2.entity;
+            if ((d1 && d1.errors) || (d2 && d2.errors)) {
+                failure();
+            } else {
+                angular.bootstrap(document, ['app']);
+            }
+        }, failure);
 
     });
 }());

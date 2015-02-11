@@ -53,7 +53,6 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-sanitize/angular-sanitize.js',
   'vendor/angular-ui-router/release/angular-ui-router.js',
   'vendor/angular-cookie/angular-cookie.js',
-  'vendor/angular-touch/angular-touch.js',
   'vendor/angular-animate/angular-animate.js',
   'vendor/angular-aria/angular-aria.js',
   'vendor/angular-messages/angular-messages.js',
@@ -64,14 +63,12 @@ ANGULAR_JS_PATHS = (
   'lib/angulike/angulike.js',
   'lib/angular-bootstrap/ui-bootstrap-tpls.js',
   'lib/angular-cache/dist/angular-cache.js',
-  'lib/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js',
   'lib/ngUpload/ng-upload.js'
 )
 
-ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'services', 'directives', 'filters', 'controllers', 'bootstrap']
+ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'bootstrap']
 
-ANGULAR_CSS_PATHS = ('js/lib/angular-ui-bootstrap-datetimepicker/datetimepicker.css',
-                     'js/lib/angular-material/angular-material.css',
+ANGULAR_CSS_PATHS = ('js/lib/angular-material/angular-material.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
                      'css/style.css')
@@ -84,10 +81,9 @@ class Structured():
   def __str__(self):
     return self.segment
 
-ANGULAR_ACTIVE_COMPONENTS = [Structured('home'), Structured('account'),
-                             Structured('buyer'), Structured('collection'), 
-                             Structured('seller'), Structured('catalog'),
-                             Structured('order'), Structured('admin')]
+ANGULAR_ACTIVE_COMPONENTS = [Structured('core'), Structured('home'), Structured('account'),
+                             Structured('buyer'), Structured('collection'), Structured('seller'), 
+                             Structured('catalog'), Structured('order'), Structured('admin')]
 ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
 ANGULAR_ACTIVE_COMPONENTS = []
 for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
@@ -103,57 +99,46 @@ ANGULAR_TEMPLATES = (
   ('form/builder.html',),
   ('form/select.html',),
   ('form/dialog/select.html',),
-  ('misc/form_wrapper.html',),
-  ('misc/dialog/alert.html',),
-  ('misc/dialog/errors.html',),
-  ('misc/dialog/confirm.html',),
-  ('misc/dialog/content_view_body.html',),
-  ('misc/dialog/content_view_footer.html',),
-  ('misc/load_more_button.html',),
-  ('misc/search_form.html',),
-  ('misc/history.html',),
-  ('misc/dialog/history_view_body.html',),
-  ('misc/dialog/history_view_footer.html',),
-  ('misc/dropdown.html',),
+  ('core/misc/dialog/alert.html',),
+  ('core/misc/dialog/errors.html',),
+  ('core/misc/dialog/confirm.html',),
+  ('core/misc/dialog/content_view_body.html',),
+  ('core/misc/dialog/content_view_footer.html',),
+  ('core/misc/load_more_button.html',),
+  ('core/misc/search_form.html',),
+  ('core/misc/history.html',),
+  ('core/misc/dialog/history_view_body.html',),
 
-
-  ('entity/dialog/editor.html',),
-  ('entity/dialog/toolbar.html',),
-  ('entity/dialog/editor_default_body.html',),
+  ('core/dropdown.html',),
+  ('core/list/dropdown.html',),
+  ('core/list/dropdown-item.html',),
+  ('core/list/button.html',),
+  ('core/underscore/form/select.html',),
+  ('core/underscore/form/select_async.html',),
+  ('core/underscore/form/structured.html',),
+  ('core/underscore/form/boolean.html',),
+  ('core/underscore/form/datetime.html',),
+  ('core/underscore/form/text.html',),
+  ('core/underscore/form/image.html',),
+  ('core/underscore/form/string.html',),
+  ('core/underscore/form/plugins.html',),
+  ('core/underscore/form/dialog/plugins.html',),
+  ('core/underscore/form/dialog/structured.html',),
   
-  ('underscore/form/select.html',),
-  ('underscore/form/select_async.html',),
-  ('underscore/form/structured.html',),
-  ('underscore/form/boolean.html',),
-  ('underscore/form/datetime.html',),
-  ('underscore/form/text.html',),
-  ('underscore/form/image.html',),
-  ('underscore/form/string.html',),
-  ('underscore/form/plugins.html',),
-  ('underscore/form/dialog/plugins.html',),
-  ('underscore/form/dialog/structured.html',),
+  ('core/entity/dialog/editor.html',),
+  ('core/entity/dialog/toolbar.html',),
+  ('core/entity/dialog/editor_default_body.html',),
+
  
   # 3rd party                   
   ('template/accordion/accordion-group.html',
    'lib/angular-bootstrap/accordion/accordion-group.html'),
   ('template/accordion/accordion.html',
    'lib/angular-bootstrap/accordion/accordion.html'),
-  ('template/datepicker/datepicker.html',
-   'lib/angular-bootstrap/datepicker/datepicker.html'),
-  ('template/datepicker/day.html',
-   'lib/angular-bootstrap/datepicker/day.html'),
-  ('template/datepicker/month.html',
-   'lib/angular-bootstrap/datepicker/month.html'),
-  ('template/datepicker/popup.html',
-   'lib/angular-bootstrap/datepicker/popup.html'),
-  ('template/datepicker/year.html',
-   'lib/angular-bootstrap/datepicker/year.html'),
   ('template/modal/backdrop.html',
    'lib/angular-bootstrap/modal/backdrop.html'),
   ('template/modal/window.html',
    'lib/angular-bootstrap/modal/window.html'),
-  ('template/timepicker/timepicker.html',
-   'lib/angular-bootstrap/timepicker/timepicker.html'),
   
   # account
   ('account/dialog/manage_body.html',),
@@ -200,6 +185,5 @@ ANGULAR_TEMPLATES = (
 
   # other
   ('home/index.html',),
-  ('tests/dialog1.html',),
-  ('tests/select.html',)
+  ('home/directive/main-menu-item.html',),
 )

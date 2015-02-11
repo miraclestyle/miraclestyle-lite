@@ -1,4 +1,4 @@
-<md-asimple-dialog>
+<simple-dialog>
      <% if (select.search) { %>
      <div class="select-search" ng-form="select.search.form">
        <div class="select-search-input">
@@ -13,7 +13,7 @@
       <ul class="list list-padding">
             <% if (select.multiple) { %>
 
-              <li ng-show="select.isChecked(item)" class="md-asimple-dialog-option list-row list-row--is-clickable" 
+              <li ng-show="select.isChecked(item)" class="simple-dialog-option list-row list-row--is-clickable-and-hoverable" 
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
                     <div class="list-content-tile list-content-tile--one-line">
@@ -25,7 +25,7 @@
 
               <li class="list-divider" ng-if="select.anyChecks()"></li>
 
-              <li ng-show="!select.isChecked(item)" class="md-asimple-dialog-option list-row list-row--is-clickable" 
+              <li ng-show="!select.isChecked(item)" class="simple-dialog-option list-row list-row--is-clickable-and-hoverable " 
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
                     <div class="list-content-tile list-content-tile--one-line">
@@ -36,26 +36,15 @@
               </li>
 
               <% } else { %>
-                <li ng-class="{'list-row--is-active': select.isSelected(item)}" class="md-asimple-dialog-option list-row list-row--is-clickable"
+                <li md-ink-ripple ng-class="{'list-row--is-active': select.isSelected(item)}" class="simple-dialog-option list-row list-row--is-clickable-and-hoverable"
                     ng-click="select.select(item)"
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
                     <div class="list-content-tile list-content-tile--one-line">
-                          <strong><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+                          <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
                     </div>
                 </li>
               <% } %>
       </ul>
     </md-content>
-    <!-- for now its hidden -->
-    <% if (select.multiple && false) { %>
-    <div class="md-actions" layout="row">
-        <md-button ng-click="select.close()">
-         Cancel
-        </md-button>
-        <md-button ng-click="select.multipleSelect()" class="md-primary">
-          Select
-        </md-button>
-    </div>
-    <% } %>
-</md-asimple-dialog>
+</simple-dialog>

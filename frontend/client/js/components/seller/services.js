@@ -199,7 +199,7 @@
                         manage: function (arg) {
 
                             if (!angular.isDefined(config.ui.specifics.templateUrl)) {
-                                config.ui.specifics.templateUrl = 'underscore/form/dialog/plugins.html';
+                                config.ui.specifics.templateUrl = 'core/underscore/form/dialog/plugins.html';
                             }
 
                             $modal.open({
@@ -451,7 +451,7 @@
             $.extend(models['23'], {
                 viewModal: function (seller, removedOrAdded) {
                     $modal.open({
-                        templateUrl: 'entity/dialog/editor.html',
+                        templateUrl: 'core/entity/dialog/editor.html',
                         controller: function ($scope, currentAccount, $modalInstance) {
                             var cartData;
                             $scope.seller = seller;
@@ -586,11 +586,11 @@
 
                             $scope.viewContent = function (content) {
                                 $modal.open({
-                                    templateUrl: 'entity/dialog/editor.html',
+                                    templateUrl: 'core/entity/dialog/editor.html',
                                     controller: function ($scope, $modalInstance) {
                                         $scope.config = {};
-                                        $scope.config.templateBodyUrl = 'misc/dialog/content_view_body.html';
-                                        $scope.config.templateFooterUrl = 'misc/dialog/content_view_footer.html';
+                                        $scope.config.templateBodyUrl = 'core/misc/dialog/content_view_body.html';
+                                        $scope.config.templateFooterUrl = 'core/misc/dialog/content_view_footer.html';
                                         $scope.content = content;
                                         $scope.close = function () {
                                             $modalInstance.dismiss('close');

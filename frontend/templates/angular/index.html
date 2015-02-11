@@ -1,15 +1,8 @@
-{# 
-
-This file is only used to act as a compiler of html for the client. It has 0 backend logic to it.
-
-It will perform linking static files and writing down all templates inside a file.
-
-This was done for easier maintenance.
-
-#}
+{# This file is only used to act as a compiler of html for the client. It has 0 backend logic to it. It will perform linking static files and writing down all templates inside a file. This was done for easier maintenance. #}
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <title ng-bind="pageTitle"></title>
     <base href="/" />
     <meta id="is-landscape" />
@@ -17,167 +10,97 @@ This was done for easier maintenance.
     <meta id="is-tablet" />
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="fragment" content="!" />
-    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'>
-    {% for style in settings.ANGULAR_CSS_PATHS %}
-    <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}"/>
-    {% endfor %}
-  </head>
-  <body ng-controller="MainMenuCtrl" layout="row">
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'> {% for style in settings.ANGULAR_CSS_PATHS %}
+    <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
+</head>
+<body ng-controller="MainMenuCtrl" layout="row">
+    <md-sidenav layout="column" class="site-sidenav md-sidenav-left md-whiteframe-z2" md-component-id="left">
+        <md-content>
+            <div class="bar-logo">
+                <img src="/client/css/images/logo_480_cut.png" />
+            </div>
+            <div class="list">
+                <div class="list-subheader">Explore</div>
+                <main-menu-item ui-sref="collections">Collections</main-menu-item>
+                <main-menu-item ui-sref="home">All</main-menu-item>
 
-  <md-sidenav layout="column"
-              class="site-sidenav md-sidenav-left md-whiteframe-z2"
-              md-component-id="left">
-    <md-toolbar>
-      <h1 class="md-toolbar-tools">
-        <a ng-href="/" layout="row" flex>
-          <span class="logo">
-              <img src="/client/css/images/logo_480_cut.png" />
-            </span>
-        </a>
-      </h1>
-    </md-toolbar>
-    <md-content>
-             <div class="list">
-                  <div class="list-subheader">Explore</div>
-                  <button type="button"
-                              md-ink-ripple
-                              loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="collections">Collections</button>
-
-                  <button type="button"
-                              md-ink-ripple
-                              loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="home">All</button>
-
-                
-                  <div ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
+                <div ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
                     <div class="list-divider"></div>
                     <div class="list-subheader">Buy</div>
-                     <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="buy-carts">Carts</button>
-
-                    <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="buy-orders">Orders</button>
-                    <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="settings()">Settings</button>
+                    <main-menu-item ui-sref="buy-carts">Carts</main-menu-item>
+                    <main-menu-item ui-sref="buy-orders">Orders</main-menu-item>
+                    <main-menu-item ng-click="settings()">Settings</main-menu-item>
                 </div>
-
 
                 <div ng-controller="SellerManagementCtrl" ng-show="!currentAccount._is_guest">
                     <div class="list-divider"></div>
                     <div class="list-subheader">Sell</div>
-                      <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="sell-catalogs">Catalogs</button>
-
-                    <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref-active="list-row--is-active" ui-sref="sell-orders">Orders</button>
-                    <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="settings()">Settings</button>
+                    <main-menu-item ui-sref="sell-catalogs">Catalogs</main-menu-item>
+                    <main-menu-item ui-sref="sell-orders">Orders</main-menu-item>
+                    <main-menu-item ng-click="settings()">Settings</main-menu-item>
                 </div>
 
-            </div>
-
-            <div ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
+                <div ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
                     <div class="list-divider"></div>
                     <div class="list-subheader">Account</div>
-                      <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="logout()">Logout</button>
-
-                    <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="settings()">Settings</button>
+                    <main-menu-item ng-click="logout()">Logout</main-menu-item>
+                    <main-menu-item ng-click="settings()">Settings</main-menu-item>
                 </div>
 
-            </div>
-            
-            <div ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
-              <div class="list-divider"></div>
-              <div class="list-subheader">Login</div>
-              <button type="button"
-                                md-ink-ripple
-                                loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-click="login(1)">Login with Google</button>
-            </div>
-             
-            <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
-                <div class="list-divider"></div>
-                <div class="list-subheader">Administration</div>
-                <button type="button"
-                          md-ink-ripple
-                          loading class="list-row list-row--is-clickable menu-item list-content-tile block" ng-repeat="item in GLOBAL_CONFIG.admin.menu"
-                          ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" 
-                          ui-sref-active="list-row--is-active" ng-bind="item.name"></button>
-            </div>
-            
-            <div>
+                <div ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
+                    <div class="list-divider"></div>
+                    <div class="list-subheader">Login</div>
+                    <main-menu-item ng-click="login(1)">Login with Google</main-menu-item>
+                </div>
+
+                <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
+                    <div class="list-divider"></div>
+                    <div class="list-subheader">Administration</div>
+                    <main-menu-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" ng-bind="item.name"></main-menu-item>
+                </div>
+
                 <div class="list-divider"></div>
                 <div class="list-subheader">Support</div>
-                  <button type="button"
-                                  md-ink-ripple
-                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="about">About</button>
-                  <button type="button"
-                                  md-ink-ripple
-                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block">Tour</button>
-                  <button type="button"
-                                  md-ink-ripple
-                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="terms">Privacy &amp; Terms</button>
-
-                  <button type="button"
-                                  md-ink-ripple
-                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="trademark">Copyright &amp; Trademark</button>
-                  <button type="button"
-                                  md-ink-ripple
-                                  loading class="list-row list-row--is-clickable menu-item list-content-tile block" ui-sref="support">Support</button>
+                <main-menu-item ui-sref="about">About</main-menu-item>
+                <main-menu-item ui-sref="tour">Tour</main-menu-item>
+                <main-menu-item ui-sref="terms">Privacy &amp; Terms</main-menu-item>
+                <main-menu-item ui-sref="trademark">Copyright &amp; Trademark</main-menu-item>
+                <main-menu-item ui-sref="support">Support</main-menu-item>
             </div>
-    </md-content>
-  </md-sidenav>
+        </md-content>
+    </md-sidenav>
 
-  <div layout="column" layout-fill tabIndex="-1" role="main">
-    <md-toolbar>
-      <div class="md-toolbar-tools" ng-click="openMenu()">
-        <div layout="row" flex class="fill-height">
-          <div class="md-toolbar-item md-breadcrumb">
-            <span class="logo">
-              <img src="/client/css/images/logo_480_cut.png" />
-            </span>
-          </div>
+    <div layout="column" layout-fill tabIndex="-1" role="main">
+        <md-toolbar>
+            <div class="md-toolbar-tools" ng-click="openMenu()">
+                <div layout="row" flex class="fill-height">
+                    <div class="md-toolbar-item md-breadcrumb">
+                        <span class="logo">
+                          <img src="/client/css/images/logo_480_cut.png" />
+                        </span>
+                    </div>
+                    <span flex></span>
+                    <div class="md-toolbar-item md-tools" layout="row"></div>
+                </div>
+            </div>
+        </md-toolbar>
+        <md-content ui-view md-scroll-y flex></md-content>
+    </div>
 
-          <span flex></span> <!-- use up the empty space -->
+    <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+    {# Compile all templates based on the settings.py #} {% for tpl in settings.ANGULAR_TEMPLATES %}
+    <script id="{{tpl[0]}}" type="{% if len(tpl) > 2 %}{{tpl[2]}}{% else %}text/ng-template{% endif %}">{% if not len(tpl) > 1 %}{{angular_include_template(tpl[0])|safe}}{% else %}{{angular_include_template(tpl[1])|safe}}{% endif %}</script>
+    {% endfor %} {% for js in settings.ANGULAR_JS_PATHS %}
+    <script type="text/javascript" src="{{static_dir('js/%s' % js)}}"></script>
+    {% endfor %}
+    <!-- angular globals -->
+    {% for g in settings.ANGULAR_GLOBAL_JS_PATHS %}
+    <script type="text/javascript" src="{{static_dir('js/%s.js' % g)}}"></script>
+    {% endfor %} {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
+    <script type="text/javascript" src="{{static_dir('js/components/%s.js' % module)}}"></script>
+    {% endfor %}
+    <script type="text/javascript" src="{{static_dir('js/init.js')}}"></script>
 
-          <div class="md-toolbar-item md-tools" layout="row">
-           
-          </div>
-        </div>
-      </div>
-    </md-toolbar>
-    <md-content ui-view md-scroll-y flex></md-content>
-  </div>
-  <script type="text/javascript" src="/_ah/channel/jsapi"></script>
-  {# 
-      Compile all templates based on the settings.py
-  #}
-  {% for tpl in settings.ANGULAR_TEMPLATES %}
-  <script id="{{tpl[0]}}" type="{% if len(tpl) > 2 %}{{tpl[2]}}{% else %}text/ng-template{% endif %}">{% if not len(tpl) > 1 %}{{angular_include_template(tpl[0])|safe}}{% else %}{{angular_include_template(tpl[1])|safe}}{% endif %}</script>
-  {% endfor %}
-   
-  {% for js in settings.ANGULAR_JS_PATHS %}
-  <script type="text/javascript" src="{{static_dir('js/%s' % js)}}"></script>
-  {% endfor %}
-  
-  <!-- angular globals -->
-  {% for g in settings.ANGULAR_GLOBAL_JS_PATHS %}
-  <script type="text/javascript" src="{{static_dir('js/%s.js' % g)}}"></script>
-  {% endfor %}
+</body>
 
-  {% for module in settings.ANGULAR_ACTIVE_COMPONENTS %}
-  <script type="text/javascript" src="{{static_dir('js/components/%s.js' % module)}}"></script>
-  {% endfor %}
-  
-  <script type="text/javascript" src="{{static_dir('js/init.js')}}"></script>
-    
-  </body> 
 </html>

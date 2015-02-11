@@ -1,33 +1,27 @@
 <div accordion-on-open="accordions">
     <accordion close-others="accordions.closeOthers">
-
         <accordion-group heading="{{accordions.groups[0].label}}" is-open="accordions.groups[0].open" is-disabled="accordions.groups[0].disabled">
- 
             <ul class="list">
                   <li class="list-row">
                         <div class="list-content-tile list-content-tile--two-lines">
-                              <strong>ID</strong>
-                              <span>{{entity.id}}</span>
+                              <strong class="first">ID</strong>
+                              <span class="second">{{entity.id}}</span>
                         </div>
                   </li>
-
                   <li class="list-row">
-                        <div class="list-content-tile list-content-tile--two-lines">
-                              <strong>Registered</strong>
-                              <span>{{entity|output:'created'}}</span>
-                        </div>
+                      <div class="list-content-tile list-content-tile--two-lines">
+                          <strong class="first">Registered</strong>
+                          <span class="second">{{entity|output:'created'}}</span>
+                      </div>
                   </li>
-
                   <li class="list-row">
-
-                        <div class="list-content-tile list-content-tile--two-lines">
-                              <strong>State</strong>
-                              <span>{{entity.state}}</span>
-                        </div>
+                      <div class="list-content-tile list-content-tile--two-lines">
+                          <strong class="first">State</strong>
+                          <span class="second">{{entity.state}}</span>
+                      </div>
                   </li>
             </ul>
- 
-
+            
         </accordion-group>
 
         <accordion-group heading="{{accordions.groups[1].label}}" is-open="accordions.groups[1].open" is-disabled="accordions.groups[1].disabled">
@@ -51,6 +45,5 @@
         <accordion-group ng-if="accordions.groups[2]" heading="{{accordions.groups[2].label}}" is-open="accordions.groups[2].open" is-disabled="accordions.groups[2].disabled" ng-init="accordion = accordions.groups[2]">
           <div ng-if="accordion.include" ng-include="accordion.include"></div>
         </accordion-group>
-
     </accordion>
  </div>

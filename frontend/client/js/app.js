@@ -19,14 +19,14 @@
         GLOBAL_CONFIG = {
             debug: true, // debug mode
             host: host,
-            modules: ['ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ngUpload',
-                'ui.bootstrap', 'ui.bootstrap.datetimepicker', 'ui.inflector',
-                'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop', 'ngTouch',
+            modules: ['config', 'ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ngUpload',
+                'ui.bootstrap', 'ui.inflector', 'ngSanitize', 'angular-data.DSCacheFactory', 'ngDragDrop',
                 'timer', 'angulike', 'googlechart', 'ngMaterial'], // this will be changed accordingly
             api: {
                 endpoint: {
                     path: host + '/api/endpoint'
-                }
+                },
+                modelsMeta: '/api/model_meta'
             },
             date: {
                 format: 'yyyy-MM-dd HH:mm:ss Z'
@@ -57,11 +57,15 @@
             }
         };
 
-    angular.module('app', GLOBAL_CONFIG.modules)
-        .constant('GLOBAL_CONFIG', GLOBAL_CONFIG).config(function ($httpProvider, $locationProvider, $mdThemingProvider) {
+    angular.module('config', ['ng'])
+        .constant('GLOBAL_CONFIG', GLOBAL_CONFIG)
+        .config(function ($httpProvider, $locationProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
             $locationProvider.html5Mode(true);
+        });
+    angular.module('app', GLOBAL_CONFIG.modules)
+        .config(function ($mdThemingProvider) {
             $mdThemingProvider.theme('default')
                 .primaryPalette('grey')
                 .accentPalette('blue-grey')

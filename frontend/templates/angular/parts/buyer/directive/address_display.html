@@ -1,7 +1,10 @@
-{{val.name}}<br ng-if="notEmpty(val.name)" />
-{{val.street}}<br ng-if="notEmpty(val.street)" />
-{{val.city}} {{val._region.name}} {{val.postal_code}}
-<br ng-if="notEmpty(val.city) || notEmpty(val._region.name) || notEmpty(val.postal_code)" />
-{{val._country.name}}<br ng-if="notEmpty(val._country.name)" />
-{{val.email}}<br ng-if="notEmpty(val.email)" />
-{{val.telephone}}<br ng-if="notEmpty(val.telephone)" />
+<!-- Addresses list should be three line list (max line number).
+First line should be "Name" field.
+Second line should be "Street, City" fields.
+Third line should be "Region, Postal Code, Country" fields. -->
+<strong class="first">{{val.name}}</strong>
+<span class="second">
+    {{val.street}}<span ng-if="notEmpty(val.city)">, </span>{{val.city}}
+    <span ng-if="notEmpty(val._region.name)"><br /> {{val._region.name}}<span ng-if="notEmpty(val.postal_code)">, {{val.postal_code}}</span><span ng-if="notEmpty(val._country.name)">, {{val._country.name}}</span>
+    </span>
+</span>
