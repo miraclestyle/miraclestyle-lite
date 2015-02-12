@@ -3239,7 +3239,8 @@ md-input-container {
     border-width: 0 0 1px 0;
     line-height: 26px;
     -ms-flex-preferred-size: 26px;
-    border-radius: 0; }
+    border-radius: 0;
+    border-style: solid; }
     md-input-container .md-input:focus, md-input-container .as-md-input:focus {
       outline: none; }
     md-input-container .md-input:invalid, md-input-container .as-md-input:invalid {

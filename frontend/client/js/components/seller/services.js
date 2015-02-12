@@ -206,7 +206,7 @@
                                 template: underscoreTemplate.get(config.ui.specifics.templateUrl)({
                                     config: config
                                 }),
-                                controller: function ($scope, $modalInstance, modelsUtil) {
+                                controller: function ($scope, modelsUtil) {
                                     var is_new = false,
                                         inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
@@ -354,7 +354,7 @@
                                     }
 
                                     $scope.close = function () {
-                                        $modalInstance.dismiss('cancel');
+                                        $scope.$close();
                                     };
 
                                     $scope.validateForm = function () {
@@ -452,7 +452,7 @@
                 viewModal: function (seller, removedOrAdded) {
                     $modal.open({
                         templateUrl: 'core/form/manage_entity.html',
-                        controller: function ($scope, currentAccount, $modalInstance) {
+                        controller: function ($scope, currentAccount) {
                             var cartData;
                             $scope.seller = seller;
                             $scope.config = {
@@ -587,13 +587,13 @@
                             $scope.viewContent = function (content) {
                                 $modal.open({
                                     templateUrl: 'core/form/manage_entity.html',
-                                    controller: function ($scope, $modalInstance) {
+                                    controller: function ($scope) {
                                         $scope.config = {};
                                         $scope.config.templateBodyUrl = 'core/misc/content_view_body.html';
                                         $scope.config.templateFooterUrl = 'core/misc/content_view_footer.html';
                                         $scope.content = content;
                                         $scope.close = function () {
-                                            $modalInstance.dismiss('close');
+                                            $scope.$close();
                                         };
                                     }
                                 });
@@ -627,7 +627,7 @@
                             };
 
                             $scope.close = function () {
-                                $modalInstance.dismiss('close');
+                                $scope.$close();
                             };
                         },
                     });

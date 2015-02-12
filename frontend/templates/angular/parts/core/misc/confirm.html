@@ -1,5 +1,5 @@
-<div class="modal-confirm">
-      <div class="modal-body">
+<div fit-in-modal class="modal-confirm">
+      <div class="modal-body max-height overflow-auto-y">
           <div class="modal-body-inner padding-24">
               <div ng-if="!config.templateUrl" ng-bind="config.message" class="confirm-message"></div>
               <div class="alert-message" ng-if="config.templateUrl">
@@ -12,5 +12,4 @@
            <md-button type="button" class="button" ng-click="config.dismiss()">Cancel</md-button>
            <md-button type="button" class="button" ng-click="config.confirm()">Yes</md-button>
       </div>
-
 </div>

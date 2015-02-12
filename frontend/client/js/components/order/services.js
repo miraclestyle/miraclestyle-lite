@@ -60,7 +60,7 @@
 
                         $modal.open({
                             templateUrl: 'order/view.html',
-                            controller: function ($scope, $modalInstance) {
+                            controller: function ($scope) {
                                 var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate, updateLiveEntity,
                                     orderActionsFields = modelsMeta.getActionArguments('34'), prepareMessageFields,
                                     displayAddress = function (address) {
@@ -354,7 +354,7 @@
                                 };
 
                                 $scope.close = function () {
-                                    $modalInstance.dismiss('close');
+                                    $scope.$close();
                                 };
 
                                 $scope.viewProduct = function (line) {

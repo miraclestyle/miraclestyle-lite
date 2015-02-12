@@ -1886,8 +1886,6 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             if matches:
               self._property_value_by_read_arguments[i] = matches[0]
           self._property_value_by_read_arguments.sort(key=lambda x: x._sequence, reverse=True)
-    if self.property_name == 'addresses':
-      print [(p.name, p._sequence) for p in self.value], [(p.name, p._sequence) for p in self._property_value_by_read_arguments]
 
   def _read(self, read_arguments):
     property_value = self._property._get_user_value(self._entity)

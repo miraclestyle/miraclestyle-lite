@@ -13,7 +13,10 @@
                             config: {
                                 more: true,
                                 search: {
-                                    orders: [{field: 'logged', operator: 'desc'}]
+                                    orders: [{
+                                        field: 'logged',
+                                        operator: 'desc'
+                                    }]
                                 }
                             }
                         }
@@ -32,13 +35,13 @@
                 view: function (record) {
                     $modal.open({
                         templateUrl: 'core/form/manage_entity.html',
-                        controller: function ($scope, $modalInstance) {
+                        controller: function ($scope) {
                             $scope.record = record;
                             $scope.config = {};
                             $scope.config.templateBodyUrl = 'core/misc/history_view_body.html';
                             $scope.config.hideSave = true;
                             $scope.close = function () {
-                                $modalInstance.dismiss('close');
+                                $scope.$close();
                             };
                         }
                     });

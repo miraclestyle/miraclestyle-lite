@@ -43,13 +43,13 @@
                     modal: function (errors) {
                         $modal.open({
                             templateUrl: 'core/misc/errors.html',
-                            controller: function ($scope, $modalInstance) {
+                            controller: function ($scope) {
                                 $scope.errors = [];
                                 angular.forEach(errors, function (error, key) {
                                     $scope.errors.push([key, errorHandling.translate(key, error)]);
                                 });
                                 $scope.ok = function () {
-                                    $modalInstance.dismiss('ok');
+                                    $scope.$close();
                                 };
                             }
                         });
@@ -999,16 +999,21 @@ w:                  while (images.length > 0) {
 
                         // every entity has _read_arguments when retrieved from database
                         // argument loader will attach that to its next rpc
+                        // to ensure that entity that has been fetched from database
+                        // gets the same read arguments for next rpc
                         if (entityCopy._read_arguments) {
                             args.read_arguments = entityCopy._read_arguments;
                         }
 
+                        // attaches next read arguments to args too, needed for paging
                         if (entityCopy._next_read_arguments) {
                             args._next_read_arguments = entityCopy._next_read_arguments;
                         }
 
+                        // attach extra data to args
                         $.extend(args, $scope.withArgs);
 
+                        // attach which action and model should be used in rpc from the config
                         args.action_id = $scope.config.action;
                         args.action_model = $scope.config.kind;
                         return args;
@@ -1017,11 +1022,10 @@ w:                  while (images.length > 0) {
                         return this.defaultArgumentLoader($scope);
                     },
                     defaultPrepareReadArguments: function ($scope) {
-
+                        // it will scan entire args and populate read arguments
                         if (!angular.isObject($scope.args.read_arguments)) {
                             $scope.args.read_arguments = {};
                         }
-
                         var readArgs = $scope.args.read_arguments,
                             parser = function (arg, key, readArgs) {
                                 if (angular.isArray(arg)) {
@@ -1054,8 +1058,10 @@ w:                  while (images.length > 0) {
                     }
                 }, actionArguments, modelsEditorInstance;
 
+                // recurse the config adding only what is supplied by the `new_config`
                 helpers.extendDeep(config, new_config);
 
+                // load all field specs from the arguments that are going to be used based on action and model provided
                 if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
                     config.fields = [];
                     actionArguments = modelsMeta.getActionArguments(config.kind, config.action);
@@ -1067,6 +1073,7 @@ w:                  while (images.length > 0) {
                     });
 
                 }
+                // map out the fields to key-value dict
                 config.keyedFields = {};
                 angular.forEach(config.fields, function (field) {
                     config.keyedFields[field.code_name] = field;
@@ -1095,11 +1102,10 @@ w:                  while (images.length > 0) {
                         });
                     },
                     open: function (entity, args) {
-
                         var opener = $modal,
                             fn = 'open',
                             ctrl;
-                        ctrl = function ($scope, $modalInstance) {
+                        ctrl = function ($scope) {
                             var inflector = $filter('inflector'),
                                 field,
                                 done = {},
@@ -1124,31 +1130,32 @@ w:                  while (images.length > 0) {
                                         }
                                     }
                                     madeHistory = true;
+                                    var rule = $scope.args.ui.rule.field._records;
                                     $scope.historyConfig.key = $scope.entity.key;
-                                    if ($scope.args.ui.rule.field._records.visible) {
+                                    if (rule && rule.visible) {
                                         recordAccordion.attach($scope.accordions);
                                     }
                                 };
-                            modelsUtil.normalize(entity);
-                            $scope.container = {
-                                action: endpoint.url
-                            };
-
                             config.getScope = function () {
                                 return $scope;
                             };
+                            modelsUtil.normalize(entity);
 
+                            $scope.container = {
+                                action: endpoint.url
+                            };
                             $scope.withArgs = args;
                             $scope.config = config;
                             $scope.entity = entity;
-                            $scope.$modalInstance = $modalInstance;
                             $scope.args = config.argumentLoader($scope);
                             $scope.rootScope = $scope;
+
                             $scope.formSetPristine = function () {
                                 if ($scope.container && $scope.container.form) {
                                     $scope.container.form.$setPristine();
                                 }
                             };
+
                             $scope.formSetDirty = function () {
                                 if ($scope.container && $scope.container.form) {
                                     $scope.container.form.$setDirty();
@@ -1159,7 +1166,6 @@ w:                  while (images.length > 0) {
                                 $scope.args.action_id = action;
                                 config.action = action;
                             };
-                            console.log('modelsEditor.init', $scope);
 
                             $scope.validateForm = function () {
                                 if (!$scope.container.form.$valid) {
@@ -1228,30 +1234,21 @@ w:                  while (images.length > 0) {
                             };
 
                             $scope.close = function () {
-                                if ($modalInstance.dismiss) {
-                                    $modalInstance.dismiss('close');
-                                } else {
-                                    $modalInstance.hide();
-                                }
+                                $scope.$close();
                                 if (config.afterClose) {
                                     config.afterClose($scope);
                                 }
                             };
 
-                            $scope.$on('$destroy', function () {
-                                config.getScope = undefined;
-                            });
-
                             if (angular.isDefined(config.scope)) {
                                 $.extend($scope, config.scope);
-                                delete config.scope;
                             }
 
                             $scope.formBuilder = {
                                 '0': []
                             };
 
-                            // if no accordions are defined, use the auto-builder
+                            // if no accordions are defined, use the auto accordion builder
                             if (!angular.isDefined($scope.accordions)) {
                                 $scope.accordions = {
                                     closeOthers: true,
@@ -1344,9 +1341,13 @@ w:                  while (images.length > 0) {
                             console.log('modelsEditor.scope', $scope);
                             makeHistory();
 
+                            $scope.$on('$destroy', function () {
+                                config.getScope = undefined;
+                            });
+
                         };
 
-                        ctrl.$inject = ['$scope', '$modalInstance'];
+                        ctrl.$inject = ['$scope'];
 
                         opener[fn]({
                             templateUrl: 'core/form/manage_entity.html',
@@ -1448,13 +1449,10 @@ w:                  while (images.length > 0) {
                     var config = info.config,
                         defaults = {
                             cache: {
-                                results: {
-                                    'default': true,
-                                    '13': false,
-                                    '24': false
-                                },
                                 query: {
-                                    '24': true
+                                    '24': true,
+                                    '12': true,
+                                    '13': true
                                 }
                             },
                             finder: {
@@ -1732,7 +1730,6 @@ w:                  while (images.length > 0) {
                                     $.inArray(field.code_name, config.ui.specifics.excludeListFields) !== -1)) {
                                 return;
                             }
-
                             listFields.push({
                                 key: field.code_name,
                                 generated: true,
@@ -1798,9 +1795,9 @@ w:                  while (images.length > 0) {
                         sort: function (e, ui) {
                             var sample = ui.placeholder.next();
                             if (sample.length) {
-                                ui.placeholder.width(sample.width()).height(sample.height());
+                                ui.placeholder.width(sample.width()).height(sample.height()); // @todo review this
                             }
-                            info.scope.$broadcast('itemOrderSorting');
+                            info.scope.$broadcast('itemOrderSorting'); // @todo review this
                         },
                         stop: function () {
                             angular.forEach(config.ui.specifics.parentArgs,
@@ -1810,17 +1807,20 @@ w:                  while (images.length > 0) {
                                     ent.ui.access[ent.ui.access.length - 1] = i;
                                 });
                             rootFormSetDirty();
-                            info.scope.$broadcast('itemOrderChanged');
+                            info.scope.$broadcast('itemOrderChanged'); // @todo review this
                             info.scope.$apply();
                         }
                     };
+                    // add default sorting config
                     $.extend(defaultSortable, config.ui.specifics.sortableOptions);
                     config.ui.specifics.sortableOptions = defaultSortable;
+                    // disables sorting if the field is not writable
+                    // writableCompiled is as-is specification
                     config.ui.init.add('checkDisabledStateForSortable', function () {
                         var fieldIsWritable = $parse(config.ui.writableCompiled);
                         config.ui.specifics.sortableOptions.disabled = !fieldIsWritable(info.scope);
                     });
-
+                    // watches list of arguments args != new
                     info.scope.$watch(config.ui.args, function (neww, old) {
                         if (neww !== old) {
                             config.ui.specifics.parentArgs = neww;
@@ -1828,6 +1828,8 @@ w:                  while (images.length > 0) {
                     });
 
                     buildPaths = function () {
+                        // builds form fields
+                        // it appends needed paths depending on hierarchy depth
                         config.ui.specifics.formBuilder = [];
                         angular.forEach(config.ui.specifics.fields, function (field) {
                             var copyWritable = angular.copy(config.ui.writable);
@@ -1853,7 +1855,9 @@ w:                  while (images.length > 0) {
                     buildPaths();
 
                     if (config.ui.specifics.remote) {
+                        // construct reference to root arguments
                         rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
+                        // assign "load more" logic
                         config.ui.specifics.reader = models[rootArgs.action_model].reader({
                             kind: rootArgs.action_model,
                             key: rootArgs.key,
@@ -1863,12 +1867,11 @@ w:                  while (images.length > 0) {
                                 config.ui.specifics.parentArgs.extend(items);
                             }
                         });
-
+                        // apply direct reader settings if any
                         if (angular.isDefined(config.ui.specifics.readerSettings)) {
                             config.ui.specifics.reader.state(config.ui.specifics.readerSettings);
                         }
                     }
-
 
                     if (!config.repeated && config.ui.specifics.modal !== true) {
 
@@ -1889,20 +1892,21 @@ w:                  while (images.length > 0) {
 
                         config.ui.specifics.remove = function (arg) {
                             arg._state = 'deleted';
-                            info.scope.$emit('itemDelete', arg);
-                            info.scope.$broadcast('itemDelete', arg);
+                            info.scope.$emit('itemDelete', arg); // @todo handle this
+                            info.scope.$broadcast('itemDelete', arg); // @todo handle this
                             rootFormSetDirty();
                         };
 
+                        // generic manage dialog that handles editing of remote and local structured properties
                         config.ui.specifics.manage = function (arg, defaultArgs) {
 
-                            buildPaths();
+                            buildPaths(); // force path rebuild
 
                             $modal.open({
                                 template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/underscore/form/manage_structured.html')({
                                     config: config
                                 }),
-                                controller: function ($scope, $modalInstance, modelsUtil) {
+                                controller: function ($scope, modelsUtil) {
                                     var isNew = false,
                                         length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
                                         formBuilder = {
@@ -1991,7 +1995,7 @@ w:                  while (images.length > 0) {
                                     $scope.rootScope = config.ui.specifics.rootScope;
                                     $scope.entity = config.ui.specifics.entity;
                                     $scope.close = function () {
-                                        $modalInstance.dismiss('cancel');
+                                        $scope.$close();
                                         if (config.ui.specifics.afterClose) {
                                             config.ui.specifics.afterClose($scope);
                                         }
@@ -2154,16 +2158,12 @@ w:                  while (images.length > 0) {
                                                     }
                                                     isNew = false;
                                                 }
-
                                                 $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
-
-
                                                 // re-run prepare to ensure proper paths for complete hook
                                                 prepare();
                                                 if (angular.isDefined(config.ui.specifics.afterSave)) {
                                                     config.ui.specifics.afterSave($scope);
                                                 }
-
                                                 $scope.formSetPristine();
 
                                             }, function (response) {
@@ -2185,7 +2185,6 @@ w:                  while (images.length > 0) {
                                             if (angular.isDefined(config.ui.specifics.afterComplete)) {
                                                 config.ui.specifics.afterComplete($scope);
                                             }
-
                                             $scope.rootFormSetDirty();
                                             $scope.formSetPristine();
                                         };
@@ -2195,7 +2194,6 @@ w:                  while (images.length > 0) {
                                             if (angular.isDefined(config.ui.specifics.noComplete)) {
                                                 config.ui.specifics.noComplete($scope);
                                             }
-
                                             $scope.rootFormSetDirty();
                                             $scope.formSetPristine();
                                         };
@@ -2205,7 +2203,6 @@ w:                  while (images.length > 0) {
                                             if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
                                                 config.ui.specifics.afterCompleteError($scope, response);
                                             }
-
                                             $scope.rootFormSetDirty();
                                             $scope.formSetPristine();
                                         };
@@ -2227,6 +2224,7 @@ w:                  while (images.length > 0) {
                                                     if (config.repeated) {
                                                         if (isNew) {
                                                             $scope.parentArgs.unshift($scope.args);
+                                                            isNew = false;
                                                             total = $scope.parentArgs.length - 1;
                                                             angular.forEach($scope.parentArgs, function (item, i) {
                                                                 i = total - i;
@@ -2272,10 +2270,12 @@ w:                  while (images.length > 0) {
                                         };
                                     }
 
+                                    // construct direct scope
                                     if (config.ui.specifics.scope) {
                                         $.extend($scope, config.ui.specifics.scope);
                                     }
 
+                                    // call constructor
                                     if (angular.isFunction(config.ui.specifics.init)) {
                                         config.ui.specifics.init($scope);
                                     }
@@ -2655,17 +2655,16 @@ w:                  while (images.length > 0) {
                 };
                 helpers.extendDeep(config, extraConfig);
                 return $modal.open({
-                    windowClass: 'modal-medium',
                     fullScreen: false,
                     targetEvent: extraConfig && extraConfig.targetEvent,
                     templateUrl: 'core/misc/' + config.type + '.html',
-                    controller: function ($scope, $modalInstance) {
+                    controller: function ($scope) {
                         var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
                         config.dismiss = function () {
                             if (callback) {
                                 callback.call(this);
                             }
-                            $modalInstance.dismiss('dismiss');
+                            $scope.$close();
                         };
 
                         if (!angular.isObject(extraConfig)) {

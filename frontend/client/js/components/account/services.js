@@ -62,7 +62,7 @@
                                 $scope.actions.sudo = function () {
                                     $modal.open({
                                         templateUrl: 'account/administer.html',
-                                        controller: function ($scope, $modalInstance) {
+                                        controller: function ($scope) {
                                             var sudoFields = modelsMeta.getActionArguments(that.kind, 'sudo');
                                             $scope.args = {key: entity.key, state: entity.state};
 
@@ -87,7 +87,7 @@
                                                 });
                                             };
                                             $scope.close = function () {
-                                                $modalInstance.dismiss('close');
+                                                $scope.$close();
                                             };
                                         }
                                     });

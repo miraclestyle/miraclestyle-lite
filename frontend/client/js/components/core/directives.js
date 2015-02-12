@@ -374,25 +374,36 @@
         .directive('fitInModal', function () {
             return {
                 link: function (scope, element, attrs) {
-                    var fn = function () {
-                        var modalDialog = $(element).parents('.modal-dialog:first'),
-                            height = $(window).height();
-                        height -= parseInt(modalDialog.css('margin-top'), 10) + parseInt(modalDialog.css('margin-bottom'), 10);
-
-                        modalDialog.find('.modal-body.min-height').css('min-height', height);
-                        modalDialog.find('.fixed-height, .modal-body.scrollable, .modal-body.unscrollable').each(function () {
-                            var newHeight = height, footerClass = '.modal-footer', toolbar = 'md-toolbar';
-                            if ($(this).hasClass('include-footer-height')) {
-                                footerClass = $(this).data('footer_element') || footerClass;
-                                newHeight -= modalDialog.find(footerClass).outerHeight();
+                    var time,
+                        fn = function () {
+                            if (time) {
+                                clearTimeout(time);
                             }
-                            if ($(this).hasClass('has-toolbar')) {
-                                newHeight -= modalDialog.find(toolbar).outerHeight();
-                            }
-                            $(this).height(newHeight);
-                        });
-
-                    };
+                            time = setTimeout(function () {
+                                var modal = $(element).parents('.modal:first'),
+                                    modalDialog = modal.find('.modal-dialog:first'),
+                                    height = (modal.hasClass('modal-medium') ? modalDialog.height() : $(window).height());
+                                modalDialog.find('.fixed-height, .min-height, .max-height').each(function () {
+                                    var newHeight = height,
+                                        footer = modalDialog.find('.md-actions'),
+                                        toolbar = modalDialog.find('md-toolbar'),
+                                        css = 'height';
+                                    if (footer.length) {
+                                        newHeight -= footer.outerHeight();
+                                    }
+                                    if (toolbar.length) {
+                                        newHeight -= toolbar.outerHeight();
+                                    }
+                                    if ($(this).hasClass('min-height')) {
+                                        css = 'min-height';
+                                    }
+                                    if ($(this).hasClass('max-height')) {
+                                        css = 'max-height';
+                                    }
+                                    $(this).css(css, newHeight);
+                                });
+                            }, 50);
+                        };
 
                     $(window).bind('resize modal.open', fn);
                     scope.$on('$destroy', function () {
@@ -531,6 +542,8 @@
 
                                 });
                             }
+
+                            scope.$apply();
                         };
 
                     element.on('click', click);
@@ -1181,19 +1194,43 @@
             return {
                 replace: true,
                 transclude: true,
-                require: ['ngModel'],
+                require: ['ngModel', '^?mdInputContainer'],
                 templateUrl: 'core/select/input.html',
                 scope: true,
                 link: function (scope, element, attrs, ctrls) {
                     var ngModel = ctrls[0],
+                        containerCtrl = ctrls[1],
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
                         search = scope.$eval(attrs.search),
                         multiple = scope.$eval(attrs.multiple),
                         placeholder = attrs.placeholder,
                         select = {},
-                        timeout;
+                        timeout,
+                        ngModelPipelineCheckValue,
+                        isErrorGetter;
+                    containerCtrl.input = element;
                     $mdTheming(element);
+                    ngModelPipelineCheckValue = function (arg) {
+                        containerCtrl.setHasValue(!ngModel.$isEmpty(arg));
+                        return arg;
+                    };
+                    isErrorGetter = containerCtrl.isErrorGetter || function () {
+                        return ngModel.$invalid && ngModel.$touched;
+                    };
+                    scope.$watch(isErrorGetter, containerCtrl.setInvalid);
+
+                    ngModel.$parsers.push(ngModelPipelineCheckValue);
+                    ngModel.$formatters.push(ngModelPipelineCheckValue);
+
+                    element.on('click', function (ev) {
+                        containerCtrl.setFocused(true);
+                    });
+                    scope.$on('$destroy', function () {
+                        containerCtrl.setFocused(false);
+                        containerCtrl.setHasValue(false);
+                        containerCtrl.input = null;
+                    });
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
@@ -1326,10 +1363,6 @@
                             attachTo = element.parents('.fixed-height:first');
                         }
 
-                        $($event.target).one('transitionEnd', function () {
-                            console.log('bar');
-                        });
-
                         $simpleDialog.show({
                             template: underscoreTemplate.get('core/select/underscore/choices.html')({select: select}),
                             targetEvent: $event,
@@ -1430,11 +1463,13 @@
                             },
                             controller: function ($scope) {
                                 select.close = function () {
-                                    $simpleDialog.hide().then(function () {
-                                        select.opened = false;
-                                    });
+                                    $simpleDialog.hide();
                                 };
                                 $scope.select = select;
+                                $scope.$on('$destroy', function () {
+                                    select.opened = false;
+                                    containerCtrl.setFocused(false);
+                                });
                             }
                         });
                     };

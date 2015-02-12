@@ -410,7 +410,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
             scope: {
                 index: '@',
                 animate: '=',
-                dialogOptions: '='
+                modalOptions: '='
             },
             replace: true,
             transclude: true,
@@ -418,56 +418,62 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                 return tAttrs.templateUrl || 'template/modal/window.html';
             },
             link: function (scope, element, attrs) {
-                var clickElement = scope.dialogOptions.targetEvent && scope.dialogOptions.targetEvent.target;
-                element.addClass(!scope.dialogOptions.fullScreen ? 'modal-medium' : ''); // attrs.windowClass
+                var clickElement = scope.modalOptions.targetEvent && scope.modalOptions.targetEvent.target;
+                element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // attrs.windowClass
                 scope.size = attrs.size;
                 $timeout(function () {
                     // trigger CSS transitions
-                    if (!scope.dialogOptions.fullScreen) {
-                        var dialog = $(element).find('.modal-dialog'),
-                            iwidth = dialog.width(),
-                            iheight = dialog.height();
-                        scope.dialogOptions.resize = function () {
+                    if (!scope.modalOptions.fullScreen) {
+                        var modal = $(element).find('.modal-dialog'),
+                            iwidth = modal.width(),
+                            iheight = modal.height();
+                        scope.modalOptions.resize = function () {
                             var wwidth = $(window).width(),
                                 wheight = $(window).height(),
                                 maxHeight,
-                                maxWidth;
+                                maxWidth,
+                                minWidth = '',
+                                minHeight = '';
                             if (iheight >= wheight) {
                                 maxHeight = wheight - 16 * 2;
                             } else {
                                 maxHeight = '';
+                                minHeight = iheight;
                             }
                             if (iwidth >= wwidth) {
                                 maxWidth = wwidth - 16 * 2;
                             } else {
                                 maxWidth = '';
+                                minWidth = iwidth;
                             }
-                            dialog.css('max-height', maxHeight);
-                            dialog.css('max-width', maxWidth);
+                            modal.css('max-height', maxHeight);
+                            modal.css('max-width', maxWidth);
+                            modal.css('min-height', minHeight);
+                            modal.css('min-width', minWidth);
                         };
-                        scope.dialogOptions.resize();
-                        $(window).on('resize', scope.dialogOptions.resize);
+                        scope.modalOptions.resize();
+                        $(window).on('resize', scope.modalOptions.resize);
                     }
                     if (clickElement) {
                         var clickRect = clickElement.getBoundingClientRect();
-                        var dialogRect = element[0].getBoundingClientRect();
-                        var scaleX = Math.min(0.5, clickRect.width / dialogRect.width);
-                        var scaleY = Math.min(0.5, clickRect.height / dialogRect.height);
+                        var modalRect = element[0].getBoundingClientRect();
+                        var scaleX = Math.min(0.5, clickRect.width / modalRect.width);
+                        var scaleY = Math.min(0.5, clickRect.height / modalRect.height);
 
                         element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
-                            (-dialogRect.left + clickRect.left + clickRect.width / 2 - dialogRect.width / 2) + 'px,' +
-                            (-dialogRect.top + clickRect.top + clickRect.height / 2 - dialogRect.height / 2) + 'px,' +
+                            (-modalRect.left + clickRect.left + clickRect.width / 2 - modalRect.width / 2) + 'px,' +
+                            (-modalRect.top + clickRect.top + clickRect.height / 2 - modalRect.height / 2) + 'px,' +
                             '0) scale(' + scaleX + ',' + scaleY + ')'
                         );
                     } else {
-                        if (scope.dialogOptions.inDirection) {
-                            element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.dialogOptions.inDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
+                        if (scope.modalOptions.inDirection) {
+                            element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.inDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
                         }
                     }
                     element.addClass('visible');
-                    if (scope.dialogOptions.inDirection && !clickElement) {
+                    if (scope.modalOptions.inDirection && !clickElement) {
                         var cb = function () {
-                            element.addClass('transition-in-' + scope.dialogOptions.inDirection)
+                            element.addClass('transition-in-' + scope.modalOptions.inDirection)
                                 .css($mdConstant.CSS.TRANSFORM, '');
                         };
                     } else {
@@ -613,30 +619,30 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
 
         function removeAfterAnimate(domEl, scope, emulateTime, done) {
             // Closing animation
-            var dialogEl = domEl,
-                clickElement = scope.dialogOptions.targetEvent && scope.dialogOptions.targetEvent.target;
+            var modalEl = domEl,
+                clickElement = scope.modalOptions.targetEvent && scope.modalOptions.targetEvent.target;
 
-            if (!clickElement && scope.dialogOptions.inDirection) {
-                dialogEl.addClass('transition-out-' + scope.dialogOptions.outDirection).removeClass('transition-in-' + scope.dialogOptions.inDirection)
-                    .css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.dialogOptions.outDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
+            if (!clickElement && scope.modalOptions.inDirection) {
+                modalEl.addClass('transition-out-' + scope.modalOptions.outDirection).removeClass('transition-in-' + scope.modalOptions.inDirection)
+                    .css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.outDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
             } else {
-                dialogEl.addClass('transition-out').removeClass('transition-in');
+                modalEl.addClass('transition-out').removeClass('transition-in');
                 if (clickElement) {
                     var clickRect = clickElement.getBoundingClientRect();
-                    var dialogRect = dialogEl[0].getBoundingClientRect();
-                    var scaleX = Math.min(0.5, clickRect.width / dialogRect.width);
-                    var scaleY = Math.min(0.5, clickRect.height / dialogRect.height);
+                    var modalRect = modalEl[0].getBoundingClientRect();
+                    var scaleX = Math.min(0.5, clickRect.width / modalRect.width);
+                    var scaleY = Math.min(0.5, clickRect.height / modalRect.height);
 
-                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
-                        (-dialogRect.left + clickRect.left + clickRect.width / 2 - dialogRect.width / 2) + 'px,' +
-                        (-dialogRect.top + clickRect.top + clickRect.height / 2 - dialogRect.height / 2) + 'px,' +
+                    modalEl.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
+                        (-modalRect.left + clickRect.left + clickRect.width / 2 - modalRect.width / 2) + 'px,' +
+                        (-modalRect.top + clickRect.top + clickRect.height / 2 - modalRect.height / 2) + 'px,' +
                         '0) scale(' + scaleX + ',' + scaleY + ')'
                     );
                 }
             }
 
-            dialogEl.on($mdConstant.CSS.TRANSITIONEND, function afterAnimating(ev) {
-                if (ev.target !== dialogEl[0]) {
+            modalEl.on($mdConstant.CSS.TRANSITIONEND, function afterAnimating(ev) {
+                if (ev.target !== modalEl[0]) {
                     return;
                 }
                 domEl.remove();
@@ -655,7 +661,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                 keyboard: modal.keyboard
             });
 
-            modal.scope.dialogOptions = {
+            modal.scope.modalOptions = {
                 inDirection: modal.inDirection,
                 outDirection: modal.outDirection,
                 targetEvent: modal.targetEvent,
@@ -685,7 +691,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                 'window-class': modal.windowClass,
                 'size': modal.size,
                 'index': openedWindows.length() - 1,
-                'dialog-options': 'dialogOptions',
+                'modal-options': 'modalOptions',
                 'animate': 'animate',
                 'exiting': 'exiting'
             }).html(modal.content);
@@ -722,8 +728,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
             var modalWindow = openedWindows.get(modalInstance);
             if (!modalInstance.withEscape) {
                 mdEscFactory.dequeue(modalInstance.esc);
-                if (modalWindow.value.modalScope.dialogOptions.resize) {
-                    $(window).off('resize', modalWindow.value.modalScope.dialogOptions.resize);
+                if (modalWindow.value.modalScope.modalOptions.resize) {
+                    $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
                 }
             }
             if (modalWindow) {

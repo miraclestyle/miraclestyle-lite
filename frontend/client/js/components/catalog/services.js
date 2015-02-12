@@ -155,7 +155,7 @@
                             }},
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
-                            controller: function ($scope, $modalInstance, productInstanceResponse) {
+                            controller: function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey;
                                 $.extend($scope, fakeScope);
                                 $scope.resetVariation = function () {
@@ -173,13 +173,13 @@
                                 $scope.viewContent = function (content) {
                                     $modal.open({
                                         templateUrl: 'core/form/manage_entity.html',
-                                        controller: function ($scope, $modalInstance) {
+                                        controller: function ($scope) {
                                             $scope.config = {};
                                             $scope.config.templateBodyUrl = 'core/misc/content_view_body.html';
                                             $scope.config.templateFooterUrl = 'core/misc/content_view_footer.html';
                                             $scope.content = content;
                                             $scope.close = function () {
-                                                $modalInstance.dismiss('close');
+                                                $scope.$close();
                                             };
                                         }
                                     });
@@ -304,7 +304,7 @@
                                 };
 
                                 $scope.close = function () {
-                                    $modalInstance.dismiss('close');
+                                    $scope.$close();
                                 };
                             }
                         });
@@ -333,7 +333,7 @@
                         $modal.open({
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
-                            controller: function ($scope, $modalInstance) {
+                            controller: function ($scope) {
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = '31';
                                 $scope.logoImageConfig = {};
@@ -401,7 +401,7 @@
                                 };
 
                                 $scope.close = function () {
-                                    $modalInstance.close();
+                                    $scope.$close();
                                 };
                             }
                         });
@@ -511,7 +511,7 @@
                                     sudo: function () {
                                         $modal.open({
                                             templateUrl: 'catalog/administer.html',
-                                            controller: function ($scope, $modalInstance) {
+                                            controller: function ($scope) {
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
                                                 $scope.args = {key: catalog.key, state: catalog.state};
 
@@ -537,7 +537,7 @@
                                                     });
                                                 };
                                                 $scope.close = function () {
-                                                    $modalInstance.dismiss('close');
+                                                    $scope.$close();
                                                 };
                                             }
                                         });
@@ -558,7 +558,7 @@
                                     $modal.open({
                                         templateUrl: 'catalog/products.html',
                                         windowClass: 'no-overflow',
-                                        controller: function ($scope, $modalInstance, $timeout) {
+                                        controller: function ($scope, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
                                                 setupCurrentPricetag;
@@ -993,7 +993,7 @@
                                             };
 
                                             $scope.close = function () {
-                                                $modalInstance.dismiss('close');
+                                                $scope.$close();
                                             };
                                         }
                                     });
