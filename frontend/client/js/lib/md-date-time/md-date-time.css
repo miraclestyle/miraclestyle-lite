@@ -1,0 +1,410 @@
+.visuallyhidden {
+    visibility: hidden;
+}
+.time-date {
+    overflow: hidden;
+    border: none;
+    position: relative;
+}
+.time-date > .display {
+    position: relative;
+    width: 47%;
+    height: 100%;
+    cursor: pointer;
+    transition: color 0.6s ease-in-out;
+}
+.time-date > .display > .title {
+    background-color: #00796b;
+    color: #e1e1e1;
+    line-height: 24px;
+    position: relative;
+}
+.time-date > .display > .content {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    top: 2.4rem;
+    font-size: 1.5rem;
+    background-color: #009688;
+    color: #e1e1e1;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+.time-date > .display > .content > .super-title {
+    text-transform: uppercase;
+}
+.time-date > .display > .content > .main-title {
+    font-size: 56px;
+}
+.time-date > .display > .content > .main-title > small {
+    font-size: 1.1rem;
+    margin-left: 0.3rem;
+}
+.time-date > .display > .content > .sub-title {
+    color: rgba(255, 255, 255, 0.5);
+}
+.time-date > .control {
+    /* width: 53%; */
+    /* overflow-x: hidden; */
+    position: relative;
+}
+.time-date > .control > .full-title {
+    display: none;
+    background-color: #00796b;
+    color: #e1e1e1;
+}
+.time-date > .control > .slider {
+    /* position: absolute !important; */
+    /* width: 200%; */
+    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+.time-date > .control > .slider > .date-control, .time-date > .control > .slider > .time-control, .time-date > .control > .slider > .switch-control {
+    /* width: 50%; */
+    /* float: left; */
+}
+.time-date > .control > .slider > .date-control, .time-date > .control > .slider > .time-control {
+}
+.time-date > .control > .slider > .switch-control {
+    width: 10%;
+    cursor: pointer;
+    padding: 0 10px;
+    position: absolute;
+    float: none;
+    z-index: 11;
+    top: 0px;
+    right: 45%;
+    width: 70px;
+    height: 240px;
+}
+.time-date > .control > .slider > .switch-control > i.fa:first-child {
+    margin-right: 1.4rem;
+}
+.time-date > .control > .slider > .switch-control > i.fa:last-child {
+    margin-left: 1.4rem;
+}
+.time-date > .control > .slider > .date-control > .title {
+    font-weight: 500;
+    line-height: 40px;
+    text-align: left;
+    width: 100%;
+    margin-bottom: 10px;
+}
+.time-date > .control > .slider > .date-control > .title:after, .time-date > .control > .slider > .date-control > .title:before {
+    display: table;
+    content: " ";
+}
+.time-date > .control > .slider > .date-control > .title:after {
+    clear: both;
+}
+.time-date > .control > .slider > .date-control > .title > span.month-part {
+    cursor: pointer;
+    position: relative;
+}
+.time-date > .control > .slider > .date-control > .title > span.month-part:hover {
+    text-decoration: underline;
+}
+.time-date > .control > .slider > .date-control > .title > span.month-part > select {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    opacity: 0;
+}
+.time-date > .control > .slider > .date-control > .title > input {
+    border: none;
+    width: 4.3rem;
+}
+.time-date > .control > .slider > .date-control > .headers {
+    font-weight: 500;
+    color: #737373;
+    margin: auto;
+    text-align: center;
+    display: block;
+}
+.time-date > .control > .slider > .date-control > .headers > .day-cell {
+    text-align: center;
+    cursor: default;
+}
+.time-date > .control > .slider > .date-control .day-cell {
+    float: left;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 32px;
+    min-width: initial;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    font-size: 14px;
+}
+.time-date > .control > .slider > .date-control > .days {
+  
+}
+.time-date > .control > .slider > .date-control > .days .day-cell {
+    color: #202020;
+}
+.time-date > .control > .slider > .date-control > .days .day-cell.today {
+    color: #009688;
+}
+.time-date > .control > .slider > .date-control > .days .day-cell.selected {
+    color: #fff;
+    background-color: #009688;
+}
+/*.time-date > .control > .slider > .date-control > .days .day-cell:hover,
+.time-date > .control > .slider > .date-control > .days .day-cell:active {
+  color: #e6e6e6;
+  background-color: #00baa9;
+}*/
+
+.time-date > .control > .slider > .time-control {
+    position: relative;
+}
+.time-date > .control > .slider > .time-control > .time-inputs {
+    text-align: center;
+}
+.time-date > .control > .slider > .time-control > .time-inputs > button.md-button {} .time-date > .control > .slider > .time-control > .time-inputs > button.md-button.hours {} .time-date > .control > .slider > .time-control > .time-inputs > button.md-button.minutes {
+    right: 0.7rem;
+    left: 50%;
+}
+.time-date > .control > .slider > .time-control > .time-inputs > button.md-button.up {} .time-date > .control > .slider > .time-control > .time-inputs > button.md-button.down {} .time-date > .control > .slider > .time-control > .time-inputs > input {
+    border: none;
+    border-bottom: 1px solid #000;
+    text-align: right;
+    font-size: 73px;
+    width: auto;
+    margin-top: 16px;
+}
+.time-date > .control > .slider > .time-control > .buttons {
+    text-align: right;
+    margin-top: 24px;
+    margin-right: 8px;
+}
+.time-date.date-mode > .control > .slider {
+    /* left: 0%; */
+}
+.time-date:not(.time-mode-add):not(.time-mode-remove):not(.date-mode-add):not(.date-mode-remove).date-mode > .control > .slider > .time-control > *, .time-date:not(.time-mode-add):not(.time-mode-remove):not(.date-mode-add):not(.date-mode-remove).time-mode > .control > .slider > .date-control > * {
+    /* display: none; */
+}
+.time-date.time-mode-add > .display, .time-date.time-mode-remove > .display, .time-date.date-mode-add > .display, .time-date.date-mode-remove > .display {
+    color: transparent !important;
+}
+.content {
+    padding-top: 4.6rem;
+}
+.time-date.time-mode > .control > .slider {
+    /* left: -100%; */
+    transform: translate3d(-50%, 0, 0);
+    -webkit-transform: translate3d(-50%, 0, 0);
+}
+.time-date.date-only > .control > .slider > .switch-control, .time-date.date-only > .control > .slider > .time-control {
+    display: none;
+}
+.time-date.date-only > .control > .slider > .date-control {
+    width: 50%;
+    padding-left: 1rem;
+}
+.time-date.time-only > .display > .title {
+    display: none;
+}
+.time-date.time-only > .display > .content {
+    top: 0px;
+    padding-top: 6.3rem;
+}
+.time-date.time-only > .control > .slider > .switch-control, .time-date.time-only > .control > .slider > .date-control {
+    display: none;
+}
+.time-date.time-only > .control > .slider > .time-control {
+    width: 50%;
+}
+.time-date > .display, .time-date > .control {
+    /* height: 340px; */
+    text-align: center;
+}
+.time-date > .buttons {
+    clear: both;
+    padding: 0.7rem;
+    text-align: right;
+}
+.time-date button, .time-date .button {
+    color: #009688;
+}
+.time-date.full-mode > .display {
+    display: none;
+}
+.time-date.full-mode > .control {
+    width: 100%;
+    height: 23.4rem;
+}
+.time-date.full-mode > .control > .full-title {
+    display: block;
+}
+.time-date.full-mode > .control > .slider {
+    float: none;
+    width: 100%;
+}
+.time-date.full-mode > .control > .slider > .time-control, .time-date.full-mode > .control > .slider > .date-control {
+    width: 50%;
+}
+.time-date.full-mode > .control > .slider > .switch-control {
+    display: none;
+}
+.time-date.full-mode > .buttons {
+    background-color: #009688;
+}
+.time-date.full-mode > .buttons > button {
+    /* Invert colours for bottom bar */
+    
+    color: #fff !important;
+}
+.time-date.vertical {
+    width: 282px;
+}
+.time-date.vertical > .display {
+    width: 100%;
+    height: auto;
+    transition: color 0.6s ease-in-out, height 0.6s ease-in-out;
+}
+.time-date.vertical > .display > .content {
+    position: relative;
+    width: 100%;
+    top: 0px;
+}
+.time-date.vertical > .control {
+    width: 100%;
+}
+.time-date.vertical.time-mode > .display > .content {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+.time-date.vertical.time-only > .display > .content {
+    top: 0px;
+    padding-top: 0.8rem;
+    height: 10rem;
+}
+.time-date.vertical.full-mode > .display {
+    display: none;
+}
+.time-date.vertical.full-mode > .control {
+    width: 100%;
+    height: 44.2rem;
+}
+.time-date.vertical.full-mode > .control > .full-title {
+    display: block;
+}
+.time-date.vertical.full-mode > .control > .slider {
+    float: none;
+    width: 100%;
+    height: auto;
+    overflow: auto;
+}
+.time-date.vertical.full-mode > .control > .slider > .time-control, .time-date.vertical.full-mode > .control > .slider > .date-control {
+    width: 100%;
+    float: left;
+}
+@media (max-width: 51rem) {
+    .time-date {
+        width: 23.1rem;
+    }
+    .time-date > .display {
+        width: 100%;
+        height: auto;
+        transition: color 0.6s ease-in-out, height 0.6s ease-in-out;
+    }
+    .time-date > .display > .content {
+        position: relative;
+        width: 100%;
+        top: 0px;
+        height: 15.5rem;
+    }
+    .time-date > .control {
+        width: 100%;
+    }
+    .time-date.time-mode > .display > .content {
+        padding-top: 4.6rem;
+    }
+    .time-date.time-only > .display > .content {
+        top: 0px;
+        padding-top: 0.8rem;
+        height: 10rem;
+    }
+    .time-date.full-mode > .display {
+        display: none;
+    }
+    .time-date.full-mode > .control {
+        width: 100%;
+        height: 44.2rem;
+    }
+    .time-date.full-mode > .control > .full-title {
+        display: block;
+    }
+    .time-date.full-mode > .control > .slider {
+        float: none;
+        width: 100%;
+        height: auto;
+        overflow: auto;
+    }
+    .time-date.full-mode > .control > .slider > .time-control, .time-date.full-mode > .control > .slider > .date-control {
+        width: 100%;
+        float: left;
+    }
+}
+.time-date .material-icon {
+    display: inline-block;
+}
+.time-date .material-icon:first-child {} .time-inputs input {
+    font-size: 60px;
+    text-align: center;
+}
+.time-inputs .t1 {
+    padding-left: 16px;
+}
+.time-inputs .t2 {
+    padding-right: 16px;
+}
+.time-inputs md-input-container {
+    margin: 0px;
+}
+.title button {
+    position: absolute;
+    top: 0px;
+    min-width: initial;
+    line-height:normal;
+}
+.title .t1 {
+    left: 0px;
+}
+.title .t2 {
+    right: 0px;
+}
+.title {
+    position: relative;
+}
+.title .contain {
+    text-align: center;
+    margin: auto;
+    padding-right: 40px;
+    padding-left: 40px;
+}
+.time-inputs button {
+    width: 100%;
+    line-height: normal;
+    min-width: inherit;
+}
+
+.time-inputs input {
+  text-align:center;
+}
+
+.time-inputs  input[type=number]::-webkit-inner-spin-button, 
+.time-inputs  input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+.date-control {
+    height: 340px;
+}

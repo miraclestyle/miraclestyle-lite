@@ -2332,10 +2332,8 @@ w:                  while (images.length > 0) {
                     return this.SuperTextProperty(info);
                 },
                 SuperDateTimeProperty: function (info) {
-                    info.config.ui.specifics.options = {
-                        datepickerPopup: 'yyy-MM-dd'
-                    };
-                    return 'datetime';
+                    info.config.ui.attrs['time-date-picker-dialog'] = '';
+                    return 'string';
                 }
             };
 

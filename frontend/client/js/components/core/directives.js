@@ -1,48 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .directive('toggle', function () {
-            return {
-                require: ['^form', '^ngModel'],
-                scope: {
-                    ngModel: '='
-                },
-                link: function (scope, element, attrs, ctrls) {
-
-                    var toggle = attrs.toggle,
-                        splits,
-                        init,
-                        handler;
-                    if (!toggle) {
-                        toggle = 'Yes/No';
-                    }
-                    splits = toggle.split('/');
-                    init = function () {
-                        if (scope.ngModel) {
-                            element.text(splits[0]);
-                        } else {
-                            element.text(splits[1]);
-                        }
-                    };
-
-                    init();
-
-                    handler = function () {
-                        scope.$apply(function () {
-                            scope.ngModel = !scope.ngModel;
-                            ctrls[0].$setDirty();
-                            init();
-                        });
-                    };
-
-                    element.bind('click', handler);
-
-                    scope.$on('$destroy', function () {
-                        element.off('click', handler);
-                    });
-                }
-            };
-        }).directive('jsonOnly', function () {
+        .directive('jsonOnly', function () {
             return {
                 require: 'ngModel',
                 link: function (scope, element, attrs, ctrl) {
@@ -1381,7 +1340,7 @@
                             onBeforeShow: function (dialogEl, options) {
                                 options.parent.css('overflow-wrap', options.parent.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
                                 var animateSelect = function () {
-                                    var target = element.parents('.as-md-input-container:first');
+                                    var target = element.parents('md-input-container:first');
                                     options.resize = function () {
                                         var targetOffset = target.offset(),
                                             targetNode = target.get(0),
@@ -1577,6 +1536,18 @@
                     $mdInkRipple.attachButtonBehavior(scope, element, {
                         dimBackground: false
                     });
+                }
+            };
+        }).directive('icon', function ($mdInkRipple) {
+            return {
+                templateUrl: 'core/misc/icon.html',
+                replace: true,
+                transclude: true,
+                scope: true,
+                link: function (scope, element, attrs) {
+                    var types = attrs.type.split('.');
+                    scope.type = types[0];
+                    scope.icon = types[1];
                 }
             };
         });

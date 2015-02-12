@@ -3026,117 +3026,6 @@ md-content {
 .md-padding {
   padding: 16px; }
 
-.as-md-input-container {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  position: relative;
-  -webkit-flex-direction: column;
-      -ms-flex-direction: column;
-          flex-direction: column;
-  padding: 0;
-  padding-bottom: 26px;
-  margin-left: 16px;
-  margin-right: 16px;
-  /* 
-   * The .md-input class is added to the input/textarea 
-   */ }
-  .as-md-input-container textarea, .as-md-input-container input[type="text"], .as-md-input-container input[type="password"], .as-md-input-container input[type="datetime"], .as-md-input-container input[type="datetime-local"], .as-md-input-container input[type="date"], .as-md-input-container input[type="month"], .as-md-input-container input[type="time"], .as-md-input-container input[type="week"], .as-md-input-container input[type="number"], .as-md-input-container input[type="email"], .as-md-input-container input[type="url"], .as-md-input-container input[type="search"], .as-md-input-container input[type="tel"], .as-md-input-container input[type="color"] {
-    /* remove default appearance from all input/textarea */
-    -moz-appearance: none;
-    -webkit-appearance: none; }
-  .as-md-input-container textarea {
-    resize: none;
-    overflow: hidden; }
-  .as-md-input-container label, .as-md-input-container .md-placeholder {
-    -webkit-order: 1;
-        -ms-flex-order: 1;
-            order: 1;
-    pointer-events: none;
-    -webkit-font-smoothing: antialiased;
-    padding-left: 2px;
-    z-index: 1;
-    -webkit-transform: translate3d(0, 24px, 0) scale(1);
-            transform: translate3d(0, 24px, 0) scale(1);
-    -webkit-transform-origin: left top;
-            transform-origin: left top;
-    transition: -webkit-transform cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
-    transition: transform cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s; }
-  .as-md-input-container .md-placeholder {
-    position: absolute;
-    top: 0;
-    opacity: 0;
-    transition-property: opacity, -webkit-transform;
-    transition-property: opacity, transform;
-    -webkit-transform: translate3d(0, 30px, 0);
-            transform: translate3d(0, 30px, 0); }
-  .as-md-input-container.md-input-focused .md-placeholder {
-    opacity: 1;
-    -webkit-transform: translate3d(0, 24px, 0);
-            transform: translate3d(0, 24px, 0); }
-  .as-md-input-container.md-input-has-value .md-placeholder {
-    transition: none;
-    opacity: 0; }
-  .as-md-input-container .md-input {
-    -webkit-flex: 1;
-        -ms-flex: 1;
-            flex: 1;
-    -webkit-order: 2;
-        -ms-flex-order: 2;
-            order: 2;
-    display: block;
-    background: none;
-    padding-top: 2px;
-    padding-bottom: 1px;
-    padding-left: 2px;
-    padding-right: 2px;
-    border-width: 0 0 1px 0;
-    line-height: 26px;
-    -ms-flex-preferred-size: 26px;
-    border-radius: 0;
-    cursor: pointer; }
-    .as-md-input-container .md-input:focus {
-      outline: none; }
-    .as-md-input-container .md-input:invalid {
-      outline: none;
-      box-shadow: none; }
-  .as-md-input-container ng-messages, .as-md-input-container data-ng-messages, .as-md-input-container x-ng-messages, .as-md-input-container [ng-messages], .as-md-input-container [data-ng-messages], .as-md-input-container [x-ng-messages] {
-    -webkit-order: 3;
-        -ms-flex-order: 3;
-            order: 3;
-    position: relative; }
-  .as-md-input-container ng-message, .as-md-input-container data-ng-message, .as-md-input-container x-ng-message, .as-md-input-container [ng-message], .as-md-input-container [data-ng-message], .as-md-input-container [x-ng-message], .as-md-input-container .md-char-counter {
-    -webkit-font-smoothing: antialiased;
-    position: absolute;
-    font-size: 12px;
-    line-height: 24px; }
-    .as-md-input-container ng-message.ng-enter, .as-md-input-container data-ng-message.ng-enter, .as-md-input-container x-ng-message.ng-enter, .as-md-input-container [ng-message].ng-enter, .as-md-input-container [data-ng-message].ng-enter, .as-md-input-container [x-ng-message].ng-enter, .as-md-input-container .md-char-counter.ng-enter {
-      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-      transition-delay: 0.2s; }
-    .as-md-input-container ng-message.ng-leave, .as-md-input-container data-ng-message.ng-leave, .as-md-input-container x-ng-message.ng-leave, .as-md-input-container [ng-message].ng-leave, .as-md-input-container [data-ng-message].ng-leave, .as-md-input-container [x-ng-message].ng-leave, .as-md-input-container .md-char-counter.ng-leave {
-      transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2); }
-    .as-md-input-container ng-message.ng-enter, .as-md-input-container ng-message.ng-leave.ng-leave-active, .as-md-input-container data-ng-message.ng-enter, .as-md-input-container data-ng-message.ng-leave.ng-leave-active, .as-md-input-container x-ng-message.ng-enter, .as-md-input-container x-ng-message.ng-leave.ng-leave-active, .as-md-input-container [ng-message].ng-enter, .as-md-input-container [ng-message].ng-leave.ng-leave-active, .as-md-input-container [data-ng-message].ng-enter, .as-md-input-container [data-ng-message].ng-leave.ng-leave-active, .as-md-input-container [x-ng-message].ng-enter, .as-md-input-container [x-ng-message].ng-leave.ng-leave-active, .as-md-input-container .md-char-counter.ng-enter, .as-md-input-container .md-char-counter.ng-leave.ng-leave-active {
-      opacity: 0;
-      -webkit-transform: translate3d(0, -20%, 0);
-              transform: translate3d(0, -20%, 0); }
-    .as-md-input-container ng-message.ng-leave, .as-md-input-container ng-message.ng-enter.ng-enter-active, .as-md-input-container data-ng-message.ng-leave, .as-md-input-container data-ng-message.ng-enter.ng-enter-active, .as-md-input-container x-ng-message.ng-leave, .as-md-input-container x-ng-message.ng-enter.ng-enter-active, .as-md-input-container [ng-message].ng-leave, .as-md-input-container [ng-message].ng-enter.ng-enter-active, .as-md-input-container [data-ng-message].ng-leave, .as-md-input-container [data-ng-message].ng-enter.ng-enter-active, .as-md-input-container [x-ng-message].ng-leave, .as-md-input-container [x-ng-message].ng-enter.ng-enter-active, .as-md-input-container .md-char-counter.ng-leave, .as-md-input-container .md-char-counter.ng-enter.ng-enter-active {
-      opacity: 1;
-      -webkit-transform: translate3d(0, 0, 0);
-              transform: translate3d(0, 0, 0); }
-  .as-md-input-container .md-char-counter {
-    bottom: 2px;
-    right: 2px; }
-  .as-md-input-container.md-input-focused label, .as-md-input-container.md-input-has-value label {
-    -webkit-transform: translate3d(0, 4px, 0) scale(0.75);
-            transform: translate3d(0, 4px, 0) scale(0.75); }
-  .as-md-input-container.md-input-focused .md-input, .as-md-input-container .md-input.ng-invalid.ng-dirty {
-    padding-bottom: 0px;
-    border-width: 0 0 2px 0; }
-  .as-md-input-container .md-input[disabled] {
-    background-position: 0 bottom;
-    background-size: 3px 1px;
-    background-repeat: repeat-x; }
-
 .simple-dialog-container {
   display: block;
   position: fixed;
@@ -3334,7 +3223,7 @@ md-input-container {
   md-input-container.md-input-has-value .md-placeholder {
     transition: none;
     opacity: 0; }
-  md-input-container .md-input {
+  md-input-container .md-input, md-input-container .as-md-input {
     -webkit-flex: 1;
         -ms-flex: 1;
             flex: 1;
@@ -3351,9 +3240,9 @@ md-input-container {
     line-height: 26px;
     -ms-flex-preferred-size: 26px;
     border-radius: 0; }
-    md-input-container .md-input:focus {
+    md-input-container .md-input:focus, md-input-container .as-md-input:focus {
       outline: none; }
-    md-input-container .md-input:invalid {
+    md-input-container .md-input:invalid, md-input-container .as-md-input:invalid {
       outline: none;
       box-shadow: none; }
   md-input-container ng-messages, md-input-container data-ng-messages, md-input-container x-ng-messages, md-input-container [ng-messages], md-input-container [data-ng-messages], md-input-container [x-ng-messages] {

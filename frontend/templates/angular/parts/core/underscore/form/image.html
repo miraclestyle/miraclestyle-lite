@@ -60,18 +60,22 @@
       <% } %>
       
       <% } else { %>
-        <div class="as-md-input-container">
-           <md-button loading="!<%= config.ui.writableCompiled %>" class="fake-button">
+        <div class="margin-sides-16">
+             <md-button type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button">
                <span><%=config.ui.compiled.label %> <span ng-show="$isUploading">(Uploading...)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
                        generate-upload-url
                        type="file" />
-           </md-button>
-           <br />
-           <br />
-            <div>
+             </md-button>
+             <br />
+             <br />
+             <div>
                 <img display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
-            </div>
+             </div>
+             <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
+              <div ng-message="help"><%= config.ui.help %></div>
+              <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
+             </div>
         </div>
  
       <% }  %>

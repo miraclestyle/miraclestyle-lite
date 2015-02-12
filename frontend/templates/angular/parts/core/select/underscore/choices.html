@@ -2,9 +2,9 @@
      <% if (select.search) { %>
      <div class="select-search" ng-form="select.search.form">
        <div class="select-search-input">
-       <div class="icon-action-grey600 icon-action-grey600-ic_search_grey600_24dp select-search-search-icon"></div>
+         <icon type="action.search" class="select-search-search-icon"></icon>
          <input tabindex="1" type="search" name="search" ng-change="select.search.doFind()" ng-model="<%= select.search.model %>" />
-         <div ng-click="<%= select.search.model %> = '';" ng-show="<%= select.search.model %>.length" class="icon-navigation-grey600 icon-navigation-grey600-ic_cancel_grey600_24dp select-search-cancel-icon"></div>
+         <icon type="navigation.cancel" ng-click="<%= select.search.model %> = '';" ng-show="<%= select.search.model %>.length" class="select-search-cancel-icon"></icon>
        </div>
        <md-divider></md-divider>
     </div>

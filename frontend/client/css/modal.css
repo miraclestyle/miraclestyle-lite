@@ -130,9 +130,6 @@
   padding-bottom: 0px;
 }
 
-.modal-body-inner-padded {
-  padding:24px;
-}
 
 .modal-small .modal-dialog {
   width: 40%;
@@ -140,12 +137,14 @@
 }
 
 .modal-medium .modal-dialog {
+
+  box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2);
+
   min-width: 240px;
-  max-width: 80%;
-  max-height: 80%;
+  max-width: 100%;
+  max-height: 100%;
   position: relative;
   overflow: hidden;
-  box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2);
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -161,6 +160,7 @@
 .md-dialog.modal-medium {
   -webkit-box-shadow:none;
   box-shadow:none;
+ 
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;

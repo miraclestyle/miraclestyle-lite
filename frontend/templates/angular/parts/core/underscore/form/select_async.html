@@ -1,4 +1,4 @@
-<div md-themable class="as-md-input-container md-input-has-value">
+<md-input-container class="md-input-has-value">
     <label><%= config.ui.compiled.label %></label>
     <select-input multiple="config.repeated" search="config.ui.specifics.search" view="config.ui.specifics.view" items="config.ui.specifics.entities" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></select-input>
    
@@ -6,4 +6,4 @@
       <div ng-message="help"><%= config.ui.help %></div>
       <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
     </div>
-</div>
+</md-input-container>

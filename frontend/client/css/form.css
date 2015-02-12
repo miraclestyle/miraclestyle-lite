@@ -28,14 +28,6 @@
   filter: alpha(opacity=0);
 }
 
-.ui-select-highlight {
-  font-weight: bold;
-}
-
-a.sort-handle {
-  cursor: move;
-}
-
 .structured-field-actions {
   padding-left:16px;
   padding-right:16px;

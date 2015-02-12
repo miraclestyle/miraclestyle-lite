@@ -59,19 +59,20 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js',
-  'lib/md-date-time/dist/md-date-time.js',
+  'lib/md-date-time/md-date-time.js',
   'lib/angular-material/angular-material.js',
   'lib/angulike/angulike.js',
-  'lib/angular-bootstrap/ui-bootstrap-tpls.js',
-  'lib/angular-cache/dist/angular-cache.js',
-  'lib/ngUpload/ng-upload.js'
+  'lib/angular-bootstrap/angular-bootstrap.js',
+  'lib/angular-cache/angular-cache.js',
+  'lib/ng-upload/ng-upload.js'
 )
 
 ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'bootstrap']
 
 ANGULAR_CSS_PATHS = ('js/lib/angular-material/angular-material.css',
-                     'js/lib/md-date-time/dist/md-date-time.css',
+                     'js/lib/md-date-time/md-date-time.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
+                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-device-grey600.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
                      'css/style.css')
 
@@ -106,6 +107,7 @@ ANGULAR_TEMPLATES = (
   ('core/misc/content_view_footer.html',),
   ('core/misc/load_more_button.html',),
   ('core/misc/search_form.html',),
+  ('core/misc/icon.html',),
   ('core/misc/history.html',),
   ('core/misc/history_view_body.html',),
 
@@ -129,9 +131,7 @@ ANGULAR_TEMPLATES = (
   
   ('core/form/manage_entity.html',),
   ('core/form/manage_entity_default_body.html',),
-
- 
-  # 3rd party                   
+      
   ('template/accordion/accordion_group.html',
    'lib/angular-bootstrap/accordion/accordion_group.html'),
   ('template/accordion/accordion.html',
@@ -140,6 +140,8 @@ ANGULAR_TEMPLATES = (
    'lib/angular-bootstrap/modal/backdrop.html'),
   ('template/modal/window.html',
    'lib/angular-bootstrap/modal/window.html'),
+  ('lib/md-date-time/popup.html',),
+  ('lib/md-date-time/md-date-time.html',),
   
   # account
   ('account/manage_body.html',),
