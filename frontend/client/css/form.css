@@ -1,7 +1,3 @@
-.panel-body  .clearfix.grid-wrapper {
-  border-bottom: 1px solid #EEEEEE;
-}
-
 .panel-body  .clearfix.grid-wrapper.grid-no-items {
   border-bottom: none;
 }

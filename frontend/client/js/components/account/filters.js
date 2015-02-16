@@ -1,4 +1,4 @@
-angular.module('app').filter('displayProvider', function (LOGIN_PROVIDERS) {
+angular.module('app').filter('formatLoginProivider', function (LOGIN_PROVIDERS) {
     return function (value) {
         var splits = value.split('-'),
             out = '';

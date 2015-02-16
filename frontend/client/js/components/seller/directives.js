@@ -3,36 +3,48 @@
     var notEmpty = function (val) {
         return angular.isString(val) || angular.isNumber(val);
     };
-    angular.module('app').directive('addressRuleLocationDisplay', function () {
+    angular.module('app').directive('addressRuleLocationListView', function () {
         return {
             scope: {
-                val: '=addressRuleLocationDisplay',
-                field: '=addressRuleLocationDisplayField'
+                val: '=addressRuleLocationListView'
             },
-            templateUrl: 'seller/address_rule_location_display.html',
+            templateUrl: 'seller/address_rule_location_list_view.html',
+            controller: function ($scope) {
+                $scope.notEmpty = notEmpty;
+                $scope.postalCodes = function (postalCodes) {
+                    return postalCodes.join(', ');
+                };
+
+            }
+        };
+    }).directive('defaultLineListView', function () {
+        return {
+            scope: {
+                val: '=defaultLineListView'
+            },
+            templateUrl: 'seller/default_line_list_view.html'
+        };
+    }).directive('carrierLineRuleListView', function () {
+        return {
+            scope: {
+                val: '=carrierLineRuleListView'
+            },
+            templateUrl: 'seller/carrier_line_rule_list_view.html',
             controller: function ($scope) {
                 $scope.notEmpty = notEmpty;
 
             }
         };
-    }).directive('defaultLineDisplay', function () {
+    }).directive('pluginListView', function (modelsMeta) {
         return {
             scope: {
-                val: '=defaultLineDisplay',
-                field: '=defaultLineDisplay'
+                val: '=pluginListView'
             },
-            templateUrl: 'seller/default_line_display.html'
-        };
-    }).directive('carrierLineRuleDisplay', function () {
-        return {
-            scope: {
-                val: '=carrierLineRuleDisplay',
-                field: '=carrierLineRuleDisplayField'
-            },
-            templateUrl: 'seller/carrier_line_rule_display.html',
+            templateUrl: 'seller/plugin_list_view.html',
             controller: function ($scope) {
-                $scope.notEmpty = notEmpty;
-
+                $scope.pluginName = function (kind) {
+                    return modelsMeta.getName(kind);
+                };
             }
         };
     });

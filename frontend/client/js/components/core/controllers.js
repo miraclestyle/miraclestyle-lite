@@ -39,7 +39,10 @@
                             $scope.record = record;
                             $scope.config = {};
                             $scope.config.templateBodyUrl = 'core/misc/history_view_body.html';
-                            $scope.config.hideSave = true;
+                            $scope.config.toolbar = {
+                                hideSave: true,
+                                title: 'Log for date  ' + record.logged
+                            };
                             $scope.close = function () {
                                 $scope.$close();
                             };

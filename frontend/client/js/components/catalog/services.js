@@ -454,7 +454,6 @@
                                                             });
 
                                                         $scope.formSetDirty();
-
                                                         $scope.$broadcast('itemOrderChanged');
                                                     }
                                                 }
@@ -556,7 +555,7 @@
                                         return false;
                                     }
                                     $modal.open({
-                                        templateUrl: 'catalog/products.html',
+                                        templateUrl: 'core/form/manage_entity.html',
                                         windowClass: 'no-overflow',
                                         controller: function ($scope, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
@@ -568,6 +567,12 @@
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.config = $scope.rootScope.config;
+                                            $.extend($scope.config, {
+                                                templateBodyUrl: 'catalog/products.html',
+                                                toolbar: {
+                                                    title: 'Manage Products'
+                                                }
+                                            });
                                             $scope.container = {};
                                             $scope.formSetPristine = function () {
                                                 if ($scope.container && $scope.container.form) {
@@ -862,11 +867,11 @@
                                             });
 
                                             $scope.fieldProduct.modelclass.images.ui = {
-                                                formName: 'images'
+                                                name: 'images'
                                             };
 
                                             $scope.fieldProduct.modelclass._instances.modelclass.images.ui = {
-                                                formName: 'images'
+                                                name: 'images'
                                             };
 
                                             $.extend($scope.fieldProduct.modelclass._instances, {
@@ -874,7 +879,7 @@
                                                     label: 'Product Instances',
                                                     path: ['_images', 'pricetags'],
                                                     specifics: {
-                                                        showListItem: 'product-instance-display',
+                                                        listView: 'product-instance-list-view',
                                                         getRootArgs: function () {
                                                             return $scope.args;
                                                         },
@@ -938,10 +943,6 @@
 
                                                             variantOptions.choices = choices;
                                                         },
-                                                        listFields: [{
-                                                            label: 'Variant Signature',
-                                                            key: 'variant_signature'
-                                                        }],
                                                         excludeFields: ['created', 'sequence']
                                                     }
                                                 }
@@ -949,30 +950,20 @@
 
                                             $.extend($scope.fieldProduct.modelclass.contents, {
                                                 ui: {
-                                                    specifics: {
-                                                        listFields: [{
-                                                            label: 'Title',
-                                                            key: 'title'
-                                                        }]
-                                                    }
+                                                    specifics: {}
                                                 }
                                             });
 
                                             $.extend($scope.fieldProduct.modelclass.images, {
                                                 ui: {
-                                                    formName: 'images',
+                                                    name: 'images',
                                                     specifics: {}
                                                 }
                                             });
 
                                             $.extend($scope.fieldProduct.modelclass.variants, {
                                                 ui: {
-                                                    specifics: {
-                                                        listFields: [{
-                                                            label: 'Name',
-                                                            key: 'name'
-                                                        }]
-                                                    }
+                                                    specifics: {}
                                                 }
                                             });
 

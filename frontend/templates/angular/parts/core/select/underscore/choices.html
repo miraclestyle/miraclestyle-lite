@@ -17,7 +17,7 @@
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
                     <div class="list-content-tile list-content-tile--one-line">
-                       <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                       <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
                          <span ng-bind-html="select.view(item)"></span>
                       </md-checkbox>
                     </div>
@@ -29,7 +29,7 @@
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
                     <div class="list-content-tile list-content-tile--one-line">
-                       <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                       <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
                          <span ng-bind-html="select.view(item)"></span>
                       </md-checkbox>
                     </div>

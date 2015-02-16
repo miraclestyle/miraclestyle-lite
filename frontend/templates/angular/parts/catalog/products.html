@@ -1,45 +1,33 @@
-<div class="fitter" fit-in-modal>
-<form name="container.form" ng-submit="save()" method="post" action="{{container.action}}">
-  <input type="hidden" compatibility-maker="args" name="__body__" />
+<div class="clearfix">
   <input type="hidden" form-input="fieldProduct" />
-    
-  <div class="modal-body unscrollable has-footer">
-  <div class="modal-body-inner">
-  <div class="clearfix">
- 
-      <div class="image-slider-outer">
-         <div image-slider-load-more="loadMoreImages(callback)" image-slider="args._images" class="image-slider"> 
-             <div ng-hide="image._state == 'deleted'"
-                  ng-repeat="image in args._images track by $index" class="image-slider-item"
-                  drop="true"
-                  jqyoui-options="{accept: '.catalog-new-pricetag'}"
-                  jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
-                  >
-             <img slider-image="image" /> 
-               <div ng-repeat="pricetag in image.pricetags track by $index"
-                    ng-model="image.pricetags"
-                    ng-hide="pricetag._state == 'deleted' || !pricetag.key"
-                    jqyoui-options="{containment : 'parent'}"
-                    jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
-                    drag="entity.ui.rule.field._images.pricetags.writable" class="button catalog-pricetag"
-                    catalog-pricetag-position="pricetag">
-                    <div class="catalog-pricetag-wrapper">
-                      <div class="catalog-pricetag-dot"></div>
-                      <a class="catalog-pricetag-link" loading tap-or-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</a>
-                    </div>
-               </div>
-
-            </div>
-         </div>
-      </div>
-       
-    </div>
- 
+  <div class="image-slider-outer">
+     <div image-slider-load-more="loadMoreImages(callback)" image-slider="args._images" class="image-slider"> 
+         <div ng-hide="image._state == 'deleted'"
+              ng-repeat="image in args._images track by $index" class="image-slider-item"
+              drop="true"
+              jqyoui-options="{accept: '.catalog-new-pricetag'}"
+              jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
+              >
+           <img slider-image="image" /> 
+           <div ng-repeat="pricetag in image.pricetags track by $index"
+                ng-model="image.pricetags"
+                ng-hide="pricetag._state == 'deleted' || !pricetag.key"
+                jqyoui-options="{containment : 'parent'}"
+                jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
+                drag="entity.ui.rule.field._images.pricetags.writable" class="button catalog-pricetag"
+                catalog-pricetag-position="pricetag">
+                <div class="catalog-pricetag-wrapper">
+                  <div class="catalog-pricetag-dot"></div>
+                  <a class="catalog-pricetag-link" loading tap-or-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</a>
+                </div>
+           </div>
+        </div>
+     </div>
   </div>
+</div>
 
-  </div>
 
-  <div class="modal-footer">
+  <div style="display:none;" class="modal-footer">
 
       <ul class="list-inline-block">
        <li loading="!entity.ui.rule.field._images.pricetags.writable" type="button" class="button catalog-new-pricetag"
@@ -56,8 +44,3 @@
       <button loading type="button" class="button" ng-click="close()">Close</button>
  
   </div>
-  
-  </div>    
- 
-</form>
-</div>

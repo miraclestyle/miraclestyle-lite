@@ -1,0 +1,44 @@
+<div class="structured-field structured-field-repeated">
+
+<div class="clearfix margin-bottom-sides-16">
+  <div class="pull-right">
+    <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create()">
+      <%=config.ui.specifics.addText %>
+    </md-button>
+  </div>
+</div>
+
+<div <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
+           ui-sortable="config.ui.specifics.sortableOptions" 
+           <% } %> 
+    ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': !config.ui.specifics.parentArgs.length}" class="list">
+
+  <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" 
+       ng-class="{'list-row--has-secondary': config.ui.specifics.listConfig.secondary}"
+       class="no-move list-row no-padding clearfix">
+
+          <button md-ink-ripple-list md-themable ng-class="{'list-content-tile--one-line': config.ui.specifics.listConfig.perLine == 1, 'list-content-tile--two-lines': config.ui.specifics.listConfig.perLine == 2, 'list-row--is-clickable': config.ui.specifics.listConfig.clickable}" type="button" loading ng-click="config.ui.specifics.manage(ent)" class="list-row menu-item list-content-tile block">
+                 <% if (config.ui.specifics.listView) { %>
+                    <span <%=config.ui.specifics.listView %>="ent"
+                          <%=config.ui.specifics.listView %>-config="config"></span>
+                  <% } else { %>
+                  <strong class="first">{{ent|output:config.ui.specifics.fields[0].code_name}}</strong>
+                  <% } %>
+          </button>
+
+          <div ng-if="config.ui.specifics.listConfig.secondary" class="list-secondary-tile">
+                <a ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable" 
+                   ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
+                   loading="!<%= config.ui.writableCompiled %>"
+                   type="button" 
+                   tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans($event)"
+                   class="md-button sort-handle">Drag</a>
+          </div>
+  </div>
+</div>
+
+<% if (config.ui.specifics.remote) { %>
+<div load-more-button="config.ui.specifics.reader"></div>
+<% } %>
+
+</div>

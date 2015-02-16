@@ -1,5 +1,11 @@
 <md-input-container>
-     <md-checkbox ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
-       <%= config.ui.compiled.label %>
-     </md-checkbox>
+     <% if (config.ui.specifics.type === 'switch') { %>
+         <md-switch ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
+           <%= config.ui.compiled.label %>
+         </md-switch>
+     <% } else if (config.ui.specifics.type === 'checkbox') { %>
+         <md-checkbox ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
+           <%= config.ui.compiled.label %>
+         </md-checkbox>
+     <% } %>
 </md-input-container>

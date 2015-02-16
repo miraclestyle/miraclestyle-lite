@@ -128,6 +128,10 @@ body .mb15 {
   position:relative;
 }
 
+.padding-0 {
+  padding:0px;
+}
+
 .padding-16 {
   padding:16px;
 }
@@ -172,6 +176,18 @@ body .mb15 {
 
 .margin-16 {
   margin:16px;
+}
+
+.margin-top-16 {
+  margin-top:16px;
+}
+
+.margin-bottom-16 {
+  margin-bottom:16px;
+}
+.margin-top-bottom-16 {
+  margin-top:16px;
+  margin-bottom:16px;
 }
 
 .margin-sides-16 {

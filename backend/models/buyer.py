@@ -45,6 +45,7 @@ class BuyerAddress(orm.BaseExpando):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   country = orm.SuperKeyProperty('2', kind='12', required=True, indexed=False)
+  region = orm.SuperKeyProperty('6', kind='13', required=True, indexed=False)
   city = orm.SuperStringProperty('3', required=True, indexed=False)
   postal_code = orm.SuperStringProperty('4', required=True, indexed=False)
   street = orm.SuperStringProperty('5', required=True, indexed=False)
@@ -52,14 +53,13 @@ class BuyerAddress(orm.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'region': orm.SuperKeyProperty('6', kind='13'),
     'email': orm.SuperStringProperty('7'),
     'telephone': orm.SuperStringProperty('8')
     }
   
   _virtual_fields = {
-    '_country': orm.SuperReferenceStructuredProperty('12', autoload=True, target_field='country'),
-    '_region': orm.SuperReferenceStructuredProperty('13', autoload=True, target_field='region')
+    '_country': orm.SuperReferenceProperty(target_field='country'),
+    '_region': orm.SuperReferenceProperty(target_field='region')
   }
   
   def get_location(self):

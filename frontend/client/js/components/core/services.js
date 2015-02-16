@@ -1437,6 +1437,9 @@ w:                  while (images.length > 0) {
                 },
                 SuperBooleanProperty: function (info) {
                     info.config.required = false;
+                    if (!info.config.ui.specifics || angular.isUndefined(info.config.ui.specifics.type)) {
+                        info.config.ui.specifics.type = 'switch';
+                    }
                     return 'boolean';
                 },
                 SuperVirtualKeyProperty: function (info) {
@@ -1452,7 +1455,8 @@ w:                  while (images.length > 0) {
                                 query: {
                                     '24': true,
                                     '12': true,
-                                    '13': true
+                                    '13': true,
+                                    '17': true
                                 }
                             },
                             finder: {
@@ -1569,7 +1573,7 @@ w:                  while (images.length > 0) {
                         args,
                         opts = {},
                         override = config.ui.specifics.override || {},
-                        actionArguments = modelsMeta.getActionArguments(config.kind, 'search'),
+                        actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
                         response = function (response) {
                             config.ui.specifics.entities = response.data.entities;
                             return config.ui.specifics.entities;
@@ -1685,9 +1689,7 @@ w:                  while (images.length > 0) {
                         modelFields = config.modelclass,
                         defaultFields = _.toArray(modelFields),
                         noSpecifics = !angular.isDefined(config.ui.specifics),
-                        listFields = [],
                         newSort = [],
-                        newListFields = [],
                         defaults,
                         defaultSortable,
                         buildPaths,
@@ -1723,48 +1725,17 @@ w:                  while (images.length > 0) {
                         config.ui.specifics.fields = newFields;
                     }
 
-                    if (noSpecifics || !config.ui.specifics.listFields) {
-
-                        angular.forEach(defaultFields, function (field) {
-                            if (!noSpecifics && (config.ui.specifics.excludeListFields &&
-                                    $.inArray(field.code_name, config.ui.specifics.excludeListFields) !== -1)) {
-                                return;
-                            }
-                            listFields.push({
-                                key: field.code_name,
-                                generated: true,
-                                label: (field.ui && field.ui.label ? field.ui.label : inflector(field.code_name, 'humanize'))
-                            });
-                        });
-
-                        if (!noSpecifics && angular.isDefined(config.ui.specifics.onlyListFields)) {
-                            newListFields = [];
-                            angular.forEach(config.ui.specifics.onlyListFields, function (key) {
-                                var find = _.findWhere(listFields, {
-                                    key: key
-                                });
-                                if (find) {
-                                    newListFields.push(find);
-                                }
-                            });
-
-                            listFields = newListFields;
-                        }
-
-                    }
-
                     defaults = {
-                        listFields: listFields,
                         fields: fields,
                         addNewText: 'Add',
                         addText: '{{config.ui.specifics.addNewText}}'
                     };
 
-                    if (config.ui.specifics.listDisplay) {
-                        $.extend(list, config.ui.specifics.listDisplay);
+                    if (config.ui.specifics.listConfig) {
+                        $.extend(list, config.ui.specifics.listConfig);
                     }
 
-                    config.ui.specifics.listDisplay = list;
+                    config.ui.specifics.listConfig = list;
 
                     // merge defaults into the
                     angular.forEach(defaults, function (value, key) {
@@ -2288,7 +2259,7 @@ w:                  while (images.length > 0) {
 
                     }
 
-                    return 'structured';
+                    return 'structured_' + (config.repeated ? 'repeated' : 'single');
                 },
                 _RemoteStructuredPropery: function (info) {
                     var config = info.config;
@@ -2304,13 +2275,11 @@ w:                  while (images.length > 0) {
                 },
                 SuperImageLocalStructuredProperty: function (info) {
                     this.SuperLocalStructuredProperty(info);
-
                     if (!info.config.ui.specifics.displayImageConfig) {
                         info.config.ui.specifics.displayImageConfig = {
                             size: 360
                         };
                     }
-
                     return 'image';
                 },
                 SuperImageStructuredProperty: function (info) {

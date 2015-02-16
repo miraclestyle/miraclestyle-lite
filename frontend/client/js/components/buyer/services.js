@@ -23,23 +23,11 @@
                     fields.addresses.ui = {
                         label: false,
                         specifics: {
-                            listFields: [{
-                                label: 'Address'
-                            }],
-                            showListItem: 'buyer-address-display',
+                            listView: 'buyer-address-list-view',
                             sortFields: ['country', 'region', 'city', 'postal_code',
                                 'street', 'name', 'email', 'telephone'],
                             afterSave: function () {
                                 endpoint.removeCache(that.getCacheKey('current'));
-                            },
-                            init: function ($scope) {
-
-                                var remove = $scope.config.ui.specifics.remove;
-
-                                $scope.config.ui.specifics.remove = function () {
-                                    remove.apply(this, arguments);
-                                };
-
                             },
                             beforeSave: function ($scope, info) {
                                 var promises = [],
@@ -51,9 +39,7 @@
                                         if (response.data.entities.length) {
                                             updatedAddress._region = response.data.entities[0];
                                         }
-
                                     });
-
                                     promises.push(promise);
                                 }
 

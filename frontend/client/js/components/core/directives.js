@@ -402,6 +402,7 @@
                                     }
                                     $(this).css(css, newHeight);
                                 });
+                                scope.$broadcast('modalResize');
                             }, 50);
                         };
 
@@ -453,18 +454,6 @@
 
                     fn(true, false);
 
-                }
-            };
-        }).directive('conditionalOutput', function (helpers, $compile) {
-            return {
-                scope: {
-                    conditionalOutput: '=conditionalOutput',
-                    conditionalOutputValue: '=conditionalOutputValue'
-                },
-                link: function (scope, element) {
-                    var template = scope.conditionalOutput(scope.conditionalOutputValue);
-                    element.html(template);
-                    $compile(element.contents())(scope);
                 }
             };
         }).directive('loading', function ($parse) {
@@ -649,7 +638,7 @@
                         }, 50);
                     };
 
-                    $(window).on('resize', resize);
+                    scope.$on('modalResize', resize);
                     scope.$on('itemOrderChanged', resize);
                     scope.$on('ngRepeatEnd', resize);
                     scope.$on('accordionOpened', function () {
@@ -660,9 +649,6 @@
                     });
                     scope.$on(attrs.fancyGridGenerator + '.length', function () {
                         $timeout(resize);
-                    });
-                    scope.$on('$destroy', function () {
-                        $(window).off('resize', resize);
                     });
 
                 }
@@ -731,8 +717,7 @@
         }).directive('defaultFieldDisplay', function ($compile) {
             return {
                 scope: {
-                    val: '=defaultFieldDisplay',
-                    field: '=defaultFieldDisplayField'
+                    val: '=defaultFieldDisplay'
                 },
                 templateUrl: 'buyer/address_display.html',
                 controller: function ($scope) {
@@ -833,21 +818,15 @@
                             element.width(Math.ceil(tw));
                         },
                         resize = function () {
-                            if (parent.parents('.modal').length) {
-                                var height = $(window).height(),
-                                    footer = parent.parents('.modal').find('.modal-footer');
-                                if (footer.length) {
-                                    height -= (footer.outerHeight());
-                                }
+                            var height = parent.parents('.fixed-height').height();
+                            if (height) {
                                 parent.height(height);
-
                                 scope.$broadcast('imageSliderResized', height);
                             }
                         };
 
                     resize();
-                    $(window).bind('resize', resize);
-
+                    scope.$on('modalResize', resize);
                     scope.$on('reMeasureImageSlider', function () {
                         resize();
                         measure();
@@ -882,15 +861,13 @@
                         });
 
                         steadyScroll.addCondition('checkLeft', true);
-
                         parent.data('steady', steadyScroll);
                     });
 
                     scope.$on('$destroy', function () {
-                        $(window).off('resize', resize);
                         if (steadyScroll) {
                             steadyScroll.stop();
-                            steadyScroll = undefined;
+                            parent.data('steady', undefined);
                         }
                     });
                 }
@@ -899,21 +876,13 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-
                     var image = scope.$eval(attrs.sliderImage),
                         run = function () {
-                            var rootModal = element.parents('.modal:first'),
-                                newHeight = rootModal.find('.modal-body:first').innerHeight() - window.SCROLLBAR_WIDTH,
+                            var newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH,
                                 newWidth = Math.ceil(newHeight * image.proportion),
                                 imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
-                                modalFooter = rootModal.find('.modal-footer'),
                                 originalNewHeight = newHeight;
-
-                            if (modalFooter.length) {
-                                newHeight -= modalFooter.outerHeight();
-                                newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
-                            }
-
+                            newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
                             element.attr('src', image.serving_url + '=s' + imageSize)
                                 .width(newWidth)
                                 .height(newHeight);
@@ -933,14 +902,9 @@
                             scope.$emit('readyImageSlider');
                         }
                     });
-
-                    $(window).bind('resize', resize);
-
+                    scope.$on('modalResize', resize);
                     scope.$on('itemDelete', function () {
                         $timeout(resize);
-                    });
-                    scope.$on('$destroy', function () {
-                        $(window).off('resize', resize);
                     });
 
                 }
@@ -984,6 +948,7 @@
                     steady = new Steady(steadyOpts);
                     scope.$on('$destroy', function () {
                         steady.stop();
+                        steady = undefined;
                     });
 
                 }
@@ -1012,6 +977,7 @@
                     steady = new Steady(steadyOpts);
                     scope.$on('$destroy', function () {
                         steady.stop();
+                        steady = undefined;
                     });
 
                 }
@@ -1057,11 +1023,7 @@
 
                     resize();
 
-                    $(window).on('resize', resize);
-
-                    scope.$on('$destroy', function () {
-                        $(window).off('resize', resize);
-                    });
+                    scope.$on('modalResize', resize);
                 }
             };
         }).directive('checkNumeric', function () {
@@ -1584,6 +1546,13 @@
                     scope.type = types[0];
                     scope.icon = types[1];
                 }
+            };
+        }).directive('contentListView', function () {
+            return {
+                scope: {
+                    val: '=contentListView'
+                },
+                templateUrl: 'core/misc/content_list_view.html'
             };
         });
 

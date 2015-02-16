@@ -302,13 +302,11 @@ class AddressRuleLocation(orm.BaseModel):
   
   country = orm.SuperKeyProperty('1', kind='12', required=True, indexed=False)
   region = orm.SuperKeyProperty('2', kind='13', indexed=False)
-  postal_code_from = orm.SuperStringProperty('3', indexed=False)
-  postal_code_to = orm.SuperStringProperty('4', indexed=False)
-  city = orm.SuperStringProperty('5', indexed=False)
+  postal_codes = orm.SuperStringProperty('3', indexed=False, repeated=True)
   
   _virtual_fields = {
-    '_country': orm.SuperReferenceStructuredProperty('12', autoload=True, target_field='country'),
-    '_region': orm.SuperReferenceStructuredProperty('13', autoload=True, target_field='region')
+    '_country': orm.SuperReferenceProperty(target_field='country'),
+    '_region': orm.SuperReferenceProperty(target_field='region')
   }
 
 
@@ -387,20 +385,14 @@ class AddressRule(orm.BaseModel):
       # Shipping everywhere except at the following locations.
       allowed = True
     for loc in self.locations.value:
-      if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-        if (address.country == loc.country):
-          allowed = self.exclusion
-          break
-      elif not (loc.postal_code_from and loc.postal_code_to):
-        if (address.country == loc.country and address.region == loc.region):
-          allowed = self.exclusion
-          break
-      elif not (loc.postal_code_to):
-        if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-          allowed = self.exclusion
-          break
-      else:
-        if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
+        checker = []
+        if loc.country:
+          checker.append(loc.country == address.country)
+        if loc.region:
+          checker.append(loc.region == address.region)
+        if loc.postal_codes:
+          checker.append(address.postal_code in loc.postal_codes)
+        if all(checker):
           allowed = self.exclusion
           break
     return allowed
@@ -689,22 +681,16 @@ class Tax(orm.BaseModel):
       allowed = True
     if self.locations.value:
       for loc in self.locations.value:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = self.exclusion
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = self.exclusion
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = self.exclusion
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = self.exclusion
-            break
+        checker = []
+        if loc.country:
+          checker.append(loc.country == address.country)
+        if loc.region:
+          checker.append(loc.region == address.region)
+        if loc.postal_codes:
+          checker.append(address.postal_code in loc.postal_codes)
+        if all(checker):
+          allowed = self.exclusion
+          break
     if allowed:
       # If tax is configured for carriers then check if the order references carrier on which the tax applies.
       if self.carriers:
@@ -865,22 +851,16 @@ class Carrier(orm.BaseModel):
       allowed = True
     if carrier_line.locations.value:
       for loc in carrier_line.locations.value:
-        if not (loc.region and loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country):
-            allowed = carrier_line.exclusion
-            break
-        elif not (loc.postal_code_from and loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region):
-            allowed = carrier_line.exclusion
-            break
-        elif not (loc.postal_code_to):
-          if (address.country == loc.country and address.region == loc.region and address.postal_code == loc.postal_code_from):
-            allowed = carrier_line.exclusion
-            break
-        else:
-          if (address.country == loc.country and address.region == loc.region and (address.postal_code >= loc.postal_code_from and address.postal_code <= loc.postal_code_to)):
-            allowed = carrier_line.exclusion
-            break
+        checker = []
+        if loc.country:
+          checker.append(loc.country == address.country)
+        if loc.region:
+          checker.append(loc.region == address.region)
+        if loc.postal_codes:
+          checker.append(address.postal_code in loc.postal_codes)
+        if all(checker):
+          allowed = carrier_line.exclusion
+          break
     else:
       allowed = True # if no locations were defined for the specific rule, then its always considered truthly
     if allowed:

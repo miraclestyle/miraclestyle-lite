@@ -104,7 +104,7 @@ ANGULAR_TEMPLATES = (
   ('core/misc/errors.html',),
   ('core/misc/confirm.html',),
   ('core/misc/content_view_body.html',),
-  ('core/misc/content_view_footer.html',),
+  ('core/misc/content_list_view.html',),
   ('core/misc/load_more_button.html',),
   ('core/misc/search_form.html',),
   ('core/misc/icon.html',),
@@ -119,7 +119,8 @@ ANGULAR_TEMPLATES = (
   ('core/list/button.html',),
   ('core/underscore/form/select.html',),
   ('core/underscore/form/select_async.html',),
-  ('core/underscore/form/structured.html',),
+  ('core/underscore/form/structured_single.html',),
+  ('core/underscore/form/structured_repeated.html',),
   ('core/underscore/form/boolean.html',),
   ('core/underscore/form/datetime.html',),
   ('core/underscore/form/text.html',),
@@ -132,14 +133,10 @@ ANGULAR_TEMPLATES = (
   ('core/form/manage_entity.html',),
   ('core/form/manage_entity_default_body.html',),
       
-  ('template/accordion/accordion_group.html',
-   'lib/angular-bootstrap/accordion/accordion_group.html'),
-  ('template/accordion/accordion.html',
-   'lib/angular-bootstrap/accordion/accordion.html'),
-  ('template/modal/backdrop.html',
-   'lib/angular-bootstrap/modal/backdrop.html'),
-  ('template/modal/window.html',
-   'lib/angular-bootstrap/modal/window.html'),
+  ('template/accordion/accordion_group.html', 'lib/angular-bootstrap/accordion/accordion_group.html'),
+  ('template/accordion/accordion.html','lib/angular-bootstrap/accordion/accordion.html'),
+  ('template/modal/backdrop.html', 'lib/angular-bootstrap/modal/backdrop.html'),
+  ('template/modal/window.html', 'lib/angular-bootstrap/modal/window.html'),
   ('lib/md-date-time/popup.html',),
   ('lib/md-date-time/md-date-time.html',),
   
@@ -149,14 +146,14 @@ ANGULAR_TEMPLATES = (
   ('account/administer.html',),
   
   # seller
-  ('seller/carrier_line_rule_display.html',),
-  ('seller/address_rule_location_display.html',),
-  ('seller/default_line_display.html',),
+  ('seller/carrier_line_rule_list_view.html',),
+  ('seller/address_rule_location_list_view.html',),
+  ('seller/default_line_list_view.html',),
   ('seller/view_body.html',),
   ('seller/view_footer.html',),
   
   # buyer
-  ('buyer/address_display.html',),
+  ('buyer/address_list_view.html',),
   ('buyer/carts.html',),
 
   # colleciton
@@ -164,10 +161,10 @@ ANGULAR_TEMPLATES = (
 
   # admin area
   ('admin/list.html',),
-  ('admin/list_display/default.html',),
-  ('admin/list_display/31.html',), # display directive template for catalog
-  ('admin/list_display/11.html',), # display directive template for account
-  ('admin/list_display/34.html',), # display directive template for order
+  ('admin/list_view/default.html',),
+  ('admin/list_view/31.html',), # display directive template for catalog
+  ('admin/list_view/11.html',), # display directive template for account
+  ('admin/list_view/34.html',), # display directive template for order
 
   # catalog
   ('catalog/quick_info.html',),
@@ -180,7 +177,7 @@ ANGULAR_TEMPLATES = (
   ('catalog/product/variant_choices.html',),
   ('catalog/list.html',),
   ('catalog/underscore/form/image.html',),
-  ('catalog/product/product_instance_display.html',),
+  ('catalog/product/product_instance_list_view.html',),
 
   # order
   ('order/view.html',),

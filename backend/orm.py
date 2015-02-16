@@ -1765,8 +1765,10 @@ class StructuredPropertyValue(PropertyValue):
               exists.populate_from(ent)
               new_list.append(exists)
             else:
+              '''
               if ent._state is None:
                 ent._state = 'created'
+              '''
               new_list.append(ent)
           del property_value[:] 
           property_value.extend(new_list)
@@ -1885,6 +1887,8 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             matches = filter(lambda x: x.key == val.key, values)
             if matches:
               self._property_value_by_read_arguments[i] = matches[0]
+          new_entities = [v for v in values if v._state == 'created']
+          self._property_value_by_read_arguments.extend(new_entities)
           self._property_value_by_read_arguments.sort(key=lambda x: x._sequence, reverse=True)
 
   def _read(self, read_arguments):
@@ -2577,8 +2581,8 @@ class _BaseStructuredProperty(_BaseProperty):
             if generate:
               if not val.key:
                 val.generate_unique_key()
-              if val._state is None:
-                val._state = 'created'
+                if val._state is None:
+                  val._state = 'created'
               current_values.append(val)
           current_values.sort(key=lambda x: x._sequence, reverse=True)
       else:
@@ -2589,8 +2593,8 @@ class _BaseStructuredProperty(_BaseProperty):
           for val in current_values:
             if not val.key:
               val.generate_unique_key()
-            if val._state is None:
-              val._state = 'created'
+              if val._state is None:
+                val._state = 'created'
     elif not self._repeated:
       if value is not None:
         current_values = value_instance.value
@@ -3010,7 +3014,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
       for v in value:
         if v is not None:
           v = unicode(v)
-        values.append(v)
+          values.append(v)
       return values
     else:
       if value is not None:
@@ -3688,8 +3692,6 @@ class SuperReferenceProperty(SuperKeyProperty):
     self._store_key = kwargs.pop('store_key', False)
     if self._callback != None and not callable(self._callback):
       raise ValueError('callback must be a callable, got %s' % self._callback)
-    if self._format_callback is None or not callable(self._format_callback):
-      raise ValueError('format_callback must be provided and callable, got %s' % self._format_callback)
     super(SuperReferenceProperty, self).__init__(*args, **kwargs)
   
   def _set_value(self, entity, value):
@@ -3726,6 +3728,9 @@ class SuperReferenceProperty(SuperKeyProperty):
     for o in other:
       dic[o[1:]] = getattr(self, o)
     return dic
+
+  def value_format(self, value, path=None):
+    return util.Nonexistent
 
 
 class SuperRecordProperty(SuperRemoteStructuredProperty):

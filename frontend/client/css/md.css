@@ -91,28 +91,41 @@ md-item-content md-checkbox {
     cursor: pointer;
     overflow: hidden;
 }
-
 .with-actions .button-transparent {
-    padding:12px;
-    margin:4px;
+    padding: 12px;
+    margin: 4px;
 }
-
 .md-toolbar-tools.with-actions {
     padding: 0px;
 }
-
 .md-toolbar-tools.with-left-action {
-    padding-left:0px;
+    padding-left: 0px;
 }
-
 .md-toolbar-tools.with-right-action {
-    padding-right:0px;
-} 
-
-.no-right-actions .md-toolbar-tools{
-    padding-right:16px;
+    padding-right: 0px;
 }
-
+.no-right-actions .md-toolbar-tools {
+    padding-right: 16px;
+}
 li .ui-select-highlight {
-    display:inline;
+    display: inline;
+}
+.simple-dialog-option md-checkbox {
+    margin: 0px;
+}
+md-input-container md-checkbox, md-input-container md-switch {
+    margin: 0px;
+}
+.button-set button {
+    margin-right: 4px;
+    margin-left: 4px;
+}
+.button-set button:last-child {
+    margin-right: 0px;
+}
+.homepage-toolbar {
+    text-align: center;
+}
+.homepage-menu {
+    margin-top:5px;
 }

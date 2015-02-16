@@ -1,0 +1,2 @@
+<strong ng-if="notEmpty(val._country.name) || notEmpty(val._region.name)" class="first">{{val._country.name}}<span ng-if="notEmpty(val._region.name)">, {{val._region.name}}</span></strong>
+<span ng-class="{'second': notEmpty(val._country.name) || notEmpty(val._region.name), 'first': (!notEmpty(val._country.name) && !notEmpty(val._region.name))}">{{postalCodes(val.postal_codes)}}</span>

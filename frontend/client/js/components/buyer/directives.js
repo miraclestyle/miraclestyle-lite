@@ -1,12 +1,11 @@
 (function () {
     'use strict';
-    angular.module('app').directive('buyerAddressDisplay', function ($compile) {
+    angular.module('app').directive('buyerAddressListView', function () {
         return {
             scope: {
-                val: '=buyerAddressDisplay',
-                field: '=buyerAddressDisplayField'
+                val: '=buyerAddressListView'
             },
-            templateUrl: 'buyer/address_display.html',
+            templateUrl: 'buyer/address_list_view.html',
             controller: function ($scope) {
                 $scope.notEmpty = function (val) {
                     return angular.isString(val) || angular.isNumber(val);

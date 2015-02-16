@@ -8,12 +8,11 @@ a.block, .block, button.block {
     width: auto;
     height: 14px;
 }
-
 .bar-logo {
-    margin:16px;
+    margin: 16px;
 }
 .bar-logo img {
-    width:100%;
+    width: 100%;
 }
 .menu-item {
     position: relative;
@@ -23,15 +22,12 @@ a.block, .block, button.block {
     text-align: left;
     line-height: 1;
 }
-
 .ui-select-highlight {
-  font-weight: bold;
+    font-weight: bold;
 }
-
 a.sort-handle {
-  cursor: move;
+    cursor: move;
 }
-
 .image-image {
     display: block;
     position: relative;
@@ -43,7 +39,7 @@ a.sort-handle {
     height: auto;
 }
 .load-more {
-    width:100%;
+    width: 100%;
 }
 .image-image .img {
     display: block;
@@ -52,6 +48,19 @@ a.sort-handle {
     border: 1px dashed #CCC;
     background: #FAFAFA;
 }
+.image-image a.sort-handle {
+    cursor: move;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+}
+
+.button-wrapper {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
 [ui-sortable] > *:not(.no-move) {
     cursor: move;
 }
@@ -149,6 +158,8 @@ div.catalog-pricetag {
     border-radius: 3px;
     -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
     box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    background:white;
+    cursor:pointer;
 }
 li.catalog-new-pricetag {
     padding: 5px 10px;
@@ -156,6 +167,8 @@ li.catalog-new-pricetag {
     border-radius: 3px;
     -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
     box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    background:white;
+    cursor:pointer;
 }
 .catalog-pricetag-dot {
     border-radius: 50%;

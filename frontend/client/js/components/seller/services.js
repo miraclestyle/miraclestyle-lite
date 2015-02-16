@@ -5,6 +5,8 @@
 
         modelsConfig(function (models) {
             formInputTypes.SuperPluginStorageProperty = function (info) {
+                //info.config.repeated = true;
+                //return this.SuperLocalStructuredProperty(info);
                 var config = info.config,
                     kinds = $.map(config.kinds, function (kind_id) {
                         var name = modelsMeta.getName(kind_id);
@@ -15,17 +17,11 @@
                     }),
                     rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
                     lineSpec = {
-                        showListItem: 'default-line-display',
-                        listFields: [{
-                            label: 'Line'
-                        }],
+                        listView: 'default-line-list-view'
                     },
                     locationSpec = {
-                        showListItem: 'address-rule-location-display',
-                        listFields: [{
-                            label: 'Location'
-                        }],
-                        sortFields: ['country', 'region', 'city', 'postal_code_from', 'postal_code_to'],
+                        listView: 'address-rule-location-list-view',
+                        sortFields: ['country', 'region', 'postal_codes'],
                         beforeSave: function ($scope, info) {
                             var promises = [],
                                 updatedAddress = $scope.args,
@@ -33,14 +29,11 @@
 
                             if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
                                 promise = models['13'].get(updatedAddress.region);
-
                                 promise.then(function (response) {
                                     if (response.data.entities.length) {
                                         updatedAddress._region = response.data.entities[0];
                                     }
-
                                 });
-
                                 promises.push(promise);
                             }
 
@@ -60,14 +53,12 @@
                                     }
 
                                 });
-
                                 promises.push(promise);
                             }
 
                             if (promises.length) {
                                 return $q.all(promises);
                             }
-
                             return false;
 
                         }
@@ -78,17 +69,29 @@
                             start: function (e, ui) {
                                 info.scope.$broadcast('itemOrderStarted');
                             },
-                            whatSortMeans: function () {
-                                modals.alert('Grab the button to start sorting.');
+                            whatSortMeans: function ($event) {
+                                modals.alert('Grab the button to start sorting.', {
+                                    targetEvent: $event
+                                });
                             },
                             handle: '.sort-handle',
                             sort: function (e, ui) {
                                 var sample = ui.placeholder.next();
                                 if (sample.length) {
-                                    ui.placeholder.width(sample.width()).height(sample.height());
+                                    ui.placeholder.width(sample.width()).height(sample.height()); // @todo review this
                                 }
+                                info.scope.$broadcast('itemOrderSorting'); // @todo review this
+                            },
+                            stop: function () {
+                                angular.forEach(config.ui.specifics.parentArgs,
+                                    function (ent, i) {
+                                        i = ((config.ui.specifics.parentArgs.length - 1) - i);
+                                        ent._sequence = i;
+                                        ent.ui.access[ent.ui.access.length - 1] = i;
+                                    });
                                 rootFormSetDirty();
-                                info.scope.$broadcast('itemOrderSorting');
+                                info.scope.$broadcast('itemOrderChanged'); // @todo review this
+                                info.scope.$apply();
                             }
                         },
                         pluginFieldOverrides: {
@@ -101,14 +104,7 @@
                                         rules: {
                                             ui: {
                                                 specifics: {
-                                                    listFields: [{
-                                                        label: 'Condition',
-                                                        key: 'condition'
-                                                    }, {
-                                                        label: 'Price',
-                                                        key: 'price'
-                                                    }],
-                                                    showListItem: 'carrier-line-rule-display'
+                                                    listView: 'carrier-line-rule-list-view'
                                                 }
                                             }
                                         },
@@ -199,7 +195,7 @@
                         manage: function (arg) {
 
                             if (!angular.isDefined(config.ui.specifics.templateUrl)) {
-                                config.ui.specifics.templateUrl = 'core/underscore/form/manage_plugin.html';
+                                config.ui.specifics.templateUrl = 'core/underscore/form/manage_structured.html';
                             }
 
                             $modal.open({
@@ -225,13 +221,16 @@
                                         getPluginFieldOverrides = function (kind_id, field) {
                                             var gets = defaultSpecifics.pluginFieldOverrides[kind_id];
                                             if (angular.isDefined(gets) && angular.isDefined(gets[field])) {
-                                                return gets[field];
+                                                return angular.copy(gets[field]);
                                             }
                                             return {};
                                         };
 
                                     if (!arg) {
                                         arg = {};
+                                    } else {
+                                        modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
+                                                config.ui.specifics.parentArgs.length);
                                     }
                                     $scope.info = {
                                         build: true
@@ -243,9 +242,8 @@
                                             arg = {
                                                 kind: $scope.info.kind
                                             };
-                                            var length = config.ui.specifics.parentArgs.length;
                                             modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
-                                                length, false);
+                                                config.ui.specifics.parentArgs.length, false);
                                             is_new = true;
 
                                             $scope.args = arg;
@@ -265,18 +263,12 @@
                                     $scope.getFormBuilder = function () {
                                         resetFormBuilder();
                                         var kind = $scope.info.kind,
-                                            settingsFields = config.ui.specifics.fields,
                                             fields = modelsMeta.getFields(kind),
                                             realTotal = 0,
                                             found = false;
                                         fields = _.toArray(fields);
                                         fields.sort(helpers.fieldSorter);
-                                        if (settingsFields) {
-                                            if (settingsFields[kind]) {
-                                                fields = settingsFields[kind];
-                                            }
-                                        }
-
+                                        config.ui.specifics.fields = fields;
                                         angular.forEach(fields, function (field) {
                                             field.ui.name = 'plugin.' + field.code_name;
                                             field.ui.writable = true;
@@ -285,7 +277,6 @@
                                             if (extra) {
                                                 helpers.extendDeep(field, extra);
                                             }
-
                                             if (field.is_structured && formInputTypes[field.type]) {
                                                 $scope.accordions.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
@@ -294,14 +285,12 @@
                                                 });
 
                                                 field.ui.label = false;
-
                                                 next = $scope.accordions.groups.length - 1;
 
                                                 if (!angular.isDefined($scope.formBuilder[next])) {
                                                     $scope.formBuilder[next] = [];
                                                     $scope.formBuilder[next].push(field);
                                                 }
-
                                                 $scope.accordions.groups[0].disabled = false;
                                             } else {
                                                 $scope.formBuilder['0'].push(field);
@@ -380,6 +369,7 @@
                                                 total = 0;
                                             if (is_new) {
                                                 $scope.parentArgs.unshift($scope.args);
+                                                is_new = false;
                                                 total = $scope.parentArgs.length;
                                                 angular.forEach($scope.parentArgs, function (item, i) {
                                                     i = total - i;
@@ -423,7 +413,6 @@
                 config.ui.specifics.entity = info.scope.$eval(config.ui.model);
 
                 info.scope.$watch(config.ui.args, function (neww, old) {
-
                     if (neww !== old) {
                         config.ui.specifics.parentArgs = neww;
                     }
@@ -643,15 +632,22 @@
                     });
                 },
                 manageModal: function (accountKey) {
-                    var fields = modelsMeta.getActionArguments(this.kind, 'update'), config;
+                    var fields = modelsMeta.getActionArguments(this.kind, 'update'),
+                        config;
                     fields._content.ui.label = false;
                     fields._content.modelclass.documents.ui = {
                         label: false,
                         specifics: {
-                            listFields: [{
-                                label: 'Title',
-                                key: 'title'
-                            }]
+                            listView: 'content-list-view',
+                            listConfig: {
+                                perLine: 1
+                            }
+                        }
+                    };
+                    fields._plugin_group.modelclass.plugins.ui = {
+                        label: false,
+                        specifics: {
+                            listView: 'plugin-list-view'
                         }
                     };
                     fields.logo.ui.label = 'Select Logo';
@@ -661,11 +657,9 @@
                         }
                     };
                     fields._plugin_group.ui.label = false;
-
                     config = {
                         kind: this.kind,
                         action: 'update',
-                        material: true,
                         fields: _.toArray(fields),
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {

@@ -51,25 +51,17 @@
                         visibility: 'visible'
                     });
                 };
-
                 $timeout(resize);
-
-                $(window).on('resize', resize);
-
+                scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
-
-                scope.$on('$destroy', function () {
-                    $(window).off('resize', resize);
-                });
             }
         };
-    }).directive('productInstanceDisplay', function ($compile) {
+    }).directive('productInstanceListView', function ($compile) {
         return {
             scope: {
-                val: '=productInstanceDisplay',
-                field: '=productInstanceDisplayField'
+                val: '=productInstanceListView'
             },
-            templateUrl: 'catalog/product/product_instance_display.html'
+            templateUrl: 'catalog/product/product_instance_list_view.html'
         };
     }).directive('catalogButtonBottomFloaterPosition', function () {
         return {

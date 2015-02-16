@@ -1,6 +1,6 @@
 <div ng-class="{'field-with-label': config.ui.label}" class="plugins-field structured-field structured-field-repeated">
  
-    <div class="clearfix buttons">
+  <div class="clearfix margin-bottom-sides-16">
     <div class="pull-right">
       <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create()">
         Add
@@ -9,20 +9,21 @@
   </div>
 
   <div ui-sortable="config.ui.specifics.sortableOptions" 
-          ng-model="config.ui.specifics.parentArgs" ng-class="{'no-items': !config.ui.specifics.parentArgs.length}" class="item-list">
-    <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" class="no-move item clearfix">
-      <div class="item-left">
-        <div>{{ent.name}}</div>
-        <div>
-          (<span ng-if="ent.active">Active</span><span ng-if="!ent.active">Inactive</span>, {{config.ui.specifics.showType(ent.kind)}})
+       ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': !config.ui.specifics.parentArgs.length}"class="list">
+        <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" 
+             ng-class="{'list-row--has-secondary': config.ui.specifics.listConfig.secondary}"
+             class="no-move list-row no-padding clearfix">
+            
+            <list-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
+                <strong class="first">{{ent.name}}</strong>
+                <span class="second">
+                  <span ng-if="ent.active">Active</span><span ng-if="!ent.active">Inactive</span>, {{config.ui.specifics.showType(ent.kind)}}
+                </span>
+            </list-button>
+
+            <div class="list-secondary-tile">
+                  <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="md-button sort-handle">Drag</a>
+           </div>
         </div>
-      </div>
-      <div class="item-right list-actions">
-          <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.remove(ent)" type="button" class="button">Remove</button>
-          <button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)" type="button" class="button">Edit</button>
-          <a ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable" ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" class="button sort-handle">Sort</a>
-      </div>
-    </div>
   </div>
- 
 </div>
