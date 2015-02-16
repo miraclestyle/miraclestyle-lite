@@ -1,4 +1,4 @@
-<h2 class="fieldset">
+<h2 class="fieldset margin-bottom-sides-16">
 
     <span class="fieldset-text">Administer {{config.titles[config.kind]}}</span>
      
@@ -7,16 +7,15 @@
 <div ng-include="'core/misc/search_form.html'"></div>
 
 <div autoload-on-vertical-scroll-end="scrollEnd" class="grid-wrapper clearfix">
-     <div class="item-list">
-        <div ng-repeat="ent in search.results track by ent.key" class="item clearfix">
-          <div class="item-left">
-                <div admin-display-list-kind="{{config.kind}}" admin-display-list-item="ent"></div>
-          </div>
-          <div class="item-right list-actions">
-              <button loading ng-click="manage(ent)" type="button" class="button">Manage</button>
-          </div>
-        </div>
-    </div>
+ 
+
+    <div class="list">
+      <div ng-repeat="ent in search.results track by ent.key" class="list-row no-padding">
+         <list-button ng-click="manage(ent)">
+            <span admin-list-view-kind="{{config.kind}}" admin-list-view-item="ent"></span>
+         </list-button>
+       </div>
+     </div>
    
 </div>
 

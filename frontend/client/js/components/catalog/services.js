@@ -562,17 +562,16 @@
                                                 imagesReader,
                                                 setupCurrentPricetag;
                                             accessImages.push(fields._images.code_name);
-
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args);
-                                            $scope.config = $scope.rootScope.config;
-                                            $.extend($scope.config, {
-                                                templateBodyUrl: 'catalog/products.html',
+                                            $scope.config = {
+                                                templateBodyUrl: 'catalog/manage_products.html',
                                                 toolbar: {
-                                                    title: 'Manage Products'
+                                                    title: 'Manage Products',
+                                                    templateActionsUrl: 'catalog/manage_products_actions.html'
                                                 }
-                                            });
+                                            };
                                             $scope.container = {};
                                             $scope.formSetPristine = function () {
                                                 if ($scope.container && $scope.container.form) {
@@ -583,6 +582,13 @@
                                                 if ($scope.container && $scope.container.form) {
                                                     $scope.container.form.$setDirty();
                                                 }
+                                            };
+                                            $scope.validateForm = function () {
+                                                if (!$scope.container.form.$valid) {
+                                                    $scope.$broadcast('invalidForm');
+                                                    return false;
+                                                }
+                                                return true;
                                             };
 
                                             imagesReader = models['31'].reader({
@@ -619,7 +625,8 @@
                                                         moveLeft = true,
                                                         index = $scope.args._images.indexOf(image),
                                                         pass = false,
-                                                        exists = false;
+                                                        exists = false,
+                                                        newPricetag;
 
                                                     if (!parent.length || !helperW) {
                                                         return; // jquery ui callback fallthrough
@@ -662,8 +669,14 @@
                                                             pricetag._position_top = currentTop;
                                                             pricetag._state = null;
                                                             if (!exists) {
-                                                                newImage.pricetags.push(angular.copy(pricetag));
+                                                                newPricetag = angular.copy(pricetag);
+                                                                newPricetag._image = image;
+                                                                newImage.pricetags.push(newPricetag);
                                                                 pricetag._state = 'deleted';
+                                                            }
+
+                                                            if (!$scope.$$phase) {
+                                                                $scope.$digest();
                                                             }
 
                                                         }
@@ -689,6 +702,10 @@
                                                 pricetag._position_left = pricetag.position_left;
 
                                                 $scope.formSetDirty();
+
+                                                if (!$scope.$$phase) {
+                                                    $scope.$digest();
+                                                }
 
                                             };
 
@@ -722,6 +739,9 @@
                                             };
 
                                             $scope.manageProduct = function (image, pricetag) {
+                                                if (pricetag._image) {
+                                                    image = pricetag._image;
+                                                }
                                                 setupCurrentPricetag(image, pricetag);
                                                 // perform read catalog.images.0.pricetags.0._product
                                                 models['31'].actions.read({
@@ -750,6 +770,10 @@
                                                         realPath = ['_images', ii, 'pricetags', image.pricetags.indexOf(pricetag), '_product'];
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
+                                                    $scope.fieldProduct.ui.specifics.toolbar = {
+                                                        title: 'Manage Product',
+                                                        templateActionsUrl: 'catalog/product/manage_actions.html'
+                                                    };
                                                     pricetag._product = product;
                                                     $scope.fieldProduct.modelclass._instances.ui.specifics.readerSettings = {
                                                         next: response.data.entity._next_read_arguments
@@ -968,9 +992,12 @@
                                             });
 
                                             $scope.save = function () {
-                                                $scope.rootScope.config.prepareReadArguments($scope);
-                                                var promise = models['31'].actions[$scope.args.action_id]($scope.args);
-
+                                                var tmp = $scope.config,
+                                                    promise;
+                                                $scope.config = $scope.rootScope.config;
+                                                $scope.config.prepareReadArguments($scope);
+                                                $scope.config = tmp;
+                                                promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);
                                                     var newArgs = $scope.rootScope.config.argumentLoader($scope);
@@ -979,7 +1006,6 @@
                                                     parentScope.config.ui.specifics.reader.state(imagesReader);
                                                     $scope.formSetPristine();
                                                 });
-
                                                 return promise;
                                             };
 

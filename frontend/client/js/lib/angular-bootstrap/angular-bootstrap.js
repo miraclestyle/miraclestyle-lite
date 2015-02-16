@@ -233,7 +233,7 @@ angular.module('ui.bootstrap.accordion', ['ui.bootstrap.collapse'])
         controller: 'AccordionController',
         transclude: true,
         replace: false,
-        templateUrl: 'template/accordion/accordion.html'
+        templateUrl: 'lib/angular-bootstrap/accordion/accordion.html'
     };
 })
 
@@ -244,7 +244,7 @@ angular.module('ui.bootstrap.accordion', ['ui.bootstrap.collapse'])
         restrict: 'EA',
         transclude: true, // It transcludes the contents of the directive into the template
         replace: true, // The element containing the directive will be replaced with the template
-        templateUrl: 'template/accordion/accordion_group.html',
+        templateUrl: 'lib/angular-bootstrap/accordion/accordion_group.html',
         scope: {
             heading: '@', // Interpolate the heading attribute onto this scope
             isOpen: '=?',
@@ -389,7 +389,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
     return {
         restrict: 'EA',
         replace: true,
-        templateUrl: 'template/modal/backdrop.html',
+        templateUrl: 'lib/angular-bootstrap/modal/backdrop.html',
         link: function (scope, element, attrs) {
             scope.backdropClass = attrs.backdropClass || '';
 
@@ -415,7 +415,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
             replace: true,
             transclude: true,
             templateUrl: function (tElement, tAttrs) {
-                return tAttrs.templateUrl || 'template/modal/window.html';
+                return tAttrs.templateUrl || 'lib/angular-bootstrap/modal/window.html';
             },
             link: function (scope, element, attrs) {
                 var clickElement = scope.modalOptions.targetEvent && scope.modalOptions.targetEvent.target;

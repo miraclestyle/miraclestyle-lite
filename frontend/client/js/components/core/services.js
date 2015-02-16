@@ -2665,10 +2665,6 @@ w:                  while (images.length > 0) {
                             writable: true,
                             attrs: {
                                 'ng-change': 'search.makeFilters()'
-                            },
-                            specifics: {
-                                choiceFilter: 'showFriendlyIndexName',
-                                repeatAs: 'choice._index as '
                             }
                         }
                     },
@@ -2691,6 +2687,39 @@ w:                  while (images.length > 0) {
                         o._index = i;
                     });
                 },
+                formatSearchFilter: function (input) {
+                    var filters, out = '';
+                    if (!input || !angular.isObject(input)) {
+                        return input;
+                    }
+                    if (input.ancestor && !input.filters) {
+                        out += 'Ancestor and ';
+                    }
+
+                    if (input.filters) {
+                        out += 'Filter by ';
+                        if (input.ancestor) {
+                            out += 'ancestor and ';
+                        }
+                        filters = $.map(input.filters, function (filter) {
+                            return filter[0];
+                        });
+
+                        out += filters.join(" and ");
+
+                        if (input.orders) {
+                            out += ' and ';
+                        }
+                    }
+
+                    if (input.orders) {
+                        out += ' order by ' + $.map(input.orders, function (value) {
+                            return value[0];
+                        }).join(', ');
+                    }
+
+                    return out;
+                },
                 resetFilters: function () {
                     this.send.filters = [];
                     this.send.orders = [];
@@ -2705,7 +2734,8 @@ w:                  while (images.length > 0) {
 
                     var searchActionArguments = modelsMeta.getActionArguments(this.kind, 'search'),
                         searchField,
-                        cfg;
+                        cfg,
+                        that = this;
 
                     if (searchActionArguments) {
                         try {
@@ -2727,7 +2757,14 @@ w:                  while (images.length > 0) {
                         this.indexes = cfg.indexes || [];
                         this.indexID = null;
                         this.mapIndexes(cfg.indexes);
-                        this.fields.indexID.choices = cfg.indexes;
+                        that.fields.indexID.choices = [];
+                        angular.forEach(cfg.indexes, function (index) {
+                            var choice = {
+                                key: index._index,
+                                name: that.formatSearchFilter(index)
+                            };
+                            that.fields.indexID.choices.push(choice);
+                        });
 
                     }
 

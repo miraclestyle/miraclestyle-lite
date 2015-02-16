@@ -5,8 +5,10 @@ Created on Oct 10, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import os
+from glob import glob
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES_DIR = os.path.join(ROOT_DIR, 'templates', 'angular', 'parts')
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
@@ -95,95 +97,12 @@ for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
       ANGULAR_ACTIVE_COMPONENTS.append('%s/%s' % (angular_component, entity))
   else:
     ANGULAR_ACTIVE_COMPONENTS.append(angular_component)
-
+ANGULAR_TEMPLATES = []
+files = []
+for dirname, dirnames, filenames in os.walk(TEMPLATES_DIR):
+    for filename in filenames:
+        files.append(os.path.join(dirname, filename))
+for f in files:
+  if not f.endswith('parts/index.html') and f.endswith('.html'):
+    ANGULAR_TEMPLATES.append((f[len(TEMPLATES_DIR) + 1:],))
 # ('Alias', 'Full path to the template in the app'), something to read https://cloud.google.com/appengine/docs/python/config/appconfig#application_readable
-ANGULAR_TEMPLATES = (
-  # core
-  ('core/form/builder.html',),
-  ('core/misc/alert.html',),
-  ('core/misc/errors.html',),
-  ('core/misc/confirm.html',),
-  ('core/misc/content_view_body.html',),
-  ('core/misc/content_list_view.html',),
-  ('core/misc/load_more_button.html',),
-  ('core/misc/search_form.html',),
-  ('core/misc/icon.html',),
-  ('core/misc/history.html',),
-  ('core/misc/history_view_body.html',),
-
-  ('core/action/dropdown.html',),
-  ('core/action/dropdown_list.html',),
-  ('core/action/toolbar.html',),
-  ('core/select/input.html',),
-  ('core/select/underscore/choices.html',),
-  ('core/list/button.html',),
-  ('core/underscore/form/select.html',),
-  ('core/underscore/form/select_async.html',),
-  ('core/underscore/form/structured_single.html',),
-  ('core/underscore/form/structured_repeated.html',),
-  ('core/underscore/form/boolean.html',),
-  ('core/underscore/form/datetime.html',),
-  ('core/underscore/form/text.html',),
-  ('core/underscore/form/image.html',),
-  ('core/underscore/form/string.html',),
-  ('core/underscore/form/plugins.html',),
-  ('core/underscore/form/manage_plugin.html',),
-  ('core/underscore/form/manage_structured.html',),
-  
-  ('core/form/manage_entity.html',),
-  ('core/form/manage_entity_default_body.html',),
-      
-  ('template/accordion/accordion_group.html', 'lib/angular-bootstrap/accordion/accordion_group.html'),
-  ('template/accordion/accordion.html','lib/angular-bootstrap/accordion/accordion.html'),
-  ('template/modal/backdrop.html', 'lib/angular-bootstrap/modal/backdrop.html'),
-  ('template/modal/window.html', 'lib/angular-bootstrap/modal/window.html'),
-  ('lib/md-date-time/popup.html',),
-  ('lib/md-date-time/md-date-time.html',),
-  
-  # account
-  ('account/manage_body.html',),
-  ('account/manage_actions.html',),
-  ('account/administer.html',),
-  
-  # seller
-  ('seller/carrier_line_rule_list_view.html',),
-  ('seller/address_rule_location_list_view.html',),
-  ('seller/default_line_list_view.html',),
-  ('seller/view_body.html',),
-  ('seller/view_footer.html',),
-  
-  # buyer
-  ('buyer/address_list_view.html',),
-  ('buyer/carts.html',),
-
-  # colleciton
-  ('collection/manage_body.html',),
-
-  # admin area
-  ('admin/list.html',),
-  ('admin/list_view/default.html',),
-  ('admin/list_view/31.html',), # display directive template for catalog
-  ('admin/list_view/11.html',), # display directive template for account
-  ('admin/list_view/34.html',), # display directive template for order
-
-  # catalog
-  ('catalog/quick_info.html',),
-  ('catalog/manage_actions.html',),
-  ('catalog/administer.html',),
-  ('catalog/products.html',),
-  ('catalog/view.html',),
-  ('catalog/product/manage_footer.html',),
-  ('catalog/product/view.html',),
-  ('catalog/product/variant_choices.html',),
-  ('catalog/list.html',),
-  ('catalog/underscore/form/image.html',),
-  ('catalog/product/product_instance_list_view.html',),
-
-  # order
-  ('order/view.html',),
-  ('order/list.html',),
-
-  # other
-  ('home/index.html',),
-  ('home/main_menu_item.html',),
-)
