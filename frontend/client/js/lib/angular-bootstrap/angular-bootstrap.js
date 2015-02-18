@@ -470,7 +470,11 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                             element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.inDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
                         }
                     }
-                    element.addClass('visible');
+
+                    if (scope.modalOptions.inDirection) {
+                        element.addClass('visible');
+                    }
+                    
                     if (scope.modalOptions.inDirection && !clickElement) {
                         var cb = function () {
                             element.addClass('transition-in-' + scope.modalOptions.inDirection)
@@ -478,6 +482,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                         };
                     } else {
                         var cb = function () {
+                            element.addClass('visible');
                             element.addClass('transition-in')
                                 .css($mdConstant.CSS.TRANSFORM, '');
                         };
@@ -527,9 +532,9 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
     };
 })
 
-.factory('$modalStack', ['$transition', '$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdEscFactory',
+.factory('$modalStack', ['$transition', '$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
     '$mdConstant',
-    function ($transition, $timeout, $document, $compile, $rootScope, $$stackedMap, mdEscFactory, $mdConstant) {
+    function ($transition, $timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant) {
 
         var OPENED_MODAL_CLASS = 'modal-open';
         var backdropDomEl, backdropScope;
@@ -711,7 +716,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
                     return true;
                 };
                 modalInstance.esc = esc;
-                mdEscFactory.queue(esc);
+                mdContextualMonitor.queue(esc);
             }
             
         };
@@ -727,7 +732,7 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.transition'])
         $modalStack.dismiss = function (modalInstance, reason) {
             var modalWindow = openedWindows.get(modalInstance);
             if (!modalInstance.withEscape) {
-                mdEscFactory.dequeue(modalInstance.esc);
+                mdContextualMonitor.dequeue(modalInstance.esc);
                 if (modalWindow.value.modalScope.modalOptions.resize) {
                     $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
                 }

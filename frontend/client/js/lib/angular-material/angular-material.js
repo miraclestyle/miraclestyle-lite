@@ -636,234 +636,6 @@ angular.element.prototype.blur = angular.element.prototype.blur || function() {
 (function() {
 'use strict';
 
-angular.module('material.core')
-  .service('$mdAria', AriaService);
-
-function AriaService($$rAF, $log, $window) {
-
-  return {
-    expect: expect,
-    expectAsync: expectAsync,
-    expectWithText: expectWithText
-  };
-
-  /**
-   * Check if expected attribute has been specified on the target element or child
-   * @param element
-   * @param attrName
-   * @param {optional} defaultValue What to set the attr to if no value is found
-   */
-  function expect(element, attrName, defaultValue) {
-    var node = element[0];
-
-    if (!node.hasAttribute(attrName) && !childHasAttribute(node, attrName)) {
-
-      defaultValue = angular.isString(defaultValue) && defaultValue.trim() || '';
-      if (defaultValue.length) {
-        element.attr(attrName, defaultValue);
-      } else {
-        $log.warn('ARIA: Attribute "', attrName, '", required for accessibility, is missing on node:', node);
-      }
-
-    }
-  }
-
-  function expectAsync(element, attrName, defaultValueGetter) {
-    // Problem: when retrieving the element's contents synchronously to find the label,
-    // the text may not be defined yet in the case of a binding.
-    // There is a higher chance that a binding will be defined if we wait one frame.
-    $$rAF(function() {
-      expect(element, attrName, defaultValueGetter());
-    });
-  }
-
-  function expectWithText(element, attrName) {
-    expectAsync(element, attrName, function() {
-      return element.text().trim();
-    });
-  }
-
-  function childHasAttribute(node, attrName) {
-    var hasChildren = node.hasChildNodes(),
-        hasAttr = false;
-
-    function isHidden(el) {
-      var style = el.currentStyle ? el.currentStyle : $window.getComputedStyle(el);
-      return (style.display === 'none');
-    }
-
-    if(hasChildren) {
-      var children = node.childNodes;
-      for(var i=0; i<children.length; i++){
-        var child = children[i];
-        if(child.nodeType === 1 && child.hasAttribute(attrName)) {
-          if(!isHidden(child)){
-            hasAttr = true;
-          }
-        }
-      }
-    }
-    return hasAttr;
-  }
-}
-AriaService.$inject = ["$$rAF", "$log", "$window"];
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-angular.module('material.core')
-  .service('$mdCompiler', mdCompilerService);
-
-function mdCompilerService($q, $http, $injector, $compile, $controller, $templateCache) {
-  /* jshint validthis: true */
-
-  /*
-   * @ngdoc service
-   * @name $mdCompiler
-   * @module material.core
-   * @description
-   * The $mdCompiler service is an abstraction of angular's compiler, that allows the developer
-   * to easily compile an element with a templateUrl, controller, and locals.
-   *
-   * @usage
-   * <hljs lang="js">
-   * $mdCompiler.compile({
-   *   templateUrl: 'modal.html',
-   *   controller: 'ModalCtrl',
-   *   locals: {
-   *     modal: myModalInstance;
-   *   }
-   * }).then(function(compileData) {
-   *   compileData.element; // modal.html's template in an element
-   *   compileData.link(myScope); //attach controller & scope to element
-   * });
-   * </hljs>
-   */
-
-   /*
-    * @ngdoc method
-    * @name $mdCompiler#compile
-    * @description A helper to compile an HTML template/templateUrl with a given controller,
-    * locals, and scope.
-    * @param {object} options An options object, with the following properties:
-    *
-    *    - `controller` - `{(string=|function()=}` Controller fn that should be associated with
-    *      newly created scope or the name of a registered controller if passed as a string.
-    *    - `controllerAs` - `{string=}` A controller alias name. If present the controller will be
-    *      published to scope under the `controllerAs` name.
-    *    - `template` - `{string=}` An html template as a string.
-    *    - `templateUrl` - `{string=}` A path to an html template.
-    *    - `transformTemplate` - `{function(template)=}` A function which transforms the template after
-    *      it is loaded. It will be given the template string as a parameter, and should
-    *      return a a new string representing the transformed template.
-    *    - `resolve` - `{Object.<string, function>=}` - An optional map of dependencies which should
-    *      be injected into the controller. If any of these dependencies are promises, the compiler
-    *      will wait for them all to be resolved, or if one is rejected before the controller is
-    *      instantiated `compile()` will fail..
-    *      * `key` - `{string}`: a name of a dependency to be injected into the controller.
-    *      * `factory` - `{string|function}`: If `string` then it is an alias for a service.
-    *        Otherwise if function, then it is injected and the return value is treated as the
-    *        dependency. If the result is a promise, it is resolved before its value is 
-    *        injected into the controller.
-    *
-    * @returns {object=} promise A promise, which will be resolved with a `compileData` object.
-    * `compileData` has the following properties: 
-    *
-    *   - `element` - `{element}`: an uncompiled element matching the provided template.
-    *   - `link` - `{function(scope)}`: A link function, which, when called, will compile
-    *     the element and instantiate the provided controller (if given).
-    *   - `locals` - `{object}`: The locals which will be passed into the controller once `link` is
-    *     called. If `bindToController` is true, they will be coppied to the ctrl instead
-    *   - `bindToController` - `bool`: bind the locals to the controller, instead of passing them in
-    */
-  this.compile = function(options) {
-    var templateUrl = options.templateUrl;
-    var template = options.template || '';
-    var controller = options.controller;
-    var controllerAs = options.controllerAs;
-    var resolve = options.resolve || {};
-    var locals = options.locals || {};
-    var transformTemplate = options.transformTemplate || angular.identity;
-    var bindToController = options.bindToController;
-
-    // Take resolve values and invoke them.  
-    // Resolves can either be a string (value: 'MyRegisteredAngularConst'),
-    // or an invokable 'factory' of sorts: (value: function ValueGetter($dependency) {})
-    angular.forEach(resolve, function(value, key) {
-      if (angular.isString(value)) {
-        resolve[key] = $injector.get(value);
-      } else {
-        resolve[key] = $injector.invoke(value);
-      }
-    });
-    //Add the locals, which are just straight values to inject
-    //eg locals: { three: 3 }, will inject three into the controller
-    angular.extend(resolve, locals);
-
-    if (templateUrl) {
-      resolve.$template = $http.get(templateUrl, {cache: $templateCache})
-        .then(function(response) {
-          return response.data;
-        });
-    } else {
-      resolve.$template = $q.when(template);
-    }
-
-    // Wait for all the resolves to finish if they are promises
-    return $q.all(resolve).then(function(locals) {
-
-      var template = transformTemplate(locals.$template);
-      var element = angular.element('<div>').html(template.trim()).contents();
-      var linkFn = $compile(element);
-
-      //Return a linking function that can be used later when the element is ready
-      return {
-        locals: locals,
-        element: element,
-        link: function link(scope) {
-          locals.$scope = scope;
-
-          //Instantiate controller if it exists, because we have scope
-          if (controller) {
-            var ctrl = $controller(controller, locals);
-            if (bindToController) {
-              angular.extend(ctrl, locals);
-            }
-            //See angular-route source for this logic
-            element.data('$ngControllerController', ctrl);
-            element.children().data('$ngControllerController', ctrl);
-
-            if (controllerAs) {
-              scope[controllerAs] = ctrl;
-            }
-          }
-
-          return linkFn(scope);
-        }
-      };
-    });
-
-  };
-}
-mdCompilerService.$inject = ["$q", "$http", "$injector", "$compile", "$controller", "$templateCache"];
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
 /*
  * TODO: Add support for multiple fingers on the `pointer` object (enables pinch gesture)
  */
@@ -1012,7 +784,7 @@ angular.module('material.core')
       },
       onEnd: function(ev, pointer) {
         if (pointer.distance < this.state.options.maxDistance) {
-          this.dispatchEvent(ev, 'click', null, ev);
+          this.dispatchEvent(ev, 'click');
         }
       }
     });
@@ -1165,7 +937,9 @@ angular.module('material.core')
     onCancel: angular.noop,
     options: {},
 
-    dispatchEvent: angular.element === window.jQuery ? jQueryDispatchEvent : jqLiteDispatchEvent,
+    dispatchEvent: typeof window.jQuery !== 'undefined' && angular.element === window.jQuery ?
+      jQueryDispatchEvent :
+      nativeDispatchEvent,
 
     start: function(ev, pointer) {
       if (this.state.isRunning) return;
@@ -1212,7 +986,7 @@ angular.module('material.core')
       element.on('$destroy', onDestroy);
 
       return onDestroy;
-      
+
       function onDestroy() {
         delete element[0].$mdGesture[self.name];
         element.off('$destroy', onDestroy);
@@ -1220,25 +994,43 @@ angular.module('material.core')
     },
   };
 
-  var customEventOptions = {
-    bubbles: true,
-    cancelable: true
-  };
+  function jQueryDispatchEvent(srcEvent, eventType, eventPointer) {
+    eventPointer = eventPointer || pointer;
+    var eventObj = new angular.element.Event(eventType)
+
+    eventObj.$material = true;
+    eventObj.pointer = eventPointer;
+    eventObj.srcEvent = srcEvent;
+
+    angular.extend(eventObj, {
+      clientX: eventPointer.x,
+      clientY: eventPointer.y,
+      screenX: eventPointer.x,
+      screenY: eventPointer.y,
+      pageX: eventPointer.x,
+      pageY: eventPointer.y,
+      ctrlKey: srcEvent.ctrlKey,
+      altKey: srcEvent.altKey,
+      shiftKey: srcEvent.shiftKey,
+      metaKey: srcEvent.metaKey
+    });
+    angular.element(eventPointer.target).trigger(eventObj);
+  }
 
   /*
-   * NOTE: dispatchEvent is very performance sensitive. 
+   * NOTE: nativeDispatchEvent is very performance sensitive.
    */
-  function jqLiteDispatchEvent(srcEvent, eventType, eventPointer, /*original DOMEvent */ev) {
+  function nativeDispatchEvent(srcEvent, eventType, eventPointer) {
     eventPointer = eventPointer || pointer;
     var eventObj;
 
     if (eventType === 'click') {
       eventObj = document.createEvent('MouseEvents');
       eventObj.initMouseEvent(
-        'click', true, true, window, ev.detail,
-        ev.screenX, ev.screenY, ev.clientX, ev.clientY, 
-        ev.ctrlKey, ev.altKey, ev.shiftKey, ev.metaKey,
-        ev.button, ev.relatedTarget || null
+        'click', true, true, window, srcEvent.detail,
+        eventPointer.x, eventPointer.y, eventPointer.x, eventPointer.y,
+        srcEvent.ctrlKey, srcEvent.altKey, srcEvent.shiftKey, srcEvent.metaKey,
+        srcEvent.button, srcEvent.relatedTarget || null
       );
 
     } else {
@@ -1249,17 +1041,6 @@ angular.module('material.core')
     eventObj.pointer = eventPointer;
     eventObj.srcEvent = srcEvent;
     eventPointer.target.dispatchEvent(eventObj);
-  }
-
-  // JQuery doesn't use native events for events registration, so using JQuery #trigger() instead of #dispatchEvent().
-  function jQueryDispatchEvent(srcEvent, eventType, eventPointer, /*original DOMEvent */ev) {
-    eventPointer = eventPointer || pointer;
-    var eventObj = new angular.element.Event(eventType)
-
-    eventObj.$material = true;
-    eventObj.pointer = eventPointer;
-    eventObj.srcEvent = srcEvent;
-    angular.element(eventPointer.target).trigger(eventObj);
   }
 
   return GestureHandler;
@@ -2656,6 +2437,152 @@ function attrNoDirective() {
 (function() {
 'use strict';
 
+angular.module('material.core')
+  .service('$mdCompiler', mdCompilerService);
+
+function mdCompilerService($q, $http, $injector, $compile, $controller, $templateCache) {
+  /* jshint validthis: true */
+
+  /*
+   * @ngdoc service
+   * @name $mdCompiler
+   * @module material.core
+   * @description
+   * The $mdCompiler service is an abstraction of angular's compiler, that allows the developer
+   * to easily compile an element with a templateUrl, controller, and locals.
+   *
+   * @usage
+   * <hljs lang="js">
+   * $mdCompiler.compile({
+   *   templateUrl: 'modal.html',
+   *   controller: 'ModalCtrl',
+   *   locals: {
+   *     modal: myModalInstance;
+   *   }
+   * }).then(function(compileData) {
+   *   compileData.element; // modal.html's template in an element
+   *   compileData.link(myScope); //attach controller & scope to element
+   * });
+   * </hljs>
+   */
+
+   /*
+    * @ngdoc method
+    * @name $mdCompiler#compile
+    * @description A helper to compile an HTML template/templateUrl with a given controller,
+    * locals, and scope.
+    * @param {object} options An options object, with the following properties:
+    *
+    *    - `controller` - `{(string=|function()=}` Controller fn that should be associated with
+    *      newly created scope or the name of a registered controller if passed as a string.
+    *    - `controllerAs` - `{string=}` A controller alias name. If present the controller will be
+    *      published to scope under the `controllerAs` name.
+    *    - `template` - `{string=}` An html template as a string.
+    *    - `templateUrl` - `{string=}` A path to an html template.
+    *    - `transformTemplate` - `{function(template)=}` A function which transforms the template after
+    *      it is loaded. It will be given the template string as a parameter, and should
+    *      return a a new string representing the transformed template.
+    *    - `resolve` - `{Object.<string, function>=}` - An optional map of dependencies which should
+    *      be injected into the controller. If any of these dependencies are promises, the compiler
+    *      will wait for them all to be resolved, or if one is rejected before the controller is
+    *      instantiated `compile()` will fail..
+    *      * `key` - `{string}`: a name of a dependency to be injected into the controller.
+    *      * `factory` - `{string|function}`: If `string` then it is an alias for a service.
+    *        Otherwise if function, then it is injected and the return value is treated as the
+    *        dependency. If the result is a promise, it is resolved before its value is 
+    *        injected into the controller.
+    *
+    * @returns {object=} promise A promise, which will be resolved with a `compileData` object.
+    * `compileData` has the following properties: 
+    *
+    *   - `element` - `{element}`: an uncompiled element matching the provided template.
+    *   - `link` - `{function(scope)}`: A link function, which, when called, will compile
+    *     the element and instantiate the provided controller (if given).
+    *   - `locals` - `{object}`: The locals which will be passed into the controller once `link` is
+    *     called. If `bindToController` is true, they will be coppied to the ctrl instead
+    *   - `bindToController` - `bool`: bind the locals to the controller, instead of passing them in
+    */
+  this.compile = function(options) {
+    var templateUrl = options.templateUrl;
+    var template = options.template || '';
+    var controller = options.controller;
+    var controllerAs = options.controllerAs;
+    var resolve = options.resolve || {};
+    var locals = options.locals || {};
+    var transformTemplate = options.transformTemplate || angular.identity;
+    var bindToController = options.bindToController;
+
+    // Take resolve values and invoke them.  
+    // Resolves can either be a string (value: 'MyRegisteredAngularConst'),
+    // or an invokable 'factory' of sorts: (value: function ValueGetter($dependency) {})
+    angular.forEach(resolve, function(value, key) {
+      if (angular.isString(value)) {
+        resolve[key] = $injector.get(value);
+      } else {
+        resolve[key] = $injector.invoke(value);
+      }
+    });
+    //Add the locals, which are just straight values to inject
+    //eg locals: { three: 3 }, will inject three into the controller
+    angular.extend(resolve, locals);
+
+    if (templateUrl) {
+      resolve.$template = $http.get(templateUrl, {cache: $templateCache})
+        .then(function(response) {
+          return response.data;
+        });
+    } else {
+      resolve.$template = $q.when(template);
+    }
+
+    // Wait for all the resolves to finish if they are promises
+    return $q.all(resolve).then(function(locals) {
+
+      var template = transformTemplate(locals.$template);
+      var element = angular.element('<div>').html(template.trim()).contents();
+      var linkFn = $compile(element);
+
+      //Return a linking function that can be used later when the element is ready
+      return {
+        locals: locals,
+        element: element,
+        link: function link(scope) {
+          locals.$scope = scope;
+
+          //Instantiate controller if it exists, because we have scope
+          if (controller) {
+            var ctrl = $controller(controller, locals);
+            if (bindToController) {
+              angular.extend(ctrl, locals);
+            }
+            //See angular-route source for this logic
+            element.data('$ngControllerController', ctrl);
+            element.children().data('$ngControllerController', ctrl);
+
+            if (controllerAs) {
+              scope[controllerAs] = ctrl;
+            }
+          }
+
+          return linkFn(scope);
+        }
+      };
+    });
+
+  };
+}
+mdCompilerService.$inject = ["$q", "$http", "$injector", "$compile", "$controller", "$templateCache"];
+})();
+
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
 angular.module('material.core.theming.palette', [])
 .constant('$mdColorPalette', {
   'red': {
@@ -3612,6 +3539,88 @@ function rgba(rgbArray, opacity) {
 (function() {
 'use strict';
 
+angular.module('material.core')
+  .service('$mdAria', AriaService);
+
+function AriaService($$rAF, $log, $window) {
+
+  return {
+    expect: expect,
+    expectAsync: expectAsync,
+    expectWithText: expectWithText
+  };
+
+  /**
+   * Check if expected attribute has been specified on the target element or child
+   * @param element
+   * @param attrName
+   * @param {optional} defaultValue What to set the attr to if no value is found
+   */
+  function expect(element, attrName, defaultValue) {
+    var node = element[0];
+
+    if (!node.hasAttribute(attrName) && !childHasAttribute(node, attrName)) {
+
+      defaultValue = angular.isString(defaultValue) && defaultValue.trim() || '';
+      if (defaultValue.length) {
+        element.attr(attrName, defaultValue);
+      } else {
+        $log.warn('ARIA: Attribute "', attrName, '", required for accessibility, is missing on node:', node);
+      }
+
+    }
+  }
+
+  function expectAsync(element, attrName, defaultValueGetter) {
+    // Problem: when retrieving the element's contents synchronously to find the label,
+    // the text may not be defined yet in the case of a binding.
+    // There is a higher chance that a binding will be defined if we wait one frame.
+    $$rAF(function() {
+      expect(element, attrName, defaultValueGetter());
+    });
+  }
+
+  function expectWithText(element, attrName) {
+    expectAsync(element, attrName, function() {
+      return element.text().trim();
+    });
+  }
+
+  function childHasAttribute(node, attrName) {
+    var hasChildren = node.hasChildNodes(),
+        hasAttr = false;
+
+    function isHidden(el) {
+      var style = el.currentStyle ? el.currentStyle : $window.getComputedStyle(el);
+      return (style.display === 'none');
+    }
+
+    if(hasChildren) {
+      var children = node.childNodes;
+      for(var i=0; i<children.length; i++){
+        var child = children[i];
+        if(child.nodeType === 1 && child.hasAttribute(attrName)) {
+          if(!isHidden(child)){
+            hasAttr = true;
+          }
+        }
+      }
+    }
+    return hasAttr;
+  }
+}
+AriaService.$inject = ["$$rAF", "$log", "$window"];
+})();
+
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
 /*
  * @ngdoc module
  * @name material.components.backdrop
@@ -4035,11 +4044,11 @@ function iosScrollFix(node) {
      * @name material.components.simpledialog
      */
     angular.module('material.components.simpledialog', ['material.core', 'material.components.backdrop'])
-        .factory('mdEscFactory', mdEscFactory)
+        .factory('mdContextualMonitor', mdContextualMonitor)
         .directive('simpleDialog', SimpleDialogDirective)
         .provider('$simpleDialog', SimpleDialogProvider);
 
-    function mdEscFactory($rootElement, $mdConstant) {
+    function mdContextualMonitor($rootElement, $mdConstant) {
         var callbacks = [],
             bound = false;
         return {
@@ -4075,7 +4084,7 @@ function iosScrollFix(node) {
             }
         };
     }
-    mdEscFactory.$inject = ["$rootElement", "$mdConstant"];
+    mdContextualMonitor.$inject = ["$rootElement", "$mdConstant"];
 
 
     function SimpleDialogDirective($$rAF, $mdTheming) {
@@ -4321,7 +4330,7 @@ function iosScrollFix(node) {
 
         var alertDialogMethods = ['title', 'content', 'ariaLabel', 'ok'];
 
-        dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$mdTheming", "$$rAF", "$q", "$simpleDialog", "mdEscFactory"];
+        dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$mdTheming", "$$rAF", "$q", "$simpleDialog", "mdContextualMonitor"];
         return $$interimElementProvider('$simpleDialog')
             .setDefaults({
                 methods: ['disableParentScroll', 'hasBackdrop', 'clickOutsideToClose', 'escapeToClose', 'targetEvent'],
@@ -4331,7 +4340,7 @@ function iosScrollFix(node) {
 
         /* @ngInject */
         function dialogDefaultOptions($timeout, $rootElement, $compile, $animate, $mdAria, $document,
-            $mdUtil, $mdConstant, $mdTheming, $$rAF, $q, $simpleDialog, mdEscFactory) {
+            $mdUtil, $mdConstant, $mdTheming, $$rAF, $q, $simpleDialog, mdContextualMonitor) {
             return {
                 hasBackdrop: true,
                 isolateScope: true,
@@ -4389,7 +4398,7 @@ function iosScrollFix(node) {
                                 }
                                 return true;
                             };
-                            mdEscFactory.queue(options.rootElementKeyupCallback);
+                            mdContextualMonitor.queue(options.rootElementKeyupCallback);
                         }
                         if (options.clickOutsideToClose) {
                             options.dialogClickOutsideCallback = function (e) {
@@ -4398,7 +4407,7 @@ function iosScrollFix(node) {
                                     $timeout($simpleDialog.cancel);
                                 }
                             };
-                            element.on('click', options.dialogClickOutsideCallback);
+                            element.on('click', options.dialogClickOutsideCallback); // @todo bug on mobile, needs to be placed after the dialog really appears
                         }
                         closeButton.focus();
 
@@ -4430,7 +4439,7 @@ function iosScrollFix(node) {
                     $document[0].removeEventListener('scroll', options.captureScroll, true);
                 }
                 if (options.escapeToClose) {
-                    mdEscFactory.dequeue(options.rootElementKeyupCallback);
+                    mdContextualMonitor.dequeue(options.rootElementKeyupCallback);
                 }
                 if (options.clickOutsideToClose) {
                     element.off('click', options.dialogClickOutsideCallback);
@@ -4471,14 +4480,23 @@ function iosScrollFix(node) {
                     clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget,
                     defer = $q.defer();
                 parentElement.append(container);
-                var promise = defer.promise;
-                promise.then(function () {
+                var promise = defer.promise,
+                    nextPromise;
+                nextPromise = promise.then(function () {
+                    var maybeDefer = $q.defer(),
+                        maybePromise = maybeDefer.promise,
+                        maybePromiseOnBefore;
                     if (options.onBeforeShow) {
-                        options.onBeforeShow(dialogEl, options);
+                        maybePromiseOnBefore = options.onBeforeShow(dialogEl, options);
+                        if (maybePromiseOnBefore && maybePromiseOnBefore.then) {
+                            return maybePromiseOnBefore;
+                        }
                     }
+                    maybeDefer.resolve();
+                    return maybePromise;
                 });
                 defer.resolve();
-                return promise;
+                return nextPromise;
             }
 
             function dialogPopOut(container, options) {
@@ -5691,7 +5709,7 @@ SidenavService.$inject = ["$mdComponentRegistry", "$q"];
  *   - `<md-sidenav md-is-locked-open="$media('min-width: 1000px')"></md-sidenav>`
  *   - `<md-sidenav md-is-locked-open="$media('sm')"></md-sidenav>` (locks open on small screens)
  */
-function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $mdTheming, $q, $document, mdEscFactory) {
+function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $mdTheming, $q, $document, mdContextualMonitor) {
   return {
     restrict: 'E',
     scope: {
@@ -5754,7 +5772,7 @@ function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $co
       var parent = element.parent();
 
       backdrop[isOpen ? 'on' : 'off']('click', close);
-      mdEscFactory[isOpen ? 'queue' : 'dequeue'](onKeyDown);
+      mdContextualMonitor[isOpen ? 'queue' : 'dequeue'](onKeyDown);
 
       if ( isOpen ) {
         // Capture upon opening..
@@ -5833,7 +5851,7 @@ function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $co
 
   }
 }
-SidenavDirective.$inject = ["$timeout", "$animate", "$parse", "$mdMedia", "$mdConstant", "$compile", "$mdTheming", "$q", "$document", "mdEscFactory"];
+SidenavDirective.$inject = ["$timeout", "$animate", "$parse", "$mdMedia", "$mdConstant", "$compile", "$mdTheming", "$q", "$document", "mdContextualMonitor"];
 
 /*
  * @private

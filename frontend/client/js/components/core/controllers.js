@@ -37,9 +37,9 @@
                         templateUrl: 'core/form/manage_entity.html',
                         controller: function ($scope) {
                             $scope.record = record;
-                            $scope.config = {};
-                            $scope.config.templateBodyUrl = 'core/misc/history_view_body.html';
-                            $scope.config.toolbar = {
+                            $scope.dialog = {};
+                            $scope.dialog.templateBodyUrl = 'core/misc/history_view_body.html';
+                            $scope.dialog.toolbar = {
                                 hideSave: true,
                                 title: 'Log for date  ' + record.logged
                             };

@@ -87,7 +87,6 @@
                                             attrs: {
                                                 'ng-change': 'changeVariation()'
                                             },
-                                            placeholder: 'Select option...',
                                             args: 'variants[' + i + '].option'
                                         }
                                     });
@@ -174,9 +173,9 @@
                                     $modal.open({
                                         templateUrl: 'core/form/manage_entity.html',
                                         controller: function ($scope) {
-                                            $scope.config = {};
-                                            $scope.config.templateBodyUrl = 'core/misc/content_view_body.html';
-                                            $scope.config.templateFooterUrl = 'core/misc/content_view_footer.html';
+                                            $scope.dialog = {};
+                                            $scope.dialog.templateBodyUrl = 'core/misc/content_view_body.html';
+                                            $scope.dialog.templateFooterUrl = 'core/misc/content_view_footer.html';
                                             $scope.content = content;
                                             $scope.close = function () {
                                                 $scope.$close();
@@ -440,8 +439,11 @@
                                 $.extend(fields._images, {
                                     ui: {
                                         label: false,
-                                        template: 'catalog/underscore/form/image.html',
                                         specifics: {
+                                            addNewText: 'Select Images',
+                                            mainActionsLayout: {
+                                                before: 'catalog/images_manage_button.html'
+                                            },
                                             sortableOptions: {
                                                 stop: function () {
                                                     if (fields._images.ui.specifics.parentArgs.length) {
@@ -509,8 +511,11 @@
                                     },
                                     sudo: function () {
                                         $modal.open({
-                                            templateUrl: 'catalog/administer.html',
+                                            templateUrl: 'core/form/manage_entity.html',
                                             controller: function ($scope) {
+                                                $scope.dialog = {
+                                                    templateBodyUrl: 'catalog/administer.html'
+                                                };
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
                                                 $scope.args = {key: catalog.key, state: catalog.state};
 
@@ -528,12 +533,15 @@
 
                                                 $scope.container = {};
                                                 $scope.save = function () {
+                                                    var promise;
                                                     if (!$scope.container.form.$valid) {
                                                         return false;
                                                     }
-                                                    models['31'].actions.sudo($scope.args).then(function (response) {
+                                                    promise = models['31'].actions.sudo($scope.args);
+                                                    promise.then(function (response) {
                                                         updateState(response.data.entity);
                                                     });
+                                                    return promise;
                                                 };
                                                 $scope.close = function () {
                                                     $scope.$close();
@@ -563,13 +571,13 @@
                                                 setupCurrentPricetag;
                                             accessImages.push(fields._images.code_name);
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
+                                            $scope.config = parentScope.rootScope.config;
                                             $scope.entity = parentScope.entity;
                                             $scope.args = angular.copy(parentScope.args);
-                                            $scope.config = {
+                                            $scope.dialog = {
                                                 templateBodyUrl: 'catalog/manage_products.html',
                                                 toolbar: {
-                                                    title: 'Manage Products',
-                                                    templateActionsUrl: 'catalog/manage_products_actions.html'
+                                                    title: 'Manage Products'
                                                 }
                                             };
                                             $scope.container = {};
@@ -738,10 +746,16 @@
                                                 $scope.pricetag = pricetag;
                                             };
 
+                                            $scope.loadingManageProduct = false;
+
                                             $scope.manageProduct = function (image, pricetag) {
                                                 if (pricetag._image) {
                                                     image = pricetag._image;
                                                 }
+                                                if ($scope.loadingManageProduct) {
+                                                    return;
+                                                }
+                                                $scope.loadingManageProduct = true;
                                                 setupCurrentPricetag(image, pricetag);
                                                 // perform read catalog.images.0.pricetags.0._product
                                                 models['31'].actions.read({
@@ -780,6 +794,8 @@
                                                     };
                                                     $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
 
+                                                })['finally'](function () {
+                                                    $scope.loadingManageProduct = false;
                                                 });
                                             };
 
@@ -992,11 +1008,7 @@
                                             });
 
                                             $scope.save = function () {
-                                                var tmp = $scope.config,
-                                                    promise;
-                                                $scope.config = $scope.rootScope.config;
-                                                $scope.config.prepareReadArguments($scope);
-                                                $scope.config = tmp;
+                                                var promise;
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);

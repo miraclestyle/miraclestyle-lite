@@ -69,28 +69,44 @@
                             start: function (e, ui) {
                                 info.scope.$broadcast('itemOrderStarted');
                             },
-                            whatSortMeans: function ($event) {
-                                modals.alert('Grab the button to start sorting.', {
-                                    targetEvent: $event
-                                });
-                            },
+                            axis: false,
+                            containment: false,
+                            whatSortMeans: modals.howToSort,
                             handle: '.sort-handle',
+                            tolerance: 'pointer',
+                            helper: 'clone',
                             sort: function (e, ui) {
-                                var sample = ui.placeholder.next();
-                                if (sample.length) {
-                                    ui.placeholder.width(sample.width()).height(sample.height()); // @todo review this
+                                var deleteMode,
+                                    division,
+                                    helperWidth = ui.helper.width(),
+                                    itemScope = ui.item.scope(),
+                                    item = itemScope.$eval(ui.item.attr('current-item'));
+                                division = ui.offset.left + helperWidth;
+                                if (division < (helperWidth / 1.5)) {
+                                    deleteMode = true;
                                 }
-                                info.scope.$broadcast('itemOrderSorting'); // @todo review this
+                                if (item) {
+                                    if (deleteMode) {
+                                        ui.helper.addClass('about-to-delete');
+                                        item._state = 'deleted';
+                                    } else {
+                                        ui.helper.removeClass('about-to-delete');
+                                        item._state = null;
+                                    }
+                                }
+                                info.scope.$broadcast('itemOrderSorting');
                             },
                             stop: function () {
                                 angular.forEach(config.ui.specifics.parentArgs,
                                     function (ent, i) {
                                         i = ((config.ui.specifics.parentArgs.length - 1) - i);
                                         ent._sequence = i;
-                                        ent.ui.access[ent.ui.access.length - 1] = i;
+                                        if (ent.ui) {
+                                            ent.ui.access[ent.ui.access.length - 1] = i;
+                                        }
                                     });
                                 rootFormSetDirty();
-                                info.scope.$broadcast('itemOrderChanged'); // @todo review this
+                                info.scope.$broadcast('itemOrderChanged');
                                 info.scope.$apply();
                             }
                         },
@@ -444,7 +460,7 @@
                         controller: function ($scope, currentAccount) {
                             var cartData;
                             $scope.seller = seller;
-                            $scope.config = {
+                            $scope.dialog = {
                                 templateBodyUrl: 'seller/view_body.html',
                                 templateFooterUrl: 'seller/view_footer.html'
                             };
@@ -577,9 +593,9 @@
                                 $modal.open({
                                     templateUrl: 'core/form/manage_entity.html',
                                     controller: function ($scope) {
-                                        $scope.config = {};
-                                        $scope.config.templateBodyUrl = 'core/misc/content_view_body.html';
-                                        $scope.config.templateFooterUrl = 'core/misc/content_view_footer.html';
+                                        $scope.dialog = {};
+                                        $scope.dialog.templateBodyUrl = 'core/misc/content_view_body.html';
+                                        $scope.dialog.templateFooterUrl = 'core/misc/content_view_footer.html';
                                         $scope.content = content;
                                         $scope.close = function () {
                                             $scope.$close();
@@ -661,6 +677,9 @@
                         kind: this.kind,
                         action: 'update',
                         fields: _.toArray(fields),
+                        toolbar: {
+                            submitNative: true
+                        },
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);

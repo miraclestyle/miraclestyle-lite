@@ -233,8 +233,7 @@
                                         $.extend(feedbackField.ui, {
                                             args: 'newMessage.feedback',
                                             parentArgs: 'newMessage',
-                                            writable: true,
-                                            placeholder: 'Select feedback...'
+                                            writable: true
                                         });
                                         feedbackField.required = false;
                                     }

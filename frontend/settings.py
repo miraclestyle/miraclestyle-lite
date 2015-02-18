@@ -76,6 +76,7 @@ ANGULAR_CSS_PATHS = ('js/lib/angular-material/angular-material.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-device-grey600.css',
                      'js/vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
+                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-content-grey600.css',
                      'css/style.css')
 
 class Structured():

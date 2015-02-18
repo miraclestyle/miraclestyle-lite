@@ -42,13 +42,20 @@
                     },
                     modal: function (errors) {
                         $modal.open({
-                            templateUrl: 'core/misc/errors.html',
+                            templateUrl: 'core/form/manage_entity.html',
                             controller: function ($scope) {
+                                $scope.dialog = {
+                                    templateBodyUrl: 'core/misc/errors.html',
+                                    toolbar: {
+                                        title: 'Error',
+                                        hideSave: true
+                                    }
+                                };
                                 $scope.errors = [];
                                 angular.forEach(errors, function (error, key) {
                                     $scope.errors.push([key, errorHandling.translate(key, error)]);
                                 });
-                                $scope.ok = function () {
+                                $scope.close = function () {
                                     $scope.$close();
                                 };
                             }
@@ -345,7 +352,7 @@ w:                  while (images.length > 0) {
 
         var onlyInMemoryCache = $cacheFactory('endpointOnlyInMemory'),
             getCache = function (type) {
-                if (type === undefined) {
+                if (type === undefined || type === 'local') {
                     return generalLocalCache;
                 }
                 if (type === 'memory') {
@@ -1146,6 +1153,10 @@ w:                  while (images.length > 0) {
                             };
                             $scope.withArgs = args;
                             $scope.config = config;
+                            $scope.dialog = {
+                                toolbar: config.toolbar,
+                                templateBodyUrl: config.templateBodyUrl
+                            };
                             $scope.entity = entity;
                             $scope.args = config.argumentLoader($scope);
                             $scope.rootScope = $scope;
@@ -1372,9 +1383,6 @@ w:                  while (images.length > 0) {
         var inflector = $filter('inflector'),
             formInputTypes = {
                 _SelectBox: function (info) {
-                    if (angular.isDefined(info.config.ui.placeholder)) {
-                        info.config.ui.placeholder = 'Select...';
-                    }
 
                     if (!angular.isDefined(info.config.ui.specifics.repeatAs)) {
                         info.config.ui.specifics.repeatAs = '';
@@ -1457,6 +1465,10 @@ w:                  while (images.length > 0) {
                                     '12': true,
                                     '13': true,
                                     '17': true
+                                },
+                                type: {
+                                    '12': 'local',
+                                    'default': 'memory'
                                 }
                             },
                             finder: {
@@ -1621,8 +1633,12 @@ w:                  while (images.length > 0) {
                     if (model && !config.ui.specifics.getEntities) {
                         if (model.actions.search) {
                             opts.cache = defaults.cache.query[config.kind];
+                            opts.cacheType = defaults.cache.type[config.kind] || defaults.cache.type['default'];
                             if (override.cache && angular.isDefined(override.cache.query)) {
                                 opts.cache = override.cache.query;
+                            }
+                            if (override.cache && angular.isDefined(override.cache.type)) {
+                                opts.cacheType = override.cache.type;
                             }
                             config.ui.specifics.initial = function () {
                                 args = defaults.queryFilter[config.kind];
@@ -1701,6 +1717,8 @@ w:                  while (images.length > 0) {
                             clickable: true
                         };
 
+                    config.ui.specifics.sortMode = true;
+
                     defaultFields = defaultFields.sort(helpers.fieldSorter);
 
                     if (noSpecifics || !config.ui.specifics.fields) {
@@ -1757,20 +1775,34 @@ w:                  while (images.length > 0) {
                         start: function (e, ui) {
                             info.scope.$broadcast('itemOrderStarted');
                         },
-                        whatSortMeans: function ($event) {
-                            modals.alert('Grab the button to start sorting.', {
-                                targetEvent: $event
-                            });
-                        },
+                        axis: false,
+                        containment: false,
+                        whatSortMeans: modals.howToSort,
                         handle: '.sort-handle',
+                        tolerance: 'pointer',
+                        helper: 'clone',
                         sort: function (e, ui) {
-                            var sample = ui.placeholder.next();
-                            if (sample.length) {
-                                ui.placeholder.width(sample.width()).height(sample.height()); // @todo review this
+                            var deleteMode,
+                                division,
+                                helperWidth = ui.helper.width(),
+                                itemScope = ui.item.scope(),
+                                item = itemScope.$eval(ui.item.attr('current-item'));
+                            division = ui.offset.left + helperWidth;
+                            if (division < (helperWidth / 1.5)) {
+                                deleteMode = true;
                             }
-                            info.scope.$broadcast('itemOrderSorting'); // @todo review this
+                            if (item) {
+                                if (deleteMode) {
+                                    ui.helper.addClass('about-to-delete');
+                                    item._state = 'deleted';
+                                } else {
+                                    ui.helper.removeClass('about-to-delete');
+                                    item._state = null;
+                                }
+                            }
+                            info.scope.$broadcast('itemOrderSorting');
                         },
-                        stop: function () {
+                        stop: function (e, ui) {
                             angular.forEach(config.ui.specifics.parentArgs,
                                 function (ent, i) {
                                     i = ((config.ui.specifics.parentArgs.length - 1) - i);
@@ -1778,7 +1810,7 @@ w:                  while (images.length > 0) {
                                     ent.ui.access[ent.ui.access.length - 1] = i;
                                 });
                             rootFormSetDirty();
-                            info.scope.$broadcast('itemOrderChanged'); // @todo review this
+                            info.scope.$broadcast('itemOrderChanged');
                             info.scope.$apply();
                         }
                     };
@@ -2280,9 +2312,23 @@ w:                  while (images.length > 0) {
                             size: 360
                         };
                     }
+                    if (!info.config.ui.specifics.sortableOptions) {
+                        info.config.ui.specifics.sortableOptions = {};
+                    }
+                    $.extend(info.config.ui.specifics.sortableOptions, {
+                        axis: false,
+                        containment: false
+                    });
                     return 'image';
                 },
                 SuperImageStructuredProperty: function (info) {
+                    if (!info.config.ui.specifics.sortableOptions) {
+                        info.config.ui.specifics.sortableOptions = {};
+                    }
+                    $.extend(info.config.ui.specifics.sortableOptions, {
+                        axis: false,
+                        containment: false
+                    });
                     return this.SuperImageLocalStructuredProperty(info);
                 },
                 SuperImageRemoteStructuredProperty: function (info) {
@@ -2574,7 +2620,12 @@ w:                  while (images.length > 0) {
 
     }).factory('modals', function ($modal, $q, helpers) {
 
-        return {
+        var modals = {
+            howToSort: function ($event) {
+                return modals.alert('Grab the button to start sorting.', {
+                    targetEvent: $event
+                });
+            },
             alert: function (message, extraConfig) {
                 if (angular.isFunction(extraConfig)) {
                     extraConfig = {
@@ -2615,15 +2666,18 @@ w:                  while (images.length > 0) {
 
                     this.dismiss();
                 };
-                return this.create(theConfig);
+                return this.create(theConfig, {
+                    inDirection: false,
+                    outDirection: false
+                });
             },
-            create: function (extraConfig) {
+            create: function (extraConfig, modalConfig) {
                 var config = {
                     message: '',
                     type: 'notice'
-                };
+                }, defaultModalConfig;
                 helpers.extendDeep(config, extraConfig);
-                return $modal.open({
+                defaultModalConfig = {
                     fullScreen: false,
                     targetEvent: extraConfig && extraConfig.targetEvent,
                     templateUrl: 'core/misc/' + config.type + '.html',
@@ -2641,9 +2695,12 @@ w:                  while (images.length > 0) {
                         }
                         $scope.config = config;
                     }
-                });
+                };
+                $.extend(defaultModalConfig, modalConfig);
+                return $modal.open(defaultModalConfig);
             }
         };
+        return modals;
     }).factory('searchBuilder', function (modelsMeta) {
         var create = function () {
             var make = {
@@ -2661,7 +2718,6 @@ w:                  while (images.length > 0) {
                         ui: {
                             args: 'search.indexID',
                             label: 'Search Options',
-                            placeholder: 'Select index',
                             writable: true,
                             attrs: {
                                 'ng-change': 'search.makeFilters()'
@@ -2675,7 +2731,6 @@ w:                  while (images.length > 0) {
                         ui: {
                             args: 'search.send.ancestor',
                             label: 'Ancestor',
-                            placeholder: 'Type the ancestor key',
                             writable: true
                         }
                     },
@@ -2795,7 +2850,6 @@ w:                  while (images.length > 0) {
                         field.required = 'search.indexID != null && search.send.filters.length';
                         field.code_name = 'filter_' + filter[0];
                         field.ui = {
-                            placeholder: 'Select value...',
                             args: 'search.send.filters[\'' + i + '\'].value',
                             writable: true
                         };
@@ -2816,7 +2870,6 @@ w:                  while (images.length > 0) {
                             required: field.required,
                             ui: {
                                 label: 'Operator',
-                                placeholder: 'Select operator',
                                 writable: true,
                                 args: 'search.send.filters[\'' + i + '\'].operator'
                             }
@@ -2840,7 +2893,6 @@ w:                  while (images.length > 0) {
                             code_name: 'order_by_' + order[0],
                             required: 'search.indexID != null && search.send.filters.length',
                             ui: {
-                                placeholder: 'Select direction',
                                 writable: true,
                                 args: 'search.send.orders[\'' + i + '\'].operator'
                             }

@@ -3,7 +3,7 @@
     'use strict';
     angular.element(document).ready(function () {
         var failure = function () {
-                var choice = prompt('Could not start application. Reload your browser and try again?');
+                var choice = confirm('Could not start application. Reload your browser and try again?');
                 if (choice) {
                     window.location.reload(true);
                 }

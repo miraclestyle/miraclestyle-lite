@@ -503,32 +503,40 @@
                         submit = $parse(attrs.submitIfFiles),
                         complete = $parse(attrs.submitIfFilesNoComplete),
                         check = $parse(attrs.submitIf),
+                        nativeSubmit = $parse(attrs.submitNative),
                         execute,
                         click = function () {
                             if (check && !check(scope)) {
                                 return false;
                             }
-                            var promise = submit(scope);
+                            var promise,
+                                isNative = nativeSubmit(scope);
+                            files = form.find('input[type="file"]');
+                            execute = false;
+                            if (files.length) {
+                                files.each(function () {
+                                    if ($(this).val()) {
+                                        execute = true;
+                                        return false;
+                                    }
+                                });
+                            }
+                            if (isNative) {
+                                if (execute) {
+                                    form.trigger('submit');
+                                    return false;
+                                }
+                                promise = submit(scope);
+                            } else {
+                                promise = submit(scope);
+                            }
                             if (promise && angular.isObject(promise) && promise.then) {
                                 promise.then(function () {
-                                    files = form.find('input[type="file"]');
-                                    if (files.length) {
-                                        execute = false;
-                                        files.each(function () {
-                                            if ($(this).val()) {
-                                                execute = true;
-                                                return false;
-                                            }
-                                        });
-
-                                        if (execute) {
-                                            form.trigger('submit');
-                                            return false;
-                                        }
+                                    if (execute) {
+                                        form.trigger('submit');
+                                        return false;
                                     }
-
                                     complete(scope);
-
                                 });
                             }
 
@@ -609,7 +617,7 @@
                                     images = [],
                                     margin = 1;
                                 if (!canvas || (check && originalCanvas === canvas)) {
-                                    return; // do not measure if canvas is falsy
+                                    return; // do not measure if canvas is falsy or if the original canvas is the same as the current one
                                 }
                                 angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
                                     if (image._state !== 'deleted') {
@@ -640,6 +648,7 @@
 
                     scope.$on('modalResize', resize);
                     scope.$on('itemOrderChanged', resize);
+                    scope.$on('itemOrderSorting', resize);
                     scope.$on('ngRepeatEnd', resize);
                     scope.$on('accordionOpened', function () {
                         setTimeout(resize, 110);
@@ -727,11 +736,11 @@
 
                 }
             };
-        }).directive('tapOrClick', function ($parse, helpers) {
+        }).directive('draggableClick', function ($parse, helpers) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    var callback = $parse(attrs.tapOrClick),
+                    var callback = $parse(attrs.draggableClick),
                         click = function (event, tap) {
                             if (element.hasClass('dragged') && !tap) {
                                 element.removeClass('dragged');
@@ -740,24 +749,10 @@
                             scope.$apply(function () {
                                 callback(scope, {$event: event});
                             });
-                        },
-                        tap = function (e) {
-                            click.call(this, e, 1);
-                            return e.preventDefault();
-                        },
-                        touch = helpers.responsive.isTouch();
-                    if (touch) {
-                        $(element).hammer().bind('tap', tap);
-                    } else {
-                        element.on('click', click);
-                    }
-
+                        };
+                    element.on('click', click);
                     scope.$on('$destroy', function () {
-                        if (touch) {
-                            $(element).hammer().off('tap', tap);
-                        } else {
-                            element.off('click', click);
-                        }
+                        element.off('click', click);
                     });
                 }
             };
@@ -818,7 +813,11 @@
                             element.width(Math.ceil(tw));
                         },
                         resize = function () {
-                            var height = parent.parents('.fixed-height').height();
+                            var height = parent.parents('.fixed-height:first').height(),
+                                bar = parent.parents('.modal:first').find('.new-pricetag-bar');
+                            if (bar.length) {
+                                height -= bar.outerHeight();
+                            }
                             if (height) {
                                 parent.height(height);
                                 scope.$broadcast('imageSliderResized', height);
@@ -878,7 +877,8 @@
                 link: function (scope, element, attrs) {
                     var image = scope.$eval(attrs.sliderImage),
                         run = function () {
-                            var newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH,
+                            var bar = element.parents('.modal:first').find('.new-pricetag-bar'),
+                                newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
                                 newWidth = Math.ceil(newHeight * image.proportion),
                                 imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
                                 originalNewHeight = newHeight;
@@ -993,7 +993,7 @@
                             setTimeout(function () {
                                 var files = element.prop('files');
                                 if (files && files.length) {
-                                    target.show();
+                                    target.css('display', 'inline');
                                     target.text(totalText.replace(':total', files.length));
                                 } else {
                                     target.hide();
@@ -1152,7 +1152,7 @@
             };
         })
         .directive('selectInput', function ($simpleDialog, $mdTheming,
-            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers) {
+            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q) {
             return {
                 replace: true,
                 transclude: true,
@@ -1260,6 +1260,7 @@
                         if (select.multiple) {
                             return $.inArray(hash, ngModel.$modelValue) !== -1;
                         }
+                        console.log(hash, ngModel.$modelValue);
                         return ngModel.$modelValue === hash;
                     };
                     select.anyChecks = function () {
@@ -1334,94 +1335,99 @@
                             },
                             onBeforeShow: function (dialogEl, options) {
                                 options.parent.css('overflow-wrap', options.parent.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
-                                var animateSelect = function () {
-                                    var target = element.parents('md-input-container:first');
-                                    options.resize = function () {
-                                        var targetOffset = target.offset(),
-                                            targetNode = target.get(0),
-                                            targetRect = targetNode.getBoundingClientRect(),
-                                            elementNode = element.get(0),
-                                            elementRect = elementNode.getBoundingClientRect(),
-                                            elementOffset = element.offset(),
-                                            parent = options.parent,
-                                            parentNode = parent.get(0),
-                                            parentRect = parentNode.getBoundingClientRect(),
-                                            paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
-                                            paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
-                                            parentHeight = options.parent.height(),
-                                            scrollElement = dialogEl.find('md-content'),
-                                            scrollElementNode = scrollElement.get(0),
-                                            top = parentRect.top + paddingTop,
-                                            activeOffset,
-                                            active = dialogEl.find('.list-row--is-active'),
-                                            activeNode = active.get(0),
-                                            activeRect,
-                                            buffer,
-                                            spaceAvailable,
-                                            scrollElementTopMargin = parseInt(scrollElement.css('margin-top'), 10),
-                                            newTop,
-                                            totalHeight,
-                                            newScrollTop;
-                                        if (active.length) {
-                                            activeOffset = active.offset();
-                                            activeRect = activeNode.getBoundingClientRect();
-                                        }
-                                        dialogEl.width(target.width());
-                                        if ((dialogEl.height() > parentHeight)
-                                                || (scrollElement.prop('scrollHeight') > parentHeight)) {
-                                            dialogEl.css({
-                                                top: top,
-                                                left: targetOffset.left
-                                            }).height(options.parent.height() - (paddingBottom + paddingTop));
-                                        } else {
-                                            dialogEl.css(targetOffset);
-                                            activeOffset = active.offset();
+                                var nextDefer = $q.defer(),
+                                    nextPromise = nextDefer.promise,
+                                    animateSelect = function () {
+                                        var target = element.parents('md-input-container:first');
+                                        options.resize = function () {
+                                            var targetOffset = target.offset(),
+                                                targetNode = target.get(0),
+                                                targetRect = targetNode.getBoundingClientRect(),
+                                                elementNode = element.get(0),
+                                                elementRect = elementNode.getBoundingClientRect(),
+                                                elementOffset = element.offset(),
+                                                parent = options.parent,
+                                                parentNode = parent.get(0),
+                                                parentRect = parentNode.getBoundingClientRect(),
+                                                paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
+                                                paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
+                                                parentHeight = options.parent.height(),
+                                                scrollElement = dialogEl.find('md-content'),
+                                                scrollElementNode = scrollElement.get(0),
+                                                top = parentRect.top + paddingTop,
+                                                activeOffset,
+                                                active = dialogEl.find('.list-row--is-active'),
+                                                activeNode = active.get(0),
+                                                activeRect,
+                                                buffer,
+                                                spaceAvailable,
+                                                scrollElementTopMargin = parseInt(scrollElement.css('margin-top'), 10),
+                                                newTop,
+                                                totalHeight,
+                                                newScrollTop;
                                             if (active.length) {
-                                                // position the selection at center of active item
-                                                newTop = (targetOffset.top - (activeOffset.top - elementOffset.top)) - ((active.height() - element.height()) / 2);
-                                            } else {
-                                                // position the div at the center if no item is selected
-                                                newTop = (elementOffset.top + element.height()) - (dialogEl.height() / 2) - parseInt(scrollElement.css('paddingTop'), 10) - 3;
+                                                activeOffset = active.offset();
+                                                activeRect = activeNode.getBoundingClientRect();
                                             }
-                                            if (newTop > top) {
-                                                totalHeight = newTop + dialogEl.height();
-                                                if (totalHeight > parentHeight) {
-                                                    newTop = newTop - (totalHeight - parentHeight);
-                                                    if (newTop < top) {
-                                                        newTop = top;
+                                            dialogEl.width(target.width());
+                                            if ((dialogEl.height() > parentHeight)
+                                                    || (scrollElement.prop('scrollHeight') > parentHeight)) {
+                                                dialogEl.css({
+                                                    top: top,
+                                                    left: targetOffset.left
+                                                }).height(options.parent.height() - (paddingBottom + paddingTop));
+                                            } else {
+                                                dialogEl.css(targetOffset);
+                                                activeOffset = active.offset();
+                                                if (active.length) {
+                                                    // position the selection at center of active item
+                                                    newTop = (targetOffset.top - (activeOffset.top - elementOffset.top)) - ((active.height() - element.height()) / 2);
+                                                } else {
+                                                    // position the div at the center if no item is selected
+                                                    newTop = (elementOffset.top + element.height()) - (dialogEl.height() / 2) - parseInt(scrollElement.css('paddingTop'), 10) - 3;
+                                                }
+                                                if (newTop > top) {
+                                                    totalHeight = newTop + dialogEl.height();
+                                                    if (totalHeight > parentHeight) {
+                                                        newTop = newTop - (totalHeight - parentHeight);
+                                                        if (newTop < top) {
+                                                            newTop = top;
+                                                        }
+                                                    }
+                                                    dialogEl.css('top', newTop);
+                                                } else {
+                                                    dialogEl.css('top', top);
+                                                }
+                                            }
+                                            if (active.length && !select.multiple) {
+                                                scrollElement.scrollTop(scrollElement.scrollTop() - scrollElement.offset().top + active.offset().top);
+                                            }
+                                        };
+                                        options.resize();
+                                        $(window).on('resize', options.resize);
+
+                                        dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
+                                            Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
+                                            Math.min(target.height() / dialogEl.height(), 1.0) + ')')
+                                            .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
+                                                if (ev.target === dialogEl[0]) {
+                                                    select.opened = true;
+                                                    nextDefer.resolve();
+                                                    if (select.search) {
+                                                        dialogEl.find('input[type="search"]').focus();
                                                     }
                                                 }
-                                                dialogEl.css('top', newTop);
-                                            } else {
-                                                dialogEl.css('top', top);
-                                            }
-                                        }
-                                        if (active.length && !select.multiple) {
-                                            scrollElement.scrollTop(scrollElement.scrollTop() - scrollElement.offset().top + active.offset().top);
-                                        }
-                                    };
-                                    options.resize();
-                                    $(window).on('resize', options.resize);
-
-                                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
-                                        Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
-                                        Math.min(target.height() / dialogEl.height(), 1.0) + ')')
-                                        .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
-                                            if (ev.target === dialogEl[0]) {
-                                                select.opened = true;
-                                                if (select.search) {
-                                                    dialogEl.find('input[type="search"]').focus();
-                                                }
-                                            }
+                                            });
+                                        $$rAF(function () {
+                                            dialogEl.addClass('transition-in');
+                                            dialogEl.css($mdConstant.CSS.TRANSFORM, '');
                                         });
-                                    $$rAF(function () {
-                                        dialogEl.addClass('transition-in');
-                                        dialogEl.css($mdConstant.CSS.TRANSFORM, '');
-                                    });
 
-                                };
+                                    };
 
                                 $$rAF(animateSelect);
+
+                                return nextPromise;
                             },
                             controller: function ($scope) {
                                 select.close = function () {
@@ -1494,12 +1500,6 @@
 
                     scope.select = select;
                 }
-            };
-        }).directive('mainMenuItem', function () {
-            return {
-                templateUrl: 'home/main_menu_item.html',
-                transclude: true,
-                replace: true
             };
         }).directive('listButton', function () {
             return {

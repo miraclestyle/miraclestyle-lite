@@ -1,18 +1,9 @@
-<div fit-in-modal>
-    <div class="modal-body min-height overflow-auto-y">
-            <div class="modal-body-inner padding-24">
-                <h2>Errors occurred while attempting to perform an action</h2>
-                <ul>
-                  <li ng-repeat="error in errors">
-                    <span ng-if="error[0] !== 'traceback'" ng-bind-html="error[1]"></span>
-                    <pre ng-if="error[0] === 'traceback'">{{error[1]}}</pre>
-                 </li>
-                </ul>
-            </div>
-    </div>
-      <div class="md-actions" layout="row">
-        <md-button ng-click="ok()" class="md-primary">
-          Ok
-        </md-button>
-      </div>
+<div class="padding-16">
+  <h2>Errors occurred while attempting to perform an action</h2>
+  <ul>
+    <li ng-repeat="error in errors">
+      <span ng-if="error[0] !== 'traceback'" ng-bind-html="error[1]"></span>
+      <pre ng-if="error[0] === 'traceback'">{{error[1]}}</pre>
+   </li>
+  </ul>
 </div>

@@ -9,11 +9,14 @@
   </div>
 
   <div ui-sortable="config.ui.specifics.sortableOptions" 
-       ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': !config.ui.specifics.parentArgs.length}"class="list">
-        <div ng-hide="ent._state == 'deleted'" ng-repeat="ent in config.ui.specifics.parentArgs" 
+       ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': !config.ui.specifics.parentArgs.length}"
+       class="list">
+        <div ng-hide="ent._state == 'deleted'" 
+             ng-repeat="ent in config.ui.specifics.parentArgs" 
              ng-class="{'list-row--has-secondary': config.ui.specifics.listConfig.secondary}"
+             current-item="ent"
              class="no-move list-row no-padding clearfix">
-            
+            <div class="delete-overlay"></div>
             <list-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
                 <strong class="first">{{ent.name}}</strong>
                 <span class="second">
@@ -22,7 +25,7 @@
             </list-button>
 
             <div class="list-secondary-tile">
-                  <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="md-button sort-handle">Drag</a>
+                  <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="md-button sort-handle"><icon type="action.reorder"></icon></a>
            </div>
         </div>
   </div>

@@ -12,6 +12,9 @@
     right: 2px;
     bottom: 2px;
 }
+.select-box {
+    cursor: pointer;
+}
 md-input-container .as-md-input {
     position: relative;
 }
@@ -53,9 +56,6 @@ md-input-container .as-md-input {
     left: 10px;
     top: 11px;
 }
-.md-item-active md-item-content {
-    background: #eee;
-}
 span.select-item-multiple {
     display: inline-block;
     background: #EEE;
@@ -91,7 +91,7 @@ md-item-content md-checkbox {
     cursor: pointer;
     overflow: hidden;
 }
-.with-actions .button-transparent {
+.button-action {
     padding: 12px;
     margin: 4px;
 }
@@ -123,9 +123,231 @@ md-input-container md-checkbox, md-input-container md-switch {
 .button-set button:last-child {
     margin-right: 0px;
 }
-.homepage-toolbar {
+a.block, .block, button.block {
+    display: block;
+}
+.logo {
+    display: inline-block;
+}
+.logo img {
+    width: auto;
+    height: 20px;
+}
+.bar-logo {
+    margin: 16px;
+}
+.bar-logo img {
+    width: 100%;
+}
+.menu-item {
+    position: relative;
+    width: 100%;
+    border: none;
+    background: none;
+    text-align: left;
+    line-height: 1;
+}
+.ui-select-highlight {
+    font-weight: bold;
+}
+a.sort-handle {
+    cursor: move;
+}
+.image-image {
+    display: block;
+    position: relative;
+    margin: 1px;
+    float: left;
+}
+.image-image .spaceout {
+    width: 100%;
+    height: auto;
+}
+.load-more {
+    width: 100%;
+}
+.image-image .img {
+    display: block;
+}
+[ui-sortable] > *:not(.no-move) {
+    cursor: move;
+}
+.t60 {
+    width: 60%;
+}
+.t40 {
+    width: 40%;
+}
+.t100 {
+    width: 100%;
+}
+.t0 {
+    width: 0%;
+}
+.manage-product-actions {
+    position: static;
+}
+.list-inline-block {
+    display: inline-block;
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+}
+.bottom-right-floating {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 11;
+}
+.bottom-right-floating-action {
+    background: rgba(255, 255, 255, 1);
+    padding: 5px;
+    display: block;
+}
+.image-image-scroll {
+    float: left;
+    height: 100%;
+    position: relative;
+    display: block;
+}
+.image-image-scroll .img {
+    height: 100%;
+    display: block;
+    width: auto;
+}
+.app-block {
+    width: 240px;
+    height: 150px;
+}
+.app-block .logo {
+    width: 100%;
+    height: auto;
+}
+.grid-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.image-image img {
+    width: 100%;
+}
+.pointable {
+    cursor: pointer;
+}
+img.horizontal, .horizontal {
+    height: 100%;
+    width: 100%;
+}
+img.vertical, .vertical {
+    height: 100%;
+    width: 56%;
+    text-align: center;
+    vertical-align: middle;
+    margin: auto;
+}
+.grid-generator {
+    float: left;
+    margin: 1px;
+    position: relative;
+}
+.image-slider-outer {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    overflow-x: visible;
+}
+.image-slider .image-slider-item {
+    float: left;
+    position: relative;
+}
+div.catalog-pricetag {
+    position: absolute;
+    top: 20%;
+    left: 20px;
+    z-index: 80;
+    padding: 0px;
+    visibility: hidden;
+    border-radius: 3px;
+    -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    background: white;
+    cursor: pointer;
+}
+li.catalog-new-pricetag {
+    padding: 5px 10px;
+    display: block;
+    border-radius: 3px;
+    -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    background: white;
+    cursor: pointer;
+}
+.catalog-pricetag-dot {
+    border-radius: 50%;
+    background: #333333;
+    width: 2px;
+    height: 2px;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+}
+.catalog-pricetag a {
+    text-decoration: none;
+    display: block;
+    padding: 5px 10px;
+}
+.catalog-pricetag button.button-transparent {
+    text-decoration: none;
+    display: block;
+    padding: 6px 10px 4px;
+}
+.catalog-new-pricetag {
+    display: block;
+}
+.catalog-new-pricetag .catalog-pricetag {
+    display: none;
+}
+.catalog-new-pricetag.ui-draggable-dragging .catalog-pricetag {
+    display: block;
+}
+.catalog-new-pricetag.ui-draggable-dragging .just-text {
+    display: none;
+}
+.catalog-pricetag-wrapper {
+    position: relative;
+}
+.no-things-available {
+    color: #CCC;
     text-align: center;
 }
-.homepage-menu {
-    margin-top:5px;
+.md-toolbar-title {
+    display: inline-block;
+    max-width: 200px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+    overflow: hidden;
+}
+.delete-overlay {
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,0,0,0.52);
+    z-index: 1;
+}
+
+.about-to-delete .delete-overlay {
+    display:block;
+}
+
+pre {
+    overflow: auto;
+    font-size: 13px;
+    padding: 5px;
+    width: auto;
+    max-height: 600px;
+    background-color: #eee;
+    margin-bottom: 1em;
+    font-family: Consolas,Menlo,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New,monospace,sans-serif;
 }

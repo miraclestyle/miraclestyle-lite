@@ -3,36 +3,41 @@
 
        <div class="clearfix button-set margin-bottom-16">
         <div class="pull-right">
-           <span ng-include="config.ui.specifics.extraFieldsBefore"></span>
+           <span ng-include="config.ui.specifics.mainActionsLayout.before"></span>
            <md-button type="button" loading="!<%= config.ui.writableCompiled %>" class="md-raised fake-button">
-               <span>Add Images <span class="selected-total">(Selected: :total)</span> <span ng-show="$isUploading">(Uploading...)</span></span>
+               <span><%=config.ui.specifics.addText %> <span class="selected-total">(:total)</span> <span ng-show="$isUploading">(Uploading...)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
                        multiple
                        show-number-of-selected-files=".selected-total"
                        generate-upload-url="true"
                        type="file" />
            </md-button>
+           <span ng-include="config.ui.specifics.mainActionsLayout.after"></span>
         </div>
       </div>
  
       <div ui-sortable="config.ui.specifics.sortableOptions" 
            fancy-grid-generator="config.ui.specifics.parentArgs" 
-           ng-model="config.ui.specifics.parentArgs" ng-class="{'grid-no-items': !config.ui.specifics.parentArgs.length}" class="clearfix grid-wrapper">
+           ng-model="config.ui.specifics.parentArgs" 
+           ng-class="{'grid-no-items': !config.ui.specifics.parentArgs.length}"
+           class="clearfix grid-wrapper">
            
           <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
                ng-hide="image._state == 'deleted'"
+               current-item="image"
                class="no-move image-image grid-item">
-               
+                <div class="delete-overlay"></div>
                 <div class="img spaceout">
                   <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
                 </div>
-                
-                <a ng-show="config.ui.specifics.sortable === undefined || config.ui.specifics.sortable"
-                   ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
-                   loading="!<%= config.ui.writableCompiled %>"
-                   type="button" 
-                   tap-or-click="config.ui.specifics.sortableOptions.whatSortMeans()" 
-                   class="md-button sort-handle">Sort</a>
+                <div class="bottom-right-floating">
+                    <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
+                       ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" 
+                       loading="!<%= config.ui.writableCompiled %>" 
+                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action sort-handle">
+                          <icon type="action.reorder"></icon>
+                    </a>
+                </div>
           </div>
       </div>
       

@@ -3,7 +3,7 @@
         <div layout="row" flex class="fill-height">
             <div ng-if="!spec.hideLeft" layout="row" class="md-toolbar-item md-tools actions-left">
                 <span ng-include="spec.templateRight"></span>
-                <button md-ink-ripple-action ng-if="!spec.templateRight" type="button" class="button-transparent"
+                <button md-ink-ripple-action ng-if="!spec.templateRight" type="button" class="button-transparent button-action"
                   loading ng-click="close()">
                     <icon type="navigation.close"></icon>
                 </button>
@@ -23,8 +23,9 @@
                   type="button" 
                   submit-if="validateForm()" 
                   submit-if-files-no-complete="noComplete()" 
-                  submit-if-files="save()" 
-                  class="button">Save</md-button>
+                  submit-if-files="save()"
+                  submit-native="spec.submitNative"
+                  class="button-action">Save</md-button>
 
                 <span ng-include="spec.templateLeft"></span>
 

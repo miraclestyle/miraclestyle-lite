@@ -61,9 +61,12 @@
                                     };
                                 $scope.actions.sudo = function () {
                                     $modal.open({
-                                        templateUrl: 'account/administer.html',
+                                        templateUrl: 'core/form/manage_entity.html',
                                         controller: function ($scope) {
                                             var sudoFields = modelsMeta.getActionArguments(that.kind, 'sudo');
+                                            $scope.dialog = {
+                                                templateBodyUrl: 'account/administer.html'
+                                            };
                                             $scope.args = {key: entity.key, state: entity.state};
 
                                             /*
@@ -79,12 +82,15 @@
 
                                             $scope.container = {};
                                             $scope.save = function () {
+                                                var promise;
                                                 if (!$scope.container.form.$valid) {
                                                     return false;
                                                 }
-                                                models[that.kind].actions.sudo($scope.args).then(function (response) {
+                                                promise = models[that.kind].actions.sudo($scope.args);
+                                                promise.then(function (response) {
                                                     updateState(response.data.entity);
                                                 });
+                                                return promise;
                                             };
                                             $scope.close = function () {
                                                 $scope.$close();
