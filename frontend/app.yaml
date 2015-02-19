@@ -10,6 +10,7 @@ handlers:
 - url: /client/
   static_dir: client/
   expiration: "364d 5h"
+  application_readable: true
 
 - url: /favicon\.ico
   static_files: client/static/favicon.ico

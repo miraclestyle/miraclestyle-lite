@@ -8,7 +8,8 @@ import os
 from glob import glob
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATES_DIR = os.path.join(ROOT_DIR, 'templates', 'angular', 'parts')
+CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
+CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src', 'components')
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
@@ -39,7 +40,7 @@ TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
 # Angular only configurations for user interface
-ANGULAR_JS_PATHS = (
+ANGULAR_VENDOR = (
   'vendor/modernizr/modernizr.js',
   'vendor/jquery/dist/jquery.js',
   'vendor/jquery-ui/jquery-ui.js',
@@ -60,50 +61,69 @@ ANGULAR_JS_PATHS = (
   'vendor/angular-messages/angular-messages.js',
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
   'vendor/angular-timer/dist/angular-timer.js',
-  'vendor/angular-google-chart/ng-google-chart.js',
-  'lib/md-date-time/md-date-time.js',
-  'lib/angular-material/angular-material.js',
-  'lib/angulike/angulike.js',
-  'lib/angular-bootstrap/angular-bootstrap.js',
-  'lib/angular-cache/angular-cache.js',
-  'lib/ng-upload/ng-upload.js'
+  'vendor/angular-google-chart/ng-google-chart.js'
 )
+ANGULAR_CSS_FILES = []
+ANGULAR_CSS_PATHS = []
+ANGULAR_JAVASCRIPT_FILES = []
+ANGULAR_JAVASCRIPT_PATHS = []
+ANGULAR_STATIC_PATHS = []
+ANGULAR_ACTIVE_COMPONENTS = [
+    "core/kernel/boot",
+    "core/kernel",
+    "core/material_design",
+    "core/accordion", 
+    "core/action", 
+    "core/cache", 
+    "core/datetime", 
+    "core/fields", 
+    "core/grid",
+    "core/misc", 
+    "core/modal", 
+    "core/models", 
+    "core/record", 
+    "core/responsive", 
+    "core/select", 
+    "core/slider", 
+    "core/social", 
+    "core/upload",
+    "account",
+    "buyer", 
+    "catalog", 
+    "collection",
+    "home", 
+    "location", 
+    "order", 
+    "seller",
+    "admin",
+    "core/kernel/init"
+]
 
-ANGULAR_GLOBAL_JS_PATHS = ['shim', 'overrides', 'app', 'bootstrap']
+_client_dir_length = len(CLIENT_DIR) + 1
+_client_components_dir_length = len(CLIENT_COMPONENTS_DIR) + 1
+for component in ANGULAR_ACTIVE_COMPONENTS:
+  for dirname, dirnames, filenames in os.walk(os.path.join(CLIENT_COMPONENTS_DIR, component)):
+    for f in filenames:
+      abs_path = os.path.join(dirname, f)
+      path = abs_path[_client_dir_length:]
+      if f.endswith('.js'):
+        ANGULAR_JAVASCRIPT_PATHS.append(abs_path)
+        ANGULAR_JAVASCRIPT_FILES.append(path)
+      elif f.endswith('.css'):
+        ANGULAR_CSS_PATHS.append(abs_path)
+        ANGULAR_CSS_FILES.append(path)
+      else:
+        ANGULAR_STATIC_PATHS.append(abs_path)
 
-ANGULAR_CSS_PATHS = ('js/lib/angular-material/angular-material.css',
-                     'js/lib/md-date-time/md-date-time.css',
-                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
-                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-device-grey600.css',
-                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
-                     'js/vendor/material-design-icons/sprites/css-sprite/sprite-content-grey600.css',
-                     'css/style.css')
+if not DEBUG:
+  ANGULAR_CSS_FILES = ['dist/style.css']
+  ANGULAR_JAVASCRIPT_FILES = ['dist/app.js', 'dist/templates.js']
 
-class Structured():
-  
-  def __init__(self, segment, parts=None):
-    self.segment = segment
-  
-  def __str__(self):
-    return self.segment
-
-ANGULAR_ACTIVE_COMPONENTS = [Structured('core'), Structured('home'), Structured('account'),
-                             Structured('buyer'), Structured('collection'), Structured('seller'), 
-                             Structured('catalog'), Structured('order'), Structured('admin')]
-ANGULAR_ACTIVE_COMPONENTS_ITER = enumerate(ANGULAR_ACTIVE_COMPONENTS)
-ANGULAR_ACTIVE_COMPONENTS = []
-for i, angular_component in ANGULAR_ACTIVE_COMPONENTS_ITER:
-  if isinstance(angular_component, Structured):
-    for entity in ('services', 'filters', 'directives', 'controllers'):
-      ANGULAR_ACTIVE_COMPONENTS.append('%s/%s' % (angular_component, entity))
-  else:
-    ANGULAR_ACTIVE_COMPONENTS.append(angular_component)
-ANGULAR_TEMPLATES = []
-files = []
-for dirname, dirnames, filenames in os.walk(TEMPLATES_DIR):
-    for filename in filenames:
-        files.append(os.path.join(dirname, filename))
-for f in files:
-  if not f.endswith('parts/index.html') and f.endswith('.html'):
-    ANGULAR_TEMPLATES.append((f[len(TEMPLATES_DIR) + 1:],))
+def get_component_dirs():
+  for dirname, dirnames, filenames in os.walk(CLIENT_COMPONENTS_DIR):
+      for d in dirnames:
+        if d != 'template':
+          ANGULAR_ACTIVE_COMPONENTS.append(os.path.join(dirname, d)[_client_components_dir_length:])
+  import json
+  print json.dumps(ANGULAR_ACTIVE_COMPONENTS, indent=4)
 # ('Alias', 'Full path to the template in the app'), something to read https://cloud.google.com/appengine/docs/python/config/appconfig#application_readable

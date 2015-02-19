@@ -1,0 +1,63 @@
+.image-image {
+    display: block;
+    position: relative;
+    margin: 1px;
+    float: left;
+}
+.image-image .spaceout {
+    width: 100%;
+    height: auto;
+}
+.image-image .img {
+    display: block;
+}
+.image-image-scroll {
+    float: left;
+    height: 100%;
+    position: relative;
+    display: block;
+}
+.image-image-scroll .img {
+    height: 100%;
+    display: block;
+    width: auto;
+}
+.grid-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.image-image img {
+    width: 100%;
+}
+
+img.horizontal, .horizontal {
+    height: 100%;
+    width: 100%;
+}
+img.vertical, .vertical {
+    height: 100%;
+    width: 56%;
+    text-align: center;
+    vertical-align: middle;
+    margin: auto;
+}
+.grid-generator {
+    float: left;
+    margin: 1px;
+    position: relative;
+}
+.image-slider-outer {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    overflow-x: visible;
+}
+.image-slider .image-slider-item {
+    float: left;
+    position: relative;
+}
+.image-slider {
+    position:relative;
+    float:left;
+}

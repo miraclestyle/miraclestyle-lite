@@ -1,0 +1,41 @@
+<md-toolbar ng-class="{'no-right-actions': spec.hideRight, 'no-left-actions': spec.hideLeft}">
+    <div class="md-toolbar-tools with-actions">
+        <div layout="row" flex class="fill-height">
+            <div ng-if="!spec.hideLeft" layout="row" class="md-toolbar-item md-tools actions-left">
+                <span ng-include="spec.templateRight"></span>
+                <button md-ink-ripple-action ng-if="!spec.templateRight" type="button" class="button-transparent button-action"
+                  loading ng-click="close()">
+                    <icon type="navigation.close"></icon>
+                </button>
+            </div>
+
+            <div class="md-toolbar-item md-breadcrumb">
+                <span class="md-toolbar-title">{{spec.title}}</span>
+            </div>
+
+            <span flex></span>
+
+            <div ng-if="!spec.hideRight" class="md-toolbar-item md-tools actions-right" layout="row">
+                <span ng-include="spec.templateRight"></span>
+                <md-button 
+                  ng-if="!spec.templateRight && !spec.hideSave"
+                  loading="container.form.$pristine"
+                  type="button" 
+                  submit-if="validateForm()" 
+                  submit-if-files-no-complete="noComplete()" 
+                  submit-if-files="save()"
+                  submit-native="spec.submitNative"
+                  class="button-action">Save</md-button>
+
+                <span ng-include="spec.templateLeft"></span>
+
+                <action-dropdown
+                  parent=".modal-content:first" 
+                  template="spec.templateActionsUrl"
+                  ng-if="!spec.templateLeft && spec.templateActionsUrl">
+                </action-dropdown>
+            </div>
+
+        </div>
+    </div>
+</md-toolbar>

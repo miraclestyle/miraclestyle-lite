@@ -1,0 +1,24 @@
+.button-action {
+    padding: 12px;
+    margin: 4px;
+}
+.md-toolbar-tools.with-actions {
+    padding: 0px;
+}
+.md-toolbar-tools.with-left-action {
+    padding-left: 0px;
+}
+.md-toolbar-tools.with-right-action {
+    padding-right: 0px;
+}
+.no-right-actions .md-toolbar-tools {
+    padding-right: 16px;
+}
+.md-toolbar-title {
+    display: inline-block;
+    max-width: 200px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+    overflow: hidden;
+}

@@ -1,0 +1,124 @@
+
+div.catalog-pricetag {
+    position: absolute;
+    top: 20%;
+    left: 20px;
+    z-index: 59;
+    padding: 0px;
+    visibility: hidden;
+    border-radius: 3px;
+    -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    background: white;
+    cursor: pointer;
+}
+li.catalog-new-pricetag {
+    padding: 5px 10px;
+    display: block;
+    border-radius: 3px;
+    -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
+    background: white;
+    cursor: pointer;
+}
+.catalog-pricetag-dot {
+    border-radius: 50%;
+    background: #333333;
+    width: 2px;
+    height: 2px;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+}
+.catalog-pricetag a {
+    text-decoration: none;
+    display: block;
+    padding: 5px 10px;
+}
+.catalog-pricetag button.button-transparent {
+    text-decoration: none;
+    display: block;
+    padding: 6px 10px 4px;
+}
+.catalog-new-pricetag {
+    display: block;
+}
+.catalog-new-pricetag .catalog-pricetag {
+    display: none;
+}
+.catalog-new-pricetag.ui-draggable-dragging .catalog-pricetag {
+    display: block;
+}
+.catalog-new-pricetag.ui-draggable-dragging .just-text {
+    display: none;
+}
+.catalog-pricetag-wrapper {
+    position: relative;
+}
+.catalog-closer {
+    position: fixed;
+    z-index: 100;
+    left: 10px;
+    top: 10px;
+}
+.sidebar-seller-logo button {
+    padding: 0px;
+}
+.seller-logo {
+    width: 240px;
+    height: 100px;
+    display: block;
+}
+md-sidenav.catalog-sidenav {
+    width: 240px;
+    min-width: 240px;
+}
+md-sidenav.product-sidenav {
+    width: 400px;
+    min-width: 400px;
+}
+input.product-quantity-input {
+    order: 4;
+    text-align: center;
+}
+.product-quantity-button-deincrease {
+    order: 3;
+    margin-right: 20px;
+    max-width: 64px;
+}
+.product-quantity-button-increase {
+    order: 5;
+    margin-left: 20px;
+    max-width: 64px;
+}
+.product-quantity-button {
+    min-height: 36px;
+}
+.product-quantity-button .material-icon {
+    display: inline-block;
+    vertical-align: middle;
+}
+.product-quantity-control {
+    order: 2;
+    margin-top: 10px;
+}
+.product-quantity-input-wrapper {
+    order: 4;
+}
+.product-quantity-input-wrapper input {
+    width: 100%;
+}
+.product-quantifier md-input-container label {
+    transform: none;
+    padding: 0px;
+    -webkit-transform: none;
+    -moz-transform: none;
+    -ms-transform: none;
+}
+.product-name {
+    margin: 0px;
+}
+
+.manage-product-actions {
+    position: static;
+}
