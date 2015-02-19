@@ -2372,7 +2372,7 @@ module.exports = {
   };
 
 
-  angular.module('app', [])
+  angular.module('app')
     .provider('DSBinaryHeap', require('./DSBinaryHeap').DSBinaryHeapProvider);
 
   /**

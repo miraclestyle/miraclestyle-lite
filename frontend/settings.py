@@ -5,7 +5,10 @@ Created on Oct 10, 2013
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import os
+import json
 from glob import glob
+import codecs
+import shutil
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
@@ -40,7 +43,7 @@ TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
 # Angular only configurations for user interface
-ANGULAR_VENDOR = (
+ANGULAR_VENDOR_JS = (
   'vendor/modernizr/modernizr.js',
   'vendor/jquery/dist/jquery.js',
   'vendor/jquery-ui/jquery-ui.js',
@@ -63,11 +66,16 @@ ANGULAR_VENDOR = (
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js'
 )
+ANGULAR_VENDOR_CSS = ('vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
+                     'vendor/material-design-icons/sprites/css-sprite/sprite-device-grey600.css',
+                     'vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
+                     'vendor/material-design-icons/sprites/css-sprite/sprite-content-grey600.css')
+ANGULAR_TEMPLATE_FILES = []
+ANGULAR_STATIC_FILES = []
 ANGULAR_CSS_FILES = []
 ANGULAR_CSS_PATHS = []
 ANGULAR_JAVASCRIPT_FILES = []
 ANGULAR_JAVASCRIPT_PATHS = []
-ANGULAR_STATIC_PATHS = []
 ANGULAR_ACTIVE_COMPONENTS = [
     "core/kernel/boot",
     "core/kernel",
@@ -99,21 +107,27 @@ ANGULAR_ACTIVE_COMPONENTS = [
     "core/kernel/init"
 ]
 
+ANGULAR_JAVASCRIPT_PATHS.extend(ANGULAR_VENDOR_JS)
+ANGULAR_CSS_PATHS.extend(ANGULAR_VENDOR_CSS)
+
 _client_dir_length = len(CLIENT_DIR) + 1
 _client_components_dir_length = len(CLIENT_COMPONENTS_DIR) + 1
 for component in ANGULAR_ACTIVE_COMPONENTS:
   for dirname, dirnames, filenames in os.walk(os.path.join(CLIENT_COMPONENTS_DIR, component)):
     for f in filenames:
+      if f.startswith('.'):
+        continue
       abs_path = os.path.join(dirname, f)
       path = abs_path[_client_dir_length:]
-      if f.endswith('.js'):
-        ANGULAR_JAVASCRIPT_PATHS.append(abs_path)
-        ANGULAR_JAVASCRIPT_FILES.append(path)
-      elif f.endswith('.css'):
-        ANGULAR_CSS_PATHS.append(abs_path)
-        ANGULAR_CSS_FILES.append(path)
-      else:
-        ANGULAR_STATIC_PATHS.append(abs_path)
+      iscomponent = dirname.endswith(component)
+      if f.endswith('.js') and not dirname.endswith('static') and iscomponent:
+        ANGULAR_JAVASCRIPT_PATHS.append(path)
+        ANGULAR_JAVASCRIPT_FILES.append(abs_path)
+      elif f.endswith('.css') and not dirname.endswith('static') and iscomponent:
+        ANGULAR_CSS_PATHS.append(path)
+        ANGULAR_CSS_FILES.append(abs_path)
+      elif f.endswith('.html') and dirname.endswith('template') or '/template/' in str(dirname):
+        ANGULAR_TEMPLATE_FILES.append(abs_path)
 
 if not DEBUG:
   ANGULAR_CSS_FILES = ['dist/style.css']
@@ -124,6 +138,76 @@ def get_component_dirs():
       for d in dirnames:
         if d != 'template':
           ANGULAR_ACTIVE_COMPONENTS.append(os.path.join(dirname, d)[_client_components_dir_length:])
-  import json
-  print json.dumps(ANGULAR_ACTIVE_COMPONENTS, indent=4)
-# ('Alias', 'Full path to the template in the app'), something to read https://cloud.google.com/appengine/docs/python/config/appconfig#application_readable
+  return json.dumps(ANGULAR_ACTIVE_COMPONENTS, indent=4)
+
+def _copytree(src, dst, symlinks=False, ignore=None):
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            copytree(s, d, symlinks, ignore)
+        else:
+            if not os.path.exists(d) or os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
+                shutil.copy2(s, d)
+
+def _empty_dir(d):
+  for root, dirs, files in os.walk(d):
+    for f in files:
+      os.unlink(os.path.join(root, f))
+    for d in dirs:
+      shutil.rmtree(os.path.join(root, d))
+
+def build(templates=True, statics=True, js_and_css=True, write=False, inform=True):
+  dist = os.path.join(CLIENT_DIR, 'dist')
+  paths = {}
+  buff = {}
+
+  def out(t):
+    if inform:
+      print t
+  def read(f, m='r'):
+    return codecs.open(f, m, 'utf-8')
+
+  for p in ['app.js', 'style.css', 'static', 'templates.js']:
+      paths[p] = os.path.join(dist, p)
+      buff[p] = u''
+  if js_and_css:
+    for t, b in [('JAVASCRIPT', 'app.js'), ('CSS', 'style.css')]:
+        for files in globals().get('ANGULAR_%s_FILES' % t):
+            with read(files) as f:
+                buff[b] += f.read()
+    if write:
+      for b, w in buff.iteritems():
+          if w:
+            out('Writing %s' % paths[b])
+            with read(paths[b], 'w') as f:
+                f.write(w)  # @todo minify
+  if templates:
+    cached_templates = []
+    for tpl in ANGULAR_TEMPLATE_FILES:
+      with read(tpl) as f:
+        d = tpl.replace('/template/', '/')[_client_components_dir_length:]
+        out('Caching template %s' % d)
+        cached_templates.append('    $templateCache.put(%s, %s);' % (json.dumps(d), json.dumps(f.read())))
+    buff['templates.js'] = """angular.module('app').run(function ($templateCache) {\n%s\n});""" % "\n".join(cached_templates)
+  if write:
+    with read(paths['templates.js'], 'w') as f:
+      out('Writing cache %s' % paths['templates.js'])
+      f.write(buff['templates.js'])
+
+  if statics and write:
+    out('Empty static dir %s' % paths['static'])
+    _empty_dir(paths['static'])
+    for c in ANGULAR_ACTIVE_COMPONENTS:
+      try:
+        static_folder = os.path.join(CLIENT_COMPONENTS_DIR, c, 'static')
+        _copytree(static_folder, paths['static'])
+      except Exception as e:
+        pass
+    out('Write static dir %s' % paths['static'])
+  return buff
+
+if __name__ == '__main__':
+  build(write=True)

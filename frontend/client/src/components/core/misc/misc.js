@@ -504,24 +504,6 @@
             return function (matchItem, query) {
                 return query && matchItem ? matchItem.replace(new RegExp(escapeRegexp(query), 'gi'), '<span class="ui-select-highlight">$&</span>') : matchItem;
             };
-        }).factory('underscoreTemplate', function () {
-
-            return {
-                get: function (path, typecheck) {
-                    if (typecheck) {
-                        typecheck = '[type="text/underscore-template"]';
-                    } else {
-                        typecheck = '';
-                    }
-                    var find = $('script[id="' + path + '"]' + typecheck),
-                        contents = find.text();
-                    if (!find.length) {
-                        console.error('underscore ' + typecheck + ' template not found ' +
-                            path);
-                    }
-                    return _.template(contents);
-                }
-            };
         }).factory('outputTypes', function (dateFilter, GLOBAL_CONFIG, modelsMeta) {
             var outputTypes = {
                 SuperDateTimeProperty: function (input, field) {

@@ -17,7 +17,7 @@
     <md-sidenav md-swipe-left="closeMenu()" layout="column" class="site-sidenav md-sidenav-left md-whiteframe-z2 md-closed" md-component-id="left">
         <md-content>
             <div class="bar-logo">
-                <img src="/client/css/images/logo_480_cut.png" />
+                <img src="/client/dist/static/logo_480_cut.png" />
             </div>
             <div class="list">
                 <div class="list-subheader">Explore</div>
@@ -81,7 +81,7 @@
                     </div>
                     <span flex>
                         <span class="logo">
-                          <img src="/client/css/images/logo_480_cut.png" />
+                          <img src="/client/dist/static/logo_480_cut.png" />
                         </span>
                     </span>
                     <div class="md-toolbar-item md-tools" layout="row"></div>
@@ -92,14 +92,13 @@
     </div>
 
     <script type="text/javascript" src="/_ah/channel/jsapi"></script>
-    <!-- vendor -->
-    {% for js in settings.ANGULAR_VENDOR %}
+    {% for js in settings.ANGULAR_JAVASCRIPT_PATHS %}
     <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>
     {% endfor %}
-    <!-- code -->
-    {% endfor %} {% for js in settings.ANGULAR_JAVASCRIPT_FILES %}
-    <script type="text/javascript" src="{{static_dir('%s.js' % js)}}"></script>
-    {% endfor %}
+
+    {% if settings.DEBUG %}
+    <script type="text/javascript" src="/build/templates.js"></script>
+    {% endif %}
 
 </body>
 

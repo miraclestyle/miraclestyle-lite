@@ -203,7 +203,7 @@
             controller: 'AccordionController',
             transclude: true,
             replace: false,
-            templateUrl: 'accordion/accordion.html'
+            templateUrl: 'core/accordion/accordion.html'
         };
     })
 
@@ -214,7 +214,7 @@
             restrict: 'EA',
             transclude: true, // It transcludes the contents of the directive into the template
             replace: true, // The element containing the directive will be replaced with the template
-            templateUrl: 'accordion/accordion_group.html',
+            templateUrl: 'core/accordion/accordion_group.html',
             scope: {
                 heading: '@', // Interpolate the heading attribute onto this scope
                 isOpen: '=?',

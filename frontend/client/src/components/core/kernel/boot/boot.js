@@ -324,7 +324,6 @@ if (!Array.prototype.indexOf) {
                 }
             }
         };
-
     angular.module('config', ['ng'])
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG)
         .config(function ($httpProvider, $locationProvider) {

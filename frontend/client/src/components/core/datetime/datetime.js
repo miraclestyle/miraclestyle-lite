@@ -166,7 +166,7 @@
                         _modelValue: '=ngModel'
                     },
                     require: 'ngModel',
-                    templateUrl: 'datetime/input.html',
+                    templateUrl: 'core/datetime/input.html',
                     link: function (scope, element, attrs, ngModel) {
                         var cancelFn, saveFn;
                         attrs.$observe('defaultMode', function (val) {
@@ -403,7 +403,7 @@
                         $modal.open({
                             windowClass: 'modal-medium',
                             targetEvent: event,
-                            templateUrl: 'datetime/popup.html',
+                            templateUrl: 'core/datetime/popup.html',
                             fullScreen: false,
                             controller: function ($scope) {
                                 $scope.date = ngModel.$modelValue;

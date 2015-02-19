@@ -409,7 +409,9 @@
                     if (!rejection.config.ignoreErrors) {
 
                         if (rejection.status > 200) {
-                            errorHandling.modal(angular.isString(rejection.data) ? {traceback: rejection.data} : rejection.data.errors);
+                            errorHandling.modal(angular.isString(rejection.data) ? {
+                                traceback: rejection.data
+                            } : rejection.data.errors);
                             if (shouldDisable) {
                                 enableUI();
                             }
@@ -456,8 +458,14 @@
                         return config || $q.when(config);
                     }
                 };
-            }
-            ]);
+            }]);
 
-    }]);
+    }]).factory('underscoreTemplate', function ($templateCache) {
+
+        return {
+            get: function (path) {
+                return _.template($templateCache.get(path));
+            }
+        };
+    });
 }());

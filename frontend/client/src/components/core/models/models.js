@@ -347,7 +347,7 @@
                             showClose: true,
                             closeAfterSave: false,
                             action: 'update',
-                            templateBodyUrl: 'core/models/manage_default_body.html',
+                            templateBodyUrl: 'core/models/manage_body_default.html',
                             scope: {},
                             fields: [],
                             init: angular.noop,
