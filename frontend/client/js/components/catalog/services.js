@@ -1,8 +1,43 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q) {
+    angular.module('app').run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, $timeout) {
 
         modelsConfig(function (models) {
+            var toggleMenu = function ($scope, id) {
+                $scope.sidenavMenuID = id;
+                $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag-link'];
+                $scope.toggleMenu = function ($event) {
+                    var it = $mdSidenav($scope.sidenavMenuID),
+                        check = false,
+                        target;
+                    if ($event.target) {
+                        target = $($event.target);
+                        angular.forEach($scope.notRipplable, function (skip) {
+                            if (target.is(skip) || target.parent().is(skip)) {
+                                check = true;
+                            }
+                        });
+                        if (check) {
+                            return;
+                        }
+                    }
+                    if (it.isOpen()) {
+                        $scope.closeMenu();
+                    } else {
+                        $scope.openMenu();
+                    }
+                };
+                $scope.closeMenu = function () {
+                    $timeout(function () {
+                        $mdSidenav($scope.sidenavMenuID).close();
+                    });
+                };
+                $scope.openMenu = function () {
+                    $timeout(function () {
+                        $mdSidenav($scope.sidenavMenuID).open();
+                    });
+                };
+            };
             $.extend(models['31'], {
                 formatPublicSearchResults: function (results) {
                     angular.forEach(results, function (result) {
@@ -157,6 +192,7 @@
                             controller: function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey;
                                 $.extend($scope, fakeScope);
+                                toggleMenu($scope, 'right_product_sidenav');
                                 $scope.resetVariation = function () {
                                     this.resetVariantProduct();
                                     $scope.variationApplied = false;
@@ -173,9 +209,12 @@
                                     $modal.open({
                                         templateUrl: 'core/form/manage_entity.html',
                                         controller: function ($scope) {
-                                            $scope.dialog = {};
-                                            $scope.dialog.templateBodyUrl = 'core/misc/content_view_body.html';
-                                            $scope.dialog.templateFooterUrl = 'core/misc/content_view_footer.html';
+                                            $scope.dialog = {
+                                                templateBodyUrl: 'core/misc/content_view_body.html',
+                                                toolbar: {
+                                                    hideSave: true
+                                                }
+                                            };
                                             $scope.content = content;
                                             $scope.close = function () {
                                                 $scope.$close();
@@ -333,6 +372,7 @@
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
                             controller: function ($scope) {
+                                toggleMenu($scope, 'right_catalog_sidenav');
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = '31';
                                 $scope.logoImageConfig = {};
@@ -415,6 +455,7 @@
                         isNew = !angular.isDefined(catalog),
                         afterSave = function ($scope) {
                             $scope.setAction('catalog_upload_images');
+                            $scope.dialog.toolbar.templateActionsUrl = 'catalog/manage_actions.html';
                             callback($scope.entity);
                         },
                         afterComplete = function ($scope) {
@@ -428,7 +469,7 @@
                             action: (isNew ? 'create' : 'update'),
                             fields: _.toArray(fields),
                             toolbar: {
-                                templateActionsUrl: 'catalog/manage_actions.html'
+                                templateActionsUrl: (isNew ? false : 'catalog/manage_actions.html')
                             },
                             afterSave: afterSave,
                             afterSaveError: afterSave,
@@ -576,9 +617,7 @@
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.dialog = {
                                                 templateBodyUrl: 'catalog/manage_products.html',
-                                                toolbar: {
-                                                    title: 'Manage Products'
-                                                }
+                                                toolbar: {}
                                             };
                                             $scope.container = {};
                                             $scope.formSetPristine = function () {

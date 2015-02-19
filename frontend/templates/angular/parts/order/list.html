@@ -8,7 +8,7 @@
                       {{order|output:'date'}}
                     </div>
                     <div class="order-total">
-                      {{order.total_amount|displayCurrency:order.currency}}
+                      {{order.total_amount|formatCurrency:order.currency}}
                     </div>
                     <div class="order-seller-name">
                       <span class="order-label">Seller:</span>

@@ -1090,11 +1090,7 @@
                                     var target = element;
                                     options.resize = function () {
                                         var targetOffset = target.offset(),
-                                            targetNode = target.get(0),
-                                            targetRect = targetNode.getBoundingClientRect(),
                                             parent = options.parent,
-                                            parentNode = parent.get(0),
-                                            parentRect = parentNode.getBoundingClientRect(),
                                             paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
                                             paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
                                             newTop = targetOffset.top,
@@ -1260,7 +1256,6 @@
                         if (select.multiple) {
                             return $.inArray(hash, ngModel.$modelValue) !== -1;
                         }
-                        console.log(hash, ngModel.$modelValue);
                         return ngModel.$modelValue === hash;
                     };
                     select.anyChecks = function () {
@@ -1340,48 +1335,35 @@
                                     animateSelect = function () {
                                         var target = element.parents('md-input-container:first');
                                         options.resize = function () {
-                                            var targetOffset = target.offset(),
-                                                targetNode = target.get(0),
-                                                targetRect = targetNode.getBoundingClientRect(),
-                                                elementNode = element.get(0),
-                                                elementRect = elementNode.getBoundingClientRect(),
+                                            var targetPosition = target.position(),
                                                 elementOffset = element.offset(),
                                                 parent = options.parent,
-                                                parentNode = parent.get(0),
-                                                parentRect = parentNode.getBoundingClientRect(),
                                                 paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
                                                 paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
                                                 parentHeight = options.parent.height(),
                                                 scrollElement = dialogEl.find('md-content'),
-                                                scrollElementNode = scrollElement.get(0),
-                                                top = parentRect.top + paddingTop,
+                                                top = targetPosition.top + paddingTop,
                                                 activeOffset,
                                                 active = dialogEl.find('.list-row--is-active'),
-                                                activeNode = active.get(0),
-                                                activeRect,
-                                                buffer,
-                                                spaceAvailable,
-                                                scrollElementTopMargin = parseInt(scrollElement.css('margin-top'), 10),
                                                 newTop,
-                                                totalHeight,
-                                                newScrollTop;
+                                                totalHeight;
                                             if (active.length) {
                                                 activeOffset = active.offset();
-                                                activeRect = activeNode.getBoundingClientRect();
                                             }
+                                            targetPosition.left += parseInt(target.css('paddingLeft'), 10);
                                             dialogEl.width(target.width());
                                             if ((dialogEl.height() > parentHeight)
                                                     || (scrollElement.prop('scrollHeight') > parentHeight)) {
                                                 dialogEl.css({
                                                     top: top,
-                                                    left: targetOffset.left
+                                                    left: targetPosition.left
                                                 }).height(options.parent.height() - (paddingBottom + paddingTop));
                                             } else {
-                                                dialogEl.css(targetOffset);
+                                                dialogEl.css(targetPosition);
                                                 activeOffset = active.offset();
                                                 if (active.length) {
                                                     // position the selection at center of active item
-                                                    newTop = (targetOffset.top - (activeOffset.top - elementOffset.top)) - ((active.height() - element.height()) / 2);
+                                                    newTop = (targetPosition.top - (activeOffset.top - elementOffset.top)) - ((active.outerHeight() - element.outerHeight()));
                                                 } else {
                                                     // position the div at the center if no item is selected
                                                     newTop = (elementOffset.top + element.height()) - (dialogEl.height() / 2) - parseInt(scrollElement.css('paddingTop'), 10) - 3;
@@ -1553,6 +1535,13 @@
                     val: '=contentListView'
                 },
                 templateUrl: 'core/misc/content_list_view.html'
+            };
+        }).directive('sidenavItem', function ($timeout, $mdSidenav) {
+            return {
+                templateUrl: 'core/misc/sidenav_item.html',
+                transclude: true,
+                replace: true,
+                link: function (scope, element, attrs) {}
             };
         });
 

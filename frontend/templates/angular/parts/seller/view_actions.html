@@ -1,0 +1,9 @@
+<simple-dialog>
+    <action-dropdown-list>
+        <list-button 
+            ng-click="parent.toggleCollection()">
+                <span ng-if="parent.alreadyInCollection">Remove From</span>
+                <span ng-if="!parent.alreadyInCollection">Add To</span> Collection
+            </list-button>
+    </action-dropdown-list>
+</simple-dialog>

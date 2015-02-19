@@ -134,7 +134,7 @@
                                     if (!angular.isDefined(item.original_name)) {
                                         item.original_name = item.name;
                                     }
-                                    item.name = item.original_name + ' (' + $filter('displayCurrency')(item.price, $scope.order.currency) + ')';
+                                    item.name = item.original_name + ' (' + $filter('formatCurrency')(item.price, $scope.order.currency) + ')';
                                     return item;
                                 });
 
@@ -359,7 +359,7 @@
                                 $scope.viewProduct = function (line) {
                                     var path = line.product._reference;
                                     models['31'].viewProductModal(path.parent.parent.parent.key,
-                                                                  path.parent.parent.key, path.parent.key,
+                                                                  path.parent.parent.key, path.pricetag.key,
                                                                   line.product.variant_signature, {events: {addToCart: updateLiveEntity}});
                                 };
 

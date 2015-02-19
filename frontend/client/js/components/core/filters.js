@@ -72,7 +72,7 @@
             return helpers.splitLines(str).join("<br />");
         };
 
-    }).filter('displayCurrency', ['$injector', '$locale', function ($injector, $locale) {
+    }).filter('formatCurrency', ['$injector', '$locale', function ($injector, $locale) {
         var $filter = $injector.get('$filter'),
             numberFilter = $filter('number'),
             formats = $locale.NUMBER_FORMATS;

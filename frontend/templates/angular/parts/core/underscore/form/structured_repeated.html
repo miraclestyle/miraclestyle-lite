@@ -31,13 +31,14 @@
           <div ng-if="config.ui.specifics.listConfig.secondary" class="list-secondary-tile">
                 <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
                    ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
-                   loading="!<%= config.ui.writableCompiled %>"
-                   type="button" 
+                   loading="!<%= config.ui.writableCompiled %>" 
                    draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)"
                    class="button-transparent sort-handle"><icon type="action.reorder"></icon></a>
           </div>
   </div>
 </div>
+
+<div ng-if="!config.ui.specifics.parentArgs.length" ng-include="config.ui.specifics.emptyHelpText"></div>
 
 <% if (config.ui.specifics.remote) { %>
 <div load-more-button="config.ui.specifics.reader"></div>

@@ -414,6 +414,8 @@
                                 };
                             }
                         });
+
+                        event.preventDefault();
                     });
 
                     ngModel.$parsers.unshift(function parseDate(viewValue) {

@@ -1468,6 +1468,7 @@ w:                  while (images.length > 0) {
                                 },
                                 type: {
                                     '12': 'local',
+                                    '17': 'local',
                                     'default': 'memory'
                                 }
                             },

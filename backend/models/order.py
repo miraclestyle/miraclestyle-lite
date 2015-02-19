@@ -59,8 +59,15 @@ class OrderProduct(orm.BaseExpando):
     }
   
   _virtual_fields = {
-    '_reference': orm.SuperComputedProperty(lambda self: self.reference.structure() if self.reference else None)
+    '_reference': orm.SuperComputedProperty(lambda self: self.get_reference_information() if self.reference else None)
     }
+
+  def get_reference_information(self):
+    dic = self.reference.structure()
+    flat = list(self.reference.parent().pairs())
+    flat.pop(3)
+    dic['pricetag'] = orm.Key(pairs=flat).structure()
+    return dic
   
   @classmethod
   def get_partial_reference_key_path(cls, reference_key):

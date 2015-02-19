@@ -152,6 +152,11 @@ a.block, .block, button.block {
 }
 a.sort-handle {
     cursor: move;
+    padding: 12px;
+    margin: 4px;
+    display: block;
+    min-width: initial;
+    min-height: initial;
 }
 .image-image {
     display: block;
@@ -264,7 +269,7 @@ div.catalog-pricetag {
     position: absolute;
     top: 20%;
     left: 20px;
-    z-index: 80;
+    z-index: 59;
     padding: 0px;
     visibility: hidden;
     border-radius: 3px;
@@ -333,14 +338,12 @@ li.catalog-new-pricetag {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: rgba(255,0,0,0.52);
+    background: rgba(255, 0, 0, 0.52);
     z-index: 1;
 }
-
 .about-to-delete .delete-overlay {
-    display:block;
+    display: block;
 }
-
 pre {
     overflow: auto;
     font-size: 13px;
@@ -349,5 +352,59 @@ pre {
     max-height: 600px;
     background-color: #eee;
     margin-bottom: 1em;
-    font-family: Consolas,Menlo,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New,monospace,sans-serif;
+    font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, sans-serif;
+}
+.ui-sortable .list-content-tile {
+    padding-right: 0px;
+}
+.ui-sortable .list-secondary-tile {
+    right: 0px;
+}
+.catalog-closer {
+    position: fixed;
+    z-index: 100;
+    left: 10px;
+    top: 10px;
+}
+.sidebar-seller-logo button {
+    padding: 0px;
+}
+.seller-logo {
+    width: 240px;
+    height: 100px;
+    display: block;
+}
+md-sidenav.catalog-sidenav {
+    width: 240px;
+    min-width: 240px;
+}
+md-sidenav.product-sidenav {
+    width: 400px;
+    min-width: 400px;
+}
+
+input.product-quantity-input {
+    order: 4;
+    text-align: center;
+}
+
+.product-quantity-button-deincrease {
+    order: 3;
+    margin-right: 20px;
+    max-width: 64px;
+}
+
+.product-quantity-button-increase {
+    order: 5;
+    margin-left: 20px;
+    max-width: 64px;
+}
+
+.product-quantity-button {
+    min-height: 36px;
+}
+
+.product-quantity-button .material-icon {
+    display:inline-block;
+    vertical-align: middle;
 }

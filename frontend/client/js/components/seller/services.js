@@ -462,7 +462,10 @@
                             $scope.seller = seller;
                             $scope.dialog = {
                                 templateBodyUrl: 'seller/view_body.html',
-                                templateFooterUrl: 'seller/view_footer.html'
+                                toolbar: {
+                                    templateActionsUrl: 'seller/view_actions.html',
+                                    hideSave: true
+                                }
                             };
                             $scope.accordions = {
                                 closeOthers: true,
@@ -593,9 +596,12 @@
                                 $modal.open({
                                     templateUrl: 'core/form/manage_entity.html',
                                     controller: function ($scope) {
-                                        $scope.dialog = {};
-                                        $scope.dialog.templateBodyUrl = 'core/misc/content_view_body.html';
-                                        $scope.dialog.templateFooterUrl = 'core/misc/content_view_footer.html';
+                                        $scope.dialog = {
+                                            templateBodyUrl: 'core/misc/content_view_body.html',
+                                            toolbar: {
+                                                hideSave: true
+                                            }
+                                        };
                                         $scope.content = content;
                                         $scope.close = function () {
                                             $scope.$close();

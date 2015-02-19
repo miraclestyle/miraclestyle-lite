@@ -42,7 +42,7 @@
                           {{line.product.code}}
                         </div>
                         <div class="order-line-product-unit_price">
-                          {{line.product.unit_price|displayCurrency:order.currency}}
+                          {{line.product.unit_price|formatCurrency:order.currency}}
                         </div>
                         <div class="order-line-product-variant_signature" ng-show="line.product.variant_signature">
                             <div ng-repeat="variant in line.product.variant_signature track by $index">
@@ -69,7 +69,7 @@
                       </div>
                       <div class="line-item order-line-discount_subtotal">
                         <div class="order-label">Subtotal</div>
-                        <div class="order-value">{{line.discount_subtotal|displayCurrency:order.currency}}</div>
+                        <div class="order-value">{{line.discount_subtotal|formatCurrency:order.currency}}</div>
                       </div>
                         <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
                         <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
@@ -84,19 +84,19 @@
             <tbody>
               <tr class="order-carrier-subtotal">
                 <td class="order-label">Shipping &amp; Handling</td>
-                <td class="order-value">{{order.carrier.subtotal|displayCurrency:order.currency}}</td>
+                <td class="order-value">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
               </tr>
               <tr class="order-untaxed_amount">
                 <td class="order-label">Net Total</td>
-                <td class="order-value">{{order.untaxed_amount|displayCurrency:order.currency}}</td>
+                <td class="order-value">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
               </tr>
               <tr class="order-tax_amount">
                 <td class="order-label">Taxes</td>
-                <td class="order-value">{{order.tax_amount|displayCurrency:order.currency}}</td>
+                <td class="order-value">{{order.tax_amount|formatCurrency:order.currency}}</td>
               </tr>
               <tr class="order-total_amount">
                 <td class="order-label">Total</td>
-                <td class="order-value">{{order.total_amount|displayCurrency:order.currency}}</td>
+                <td class="order-value">{{order.total_amount|formatCurrency:order.currency}}</td>
               </tr>
               <tr class="order-currency">
                 <td class="order-label">Currency</td>

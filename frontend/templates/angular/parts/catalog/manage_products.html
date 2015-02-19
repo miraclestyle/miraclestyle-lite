@@ -3,10 +3,12 @@
   <div class="clearfix new-pricetag-bar padding-16">
     <div class="pull-right">
        <ul class="list-inline-block">
-               <li loading="!entity.ui.rule.field._images.pricetags.writable" class="catalog-new-pricetag"
-                    drag="entity.ui.rule.field._images.pricetags.writable"
-                    jqyoui-options="{revert: 'invalid', helper: 'clone'}"
-                    jqyoui-draggable="{placeholder: 'keep'}">
+               <li loading="!entity.ui.rule.field._images.pricetags.writable" 
+                   class="catalog-new-pricetag"
+                   drag="entity.ui.rule.field._images.pricetags.writable"
+                   jqyoui-options="{revert: 'invalid', distance: 10, helper: 'clone'}"
+                   ng-click="howToDrag($event)"
+                   jqyoui-draggable="{placeholder: 'keep'}">
                  <div class="catalog-pricetag-dot"></div>
                  <div class="catalog-pricetag-link">Drag New Product</div>
                </li>
@@ -16,7 +18,8 @@
   <div class="image-slider-outer">
      <div image-slider-load-more="loadMoreImages(callback)" image-slider-manage-products="true" image-slider="args._images" class="image-slider"> 
          <div ng-hide="image._state == 'deleted'"
-              ng-repeat="image in args._images track by $index" class="image-slider-item"
+              ng-repeat="image in args._images track by $index" 
+              class="image-slider-item"
               drop="true"
               jqyoui-options="{accept: '.catalog-new-pricetag'}"
               jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
@@ -25,13 +28,16 @@
            <div ng-repeat="pricetag in image.pricetags track by $index"
                 ng-model="image.pricetags"
                 ng-hide="pricetag._state == 'deleted' || !pricetag.key"
-                jqyoui-options="{containment : 'parent'}"
-                jqyoui-draggable="{index: $index, distance: 10, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
-                drag="entity.ui.rule.field._images.pricetags.writable" class="button catalog-pricetag"
+                jqyoui-options="{containment : 'parent', distance: 10}"
+                jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
+                drag="entity.ui.rule.field._images.pricetags.writable" 
+                class="catalog-pricetag"
                 catalog-pricetag-position="pricetag">
                 <div class="catalog-pricetag-wrapper">
                   <div class="catalog-pricetag-dot"></div>
-                  <a class="catalog-pricetag-link" loading draggable-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</a>
+                  <a class="catalog-pricetag-link" 
+                     loading 
+                     draggable-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</a>
                 </div>
            </div>
         </div>
