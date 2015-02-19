@@ -1515,6 +1515,16 @@
                     });
                 }
             };
+        }).directive('mdInkRippleFit', function ($mdInkRipple) {
+            return {
+                link: function (scope, element, attrs) {
+                    $mdInkRipple.attachButtonBehavior(scope, element, {
+                        dimBackground: false,
+                        fitRipple: true,
+                        moveToCenter: false
+                    });
+                }
+            };
         }).directive('icon', function ($mdInkRipple) {
             return {
                 templateUrl: 'core/misc/icon.html',

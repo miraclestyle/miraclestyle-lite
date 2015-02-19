@@ -4,7 +4,7 @@
  * @license MIT
  * v0.7.1
  */
-angular.module('ngMaterial', ["ng","ngAnimate","ngAria","material.core","material.core.theming.palette","material.core.theming","material.components.backdrop","material.components.button","material.components.card","material.components.checkbox","material.components.content","material.components.simpledialog","material.components.divider","material.components.input","material.components.progressCircular","material.components.progressLinear","material.components.radioButton","material.components.sidenav","material.components.sticky","material.components.subheader","material.components.swipe","material.components.switch","material.components.textField","material.components.toolbar","material.components.whiteframe"]);
+angular.module('ngMaterial', ["ng","ngAnimate","ngAria","material.core","material.core.theming.palette","material.core.theming","material.components.backdrop","material.components.card","material.components.checkbox","material.components.content","material.components.button","material.components.simpledialog","material.components.divider","material.components.input","material.components.progressCircular","material.components.sidenav","material.components.sticky","material.components.radioButton","material.components.progressLinear","material.components.swipe","material.components.subheader","material.components.textField","material.components.whiteframe","material.components.toolbar","material.components.switch"]);
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -1705,417 +1705,6 @@ function InterimElementProvider() {
  * v0.7.1
  */
 (function() {
-'use strict';
-
-angular.module('material.core')
-  .provider('$$interimStackableElement', InterimElementProvider);
-
-/*
- * @ngdoc service
- * @name $$interimStackableElement
- * @module material.core
- *
- * @description
- *
- * Factory that contructs `$$interimStackableElement.$service` services.
- * Used internally in material design for elements that appear on screen temporarily.
- * The service provides a promise-like API for interacting with the temporary
- * elements.
- *
- * ```js
- * app.service('$mdToast', function($$interimStackableElement) {
- *   var $mdToast = $$interimStackableElement(toastDefaultOptions);
- *   return $mdToast;
- * });
- * ```
- * @param {object=} defaultOptions Options used by default for the `show` method on the service.
- *
- * @returns {$$interimStackableElement.$service}
- *
- */
-
-function InterimElementProvider() {
-  createInterimElementProvider.$get = InterimElementFactory;
-  InterimElementFactory.$inject = ["$document", "$q", "$rootScope", "$timeout", "$rootElement", "$animate", "$interpolate", "$mdCompiler", "$mdTheming"];
-  return createInterimElementProvider;
-
-  /**
-   * Returns a new provider which allows configuration of a new interimElement
-   * service. Allows configuration of default options & methods for options,
-   * as well as configuration of 'preset' methods (eg dialog.basic(): basic is a preset method)
-   */
-  function createInterimElementProvider(interimFactoryName) {
-    var EXPOSED_METHODS = ['onHide', 'onShow', 'onRemove'];
-    var providerConfig = {
-      presets: {}
-    };
-    var provider = {
-      setDefaults: setDefaults,
-      addPreset: addPreset,
-      $get: factory
-    };
-
-    /**
-     * all interim elements will come with the 'build' preset
-     */
-    provider.addPreset('build', {
-      methods: ['controller', 'controllerAs', 'resolve',
-        'template', 'templateUrl', 'themable', 'transformTemplate', 'parent']
-    });
-
-    factory.$inject = ["$$interimStackableElement", "$animate", "$injector"];
-    return provider;
-
-    /**
-     * Save the configured defaults to be used when the factory is instantiated
-     */
-    function setDefaults(definition) {
-      providerConfig.optionsFactory = definition.options;
-      providerConfig.methods = (definition.methods || []).concat(EXPOSED_METHODS);
-      return provider;
-    }
-
-    /**
-     * Save the configured preset to be used when the factory is instantiated
-     */
-    function addPreset(name, definition) {
-      definition = definition || {};
-      definition.methods = definition.methods || [];
-      definition.options = definition.options || function() { return {}; };
-
-      if (/^cancel|hide|show$/.test(name)) {
-        throw new Error("Preset '" + name + "' in " + interimFactoryName + " is reserved!");
-      }
-      if (definition.methods.indexOf('_options') > -1) {
-        throw new Error("Method '_options' in " + interimFactoryName + " is reserved!");
-      }
-      providerConfig.presets[name] = {
-        methods: definition.methods.concat(EXPOSED_METHODS),
-        optionsFactory: definition.options,
-        argOption: definition.argOption
-      };
-      return provider;
-    }
-
-    /**
-     * Create a factory that has the given methods & defaults implementing interimElement
-     */
-    /* @ngInject */
-    function factory($$interimStackableElement, $animate, $injector) {
-      var defaultMethods;
-      var defaultOptions;
-      var interimElementService = $$interimStackableElement();
-
-      /*
-       * publicService is what the developer will be using.
-       * It has methods hide(), cancel(), show(), build(), and any other
-       * presets which were set during the config phase.
-       */
-      var publicService = {
-        hide: interimElementService.hide,
-        cancel: interimElementService.cancel,
-        show: showInterimElement
-      };
-
-      defaultMethods = providerConfig.methods || [];
-      // This must be invoked after the publicService is initialized
-      defaultOptions = invokeFactory(providerConfig.optionsFactory, {});
-
-      angular.forEach(providerConfig.presets, function(definition, name) {
-        var presetDefaults = invokeFactory(definition.optionsFactory, {});
-        var presetMethods = (definition.methods || []).concat(defaultMethods);
-
-        // Every interimElement built with a preset has a field called `$type`,
-        // which matches the name of the preset.
-        // Eg in preset 'confirm', options.$type === 'confirm'
-        angular.extend(presetDefaults, { $type: name });
-
-        // This creates a preset class which has setter methods for every
-        // method given in the `.addPreset()` function, as well as every
-        // method given in the `.setDefaults()` function.
-        //
-        // @example
-        // .setDefaults({
-        //   methods: ['hasBackdrop', 'clickOutsideToClose', 'escapeToClose', 'targetEvent'],
-        //   options: dialogDefaultOptions
-        // })
-        // .addPreset('alert', {
-        //   methods: ['title', 'ok'],
-        //   options: alertDialogOptions
-        // })
-        //
-        // Set values will be passed to the options when interimElemnt.show() is called.
-        function Preset(opts) {
-          this._options = angular.extend({}, presetDefaults, opts);
-        }
-        angular.forEach(presetMethods, function(name) {
-          Preset.prototype[name] = function(value) {
-            this._options[name] = value;
-            return this;
-          };
-        });
-
-        // Create shortcut method for one-linear methods
-        if (definition.argOption) {
-          var methodName = 'show' + name.charAt(0).toUpperCase() + name.slice(1);
-          publicService[methodName] = function(arg) {
-            var config = publicService[name](arg);
-            return publicService.show(config);
-          };
-        }
-
-        // eg $mdDialog.alert() will return a new alert preset
-        publicService[name] = function(arg) {
-          // If argOption is supplied, eg `argOption: 'content'`, then we assume
-          // if the argument is not an options object then it is the `argOption` option.
-          //
-          // @example `$mdToast.simple('hello')` // sets options.content to hello
-          //                                     // because argOption === 'content'
-          if (arguments.length && definition.argOption && !angular.isObject(arg) &&
-              !angular.isArray(arg)) {
-            return (new Preset())[definition.argOption](arg);
-          } else {
-            return new Preset(arg);
-          }
-
-        };
-      });
-
-      return publicService;
-
-      function showInterimElement(opts) {
-        // opts is either a preset which stores its options on an _options field,
-        // or just an object made up of options
-        if (opts && opts._options) opts = opts._options;
-        return interimElementService.show(
-          angular.extend({}, defaultOptions, opts)
-        );
-      }
-
-      /**
-       * Helper to call $injector.invoke with a local of the factory name for
-       * this provider.
-       * If an $mdDialog is providing options for a dialog and tries to inject
-       * $mdDialog, a circular dependency error will happen.
-       * We get around that by manually injecting $mdDialog as a local.
-       */
-      function invokeFactory(factory, defaultVal) {
-        var locals = {};
-        locals[interimFactoryName] = publicService;
-        return $injector.invoke(factory || function() { return defaultVal; }, {}, locals);
-      }
-
-    }
-
-  }
-
-  /* @ngInject */
-  function InterimElementFactory($document, $q, $rootScope, $timeout, $rootElement, $animate,
-                                 $interpolate, $mdCompiler, $mdTheming ) {
-    var startSymbol = $interpolate.startSymbol(),
-        endSymbol = $interpolate.endSymbol(),
-        usesStandardSymbols = ((startSymbol === '{{') && (endSymbol === '}}')),
-        processTemplate  = usesStandardSymbols ? angular.identity : replaceInterpolationSymbols;
-
-    return function createInterimElementService() {
-      /*
-       * @ngdoc service
-       * @name $$interimStackableElement.$service
-       *
-       * @description
-       * A service used to control inserting and removing an element into the DOM.
-       *
-       */
-      var stack = [];
-      var service;
-      return service = {
-        show: show,
-        hide: hide,
-        cancel: cancel
-      };
-
-      /*
-       * @ngdoc method
-       * @name $$interimStackableElement.$service#show
-       * @kind function
-       *
-       * @description
-       * Adds the `$interimElement` to the DOM and returns a promise that will be resolved or rejected
-       * with hide or cancel, respectively.
-       *
-       * @param {*} options is hashMap of settings
-       * @returns a Promise
-       *
-       */
-      function show(options) {
-        options.zIndex = 80 + stack.length;
-        var interimElement = new InterimElement(options);
-
-        stack.unshift(interimElement);
-        return interimElement.show().then(function() {
-          return interimElement.deferred.promise;
-        });
-      }
-
-      /*
-       * @ngdoc method
-       * @name $$interimStackableElement.$service#hide
-       * @kind function
-       *
-       * @description
-       * Removes the `$interimElement` from the DOM and resolves the promise returned from `show`
-       *
-       * @param {*} resolveParam Data to resolve the promise with
-       * @returns a Promise that will be resolved after the element has been removed.
-       *
-       */
-      function hide(response, interimElementAt) {
-        var interimElement;
-        if (interimElementAt !== undefined) {
-          interimElement = interimElementAt;
-          stack.splice(stack.indexOf(interimElementAt), 1);
-        } else {
-          interimElement = stack.shift();
-        }
-        interimElement && interimElement.remove().then(function() {
-          interimElement.deferred.resolve(response);
-        });
-
-        return interimElement ? interimElement.deferred.promise : $q.when(response);
-      }
-
-      /*
-       * @ngdoc method
-       * @name $$interimStackableElement.$service#cancel
-       * @kind function
-       *
-       * @description
-       * Removes the `$interimElement` from the DOM and rejects the promise returned from `show`
-       *
-       * @param {*} reason Data to reject the promise with
-       * @returns Promise that will be rejected after the element has been removed.
-       *
-       */
-      function cancel(reason, interimElementAt) {
-        var interimElement;
-        if (interimElementAt !== undefined) {
-          interimElement = interimElementAt;
-          stack.splice(stack.indexOf(interimElementAt), 1);
-        } else {
-          interimElement = stack.shift();
-        }
-        interimElement && interimElement.remove().then(function() {
-          interimElement.deferred.reject(reason);
-        });
-
-        return interimElement ? interimElement.deferred.promise : $q.reject(reason);
-      }
-
-
-      /*
-       * Internal Interim Element Object
-       * Used internally to manage the DOM element and related data
-       */
-      function InterimElement(options) {
-        var self;
-        var hideTimeout, element;
-
-        options = options || {};
-        options = angular.extend({
-          scope: options.scope || $rootScope.$new(options.isolateScope),
-          onShow: function(scope, element, options) {
-            return $animate.enter(element, options.parent);
-          },
-          onRemove: function(scope, element, options) {
-            // Element could be undefined if a new element is shown before
-            // the old one finishes compiling.
-            return element && $animate.leave(element) || $q.when();
-          }
-        }, options);
-
-        if (options.template) {
-          options.template = processTemplate(options.template);
-        }
-
-        self = {
-          options: options,
-          deferred: $q.defer(),
-          show: function() {
-            return $mdCompiler.compile(options).then(function(compileData) {
-              angular.extend(compileData.locals, self.options);
-
-              // Search for parent at insertion time, if not specified
-              if (angular.isString(options.parent)) {
-                options.parent = angular.element($document[0].querySelector(options.parent));
-              } else if (!options.parent) {
-                options.parent = $rootElement.find('body');
-                if (!options.parent.length) options.parent = $rootElement;
-              }
-
-              element = compileData.link(options.scope);
-              element.css('z-index', options.zIndex);
-              if (options.themable) $mdTheming(element);
-              var ret = options.onShow(options.scope, element, options);
-              return $q.when(ret)
-                .then(function(){
-                  // Issue onComplete callback when the `show()` finishes
-                  (options.onComplete || angular.noop)(options.scope, element, options);
-                  startHideTimeout();
-                });
-
-              function startHideTimeout() {
-                if (options.hideDelay) {
-                  hideTimeout = $timeout(service.cancel, options.hideDelay) ;
-                }
-              }
-            });
-          },
-          cancelTimeout: function() {
-            if (hideTimeout) {
-              $timeout.cancel(hideTimeout);
-              hideTimeout = undefined;
-            }
-          },
-          remove: function() {
-            self.cancelTimeout();
-            var ret = options.onRemove(options.scope, element, options);
-            return $q.when(ret).then(function() {
-              options.scope.$destroy();
-            });
-          }
-        };
-
-        options.interimElement = self;
-        options.stack = stack;
-
-        return self;
-      }
-    };
-
-    /*
-     * Replace `{{` and `}}` in a string (usually a template) with the actual start-/endSymbols used
-     * for interpolation. This allows pre-defined templates (for components such as dialog, toast etc)
-     * to continue to work in apps that use custom interpolation start-/endSymbols.
-     *
-     * @param {string} text The text in which to replace `{{` / `}}`
-     * @returns {string} The modified string using the actual interpolation start-/endSymbols
-     */
-    function replaceInterpolationSymbols(text) {
-      if (!text || !angular.isString(text)) return text;
-      return text.replace(/\{\{/g, startSymbol).replace(/}}/g, endSymbol);
-    }
-  }
-
-}
-
-})();
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
   'use strict';
 
   /**
@@ -3650,6 +3239,417 @@ function rgba(rgbArray, opacity) {
 (function() {
 'use strict';
 
+angular.module('material.core')
+  .provider('$$interimStackableElement', InterimElementProvider);
+
+/*
+ * @ngdoc service
+ * @name $$interimStackableElement
+ * @module material.core
+ *
+ * @description
+ *
+ * Factory that contructs `$$interimStackableElement.$service` services.
+ * Used internally in material design for elements that appear on screen temporarily.
+ * The service provides a promise-like API for interacting with the temporary
+ * elements.
+ *
+ * ```js
+ * app.service('$mdToast', function($$interimStackableElement) {
+ *   var $mdToast = $$interimStackableElement(toastDefaultOptions);
+ *   return $mdToast;
+ * });
+ * ```
+ * @param {object=} defaultOptions Options used by default for the `show` method on the service.
+ *
+ * @returns {$$interimStackableElement.$service}
+ *
+ */
+
+function InterimElementProvider() {
+  createInterimElementProvider.$get = InterimElementFactory;
+  InterimElementFactory.$inject = ["$document", "$q", "$rootScope", "$timeout", "$rootElement", "$animate", "$interpolate", "$mdCompiler", "$mdTheming"];
+  return createInterimElementProvider;
+
+  /**
+   * Returns a new provider which allows configuration of a new interimElement
+   * service. Allows configuration of default options & methods for options,
+   * as well as configuration of 'preset' methods (eg dialog.basic(): basic is a preset method)
+   */
+  function createInterimElementProvider(interimFactoryName) {
+    var EXPOSED_METHODS = ['onHide', 'onShow', 'onRemove'];
+    var providerConfig = {
+      presets: {}
+    };
+    var provider = {
+      setDefaults: setDefaults,
+      addPreset: addPreset,
+      $get: factory
+    };
+
+    /**
+     * all interim elements will come with the 'build' preset
+     */
+    provider.addPreset('build', {
+      methods: ['controller', 'controllerAs', 'resolve',
+        'template', 'templateUrl', 'themable', 'transformTemplate', 'parent']
+    });
+
+    factory.$inject = ["$$interimStackableElement", "$animate", "$injector"];
+    return provider;
+
+    /**
+     * Save the configured defaults to be used when the factory is instantiated
+     */
+    function setDefaults(definition) {
+      providerConfig.optionsFactory = definition.options;
+      providerConfig.methods = (definition.methods || []).concat(EXPOSED_METHODS);
+      return provider;
+    }
+
+    /**
+     * Save the configured preset to be used when the factory is instantiated
+     */
+    function addPreset(name, definition) {
+      definition = definition || {};
+      definition.methods = definition.methods || [];
+      definition.options = definition.options || function() { return {}; };
+
+      if (/^cancel|hide|show$/.test(name)) {
+        throw new Error("Preset '" + name + "' in " + interimFactoryName + " is reserved!");
+      }
+      if (definition.methods.indexOf('_options') > -1) {
+        throw new Error("Method '_options' in " + interimFactoryName + " is reserved!");
+      }
+      providerConfig.presets[name] = {
+        methods: definition.methods.concat(EXPOSED_METHODS),
+        optionsFactory: definition.options,
+        argOption: definition.argOption
+      };
+      return provider;
+    }
+
+    /**
+     * Create a factory that has the given methods & defaults implementing interimElement
+     */
+    /* @ngInject */
+    function factory($$interimStackableElement, $animate, $injector) {
+      var defaultMethods;
+      var defaultOptions;
+      var interimElementService = $$interimStackableElement();
+
+      /*
+       * publicService is what the developer will be using.
+       * It has methods hide(), cancel(), show(), build(), and any other
+       * presets which were set during the config phase.
+       */
+      var publicService = {
+        hide: interimElementService.hide,
+        cancel: interimElementService.cancel,
+        show: showInterimElement
+      };
+
+      defaultMethods = providerConfig.methods || [];
+      // This must be invoked after the publicService is initialized
+      defaultOptions = invokeFactory(providerConfig.optionsFactory, {});
+
+      angular.forEach(providerConfig.presets, function(definition, name) {
+        var presetDefaults = invokeFactory(definition.optionsFactory, {});
+        var presetMethods = (definition.methods || []).concat(defaultMethods);
+
+        // Every interimElement built with a preset has a field called `$type`,
+        // which matches the name of the preset.
+        // Eg in preset 'confirm', options.$type === 'confirm'
+        angular.extend(presetDefaults, { $type: name });
+
+        // This creates a preset class which has setter methods for every
+        // method given in the `.addPreset()` function, as well as every
+        // method given in the `.setDefaults()` function.
+        //
+        // @example
+        // .setDefaults({
+        //   methods: ['hasBackdrop', 'clickOutsideToClose', 'escapeToClose', 'targetEvent'],
+        //   options: dialogDefaultOptions
+        // })
+        // .addPreset('alert', {
+        //   methods: ['title', 'ok'],
+        //   options: alertDialogOptions
+        // })
+        //
+        // Set values will be passed to the options when interimElemnt.show() is called.
+        function Preset(opts) {
+          this._options = angular.extend({}, presetDefaults, opts);
+        }
+        angular.forEach(presetMethods, function(name) {
+          Preset.prototype[name] = function(value) {
+            this._options[name] = value;
+            return this;
+          };
+        });
+
+        // Create shortcut method for one-linear methods
+        if (definition.argOption) {
+          var methodName = 'show' + name.charAt(0).toUpperCase() + name.slice(1);
+          publicService[methodName] = function(arg) {
+            var config = publicService[name](arg);
+            return publicService.show(config);
+          };
+        }
+
+        // eg $mdDialog.alert() will return a new alert preset
+        publicService[name] = function(arg) {
+          // If argOption is supplied, eg `argOption: 'content'`, then we assume
+          // if the argument is not an options object then it is the `argOption` option.
+          //
+          // @example `$mdToast.simple('hello')` // sets options.content to hello
+          //                                     // because argOption === 'content'
+          if (arguments.length && definition.argOption && !angular.isObject(arg) &&
+              !angular.isArray(arg)) {
+            return (new Preset())[definition.argOption](arg);
+          } else {
+            return new Preset(arg);
+          }
+
+        };
+      });
+
+      return publicService;
+
+      function showInterimElement(opts) {
+        // opts is either a preset which stores its options on an _options field,
+        // or just an object made up of options
+        if (opts && opts._options) opts = opts._options;
+        return interimElementService.show(
+          angular.extend({}, defaultOptions, opts)
+        );
+      }
+
+      /**
+       * Helper to call $injector.invoke with a local of the factory name for
+       * this provider.
+       * If an $mdDialog is providing options for a dialog and tries to inject
+       * $mdDialog, a circular dependency error will happen.
+       * We get around that by manually injecting $mdDialog as a local.
+       */
+      function invokeFactory(factory, defaultVal) {
+        var locals = {};
+        locals[interimFactoryName] = publicService;
+        return $injector.invoke(factory || function() { return defaultVal; }, {}, locals);
+      }
+
+    }
+
+  }
+
+  /* @ngInject */
+  function InterimElementFactory($document, $q, $rootScope, $timeout, $rootElement, $animate,
+                                 $interpolate, $mdCompiler, $mdTheming ) {
+    var startSymbol = $interpolate.startSymbol(),
+        endSymbol = $interpolate.endSymbol(),
+        usesStandardSymbols = ((startSymbol === '{{') && (endSymbol === '}}')),
+        processTemplate  = usesStandardSymbols ? angular.identity : replaceInterpolationSymbols;
+
+    return function createInterimElementService() {
+      /*
+       * @ngdoc service
+       * @name $$interimStackableElement.$service
+       *
+       * @description
+       * A service used to control inserting and removing an element into the DOM.
+       *
+       */
+      var stack = [];
+      var service;
+      return service = {
+        show: show,
+        hide: hide,
+        cancel: cancel
+      };
+
+      /*
+       * @ngdoc method
+       * @name $$interimStackableElement.$service#show
+       * @kind function
+       *
+       * @description
+       * Adds the `$interimElement` to the DOM and returns a promise that will be resolved or rejected
+       * with hide or cancel, respectively.
+       *
+       * @param {*} options is hashMap of settings
+       * @returns a Promise
+       *
+       */
+      function show(options) {
+        options.zIndex = 80 + stack.length;
+        var interimElement = new InterimElement(options);
+
+        stack.unshift(interimElement);
+        return interimElement.show().then(function() {
+          return interimElement.deferred.promise;
+        });
+      }
+
+      /*
+       * @ngdoc method
+       * @name $$interimStackableElement.$service#hide
+       * @kind function
+       *
+       * @description
+       * Removes the `$interimElement` from the DOM and resolves the promise returned from `show`
+       *
+       * @param {*} resolveParam Data to resolve the promise with
+       * @returns a Promise that will be resolved after the element has been removed.
+       *
+       */
+      function hide(response, interimElementAt) {
+        var interimElement;
+        if (interimElementAt !== undefined) {
+          interimElement = interimElementAt;
+          stack.splice(stack.indexOf(interimElementAt), 1);
+        } else {
+          interimElement = stack.shift();
+        }
+        interimElement && interimElement.remove().then(function() {
+          interimElement.deferred.resolve(response);
+        });
+
+        return interimElement ? interimElement.deferred.promise : $q.when(response);
+      }
+
+      /*
+       * @ngdoc method
+       * @name $$interimStackableElement.$service#cancel
+       * @kind function
+       *
+       * @description
+       * Removes the `$interimElement` from the DOM and rejects the promise returned from `show`
+       *
+       * @param {*} reason Data to reject the promise with
+       * @returns Promise that will be rejected after the element has been removed.
+       *
+       */
+      function cancel(reason, interimElementAt) {
+        var interimElement;
+        if (interimElementAt !== undefined) {
+          interimElement = interimElementAt;
+          stack.splice(stack.indexOf(interimElementAt), 1);
+        } else {
+          interimElement = stack.shift();
+        }
+        interimElement && interimElement.remove().then(function() {
+          interimElement.deferred.reject(reason);
+        });
+
+        return interimElement ? interimElement.deferred.promise : $q.reject(reason);
+      }
+
+
+      /*
+       * Internal Interim Element Object
+       * Used internally to manage the DOM element and related data
+       */
+      function InterimElement(options) {
+        var self;
+        var hideTimeout, element;
+
+        options = options || {};
+        options = angular.extend({
+          scope: options.scope || $rootScope.$new(options.isolateScope),
+          onShow: function(scope, element, options) {
+            return $animate.enter(element, options.parent);
+          },
+          onRemove: function(scope, element, options) {
+            // Element could be undefined if a new element is shown before
+            // the old one finishes compiling.
+            return element && $animate.leave(element) || $q.when();
+          }
+        }, options);
+
+        if (options.template) {
+          options.template = processTemplate(options.template);
+        }
+
+        self = {
+          options: options,
+          deferred: $q.defer(),
+          show: function() {
+            return $mdCompiler.compile(options).then(function(compileData) {
+              angular.extend(compileData.locals, self.options);
+
+              // Search for parent at insertion time, if not specified
+              if (angular.isString(options.parent)) {
+                options.parent = angular.element($document[0].querySelector(options.parent));
+              } else if (!options.parent) {
+                options.parent = $rootElement.find('body');
+                if (!options.parent.length) options.parent = $rootElement;
+              }
+
+              element = compileData.link(options.scope);
+              element.css('z-index', options.zIndex);
+              if (options.themable) $mdTheming(element);
+              var ret = options.onShow(options.scope, element, options);
+              return $q.when(ret)
+                .then(function(){
+                  // Issue onComplete callback when the `show()` finishes
+                  (options.onComplete || angular.noop)(options.scope, element, options);
+                  startHideTimeout();
+                });
+
+              function startHideTimeout() {
+                if (options.hideDelay) {
+                  hideTimeout = $timeout(service.cancel, options.hideDelay) ;
+                }
+              }
+            });
+          },
+          cancelTimeout: function() {
+            if (hideTimeout) {
+              $timeout.cancel(hideTimeout);
+              hideTimeout = undefined;
+            }
+          },
+          remove: function() {
+            self.cancelTimeout();
+            var ret = options.onRemove(options.scope, element, options);
+            return $q.when(ret).then(function() {
+              options.scope.$destroy();
+            });
+          }
+        };
+
+        options.interimElement = self;
+        options.stack = stack;
+
+        return self;
+      }
+    };
+
+    /*
+     * Replace `{{` and `}}` in a string (usually a template) with the actual start-/endSymbols used
+     * for interpolation. This allows pre-defined templates (for components such as dialog, toast etc)
+     * to continue to work in apps that use custom interpolation start-/endSymbols.
+     *
+     * @param {string} text The text in which to replace `{{` / `}}`
+     * @returns {string} The modified string using the actual interpolation start-/endSymbols
+     */
+    function replaceInterpolationSymbols(text) {
+      if (!text || !angular.isString(text)) return text;
+      return text.replace(/\{\{/g, startSymbol).replace(/}}/g, endSymbol);
+    }
+  }
+
+}
+
+})();
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
 /*
  * @ngdoc module
  * @name material.components.backdrop
@@ -3678,106 +3678,6 @@ function BackdropDirective($mdTheming) {
   return $mdTheming;
 }
 BackdropDirective.$inject = ["$mdTheming"];
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-/**
- * @ngdoc module
- * @name material.components.button
- * @description
- *
- * Button
- */
-angular.module('material.components.button', [
-  'material.core'
-])
-  .directive('mdButton', MdButtonDirective);
-
-/**
- * @ngdoc directive
- * @name mdButton
- * @module material.components.button
- *
- * @restrict E
- *
- * @description
- * `<md-button>` is a button directive with optional ink ripples (default enabled).
- *
- * If you supply a `href` or `ng-href` attribute, it will become an `<a>` element. Otherwise, it will
- * become a `<button>` element.
- *
- * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
- * the FAB button is in the accent color by default. The primary color palette may be used with
- * the `md-primary` class.
- *
- * @param {boolean=} md-no-ink If present, disable ripple ink effects.
- * @param {expression=} ng-disabled En/Disable based on the expression
- * @param {string=} md-ripple-size Overrides the default ripple size logic. Options: `full`, `partial`, `auto`
- * @param {string=} aria-label Adds alternative text to button for accessibility, useful for icon buttons.
- * If no default text is found, a warning will be logged.
- *
- * @usage
- * <hljs lang="html">
- *  <md-button>
- *    Button
- *  </md-button>
- *  <md-button href="http://google.com" class="md-button-colored">
- *    I'm a link
- *  </md-button>
- *  <md-button ng-disabled="true" class="md-colored">
- *    I'm a disabled button
- *  </md-button>
- * </hljs>
- */
-function MdButtonDirective($mdInkRipple, $mdTheming, $mdAria) {
-
-  return {
-    restrict: 'E',
-    replace: true,
-    transclude: true,
-    template: getTemplate,
-    link: postLink
-  };
-
-  function isAnchor(attr) {
-    return angular.isDefined(attr.href) || angular.isDefined(attr.ngHref);
-  }
-  
-  function getTemplate(element, attr) {
-    return isAnchor(attr) ?
-           '<a class="md-button" ng-transclude></a>' :
-           '<button class="md-button" ng-transclude></button>';
-  }
-
-  function postLink(scope, element, attr) {
-    var node = element[0];
-    $mdTheming(element);
-    $mdInkRipple.attachButtonBehavior(scope, element);
-
-    var elementHasText = node.textContent.trim();
-    if (!elementHasText) {
-      $mdAria.expect(element, 'aria-label');
-    }
-
-    // For anchor elements, we have to set tabindex manually when the 
-    // element is disabled
-    if (isAnchor(attr) && angular.isDefined(attr.ngDisabled) ) {
-      scope.$watch(attr.ngDisabled, function(isDisabled) {
-        element.attr('tabindex', isDisabled ? -1 : 0);
-      });
-    }
-  }
-
-}
-MdButtonDirective.$inject = ["$mdInkRipple", "$mdTheming", "$mdAria"];
 })();
 
 /*!
@@ -4057,6 +3957,106 @@ function iosScrollFix(node) {
     }
   });
 }
+})();
+
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
+/**
+ * @ngdoc module
+ * @name material.components.button
+ * @description
+ *
+ * Button
+ */
+angular.module('material.components.button', [
+  'material.core'
+])
+  .directive('mdButton', MdButtonDirective);
+
+/**
+ * @ngdoc directive
+ * @name mdButton
+ * @module material.components.button
+ *
+ * @restrict E
+ *
+ * @description
+ * `<md-button>` is a button directive with optional ink ripples (default enabled).
+ *
+ * If you supply a `href` or `ng-href` attribute, it will become an `<a>` element. Otherwise, it will
+ * become a `<button>` element.
+ *
+ * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
+ * the FAB button is in the accent color by default. The primary color palette may be used with
+ * the `md-primary` class.
+ *
+ * @param {boolean=} md-no-ink If present, disable ripple ink effects.
+ * @param {expression=} ng-disabled En/Disable based on the expression
+ * @param {string=} md-ripple-size Overrides the default ripple size logic. Options: `full`, `partial`, `auto`
+ * @param {string=} aria-label Adds alternative text to button for accessibility, useful for icon buttons.
+ * If no default text is found, a warning will be logged.
+ *
+ * @usage
+ * <hljs lang="html">
+ *  <md-button>
+ *    Button
+ *  </md-button>
+ *  <md-button href="http://google.com" class="md-button-colored">
+ *    I'm a link
+ *  </md-button>
+ *  <md-button ng-disabled="true" class="md-colored">
+ *    I'm a disabled button
+ *  </md-button>
+ * </hljs>
+ */
+function MdButtonDirective($mdInkRipple, $mdTheming, $mdAria) {
+
+  return {
+    restrict: 'E',
+    replace: true,
+    transclude: true,
+    template: getTemplate,
+    link: postLink
+  };
+
+  function isAnchor(attr) {
+    return angular.isDefined(attr.href) || angular.isDefined(attr.ngHref);
+  }
+  
+  function getTemplate(element, attr) {
+    return isAnchor(attr) ?
+           '<a class="md-button" ng-transclude></a>' :
+           '<button class="md-button" ng-transclude></button>';
+  }
+
+  function postLink(scope, element, attr) {
+    var node = element[0];
+    $mdTheming(element);
+    $mdInkRipple.attachButtonBehavior(scope, element);
+
+    var elementHasText = node.textContent.trim();
+    if (!elementHasText) {
+      $mdAria.expect(element, 'aria-label');
+    }
+
+    // For anchor elements, we have to set tabindex manually when the 
+    // element is disabled
+    if (isAnchor(attr) && angular.isDefined(attr.ngDisabled) ) {
+      scope.$watch(attr.ngDisabled, function(isDisabled) {
+        element.attr('tabindex', isDisabled ? -1 : 0);
+      });
+    }
+  }
+
+}
+MdButtonDirective.$inject = ["$mdInkRipple", "$mdTheming", "$mdAria"];
 })();
 
 /*!
@@ -5121,436 +5121,6 @@ MdProgressCircularDirective.$inject = ["$$rAF", "$mdConstant", "$mdTheming"];
 (function() {
 'use strict';
 
-
-/**
- * @ngdoc module
- * @name material.components.progressLinear
- * @description Linear Progress module!
- */
-angular.module('material.components.progressLinear', [
-  'material.core'
-])
-  .directive('mdProgressLinear', MdProgressLinearDirective);
-
-/**
- * @ngdoc directive
- * @name mdProgressLinear
- * @module material.components.progressLinear
- * @restrict E
- *
- * @description
- * The linear progress directive is used to make loading content in your app as delightful and painless as possible by minimizing the amount of visual change a user sees before they can view and interact with content. Each operation should only be represented by one activity indicator—for example, one refresh operation should not display both a refresh bar and an activity circle.
- *
- * For operations where the percentage of the operation completed can be determined, use a determinate indicator. They give users a quick sense of how long an operation will take.
- *
- * For operations where the user is asked to wait a moment while something finishes up, and it’s not necessary to expose what's happening behind the scenes and how long it will take, use an indeterminate indicator.
- *
- * @param {string} md-mode Select from one of four modes: determinate, indeterminate, buffer or query.
- * @param {number=} value In determinate and buffer modes, this number represents the percentage of the primary progress bar. Default: 0
- * @param {number=} md-buffer-value In the buffer mode, this number represents the precentage of the secondary progress bar. Default: 0
- *
- * @usage
- * <hljs lang="html">
- * <md-progress-linear md-mode="determinate" value="..."></md-progress-linear>
- *
- * <md-progress-linear md-mode="determinate" ng-value="..."></md-progress-linear>
- *
- * <md-progress-linear md-mode="indeterminate"></md-progress-linear>
- *
- * <md-progress-linear md-mode="buffer" value="..." md-buffer-value="..."></md-progress-linear>
- *
- * <md-progress-linear md-mode="query"></md-progress-linear>
- * </hljs>
- */
-function MdProgressLinearDirective($$rAF, $mdConstant, $mdTheming) {
-
-  return {
-    restrict: 'E',
-    template: '<div class="md-container">' +
-      '<div class="md-dashed"></div>' +
-      '<div class="md-bar md-bar1"></div>' +
-      '<div class="md-bar md-bar2"></div>' +
-      '</div>',
-    compile: compile
-  };
-  
-  function compile(tElement, tAttrs, transclude) {
-    tElement.attr('aria-valuemin', 0);
-    tElement.attr('aria-valuemax', 100);
-    tElement.attr('role', 'progressbar');
-
-    return postLink;
-  }
-  function postLink(scope, element, attr) {
-    $mdTheming(element);
-    var bar1Style = element[0].querySelector('.md-bar1').style,
-      bar2Style = element[0].querySelector('.md-bar2').style,
-      container = angular.element(element[0].querySelector('.md-container'));
-
-    attr.$observe('value', function(value) {
-      if (attr.mdMode == 'query') {
-        return;
-      }
-
-      var clamped = clamp(value);
-      element.attr('aria-valuenow', clamped);
-      bar2Style[$mdConstant.CSS.TRANSFORM] = transforms[clamped];
-    });
-
-    attr.$observe('mdBufferValue', function(value) {
-      bar1Style[$mdConstant.CSS.TRANSFORM] = transforms[clamp(value)];
-    });
-
-    $$rAF(function() {
-      container.addClass('md-ready');
-    });
-  }
-
-  function clamp(value) {
-    if (value > 100) {
-      return 100;
-    }
-
-    if (value < 0) {
-      return 0;
-    }
-
-    return Math.ceil(value || 0);
-  }
-}
-MdProgressLinearDirective.$inject = ["$$rAF", "$mdConstant", "$mdTheming"];
-
-
-// **********************************************************
-// Private Methods
-// **********************************************************
-var transforms = (function() {
-  var values = new Array(101);
-  for(var i = 0; i < 101; i++){
-    values[i] = makeTransform(i);
-  }
-
-  return values;
-
-  function makeTransform(value){
-    var scale = value/100;
-    var translateX = (value-100)/2;
-    return 'translateX(' + translateX.toString() + '%) scale(' + scale.toString() + ', 1)';
-  }
-})();
-
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-
-/**
- * @ngdoc module
- * @name material.components.radioButton
- * @description radioButton module!
- */
-angular.module('material.components.radioButton', [
-  'material.core'
-])
-  .directive('mdRadioGroup', mdRadioGroupDirective)
-  .directive('mdRadioButton', mdRadioButtonDirective);
-
-/**
- * @ngdoc directive
- * @module material.components.radioButton
- * @name mdRadioGroup
- *
- * @restrict E
- *
- * @description
- * The `<md-radio-group>` directive identifies a grouping
- * container for the 1..n grouped radio buttons; specified using nested
- * `<md-radio-button>` tags.
- *
- * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
- * the radio button is in the accent color by default. The primary color palette may be used with
- * the `md-primary` class.
- *
- * Note: `<md-radio-group>` and `<md-radio-button>` handle tabindex differently
- * than the native `<input type='radio'>` controls. Whereas the native controls
- * force the user to tab through all the radio buttons, `<md-radio-group>`
- * is focusable, and by default the `<md-radio-button>`s are not.
- *
- * @param {string} ng-model Assignable angular expression to data-bind to.
- * @param {boolean=} md-no-ink Use of attribute indicates flag to disable ink ripple effects.
- *
- * @usage
- * <hljs lang="html">
- * <md-radio-group ng-model="selected">
- *
- *   <md-radio-button
- *        ng-repeat="d in colorOptions"
- *        ng-value="d.value" aria-label="{{ d.label }}">
- *
- *          {{ d.label }}
- *
- *   </md-radio-button>
- *
- * </md-radio-group>
- * </hljs>
- *
- */
-function mdRadioGroupDirective($mdUtil, $mdConstant, $mdTheming) {
-  RadioGroupController.prototype = createRadioGroupControllerProto();
-
-  return {
-    restrict: 'E',
-    controller: ['$element', RadioGroupController],
-    require: ['mdRadioGroup', '?ngModel'],
-    link: { pre: linkRadioGroup }
-  };
-
-  function linkRadioGroup(scope, element, attr, ctrls) {
-    $mdTheming(element);
-    var rgCtrl = ctrls[0];
-    var ngModelCtrl = ctrls[1] || $mdUtil.fakeNgModel();
-
-    function keydownListener(ev) {
-      switch(ev.keyCode) {
-        case $mdConstant.KEY_CODE.LEFT_ARROW:
-        case $mdConstant.KEY_CODE.UP_ARROW:
-          ev.preventDefault();
-          rgCtrl.selectPrevious();
-          break;
-
-        case $mdConstant.KEY_CODE.RIGHT_ARROW:
-        case $mdConstant.KEY_CODE.DOWN_ARROW:
-          ev.preventDefault();
-          rgCtrl.selectNext();
-          break;
-
-        case $mdConstant.KEY_CODE.ENTER:
-          var form = angular.element($mdUtil.getClosest(element[0], 'form'));
-          if (form.length > 0) {
-            form.triggerHandler('submit');
-          }
-          break;
-      }
-    }
-
-    rgCtrl.init(ngModelCtrl);
-
-    element.attr({
-              'role': 'radiogroup',
-              'tabIndex': element.attr('tabindex') || '0'
-            })
-            .on('keydown', keydownListener);
-
-  }
-
-  function RadioGroupController($element) {
-    this._radioButtonRenderFns = [];
-    this.$element = $element;
-  }
-
-  function createRadioGroupControllerProto() {
-    return {
-      init: function(ngModelCtrl) {
-        this._ngModelCtrl = ngModelCtrl;
-        this._ngModelCtrl.$render = angular.bind(this, this.render);
-      },
-      add: function(rbRender) {
-        this._radioButtonRenderFns.push(rbRender);
-      },
-      remove: function(rbRender) {
-        var index = this._radioButtonRenderFns.indexOf(rbRender);
-        if (index !== -1) {
-          this._radioButtonRenderFns.splice(index, 1);
-        }
-      },
-      render: function() {
-        this._radioButtonRenderFns.forEach(function(rbRender) {
-          rbRender();
-        });
-      },
-      setViewValue: function(value, eventType) {
-        this._ngModelCtrl.$setViewValue(value, eventType);
-        // update the other radio buttons as well
-        this.render();
-      },
-      getViewValue: function() {
-        return this._ngModelCtrl.$viewValue;
-      },
-      selectNext: function() {
-        return changeSelectedButton(this.$element, 1);
-      },
-      selectPrevious : function() {
-        return changeSelectedButton(this.$element, -1);
-      },
-      setActiveDescendant: function (radioId) {
-        this.$element.attr('aria-activedescendant', radioId);
-      }
-    };
-  }
-  /**
-   * Change the radio group's selected button by a given increment.
-   * If no button is selected, select the first button.
-   */
-  function changeSelectedButton(parent, increment) {
-    // Coerce all child radio buttons into an array, then wrap then in an iterator
-    var buttons = $mdUtil.iterator(
-      Array.prototype.slice.call(parent[0].querySelectorAll('md-radio-button')),
-      true
-    );
-
-    if (buttons.count()) {
-      var validate = function (button) {
-        // If disabled, then NOT valid
-        return !angular.element(button).attr("disabled");
-      };
-      var selected = parent[0].querySelector('md-radio-button.md-checked');
-      var target = buttons[increment < 0 ? 'previous' : 'next'](selected, validate) || buttons.first();
-      // Activate radioButton's click listener (triggerHandler won't create a real click event)
-      angular.element(target).triggerHandler('click');
-
-
-    }
-  }
-
-}
-mdRadioGroupDirective.$inject = ["$mdUtil", "$mdConstant", "$mdTheming"];
-
-/**
- * @ngdoc directive
- * @module material.components.radioButton
- * @name mdRadioButton
- *
- * @restrict E
- *
- * @description
- * The `<md-radio-button>`directive is the child directive required to be used within `<md-radio-group>` elements.
- *
- * While similar to the `<input type="radio" ng-model="" value="">` directive,
- * the `<md-radio-button>` directive provides ink effects, ARIA support, and
- * supports use within named radio groups.
- *
- * @param {string} ngModel Assignable angular expression to data-bind to.
- * @param {string=} ngChange Angular expression to be executed when input changes due to user
- *    interaction with the input element.
- * @param {string} ngValue Angular expression which sets the value to which the expression should
- *    be set when selected.*
- * @param {string} value The value to which the expression should be set when selected.
- * @param {string=} name Property name of the form under which the control is published.
- * @param {string=} ariaLabel Adds label to radio button for accessibility.
- * Defaults to radio button's text. If no default text is found, a warning will be logged.
- *
- * @usage
- * <hljs lang="html">
- *
- * <md-radio-button value="1" aria-label="Label 1">
- *   Label 1
- * </md-radio-button>
- *
- * <md-radio-button ng-model="color" ng-value="specialValue" aria-label="Green">
- *   Green
- * </md-radio-button>
- *
- * </hljs>
- *
- */
-function mdRadioButtonDirective($mdAria, $mdUtil, $mdTheming) {
-
-  var CHECKED_CSS = 'md-checked';
-
-  return {
-    restrict: 'E',
-    require: '^mdRadioGroup',
-    transclude: true,
-    template: '<div class="md-container" md-ink-ripple md-ink-ripple-checkbox>' +
-                '<div class="md-off"></div>' +
-                '<div class="md-on"></div>' +
-              '</div>' +
-              '<div ng-transclude class="md-label"></div>',
-    link: link
-  };
-
-  function link(scope, element, attr, rgCtrl) {
-    var lastChecked;
-
-    $mdTheming(element);
-    configureAria(element, scope);
-
-    rgCtrl.add(render);
-    attr.$observe('value', render);
-
-    element
-      .on('click', listener)
-      .on('$destroy', function() {
-        rgCtrl.remove(render);
-      });
-
-    function listener(ev) {
-      if (element[0].hasAttribute('disabled')) return;
-
-      scope.$apply(function() {
-        rgCtrl.setViewValue(attr.value, ev && ev.type);
-      });
-    }
-
-    function render() {
-      var checked = (rgCtrl.getViewValue() == attr.value);
-      if (checked === lastChecked) {
-        return;
-      }
-      lastChecked = checked;
-      element.attr('aria-checked', checked);
-      if (checked) {
-        element.addClass(CHECKED_CSS);
-        rgCtrl.setActiveDescendant(element.attr('id'));
-      } else {
-        element.removeClass(CHECKED_CSS);
-      }
-    }
-    /**
-     * Inject ARIA-specific attributes appropriate for each radio button
-     */
-    function configureAria( element, scope ){
-      scope.ariaId = buildAriaID();
-
-      element.attr({
-        'id' :  scope.ariaId,
-        'role' : 'radio',
-        'aria-checked' : 'false'
-      });
-
-      $mdAria.expectWithText(element, 'aria-label');
-
-      /**
-       * Build a unique ID for each radio button that will be used with aria-activedescendant.
-       * Preserve existing ID if already specified.
-       * @returns {*|string}
-       */
-      function buildAriaID() {
-        return attr.id || ( 'radio' + "_" + $mdUtil.nextUid() );
-      }
-    }
-  }
-}
-mdRadioButtonDirective.$inject = ["$mdAria", "$mdUtil", "$mdTheming"];
-
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
 /**
  * @ngdoc module
  * @name material.components.sidenav
@@ -6208,82 +5778,425 @@ MdSticky.$inject = ["$document", "$mdConstant", "$compile", "$$rAF", "$mdUtil"];
 (function() {
 'use strict';
 
+
 /**
  * @ngdoc module
- * @name material.components.subheader
- * @description
- * SubHeader module
- *
- *  Subheaders are special list tiles that delineate distinct sections of a
- *  list or grid list and are typically related to the current filtering or
- *  sorting criteria. Subheader tiles are either displayed inline with tiles or
- *  can be associated with content, for example, in an adjacent column.
- *
- *  Upon scrolling, subheaders remain pinned to the top of the screen and remain
- *  pinned until pushed on or off screen by the next subheader. @see [Material
- *  Design Specifications](https://www.google.com/design/spec/components/subheaders.html)
- *
- *  > To improve the visual grouping of content, use the system color for your subheaders.
- *
+ * @name material.components.radioButton
+ * @description radioButton module!
  */
-angular.module('material.components.subheader', [
-  'material.core',
-  'material.components.sticky'
+angular.module('material.components.radioButton', [
+  'material.core'
 ])
-  .directive('mdSubheader', MdSubheaderDirective);
+  .directive('mdRadioGroup', mdRadioGroupDirective)
+  .directive('mdRadioButton', mdRadioButtonDirective);
 
 /**
  * @ngdoc directive
- * @name mdSubheader
- * @module material.components.subheader
+ * @module material.components.radioButton
+ * @name mdRadioGroup
  *
  * @restrict E
  *
  * @description
- * The `<md-subheader>` directive is a subheader for a section
+ * The `<md-radio-group>` directive identifies a grouping
+ * container for the 1..n grouped radio buttons; specified using nested
+ * `<md-radio-button>` tags.
+ *
+ * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
+ * the radio button is in the accent color by default. The primary color palette may be used with
+ * the `md-primary` class.
+ *
+ * Note: `<md-radio-group>` and `<md-radio-button>` handle tabindex differently
+ * than the native `<input type='radio'>` controls. Whereas the native controls
+ * force the user to tab through all the radio buttons, `<md-radio-group>`
+ * is focusable, and by default the `<md-radio-button>`s are not.
+ *
+ * @param {string} ng-model Assignable angular expression to data-bind to.
+ * @param {boolean=} md-no-ink Use of attribute indicates flag to disable ink ripple effects.
  *
  * @usage
  * <hljs lang="html">
- * <md-subheader>Online Friends</md-subheader>
+ * <md-radio-group ng-model="selected">
+ *
+ *   <md-radio-button
+ *        ng-repeat="d in colorOptions"
+ *        ng-value="d.value" aria-label="{{ d.label }}">
+ *
+ *          {{ d.label }}
+ *
+ *   </md-radio-button>
+ *
+ * </md-radio-group>
  * </hljs>
+ *
  */
+function mdRadioGroupDirective($mdUtil, $mdConstant, $mdTheming) {
+  RadioGroupController.prototype = createRadioGroupControllerProto();
 
-function MdSubheaderDirective($mdSticky, $compile, $mdTheming) {
   return {
     restrict: 'E',
-    replace: true,
-    transclude: true,
-    template: 
-      '<h2 class="md-subheader">' +
-        '<span class="md-subheader-content"></span>' +
-      '</h2>',
-    compile: function(element, attr, transclude) {
-      var outerHTML = element[0].outerHTML;
-      return function postLink(scope, element, attr) {
-        $mdTheming(element);
-        function getContent(el) {
-          return angular.element(el[0].querySelector('.md-subheader-content'));
-        }
-
-        // Transclude the user-given contents of the subheader
-        // the conventional way.
-        transclude(scope, function(clone) {
-          getContent(element).append(clone);
-        });
-
-        // Create another clone, that uses the outer and inner contents
-        // of the element, that will be 'stickied' as the user scrolls.
-        transclude(scope, function(clone) {
-          var stickyClone = $compile(angular.element(outerHTML))(scope);
-          $mdTheming(stickyClone);
-          getContent(stickyClone).append(clone);
-          $mdSticky(scope, element, stickyClone);
-        });
-      };
-    }
+    controller: ['$element', RadioGroupController],
+    require: ['mdRadioGroup', '?ngModel'],
+    link: { pre: linkRadioGroup }
   };
+
+  function linkRadioGroup(scope, element, attr, ctrls) {
+    $mdTheming(element);
+    var rgCtrl = ctrls[0];
+    var ngModelCtrl = ctrls[1] || $mdUtil.fakeNgModel();
+
+    function keydownListener(ev) {
+      switch(ev.keyCode) {
+        case $mdConstant.KEY_CODE.LEFT_ARROW:
+        case $mdConstant.KEY_CODE.UP_ARROW:
+          ev.preventDefault();
+          rgCtrl.selectPrevious();
+          break;
+
+        case $mdConstant.KEY_CODE.RIGHT_ARROW:
+        case $mdConstant.KEY_CODE.DOWN_ARROW:
+          ev.preventDefault();
+          rgCtrl.selectNext();
+          break;
+
+        case $mdConstant.KEY_CODE.ENTER:
+          var form = angular.element($mdUtil.getClosest(element[0], 'form'));
+          if (form.length > 0) {
+            form.triggerHandler('submit');
+          }
+          break;
+      }
+    }
+
+    rgCtrl.init(ngModelCtrl);
+
+    element.attr({
+              'role': 'radiogroup',
+              'tabIndex': element.attr('tabindex') || '0'
+            })
+            .on('keydown', keydownListener);
+
+  }
+
+  function RadioGroupController($element) {
+    this._radioButtonRenderFns = [];
+    this.$element = $element;
+  }
+
+  function createRadioGroupControllerProto() {
+    return {
+      init: function(ngModelCtrl) {
+        this._ngModelCtrl = ngModelCtrl;
+        this._ngModelCtrl.$render = angular.bind(this, this.render);
+      },
+      add: function(rbRender) {
+        this._radioButtonRenderFns.push(rbRender);
+      },
+      remove: function(rbRender) {
+        var index = this._radioButtonRenderFns.indexOf(rbRender);
+        if (index !== -1) {
+          this._radioButtonRenderFns.splice(index, 1);
+        }
+      },
+      render: function() {
+        this._radioButtonRenderFns.forEach(function(rbRender) {
+          rbRender();
+        });
+      },
+      setViewValue: function(value, eventType) {
+        this._ngModelCtrl.$setViewValue(value, eventType);
+        // update the other radio buttons as well
+        this.render();
+      },
+      getViewValue: function() {
+        return this._ngModelCtrl.$viewValue;
+      },
+      selectNext: function() {
+        return changeSelectedButton(this.$element, 1);
+      },
+      selectPrevious : function() {
+        return changeSelectedButton(this.$element, -1);
+      },
+      setActiveDescendant: function (radioId) {
+        this.$element.attr('aria-activedescendant', radioId);
+      }
+    };
+  }
+  /**
+   * Change the radio group's selected button by a given increment.
+   * If no button is selected, select the first button.
+   */
+  function changeSelectedButton(parent, increment) {
+    // Coerce all child radio buttons into an array, then wrap then in an iterator
+    var buttons = $mdUtil.iterator(
+      Array.prototype.slice.call(parent[0].querySelectorAll('md-radio-button')),
+      true
+    );
+
+    if (buttons.count()) {
+      var validate = function (button) {
+        // If disabled, then NOT valid
+        return !angular.element(button).attr("disabled");
+      };
+      var selected = parent[0].querySelector('md-radio-button.md-checked');
+      var target = buttons[increment < 0 ? 'previous' : 'next'](selected, validate) || buttons.first();
+      // Activate radioButton's click listener (triggerHandler won't create a real click event)
+      angular.element(target).triggerHandler('click');
+
+
+    }
+  }
+
 }
-MdSubheaderDirective.$inject = ["$mdSticky", "$compile", "$mdTheming"];
+mdRadioGroupDirective.$inject = ["$mdUtil", "$mdConstant", "$mdTheming"];
+
+/**
+ * @ngdoc directive
+ * @module material.components.radioButton
+ * @name mdRadioButton
+ *
+ * @restrict E
+ *
+ * @description
+ * The `<md-radio-button>`directive is the child directive required to be used within `<md-radio-group>` elements.
+ *
+ * While similar to the `<input type="radio" ng-model="" value="">` directive,
+ * the `<md-radio-button>` directive provides ink effects, ARIA support, and
+ * supports use within named radio groups.
+ *
+ * @param {string} ngModel Assignable angular expression to data-bind to.
+ * @param {string=} ngChange Angular expression to be executed when input changes due to user
+ *    interaction with the input element.
+ * @param {string} ngValue Angular expression which sets the value to which the expression should
+ *    be set when selected.*
+ * @param {string} value The value to which the expression should be set when selected.
+ * @param {string=} name Property name of the form under which the control is published.
+ * @param {string=} ariaLabel Adds label to radio button for accessibility.
+ * Defaults to radio button's text. If no default text is found, a warning will be logged.
+ *
+ * @usage
+ * <hljs lang="html">
+ *
+ * <md-radio-button value="1" aria-label="Label 1">
+ *   Label 1
+ * </md-radio-button>
+ *
+ * <md-radio-button ng-model="color" ng-value="specialValue" aria-label="Green">
+ *   Green
+ * </md-radio-button>
+ *
+ * </hljs>
+ *
+ */
+function mdRadioButtonDirective($mdAria, $mdUtil, $mdTheming) {
+
+  var CHECKED_CSS = 'md-checked';
+
+  return {
+    restrict: 'E',
+    require: '^mdRadioGroup',
+    transclude: true,
+    template: '<div class="md-container" md-ink-ripple md-ink-ripple-checkbox>' +
+                '<div class="md-off"></div>' +
+                '<div class="md-on"></div>' +
+              '</div>' +
+              '<div ng-transclude class="md-label"></div>',
+    link: link
+  };
+
+  function link(scope, element, attr, rgCtrl) {
+    var lastChecked;
+
+    $mdTheming(element);
+    configureAria(element, scope);
+
+    rgCtrl.add(render);
+    attr.$observe('value', render);
+
+    element
+      .on('click', listener)
+      .on('$destroy', function() {
+        rgCtrl.remove(render);
+      });
+
+    function listener(ev) {
+      if (element[0].hasAttribute('disabled')) return;
+
+      scope.$apply(function() {
+        rgCtrl.setViewValue(attr.value, ev && ev.type);
+      });
+    }
+
+    function render() {
+      var checked = (rgCtrl.getViewValue() == attr.value);
+      if (checked === lastChecked) {
+        return;
+      }
+      lastChecked = checked;
+      element.attr('aria-checked', checked);
+      if (checked) {
+        element.addClass(CHECKED_CSS);
+        rgCtrl.setActiveDescendant(element.attr('id'));
+      } else {
+        element.removeClass(CHECKED_CSS);
+      }
+    }
+    /**
+     * Inject ARIA-specific attributes appropriate for each radio button
+     */
+    function configureAria( element, scope ){
+      scope.ariaId = buildAriaID();
+
+      element.attr({
+        'id' :  scope.ariaId,
+        'role' : 'radio',
+        'aria-checked' : 'false'
+      });
+
+      $mdAria.expectWithText(element, 'aria-label');
+
+      /**
+       * Build a unique ID for each radio button that will be used with aria-activedescendant.
+       * Preserve existing ID if already specified.
+       * @returns {*|string}
+       */
+      function buildAriaID() {
+        return attr.id || ( 'radio' + "_" + $mdUtil.nextUid() );
+      }
+    }
+  }
+}
+mdRadioButtonDirective.$inject = ["$mdAria", "$mdUtil", "$mdTheming"];
+
+})();
+
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
+
+/**
+ * @ngdoc module
+ * @name material.components.progressLinear
+ * @description Linear Progress module!
+ */
+angular.module('material.components.progressLinear', [
+  'material.core'
+])
+  .directive('mdProgressLinear', MdProgressLinearDirective);
+
+/**
+ * @ngdoc directive
+ * @name mdProgressLinear
+ * @module material.components.progressLinear
+ * @restrict E
+ *
+ * @description
+ * The linear progress directive is used to make loading content in your app as delightful and painless as possible by minimizing the amount of visual change a user sees before they can view and interact with content. Each operation should only be represented by one activity indicator—for example, one refresh operation should not display both a refresh bar and an activity circle.
+ *
+ * For operations where the percentage of the operation completed can be determined, use a determinate indicator. They give users a quick sense of how long an operation will take.
+ *
+ * For operations where the user is asked to wait a moment while something finishes up, and it’s not necessary to expose what's happening behind the scenes and how long it will take, use an indeterminate indicator.
+ *
+ * @param {string} md-mode Select from one of four modes: determinate, indeterminate, buffer or query.
+ * @param {number=} value In determinate and buffer modes, this number represents the percentage of the primary progress bar. Default: 0
+ * @param {number=} md-buffer-value In the buffer mode, this number represents the precentage of the secondary progress bar. Default: 0
+ *
+ * @usage
+ * <hljs lang="html">
+ * <md-progress-linear md-mode="determinate" value="..."></md-progress-linear>
+ *
+ * <md-progress-linear md-mode="determinate" ng-value="..."></md-progress-linear>
+ *
+ * <md-progress-linear md-mode="indeterminate"></md-progress-linear>
+ *
+ * <md-progress-linear md-mode="buffer" value="..." md-buffer-value="..."></md-progress-linear>
+ *
+ * <md-progress-linear md-mode="query"></md-progress-linear>
+ * </hljs>
+ */
+function MdProgressLinearDirective($$rAF, $mdConstant, $mdTheming) {
+
+  return {
+    restrict: 'E',
+    template: '<div class="md-container">' +
+      '<div class="md-dashed"></div>' +
+      '<div class="md-bar md-bar1"></div>' +
+      '<div class="md-bar md-bar2"></div>' +
+      '</div>',
+    compile: compile
+  };
+  
+  function compile(tElement, tAttrs, transclude) {
+    tElement.attr('aria-valuemin', 0);
+    tElement.attr('aria-valuemax', 100);
+    tElement.attr('role', 'progressbar');
+
+    return postLink;
+  }
+  function postLink(scope, element, attr) {
+    $mdTheming(element);
+    var bar1Style = element[0].querySelector('.md-bar1').style,
+      bar2Style = element[0].querySelector('.md-bar2').style,
+      container = angular.element(element[0].querySelector('.md-container'));
+
+    attr.$observe('value', function(value) {
+      if (attr.mdMode == 'query') {
+        return;
+      }
+
+      var clamped = clamp(value);
+      element.attr('aria-valuenow', clamped);
+      bar2Style[$mdConstant.CSS.TRANSFORM] = transforms[clamped];
+    });
+
+    attr.$observe('mdBufferValue', function(value) {
+      bar1Style[$mdConstant.CSS.TRANSFORM] = transforms[clamp(value)];
+    });
+
+    $$rAF(function() {
+      container.addClass('md-ready');
+    });
+  }
+
+  function clamp(value) {
+    if (value > 100) {
+      return 100;
+    }
+
+    if (value < 0) {
+      return 0;
+    }
+
+    return Math.ceil(value || 0);
+  }
+}
+MdProgressLinearDirective.$inject = ["$$rAF", "$mdConstant", "$mdTheming"];
+
+
+// **********************************************************
+// Private Methods
+// **********************************************************
+var transforms = (function() {
+  var values = new Array(101);
+  for(var i = 0; i < 101; i++){
+    values[i] = makeTransform(i);
+  }
+
+  return values;
+
+  function makeTransform(value){
+    var scale = value/100;
+    var translateX = (value-100)/2;
+    return 'translateX(' + translateX.toString() + '%) scale(' + scale.toString() + ', 1)';
+  }
+})();
+
 })();
 
 /*!
@@ -6374,163 +6287,81 @@ var module = angular.module('material.components.swipe',[]);
 'use strict';
 
 /**
- * @private
  * @ngdoc module
- * @name material.components.switch
+ * @name material.components.subheader
+ * @description
+ * SubHeader module
+ *
+ *  Subheaders are special list tiles that delineate distinct sections of a
+ *  list or grid list and are typically related to the current filtering or
+ *  sorting criteria. Subheader tiles are either displayed inline with tiles or
+ *  can be associated with content, for example, in an adjacent column.
+ *
+ *  Upon scrolling, subheaders remain pinned to the top of the screen and remain
+ *  pinned until pushed on or off screen by the next subheader. @see [Material
+ *  Design Specifications](https://www.google.com/design/spec/components/subheaders.html)
+ *
+ *  > To improve the visual grouping of content, use the system color for your subheaders.
+ *
  */
-
-angular.module('material.components.switch', [
+angular.module('material.components.subheader', [
   'material.core',
-  'material.components.checkbox'
+  'material.components.sticky'
 ])
-  .directive('mdSwitch', MdSwitch);
+  .directive('mdSubheader', MdSubheaderDirective);
 
 /**
- * @private
  * @ngdoc directive
- * @module material.components.switch
- * @name mdSwitch
+ * @name mdSubheader
+ * @module material.components.subheader
+ *
  * @restrict E
  *
- * The switch directive is used very much like the normal [angular checkbox](https://docs.angularjs.org/api/ng/input/input%5Bcheckbox%5D).
- *
- * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
- * the switch is in the accent color by default. The primary color palette may be used with
- * the `md-primary` class.
- *
- * @param {string} ng-model Assignable angular expression to data-bind to.
- * @param {string=} name Property name of the form under which the control is published.
- * @param {expression=} ng-true-value The value to which the expression should be set when selected.
- * @param {expression=} ng-false-value The value to which the expression should be set when not selected.
- * @param {string=} ng-change Angular expression to be executed when input changes due to user interaction with the input element.
- * @param {boolean=} md-no-ink Use of attribute indicates use of ripple ink effects.
- * @param {string=} aria-label Publish the button label used by screen-readers for accessibility. Defaults to the switch's text.
+ * @description
+ * The `<md-subheader>` directive is a subheader for a section
  *
  * @usage
  * <hljs lang="html">
- * <md-switch ng-model="isActive" aria-label="Finished?">
- *   Finished ?
- * </md-switch>
- *
- * <md-switch md-no-ink ng-model="hasInk" aria-label="No Ink Effects">
- *   No Ink Effects
- * </md-switch>
- *
- * <md-switch ng-disabled="true" ng-model="isDisabled" aria-label="Disabled">
- *   Disabled
- * </md-switch>
- *
+ * <md-subheader>Online Friends</md-subheader>
  * </hljs>
  */
-function MdSwitch(mdCheckboxDirective, $mdTheming, $mdUtil, $document, $mdConstant, $parse, $$rAF, $mdGesture) {
-  var checkboxDirective = mdCheckboxDirective[0];
 
+function MdSubheaderDirective($mdSticky, $compile, $mdTheming) {
   return {
     restrict: 'E',
+    replace: true,
     transclude: true,
-    template:
-      '<div class="md-container">' +
-        '<div class="md-bar"></div>' +
-        '<div class="md-thumb-container">' +
-          '<div class="md-thumb" md-ink-ripple md-ink-ripple-checkbox></div>' +
-        '</div>'+
-      '</div>' +
-      '<div ng-transclude class="md-label">' +
-      '</div>',
-    require: '?ngModel',
-    compile: compile
-  };
-
-  function compile(element, attr) {
-    var checkboxLink = checkboxDirective.compile(element, attr);
-    // no transition on initial load
-    element.addClass('md-dragging');
-
-    return function (scope, element, attr, ngModel) {
-      ngModel = ngModel || $mdUtil.fakeNgModel();
-      var disabledGetter = $parse(attr.ngDisabled);
-      var thumbContainer = angular.element(element[0].querySelector('.md-thumb-container'));
-      var switchContainer = angular.element(element[0].querySelector('.md-container'));
-
-      // no transition on initial load
-      $$rAF(function() {
-        element.removeClass('md-dragging');
-      });
-
-      checkboxLink(scope, element, attr, ngModel);
-
-      if (angular.isDefined(attr.ngDisabled)) {
-        scope.$watch(disabledGetter, function(isDisabled) {
-          element.attr('tabindex', isDisabled ? -1 : 0);
-        });
-      }
-
-      // These events are triggered by setup drag
-      $mdGesture.register(switchContainer, 'drag');
-      switchContainer
-        .on('$md.dragstart', onDragStart)
-        .on('$md.drag', onDrag)
-        .on('$md.dragend', onDragEnd);
-
-      var drag;
-      function onDragStart(ev) {
-        // Don't go if ng-disabled===true
-        if (disabledGetter(scope)) return;
-        ev.stopPropagation();
-
-        element.addClass('md-dragging');
-        drag = {
-          width: thumbContainer.prop('offsetWidth')
-        };
-        element.removeClass('transition');
-      }
-
-      function onDrag(ev) {
-        if (!drag) return;
-        ev.stopPropagation();
-        ev.srcEvent && ev.srcEvent.preventDefault();
-
-        var percent = ev.pointer.distanceX / drag.width;
-
-        //if checked, start from right. else, start from left
-        var translate = ngModel.$viewValue ?  1 + percent : percent;
-        // Make sure the switch stays inside its bounds, 0-1%
-        translate = Math.max(0, Math.min(1, translate));
-
-        thumbContainer.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (100*translate) + '%,0,0)');
-        drag.translate = translate;
-      }
-
-      function onDragEnd(ev) {
-        if (!drag) return;
-        ev.stopPropagation();
-
-        element.removeClass('md-dragging');
-        thumbContainer.css($mdConstant.CSS.TRANSFORM, '');
-
-        // We changed if there is no distance (this is a click a click),
-        // or if the drag distance is >50% of the total.
-        var isChanged = ngModel.$viewValue ? drag.translate < 0.5 : drag.translate > 0.5;
-        if (isChanged) {
-          applyModelValue(!ngModel.$viewValue);
+    template: 
+      '<h2 class="md-subheader">' +
+        '<span class="md-subheader-content"></span>' +
+      '</h2>',
+    compile: function(element, attr, transclude) {
+      var outerHTML = element[0].outerHTML;
+      return function postLink(scope, element, attr) {
+        $mdTheming(element);
+        function getContent(el) {
+          return angular.element(el[0].querySelector('.md-subheader-content'));
         }
-        drag = null;
-      }
 
-      function applyModelValue(newValue) {
-        scope.$apply(function() {
-          ngModel.$setViewValue(newValue);
-          ngModel.$render();
+        // Transclude the user-given contents of the subheader
+        // the conventional way.
+        transclude(scope, function(clone) {
+          getContent(element).append(clone);
         });
-      }
 
-    };
-  }
-
-
+        // Create another clone, that uses the outer and inner contents
+        // of the element, that will be 'stickied' as the user scrolls.
+        transclude(scope, function(clone) {
+          var stickyClone = $compile(angular.element(outerHTML))(scope);
+          $mdTheming(stickyClone);
+          getContent(stickyClone).append(clone);
+          $mdSticky(scope, element, stickyClone);
+        });
+      };
+    }
+  };
 }
-MdSwitch.$inject = ["mdCheckboxDirective", "$mdTheming", "$mdUtil", "$document", "$mdConstant", "$parse", "$$rAF", "$mdGesture"];
-
+MdSubheaderDirective.$inject = ["$mdSticky", "$compile", "$mdTheming"];
 })();
 
 /*!
@@ -6675,6 +6506,22 @@ function mdInputDirective($mdUtil, $log) {
 }
 mdInputDirective.$inject = ["$mdUtil", "$log"];
 
+})();
+
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
+/**
+ * @ngdoc module
+ * @name material.components.whiteframe
+ */
+angular.module('material.components.whiteframe', []);
 })();
 
 /*!
@@ -6846,10 +6693,163 @@ mdToolbarDirective.$inject = ["$$rAF", "$mdConstant", "$mdUtil", "$mdTheming"];
 'use strict';
 
 /**
+ * @private
  * @ngdoc module
- * @name material.components.whiteframe
+ * @name material.components.switch
  */
-angular.module('material.components.whiteframe', []);
+
+angular.module('material.components.switch', [
+  'material.core',
+  'material.components.checkbox'
+])
+  .directive('mdSwitch', MdSwitch);
+
+/**
+ * @private
+ * @ngdoc directive
+ * @module material.components.switch
+ * @name mdSwitch
+ * @restrict E
+ *
+ * The switch directive is used very much like the normal [angular checkbox](https://docs.angularjs.org/api/ng/input/input%5Bcheckbox%5D).
+ *
+ * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
+ * the switch is in the accent color by default. The primary color palette may be used with
+ * the `md-primary` class.
+ *
+ * @param {string} ng-model Assignable angular expression to data-bind to.
+ * @param {string=} name Property name of the form under which the control is published.
+ * @param {expression=} ng-true-value The value to which the expression should be set when selected.
+ * @param {expression=} ng-false-value The value to which the expression should be set when not selected.
+ * @param {string=} ng-change Angular expression to be executed when input changes due to user interaction with the input element.
+ * @param {boolean=} md-no-ink Use of attribute indicates use of ripple ink effects.
+ * @param {string=} aria-label Publish the button label used by screen-readers for accessibility. Defaults to the switch's text.
+ *
+ * @usage
+ * <hljs lang="html">
+ * <md-switch ng-model="isActive" aria-label="Finished?">
+ *   Finished ?
+ * </md-switch>
+ *
+ * <md-switch md-no-ink ng-model="hasInk" aria-label="No Ink Effects">
+ *   No Ink Effects
+ * </md-switch>
+ *
+ * <md-switch ng-disabled="true" ng-model="isDisabled" aria-label="Disabled">
+ *   Disabled
+ * </md-switch>
+ *
+ * </hljs>
+ */
+function MdSwitch(mdCheckboxDirective, $mdTheming, $mdUtil, $document, $mdConstant, $parse, $$rAF, $mdGesture) {
+  var checkboxDirective = mdCheckboxDirective[0];
+
+  return {
+    restrict: 'E',
+    transclude: true,
+    template:
+      '<div class="md-container">' +
+        '<div class="md-bar"></div>' +
+        '<div class="md-thumb-container">' +
+          '<div class="md-thumb" md-ink-ripple md-ink-ripple-checkbox></div>' +
+        '</div>'+
+      '</div>' +
+      '<div ng-transclude class="md-label">' +
+      '</div>',
+    require: '?ngModel',
+    compile: compile
+  };
+
+  function compile(element, attr) {
+    var checkboxLink = checkboxDirective.compile(element, attr);
+    // no transition on initial load
+    element.addClass('md-dragging');
+
+    return function (scope, element, attr, ngModel) {
+      ngModel = ngModel || $mdUtil.fakeNgModel();
+      var disabledGetter = $parse(attr.ngDisabled);
+      var thumbContainer = angular.element(element[0].querySelector('.md-thumb-container'));
+      var switchContainer = angular.element(element[0].querySelector('.md-container'));
+
+      // no transition on initial load
+      $$rAF(function() {
+        element.removeClass('md-dragging');
+      });
+
+      checkboxLink(scope, element, attr, ngModel);
+
+      if (angular.isDefined(attr.ngDisabled)) {
+        scope.$watch(disabledGetter, function(isDisabled) {
+          element.attr('tabindex', isDisabled ? -1 : 0);
+        });
+      }
+
+      // These events are triggered by setup drag
+      $mdGesture.register(switchContainer, 'drag');
+      switchContainer
+        .on('$md.dragstart', onDragStart)
+        .on('$md.drag', onDrag)
+        .on('$md.dragend', onDragEnd);
+
+      var drag;
+      function onDragStart(ev) {
+        // Don't go if ng-disabled===true
+        if (disabledGetter(scope)) return;
+        ev.stopPropagation();
+
+        element.addClass('md-dragging');
+        drag = {
+          width: thumbContainer.prop('offsetWidth')
+        };
+        element.removeClass('transition');
+      }
+
+      function onDrag(ev) {
+        if (!drag) return;
+        ev.stopPropagation();
+        ev.srcEvent && ev.srcEvent.preventDefault();
+
+        var percent = ev.pointer.distanceX / drag.width;
+
+        //if checked, start from right. else, start from left
+        var translate = ngModel.$viewValue ?  1 + percent : percent;
+        // Make sure the switch stays inside its bounds, 0-1%
+        translate = Math.max(0, Math.min(1, translate));
+
+        thumbContainer.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (100*translate) + '%,0,0)');
+        drag.translate = translate;
+      }
+
+      function onDragEnd(ev) {
+        if (!drag) return;
+        ev.stopPropagation();
+
+        element.removeClass('md-dragging');
+        thumbContainer.css($mdConstant.CSS.TRANSFORM, '');
+
+        // We changed if there is no distance (this is a click a click),
+        // or if the drag distance is >50% of the total.
+        var isChanged = ngModel.$viewValue ? drag.translate < 0.5 : drag.translate > 0.5;
+        if (isChanged) {
+          applyModelValue(!ngModel.$viewValue);
+        }
+        drag = null;
+      }
+
+      function applyModelValue(newValue) {
+        scope.$apply(function() {
+          ngModel.$setViewValue(newValue);
+          ngModel.$render();
+        });
+      }
+
+    };
+  }
+
+
+}
+MdSwitch.$inject = ["mdCheckboxDirective", "$mdTheming", "$mdUtil", "$document", "$mdConstant", "$parse", "$$rAF", "$mdGesture"];
+
 })();
 
-angular.module("material.core").constant("$MD_THEME_CSS", "md-backdrop.md-opaque.md-THEME_NAME-theme {  background-color: '{{foreground-4-0.5}}'; }md-toolbar .md-button.md-THEME_NAME-theme.md-fab {  background-color: white; }.md-button.md-THEME_NAME-theme {  border-radius: 3px; }  .md-button.md-THEME_NAME-theme:not([disabled]):hover, .md-button.md-THEME_NAME-theme:not([disabled]):focus {    background-color: '{{background-500-0.2}}'; }  .md-button.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}'; }    .md-button.md-THEME_NAME-theme.md-primary.md-raised, .md-button.md-THEME_NAME-theme.md-primary.md-fab {      color: '{{primary-contrast}}';      background-color: '{{primary-color}}'; }      .md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):focus {        background-color: '{{primary-600}}'; }  .md-button.md-THEME_NAME-theme.md-fab {    border-radius: 50%;    background-color: '{{accent-color}}';    color: '{{accent-contrast}}'; }    .md-button.md-THEME_NAME-theme.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-fab:not([disabled]):focus {      background-color: '{{accent-A700}}'; }  .md-button.md-THEME_NAME-theme.md-raised {    color: '{{background-contrast}}';    background-color: '{{background-50}}'; }    .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):focus {      background-color: '{{background-200}}'; }  .md-button.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}'; }    .md-button.md-THEME_NAME-theme.md-warn.md-raised, .md-button.md-THEME_NAME-theme.md-warn.md-fab {      color: '{{warn-contrast}}';      background-color: '{{warn-color}}'; }      .md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):focus {        background-color: '{{warn-700}}'; }  .md-button.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}'; }    .md-button.md-THEME_NAME-theme.md-accent.md-raised, .md-button.md-THEME_NAME-theme.md-accent.md-fab {      color: '{{accent-contrast}}';      background-color: '{{accent-color}}'; }      .md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):focus {        background-color: '{{accent-700}}'; }  .md-button.md-THEME_NAME-theme[disabled], .md-button.md-THEME_NAME-theme.md-raised[disabled], .md-button.md-THEME_NAME-theme.md-fab[disabled] {    color: '{{foreground-3}}';    background-color: transparent;    cursor: not-allowed; }md-card.md-THEME_NAME-theme {  border-radius: 2px; }  md-card.md-THEME_NAME-theme .md-card-image {    border-radius: 2px 2px 0 0; }md-checkbox.md-THEME_NAME-theme .md-ripple {  color: '{{accent-600}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon {  background-color: '{{accent-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-ripple {  color: '{{primary-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon {  background-color: '{{primary-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-ripple {  color: '{{warn-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon {  background-color: '{{warn-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme[disabled] .md-icon {  border-color: '{{foreground-3}}'; }md-checkbox.md-THEME_NAME-theme[disabled].md-checked .md-icon {  background-color: '{{foreground-3}}'; }md-content.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }.as-md-input-container.md-THEME_NAME-theme .md-input {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}';  text-shadow: '{{foreground-shadow}}'; }  .as-md-input-container.md-THEME_NAME-theme .md-input::-webkit-input-placeholder, .as-md-input-container.md-THEME_NAME-theme .md-input::-moz-placeholder, .as-md-input-container.md-THEME_NAME-theme .md-input:-moz-placeholder, .as-md-input-container.md-THEME_NAME-theme .md-input:-ms-input-placeholder {    color: '{{foreground-3}}'; }.as-md-input-container.md-THEME_NAME-theme label, .as-md-input-container.md-THEME_NAME-theme .md-placeholder {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-has-value label {  color: '{{foreground-2}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused .md-input {  border-color: '{{primary-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused label {  color: '{{primary-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent .md-input {  border-color: '{{accent-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent label {  color: '{{accent-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn .md-input {  border-color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn label {  color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme.md-input-invalid .md-input {  border-color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme.md-input-invalid label {  color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme.md-input-invalid ng-message, .as-md-input-container.md-THEME_NAME-theme.md-input-invalid data-ng-message, .as-md-input-container.md-THEME_NAME-theme.md-input-invalid x-ng-message, .as-md-input-container.md-THEME_NAME-theme.md-input-invalid [ng-message], .as-md-input-container.md-THEME_NAME-theme.md-input-invalid [data-ng-message], .as-md-input-container.md-THEME_NAME-theme.md-input-invalid [x-ng-message], .as-md-input-container.md-THEME_NAME-theme.md-input-invalid .md-char-counter {  color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme .md-input[disabled] {  border-bottom-color: transparent;  color: '{{foreground-3}}';  background-image: linear-gradient(to right, '{{foreground-4}}' 0%, '{{foreground-4}}' 33%, transparent 0%); }md-divider.md-THEME_NAME-theme {  border-top-color: '{{foreground-4}}'; }md-input-container.md-THEME_NAME-theme .md-input, md-input-container.md-THEME_NAME-theme .as-md-input {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}';  text-shadow: '{{foreground-shadow}}'; }  md-input-container.md-THEME_NAME-theme .md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-ms-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme label, md-input-container.md-THEME_NAME-theme .md-placeholder {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-has-value label {  color: '{{foreground-2}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused .md-input {  border-color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused label {  color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent .md-input {  border-color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn .md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid .md-input, md-input-container.md-THEME_NAME-theme.md-input-invalid .as-md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid data-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid x-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid [ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [data-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [x-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid .md-char-counter {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme .md-input[disabled], md-input-container.md-THEME_NAME-theme .as-md-input[disabled] {  border-bottom-color: transparent;  color: '{{foreground-3}}';  background-image: linear-gradient(to right, '{{foreground-4}}' 0%, '{{foreground-4}}' 33%, transparent 0%); }.list-subheader {  color: '{{foreground-2}}'; }.list-divider {  background-color: '{{foreground-4}}'; }.list-content-tile span.second {  color: '{{foreground-2}}'; }.list-row--has-separator:after {  border-color: '{{foreground-4}}'; }md-progress-circular.md-THEME_NAME-theme {  background-color: transparent; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-gap {    border-top-color: '{{primary-color}}';    border-bottom-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-top-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-right-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle {    border-left-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-gap {    border-top-color: '{{warn-color}}';    border-bottom-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-top-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-right-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle {    border-left-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-gap {    border-top-color: '{{accent-color}}';    border-bottom-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-top-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-right-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle {    border-left-color: '{{accent-color}}'; }md-progress-linear.md-THEME_NAME-theme .md-container {  background-color: '{{primary-100}}'; }md-progress-linear.md-THEME_NAME-theme .md-bar {  background-color: '{{primary-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-container {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-bar {  background-color: '{{warn-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-container {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-bar {  background-color: '{{accent-color}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-bar1 {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-dashed:before {  background: radial-gradient('{{warn-100}}' 0%, '{{warn-100}}' 16%, transparent 42%); }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-bar1 {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-dashed:before {  background: radial-gradient('{{accent-100}}' 0%, '{{accent-100}}' 16%, transparent 42%); }md-radio-button.md-THEME_NAME-theme .md-off {  border-color: '{{foreground-2}}'; }md-radio-button.md-THEME_NAME-theme .md-on {  background-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-off {  border-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-ink-ripple {  color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme .md-container .md-ripple {  color: '{{accent-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-on {  background-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-off {  border-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ink-ripple {  color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-container .md-ripple {  color: '{{primary-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-on {  background-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-off {  border-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-ink-ripple {  color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-container .md-ripple {  color: '{{warn-600}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-off {  border-color: '{{foreground-3}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-on {  border-color: '{{foreground-3}}'; }md-radio-group.md-THEME_NAME-theme:focus:not(:empty) {  border-color: '{{foreground-1}}'; }md-sidenav.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }.md-subheader.md-THEME_NAME-theme {  color: '{{ foreground-2-0.23 }}';  background-color: '{{background-hue-3}}'; }  .md-subheader.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}'; }md-switch.md-THEME_NAME-theme .md-thumb {  background-color: '{{background-50}}'; }md-switch.md-THEME_NAME-theme .md-bar {  background-color: '{{background-500}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-thumb {  background-color: '{{accent-color}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-bar {  background-color: '{{accent-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-thumb {  background-color: '{{primary-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-bar {  background-color: '{{primary-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-thumb {  background-color: '{{warn-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-bar {  background-color: '{{warn-color-0.5}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-thumb {  background-color: '{{background-400}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-bar {  background-color: '{{foreground-4}}'; }md-switch.md-THEME_NAME-theme:focus .md-label:not(:empty) {  border-color: '{{foreground-1}}';  border-style: dotted; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  text-shadow: '{{foreground-shadow}}'; }  md-input-group.md-THEME_NAME-theme input::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme input::-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-ms-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme label {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused input, md-input-group.md-THEME_NAME-theme.md-input-focused textarea {  border-color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused label {  color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent input, md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent textarea {  border-color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-has-value:not(.md-input-focused) label {  color: '{{foreground-2}}'; }md-input-group.md-THEME_NAME-theme .md-input[disabled] {  border-bottom-color: '{{foreground-4}}';  color: '{{foreground-3}}'; }md-toolbar.md-THEME_NAME-theme {  background-color: white; }");
+angular.module("material.core").constant("$MD_THEME_CSS", "md-backdrop.md-opaque.md-THEME_NAME-theme {  background-color: '{{foreground-4-0.5}}'; }md-card.md-THEME_NAME-theme {  border-radius: 2px; }  md-card.md-THEME_NAME-theme .md-card-image {    border-radius: 2px 2px 0 0; }md-checkbox.md-THEME_NAME-theme .md-ripple {  color: '{{accent-600}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon {  background-color: '{{accent-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-ripple {  color: '{{primary-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon {  background-color: '{{primary-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-ripple {  color: '{{warn-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon {  background-color: '{{warn-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme[disabled] .md-icon {  border-color: '{{foreground-3}}'; }md-checkbox.md-THEME_NAME-theme[disabled].md-checked .md-icon {  background-color: '{{foreground-3}}'; }md-content.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }md-toolbar .md-button.md-THEME_NAME-theme.md-fab {  background-color: white; }.md-button.md-THEME_NAME-theme {  border-radius: 3px; }  .md-button.md-THEME_NAME-theme:not([disabled]):hover, .md-button.md-THEME_NAME-theme:not([disabled]):focus {    background-color: '{{background-500-0.2}}'; }  .md-button.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}'; }    .md-button.md-THEME_NAME-theme.md-primary.md-raised, .md-button.md-THEME_NAME-theme.md-primary.md-fab {      color: '{{primary-contrast}}';      background-color: '{{primary-color}}'; }      .md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):focus {        background-color: '{{primary-600}}'; }  .md-button.md-THEME_NAME-theme.md-fab {    border-radius: 50%;    background-color: '{{accent-color}}';    color: '{{accent-contrast}}'; }    .md-button.md-THEME_NAME-theme.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-fab:not([disabled]):focus {      background-color: '{{accent-A700}}'; }  .md-button.md-THEME_NAME-theme.md-raised {    color: '{{background-contrast}}';    background-color: '{{background-50}}'; }    .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):focus {      background-color: '{{background-200}}'; }  .md-button.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}'; }    .md-button.md-THEME_NAME-theme.md-warn.md-raised, .md-button.md-THEME_NAME-theme.md-warn.md-fab {      color: '{{warn-contrast}}';      background-color: '{{warn-color}}'; }      .md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):focus {        background-color: '{{warn-700}}'; }  .md-button.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}'; }    .md-button.md-THEME_NAME-theme.md-accent.md-raised, .md-button.md-THEME_NAME-theme.md-accent.md-fab {      color: '{{accent-contrast}}';      background-color: '{{accent-color}}'; }      .md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):focus {        background-color: '{{accent-700}}'; }  .md-button.md-THEME_NAME-theme[disabled], .md-button.md-THEME_NAME-theme.md-raised[disabled], .md-button.md-THEME_NAME-theme.md-fab[disabled] {    color: '{{foreground-3}}';    background-color: transparent;    cursor: not-allowed; }.as-md-input-container.md-THEME_NAME-theme .md-input {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}';  text-shadow: '{{foreground-shadow}}'; }  .as-md-input-container.md-THEME_NAME-theme .md-input::-webkit-input-placeholder, .as-md-input-container.md-THEME_NAME-theme .md-input::-moz-placeholder, .as-md-input-container.md-THEME_NAME-theme .md-input:-moz-placeholder, .as-md-input-container.md-THEME_NAME-theme .md-input:-ms-input-placeholder {    color: '{{foreground-3}}'; }.as-md-input-container.md-THEME_NAME-theme label, .as-md-input-container.md-THEME_NAME-theme .md-placeholder {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-has-value label {  color: '{{foreground-2}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused .md-input {  border-color: '{{primary-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused label {  color: '{{primary-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent .md-input {  border-color: '{{accent-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent label {  color: '{{accent-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn .md-input {  border-color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn label {  color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme.md-input-invalid .md-input {  border-color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme.md-input-invalid label {  color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme.md-input-invalid ng-message, .as-md-input-container.md-THEME_NAME-theme.md-input-invalid data-ng-message, .as-md-input-container.md-THEME_NAME-theme.md-input-invalid x-ng-message, .as-md-input-container.md-THEME_NAME-theme.md-input-invalid [ng-message], .as-md-input-container.md-THEME_NAME-theme.md-input-invalid [data-ng-message], .as-md-input-container.md-THEME_NAME-theme.md-input-invalid [x-ng-message], .as-md-input-container.md-THEME_NAME-theme.md-input-invalid .md-char-counter {  color: '{{warn-500}}'; }.as-md-input-container.md-THEME_NAME-theme .md-input[disabled] {  border-bottom-color: transparent;  color: '{{foreground-3}}';  background-image: linear-gradient(to right, '{{foreground-4}}' 0%, '{{foreground-4}}' 33%, transparent 0%); }md-divider.md-THEME_NAME-theme {  border-top-color: '{{foreground-4}}'; }md-input-container.md-THEME_NAME-theme .md-input, md-input-container.md-THEME_NAME-theme .as-md-input {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}';  text-shadow: '{{foreground-shadow}}'; }  md-input-container.md-THEME_NAME-theme .md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-ms-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme label, md-input-container.md-THEME_NAME-theme .md-placeholder {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-has-value label {  color: '{{foreground-2}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused .md-input {  border-color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused label {  color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent .md-input {  border-color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn .md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid .md-input, md-input-container.md-THEME_NAME-theme.md-input-invalid .as-md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid data-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid x-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid [ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [data-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [x-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid .md-char-counter {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme .md-input[disabled], md-input-container.md-THEME_NAME-theme .as-md-input[disabled] {  border-bottom-color: transparent;  color: '{{foreground-3}}';  background-image: linear-gradient(to right, '{{foreground-4}}' 0%, '{{foreground-4}}' 33%, transparent 0%); }.list-subheader {  color: '{{foreground-2}}'; }.list-divider {  background-color: '{{foreground-4}}'; }.list-content-tile span.second {  color: '{{foreground-2}}'; }.list-row--has-separator:after {  border-color: '{{foreground-4}}'; }md-progress-circular.md-THEME_NAME-theme {  background-color: transparent; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-gap {    border-top-color: '{{primary-color}}';    border-bottom-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-top-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-right-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle {    border-left-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-gap {    border-top-color: '{{warn-color}}';    border-bottom-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-top-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-right-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle {    border-left-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-gap {    border-top-color: '{{accent-color}}';    border-bottom-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-top-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-right-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle {    border-left-color: '{{accent-color}}'; }md-sidenav.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }md-radio-button.md-THEME_NAME-theme .md-off {  border-color: '{{foreground-2}}'; }md-radio-button.md-THEME_NAME-theme .md-on {  background-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-off {  border-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-ink-ripple {  color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme .md-container .md-ripple {  color: '{{accent-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-on {  background-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-off {  border-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ink-ripple {  color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-container .md-ripple {  color: '{{primary-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-on {  background-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-off {  border-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-ink-ripple {  color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-container .md-ripple {  color: '{{warn-600}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-off {  border-color: '{{foreground-3}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-on {  border-color: '{{foreground-3}}'; }md-radio-group.md-THEME_NAME-theme:focus:not(:empty) {  border-color: '{{foreground-1}}'; }md-progress-linear.md-THEME_NAME-theme .md-container {  background-color: '{{primary-100}}'; }md-progress-linear.md-THEME_NAME-theme .md-bar {  background-color: '{{primary-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-container {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-bar {  background-color: '{{warn-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-container {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-bar {  background-color: '{{accent-color}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-bar1 {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-dashed:before {  background: radial-gradient('{{warn-100}}' 0%, '{{warn-100}}' 16%, transparent 42%); }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-bar1 {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-dashed:before {  background: radial-gradient('{{accent-100}}' 0%, '{{accent-100}}' 16%, transparent 42%); }.md-subheader.md-THEME_NAME-theme {  color: '{{ foreground-2-0.23 }}';  background-color: '{{background-hue-3}}'; }  .md-subheader.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}'; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  text-shadow: '{{foreground-shadow}}'; }  md-input-group.md-THEME_NAME-theme input::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme input::-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-ms-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme label {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused input, md-input-group.md-THEME_NAME-theme.md-input-focused textarea {  border-color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused label {  color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent input, md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent textarea {  border-color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-has-value:not(.md-input-focused) label {  color: '{{foreground-2}}'; }md-input-group.md-THEME_NAME-theme .md-input[disabled] {  border-bottom-color: '{{foreground-4}}';  color: '{{foreground-3}}'; }md-toolbar.md-THEME_NAME-theme {  background-color: white; }md-switch.md-THEME_NAME-theme .md-thumb {  background-color: '{{background-50}}'; }md-switch.md-THEME_NAME-theme .md-bar {  background-color: '{{background-500}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-thumb {  background-color: '{{accent-color}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-bar {  background-color: '{{accent-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-thumb {  background-color: '{{primary-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-bar {  background-color: '{{primary-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-thumb {  background-color: '{{warn-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-bar {  background-color: '{{warn-color-0.5}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-thumb {  background-color: '{{background-400}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-bar {  background-color: '{{foreground-4}}'; }md-switch.md-THEME_NAME-theme:focus .md-label:not(:empty) {  border-color: '{{foreground-1}}';  border-style: dotted; }");

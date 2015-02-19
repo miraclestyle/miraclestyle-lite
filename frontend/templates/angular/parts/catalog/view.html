@@ -4,8 +4,8 @@
   <div class="modal-body fixed-height no-footer">
   <div class="clearfix">
  
-      <div md-ink-ripple md-ink-ripple-ignore="notRipplable" ng-click="toggleMenu($event)" class="image-slider-outer">
-         <div image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
+      <div ng-click="toggleMenu($event)" class="image-slider-outer">
+         <div md-ink-ripple-fit md-ink-ripple-ignore="notRipplable" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img slider-image="image" /> 
                <div ng-repeat="pricetag in image.pricetags track by $index"
@@ -13,7 +13,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button md-themable type="button" class="button-transparent catalog-pricetag-link" loading ng-click="viewProduct(image, pricetag)">
+                         <button md-ink-ripple md-themable type="button" class="button-transparent catalog-pricetag-link" loading ng-click="viewProduct(image, pricetag)">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>

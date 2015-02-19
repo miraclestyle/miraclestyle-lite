@@ -1,30 +1,22 @@
-.panel-body  .clearfix.grid-wrapper.grid-no-items {
-  border-bottom: none;
-}
-/* validation colors */
-
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
-  border-color:red; /* this for now*/
+    border-color: red;
 }
-
 .fake-button {
-  position: relative;
-  overflow: hidden;
+    position: relative;
+    overflow: hidden;
 }
-
 .fake-button input.upload {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin: 0;
-  padding: 0;
-  font-size: 27px;
-  cursor: pointer;
-  opacity: 0;
-  filter: alpha(opacity=0);
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 27px;
+    cursor: pointer;
+    opacity: 0;
+    filter: alpha(opacity=0);
 }
-
 .structured-field-actions {
-  padding-left:16px;
-  padding-right:16px;
+    padding-left: 16px;
+    padding-right: 16px;
 }
