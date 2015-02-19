@@ -13,7 +13,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button type="button" class="button-transparent catalog-pricetag-link" loading ng-click="viewProduct(image, pricetag)">
+                         <button md-themable type="button" class="button-transparent catalog-pricetag-link" loading ng-click="viewProduct(image, pricetag)">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>
@@ -24,7 +24,7 @@
 
 
         <div class="catalog-closer">
-           <button md-ink-ripple loading type="button" class="button-transparent catalog-close-button" ng-click="close()">
+           <button md-ink-ripple md-themable  loading type="button" class="button-transparent catalog-close-button" ng-click="close()">
              <icon type="navigation.close"></icon>
            </button>
         </div>

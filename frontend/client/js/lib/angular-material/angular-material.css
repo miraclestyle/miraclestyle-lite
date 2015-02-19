@@ -3027,13 +3027,14 @@ md-content {
   padding: 16px; }
 
 .simple-dialog-container {
+  /*
   display: block;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 80; }
+  z-index: $z-index-dialog;*/ }
 
 md-backdrop {
   z-index: 50; }

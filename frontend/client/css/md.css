@@ -382,29 +382,47 @@ md-sidenav.product-sidenav {
     width: 400px;
     min-width: 400px;
 }
-
 input.product-quantity-input {
     order: 4;
     text-align: center;
 }
-
 .product-quantity-button-deincrease {
     order: 3;
     margin-right: 20px;
     max-width: 64px;
 }
-
 .product-quantity-button-increase {
     order: 5;
     margin-left: 20px;
     max-width: 64px;
 }
-
 .product-quantity-button {
     min-height: 36px;
 }
-
 .product-quantity-button .material-icon {
-    display:inline-block;
+    display: inline-block;
     vertical-align: middle;
+}
+.product-quantity-control {
+    order: 2;
+    margin-top: 10px;
+}
+.product-quantity-input-wrapper {
+    order: 4;
+}
+.product-quantity-input-wrapper input {
+    width: 100%;
+}
+.product-quantifier md-input-container label {
+    transform: none;
+    padding: 0px;
+    -webkit-transform: none;
+    -moz-transform: none;
+    -ms-transform: none;
+}
+.button-set button:first-child {
+    margin-left: 0px;
+}
+.product-name {
+    margin: 0px;
 }

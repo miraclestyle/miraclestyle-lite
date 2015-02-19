@@ -1336,49 +1336,45 @@
                                         var target = element.parents('md-input-container:first');
                                         options.resize = function () {
                                             var targetPosition = target.position(),
-                                                elementOffset = element.offset(),
+                                                targetPaddingLeft = parseInt(target.css('paddingLeft'), 10),
                                                 parent = options.parent,
+                                                parentHeight = options.parent.height(),
+                                                parentPosition = parent.position(),
                                                 paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
                                                 paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
-                                                parentHeight = options.parent.height(),
                                                 scrollElement = dialogEl.find('md-content'),
-                                                top = targetPosition.top + paddingTop,
-                                                activeOffset,
+                                                maxTop = paddingTop,
                                                 active = dialogEl.find('.list-row--is-active'),
                                                 newTop,
                                                 totalHeight;
-                                            if (active.length) {
-                                                activeOffset = active.offset();
-                                            }
-                                            targetPosition.left += parseInt(target.css('paddingLeft'), 10);
+                                            targetPosition.left += targetPaddingLeft;
                                             dialogEl.width(target.width());
                                             if ((dialogEl.height() > parentHeight)
                                                     || (scrollElement.prop('scrollHeight') > parentHeight)) {
                                                 dialogEl.css({
-                                                    top: top,
+                                                    top: maxTop,
                                                     left: targetPosition.left
                                                 }).height(options.parent.height() - (paddingBottom + paddingTop));
                                             } else {
                                                 dialogEl.css(targetPosition);
-                                                activeOffset = active.offset();
                                                 if (active.length) {
                                                     // position the selection at center of active item
-                                                    newTop = (targetPosition.top - (activeOffset.top - elementOffset.top)) - ((active.outerHeight() - element.outerHeight()));
+                                                    newTop = targetPosition.top - (active.position().top - element.height() / 3);
                                                 } else {
                                                     // position the div at the center if no item is selected
-                                                    newTop = (elementOffset.top + element.height()) - (dialogEl.height() / 2) - parseInt(scrollElement.css('paddingTop'), 10) - 3;
+                                                    newTop = targetPosition.top - (dialogEl.height() / 2);
                                                 }
-                                                if (newTop > top) {
-                                                    totalHeight = newTop + dialogEl.height();
+                                                if (newTop > maxTop) { // if newTop is larger then maxTop, attempt to check if that calculated top is possible
+                                                    totalHeight = newTop + dialogEl.height(); // if the top + dialogEl exceedes parentHeight
                                                     if (totalHeight > parentHeight) {
-                                                        newTop = newTop - (totalHeight - parentHeight);
-                                                        if (newTop < top) {
-                                                            newTop = top;
+                                                        newTop = newTop - (totalHeight - parentHeight); // new top is calculated by substracting the extra space from the entire space
+                                                        if (newTop < maxTop) {
+                                                            newTop = maxTop;
                                                         }
                                                     }
                                                     dialogEl.css('top', newTop);
                                                 } else {
-                                                    dialogEl.css('top', top);
+                                                    dialogEl.css('top', maxTop);
                                                 }
                                             }
                                             if (active.length && !select.multiple) {
@@ -1386,7 +1382,9 @@
                                             }
                                         };
                                         options.resize();
-                                        $(window).on('resize', options.resize);
+                                        $(window).on('resize', function () {
+                                            setTimeout(options.resize, 100);
+                                        });
 
                                         dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
                                             Math.min(target.width() / dialogEl.width(), 1.0) + ',' +

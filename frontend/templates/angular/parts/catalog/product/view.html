@@ -27,10 +27,10 @@
                             <div class="list">
                                 <div ng-include="'catalog/quick_info.html'"></div>
                             </div>
-                            <div class="product-category">{{product._category.name}}</div>
-                            <h1 class="product-name">{{product.name}}</h1>
-                            <div class="product-code">{{product.code}}</div>
-                            <div class="product-description">{{product.description}}</div>
+                            <div class="product-category padding-sides-16">{{product._category.name}}</div>
+                            <h1 class="product-name padding-top-sides-16">{{product.name}}</h1>
+                            <div class="product-code padding-top-sides-16">{{product.code}}</div>
+                            <div class="product-description padding-bottom-sides-16">{{product.description}}</div>
                             <div ng-if="product.contents.length" class="product-contents">
                                 <div class="list">
                                     <div ng-repeat="content in product.contents track by content.key"
@@ -41,34 +41,40 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="product-price">
+                            <div class="product-share">
+                                <div class="list">
+                                    <div class="list-divider margin-0"></div>
+                                    <list-button ng-click="share()" loading>Share</list-button>
+                                    <div class="list-divider margin-0"></div>
+                                </div>
+                            </div>
+                            <div class="product-price padding-top-sides-16">
                                 {{product.unit_price|formatCurrency:catalog._seller._currency}} ({{catalog._seller._currency.code}})
                             </div>
-                            <div class="product-availability">{{product.availability}}</div>
+                            <div class="product-availability padding-bottom-sides-16">{{product.availability}}</div>
                             <div class="product-variant-selection" ng-if="variantSelection.length">
                                 <div form-builder="variantSelection"></div>
                             </div>
-                            <div class="form-control">
-                                <label class="form-label">
-                                  Quantity ({{product._uom.name}})
-                                </label>
-                                <div class="form-input">
-                                  <md-input-container layout="row">
-                                      <md-button flex ng-click="decreaseQuantity()" loading="!canAddToCart" class="md-raised product-quantity-button product-quantity-button-deincrease">
-                                        <icon type="content.remove"></icon>
-                                      </md-button>
-                                        <input class="text-input product-quantity-input" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity"/>
-                                      <md-button flex ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="md-raised product-quantity-button product-quantity-button-increase">
-                                         <icon type="content.add"></icon>
-                                      </md-button>
+                            <div class="product-quantifier">
+                                  <md-input-container>
+                                      <label>
+                                       Quantity ({{product._uom.name}})
+                                      </label>
+                                      <div class="product-quantity-control" layout="row">
+                                          <md-button flex ng-click="decreaseQuantity()" loading="!canAddToCart" class="md-raised product-quantity-button product-quantity-button-deincrease">
+                                            <icon type="content.remove"></icon>
+                                          </md-button>
+                                            <div class="product-quantity-input-wrapper" flex>
+                                                <input class="text-input product-quantity-input" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity"/>
+                                            </div>
+                                          <md-button flex ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="md-raised product-quantity-button product-quantity-button-increase">
+                                             <icon type="content.add"></icon>
+                                          </md-button>
+                                      </div>
                                   </md-input-container>
-                                </div>
                             </div>
 
-                             <div class="product-actions button-set padding-bottom-sides-16">
-                               <md-button type="button" ng-click="share()" loading class="md-raised">
-                                Share
-                               </md-button>
+                             <div class="product-actions padding-bottom-sides-16">
                                <md-button type="button" ng-click="addToCart()" loading="!canAddToCart || disableUpdateCart" class="md-raised">
                                 <span ng-show="hasThisProduct">Update Cart</span>
                                 <span ng-show="!hasThisProduct">Add To Cart</span>

@@ -4416,6 +4416,8 @@ function iosScrollFix(node) {
                     $animate.enter(options.backdrop, options.parent);
                 }
 
+                dialogEl.css('z-index', options.zIndex + 1);
+
                 return dialogPopIn(element, options)
                     .then(function () {
                         if (options.escapeToClose) {
@@ -4432,11 +4434,11 @@ function iosScrollFix(node) {
                         if (options.clickOutsideToClose) {
                             options.dialogClickOutsideCallback = function (e) {
                                 // Only close if we click the flex container outside the backdrop
-                                if (e.target === element[0]) {
+                                if (e.target === options.backdrop[0]) {
                                     $timeout($simpleDialog.cancel);
                                 }
                             };
-                            element.on('click', options.dialogClickOutsideCallback); // @todo bug on mobile, needs to be placed after the dialog really appears
+                            options.backdrop.on('click', options.dialogClickOutsideCallback);
                         }
                         closeButton.focus();
 
@@ -4458,7 +4460,9 @@ function iosScrollFix(node) {
 
             // On remove function for all dialogs
             function onRemove(scope, element, options) {
-
+                if (options.clickOutsideToClose && options.backdrop) {
+                    options.backdrop.off('click', options.dialogClickOutsideCallback);
+                }
                 if (options.backdrop) {
                     $animate.leave(options.backdrop);
                 }
@@ -4469,9 +4473,6 @@ function iosScrollFix(node) {
                 }
                 if (options.escapeToClose) {
                     mdContextualMonitor.dequeue(options.rootElementKeyupCallback);
-                }
-                if (options.clickOutsideToClose) {
-                    element.off('click', options.dialogClickOutsideCallback);
                 }
                 return dialogPopOut(element, options).then(function() {
                     options.scope.$destroy();
