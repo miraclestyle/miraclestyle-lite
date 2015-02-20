@@ -4147,12 +4147,6 @@ function iosScrollFix(node) {
             restrict: 'E',
             link: function(scope, element, attr) {
                 $mdTheming(element);
-                $$rAF(function() {
-                    var content = element[0].querySelector('md-content');
-                    if (content && content.scrollHeight > content.clientHeight) {
-                        element.addClass('md-content-overflow');
-                    }
-                });
             }
         };
     }
@@ -4437,7 +4431,7 @@ function iosScrollFix(node) {
                 if (options.hasBackdrop) {
                     options.backdrop = angular.element('<md-backdrop class="simple-dialog-backdrop" style="z-index: ' + options.zIndex + '">');
                     $mdTheming.inherit(options.backdrop, options.parent);
-                    $animate.enter(options.backdrop, options.parent);
+                    $animate.enter(options.backdrop, (options.parent.is('body') ? options.parent : options.parent.parent()));
                 }
 
                 dialogEl.css('z-index', options.zIndex + 1);

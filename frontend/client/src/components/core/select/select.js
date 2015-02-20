@@ -194,6 +194,7 @@
                                                 parent = options.parent,
                                                 parentHeight = options.parent.height(),
                                                 parentPosition = parent.position(),
+                                                parentScrollTop = parent.scrollTop(),
                                                 paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
                                                 paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
                                                 scrollElement = dialogEl.find('md-content'),
@@ -202,6 +203,9 @@
                                                 newTop,
                                                 totalHeight;
                                             targetPosition.left += targetPaddingLeft;
+                                            if (parentScrollTop > 0) {
+                                                maxTop = parentScrollTop + paddingTop;
+                                            }
                                             dialogEl.width(target.width());
                                             if ((dialogEl.height() > parentHeight)
                                                     || (scrollElement.prop('scrollHeight') > parentHeight)) {
@@ -220,8 +224,8 @@
                                                 }
                                                 if (newTop > maxTop) { // if newTop is larger then maxTop, attempt to check if that calculated top is possible
                                                     totalHeight = newTop + dialogEl.height(); // if the top + dialogEl exceedes parentHeight
-                                                    if (totalHeight > parentHeight) {
-                                                        newTop = newTop - (totalHeight - parentHeight); // new top is calculated by substracting the extra space from the entire space
+                                                    if (totalHeight > (parentHeight + parentScrollTop)) {
+                                                        newTop = newTop - (totalHeight - (parentHeight + parentScrollTop)); // new top is calculated by substracting the extra space from the entire space
                                                         if (newTop < maxTop) {
                                                             newTop = maxTop;
                                                         }
