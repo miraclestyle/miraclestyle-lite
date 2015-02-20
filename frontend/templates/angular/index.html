@@ -17,12 +17,15 @@
     <md-sidenav md-swipe-left="closeMenu()" layout="column" class="site-sidenav md-sidenav-left md-whiteframe-z2 md-closed" md-component-id="left">
         <md-content>
             <div class="bar-logo">
-                <img src="/client/dist/static/logo_480_cut.png" />
+                <img src="/client/dist/static/logo_240.png" />
             </div>
             <div class="list">
+              <div>
+                <div class="list-divider"></div>
                 <div class="list-subheader">Explore</div>
                 <sidenav-item ui-sref="collections">Collections</sidenav-item>
                 <sidenav-item ui-sref="home">All</sidenav-item>
+              </div>
 
                 <div ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
                     <div class="list-divider"></div>
@@ -49,7 +52,7 @@
 
                 <div ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
                     <div class="list-divider"></div>
-                    <div class="list-subheader">Login</div>
+                    <div class="list-subheader">Account</div>
                     <sidenav-item ng-click="login(1)">Login with Google</sidenav-item>
                 </div>
 
@@ -59,6 +62,7 @@
                     <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
                 </div>
 
+              <div>
                 <div class="list-divider"></div>
                 <div class="list-subheader">Support</div>
                 <sidenav-item ui-sref="about">About</sidenav-item>
@@ -66,6 +70,7 @@
                 <sidenav-item ui-sref="terms">Privacy &amp; Terms</sidenav-item>
                 <sidenav-item ui-sref="trademark">Copyright &amp; Trademark</sidenav-item>
                 <sidenav-item ui-sref="support">Support</sidenav-item>
+              </div>
             </div>
         </md-content>
     </md-sidenav>
@@ -81,7 +86,7 @@
                     </div>
                     <span flex>
                         <span class="logo">
-                          <img src="/client/dist/static/logo_480_cut.png" />
+                          <img src="/client/dist/static/logo_240_cut.png" />
                         </span>
                     </span>
                     <div class="md-toolbar-item md-tools" layout="row"></div>
