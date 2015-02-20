@@ -375,7 +375,7 @@
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
 
-                var esc = function (e) {
+                modalInstance.esc = function (e) {
                     if (e) {
                         e.preventDefault();
                     }
@@ -385,13 +385,20 @@
                     });
                     return true;
                 };
-                modalInstance.esc = esc;
-                mdContextualMonitor.queue(esc);
+                mdContextualMonitor.queue(modalInstance.esc);
 
+            };
+
+            $modalStack._dequeue = function (modalWindow, modalInstance) {
+                mdContextualMonitor.dequeue(modalInstance.esc);
+                if (modalWindow.value.modalScope.modalOptions.resize) {
+                    $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
+                }
             };
 
             $modalStack.close = function (modalInstance, result) {
                 var modalWindow = openedWindows.get(modalInstance);
+                $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.resolve(result);
                     removeModalWindow(modalInstance);
@@ -400,12 +407,7 @@
 
             $modalStack.dismiss = function (modalInstance, reason) {
                 var modalWindow = openedWindows.get(modalInstance);
-                if (!modalInstance.withEscape) {
-                    mdContextualMonitor.dequeue(modalInstance.esc);
-                    if (modalWindow.value.modalScope.modalOptions.resize) {
-                        $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
-                    }
-                }
+                $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.reject(reason);
                     removeModalWindow(modalInstance);
