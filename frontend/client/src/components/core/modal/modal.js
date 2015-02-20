@@ -96,28 +96,28 @@
                                 iwidth = modal.width(),
                                 iheight = modal.height();
                             scope.modalOptions.resize = function () {
-                                var wwidth = $(window).width(),
-                                    wheight = $(window).height(),
+                                var wwidth = $(window).width() - 40 * 2,
+                                    wheight = $(window).height() - 24 * 2,
                                     maxHeight,
                                     maxWidth,
                                     minWidth = '',
-                                    minHeight = '';
-                                if (iheight >= wheight) {
-                                    maxHeight = wheight - 16 * 2;
+                                    minHeight = '',
+                                    cwidth = modal.width(),
+                                    cheight = modal.height(),
+                                    overHeight = iheight >= wheight,
+                                    overWidth = iwidth >= wwidth;
+                                if (overHeight || (cheight < wheight && overHeight)) {
+                                    maxHeight = wheight;
                                 } else {
                                     maxHeight = '';
-                                    minHeight = iheight;
                                 }
-                                if (iwidth >= wwidth) {
-                                    maxWidth = wwidth - 16 * 2;
+                                if (overWidth || (cwidth < wwidth && overWidth)) {
+                                    maxWidth = wwidth;
                                 } else {
                                     maxWidth = '';
-                                    minWidth = iwidth;
                                 }
                                 modal.css('max-height', maxHeight);
                                 modal.css('max-width', maxWidth);
-                                modal.css('min-height', minHeight);
-                                modal.css('min-width', minWidth);
                             };
                             scope.modalOptions.resize();
                             $(window).on('resize', scope.modalOptions.resize);
@@ -561,7 +561,7 @@
                         time = setTimeout(function () {
                             var modal = $(element).parents('.modal:first'),
                                 modalDialog = modal.find('.modal-dialog:first'),
-                                height = (modal.hasClass('modal-medium') ? modalDialog.height() : $(window).height());
+                                height = (modal.hasClass('modal-medium') ? (parseInt((modalDialog.css('max-height').indexOf('%') === -1 ? modalDialog.css('max-height') : 0), 10) || modalDialog.height()) : $(window).height());
                             modalDialog.find('.fixed-height, .min-height, .max-height').each(function () {
                                 var newHeight = height,
                                     footer = modalDialog.find('.md-actions'),

@@ -193,7 +193,6 @@
                                                 targetPaddingLeft = parseInt(target.css('paddingLeft'), 10),
                                                 parent = options.parent,
                                                 parentHeight = options.parent.height(),
-                                                parentPosition = parent.position(),
                                                 parentScrollTop = parent.scrollTop(),
                                                 paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
                                                 paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
@@ -217,10 +216,10 @@
                                                 dialogEl.css(targetPosition);
                                                 if (active.length) {
                                                     // position the selection at center of active item
-                                                    newTop = targetPosition.top - (active.position().top - element.height() / 3);
+                                                    newTop = (targetPosition.top + parentScrollTop) - (active.position().top + (element.height() / 4)) + paddingTop;
                                                 } else {
                                                     // position the div at the center if no item is selected
-                                                    newTop = targetPosition.top - (dialogEl.height() / 2);
+                                                    newTop = (targetPosition.top + parentScrollTop) - (dialogEl.height() / 2) + paddingTop;
                                                 }
                                                 if (newTop > maxTop) { // if newTop is larger then maxTop, attempt to check if that calculated top is possible
                                                     totalHeight = newTop + dialogEl.height(); // if the top + dialogEl exceedes parentHeight
