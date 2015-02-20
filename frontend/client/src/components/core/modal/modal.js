@@ -172,7 +172,7 @@
 
                         setTimeout(function () {
                             $$rAF(cb);
-                        }, 100);
+                        }, 1);
 
                         $(window).triggerHandler('modal.open');
 
