@@ -170,7 +170,9 @@
                             }
                         });
 
-                        $$rAF(cb);
+                        setTimeout(function () {
+                            $$rAF(cb);
+                        }, 100);
 
                         $(window).triggerHandler('modal.open');
 
@@ -330,8 +332,7 @@
                 openedWindows.add(modalInstance, {
                     deferred: modal.deferred,
                     modalScope: modal.scope,
-                    backdrop: modal.backdrop,
-                    keyboard: modal.keyboard
+                    backdrop: modal.backdrop
                 });
 
                 modal.scope.modalOptions = {
@@ -374,18 +375,18 @@
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
 
-                if (modal.keyboard) {
-                    var esc = function (e) {
+                var esc = function (e) {
+                    if (e) {
                         e.preventDefault();
-                        $rootScope.$apply(function () {
-                            modalInstance.withEscape = true;
-                            $modalStack.dismiss(modalInstance, 'escape key press');
-                        });
-                        return true;
-                    };
-                    modalInstance.esc = esc;
-                    mdContextualMonitor.queue(esc);
-                }
+                    }
+                    $rootScope.$apply(function () {
+                        modalInstance.withEscape = true;
+                        $modalStack.dismiss(modalInstance, 'escape key press');
+                    });
+                    return true;
+                };
+                modalInstance.esc = esc;
+                mdContextualMonitor.queue(esc);
 
             };
 
@@ -432,7 +433,6 @@
         var $modalProvider = {
             options: {
                 backdrop: true, //can be also false or 'static'
-                keyboard: true,
                 inDirection: 'right',
                 outDirection: 'right',
                 fullScreen: true
@@ -519,7 +519,6 @@
                                 deferred: modalResultDeferred,
                                 content: tplAndVars[0],
                                 backdrop: modalOptions.backdrop,
-                                keyboard: modalOptions.keyboard,
                                 backdropClass: modalOptions.backdropClass,
                                 windowClass: modalOptions.windowClass,
                                 windowTemplateUrl: modalOptions.windowTemplateUrl,

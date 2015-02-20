@@ -271,3 +271,11 @@ pre {
     text-align: left;
     line-height: 1;
 }
+
+.ellipsis-text {
+    width: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display:block;
+}

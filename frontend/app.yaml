@@ -13,13 +13,13 @@ handlers:
   application_readable: true
 
 - url: /favicon\.ico
-  static_files: client/static/favicon.ico
-  upload: client/static/favicon.ico
+  static_files: client/dist/favicon.ico
+  upload: client/dist/favicon.ico
   expiration: "364d 5h"
 
 - url: /robots\.txt
-  static_files: client/static/robots.txt
-  upload: client/static/robots.txt
+  static_files: client/dist/robots.txt
+  upload: client/dist/robots.txt
   expiration: "364d 5h"
 
 - url: /.*

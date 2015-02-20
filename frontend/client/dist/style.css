@@ -3060,7 +3060,7 @@ simple-dialog {
     opacity: 1;
     transition: -webkit-transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transition: transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    transition-duration: 400ms;
+    transition-duration: 200ms;
     background: white; }
     simple-dialog.transition-in .simple-dialog-option {
       opacity: 1; }
@@ -3068,8 +3068,6 @@ simple-dialog {
     opacity: 1; }
   simple-dialog.transition-out {
     opacity: 0;
-    -webkit-transform: translate3d(0, -6px, 0);
-            transform: translate3d(0, -6px, 0);
     transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
     transition-duration: 250ms; }
   simple-dialog md-content {
@@ -6459,6 +6457,14 @@ pre {
     background: none;
     text-align: left;
     line-height: 1;
+}
+
+.ellipsis-text {
+    width: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display:block;
 }.modal-open {
   overflow: hidden;
 }
