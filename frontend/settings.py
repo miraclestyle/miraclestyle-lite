@@ -12,7 +12,7 @@ import shutil
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
-CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src', 'components')
+CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src')
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
@@ -79,27 +79,27 @@ ANGULAR_JAVASCRIPT_PATHS = []
 ANGULAR_ACTIVE_COMPONENTS = [
     "core/kernel/boot",
     "core/kernel",
-    "core/material_design/backdrop",
-    "core/material_design/button",
-    "core/material_design/card",
-    "core/material_design/checkbox",
-    "core/material_design/content",
-    "core/material_design/core",
-    "core/material_design/divider",
-    "core/material_design/input",
-    "core/material_design/progressCircular",
-    "core/material_design/progressLinear",
-    "core/material_design/radioButton",
-    "core/material_design/sidenav",
-    "core/material_design/simpledialog",
-    "core/material_design/list",
-    "core/material_design/sticky",
-    "core/material_design/subheader",
-    "core/material_design/swipe",
-    "core/material_design/switch",
-    "core/material_design/textField", 
-    "core/material_design/toolbar", 
-    "core/material_design/whiteframe",
+    "core/backdrop",
+    "core/button",
+    "core/card",
+    "core/checkbox",
+    "core/content",
+    "core/util",
+    "core/divider",
+    "core/input",
+    "core/progressCircular",
+    "core/progressLinear",
+    "core/radioButton",
+    "core/sidenav",
+    "core/simpledialog",
+    "core/list",
+    "core/sticky",
+    "core/subheader",
+    "core/swipe",
+    "core/switch",
+    "core/textField", 
+    "core/toolbar", 
+    "core/whiteframe",
     "core/accordion", 
     "core/action", 
     "core/cache", 
@@ -196,16 +196,15 @@ def build(templates=True, statics=True, js_and_css=True, write=False, material_c
       buff[p] = u''
   if material_css:
     default_theme_js_buff = u''
-    default_theme_js = os.path.join(CLIENT_COMPONENTS_DIR, 'core', 'material_design', 'core', 'default-theme.js')
+    default_theme_js = os.path.join(CLIENT_COMPONENTS_DIR, 'core', 'util', 'default-theme.js')
     for c in ANGULAR_ACTIVE_COMPONENTS:
-      if '/material_design/' in c:
-        name = '%s-default-theme.css' % c.split('/')[-1]
-        try:
-          with read(os.path.join(CLIENT_COMPONENTS_DIR, c, name)) as f:
-            default_theme_js_buff += f.read().replace('\n', '').replace('"', '\"')
-          out('Material design css theme: %s' % name)
-        except:
-          pass
+      name = '%s-default-theme.css' % c.split('/')[-1]
+      try:
+        with read(os.path.join(CLIENT_COMPONENTS_DIR, c, name)) as f:
+          default_theme_js_buff += f.read().replace('\n', '').replace('"', '\"')
+        out('Material design css theme: %s' % name)
+      except:
+        pass
     default_theme_js_buff = u"""angular.module("material.core").constant("$MD_THEME_CSS", "%s");""" % default_theme_js_buff
     buff['default-theme.js'] = default_theme_js_buff
   if js_and_css:
