@@ -855,7 +855,413 @@ $(function () {
  * @license MIT
  * v0.7.1
  */
-angular.module('ngMaterial', ["ng","ngAnimate","ngAria","material.core","material.core.theming.palette","material.core.theming","material.components.backdrop","material.components.button","material.components.card","material.components.checkbox","material.components.content","material.components.simpledialog","material.components.divider","material.components.input","material.components.progressCircular","material.components.progressLinear","material.components.radioButton","material.components.sidenav","material.components.sticky","material.components.subheader","material.components.swipe","material.components.switch","material.components.textField","material.components.toolbar","material.components.whiteframe"]);
+(function() {
+'use strict';
+
+/*
+ * @ngdoc module
+ * @name material.components.backdrop
+ * @description Backdrop
+ */
+
+/**
+ * @ngdoc directive
+ * @name mdBackdrop
+ * @module material.components.backdrop
+ *
+ * @restrict E
+ *
+ * @description
+ * `<md-backdrop>` is a backdrop element used by other coponents, such as dialog and bottom sheet.
+ * Apply class `opaque` to make the backdrop use the theme backdrop color.
+ *
+ */
+
+angular.module('material.components.backdrop', [
+  'material.core'
+])
+  .directive('mdBackdrop', BackdropDirective);
+
+function BackdropDirective($mdTheming) {
+  return $mdTheming;
+}
+BackdropDirective.$inject = ["$mdTheming"];
+})();
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
+/**
+ * @ngdoc module
+ * @name material.components.button
+ * @description
+ *
+ * Button
+ */
+angular.module('material.components.button', [
+  'material.core'
+])
+  .directive('mdButton', MdButtonDirective);
+
+/**
+ * @ngdoc directive
+ * @name mdButton
+ * @module material.components.button
+ *
+ * @restrict E
+ *
+ * @description
+ * `<md-button>` is a button directive with optional ink ripples (default enabled).
+ *
+ * If you supply a `href` or `ng-href` attribute, it will become an `<a>` element. Otherwise, it will
+ * become a `<button>` element.
+ *
+ * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
+ * the FAB button is in the accent color by default. The primary color palette may be used with
+ * the `md-primary` class.
+ *
+ * @param {boolean=} md-no-ink If present, disable ripple ink effects.
+ * @param {expression=} ng-disabled En/Disable based on the expression
+ * @param {string=} md-ripple-size Overrides the default ripple size logic. Options: `full`, `partial`, `auto`
+ * @param {string=} aria-label Adds alternative text to button for accessibility, useful for icon buttons.
+ * If no default text is found, a warning will be logged.
+ *
+ * @usage
+ * <hljs lang="html">
+ *  <md-button>
+ *    Button
+ *  </md-button>
+ *  <md-button href="http://google.com" class="md-button-colored">
+ *    I'm a link
+ *  </md-button>
+ *  <md-button ng-disabled="true" class="md-colored">
+ *    I'm a disabled button
+ *  </md-button>
+ * </hljs>
+ */
+function MdButtonDirective($mdInkRipple, $mdTheming, $mdAria) {
+
+  return {
+    restrict: 'E',
+    replace: true,
+    transclude: true,
+    template: getTemplate,
+    link: postLink
+  };
+
+  function isAnchor(attr) {
+    return angular.isDefined(attr.href) || angular.isDefined(attr.ngHref);
+  }
+  
+  function getTemplate(element, attr) {
+    return isAnchor(attr) ?
+           '<a class="md-button" ng-transclude></a>' :
+           '<button class="md-button" ng-transclude></button>';
+  }
+
+  function postLink(scope, element, attr) {
+    var node = element[0];
+    $mdTheming(element);
+    $mdInkRipple.attachButtonBehavior(scope, element);
+
+    var elementHasText = node.textContent.trim();
+    if (!elementHasText) {
+      $mdAria.expect(element, 'aria-label');
+    }
+
+    // For anchor elements, we have to set tabindex manually when the 
+    // element is disabled
+    if (isAnchor(attr) && angular.isDefined(attr.ngDisabled) ) {
+      scope.$watch(attr.ngDisabled, function(isDisabled) {
+        element.attr('tabindex', isDisabled ? -1 : 0);
+      });
+    }
+  }
+
+}
+MdButtonDirective.$inject = ["$mdInkRipple", "$mdTheming", "$mdAria"];
+})();
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
+/**
+ * @ngdoc module
+ * @name material.components.card
+ *
+ * @description
+ * Card components.
+ */
+angular.module('material.components.card', [
+  'material.core'
+])
+  .directive('mdCard', mdCardDirective);
+
+
+
+/**
+ * @ngdoc directive
+ * @name mdCard
+ * @module material.components.card
+ *
+ * @restrict E
+ *
+ * @description
+ * The `<md-card>` directive is a container element used within `<md-content>` containers.
+ *
+ * Cards have constant width and variable heights; where the maximum height is limited to what can
+ * fit within a single view on a platform, but it can temporarily expand as needed
+ *
+ * @usage
+ * <hljs lang="html">
+ * <md-card>
+ *  <img src="img/washedout.png" class="md-card-image">
+ *  <h2>Paracosm</h2>
+ *  <p>
+ *    The titles of Washed Out's breakthrough song and the first single from Paracosm share the * two most important words in Ernest Greene's musical language: feel it. It's a simple request, as well...
+ *  </p>
+ * </md-card>
+ * </hljs>
+ *
+ */
+function mdCardDirective($mdTheming) {
+  return {
+    restrict: 'E',
+    link: function($scope, $element, $attr) {
+      $mdTheming($element);
+    }
+  };
+}
+mdCardDirective.$inject = ["$mdTheming"];
+})();
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
+/**
+ * @ngdoc module
+ * @name material.components.checkbox
+ * @description Checkbox module!
+ */
+angular.module('material.components.checkbox', [
+  'material.core'
+])
+  .directive('mdCheckbox', MdCheckboxDirective);
+
+/**
+ * @ngdoc directive
+ * @name mdCheckbox
+ * @module material.components.checkbox
+ * @restrict E
+ *
+ * @description
+ * The checkbox directive is used like the normal [angular checkbox](https://docs.angularjs.org/api/ng/input/input%5Bcheckbox%5D).
+ *
+ * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
+ * the checkbox is in the accent color by default. The primary color palette may be used with
+ * the `md-primary` class.
+ *
+ * @param {string} ng-model Assignable angular expression to data-bind to.
+ * @param {string=} name Property name of the form under which the control is published.
+ * @param {expression=} ng-true-value The value to which the expression should be set when selected.
+ * @param {expression=} ng-false-value The value to which the expression should be set when not selected.
+ * @param {string=} ng-change Angular expression to be executed when input changes due to user interaction with the input element.
+ * @param {boolean=} md-no-ink Use of attribute indicates use of ripple ink effects
+ * @param {string=} aria-label Adds label to checkbox for accessibility.
+ * Defaults to checkbox's text. If no default text is found, a warning will be logged.
+ *
+ * @usage
+ * <hljs lang="html">
+ * <md-checkbox ng-model="isChecked" aria-label="Finished?">
+ *   Finished ?
+ * </md-checkbox>
+ *
+ * <md-checkbox md-no-ink ng-model="hasInk" aria-label="No Ink Effects">
+ *   No Ink Effects
+ * </md-checkbox>
+ *
+ * <md-checkbox ng-disabled="true" ng-model="isDisabled" aria-label="Disabled">
+ *   Disabled
+ * </md-checkbox>
+ *
+ * </hljs>
+ *
+ */
+function MdCheckboxDirective(inputDirective, $mdInkRipple, $mdAria, $mdConstant, $mdTheming, $mdUtil) {
+  inputDirective = inputDirective[0];
+  var CHECKED_CSS = 'md-checked';
+
+  return {
+    restrict: 'E',
+    transclude: true,
+    require: '?ngModel',
+    template: 
+      '<div class="md-container" md-ink-ripple md-ink-ripple-checkbox>' +
+        '<div class="md-icon"></div>' +
+      '</div>' +
+      '<div ng-transclude class="md-label"></div>',
+    compile: compile
+  };
+
+  // **********************************************************
+  // Private Methods
+  // **********************************************************
+
+  function compile (tElement, tAttrs) {
+
+    tAttrs.type = 'checkbox';
+    tAttrs.tabIndex = 0;
+    tElement.attr('role', tAttrs.type);
+
+    return function postLink(scope, element, attr, ngModelCtrl) {
+      ngModelCtrl = ngModelCtrl || $mdUtil.fakeNgModel();
+      var checked = false;
+      $mdTheming(element);
+
+      $mdAria.expectWithText(element, 'aria-label');
+
+      // Reuse the original input[type=checkbox] directive from Angular core.
+      // This is a bit hacky as we need our own event listener and own render
+      // function.
+      inputDirective.link.pre(scope, {
+        on: angular.noop,
+        0: {}
+      }, attr, [ngModelCtrl]);
+
+      element.on('click', listener)
+        .on('keypress', keypressHandler);
+      ngModelCtrl.$render = render;
+
+      function keypressHandler(ev) {
+        if(ev.which === $mdConstant.KEY_CODE.SPACE) {
+          ev.preventDefault();
+          listener(ev);
+        }
+      }
+      function listener(ev) {
+        if (element[0].hasAttribute('disabled')) return;
+
+        scope.$apply(function() {
+          checked = !checked;
+          ngModelCtrl.$setViewValue(checked, ev && ev.type);
+          ngModelCtrl.$render();
+        });
+      }
+
+      function render() {
+        checked = ngModelCtrl.$viewValue;
+        if(checked) {
+          element.addClass(CHECKED_CSS);
+        } else {
+          element.removeClass(CHECKED_CSS);
+        }
+      }
+    };
+  }
+}
+MdCheckboxDirective.$inject = ["inputDirective", "$mdInkRipple", "$mdAria", "$mdConstant", "$mdTheming", "$mdUtil"];
+
+})();
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+'use strict';
+
+/**
+ * @ngdoc module
+ * @name material.components.content
+ *
+ * @description
+ * Scrollable content
+ */
+angular.module('material.components.content', [
+  'material.core'
+])
+  .directive('mdContent', mdContentDirective);
+
+/**
+ * @ngdoc directive
+ * @name mdContent
+ * @module material.components.content
+ *
+ * @restrict E
+ *
+ * @description
+ * The `<md-content>` directive is a container element useful for scrollable content
+ *
+ * ### Restrictions
+ *
+ * - Add the `md-padding` class to make the content padded.
+ *
+ * @usage
+ * <hljs lang="html">
+ *  <md-content class="md-padding">
+ *      Lorem ipsum dolor sit amet, ne quod novum mei.
+ *  </md-content>
+ * </hljs>
+ *
+ */
+
+function mdContentDirective($mdTheming) {
+  return {
+    restrict: 'E',
+    controller: ['$scope', '$element', ContentController],
+    link: function(scope, element, attr) {
+      var node = element[0];
+
+      $mdTheming(element);
+      scope.$broadcast('$mdContentLoaded', element);
+
+      iosScrollFix(element[0]);
+    }
+  };
+
+  function ContentController($scope, $element) {
+    this.$scope = $scope;
+    this.$element = $element;
+  }
+}
+mdContentDirective.$inject = ["$mdTheming"];
+
+function iosScrollFix(node) {
+  // IOS FIX:
+  // If we scroll where there is no more room for the webview to scroll,
+  // by default the webview itself will scroll up and down, this looks really
+  // bad.  So if we are scrolling to the very top or bottom, add/subtract one
+  angular.element(node).on('$md.pressdown', function(ev) {
+    // Only touch events
+    if (ev.pointer.type !== 't') return;
+    // Don't let a child content's touchstart ruin it for us.
+    if (ev.$materialScrollFixed) return;
+    ev.$materialScrollFixed = true;
+
+    if (node.scrollTop === 0) {
+      node.scrollTop = 1;
+    } else if (node.scrollHeight === node.scrollTop + node.offsetHeight) {
+      node.scrollTop -= 1;
+    }
+  });
+}
+})();
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -918,12 +1324,6 @@ function rAFDecorator( $delegate ) {
 
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -974,12 +1374,6 @@ function MdConstantFactory($$rAF, $sniffer) {
 MdConstantFactory.$inject = ["$$rAF", "$sniffer"];
 
 })();
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function(){
 
   angular
@@ -1208,12 +1602,6 @@ MdConstantFactory.$inject = ["$$rAF", "$sniffer"];
 
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 angular.module('material.core')
 .factory('$mdMedia', mdMediaFactory);
 
@@ -1267,12 +1655,6 @@ function mdMediaFactory($mdConstant, $rootScope, $window) {
 }
 mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -1478,12 +1860,6 @@ angular.element.prototype.blur = angular.element.prototype.blur || function() {
 
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -1560,12 +1936,6 @@ function AriaService($$rAF, $log, $window) {
 AriaService.$inject = ["$$rAF", "$log", "$window"];
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -1706,12 +2076,6 @@ function mdCompilerService($q, $http, $injector, $compile, $controller, $templat
 mdCompilerService.$inject = ["$q", "$http", "$injector", "$compile", "$controller", "$templateCache"];
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -2138,12 +2502,6 @@ angular.module('material.core')
 }]);
 
 })();
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -2549,12 +2907,6 @@ function InterimElementProvider() {
 }
 
 })();
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -2960,12 +3312,6 @@ function InterimElementProvider() {
 }
 
 })();
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
   'use strict';
 
@@ -3093,12 +3439,6 @@ function InterimElementProvider() {
 
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -3536,12 +3876,6 @@ function attrNoDirective() {
 }
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -3908,12 +4242,6 @@ angular.module('material.core.theming.palette', [])
 });
 })();
 
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function() {
 'use strict';
 
@@ -4491,961 +4819,6 @@ function rgba(rgbArray, opacity) {
 }
 
 })();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-/*
- * @ngdoc module
- * @name material.components.backdrop
- * @description Backdrop
- */
-
-/**
- * @ngdoc directive
- * @name mdBackdrop
- * @module material.components.backdrop
- *
- * @restrict E
- *
- * @description
- * `<md-backdrop>` is a backdrop element used by other coponents, such as dialog and bottom sheet.
- * Apply class `opaque` to make the backdrop use the theme backdrop color.
- *
- */
-
-angular.module('material.components.backdrop', [
-  'material.core'
-])
-  .directive('mdBackdrop', BackdropDirective);
-
-function BackdropDirective($mdTheming) {
-  return $mdTheming;
-}
-BackdropDirective.$inject = ["$mdTheming"];
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-/**
- * @ngdoc module
- * @name material.components.button
- * @description
- *
- * Button
- */
-angular.module('material.components.button', [
-  'material.core'
-])
-  .directive('mdButton', MdButtonDirective);
-
-/**
- * @ngdoc directive
- * @name mdButton
- * @module material.components.button
- *
- * @restrict E
- *
- * @description
- * `<md-button>` is a button directive with optional ink ripples (default enabled).
- *
- * If you supply a `href` or `ng-href` attribute, it will become an `<a>` element. Otherwise, it will
- * become a `<button>` element.
- *
- * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
- * the FAB button is in the accent color by default. The primary color palette may be used with
- * the `md-primary` class.
- *
- * @param {boolean=} md-no-ink If present, disable ripple ink effects.
- * @param {expression=} ng-disabled En/Disable based on the expression
- * @param {string=} md-ripple-size Overrides the default ripple size logic. Options: `full`, `partial`, `auto`
- * @param {string=} aria-label Adds alternative text to button for accessibility, useful for icon buttons.
- * If no default text is found, a warning will be logged.
- *
- * @usage
- * <hljs lang="html">
- *  <md-button>
- *    Button
- *  </md-button>
- *  <md-button href="http://google.com" class="md-button-colored">
- *    I'm a link
- *  </md-button>
- *  <md-button ng-disabled="true" class="md-colored">
- *    I'm a disabled button
- *  </md-button>
- * </hljs>
- */
-function MdButtonDirective($mdInkRipple, $mdTheming, $mdAria) {
-
-  return {
-    restrict: 'E',
-    replace: true,
-    transclude: true,
-    template: getTemplate,
-    link: postLink
-  };
-
-  function isAnchor(attr) {
-    return angular.isDefined(attr.href) || angular.isDefined(attr.ngHref);
-  }
-  
-  function getTemplate(element, attr) {
-    return isAnchor(attr) ?
-           '<a class="md-button" ng-transclude></a>' :
-           '<button class="md-button" ng-transclude></button>';
-  }
-
-  function postLink(scope, element, attr) {
-    var node = element[0];
-    $mdTheming(element);
-    $mdInkRipple.attachButtonBehavior(scope, element);
-
-    var elementHasText = node.textContent.trim();
-    if (!elementHasText) {
-      $mdAria.expect(element, 'aria-label');
-    }
-
-    // For anchor elements, we have to set tabindex manually when the 
-    // element is disabled
-    if (isAnchor(attr) && angular.isDefined(attr.ngDisabled) ) {
-      scope.$watch(attr.ngDisabled, function(isDisabled) {
-        element.attr('tabindex', isDisabled ? -1 : 0);
-      });
-    }
-  }
-
-}
-MdButtonDirective.$inject = ["$mdInkRipple", "$mdTheming", "$mdAria"];
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-/**
- * @ngdoc module
- * @name material.components.card
- *
- * @description
- * Card components.
- */
-angular.module('material.components.card', [
-  'material.core'
-])
-  .directive('mdCard', mdCardDirective);
-
-
-
-/**
- * @ngdoc directive
- * @name mdCard
- * @module material.components.card
- *
- * @restrict E
- *
- * @description
- * The `<md-card>` directive is a container element used within `<md-content>` containers.
- *
- * Cards have constant width and variable heights; where the maximum height is limited to what can
- * fit within a single view on a platform, but it can temporarily expand as needed
- *
- * @usage
- * <hljs lang="html">
- * <md-card>
- *  <img src="img/washedout.png" class="md-card-image">
- *  <h2>Paracosm</h2>
- *  <p>
- *    The titles of Washed Out's breakthrough song and the first single from Paracosm share the * two most important words in Ernest Greene's musical language: feel it. It's a simple request, as well...
- *  </p>
- * </md-card>
- * </hljs>
- *
- */
-function mdCardDirective($mdTheming) {
-  return {
-    restrict: 'E',
-    link: function($scope, $element, $attr) {
-      $mdTheming($element);
-    }
-  };
-}
-mdCardDirective.$inject = ["$mdTheming"];
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-/**
- * @ngdoc module
- * @name material.components.checkbox
- * @description Checkbox module!
- */
-angular.module('material.components.checkbox', [
-  'material.core'
-])
-  .directive('mdCheckbox', MdCheckboxDirective);
-
-/**
- * @ngdoc directive
- * @name mdCheckbox
- * @module material.components.checkbox
- * @restrict E
- *
- * @description
- * The checkbox directive is used like the normal [angular checkbox](https://docs.angularjs.org/api/ng/input/input%5Bcheckbox%5D).
- *
- * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
- * the checkbox is in the accent color by default. The primary color palette may be used with
- * the `md-primary` class.
- *
- * @param {string} ng-model Assignable angular expression to data-bind to.
- * @param {string=} name Property name of the form under which the control is published.
- * @param {expression=} ng-true-value The value to which the expression should be set when selected.
- * @param {expression=} ng-false-value The value to which the expression should be set when not selected.
- * @param {string=} ng-change Angular expression to be executed when input changes due to user interaction with the input element.
- * @param {boolean=} md-no-ink Use of attribute indicates use of ripple ink effects
- * @param {string=} aria-label Adds label to checkbox for accessibility.
- * Defaults to checkbox's text. If no default text is found, a warning will be logged.
- *
- * @usage
- * <hljs lang="html">
- * <md-checkbox ng-model="isChecked" aria-label="Finished?">
- *   Finished ?
- * </md-checkbox>
- *
- * <md-checkbox md-no-ink ng-model="hasInk" aria-label="No Ink Effects">
- *   No Ink Effects
- * </md-checkbox>
- *
- * <md-checkbox ng-disabled="true" ng-model="isDisabled" aria-label="Disabled">
- *   Disabled
- * </md-checkbox>
- *
- * </hljs>
- *
- */
-function MdCheckboxDirective(inputDirective, $mdInkRipple, $mdAria, $mdConstant, $mdTheming, $mdUtil) {
-  inputDirective = inputDirective[0];
-  var CHECKED_CSS = 'md-checked';
-
-  return {
-    restrict: 'E',
-    transclude: true,
-    require: '?ngModel',
-    template: 
-      '<div class="md-container" md-ink-ripple md-ink-ripple-checkbox>' +
-        '<div class="md-icon"></div>' +
-      '</div>' +
-      '<div ng-transclude class="md-label"></div>',
-    compile: compile
-  };
-
-  // **********************************************************
-  // Private Methods
-  // **********************************************************
-
-  function compile (tElement, tAttrs) {
-
-    tAttrs.type = 'checkbox';
-    tAttrs.tabIndex = 0;
-    tElement.attr('role', tAttrs.type);
-
-    return function postLink(scope, element, attr, ngModelCtrl) {
-      ngModelCtrl = ngModelCtrl || $mdUtil.fakeNgModel();
-      var checked = false;
-      $mdTheming(element);
-
-      $mdAria.expectWithText(element, 'aria-label');
-
-      // Reuse the original input[type=checkbox] directive from Angular core.
-      // This is a bit hacky as we need our own event listener and own render
-      // function.
-      inputDirective.link.pre(scope, {
-        on: angular.noop,
-        0: {}
-      }, attr, [ngModelCtrl]);
-
-      element.on('click', listener)
-        .on('keypress', keypressHandler);
-      ngModelCtrl.$render = render;
-
-      function keypressHandler(ev) {
-        if(ev.which === $mdConstant.KEY_CODE.SPACE) {
-          ev.preventDefault();
-          listener(ev);
-        }
-      }
-      function listener(ev) {
-        if (element[0].hasAttribute('disabled')) return;
-
-        scope.$apply(function() {
-          checked = !checked;
-          ngModelCtrl.$setViewValue(checked, ev && ev.type);
-          ngModelCtrl.$render();
-        });
-      }
-
-      function render() {
-        checked = ngModelCtrl.$viewValue;
-        if(checked) {
-          element.addClass(CHECKED_CSS);
-        } else {
-          element.removeClass(CHECKED_CSS);
-        }
-      }
-    };
-  }
-}
-MdCheckboxDirective.$inject = ["inputDirective", "$mdInkRipple", "$mdAria", "$mdConstant", "$mdTheming", "$mdUtil"];
-
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
-
-/**
- * @ngdoc module
- * @name material.components.content
- *
- * @description
- * Scrollable content
- */
-angular.module('material.components.content', [
-  'material.core'
-])
-  .directive('mdContent', mdContentDirective);
-
-/**
- * @ngdoc directive
- * @name mdContent
- * @module material.components.content
- *
- * @restrict E
- *
- * @description
- * The `<md-content>` directive is a container element useful for scrollable content
- *
- * ### Restrictions
- *
- * - Add the `md-padding` class to make the content padded.
- *
- * @usage
- * <hljs lang="html">
- *  <md-content class="md-padding">
- *      Lorem ipsum dolor sit amet, ne quod novum mei.
- *  </md-content>
- * </hljs>
- *
- */
-
-function mdContentDirective($mdTheming) {
-  return {
-    restrict: 'E',
-    controller: ['$scope', '$element', ContentController],
-    link: function(scope, element, attr) {
-      var node = element[0];
-
-      $mdTheming(element);
-      scope.$broadcast('$mdContentLoaded', element);
-
-      iosScrollFix(element[0]);
-    }
-  };
-
-  function ContentController($scope, $element) {
-    this.$scope = $scope;
-    this.$element = $element;
-  }
-}
-mdContentDirective.$inject = ["$mdTheming"];
-
-function iosScrollFix(node) {
-  // IOS FIX:
-  // If we scroll where there is no more room for the webview to scroll,
-  // by default the webview itself will scroll up and down, this looks really
-  // bad.  So if we are scrolling to the very top or bottom, add/subtract one
-  angular.element(node).on('$md.pressdown', function(ev) {
-    // Only touch events
-    if (ev.pointer.type !== 't') return;
-    // Don't let a child content's touchstart ruin it for us.
-    if (ev.$materialScrollFixed) return;
-    ev.$materialScrollFixed = true;
-
-    if (node.scrollTop === 0) {
-      node.scrollTop = 1;
-    } else if (node.scrollHeight === node.scrollTop + node.offsetHeight) {
-      node.scrollTop -= 1;
-    }
-  });
-}
-})();
-
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-    'use strict';
-
-    /**
-     * @ngdoc module
-     * @name material.components.simpledialog
-     */
-    angular.module('material.components.simpledialog', ['material.core', 'material.components.backdrop'])
-        .factory('mdContextualMonitor', mdContextualMonitor)
-        .directive('simpleDialog', SimpleDialogDirective)
-        .provider('$simpleDialog', SimpleDialogProvider);
-
-    function mdContextualMonitor($rootElement, $mdConstant) {
-        var callbacks = [],
-            bound = false;
-        return {
-            dequeue: function (cb) {
-                var index = callbacks.indexOf(cb);
-                if (index !== -1) {
-                    callbacks.splice(index, 1);
-                }
-            },
-            queue: function (cb) {
-                var hashPrefix = 'context-monitor-',
-                    lastHash = window.location.hash;
-                if (!bound) {
-                    $rootElement.on('keyup', function (e) {
-                        var one = false;
-                        if (e.keyCode !== $mdConstant.KEY_CODE.ESCAPE) {
-                            return;
-                        }
-                        angular.forEach(callbacks.concat().reverse(), function (cb) {
-                            if (one) {
-                                return;
-                            }
-                            if (cb && cb(e)) {
-                                var index = callbacks.indexOf(cb);
-                                if (index !== -1) {
-                                    callbacks.splice(index, 1);
-                                    one = true;
-                                }
-                            }
-                        });
-                    });
-                    $(window).bind('hashchange', function () {
-                        var newHash = window.location.hash;
-                        // Do something
-                        console.log(newHash, lastHash);
-                        //At the end of the func:
-                        lastHash = newHash;
-                    });
-
-                    bound = true;
-                }
-                window.location.hash = hashPrefix + _.uniqueId();
-                callbacks.push(cb);
-            }
-        };
-    }
-    mdContextualMonitor.$inject = ["$rootElement", "$mdConstant"];
-
-
-    function SimpleDialogDirective($$rAF, $mdTheming) {
-        return {
-            restrict: 'E',
-            link: function(scope, element, attr) {
-                $mdTheming(element);
-                $$rAF(function() {
-                    var content = element[0].querySelector('md-content');
-                    if (content && content.scrollHeight > content.clientHeight) {
-                        element.addClass('md-content-overflow');
-                    }
-                });
-            }
-        };
-    }
-    SimpleDialogDirective.$inject = ["$$rAF", "$mdTheming"];
-
-    /**
-     * @ngdoc service
-     * @name $simpleDialog
-     * @module material.components.simpledialog
-     *
-     * @description
-     * `$simpleDialog` opens a dialog over the app and provides a simple promise API.
-     *
-     * ### Restrictions
-     *
-     * - The dialog is always given an isolate scope.
-     * - The dialog's template must have an outer `<md-simpledialog>` element.
-     *   Inside, use an `<md-content>` element for the dialog's content, and use
-     *   an element with class `md-actions` for the dialog's actions.
-     *
-     * @usage
-     * ##### HTML
-     *
-     * <hljs lang="html">
-     * <div  ng-app="demoApp" ng-controller="EmployeeController">
-     *   <md-button ng-click="showAlert()" class="md-raised md-warn">
-     *     Employee Alert!
-     *   </md-button>
-     *   <md-button ng-click="closeAlert()" ng-disabled="!hasAlert()" class="md-raised">
-     *     Close Alert
-     *   </md-button>
-     *   <md-button ng-click="showGreeting($event)" class="md-raised md-primary" >
-     *     Greet Employee
-     *   </md-button>
-     * </div>
-     * </hljs>
-     *
-     * ##### JavaScript
-     *
-     * <hljs lang="js">
-     * (function(angular, undefined){
-     *   "use strict";
-     *
-     *   angular
-     *     .module('demoApp', ['ngMaterial'])
-     *     .controller('EmployeeController', EmployeeEditor)
-     *     .controller('GreetingController', GreetingController);
-     *
-     *   // Fictitious Employee Editor to show how to use simple and complex dialogs.
-     *
-     *   function EmployeeEditor($scope, $simpleDialog) {
-     *     var alert;
-     *
-     *     $scope.showAlert = showAlert;
-     *     $scope.closeAlert = closeAlert;
-     *     $scope.showGreeting = showCustomGreeting;
-     *
-     *     $scope.hasAlert = function() { return !!alert };
-     *     $scope.userName = $scope.userName || 'Bobby';
-     *
-     *     // Dialog #1 - Show simple alert dialog and cache
-     *     // reference to dialog instance
-     *
-     *     function showAlert() {
-     *       alert = $simpleDialog.alert()
-     *         .title('Attention, ' + $scope.userName)
-     *         .content('This is an example of how easy dialogs can be!')
-     *         .ok('Close');
-     *
-     *       $simpleDialog
-     *           .show( alert )
-     *           .finally(function() {
-     *             alert = undefined;
-     *           });
-     *     }
-     *
-     *     // Close the specified dialog instance and resolve with 'finished' flag
-     *     // Normally this is not needed, just use '$simpleDialog.hide()' to close
-     *     // the most recent dialog popup.
-     *
-     *     function closeAlert() {
-     *       $simpleDialog.hide( alert, "finished" );
-     *       alert = undefined;
-     *     }
-     *
-     *     // Dialog #2 - Demonstrate more complex dialogs construction and popup.
-     *
-     *     function showCustomGreeting($event) {
-     *         $simpleDialog.show({
-     *           targetEvent: $event,
-     *           template:
-     *             '<md-simpledialog>' +
-     *
-     *             '  <md-content>Hello {{ employee }}!</md-content>' +
-     *
-     *             '  <div class="md-actions">' +
-     *             '    <md-button ng-click="closeDialog()">' +
-     *             '      Close Greeting' +
-     *
-     *             '    </md-button>' +
-     *             '  </div>' +
-     *             '</md-simpledialog>',
-     *           controller: 'GreetingController',
-     *           onComplete: afterShowAnimation,
-     *           locals: { employee: $scope.userName }
-     *         });
-     *
-     *         // When the 'enter' animation finishes...
-     *
-     *         function afterShowAnimation(scope, element, options) {
-     *            // post-show code here: DOM element focus, etc.
-     *         }
-     *     }
-     *   }
-     *
-     *   // Greeting controller used with the more complex 'showCustomGreeting()' custom dialog
-     *
-     *   function GreetingController($scope, $simpleDialog, employee) {
-     *     // Assigned from construction <code>locals</code> options...
-     *     $scope.employee = employee;
-     *
-     *     $scope.closeDialog = function() {
-     *       // Easily hides most recent dialog shown...
-     *       // no specific instance reference is needed.
-     *       $simpleDialog.hide();
-     *     };
-     *   }
-     *
-     * })(angular);
-     * </hljs>
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#alert
-     *
-     * @description
-     * Builds a preconfigured dialog with the specified message.
-     *
-     * @returns {obj} an `$simpleDialogPreset` with the chainable configuration methods:
-     *
-     * - $simpleDialogPreset#title(string) - sets title to string
-     * - $simpleDialogPreset#content(string) - sets content / message to string
-     * - $simpleDialogPreset#ok(string) - sets okay button text to string
-     *
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#confirm
-     *
-     * @description
-     * Builds a preconfigured dialog with the specified message. You can call show and the promise returned
-     * will be resolved only if the user clicks the confirm action on the dialog.
-     *
-     * @returns {obj} an `$simpleDialogPreset` with the chainable configuration methods:
-     *
-     * Additionally, it supports the following methods:
-     *
-     * - $simpleDialogPreset#title(string) - sets title to string
-     * - $simpleDialogPreset#content(string) - sets content / message to string
-     * - $simpleDialogPreset#ok(string) - sets okay button text to string
-     * - $simpleDialogPreset#cancel(string) - sets cancel button text to string
-     *
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#show
-     *
-     * @description
-     * Show a dialog with the specified options.
-     *
-     * @param {object} optionsOrPreset Either provide an `$simpleDialogPreset` returned from `alert()`,
-     * `confirm()` or an options object with the following properties:
-     *   - `templateUrl` - `{string=}`: The url of a template that will be used as the content
-     *   of the dialog.
-     *   - `template` - `{string=}`: Same as templateUrl, except this is an actual template string.
-     *   - `targetEvent` - `{DOMClickEvent=}`: A click's event object. When passed in as an option,
-     *     the location of the click will be used as the starting point for the opening animation
-     *     of the the dialog.
-     *   - `disableParentScroll` - `{boolean=}`: Whether to disable scrolling while the dialog is open.
-     *     Default true.
-     *   - `hasBackdrop` - `{boolean=}`: Whether there should be an opaque backdrop behind the dialog.
-     *     Default true.
-     *   - `clickOutsideToClose` - `{boolean=}`: Whether the user can click outside the dialog to
-     *     close it. Default true.
-     *   - `escapeToClose` - `{boolean=}`: Whether the user can press escape to close the dialog.
-     *     Default true.
-     *   - `controller` - `{string=}`: The controller to associate with the dialog. The controller
-     *     will be injected with the local `$hideDialog`, which is a function used to hide the dialog.
-     *   - `locals` - `{object=}`: An object containing key/value pairs. The keys will be used as names
-     *     of values to inject into the controller. For example, `locals: {three: 3}` would inject
-     *     `three` into the controller, with the value 3. If `bindToController` is true, they will be
-     *     copied to the controller instead.
-     *   - `bindToController` - `bool`: bind the locals to the controller, instead of passing them in
-     *   - `resolve` - `{object=}`: Similar to locals, except it takes promises as values, and the
-     *     dialog will not open until all of the promises resolve.
-     *   - `controllerAs` - `{string=}`: An alias to assign the controller to on the scope.
-     *   - `parent` - `{element=}`: The element to append the dialog to. Defaults to appending
-     *     to the root element of the application.
-     *   - `onComplete` `{function=}`: Callback function used to announce when the show() action is
-     *     finished.
-     *
-     * @returns {promise} A promise that can be resolved with `$simpleDialog.hide()` or
-     * rejected with `mdAdialog.cancel()`.
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#hide
-     *
-     * @description
-     * Hide an existing dialog and resolve the promise returned from `$simpleDialog.show()`.
-     *
-     * @param {*=} response An argument for the resolved promise.
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#cancel
-     *
-     * @description
-     * Hide an existing dialog and reject the promise returned from `$simpleDialog.show()`.
-     *
-     * @param {*=} response An argument for the rejected promise.
-     */
-
-    function SimpleDialogProvider($$interimElementProvider) {
-
-        var alertDialogMethods = ['title', 'content', 'ariaLabel', 'ok'];
-
-        dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$mdTheming", "$$rAF", "$q", "$simpleDialog", "mdContextualMonitor"];
-        return $$interimElementProvider('$simpleDialog')
-            .setDefaults({
-                methods: ['disableParentScroll', 'hasBackdrop', 'clickOutsideToClose', 'escapeToClose', 'targetEvent'],
-                options: dialogDefaultOptions
-            });
-
-
-        /* @ngInject */
-        function dialogDefaultOptions($timeout, $rootElement, $compile, $animate, $mdAria, $document,
-            $mdUtil, $mdConstant, $mdTheming, $$rAF, $q, $simpleDialog, mdContextualMonitor) {
-            return {
-                hasBackdrop: true,
-                isolateScope: true,
-                onShow: onShow,
-                onRemove: onRemove,
-                clickOutsideToClose: true,
-                escapeToClose: true,
-                targetEvent: null,
-                disableParentScroll: true,
-                transformTemplate: function(template) {
-                    return '<div class="simple-dialog-container">' + template + '</div>';
-                }
-            };
-
-            function discoverDirective(options) {
-                return 'simple-dialog';
-            }
-
-            function discoverContainerClass(container, options) {
-            }
-
-            // On show method for dialogs
-            function onShow(scope, element, options) {
-                // Incase the user provides a raw dom element, always wrap it in jqLite
-                options.parent = angular.element(options.parent);
-
-                options.popInTarget = angular.element((options.targetEvent || {}).target);
-                var closeButton = findCloseButton(),
-                    directive = discoverDirective(options),
-                    dialogEl = element.find(directive);
-
-                configureAria(dialogEl);
-                if (options.disableParentScroll) {
-                    options.oldOverflowStyle = {
-                        'overflow-y': options.parent.css('overflow-y'),
-                        'overflow-x': options.parent.css('overflow-x')
-                    };
-                    options.parent.css('overflow', 'hidden');
-                }
-
-                if (options.hasBackdrop) {
-                    options.backdrop = angular.element('<md-backdrop class="simple-dialog-backdrop" style="z-index: ' + options.zIndex + '">');
-                    $mdTheming.inherit(options.backdrop, options.parent);
-                    $animate.enter(options.backdrop, options.parent);
-                }
-
-                dialogEl.css('z-index', options.zIndex + 1);
-
-                return dialogPopIn(element, options)
-                    .then(function () {
-                        if (options.escapeToClose) {
-                            options.rootElementKeyupCallback = function (e) {
-                                if (options.stack.indexOf(options.interimElement) === 0) {
-                                    $timeout(function () {
-                                        $simpleDialog.cancel('esc', options.interimElement);
-                                    });
-                                }
-                                return true;
-                            };
-                            mdContextualMonitor.queue(options.rootElementKeyupCallback);
-                        }
-                        if (options.clickOutsideToClose) {
-                            options.dialogClickOutsideCallback = function (e) {
-                                // Only close if we click the flex container outside the backdrop
-                                if (e.target === options.backdrop[0]) {
-                                    $timeout($simpleDialog.cancel);
-                                }
-                            };
-                            options.backdrop.on('click', options.dialogClickOutsideCallback);
-                        }
-                        closeButton.focus();
-
-                    });
-
-
-                function findCloseButton() {
-                    //If no element with class dialog-close, try to find the last
-                    //button child in md-actions and assume it is a close button
-                    var closeButton = element[0].querySelector('.dialog-close');
-                    if (!closeButton) {
-                        var actionButtons = element[0].querySelectorAll('.md-actions button');
-                        closeButton = actionButtons[actionButtons.length - 1];
-                    }
-                    return angular.element(closeButton);
-                }
-
-            }
-
-            // On remove function for all dialogs
-            function onRemove(scope, element, options) {
-                if (options.clickOutsideToClose && options.backdrop) {
-                    options.backdrop.off('click', options.dialogClickOutsideCallback);
-                }
-                if (options.backdrop) {
-                    $animate.leave(options.backdrop);
-                }
-                if (options.disableParentScroll) {
-                    options.parent.css(options.oldOverflowStyle);
-                    options.parent.css('overflow-wrap', options.parent.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
-                    $document[0].removeEventListener('scroll', options.captureScroll, true);
-                }
-                if (options.escapeToClose) {
-                    mdContextualMonitor.dequeue(options.rootElementKeyupCallback);
-                }
-                return dialogPopOut(element, options).then(function() {
-                    options.scope.$destroy();
-                    element.remove();
-                    options.popInTarget && options.popInTarget.focus();
-                });
-
-            }
-
-            /**
-             * Inject ARIA-specific attributes appropriate for Dialogs
-             */
-            function configureAria(element) {
-                element.attr({
-                    'role': 'dialog'
-                });
-
-                var dialogContent = element.find('md-content');
-                if (dialogContent.length === 0) {
-                    dialogContent = element;
-                }
-                $mdAria.expectAsync(element, 'aria-label', function () {
-                    var words = dialogContent.text().split(/\s+/);
-                    if (words.length > 3) {
-                        words = words.slice(0, 3).concat('...');
-                    }
-                    return words.join(' ');
-                });
-            }
-
-            function dialogPopIn(container, options) {
-                discoverContainerClass(container, options);
-                var dialogEl = container.find(discoverDirective(options)),
-                    parentElement = options.parent,
-                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget,
-                    defer = $q.defer();
-                parentElement.append(container);
-                var promise = defer.promise,
-                    nextPromise;
-                nextPromise = promise.then(function () {
-                    var maybeDefer = $q.defer(),
-                        maybePromise = maybeDefer.promise,
-                        maybePromiseOnBefore;
-                    if (options.onBeforeShow) {
-                        maybePromiseOnBefore = options.onBeforeShow(dialogEl, options);
-                        if (maybePromiseOnBefore && maybePromiseOnBefore.then) {
-                            return maybePromiseOnBefore;
-                        }
-                    }
-                    maybeDefer.resolve();
-                    return maybePromise;
-                });
-                defer.resolve();
-                return nextPromise;
-            }
-
-            function dialogPopOut(container, options) {
-                discoverContainerClass(container, options);
-                var dialogEl = container.find(discoverDirective(options)),
-                    parentElement = options.parent,
-                    type,
-                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget;
-                if (options.onBeforeHide) {
-                    options.onBeforeHide(dialogEl, options);
-                }
-                dialogEl.addClass('transition-out').removeClass('transition-in');
-                var promise = dialogTransitionEnd(dialogEl);
-                promise.then(function () {
-                    if (options.onAfterHide) {
-                        options.onAfterHide(dialogEl, options);
-                    }
-                });
-                return promise;
-            }
-
-            function transformToClickElement(dialogEl, clickElement) {
-                if (clickElement) {
-                    var clickRect = clickElement[0].getBoundingClientRect();
-                    var dialogRect = dialogEl[0].getBoundingClientRect();
-
-                    var scaleX = Math.min(0.5, clickRect.width / dialogRect.width);
-                    var scaleY = Math.min(0.5, clickRect.height / dialogRect.height);
-
-                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
-                        (-dialogRect.left + clickRect.left + clickRect.width / 2 - dialogRect.width / 2) + 'px,' +
-                        (-dialogRect.top + clickRect.top + clickRect.height / 2 - dialogRect.height / 2) + 'px,' +
-                        '0) scale(' + scaleX + ',' + scaleY + ')'
-                    );
-                }
-            }
-
-            function dialogTransitionEnd(dialogEl) {
-                var deferred = $q.defer();
-                dialogEl.on($mdConstant.CSS.TRANSITIONEND, finished);
-
-                function finished(ev) {
-                    //Make sure this transitionend didn't bubble up from a child
-                    if (ev.target === dialogEl[0]) {
-                        dialogEl.off($mdConstant.CSS.TRANSITIONEND, finished);
-                        deferred.resolve();
-                    }
-                }
-                return deferred.promise;
-            }
-
-        }
-    }
-    SimpleDialogProvider.$inject = ["$$interimElementProvider"];
-
-})();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -5491,7 +4864,6 @@ function MdDividerDirective($mdTheming) {
 }
 MdDividerDirective.$inject = ["$mdTheming"];
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -5845,7 +5217,6 @@ function placeholderDirective() {
 }
 
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -5973,7 +5344,6 @@ function MdProgressCircularDirective($$rAF, $mdConstant, $mdTheming) {
 }
 MdProgressCircularDirective.$inject = ["$$rAF", "$mdConstant", "$mdTheming"];
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -6102,7 +5472,6 @@ var transforms = (function() {
 })();
 
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -6403,7 +5772,6 @@ function mdRadioButtonDirective($mdAria, $mdUtil, $mdTheming) {
 mdRadioButtonDirective.$inject = ["$mdAria", "$mdUtil", "$mdTheming"];
 
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -6711,8 +6079,10 @@ function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $co
      * to close() and perform its own actions.
      */
     function close(ev) {
-      ev.preventDefault();
-      ev.stopPropagation();
+      if (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
 
       return sidenavCtrl.close();
     }
@@ -6748,7 +6118,549 @@ SidenavController.$inject = ["$scope", "$element", "$attrs", "$mdComponentRegist
 
 
 })();
+/*!
+ * Angular Material Design
+ * https://github.com/angular/material
+ * @license MIT
+ * v0.7.1
+ */
+(function() {
+    'use strict';
 
+    /**
+     * @ngdoc module
+     * @name material.components.simpledialog
+     */
+    angular.module('material.components.simpledialog', ['material.core', 'material.components.backdrop'])
+        .factory('mdContextualMonitor', mdContextualMonitor)
+        .directive('simpleDialog', SimpleDialogDirective)
+        .provider('$simpleDialog', SimpleDialogProvider);
+
+    function mdContextualMonitor($rootElement, $mdConstant) {
+        var callbacks = [],
+            bound = false,
+            id = 1,
+            generateNextID = function () {
+                id += 1;
+                return id;
+            },
+            emptyHashery = function () {
+                if (!callbacks.length) {
+                    window.location.hash = '';
+                    id = 1;
+                }
+            };
+        return {
+            dequeue: function (cb) {
+                var index = callbacks.indexOf(cb);
+                if (index !== -1) {
+                    callbacks.splice(index, 1);
+                }
+                emptyHashery();
+            },
+            queue: function (cb) {
+                var hashPrefix = 'context-monitor-',
+                    lastHash = window.location.hash,
+                    nextId = generateNextID(),
+                    executeFirstInQueue = function (e) {
+                        var next = callbacks.pop(),
+                            execute = (next && next(e));
+                        emptyHashery();
+                        return execute;
+                    };
+                if (!bound) {
+                    $rootElement.on('keyup', function (e) {
+                        if (e.keyCode !== $mdConstant.KEY_CODE.ESCAPE) {
+                            return;
+                        }
+                        executeFirstInQueue(e);
+                    });
+                    $(window).bind('hashchange', function () {
+                        var newHash = window.location.hash,
+                            isBack,
+                            newHashId = parseInt(newHash.substr(hashPrefix.length + 1), 10),
+                            oldHashId = parseInt(lastHash.substr(hashPrefix.length + 1), 10);
+                        // Do something
+                        if (isNaN(newHashId) || (!isNaN(oldHashId) && (newHashId < oldHashId))) {
+                            isBack = true;
+                        }
+                        //At the end of the func:
+                        lastHash = newHash;
+                        if (isBack) {
+                            executeFirstInQueue();
+                        }
+                    });
+
+                    bound = true;
+                }
+                window.location.hash = hashPrefix + nextId;
+                callbacks.push(cb);
+            }
+        };
+    }
+    mdContextualMonitor.$inject = ["$rootElement", "$mdConstant"];
+
+
+    function SimpleDialogDirective($$rAF, $mdTheming) {
+        return {
+            restrict: 'E',
+            link: function(scope, element, attr) {
+                $mdTheming(element);
+            }
+        };
+    }
+    SimpleDialogDirective.$inject = ["$$rAF", "$mdTheming"];
+
+    /**
+     * @ngdoc service
+     * @name $simpleDialog
+     * @module material.components.simpledialog
+     *
+     * @description
+     * `$simpleDialog` opens a dialog over the app and provides a simple promise API.
+     *
+     * ### Restrictions
+     *
+     * - The dialog is always given an isolate scope.
+     * - The dialog's template must have an outer `<md-simpledialog>` element.
+     *   Inside, use an `<md-content>` element for the dialog's content, and use
+     *   an element with class `md-actions` for the dialog's actions.
+     *
+     * @usage
+     * ##### HTML
+     *
+     * <hljs lang="html">
+     * <div  ng-app="demoApp" ng-controller="EmployeeController">
+     *   <md-button ng-click="showAlert()" class="md-raised md-warn">
+     *     Employee Alert!
+     *   </md-button>
+     *   <md-button ng-click="closeAlert()" ng-disabled="!hasAlert()" class="md-raised">
+     *     Close Alert
+     *   </md-button>
+     *   <md-button ng-click="showGreeting($event)" class="md-raised md-primary" >
+     *     Greet Employee
+     *   </md-button>
+     * </div>
+     * </hljs>
+     *
+     * ##### JavaScript
+     *
+     * <hljs lang="js">
+     * (function(angular, undefined){
+     *   "use strict";
+     *
+     *   angular
+     *     .module('demoApp', ['ngMaterial'])
+     *     .controller('EmployeeController', EmployeeEditor)
+     *     .controller('GreetingController', GreetingController);
+     *
+     *   // Fictitious Employee Editor to show how to use simple and complex dialogs.
+     *
+     *   function EmployeeEditor($scope, $simpleDialog) {
+     *     var alert;
+     *
+     *     $scope.showAlert = showAlert;
+     *     $scope.closeAlert = closeAlert;
+     *     $scope.showGreeting = showCustomGreeting;
+     *
+     *     $scope.hasAlert = function() { return !!alert };
+     *     $scope.userName = $scope.userName || 'Bobby';
+     *
+     *     // Dialog #1 - Show simple alert dialog and cache
+     *     // reference to dialog instance
+     *
+     *     function showAlert() {
+     *       alert = $simpleDialog.alert()
+     *         .title('Attention, ' + $scope.userName)
+     *         .content('This is an example of how easy dialogs can be!')
+     *         .ok('Close');
+     *
+     *       $simpleDialog
+     *           .show( alert )
+     *           .finally(function() {
+     *             alert = undefined;
+     *           });
+     *     }
+     *
+     *     // Close the specified dialog instance and resolve with 'finished' flag
+     *     // Normally this is not needed, just use '$simpleDialog.hide()' to close
+     *     // the most recent dialog popup.
+     *
+     *     function closeAlert() {
+     *       $simpleDialog.hide( alert, "finished" );
+     *       alert = undefined;
+     *     }
+     *
+     *     // Dialog #2 - Demonstrate more complex dialogs construction and popup.
+     *
+     *     function showCustomGreeting($event) {
+     *         $simpleDialog.show({
+     *           targetEvent: $event,
+     *           template:
+     *             '<md-simpledialog>' +
+     *
+     *             '  <md-content>Hello {{ employee }}!</md-content>' +
+     *
+     *             '  <div class="md-actions">' +
+     *             '    <md-button ng-click="closeDialog()">' +
+     *             '      Close Greeting' +
+     *
+     *             '    </md-button>' +
+     *             '  </div>' +
+     *             '</md-simpledialog>',
+     *           controller: 'GreetingController',
+     *           onComplete: afterShowAnimation,
+     *           locals: { employee: $scope.userName }
+     *         });
+     *
+     *         // When the 'enter' animation finishes...
+     *
+     *         function afterShowAnimation(scope, element, options) {
+     *            // post-show code here: DOM element focus, etc.
+     *         }
+     *     }
+     *   }
+     *
+     *   // Greeting controller used with the more complex 'showCustomGreeting()' custom dialog
+     *
+     *   function GreetingController($scope, $simpleDialog, employee) {
+     *     // Assigned from construction <code>locals</code> options...
+     *     $scope.employee = employee;
+     *
+     *     $scope.closeDialog = function() {
+     *       // Easily hides most recent dialog shown...
+     *       // no specific instance reference is needed.
+     *       $simpleDialog.hide();
+     *     };
+     *   }
+     *
+     * })(angular);
+     * </hljs>
+     */
+
+    /**
+     * @ngdoc method
+     * @name $simpleDialog#alert
+     *
+     * @description
+     * Builds a preconfigured dialog with the specified message.
+     *
+     * @returns {obj} an `$simpleDialogPreset` with the chainable configuration methods:
+     *
+     * - $simpleDialogPreset#title(string) - sets title to string
+     * - $simpleDialogPreset#content(string) - sets content / message to string
+     * - $simpleDialogPreset#ok(string) - sets okay button text to string
+     *
+     */
+
+    /**
+     * @ngdoc method
+     * @name $simpleDialog#confirm
+     *
+     * @description
+     * Builds a preconfigured dialog with the specified message. You can call show and the promise returned
+     * will be resolved only if the user clicks the confirm action on the dialog.
+     *
+     * @returns {obj} an `$simpleDialogPreset` with the chainable configuration methods:
+     *
+     * Additionally, it supports the following methods:
+     *
+     * - $simpleDialogPreset#title(string) - sets title to string
+     * - $simpleDialogPreset#content(string) - sets content / message to string
+     * - $simpleDialogPreset#ok(string) - sets okay button text to string
+     * - $simpleDialogPreset#cancel(string) - sets cancel button text to string
+     *
+     */
+
+    /**
+     * @ngdoc method
+     * @name $simpleDialog#show
+     *
+     * @description
+     * Show a dialog with the specified options.
+     *
+     * @param {object} optionsOrPreset Either provide an `$simpleDialogPreset` returned from `alert()`,
+     * `confirm()` or an options object with the following properties:
+     *   - `templateUrl` - `{string=}`: The url of a template that will be used as the content
+     *   of the dialog.
+     *   - `template` - `{string=}`: Same as templateUrl, except this is an actual template string.
+     *   - `targetEvent` - `{DOMClickEvent=}`: A click's event object. When passed in as an option,
+     *     the location of the click will be used as the starting point for the opening animation
+     *     of the the dialog.
+     *   - `disableParentScroll` - `{boolean=}`: Whether to disable scrolling while the dialog is open.
+     *     Default true.
+     *   - `hasBackdrop` - `{boolean=}`: Whether there should be an opaque backdrop behind the dialog.
+     *     Default true.
+     *   - `clickOutsideToClose` - `{boolean=}`: Whether the user can click outside the dialog to
+     *     close it. Default true.
+     *     Default true.
+     *   - `controller` - `{string=}`: The controller to associate with the dialog. The controller
+     *     will be injected with the local `$hideDialog`, which is a function used to hide the dialog.
+     *   - `locals` - `{object=}`: An object containing key/value pairs. The keys will be used as names
+     *     of values to inject into the controller. For example, `locals: {three: 3}` would inject
+     *     `three` into the controller, with the value 3. If `bindToController` is true, they will be
+     *     copied to the controller instead.
+     *   - `bindToController` - `bool`: bind the locals to the controller, instead of passing them in
+     *   - `resolve` - `{object=}`: Similar to locals, except it takes promises as values, and the
+     *     dialog will not open until all of the promises resolve.
+     *   - `controllerAs` - `{string=}`: An alias to assign the controller to on the scope.
+     *   - `parent` - `{element=}`: The element to append the dialog to. Defaults to appending
+     *     to the root element of the application.
+     *   - `onComplete` `{function=}`: Callback function used to announce when the show() action is
+     *     finished.
+     *
+     * @returns {promise} A promise that can be resolved with `$simpleDialog.hide()` or
+     * rejected with `mdAdialog.cancel()`.
+     */
+
+    /**
+     * @ngdoc method
+     * @name $simpleDialog#hide
+     *
+     * @description
+     * Hide an existing dialog and resolve the promise returned from `$simpleDialog.show()`.
+     *
+     * @param {*=} response An argument for the resolved promise.
+     */
+
+    /**
+     * @ngdoc method
+     * @name $simpleDialog#cancel
+     *
+     * @description
+     * Hide an existing dialog and reject the promise returned from `$simpleDialog.show()`.
+     *
+     * @param {*=} response An argument for the rejected promise.
+     */
+
+    function SimpleDialogProvider($$interimElementProvider) {
+
+        var alertDialogMethods = ['title', 'content', 'ariaLabel', 'ok'];
+
+        dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$mdTheming", "$$rAF", "$q", "$simpleDialog", "mdContextualMonitor"];
+        return $$interimElementProvider('$simpleDialog')
+            .setDefaults({
+                methods: ['disableParentScroll', 'hasBackdrop', 'clickOutsideToClose', 'targetEvent'],
+                options: dialogDefaultOptions
+            });
+
+
+        /* @ngInject */
+        function dialogDefaultOptions($timeout, $rootElement, $compile, $animate, $mdAria, $document,
+            $mdUtil, $mdConstant, $mdTheming, $$rAF, $q, $simpleDialog, mdContextualMonitor) {
+            return {
+                hasBackdrop: true,
+                isolateScope: true,
+                onShow: onShow,
+                onRemove: onRemove,
+                clickOutsideToClose: true,
+                targetEvent: null,
+                disableParentScroll: true,
+                transformTemplate: function(template) {
+                    return '<div class="simple-dialog-container">' + template + '</div>';
+                }
+            };
+
+            function discoverDirective(options) {
+                return 'simple-dialog';
+            }
+
+            function discoverContainerClass(container, options) {
+            }
+
+            // On show method for dialogs
+            function onShow(scope, element, options) {
+                // Incase the user provides a raw dom element, always wrap it in jqLite
+                options.parent = angular.element(options.parent);
+
+                options.popInTarget = angular.element((options.targetEvent || {}).target);
+                var closeButton = findCloseButton(),
+                    directive = discoverDirective(options),
+                    dialogEl = element.find(directive),
+                    dialogMaybe;
+
+                configureAria(dialogEl);
+                if (options.disableParentScroll) {
+                    options.oldOverflowStyle = {
+                        'overflow-y': options.parent.css('overflow-y'),
+                        'overflow-x': options.parent.css('overflow-x')
+                    };
+                    options.parent.css('overflow', 'hidden');
+                }
+
+                if (options.hasBackdrop) {
+                    options.backdrop = angular.element('<md-backdrop class="simple-dialog-backdrop" style="z-index: ' + options.zIndex + '">');
+                    $mdTheming.inherit(options.backdrop, options.parent);
+                    dialogMaybe = options.parent.parents('.modal-content:first');
+                    if (!dialogMaybe.length) {
+                        dialogMaybe = options.parent;
+                    }
+                    $animate.enter(options.backdrop, dialogMaybe);
+                }
+
+                dialogEl.css('z-index', options.zIndex + 1);
+
+                return dialogPopIn(element, options)
+                    .then(function () {
+                        options.rootElementKeyupCallback = function () {
+                            if (options.stack.indexOf(options.interimElement) === 0) {
+                                $timeout(function () {
+                                    $simpleDialog.cancel('esc', options.interimElement);
+                                });
+                            }
+                            return true;
+                        };
+                        mdContextualMonitor.queue(options.rootElementKeyupCallback);
+                        if (options.clickOutsideToClose) {
+                            options.dialogClickOutsideCallback = function (e) {
+                                // Only close if we click the flex container outside the backdrop
+                                if (e.target === options.backdrop[0]) {
+                                    $timeout($simpleDialog.cancel);
+                                }
+                            };
+                            options.backdrop.on('click', options.dialogClickOutsideCallback);
+                        }
+                        closeButton.focus();
+
+                    });
+
+
+                function findCloseButton() {
+                    //If no element with class dialog-close, try to find the last
+                    //button child in md-actions and assume it is a close button
+                    var closeButton = element[0].querySelector('.dialog-close');
+                    if (!closeButton) {
+                        var actionButtons = element[0].querySelectorAll('.md-actions button');
+                        closeButton = actionButtons[actionButtons.length - 1];
+                    }
+                    return angular.element(closeButton);
+                }
+
+            }
+
+            // On remove function for all dialogs
+            function onRemove(scope, element, options) {
+                if (options.clickOutsideToClose && options.backdrop) {
+                    options.backdrop.off('click', options.dialogClickOutsideCallback);
+                }
+                if (options.backdrop) {
+                    $animate.leave(options.backdrop);
+                }
+                if (options.disableParentScroll) {
+                    options.parent.css(options.oldOverflowStyle);
+                    options.parent.css('overflow-wrap', options.parent.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
+                    $document[0].removeEventListener('scroll', options.captureScroll, true);
+                }
+                mdContextualMonitor.dequeue(options.rootElementKeyupCallback);
+                return dialogPopOut(element, options).then(function() {
+                    options.scope.$destroy();
+                    element.remove();
+                    options.popInTarget && options.popInTarget.focus();
+                });
+
+            }
+
+            /**
+             * Inject ARIA-specific attributes appropriate for Dialogs
+             */
+            function configureAria(element) {
+                element.attr({
+                    'role': 'dialog'
+                });
+
+                var dialogContent = element.find('md-content');
+                if (dialogContent.length === 0) {
+                    dialogContent = element;
+                }
+                $mdAria.expectAsync(element, 'aria-label', function () {
+                    var words = dialogContent.text().split(/\s+/);
+                    if (words.length > 3) {
+                        words = words.slice(0, 3).concat('...');
+                    }
+                    return words.join(' ');
+                });
+            }
+
+            function dialogPopIn(container, options) {
+                discoverContainerClass(container, options);
+                var dialogEl = container.find(discoverDirective(options)),
+                    parentElement = options.parent,
+                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget,
+                    defer = $q.defer();
+                parentElement.append(container);
+                var promise = defer.promise,
+                    nextPromise;
+                nextPromise = promise.then(function () {
+                    var maybeDefer = $q.defer(),
+                        maybePromise = maybeDefer.promise,
+                        maybePromiseOnBefore;
+                    if (options.onBeforeShow) {
+                        maybePromiseOnBefore = options.onBeforeShow(dialogEl, options);
+                        if (maybePromiseOnBefore && maybePromiseOnBefore.then) {
+                            return maybePromiseOnBefore;
+                        }
+                    }
+                    maybeDefer.resolve();
+                    return maybePromise;
+                });
+                defer.resolve();
+                return nextPromise;
+            }
+
+            function dialogPopOut(container, options) {
+                discoverContainerClass(container, options);
+                var dialogEl = container.find(discoverDirective(options)),
+                    parentElement = options.parent,
+                    type,
+                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget;
+                if (options.onBeforeHide) {
+                    options.onBeforeHide(dialogEl, options);
+                }
+                dialogEl.addClass('transition-out').removeClass('transition-in');
+                var promise = dialogTransitionEnd(dialogEl);
+                promise.then(function () {
+                    if (options.onAfterHide) {
+                        options.onAfterHide(dialogEl, options);
+                    }
+                });
+                return promise;
+            }
+
+            function transformToClickElement(dialogEl, clickElement) {
+                if (clickElement) {
+                    var clickRect = clickElement[0].getBoundingClientRect();
+                    var dialogRect = dialogEl[0].getBoundingClientRect();
+
+                    var scaleX = Math.min(0.5, clickRect.width / dialogRect.width);
+                    var scaleY = Math.min(0.5, clickRect.height / dialogRect.height);
+
+                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
+                        (-dialogRect.left + clickRect.left + clickRect.width / 2 - dialogRect.width / 2) + 'px,' +
+                        (-dialogRect.top + clickRect.top + clickRect.height / 2 - dialogRect.height / 2) + 'px,' +
+                        '0) scale(' + scaleX + ',' + scaleY + ')'
+                    );
+                }
+            }
+
+            function dialogTransitionEnd(dialogEl) {
+                var deferred = $q.defer();
+                dialogEl.on($mdConstant.CSS.TRANSITIONEND, finished);
+
+                function finished(ev) {
+                    //Make sure this transitionend didn't bubble up from a child
+                    if (ev.target === dialogEl[0]) {
+                        dialogEl.off($mdConstant.CSS.TRANSITIONEND, finished);
+                        deferred.resolve();
+                    }
+                }
+                return deferred.promise;
+            }
+
+        }
+    }
+    SimpleDialogProvider.$inject = ["$$interimElementProvider"];
+
+})();
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -7060,7 +6972,6 @@ function MdSticky($document, $mdConstant, $compile, $$rAF, $mdUtil) {
 }
 MdSticky.$inject = ["$document", "$mdConstant", "$compile", "$$rAF", "$mdUtil"];
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -7147,7 +7058,6 @@ function MdSubheaderDirective($mdSticky, $compile, $mdTheming) {
 }
 MdSubheaderDirective.$inject = ["$mdSticky", "$compile", "$mdTheming"];
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -7225,7 +7135,6 @@ var module = angular.module('material.components.swipe',[]);
 });
 
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -7394,7 +7303,6 @@ function MdSwitch(mdCheckboxDirective, $mdTheming, $mdUtil, $document, $mdConsta
 MdSwitch.$inject = ["mdCheckboxDirective", "$mdTheming", "$mdUtil", "$document", "$mdConstant", "$parse", "$$rAF", "$mdGesture"];
 
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -7538,7 +7446,6 @@ function mdInputDirective($mdUtil, $log) {
 mdInputDirective.$inject = ["$mdUtil", "$log"];
 
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -7697,7 +7604,6 @@ function mdToolbarDirective($$rAF, $mdConstant, $mdUtil, $mdTheming) {
 }
 mdToolbarDirective.$inject = ["$$rAF", "$mdConstant", "$mdUtil", "$mdTheming"];
 })();
-
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -7713,8 +7619,7 @@ mdToolbarDirective.$inject = ["$$rAF", "$mdConstant", "$mdUtil", "$mdTheming"];
  */
 angular.module('material.components.whiteframe', []);
 })();
-
-angular.module("material.core").constant("$MD_THEME_CSS", "md-backdrop.md-opaque.md-THEME_NAME-theme {  background-color: '{{foreground-4-0.5}}'; }md-toolbar .md-button.md-THEME_NAME-theme.md-fab {  background-color: white; }.md-button.md-THEME_NAME-theme {  border-radius: 3px; }  .md-button.md-THEME_NAME-theme:not([disabled]):hover, .md-button.md-THEME_NAME-theme:not([disabled]):focus {    background-color: '{{background-500-0.2}}'; }  .md-button.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}'; }    .md-button.md-THEME_NAME-theme.md-primary.md-raised, .md-button.md-THEME_NAME-theme.md-primary.md-fab {      color: '{{primary-contrast}}';      background-color: '{{primary-color}}'; }      .md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):focus {        background-color: '{{primary-600}}'; }  .md-button.md-THEME_NAME-theme.md-fab {    border-radius: 50%;    background-color: '{{accent-color}}';    color: '{{accent-contrast}}'; }    .md-button.md-THEME_NAME-theme.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-fab:not([disabled]):focus {      background-color: '{{accent-A700}}'; }  .md-button.md-THEME_NAME-theme.md-raised {    color: '{{background-contrast}}';    background-color: '{{background-50}}'; }    .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):focus {      background-color: '{{background-200}}'; }  .md-button.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}'; }    .md-button.md-THEME_NAME-theme.md-warn.md-raised, .md-button.md-THEME_NAME-theme.md-warn.md-fab {      color: '{{warn-contrast}}';      background-color: '{{warn-color}}'; }      .md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):focus {        background-color: '{{warn-700}}'; }  .md-button.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}'; }    .md-button.md-THEME_NAME-theme.md-accent.md-raised, .md-button.md-THEME_NAME-theme.md-accent.md-fab {      color: '{{accent-contrast}}';      background-color: '{{accent-color}}'; }      .md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):focus {        background-color: '{{accent-700}}'; }  .md-button.md-THEME_NAME-theme[disabled], .md-button.md-THEME_NAME-theme.md-raised[disabled], .md-button.md-THEME_NAME-theme.md-fab[disabled] {    color: '{{foreground-3}}';    background-color: transparent;    cursor: not-allowed; }md-card.md-THEME_NAME-theme {  border-radius: 2px; }  md-card.md-THEME_NAME-theme .md-card-image {    border-radius: 2px 2px 0 0; }md-checkbox.md-THEME_NAME-theme .md-ripple {  color: '{{accent-600}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon {  background-color: '{{accent-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-ripple {  color: '{{primary-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon {  background-color: '{{primary-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-ripple {  color: '{{warn-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon {  background-color: '{{warn-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme[disabled] .md-icon {  border-color: '{{foreground-3}}'; }md-checkbox.md-THEME_NAME-theme[disabled].md-checked .md-icon {  background-color: '{{foreground-3}}'; }md-content.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }md-divider.md-THEME_NAME-theme {  border-top-color: '{{foreground-4}}'; }md-input-container.md-THEME_NAME-theme .md-input, md-input-container.md-THEME_NAME-theme .as-md-input {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}';  text-shadow: '{{foreground-shadow}}'; }  md-input-container.md-THEME_NAME-theme .md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-ms-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme label, md-input-container.md-THEME_NAME-theme .md-placeholder {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-has-value label {  color: '{{foreground-2}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused .md-input {  border-color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused label {  color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent .md-input {  border-color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn .md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid .md-input, md-input-container.md-THEME_NAME-theme.md-input-invalid .as-md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid data-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid x-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid [ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [data-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [x-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid .md-char-counter {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme .md-input[disabled], md-input-container.md-THEME_NAME-theme .as-md-input[disabled] {  border-bottom-color: transparent;  color: '{{foreground-3}}';  background-image: linear-gradient(to right, '{{foreground-4}}' 0%, '{{foreground-4}}' 33%, transparent 0%); }.list-subheader {  color: '{{foreground-2}}'; }.list-divider {  background-color: '{{foreground-4}}'; }.list-content-tile span.second {  color: '{{foreground-2}}'; }.list-row--has-separator:after {  border-color: '{{foreground-4}}'; }md-progress-circular.md-THEME_NAME-theme {  background-color: transparent; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-gap {    border-top-color: '{{primary-color}}';    border-bottom-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-top-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-right-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle {    border-left-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-gap {    border-top-color: '{{warn-color}}';    border-bottom-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-top-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-right-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle {    border-left-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-gap {    border-top-color: '{{accent-color}}';    border-bottom-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-top-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-right-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle {    border-left-color: '{{accent-color}}'; }md-progress-linear.md-THEME_NAME-theme .md-container {  background-color: '{{primary-100}}'; }md-progress-linear.md-THEME_NAME-theme .md-bar {  background-color: '{{primary-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-container {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-bar {  background-color: '{{warn-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-container {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-bar {  background-color: '{{accent-color}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-bar1 {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-dashed:before {  background: radial-gradient('{{warn-100}}' 0%, '{{warn-100}}' 16%, transparent 42%); }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-bar1 {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-dashed:before {  background: radial-gradient('{{accent-100}}' 0%, '{{accent-100}}' 16%, transparent 42%); }md-radio-button.md-THEME_NAME-theme .md-off {  border-color: '{{foreground-2}}'; }md-radio-button.md-THEME_NAME-theme .md-on {  background-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-off {  border-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-ink-ripple {  color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme .md-container .md-ripple {  color: '{{accent-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-on {  background-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-off {  border-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ink-ripple {  color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-container .md-ripple {  color: '{{primary-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-on {  background-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-off {  border-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-ink-ripple {  color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-container .md-ripple {  color: '{{warn-600}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-off {  border-color: '{{foreground-3}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-on {  border-color: '{{foreground-3}}'; }md-radio-group.md-THEME_NAME-theme:focus:not(:empty) {  border-color: '{{foreground-1}}'; }md-sidenav.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }.md-subheader.md-THEME_NAME-theme {  color: '{{ foreground-2-0.23 }}';  background-color: '{{background-hue-3}}'; }  .md-subheader.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}'; }md-switch.md-THEME_NAME-theme .md-thumb {  background-color: '{{background-50}}'; }md-switch.md-THEME_NAME-theme .md-bar {  background-color: '{{background-500}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-thumb {  background-color: '{{accent-color}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-bar {  background-color: '{{accent-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-thumb {  background-color: '{{primary-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-bar {  background-color: '{{primary-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-thumb {  background-color: '{{warn-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-bar {  background-color: '{{warn-color-0.5}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-thumb {  background-color: '{{background-400}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-bar {  background-color: '{{foreground-4}}'; }md-switch.md-THEME_NAME-theme:focus .md-label:not(:empty) {  border-color: '{{foreground-1}}';  border-style: dotted; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  text-shadow: '{{foreground-shadow}}'; }  md-input-group.md-THEME_NAME-theme input::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme input::-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-ms-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme label {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused input, md-input-group.md-THEME_NAME-theme.md-input-focused textarea {  border-color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused label {  color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent input, md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent textarea {  border-color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-has-value:not(.md-input-focused) label {  color: '{{foreground-2}}'; }md-input-group.md-THEME_NAME-theme .md-input[disabled] {  border-bottom-color: '{{foreground-4}}';  color: '{{foreground-3}}'; }md-toolbar.md-THEME_NAME-theme {  background-color: white; }");(function () {
+(function () {
     'use strict';
     angular.module('app')
         .factory('$transition', ['$q', '$timeout', '$rootScope', function ($q, $timeout, $rootScope) {
@@ -13853,28 +13758,28 @@ module.exports = {
                                 iwidth = modal.width(),
                                 iheight = modal.height();
                             scope.modalOptions.resize = function () {
-                                var wwidth = $(window).width(),
-                                    wheight = $(window).height(),
+                                var wwidth = $(window).width() - 40 * 2,
+                                    wheight = $(window).height() - 24 * 2,
                                     maxHeight,
                                     maxWidth,
                                     minWidth = '',
-                                    minHeight = '';
-                                if (iheight >= wheight) {
-                                    maxHeight = wheight - 16 * 2;
+                                    minHeight = '',
+                                    cwidth = modal.width(),
+                                    cheight = modal.height(),
+                                    overHeight = iheight >= wheight,
+                                    overWidth = iwidth >= wwidth;
+                                if (overHeight || (cheight < wheight && overHeight)) {
+                                    maxHeight = wheight;
                                 } else {
                                     maxHeight = '';
-                                    minHeight = iheight;
                                 }
-                                if (iwidth >= wwidth) {
-                                    maxWidth = wwidth - 16 * 2;
+                                if (overWidth || (cwidth < wwidth && overWidth)) {
+                                    maxWidth = wwidth;
                                 } else {
                                     maxWidth = '';
-                                    minWidth = iwidth;
                                 }
                                 modal.css('max-height', maxHeight);
                                 modal.css('max-width', maxWidth);
-                                modal.css('min-height', minHeight);
-                                modal.css('min-width', minWidth);
                             };
                             scope.modalOptions.resize();
                             $(window).on('resize', scope.modalOptions.resize);
@@ -13929,7 +13834,7 @@ module.exports = {
 
                         setTimeout(function () {
                             $$rAF(cb);
-                        }, 100);
+                        }, 1);
 
                         $(window).triggerHandler('modal.open');
 
@@ -14089,8 +13994,7 @@ module.exports = {
                 openedWindows.add(modalInstance, {
                     deferred: modal.deferred,
                     modalScope: modal.scope,
-                    backdrop: modal.backdrop,
-                    keyboard: modal.keyboard
+                    backdrop: modal.backdrop
                 });
 
                 modal.scope.modalOptions = {
@@ -14133,23 +14037,30 @@ module.exports = {
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
 
-                if (modal.keyboard) {
-                    var esc = function (e) {
+                modalInstance.esc = function (e) {
+                    if (e) {
                         e.preventDefault();
-                        $rootScope.$apply(function () {
-                            modalInstance.withEscape = true;
-                            $modalStack.dismiss(modalInstance, 'escape key press');
-                        });
-                        return true;
-                    };
-                    modalInstance.esc = esc;
-                    mdContextualMonitor.queue(esc);
-                }
+                    }
+                    $rootScope.$apply(function () {
+                        modalInstance.withEscape = true;
+                        $modalStack.dismiss(modalInstance, 'escape key press');
+                    });
+                    return true;
+                };
+                mdContextualMonitor.queue(modalInstance.esc);
 
+            };
+
+            $modalStack._dequeue = function (modalWindow, modalInstance) {
+                mdContextualMonitor.dequeue(modalInstance.esc);
+                if (modalWindow.value.modalScope.modalOptions.resize) {
+                    $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
+                }
             };
 
             $modalStack.close = function (modalInstance, result) {
                 var modalWindow = openedWindows.get(modalInstance);
+                $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.resolve(result);
                     removeModalWindow(modalInstance);
@@ -14158,12 +14069,7 @@ module.exports = {
 
             $modalStack.dismiss = function (modalInstance, reason) {
                 var modalWindow = openedWindows.get(modalInstance);
-                if (!modalInstance.withEscape) {
-                    mdContextualMonitor.dequeue(modalInstance.esc);
-                    if (modalWindow.value.modalScope.modalOptions.resize) {
-                        $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
-                    }
-                }
+                $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.reject(reason);
                     removeModalWindow(modalInstance);
@@ -14191,7 +14097,6 @@ module.exports = {
         var $modalProvider = {
             options: {
                 backdrop: true, //can be also false or 'static'
-                keyboard: true,
                 inDirection: 'right',
                 outDirection: 'right',
                 fullScreen: true
@@ -14278,7 +14183,6 @@ module.exports = {
                                 deferred: modalResultDeferred,
                                 content: tplAndVars[0],
                                 backdrop: modalOptions.backdrop,
-                                keyboard: modalOptions.keyboard,
                                 backdropClass: modalOptions.backdropClass,
                                 windowClass: modalOptions.windowClass,
                                 windowTemplateUrl: modalOptions.windowTemplateUrl,
@@ -14319,7 +14223,7 @@ module.exports = {
                         time = setTimeout(function () {
                             var modal = $(element).parents('.modal:first'),
                                 modalDialog = modal.find('.modal-dialog:first'),
-                                height = (modal.hasClass('modal-medium') ? modalDialog.height() : $(window).height());
+                                height = (modal.hasClass('modal-medium') ? (parseInt((modalDialog.css('max-height').indexOf('%') === -1 ? modalDialog.css('max-height') : 0), 10) || modalDialog.height()) : $(window).height());
                             modalDialog.find('.fixed-height, .min-height, .max-height').each(function () {
                                 var newHeight = height,
                                     footer = modalDialog.find('.md-actions'),
@@ -15744,7 +15648,7 @@ module.exports = {
                                                 targetPaddingLeft = parseInt(target.css('paddingLeft'), 10),
                                                 parent = options.parent,
                                                 parentHeight = options.parent.height(),
-                                                parentPosition = parent.position(),
+                                                parentScrollTop = parent.scrollTop(),
                                                 paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
                                                 paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
                                                 scrollElement = dialogEl.find('md-content'),
@@ -15753,6 +15657,9 @@ module.exports = {
                                                 newTop,
                                                 totalHeight;
                                             targetPosition.left += targetPaddingLeft;
+                                            if (parentScrollTop > 0) {
+                                                maxTop = parentScrollTop + paddingTop;
+                                            }
                                             dialogEl.width(target.width());
                                             if ((dialogEl.height() > parentHeight)
                                                     || (scrollElement.prop('scrollHeight') > parentHeight)) {
@@ -15764,15 +15671,15 @@ module.exports = {
                                                 dialogEl.css(targetPosition);
                                                 if (active.length) {
                                                     // position the selection at center of active item
-                                                    newTop = targetPosition.top - (active.position().top - element.height() / 3);
+                                                    newTop = (targetPosition.top + parentScrollTop) - (active.position().top + (element.height() / 4)) + paddingTop;
                                                 } else {
                                                     // position the div at the center if no item is selected
-                                                    newTop = targetPosition.top - (dialogEl.height() / 2);
+                                                    newTop = (targetPosition.top + parentScrollTop) - (dialogEl.height() / 2) + paddingTop;
                                                 }
                                                 if (newTop > maxTop) { // if newTop is larger then maxTop, attempt to check if that calculated top is possible
                                                     totalHeight = newTop + dialogEl.height(); // if the top + dialogEl exceedes parentHeight
-                                                    if (totalHeight > parentHeight) {
-                                                        newTop = newTop - (totalHeight - parentHeight); // new top is calculated by substracting the extra space from the entire space
+                                                    if (totalHeight > (parentHeight + parentScrollTop)) {
+                                                        newTop = newTop - (totalHeight - (parentHeight + parentScrollTop)); // new top is calculated by substracting the extra space from the entire space
                                                         if (newTop < maxTop) {
                                                             newTop = maxTop;
                                                         }
@@ -19677,4 +19584,4 @@ angular.module('app')
             delete window.CURRENT_ACCOUNT;
         }
     });
-}());
+}());angular.module("material.core").constant("$MD_THEME_CSS", "md-backdrop.md-opaque.md-THEME_NAME-theme {  background-color: '{{foreground-4-0.5}}'; }md-toolbar .md-button.md-THEME_NAME-theme.md-fab {    background-color: white;}.md-button.md-THEME_NAME-theme {    border-radius: 3px;}.md-button.md-THEME_NAME-theme:not([disabled]):hover, .md-button.md-THEME_NAME-theme:not([disabled]):focus {    background-color: '{{background-500-0.2}}';}.md-button.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}';}.md-button.md-THEME_NAME-theme.md-primary.md-raised, .md-button.md-THEME_NAME-theme.md-primary.md-fab {    color: '{{primary-contrast}}';    background-color: '{{primary-color}}';}.md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-primary.md-fab:not([disabled]):focus {    background-color: '{{primary-600}}';}.md-button.md-THEME_NAME-theme.md-fab {    border-radius: 50%;    background-color: '{{accent-color}}';    color: '{{accent-contrast}}';}.md-button.md-THEME_NAME-theme.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-fab:not([disabled]):focus {    background-color: '{{accent-A700}}';}.md-button.md-THEME_NAME-theme.md-raised {    color: '{{background-contrast}}';    background-color: '{{background-50}}';}.md-button.md-THEME_NAME-theme.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):focus {    background-color: '{{background-200}}';}.md-button.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}';}.md-button.md-THEME_NAME-theme.md-warn.md-raised, .md-button.md-THEME_NAME-theme.md-warn.md-fab {    color: '{{warn-contrast}}';    background-color: '{{warn-color}}';}.md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-warn.md-fab:not([disabled]):focus {    background-color: '{{warn-700}}';}.md-button.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}';}.md-button.md-THEME_NAME-theme.md-accent.md-raised, .md-button.md-THEME_NAME-theme.md-accent.md-fab {    color: '{{accent-contrast}}';    background-color: '{{accent-color}}';}.md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-raised:not([disabled]):focus, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-accent.md-fab:not([disabled]):focus {    background-color: '{{accent-700}}';}.md-button.md-THEME_NAME-theme[disabled], .md-button.md-THEME_NAME-theme.md-raised[disabled], .md-button.md-THEME_NAME-theme.md-fab[disabled] {    color: '{{foreground-3}}';    background-color: transparent;    cursor: not-allowed;}md-card.md-THEME_NAME-theme {  border-radius: 2px; }  md-card.md-THEME_NAME-theme .md-card-image {    border-radius: 2px 2px 0 0; }md-checkbox.md-THEME_NAME-theme .md-ripple {  color: '{{accent-600}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon {  background-color: '{{accent-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-ripple {  color: '{{primary-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ripple {  color: '{{background-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon {  background-color: '{{primary-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-ripple {  color: '{{warn-600}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn .md-icon {  border-color: '{{foreground-2}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon {  background-color: '{{warn-color-0.87}}'; }md-checkbox.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-icon:after {  border-color: '{{background-200}}'; }md-checkbox.md-THEME_NAME-theme[disabled] .md-icon {  border-color: '{{foreground-3}}'; }md-checkbox.md-THEME_NAME-theme[disabled].md-checked .md-icon {  background-color: '{{foreground-3}}'; }md-content.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }md-divider.md-THEME_NAME-theme {  border-top-color: '{{foreground-4}}'; }md-input-container.md-THEME_NAME-theme .md-input, md-input-container.md-THEME_NAME-theme .as-md-input {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}';  text-shadow: '{{foreground-shadow}}'; }  md-input-container.md-THEME_NAME-theme .md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .md-input:-ms-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-webkit-input-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input::-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-moz-placeholder, md-input-container.md-THEME_NAME-theme .as-md-input:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme label, md-input-container.md-THEME_NAME-theme .md-placeholder {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-has-value label {  color: '{{foreground-2}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused .md-input {  border-color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused label {  color: '{{primary-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent .md-input {  border-color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn .md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme:not(.md-input-invalid).md-input-focused.md-warn label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid .md-input, md-input-container.md-THEME_NAME-theme.md-input-invalid .as-md-input {  border-color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid label {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme.md-input-invalid ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid data-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid x-ng-message, md-input-container.md-THEME_NAME-theme.md-input-invalid [ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [data-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid [x-ng-message], md-input-container.md-THEME_NAME-theme.md-input-invalid .md-char-counter {  color: '{{warn-500}}'; }md-input-container.md-THEME_NAME-theme .md-input[disabled], md-input-container.md-THEME_NAME-theme .as-md-input[disabled] {  border-bottom-color: transparent;  color: '{{foreground-3}}';  background-image: linear-gradient(to right, '{{foreground-4}}' 0%, '{{foreground-4}}' 33%, transparent 0%); }md-progress-circular.md-THEME_NAME-theme {  background-color: transparent; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-gap {    border-top-color: '{{primary-color}}';    border-bottom-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-top-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-right .md-half-circle {    border-right-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme .md-inner .md-left .md-half-circle {    border-left-color: '{{primary-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-gap {    border-top-color: '{{warn-color}}';    border-bottom-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-top-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-right .md-half-circle {    border-right-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-warn .md-inner .md-left .md-half-circle {    border-left-color: '{{warn-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-gap {    border-top-color: '{{accent-color}}';    border-bottom-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle, md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-top-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-right .md-half-circle {    border-right-color: '{{accent-color}}'; }  md-progress-circular.md-THEME_NAME-theme.md-accent .md-inner .md-left .md-half-circle {    border-left-color: '{{accent-color}}'; }md-progress-linear.md-THEME_NAME-theme .md-container {  background-color: '{{primary-100}}'; }md-progress-linear.md-THEME_NAME-theme .md-bar {  background-color: '{{primary-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-container {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-warn .md-bar {  background-color: '{{warn-color}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-container {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme.md-accent .md-bar {  background-color: '{{accent-color}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-bar1 {  background-color: '{{warn-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-warn .md-dashed:before {  background: radial-gradient('{{warn-100}}' 0%, '{{warn-100}}' 16%, transparent 42%); }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-bar1 {  background-color: '{{accent-100}}'; }md-progress-linear.md-THEME_NAME-theme[md-mode=buffer].md-accent .md-dashed:before {  background: radial-gradient('{{accent-100}}' 0%, '{{accent-100}}' 16%, transparent 42%); }md-radio-button.md-THEME_NAME-theme .md-off {  border-color: '{{foreground-2}}'; }md-radio-button.md-THEME_NAME-theme .md-on {  background-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-off {  border-color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme.md-checked .md-ink-ripple {  color: '{{accent-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme .md-container .md-ripple {  color: '{{accent-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-on {  background-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-off {  border-color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary.md-checked .md-ink-ripple {  color: '{{primary-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-primary .md-container .md-ripple {  color: '{{primary-600}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-on {  background-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-off {  border-color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn.md-checked .md-ink-ripple {  color: '{{warn-color-0.87}}'; }md-radio-button.md-THEME_NAME-theme:not([disabled]).md-warn .md-container .md-ripple {  color: '{{warn-600}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-off {  border-color: '{{foreground-3}}'; }md-radio-button.md-THEME_NAME-theme[disabled] .md-container .md-on {  border-color: '{{foreground-3}}'; }md-radio-group.md-THEME_NAME-theme:focus:not(:empty) {  border-color: '{{foreground-1}}'; }md-sidenav.md-THEME_NAME-theme {  background-color: '{{background-hue-3}}'; }.md-subheader.md-THEME_NAME-theme {  color: '{{ foreground-2-0.23 }}';  background-color: '{{background-hue-3}}'; }  .md-subheader.md-THEME_NAME-theme.md-primary {    color: '{{primary-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-accent {    color: '{{accent-color}}'; }  .md-subheader.md-THEME_NAME-theme.md-warn {    color: '{{warn-color}}'; }md-switch.md-THEME_NAME-theme .md-thumb {  background-color: '{{background-50}}'; }md-switch.md-THEME_NAME-theme .md-bar {  background-color: '{{background-500}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-thumb {  background-color: '{{accent-color}}'; }md-switch.md-THEME_NAME-theme.md-checked .md-bar {  background-color: '{{accent-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-thumb {  background-color: '{{primary-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-primary .md-bar {  background-color: '{{primary-color-0.5}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-thumb {  background-color: '{{warn-color}}'; }md-switch.md-THEME_NAME-theme.md-checked.md-warn .md-bar {  background-color: '{{warn-color-0.5}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-thumb {  background-color: '{{background-400}}'; }md-switch.md-THEME_NAME-theme[disabled] .md-bar {  background-color: '{{foreground-4}}'; }md-switch.md-THEME_NAME-theme:focus .md-label:not(:empty) {  border-color: '{{foreground-1}}';  border-style: dotted; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  text-shadow: '{{foreground-shadow}}'; }  md-input-group.md-THEME_NAME-theme input::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme input::-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-moz-placeholder, md-input-group.md-THEME_NAME-theme input:-ms-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-webkit-input-placeholder, md-input-group.md-THEME_NAME-theme textarea::-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-moz-placeholder, md-input-group.md-THEME_NAME-theme textarea:-ms-input-placeholder {    color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme label {  text-shadow: '{{foreground-shadow}}';  color: '{{foreground-3}}'; }md-input-group.md-THEME_NAME-theme input, md-input-group.md-THEME_NAME-theme textarea {  color: '{{foreground-1}}';  border-color: '{{foreground-4}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused input, md-input-group.md-THEME_NAME-theme.md-input-focused textarea {  border-color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused label {  color: '{{primary-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent input, md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent textarea {  border-color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-focused.md-accent label {  color: '{{accent-500}}'; }md-input-group.md-THEME_NAME-theme.md-input-has-value:not(.md-input-focused) label {  color: '{{foreground-2}}'; }md-input-group.md-THEME_NAME-theme .md-input[disabled] {  border-bottom-color: '{{foreground-4}}';  color: '{{foreground-3}}'; }md-toolbar.md-THEME_NAME-theme {  background-color: white; }");

@@ -1,0 +1,15 @@
+.list-subheader {
+  color: '{{foreground-2}}';
+}
+
+.list-divider {
+  background-color: '{{foreground-4}}'; 
+}
+
+.list-content-tile span.second {
+  color: '{{foreground-2}}'; 
+}
+
+.list-row--has-separator:after  {
+  border-color: '{{foreground-4}}'; 
+}

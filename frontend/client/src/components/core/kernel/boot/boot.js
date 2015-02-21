@@ -289,7 +289,22 @@ if (!Array.prototype.indexOf) {
             debug: true, // debug mode
             host: host,
             modules: ['config', 'ngAnimate', 'ngMessages', 'ui.router', 'ui.sortable', 'ui.inflector', 'ngSanitize',
-                      'ngDragDrop', 'timer', 'googlechart', 'ngMaterial'], // this will be changed accordingly
+                      'ngDragDrop', 'timer', 'googlechart', 
+                      'material.core','material.core.theming.palette',
+                      'material.core.theming','material.components.backdrop',
+                      'material.components.button','material.components.card',
+                      'material.components.checkbox','material.components.content',
+                      'material.components.simpledialog','material.components.divider',
+                      'material.components.input','material.components.progressCircular',
+                      'material.components.progressLinear','material.components.radioButton',
+                      'material.components.sidenav',
+                      'material.components.sticky',
+                      'material.components.subheader',
+                      'material.components.swipe',
+                      'material.components.switch',
+                      'material.components.textField',
+                      'material.components.toolbar',
+                      'material.components.whiteframe'], // this will be changed accordingly
             api: {
                 endpoint: {
                     path: host + '/api/endpoint'
@@ -324,6 +339,7 @@ if (!Array.prototype.indexOf) {
                 }
             }
         };
+    angular.module('ngMaterial', ["material.core","material.core.theming.palette","material.core.theming","material.components.backdrop","material.components.button","material.components.card","material.components.checkbox","material.components.content","material.components.simpledialog","material.components.divider","material.components.input","material.components.progressCircular","material.components.progressLinear","material.components.radioButton","material.components.sidenav","material.components.sticky","material.components.subheader","material.components.swipe","material.components.switch","material.components.textField","material.components.toolbar","material.components.whiteframe"]);     
     angular.module('config', ['ng'])
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG)
         .config(function ($httpProvider, $locationProvider) {

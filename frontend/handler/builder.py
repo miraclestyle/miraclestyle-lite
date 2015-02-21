@@ -30,7 +30,7 @@ class BuildAngularIndexHTML(base.Angular):
     self.response.headers['Content-Type'] = 'text/plain; charset=utf8'
     self.render(self.base_template, {'static_dir': self._static_dir})
 
-class BuildAngularTemplates(base.Angular):
+class BuildAngularDynamics(base.Angular):
 
   def after(self):
     pass
@@ -38,8 +38,9 @@ class BuildAngularTemplates(base.Angular):
   def respond(self):
     if settings.DEBUG:
       self.response.headers['Content-Type'] = 'application/x-javascript; charset=utf-8'
-      gets = settings.build(templates=True, js_and_css=False, statics=False, write=False)
+      gets = settings.build(templates=True,  material_css=True, js_and_css=False, statics=False, write=False)
+      self.response.write(gets['default-theme.js'])
       self.response.write(gets['templates.js'])
 
 settings.ROUTES.append((r'/build/angular/index.html', BuildAngularIndexHTML))
-settings.ROUTES.append((r'/build/templates.js', BuildAngularTemplates))
+settings.ROUTES.append((r'/build/dynamics.js', BuildAngularDynamics))

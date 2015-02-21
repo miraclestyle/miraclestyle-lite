@@ -79,7 +79,27 @@ ANGULAR_JAVASCRIPT_PATHS = []
 ANGULAR_ACTIVE_COMPONENTS = [
     "core/kernel/boot",
     "core/kernel",
-    "core/material_design",
+    "core/material_design/backdrop",
+    "core/material_design/button",
+    "core/material_design/card",
+    "core/material_design/checkbox",
+    "core/material_design/content",
+    "core/material_design/core",
+    "core/material_design/divider",
+    "core/material_design/input",
+    "core/material_design/progressCircular",
+    "core/material_design/progressLinear",
+    "core/material_design/radioButton",
+    "core/material_design/sidenav",
+    "core/material_design/simpledialog",
+    "core/material_design/list",
+    "core/material_design/sticky",
+    "core/material_design/subheader",
+    "core/material_design/swipe",
+    "core/material_design/switch",
+    "core/material_design/textField", 
+    "core/material_design/toolbar", 
+    "core/material_design/whiteframe",
     "core/accordion", 
     "core/action", 
     "core/cache", 
@@ -123,7 +143,8 @@ for component in ANGULAR_ACTIVE_COMPONENTS:
       if f.endswith('.js') and not dirname.endswith('static') and iscomponent:
         ANGULAR_JAVASCRIPT_PATHS.append(path)
         ANGULAR_JAVASCRIPT_FILES.append(abs_path)
-      elif f.endswith('.css') and not dirname.endswith('static') and iscomponent:
+      elif f.endswith('.css') and not dirname.endswith('static') and iscomponent \
+           and not f.endswith('-default-theme.css'):
         ANGULAR_CSS_PATHS.append(path)
         ANGULAR_CSS_FILES.append(abs_path)
       elif f.endswith('.html') and dirname.endswith('template') or '/template/' in str(dirname):
@@ -159,7 +180,7 @@ def _empty_dir(d):
     for d in dirs:
       shutil.rmtree(os.path.join(root, d))
 
-def build(templates=True, statics=True, js_and_css=True, write=False, inform=True):
+def build(templates=True, statics=True, js_and_css=True, write=False, material_css=True, inform=True):
   dist = os.path.join(CLIENT_DIR, 'dist')
   paths = {}
   buff = {}
@@ -173,12 +194,29 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
   for p in ['app.js', 'style.css', 'static', 'templates.js']:
       paths[p] = os.path.join(dist, p)
       buff[p] = u''
+  if material_css:
+    default_theme_js_buff = u''
+    default_theme_js = os.path.join(CLIENT_COMPONENTS_DIR, 'core', 'material_design', 'core', 'default-theme.js')
+    for c in ANGULAR_ACTIVE_COMPONENTS:
+      if '/material_design/' in c:
+        name = '%s-default-theme.css' % c.split('/')[-1]
+        try:
+          with read(os.path.join(CLIENT_COMPONENTS_DIR, c, name)) as f:
+            default_theme_js_buff += f.read().replace('\n', '').replace('"', '\"')
+          out('Material design css theme: %s' % name)
+        except:
+          pass
+    default_theme_js_buff = u"""angular.module("material.core").constant("$MD_THEME_CSS", "%s");""" % default_theme_js_buff
+    buff['default-theme.js'] = default_theme_js_buff
   if js_and_css:
     for t, b in [('JAVASCRIPT', 'app.js'), ('CSS', 'style.css')]:
         for files in globals().get('ANGULAR_%s_FILES' % t):
             with read(files) as f:
                 buff[b] += f.read()
     if write:
+      if 'default-theme.js' in buff:
+        buff['app.js'] += buff['default-theme.js']
+        del buff['default-theme.js']
       for b, w in buff.iteritems():
           if w:
             out('Writing %s' % paths[b])

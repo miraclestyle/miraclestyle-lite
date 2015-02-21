@@ -224,7 +224,7 @@
                                                 if (newTop > maxTop) { // if newTop is larger then maxTop, attempt to check if that calculated top is possible
                                                     totalHeight = newTop + dialogEl.height(); // if the top + dialogEl exceedes parentHeight
                                                     if (totalHeight > (parentHeight + parentScrollTop)) {
-                                                        newTop = newTop - (totalHeight - (parentHeight + parentScrollTop)); // new top is calculated by substracting the extra space from the entire space
+                                                        newTop = newTop - (totalHeight - (parentHeight + parentScrollTop - paddingBottom)); // new top is calculated by substracting the extra space from the entire space
                                                         if (newTop < maxTop) {
                                                             newTop = maxTop;
                                                         }

@@ -68,7 +68,11 @@
             var toggleMenu = function ($scope, id) {
                 $scope.sidenavMenuID = id;
                 $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag-link'];
+                $scope.toggling = false;
                 $scope.toggleMenu = function ($event) {
+                    if ($scope.toggling) {
+                        return;
+                    }
                     var it = $mdSidenav($scope.sidenavMenuID),
                         check = false,
                         target;
@@ -83,6 +87,7 @@
                             return;
                         }
                     }
+                    $scope.toggling = true;
                     if (it.isOpen()) {
                         $scope.closeMenu();
                     } else {
@@ -91,12 +96,16 @@
                 };
                 $scope.closeMenu = function () {
                     $timeout(function () {
-                        $mdSidenav($scope.sidenavMenuID).close();
+                        $mdSidenav($scope.sidenavMenuID).close().then(function () {
+                            $scope.toggling = false;
+                        });
                     });
                 };
                 $scope.openMenu = function () {
                     $timeout(function () {
-                        $mdSidenav($scope.sidenavMenuID).open();
+                        $mdSidenav($scope.sidenavMenuID).open().then(function () {
+                            $scope.toggling = false;
+                        });
                     });
                 };
             };
