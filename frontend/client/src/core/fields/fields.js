@@ -234,6 +234,10 @@
                             config.ui.writableCompiled = writableCompiled;
                         }
 
+                        if (attrs.readonly) {
+                            delete attrs['ng-disabled'];
+                        }
+
                         return attrs;
                     },
                     extra_attrs: function (config) {
@@ -1540,6 +1544,7 @@
                     },
                     SuperDateTimeProperty: function (info) {
                         info.config.ui.attrs['time-date-picker-dialog'] = '';
+                        info.config.ui.attrs.readonly = 'true';
                         return 'string';
                     }
                 };

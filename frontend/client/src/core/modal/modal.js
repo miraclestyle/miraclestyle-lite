@@ -86,7 +86,8 @@
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    var clickElement = scope.modalOptions.targetEvent && scope.modalOptions.targetEvent.target;
+                    var clickElement = scope.modalOptions.targetEvent && scope.modalOptions.targetEvent.target,
+                        noTransformCommand = false;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // attrs.windowClass
                     scope.size = attrs.size;
                     $timeout(function () {
@@ -135,10 +136,11 @@
                                 (-modalRect.top + clickRect.top + clickRect.height / 2 - modalRect.height / 2) + 'px,' +
                                 '0) scale(' + scaleX + ',' + scaleY + ')'
                             );
+                        } else if (scope.modalOptions.inDirection) {
+                            element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.inDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
                         } else {
-                            if (scope.modalOptions.inDirection) {
-                                element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.inDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
-                            }
+                            noTransformCommand = true;
+                            element.css($mdConstant.CSS.TRANSFORM, 'translate3d(0px, -120%, 0px)');
                         }
 
                         if (scope.modalOptions.inDirection) {

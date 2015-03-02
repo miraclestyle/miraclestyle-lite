@@ -389,7 +389,7 @@
                     ]
                 };
             }
-        ]).directive('timeDatePickerDialog', function ($modal, dateFilter, dateParser, GLOBAL_CONFIG) {
+        ]).directive('timeDatePickerDialog', function ($modal, dateFilter, dateParser, GLOBAL_CONFIG, $$rAF) {
             return {
                 require: ['ngModel', '^form'],
                 link: function (scope, element, attrs, ctrls) {
@@ -401,34 +401,35 @@
                     };
 
                     element.on('click focus', function (event) {
+                        event.preventDefault();
                         if (open) {
-                            event.preventDefault();
                             return;
                         }
                         open = true;
-                        $modal.open({
-                            windowClass: 'modal-medium',
-                            targetEvent: false,
-                            inDirection: false,
-                            outDirection: false,
-                            templateUrl: 'core/datetime/popup.html',
-                            fullScreen: false,
-                            controller: function ($scope) {
-                                $scope.date = ngModel.$modelValue;
-                                var $close = $scope.$close;
-                                $scope.$close = function () {
-                                    open = false;
-                                    $close();
-                                };
-                                $scope.select = function () {
-                                    ngModel.$setViewValue($scope.date);
-                                    ngModel.$render();
-                                    $scope.$close();
-                                };
-                            }
-                        });
 
-                        event.preventDefault();
+                        $$rAF(function () {
+                            $modal.open({
+                                windowClass: 'modal-medium',
+                                targetEvent: false,
+                                inDirection: false,
+                                outDirection: false,
+                                templateUrl: 'core/datetime/popup.html',
+                                fullScreen: false,
+                                controller: function ($scope) {
+                                    $scope.date = ngModel.$modelValue;
+                                    var $close = $scope.$close;
+                                    $scope.$close = function () {
+                                        open = false;
+                                        $close();
+                                    };
+                                    $scope.select = function () {
+                                        ngModel.$setViewValue($scope.date);
+                                        ngModel.$render();
+                                        $scope.$close();
+                                    };
+                                }
+                            });
+                        });
                     });
 
                     ngModel.$parsers.unshift(function parseDate(viewValue) {
