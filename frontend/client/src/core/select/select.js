@@ -24,7 +24,11 @@
                     containerCtrl.input = element;
                     $mdTheming(element);
                     ngModelPipelineCheckValue = function (arg) {
-                        containerCtrl.setHasValue(!ngModel.$isEmpty(arg));
+                        var s = !ngModel.$isEmpty(arg);
+                        if (angular.isArray(arg)) {
+                            s = arg.length !== 0;
+                        }
+                        containerCtrl.setHasValue(s);
                         return arg;
                     };
                     isErrorGetter = containerCtrl.isErrorGetter || function () {
@@ -35,7 +39,15 @@
                     ngModel.$parsers.push(ngModelPipelineCheckValue);
                     ngModel.$formatters.push(ngModelPipelineCheckValue);
 
-                    element.on('click', function (ev) {
+                    element.on('keyup', function (ev) {
+                        if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
+                            select.open();
+                        }
+                    });
+                    element.on('click focus', function (ev) {
+                        containerCtrl.setFocused(true);
+                    });
+                    element.on('blur', function (ev) {
                         containerCtrl.setFocused(true);
                     });
                     scope.$on('$destroy', function () {
@@ -122,7 +134,7 @@
                             already = ngModel.$modelValue || [],
                             selected = $.inArray(hash, ngModel.$modelValue) !== -1;
                         if (!angular.isArray(select.item)) {
-                            select.item = [];
+                            select.item = already;
                         }
                         if (hasIt) {
                             if (!selected) {
@@ -136,6 +148,7 @@
                             }
                         }
                         ngModel.$setViewValue(already);
+                        ngModelPipelineCheckValue(already);
                     };
 
                     select.collectActive = function () {
@@ -252,6 +265,8 @@
                                                     nextDefer.resolve();
                                                     if (select.search) {
                                                         dialogEl.find('input[type="search"]').focus();
+                                                    } else {
+                                                       // dialogEl.find('[tabindex="1"]').focus();
                                                     }
                                                 }
                                             });

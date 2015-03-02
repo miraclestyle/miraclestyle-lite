@@ -354,13 +354,9 @@
                         },
                         kind: undefined,
                         selectKinds: {
-                            type: 'SuperKeyProperty',
+                            type: 'SuperStringProperty',
+                            choices: kinds,
                             ui: {
-                                specifics: {
-                                    entities: function () {
-                                        return kinds;
-                                    },
-                                },
                                 args: 'info.kind',
                                 label: 'Plugins',
                                 attrs: {

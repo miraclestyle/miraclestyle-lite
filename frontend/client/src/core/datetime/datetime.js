@@ -399,7 +399,7 @@
                         element.val(dateFilter(ngModel.$modelValue, GLOBAL_CONFIG.date.format));
                     };
 
-                    element.on('click', function (event) {
+                    element.on('click focus', function (event) {
                         $modal.open({
                             windowClass: 'modal-medium',
                             targetEvent: event,

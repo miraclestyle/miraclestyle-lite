@@ -107,6 +107,10 @@ body .mb15 {
 .padding-16 {
     padding: 16px;
 }
+.padding-sides-0 {
+    padding-left: 0px;
+    padding-right: 0px;
+}
 .padding-sides-16 {
     padding-right: 16px;
     padding-left: 16px;
@@ -188,7 +192,6 @@ body .mb15 {
 a.block, .block, button.block {
     display: block;
 }
-
 .t60 {
     width: 60%;
 }
@@ -201,7 +204,6 @@ a.block, .block, button.block {
 .t0 {
     width: 0%;
 }
-
 .bottom-right-floating {
     position: absolute;
     bottom: 10px;
@@ -213,11 +215,9 @@ a.block, .block, button.block {
     padding: 5px;
     display: block;
 }
-
 .pointable {
     cursor: pointer;
 }
-
 pre {
     overflow: auto;
     font-size: 13px;
@@ -228,17 +228,13 @@ pre {
     margin-bottom: 1em;
     font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, sans-serif;
 }
-
 .load-more {
     width: 100%;
 }
-
-
 .no-things-available {
     color: #CCC;
     text-align: center;
 }
-
 .menu-item {
     position: relative;
     width: 100%;
@@ -247,11 +243,10 @@ pre {
     text-align: left;
     line-height: 1;
 }
-
 .ellipsis-text {
     width: auto;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display:block;
+    display: block;
 }

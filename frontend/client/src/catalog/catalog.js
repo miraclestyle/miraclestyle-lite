@@ -622,6 +622,7 @@
                                             });
                                     },
                                     sudo: function () {
+                                        var parentScope = $scope;
                                         $modal.open({
                                             templateUrl: 'core/models/manage.html',
                                             controller: function ($scope) {
@@ -629,7 +630,7 @@
                                                     templateBodyUrl: 'catalog/administer.html'
                                                 };
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
-                                                $scope.args = {key: catalog.key, state: catalog.state};
+                                                $scope.args = {key: parentScope.entity.key, state: parentScope.entity.state};
 
                                                 /*
                                                 sudoFields.state.ui.placeholder = 'Set state';

@@ -5,7 +5,7 @@
         <div class="pull-right">
            <span ng-include="config.ui.specifics.mainActionsLayout.before"></span>
            <md-button type="button" loading="!<%= config.ui.writableCompiled %>" class="md-raised fake-button">
-               <span><%=config.ui.specifics.addText %> <span class="selected-total">(:total)</span> <span ng-show="$isUploading">(Uploading...)</span></span>
+               <span><%=config.ui.specifics.addText %> <span class="selected-total">(:total)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
                        multiple
                        show-number-of-selected-files=".selected-total"
@@ -46,23 +46,25 @@
       <% } %>
       
       <% } else { %>
-        <div>
+        <md-input-container class="block padding-sides-0">
              <md-button type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button md-raised">
-               <span><%=config.ui.compiled.label %> <span ng-show="$isUploading">(Uploading...)</span></span>
+               <span><%=config.ui.compiled.label %> <span class="selected-total">(:total)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
-                       generate-upload-url
-                       type="file" />
+                      generate-upload-url
+                      ng-required="config.required || !<%= config.ui.args %>.serving_url"
+                      valid-file
+                      show-number-of-selected-files=".selected-total"
+                      ng-model="<%= config.ui.args %>._file"
+                      type="file" />
              </md-button>
-             <br />
-             <br />
-             <div>
+             
+             <div class="uploaded-image">
                 <img display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
              </div>
              <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
               <div ng-message="help"><%= config.ui.help %></div>
               <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
              </div>
-        </div>
- 
+        </md-input-container>
       <% }  %>
 </div>

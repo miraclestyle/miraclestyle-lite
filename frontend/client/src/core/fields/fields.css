@@ -65,3 +65,10 @@ a.sort-handle {
 .about-to-delete .delete-overlay {
     display: block;
 }
+
+.uploaded-image {  
+    padding-top: 16px;
+}
+.uploaded-image img {
+    display:block;
+}
