@@ -536,29 +536,13 @@
                                 $scope.args = config.argumentLoader($scope);
                                 $scope.rootScope = $scope;
 
-                                $scope.formSetPristine = function () {
-                                    if ($scope.container && $scope.container.form) {
-                                        $scope.container.form.$setPristine();
-                                    }
-                                };
-
-                                $scope.formSetDirty = function () {
-                                    if ($scope.container && $scope.container.form) {
-                                        $scope.container.form.$setDirty();
-                                    }
-                                };
+                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
                                 $scope.setAction = function (action) {
                                     $scope.args.action_id = action;
                                     config.action = action;
-                                };
-
-                                $scope.validateForm = function () {
-                                    if (!$scope.container.form.$valid) {
-                                        $scope.$broadcast('invalidForm');
-                                        return false;
-                                    }
-                                    return true;
                                 };
 
                                 $scope.save = function () {

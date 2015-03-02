@@ -326,13 +326,19 @@
                         check = function () {
                             element.find('[name]').each(function () {
                                 var name = $(this).attr('name'),
-                                    formElement = form[name];
+                                    formElement = form[name],
+                                    lastSet;
                                 if (angular.isDefined(formElement)) {
                                     if (!formElement.$valid) {
+                                        if (lastSet) {
+                                            lastSet.open = false;
+                                        }
                                         accordion.open = true;
+                                        lastSet = accordion;
                                         form.$setDirty();
                                         formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
                                         formElement.$setDirty();
+                                        formElement.$setTouched();
                                         if (!scope.$$phase) {
                                             scope.$apply();
                                         }

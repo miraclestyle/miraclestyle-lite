@@ -394,19 +394,32 @@
                 require: ['ngModel', '^form'],
                 link: function (scope, element, attrs, ctrls) {
                     var ngModel = ctrls[0],
-                        form = ctrls[1];
+                        form = ctrls[1],
+                        open = false;
                     ngModel.$render = function () {
                         element.val(dateFilter(ngModel.$modelValue, GLOBAL_CONFIG.date.format));
                     };
 
                     element.on('click focus', function (event) {
+                        if (open) {
+                            event.preventDefault();
+                            return;
+                        }
+                        open = true;
                         $modal.open({
                             windowClass: 'modal-medium',
-                            targetEvent: event,
+                            targetEvent: false,
+                            inDirection: false,
+                            outDirection: false,
                             templateUrl: 'core/datetime/popup.html',
                             fullScreen: false,
                             controller: function ($scope) {
                                 $scope.date = ngModel.$modelValue;
+                                var $close = $scope.$close;
+                                $scope.$close = function () {
+                                    open = false;
+                                    $close();
+                                };
                                 $scope.select = function () {
                                     ngModel.$setViewValue($scope.date);
                                     ngModel.$render();

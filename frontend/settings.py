@@ -6,9 +6,9 @@ Created on Oct 10, 2013
 '''
 import os
 import json
-from glob import glob
 import codecs
 import shutil
+from glob import glob
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')

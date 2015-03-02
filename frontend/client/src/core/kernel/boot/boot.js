@@ -225,6 +225,33 @@ if (!Array.prototype.indexOf) {
         return this.indexOf(value) > -1;
     };
 
+    // attach the .equals method to Array's prototype to call it on any array
+    Array.prototype.equals = function (array) {
+        // if the other array is a falsy value, return
+        if (!array)
+            return false;
+
+        // compare lengths - can save a lot of time 
+        if (this.length !== array.length) {
+            return false;
+        }
+
+        for (var i = 0, l=this.length; i < l; i++) {
+            // Check if we have nested arrays
+            if (this[i] instanceof Array && array[i] instanceof Array) {
+                // recurse into the nested arrays
+                if (!this[i].equals(array[i])) {
+                    return false;
+                }        
+            }           
+            else if (this[i] !== array[i]) { 
+                // Warning - two different object instances will never be equal: {x:20} != {x:20}
+                return false;   
+            }           
+        }       
+        return true;
+    };
+
     Array.prototype.compare = function (array) {
         // if the other array is a falsy value, return
         if (!array) {
@@ -339,7 +366,7 @@ if (!Array.prototype.indexOf) {
                 }
             }
         };
-    angular.module('ngMaterial', ["material.core","material.core.theming.palette","material.core.theming","material.components.backdrop","material.components.button","material.components.card","material.components.checkbox","material.components.content","material.components.simpledialog","material.components.divider","material.components.input","material.components.progressCircular","material.components.progressLinear","material.components.radioButton","material.components.sidenav","material.components.sticky","material.components.subheader","material.components.swipe","material.components.switch","material.components.textField","material.components.toolbar","material.components.whiteframe"]);     
+ 
     angular.module('config', ['ng'])
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG)
         .config(function ($httpProvider, $locationProvider) {

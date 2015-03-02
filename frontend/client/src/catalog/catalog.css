@@ -3,7 +3,7 @@ div.catalog-pricetag {
     position: absolute;
     top: 20%;
     left: 20px;
-    z-index: 59;
+    z-index: 58;
     padding: 0px;
     visibility: hidden;
     border-radius: 3px;
@@ -57,7 +57,7 @@ li.catalog-new-pricetag {
 }
 .catalog-closer {
     position: fixed;
-    z-index: 100;
+    z-index: 57;
     left: 10px;
     top: 10px;
 }

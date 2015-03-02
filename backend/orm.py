@@ -3873,8 +3873,11 @@ class SuperPluginStorageProperty(SuperPickleProperty):
   def _get_value(self, entity):
     values = super(SuperPluginStorageProperty, self)._get_value(entity)
     if values:
+      sequence = len(values)
       for val in values:
         val.read()
+        sequence -= 1
+        val._sequence = sequence
     return values
   
   def _set_value(self, entity, value):

@@ -3,6 +3,12 @@
  
   <div class="modal-body fixed-height relative">
   <div class="clearfix">
+
+      <div class="catalog-closer">
+           <button md-ink-ripple md-themable  loading type="button" class="button-transparent catalog-close-button" ng-click="close()">
+             <icon type="navigation.close"></icon>
+           </button>
+      </div>
  
       <div ng-click="toggleMenu($event)" class="image-slider-outer">
          <div md-ink-ripple-fit md-ink-ripple-ignore="notRipplable" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
@@ -13,7 +19,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button md-ink-ripple md-themable type="button" class="button-transparent catalog-pricetag-link" loading ng-click="viewProduct(image, pricetag)">
+                         <button md-ink-ripple md-themable type="button" class="button-transparent catalog-pricetag-link" loading ng-click="viewProduct(image, pricetag, {targetEvent: $event})">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>
@@ -23,11 +29,7 @@
          </div>
 
 
-        <div class="catalog-closer">
-           <button md-ink-ripple md-themable  loading type="button" class="button-transparent catalog-close-button" ng-click="close()">
-             <icon type="navigation.close"></icon>
-           </button>
-        </div>
+
 
       </div>
 

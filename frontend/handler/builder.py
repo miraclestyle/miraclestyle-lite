@@ -6,7 +6,6 @@ Created on Oct 7, 2014
 '''
 import settings
 import os
-import subprocess
 
 from handler import base
 

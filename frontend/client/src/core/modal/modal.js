@@ -127,7 +127,9 @@
                             var modalRect = element[0].getBoundingClientRect();
                             var scaleX = Math.min(0.5, clickRect.width / modalRect.width);
                             var scaleY = Math.min(0.5, clickRect.height / modalRect.height);
-
+                            var halfscreen = ($(window).width() / 2);
+                            var horiz = (clickRect.left < halfscreen ? 'right' : 'left');
+                           
                             element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
                                 (-modalRect.left + clickRect.left + clickRect.width / 2 - modalRect.width / 2) + 'px,' +
                                 (-modalRect.top + clickRect.top + clickRect.height / 2 - modalRect.height / 2) + 'px,' +
@@ -150,8 +152,12 @@
                             };
                         } else {
                             var cb = function () {
-                                element.addClass('visible');
-                                element.addClass('transition-in')
+                                element.addClass('visible')
+                                    .addClass('transition-in');
+                                    if (scope.modalOptions.transformOrigin) {
+                                        element.addClass('transfrom-origin-center-' + horiz)
+                                    }
+                                    element
                                     .css($mdConstant.CSS.TRANSFORM, '');
                             };
                         }
@@ -301,7 +307,13 @@
                     modalEl.addClass('transition-out-' + scope.modalOptions.outDirection).removeClass('transition-in-' + scope.modalOptions.inDirection)
                         .css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.outDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
                 } else {
-                    modalEl.addClass('transition-out').removeClass('transition-in');
+                    modalEl
+                    .removeClass('transition-in');
+                    if (scope.modalOptions.transformOrigin) {
+                        modalEl.removeClass('transfrom-origin-center-left transfrom-origin-center-right');
+                    }
+                    modalEl
+                    .addClass('transition-out');
                     if (clickElement) {
                         var clickRect = clickElement.getBoundingClientRect();
                         var modalRect = modalEl[0].getBoundingClientRect();
@@ -339,7 +351,8 @@
                     inDirection: modal.inDirection,
                     outDirection: modal.outDirection,
                     targetEvent: modal.targetEvent,
-                    fullScreen: modal.fullScreen
+                    fullScreen: modal.fullScreen,
+                    transformOrigin: modal.transformOrigin
                 };
 
                 var body = $document.find('body').eq(0),
@@ -528,6 +541,7 @@
                                 inDirection: modalOptions.inDirection,
                                 outDirection: modalOptions.outDirection,
                                 fullScreen: modalOptions.fullScreen,
+                                transformOrigin: modalOptions.transformOrigin,
                                 targetEvent: modalOptions.targetEvent
                             });
 

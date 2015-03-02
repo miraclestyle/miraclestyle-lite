@@ -70,8 +70,9 @@
             models['31'].manageModal(undefined, newEntity);
         };
 
-        $scope.preview = function (key) {
-            models['31'].previewModal(key);
+        $scope.preview = function (key, config) {
+            config.targetEvent.target = $(config.targetEvent.target).parents('.grid-item:first').get(0);
+            models['31'].previewModal(key, config);
         };
 
         $scope.manage = function (entity) {
@@ -267,16 +268,22 @@
                                 }
                                 info.scope.$broadcast('itemOrderSorting');
                             },
-                            stop: function () {
+                            stop: function (e, ui) {
+                                var cmp = [],
+                                    cmp2 = [];
                                 angular.forEach(config.ui.specifics.parentArgs,
                                     function (ent, i) {
+                                        cmp.push(ent._sequence);
                                         i = ((config.ui.specifics.parentArgs.length - 1) - i);
+                                        cmp2.push(i);
                                         ent._sequence = i;
                                         if (ent.ui) {
                                             ent.ui.access[ent.ui.access.length - 1] = i;
                                         }
                                     });
-                                rootFormSetDirty();
+                                if (!cmp.equals(cmp2)) {
+                                    rootFormSetDirty();
+                                }
                                 info.scope.$broadcast('itemOrderChanged');
                                 info.scope.$apply();
                             }
@@ -450,7 +457,7 @@
                                             realTotal = 0,
                                             found = false;
                                         fields = _.toArray(fields);
-                                        fields.sort(helpers.fieldSorter);
+                                        fields.sort(helpers.fields.sort);
                                         config.ui.specifics.fields = fields;
                                         angular.forEach(fields, function (field) {
                                             field.ui.name = 'plugin.' + field.code_name;
@@ -508,16 +515,9 @@
                                     // entity.addresses
                                     $scope.entity = config.ui.specifics.entity;
                                     $scope.rootFormSetDirty = rootFormSetDirty;
-                                    $scope.formSetDirty = function () {
-                                        if ($scope.container && $scope.container.form) {
-                                            return $scope.container.form.$setDirty();
-                                        }
-                                    };
-                                    $scope.formSetPristine = function () {
-                                        if ($scope.container && $scope.container.form) {
-                                            return $scope.container.form.$setPristine();
-                                        }
-                                    };
+                                    $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                    $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                    $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
                                     if ($scope.args && $scope.args.kind) {
                                         $scope.info.kind = $scope.args.kind;
@@ -527,14 +527,6 @@
 
                                     $scope.close = function () {
                                         $scope.$close();
-                                    };
-
-                                    $scope.validateForm = function () {
-                                        if (!$scope.container.form.$valid) {
-                                            $scope.$broadcast('invalidForm');
-                                            return false;
-                                        }
-                                        return true;
                                     };
 
                                     $scope.save = function () {

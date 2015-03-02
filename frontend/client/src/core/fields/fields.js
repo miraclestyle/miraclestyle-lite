@@ -2,17 +2,44 @@
     'use strict';
     angular.module('app')
         .run(function (helpers) {
-            helpers.fieldSorter = function (prev, next) {
-                var p1 = parseInt(prev.name, 10),
-                    p2 = parseInt(next.name, 10);
-                if (isNaN(p1)) {
-                    p1 = 999999;
+            if (!helpers.fields) {
+                helpers.fields = {};
+            }
+            if (!helpers.form) {
+                helpers.form = {};
+            }
+            $.extend(helpers.fields, {
+                sorter: function (prev, next) {
+                    var p1 = parseInt(prev.name, 10),
+                        p2 = parseInt(next.name, 10);
+                    if (isNaN(p1)) {
+                        p1 = 999999;
+                    }
+                    if (isNaN(p2)) {
+                        p2 = 999999;
+                    }
+                    return p1 - p2;
                 }
-                if (isNaN(p2)) {
-                    p2 = 999999;
+            });
+            $.extend(helpers.form, {
+                setDirty: function () {
+                    if (this.container && this.container.form) {
+                        this.container.form.$setDirty();
+                    }
+                },
+                setPristine: function () {
+                    if (this.container && this.container.form) {
+                        this.container.form.$setPristine();
+                    }
+                },
+                validate: function () {
+                    if (!this.container.form.$valid) {
+                        this.$broadcast('invalidForm');
+                        return false;
+                    }
+                    return true;
                 }
-                return p1 - p2;
-            };
+            });
         })
         .directive('validFile', function () {
             return {
@@ -33,13 +60,10 @@
                 require: 'ngModel',
                 link: function (scope, element, attrs, ctrl) {
                     var worker = function (value, what) {
-
                             var test = false;
-
                             try {
                                 value = angular[what](value);
                                 test = true;
-
                             } catch (ignore) {}
 
                             ctrl.$setValidity('jsonOnly', test);
@@ -80,7 +104,7 @@
 
                             } catch (ignore) {}
 
-                            ctrl.$setValidity('repeatedText', test);
+                            ctrl.$setValidity('invalid', test);
 
                             return value;
                         },
@@ -232,7 +256,6 @@
                 link: function (scope, element, attrs, ctrl) {
 
                     var run = function () {
-
                         var supplied_config = scope.$eval(attrs.formInput),
                             name,
                             label = null,
@@ -432,10 +455,8 @@
                                     form.trigger('submit');
                                     return false;
                                 }
-                                promise = submit(scope);
-                            } else {
-                                promise = submit(scope);
                             }
+                            promise = submit(scope);
                             if (promise && angular.isObject(promise) && promise.then) {
                                 promise.then(function () {
                                     if (execute) {
@@ -887,8 +908,7 @@
                             };
 
                         config.ui.specifics.sortMode = true;
-
-                        defaultFields = defaultFields.sort(helpers.fieldSorter);
+                        defaultFields = defaultFields.sort(helpers.fields.sort);
 
                         if (noSpecifics || !config.ui.specifics.fields) {
                             config.ui.specifics.fields = defaultFields;
@@ -972,13 +992,19 @@
                                 info.scope.$broadcast('itemOrderSorting');
                             },
                             stop: function (e, ui) {
+                                var cmp = [],
+                                    cmp2 = [];
                                 angular.forEach(config.ui.specifics.parentArgs,
                                     function (ent, i) {
+                                        cmp.push(ent._sequence);
                                         i = ((config.ui.specifics.parentArgs.length - 1) - i);
+                                        cmp2.push(i);
                                         ent._sequence = i;
                                         ent.ui.access[ent.ui.access.length - 1] = i;
                                     });
-                                rootFormSetDirty();
+                                if (!cmp.equals(cmp2)) {
+                                    rootFormSetDirty();
+                                }
                                 info.scope.$broadcast('itemOrderChanged');
                                 info.scope.$apply();
                             }
@@ -1113,16 +1139,8 @@
                                         };
 
                                         $scope.rootFormSetDirty = rootFormSetDirty;
-                                        $scope.formSetDirty = function () {
-                                            if ($scope.container && $scope.container.form) {
-                                                return $scope.container.form.$setDirty();
-                                            }
-                                        };
-                                        $scope.formSetPristine = function () {
-                                            if ($scope.container && $scope.container.form) {
-                                                return $scope.container.form.$setPristine();
-                                            }
-                                        };
+                                        $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                        $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
 
                                         $scope.response = null;
                                         $scope.config = config;

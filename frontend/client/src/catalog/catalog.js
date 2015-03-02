@@ -260,6 +260,8 @@
                             }},
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
+                            targetEvent: config.targetEvent,
+                            transformOrigin: true,
                             controller: function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey;
                                 $.extend($scope, fakeScope);
@@ -442,6 +444,7 @@
                         $modal.open({
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
+                            targetEvent: config.targetEvent,
                             controller: function ($scope) {
                                 toggleMenu($scope, 'right_catalog_sidenav');
                                 $scope.catalog = entity;
@@ -502,8 +505,9 @@
                                 // cache current user's cart
                                 models['34'].current($scope.catalog._seller.key);
 
-                                $scope.viewProduct = function (image, pricetag) {
-                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key);
+                                $scope.viewProduct = function (image, pricetag, config) {
+                                    config.targetEvent.target = $(config.targetEvent.target).parents('.catalog-pricetag:first').get(0);
+                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, null, config);
                                 };
 
                                 $scope.sellerDetails = function () {
@@ -559,16 +563,23 @@
                                             sortableOptions: {
                                                 stop: function () {
                                                     if (fields._images.ui.specifics.parentArgs.length) {
-                                                        var total = fields._images.ui.specifics.parentArgs[0].sequence;
+                                                        var total = fields._images.ui.specifics.parentArgs[0].sequence,
+                                                            cmp = [],
+                                                            cmp2 = [];
                                                         angular.forEach(fields._images.ui.specifics.parentArgs,
                                                             function (ent, i) {
-                                                                i = ((total + 1) - i);
+                                                                i = (total - i);
+                                                                cmp.push(ent.sequence);
+                                                                cmp2.push(i);
                                                                 ent.sequence = i;
                                                                 ent.ui.access[ent.ui.access.length - 1] = i;
                                                             });
 
-                                                        $scope.formSetDirty();
+                                                        if (!cmp.equals(cmp2)) {
+                                                            $scope.formSetDirty();
+                                                        }
                                                         $scope.$broadcast('itemOrderChanged');
+
                                                     }
                                                 }
                                             }
@@ -692,23 +703,9 @@
                                                 toolbar: {}
                                             };
                                             $scope.container = {};
-                                            $scope.formSetPristine = function () {
-                                                if ($scope.container && $scope.container.form) {
-                                                    $scope.container.form.$setPristine();
-                                                }
-                                            };
-                                            $scope.formSetDirty = function () {
-                                                if ($scope.container && $scope.container.form) {
-                                                    $scope.container.form.$setDirty();
-                                                }
-                                            };
-                                            $scope.validateForm = function () {
-                                                if (!$scope.container.form.$valid) {
-                                                    $scope.$broadcast('invalidForm');
-                                                    return false;
-                                                }
-                                                return true;
-                                            };
+                                            $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                            $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                            $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
                                             imagesReader = models['31'].reader({
                                                 kind: '31',
@@ -1048,18 +1045,21 @@
                                                         },
                                                         sortableOptions: {
                                                             stop: function () {
-                                                                var field = $scope.fieldProduct.modelclass._instances, total,
+                                                                var field = $scope.fieldProduct.modelclass._instances, total, cmp = [], cmp2 = [],
                                                                     currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
                                                                 if (field.ui.specifics.parentArgs.length) {
                                                                     total = field.ui.specifics.parentArgs[0].sequence;
                                                                     angular.forEach(field.ui.specifics.parentArgs,
                                                                         function (ent, i) {
-                                                                            i = ((total + 1) - i);
+                                                                            i = ((total) - i);
+                                                                            cmp.push(ent.sequence);
+                                                                            cmp2.push(i);
                                                                             ent.sequence = i;
                                                                             ent.ui.access[ent.ui.access.length - 1] = i;
                                                                         });
-
-                                                                    currentFieldScope.formSetDirty();
+                                                                    if (!cmp.equals(cmp2)) {
+                                                                        currentFieldScope.formSetDirty();
+                                                                    }
                                                                     currentFieldScope.$broadcast('itemOrderChanged');
                                                                 }
                                                             }

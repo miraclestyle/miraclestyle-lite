@@ -235,3 +235,14 @@
   width: 100%;
   height: 100%;
 }
+
+.transfrom-origin-center-left {
+  -webkit-transform-origin: center left;
+  transform-origin: center left;
+}
+
+
+.transfrom-origin-center-right {
+  -webkit-transform-origin: center right;
+  transform-origin: center right;
+}
