@@ -3,19 +3,19 @@
         <accordion-group heading="{{accordions.groups[0].label}}" is-open="accordions.groups[0].open" is-disabled="accordions.groups[0].disabled">
             <ul class="list">
                   <li class="list-row">
-                        <div class="list-content-tile list-content-tile--two-lines">
+                        <div class="list-content-tile list-content-tile-two-lines">
                               <strong class="first">ID</strong>
                               <span class="second">{{entity.id}}</span>
                         </div>
                   </li>
                   <li class="list-row">
-                      <div class="list-content-tile list-content-tile--two-lines">
+                      <div class="list-content-tile list-content-tile-two-lines">
                           <strong class="first">Registered</strong>
                           <span class="second">{{entity|output:'created'}}</span>
                       </div>
                   </li>
                   <li class="list-row">
-                      <div class="list-content-tile list-content-tile--two-lines">
+                      <div class="list-content-tile list-content-tile-two-lines">
                           <strong class="first">State</strong>
                           <span class="second">{{entity.state}}</span>
                       </div>
@@ -25,7 +25,7 @@
 
         <accordion-group heading="{{accordions.groups[1].label}}" is-open="accordions.groups[1].open" is-disabled="accordions.groups[1].disabled">
            <div class="list">
-            <div ng-repeat="ident in entity.identities" class="list-row no-padding list-row--has-secondary">
+            <div ng-repeat="ident in entity.identities" class="list-row no-padding list-row-has-secondary">
                <list-button ng-disabled="ident.identity == args.primary_identity" ng-click="setPrimary(ident)">
                   <strong class="first">{{ident.identity|formatLoginProivider}}</strong>
                   <span class="second">

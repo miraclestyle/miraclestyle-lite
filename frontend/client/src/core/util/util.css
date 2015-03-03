@@ -2608,7 +2608,7 @@ html, body {
     font-weight: bold; }
 
 button, select, html, textarea, input {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif; }
+  font-family: Roboto, 'Helvetica Neue', sans-serif; }
 
 body {
   margin: 0;
@@ -2619,7 +2619,7 @@ body {
   padding: 10px; }
 
 button {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif; }
+  font-family: Roboto, 'Helvetica Neue', sans-serif; }
 
 a {
   background: transparent;

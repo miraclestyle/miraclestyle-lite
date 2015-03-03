@@ -610,11 +610,6 @@
     }).factory('modals', function ($modal, $q, helpers) {
 
         var modals = {
-            howToSort: function ($event) {
-                return modals.alert('Grab the button to start sorting.', {
-                    targetEvent: $event
-                });
-            },
             alert: function (message, extraConfig) {
                 if (angular.isFunction(extraConfig)) {
                     extraConfig = {

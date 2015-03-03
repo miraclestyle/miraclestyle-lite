@@ -524,7 +524,9 @@
                 adminManageModal: function (catalog) {
                     return this.manageModal(catalog);
                 },
-                manageModal: function (catalog, callback) { // modal dialog for managing the catalog
+                manageModal: function (catalog, callback, modalConfig) { // modal dialog for managing the catalog
+
+                    modalConfig = helpers.alwaysObject(modalConfig);
 
                     var fields = modelsMeta.getActionArguments('31', 'update'),
                         isNew = !angular.isDefined(catalog),
@@ -542,6 +544,7 @@
                         config = {
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
+                            modalConfig: modalConfig,
                             fields: _.toArray(fields),
                             toolbar: {
                                 templateActionsUrl: (isNew ? false : 'catalog/manage_actions.html')
@@ -904,6 +907,12 @@
 
                                                 })['finally'](function () {
                                                     $scope.loadingManageProduct = false;
+                                                });
+                                            };
+
+                                            $scope.howToDrag = function ($event) {
+                                                modals.alert('Drag the pricetag to desired place to add new pricetag.', {
+                                                    targetEvent: $event
                                                 });
                                             };
 

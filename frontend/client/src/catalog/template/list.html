@@ -9,7 +9,7 @@
 
         <div autoload-on-vertical-scroll-end="scrollEnd" grid-generator-items="search.results" grid-generator="{square: false, margin: 1, maxWidth: 240, maxHeight: 240, minWidth: 180}" class="grid-wrapper clearfix">
             <div ng-repeat="result in search.results track by $index" on-ng-repeat-end class="grid-item grid-generator">
-                <button md-ink-ripple md-no-stretch loading ng-click="manage(result)" class="button-transparent pointable padding-0">
+                <button md-ink-ripple md-no-stretch loading ng-click="manage(result, {targetEvent: $event})" class="button-transparent pointable padding-0">
                     <img display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
                 </button>
                 <div class="bottom-right-floating">

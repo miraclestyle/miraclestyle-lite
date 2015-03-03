@@ -1,9 +1,8 @@
-.logo {
-    display: inline-block;
-}
 .logo img {
     width: auto;
-    height: 20px;
+    height: 100%;
+    vertical-align: middle;
+    display: block;
 }
 .bar-logo {
     margin: 16px;

@@ -47,7 +47,7 @@ a.sort-handle {
     cursor: move;
 }
 .ui-sortable .list-content-tile {
-    padding-right: 0px;
+    padding-right: 56px;
 }
 .ui-sortable .list-secondary-tile {
     right: 0px;

@@ -72,7 +72,10 @@ md-input-container {
     line-height: 26px;
     -ms-flex-preferred-size: 26px;
     border-radius: 0;
-    border-style: solid; }
+    border-style: solid;
+    padding: 8px 0px 7px;
+    line-height:normal;
+   }
     md-input-container .md-input:focus, md-input-container .as-md-input:focus {
       outline: none; }
     md-input-container .md-input:invalid, md-input-container .as-md-input:invalid {
@@ -108,9 +111,13 @@ md-input-container {
     -webkit-transform: translate3d(0, 4px, 0) scale(0.75);
             transform: translate3d(0, 4px, 0) scale(0.75); }
   md-input-container.md-input-focused .md-input, md-input-container .md-input.ng-invalid.ng-dirty {
-    padding-bottom: 0px;
+    padding-bottom: 6px;
     border-width: 0 0 2px 0; }
   md-input-container .md-input[disabled] {
     background-position: 0 bottom;
     background-size: 3px 1px;
     background-repeat: repeat-x; }
+
+input[readonly="true"] {
+  cursor:pointer;
+}

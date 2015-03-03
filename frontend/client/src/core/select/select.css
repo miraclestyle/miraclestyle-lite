@@ -12,7 +12,6 @@ md-input-container .as-md-input {
 }
 .selected-item {
     padding-right: 30px;
-    min-height: 26px;
 }
 .select-icon {
     position: absolute;

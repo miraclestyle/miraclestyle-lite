@@ -5,7 +5,6 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 .panel-default > .panel-heading {
-    color: #333333;
     background-color: #FFFFFF;
 }
 .panel .panel-heading {
@@ -37,9 +36,6 @@
     margin-top: 0;
     margin-bottom: 0;
     color: inherit;
-    font-size: 24px;
-    line-height: 28px;
-    color: #777777;
 }
 .panel-title > a {
     color: inherit;

@@ -1,146 +1,117 @@
 .list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
-
 .list-padding {
-  padding-top: 8px;
-  padding-bottom: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
-
-.list-row--has-primary > .list-content-tile {
-  margin-left: 56px;
+.list-row-has-separator:after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    border-bottom: 1px solid;
 }
-
-.list-row--has-secondary > .list-content-tile {
-  margin-right: 32px;
+.list-row-has-separator:last-child:after {
+    border-bottom: none;
 }
-
-.list-row--has-separator:after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 1px;
-  border-bottom: 1px solid;
+.list-row-has-primary.list-row-has-separator:after {
+    left: 72px;
 }
-
-.list-row--has-separator:last-child:after {
-  border-bottom: none;
+.list-row-is-clickable {
+    cursor: pointer;
 }
-
-.list-row--has-primary.list-row--has-separator:after {
-  left: 72px;
-}
-
-.list-row--is-clickable {
-  cursor: pointer;
-}
-
 .list-primary-tile {
-  position: absolute;
-  top: 50%;
-  left: 16px;
-  margin-top: -20px;
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    margin-top: -20px;
 }
-
-.list-primary-tile__img {
-  height: 40px;
-  width: 40px;
-  border-radius: 50%;
-}
-
 .list-content-tile {
-  padding-top: 0px;
-  padding-bottom: 0px;
-  padding-left: 16px;
-  padding-right: 16px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 16px;
+    padding-right: 16px;
 }
-
-.list-content-tile strong.first,
+.list-content-tile strong.first, .list-content-tile span.second {
+    display: block;
+}
 .list-content-tile span.second {
-  display: block;
+    font-size: 14px;
 }
-
-.list-content-tile strong.first {
-  font-weight: 400;
+.list-content-tile-one-line strong.first {
+    line-height: 1;
 }
-
-.list-content-tile span.second {
-  font-size: 14px;
+.list-row-has-primary > .list-content-tile-one-line strong.first {
+    line-height: 24px;
 }
-
-.list-content-tile--one-line strong.first {
-  line-height: 1;
-}
-
-.list-row--has-primary > .list-content-tile--one-line strong.first {
-  line-height: 24px;
-}
-
-.list-content-tile--two-lines strong.first,
-.list-content-tile--two-lines span.second {
-  line-height: 20px;
-}
-
 .list-secondary-tile {
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  z-index: 2;
-  -webkit-transform: translateY(-50%);
-  -moz-transform: translateY(-50%);
-  -ms-transform: translateY(-50%);
-  -o-transform: translateY(-50%);
-  transform: translateY(-50%);
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    z-index: 2;
+    -webkit-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
 }
-
 .list-divider {
-  height: 1px;
-  margin-top: 8px;
-  margin-bottom: 8px;
+    height: 1px;
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
-
-.list-divider--is-pushed {
-  /* margin-left: 72px; */
-}
-
 .list-subheader {
-  padding: 16px;
-  font-size: 14px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 16px;
+    padding: 16px;
+    font-size: 14px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 16px;
 }
-
 .list-subheader--is-pushed {
-  margin-left: 56px;
+    margin-left: 56px;
 }
-
-.list-row--is-clickable-and-hoverable {
-  cursor: pointer;
+.list-row-is-clickable-and-hoverable {
+    cursor: pointer;
 }
-
 .list-row {
-  position: relative;
-  padding-top: 16px;
-  padding-bottom: 16px;
-  background: white;
+    position: relative;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    background: white;
 }
-
 .list-row.no-padding {
-  padding: 0px;
+    padding: 0px;
 }
-
-.list-row--is-clickable-and-hoverable:hover, .list-row--is-active {
-  background-color: #F5F5F5;
+.list-row-is-clickable-and-hoverable:hover, .list-row-is-active {
+    background-color: #F5F5F5;
 }
-
 .list-inline-block {
-  display: inline-block;
-  list-style: none;
-  margin: 0px;
-  padding: 0px;
+    display: inline-block;
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+}
+strong.first {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    text-align: left;
+}
+span.second {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    text-align: left;
+}
+
+.list-row-three-lines {
+    padding-top: 12px;
+    padding-bottom: 12px;
 }

@@ -10,6 +10,6 @@
   color: '{{foreground-2}}'; 
 }
 
-.list-row--has-separator:after  {
+.list-row-has-separator:after  {
   border-color: '{{foreground-4}}'; 
 }

@@ -14,7 +14,7 @@
      <div class="list">
         <div ng-repeat="content in seller._content.documents track by content.key" class="list-row no-padding">
            <list-button ng-click="viewContent(content)">
-              <strong class="first">{{content.title}}</strong>
+              <strong class="first ellipsis-text">{{content.title}}</strong>
            </list-button>
         </div>
      </div>

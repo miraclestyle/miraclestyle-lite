@@ -13,12 +13,12 @@
        class="list">
         <div ng-hide="ent._state == 'deleted'" 
              ng-repeat="ent in config.ui.specifics.parentArgs" 
-             ng-class="{'list-row--has-secondary': config.ui.specifics.listConfig.secondary}"
+             ng-class="{'list-row-has-secondary': config.ui.specifics.listConfig.secondary}"
              current-item="ent"
              class="no-move list-row no-padding clearfix">
             <div class="delete-overlay"></div>
             <list-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
-                <strong class="first">{{ent.name}}</strong>
+                <strong class="first ellipsis-text">{{ent.name}}</strong>
                 <span class="second">
                   <span ng-if="ent.active">Active</span><span ng-if="!ent.active">Inactive</span>, {{config.ui.specifics.showType(ent.kind)}}
                 </span>

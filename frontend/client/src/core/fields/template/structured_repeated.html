@@ -15,17 +15,19 @@
 
   <div ng-hide="ent._state == 'deleted'" 
        ng-repeat="ent in config.ui.specifics.parentArgs" 
-       ng-class="{'list-row--has-secondary': config.ui.specifics.listConfig.secondary}"
+       ng-class="{'list-row-has-secondary': config.ui.specifics.listConfig.secondary}"
        current-item="ent"
        class="no-move list-row no-padding clearfix">
           <div class="delete-overlay"></div>
-          <button md-ink-ripple-list md-themable ng-class="{'list-content-tile--one-line': config.ui.specifics.listConfig.perLine == 1, 'list-content-tile--two-lines': config.ui.specifics.listConfig.perLine == 2, 'list-row--is-clickable': config.ui.specifics.listConfig.clickable}" type="button" loading ng-click="config.ui.specifics.manage(ent)" class="list-row menu-item list-content-tile block">
+          <button md-ink-ripple-list md-themable ng-class="{'list-row-one-line': config.ui.specifics.listConfig.perLine == 1, 'list-row-two-lines': config.ui.specifics.listConfig.perLine == 2, 'list-row-three-lines': config.ui.specifics.listConfig.perLine == 3, 'list-row-is-clickable': config.ui.specifics.listConfig.clickable}" type="button" loading ng-click="config.ui.specifics.manage(ent)" class="list-row menu-item list-content-tile block">
+         
                  <% if (config.ui.specifics.listView) { %>
                     <span <%=config.ui.specifics.listView %>="ent"
                           <%=config.ui.specifics.listView %>-config="config"></span>
                   <% } else { %>
-                  <strong class="first">{{ent|output:config.ui.specifics.fields[0].code_name}}</strong>
+                  <strong class="first ellipsis-text">{{ent|output:config.ui.specifics.fields[0].code_name}}</strong>
                   <% } %>
+          
           </button>
 
           <div ng-if="config.ui.specifics.listConfig.secondary" class="list-secondary-tile">

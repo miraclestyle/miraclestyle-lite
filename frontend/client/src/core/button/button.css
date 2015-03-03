@@ -16,16 +16,18 @@
     position: relative;
     outline: none;
     border: 0;
-    padding: 6px;
-    margin: 0;
+    padding: 6px 8px;
+    margin: 6px 4px;
     background: transparent;
     white-space: nowrap;
     min-width: 64px;
-    padding-left: 8px;
-    padding-right: 8px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.1px;
     text-align: center;
     text-transform: uppercase;
-    font-weight: 500;
     font-style: inherit;
     font-variant: inherit;
     font-size: inherit;
@@ -55,61 +57,9 @@
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
 }
-.md-button.md-fab {
-    z-index: 20;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    border-radius: 50%;
-    overflow: hidden;
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    transition: 0.2s linear;
-    transition-property: -webkit-transform, box-shadow;
-    transition-property: transform, box-shadow;
-}
-.md-button.md-fab.md-fab-bottom-right {
-    top: auto;
-    right: 20px;
-    bottom: 20px;
-    left: auto;
-    position: absolute;
-}
-.md-button.md-fab.md-fab-bottom-left {
-    top: auto;
-    right: auto;
-    bottom: 20px;
-    left: 20px;
-    position: absolute;
-}
-.md-button.md-fab.md-fab-top-right {
-    top: 20px;
-    right: 20px;
-    bottom: auto;
-    left: auto;
-    position: absolute;
-}
-.md-button.md-fab.md-fab-top-left {
-    top: 20px;
-    right: auto;
-    bottom: auto;
-    left: 20px;
-    position: absolute;
-}
-.md-button.md-fab md-icon {
-    line-height: 56px;
-    margin-top: 0;
-}
-.md-button.md-fab.md-mini {
-    width: 40px;
-    height: 40px;
-}
-.md-button.md-fab.md-mini md-icon {
-    line-height: 40px;
-}
 .md-button:not([disabled]).md-raised:focus, .md-button:not([disabled]).md-raised:hover, .md-button:not([disabled]).md-fab:focus, .md-button:not([disabled]).md-fab:hover {
-    -webkit-transform: translate3d(0, -1px, 0);
-    transform: translate3d(0, -1px, 0);
+/*    -webkit-transform: translate3d(0, -1px, 0);
+    transform: translate3d(0, -1px, 0);*/
 }
 .md-toast-open-top .md-button.md-fab-top-left, .md-toast-open-top .md-button.md-fab-top-right {
     -webkit-transform: translate3d(0, 42px, 0);
@@ -158,6 +108,9 @@
 }
 .md-shadow-bottom-z-1, .md-button.md-raised:not([disabled]), .md-button.md-fab {
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+}
+.md-button.md-raised:not([disabled]) {
+  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
 }
 
 .button-transparent {

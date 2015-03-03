@@ -47,7 +47,7 @@
       
       <% } else { %>
         <md-input-container class="block padding-sides-0">
-             <md-button type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button md-raised">
+             <md-button type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button md-raised margin-sides-0">
                <span><%=config.ui.compiled.label %> <span class="selected-total">(:total)</span></span>
                <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
                       generate-upload-url

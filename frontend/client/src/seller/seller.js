@@ -75,10 +75,9 @@
             models['31'].previewModal(key, config);
         };
 
-        $scope.manage = function (entity) {
-            models['31'].manageModal(entity, newEntity);
+        $scope.manage = function (entity, config) {
+            models['31'].manageModal(entity, newEntity, config);
         };
-
 
         $scope.search = {
             results: [],
@@ -457,7 +456,7 @@
                                             realTotal = 0,
                                             found = false;
                                         fields = _.toArray(fields);
-                                        fields.sort(helpers.fields.sort);
+                                        fields.sort(helpers.fields.sorter);
                                         config.ui.specifics.fields = fields;
                                         angular.forEach(fields, function (field) {
                                             field.ui.name = 'plugin.' + field.code_name;

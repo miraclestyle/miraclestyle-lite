@@ -98,6 +98,9 @@
                             label: false,
                             specifics: {
                                 listView: 'buyer-address-list-view',
+                                listConfig: {
+                                    perLine: 3
+                                },
                                 sortFields: ['country', 'region', 'city', 'postal_code',
                                     'street', 'name', 'email', 'telephone'],
                                 afterSave: function () {

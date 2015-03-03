@@ -78,18 +78,19 @@
     <div layout="column" layout-fill tabIndex="-1" role="main">
         <md-toolbar>
             <div class="md-toolbar-tools homepage-toolbar with-actions">
-                <div layout="row" flex class="fill-height">
-                    <div class="md-toolbar-item md-breadcrumb">
+                <div class="fill-height">
+                    <div class="md-toolbar-item md-tools">
                         <button md-ink-ripple-action ng-click="openMenu()" type="button" class="button-transparent homepage-menu button-action">
                             <icon type="navigation.menu"></icon>
                         </button>
                     </div>
-                    <span flex>
-                        <span class="logo">
-                          <img src="/client/dist/static/logo_240_cut.png" />
+                    <div class="md-toolbar-item md-breadcrumb">
+                        <span class="md-toolbar-title">
+                            <span class="logo">
+                              <img src="/client/dist/static/logo_240_cut.png" />
+                            </span>
                         </span>
-                    </span>
-                    <div class="md-toolbar-item md-tools" layout="row"></div>
+                    </div>
                 </div>
             </div>
         </md-toolbar>

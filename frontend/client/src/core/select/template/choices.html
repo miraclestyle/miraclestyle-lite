@@ -13,35 +13,35 @@
       <ul class="list list-padding">
             <% if (select.multiple) { %>
 
-              <li ng-show="select.isChecked(item)" class="simple-dialog-option list-row list-row--is-clickable-and-hoverable" 
+              <li ng-show="select.isChecked(item)" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable" 
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
-                    <div class="list-content-tile list-content-tile--one-line">
+                    <div class="list-content-tile list-content-tile-one-line">
                        <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
-                         <span class="ellipsis-text" ng-bind-html="select.view(item)"></span>
+                         <span ng-bind-html="select.view(item)"></span>
                       </md-checkbox>
                     </div>
               </li>
 
               <li class="list-divider" ng-if="select.anyChecks()"></li>
 
-              <li ng-show="!select.isChecked(item)" class="simple-dialog-option list-row list-row--is-clickable-and-hoverable " 
+              <li ng-show="!select.isChecked(item)" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable " 
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
-                    <div class="list-content-tile list-content-tile--one-line">
+                    <div class="list-content-tile list-content-tile-one-line">
                        <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
-                         <span class="ellipsis-text" ng-bind-html="select.view(item)"></span>
+                         <span ng-bind-html="select.view(item)"></span>
                       </md-checkbox>
                     </div>
               </li>
 
               <% } else { %>
-                <li md-ink-ripple-list ng-class="{'list-row--is-active': select.isSelected(item)}" class="simple-dialog-option list-row list-row--is-clickable-and-hoverable"
+                <li md-ink-ripple-list ng-class="{'list-row-is-active': select.isSelected(item)}" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
                     ng-click="select.select(item)"
                     ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                     tabindex="{{$index + 2}}">
-                    <div class="list-content-tile list-content-tile--one-line">
-                          <strong class="first"><span class="ellipsis-text" ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+                    <div class="list-content-tile list-content-tile-one-line">
+                          <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
                     </div>
                 </li>
               <% } %>

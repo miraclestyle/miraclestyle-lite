@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (helpers) {
+        .run(function (helpers, modals) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -40,6 +40,12 @@
                     return true;
                 }
             });
+
+            modals.howToSort = function ($event) {
+                return modals.alert('Grab the button to start sorting.', {
+                    targetEvent: $event
+                });
+            };
         })
         .directive('validFile', function () {
             return {
@@ -912,7 +918,7 @@
                             };
 
                         config.ui.specifics.sortMode = true;
-                        defaultFields = defaultFields.sort(helpers.fields.sort);
+                        defaultFields = defaultFields.sort(helpers.fields.sorter);
 
                         if (noSpecifics || !config.ui.specifics.fields) {
                             config.ui.specifics.fields = defaultFields;

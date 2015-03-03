@@ -211,7 +211,7 @@
                                                 paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
                                                 scrollElement = dialogEl.find('md-content'),
                                                 maxTop = paddingTop,
-                                                active = dialogEl.find('.list-row--is-active'),
+                                                active = dialogEl.find('.list-row-is-active'),
                                                 newTop,
                                                 totalHeight;
                                             targetPosition.left += targetPaddingLeft;

@@ -438,7 +438,8 @@
                                 this.defaultPrepareReadArguments($scope);
                             }
                         },
-                        actionArguments, modelsEditorInstance;
+                        actionArguments,
+                        modelsEditorInstance;
 
                     // recurse the config adding only what is supplied by the `new_config`
                     helpers.extendDeep(config, new_config);
@@ -719,10 +720,10 @@
 
                             ctrl.$inject = ['$scope'];
 
-                            opener[fn]({
+                            opener[fn]($.extend({
                                 templateUrl: 'core/models/manage.html',
                                 controller: ctrl
-                            });
+                            }, config.modalConfig));
 
                             return this;
                         }
