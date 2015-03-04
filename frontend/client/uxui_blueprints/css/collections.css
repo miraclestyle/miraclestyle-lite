@@ -1,0 +1,50 @@
+.list,
+.cards,
+.grid,
+.cell,
+.tile {
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 0px;
+}
+
+.list {
+  padding: 8px 0px;
+}
+
+.cards {
+  padding: 4px 0px;
+}
+
+.grid {
+  padding: 1px;
+}
+
+.list.seam-top,
+.cards.seam-top,
+.grid.seam-top {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.list.seam-bottom,
+.cards.seam-bottom,
+.grid.seam-bottom,
+.cell.seam {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.cards .cell {
+  padding: 4px 8px;
+}
+
+.grid .cell {
+  padding: 1px;
+  float: left;
+}
+
+.cards .tile {
+  border-radius: 2px;
+  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
+}

@@ -1,0 +1,156 @@
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+.trim {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.button,
+.caption,
+.label,
+.helper,
+.body1,
+.secondary,
+.body2,
+.menu,
+.subheader,
+.subhead,
+.primary,
+.text,
+.title,
+.headline,
+.display1,
+.display2,
+.display3,
+.display4 {
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.button {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.caption,
+.label,
+.helper {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.label,
+.helper {
+  line-height: 14px;
+}
+
+.helper {
+  color: rgba(0, 0, 0, 0.26);
+}
+
+.body1,
+.secondary {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.body2,
+.menu,
+.subheader {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.secondary,
+.subheader {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.subhead,
+.primary,
+.text {
+  font-size: 16px;
+  font-weight: 400;
+  line-height:  24px;
+  letter-spacing: 0.1px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.text {
+  line-height:  20px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+  letter-spacing: 0.05px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.headline {
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 32px;
+  letter-spacing: 0px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.display1 {
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 40px;
+  letter-spacing: 0px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.display2 {
+  font-size: 45px;
+  font-weight: 400;
+  line-height: 48px;
+  letter-spacing: 0px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.display3 {
+  font-size: 56px;
+  font-weight: 400;
+  line-height: 62px;
+  letter-spacing: -0.05px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.display4 {
+  font-size: 112px;
+  font-weight: 300;
+  line-height: 124px;
+  letter-spacing: -0.1px;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.54);
+}

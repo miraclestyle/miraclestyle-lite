@@ -1,0 +1,108 @@
+.backdrop,
+.dialog {
+  display: block;
+  overflow: hidden;
+  position: fixed;
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 0px;
+}
+
+.backdrop {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.12);
+  z-index: 1050;
+}
+
+.dialog {
+  background: rgba(255, 255, 255, 1);
+  z-index: 1060;
+  min-width: 280px;
+}
+
+.dialog.fullscreen,
+.dialog.confirmation,
+.dialog.leftside.drawer,
+.dialog.rightside.drawer {
+  top: 0;
+  bottom: 0;
+  box-shadow: 0px 0px 30px 4px rgba(0, 0, 0, 0.26);
+}
+
+.dialog.fullscreen,
+.dialog.confirmation {
+  left: 0;
+  right: 0;
+}
+
+.dialog.confirmation {
+  margin: 72px 48px 24px;
+  border-radius: 2px;
+  box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
+}
+
+.dialog.leftside.drawer {
+  left: 0;
+  min-width: 240px;
+}
+
+.dialog.rightside.drawer {
+  right: 0;
+  min-width: 240px;
+}
+
+.dialog.leftside.drawer.wide,
+.dialog.rightside.drawer.wide {
+  max-width: 400px;
+  width: 400px;
+}
+
+.actionbar,
+.content {
+  display: block;
+  overflow: hidden;
+  position: absolute;
+  box-sizing: border-box;
+  left: 0;
+  right: 0;
+}
+
+.actionbar {
+  background: rgba(255, 255, 255, 1);
+  z-index: 100;
+}
+
+.content {
+  overflow-y: scroll;
+}
+
+.dialog.fullscreen .actionbar {
+  top: 0;
+  height: 56px;
+  box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
+}
+
+.dialog.confirmation .actionbar {
+  bottom: 0;
+  height: 57px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.dialog.fullscreen .content {
+  top: 56px;
+  bottom: 0;
+}
+
+.dialog.confirmation .content {
+  top: 0;
+  bottom: 57px;
+}
+
+.dialog.leftside.drawer .content,
+.dialog.rightside.drawer .content {
+  top: 0;
+  bottom: 0px;
+}

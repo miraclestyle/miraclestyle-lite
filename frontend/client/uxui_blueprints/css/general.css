@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.clearfix {
+  clear: both;
+}
+
+.left {
+  display: block;
+  float: left;
+}
+
+.right {
+  display: block;
+  float: right;
+}
+
+.pad-16 {
+  padding: 16px;
+}
+
+.pad-24 {
+  padding: 24px;
+}
