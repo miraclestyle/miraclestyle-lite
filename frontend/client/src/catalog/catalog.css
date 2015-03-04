@@ -38,7 +38,7 @@ li.catalog-new-pricetag {
 .catalog-pricetag button.button-transparent {
     text-decoration: none;
     display: block;
-    padding: 6px 10px 4px;
+    padding: 6px 8px;
 }
 .catalog-new-pricetag {
     display: block;
@@ -109,11 +109,11 @@ input.product-quantity-input {
     width: 100%;
 }
 .product-quantifier md-input-container label {
-    transform: none;
+    /*transform: none;
     padding: 0px;
     -webkit-transform: none;
     -moz-transform: none;
-    -ms-transform: none;
+    -ms-transform: none;*/
 }
 .product-name {
     margin: 0px;

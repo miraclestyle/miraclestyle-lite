@@ -14,56 +14,48 @@
     <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
 </head>
 <body ng-controller="MainMenuCtrl" layout="row">
-    <md-sidenav md-swipe-left="closeMenu()" layout="column" class="site-sidenav md-sidenav-left md-whiteframe-z2 md-closed" md-component-id="left">
+    <md-sidenav md-swipe-left="closeMenu()" layout="column" class="site-sidenav md-sidenav-left md-closed" md-component-id="left">
         <md-content>
             <div class="bar-logo">
                 <img src="/client/dist/static/logo_240.png" />
             </div>
-            <div class="list">
-              <div>
-                <div class="list-divider"></div>
+            <div class="list list-padding seam-bottom">
                 <div class="list-subheader subheader">Explore</div>
                 <sidenav-item ui-sref="collections">Collections</sidenav-item>
                 <sidenav-item ui-sref="home">All</sidenav-item>
-              </div>
+            </div>
 
-                <div ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
-                    <div class="list-divider"></div>
-                    <div class="list-subheader subheader">Buy</div>
-                    <sidenav-item ui-sref="buy-carts">Carts</sidenav-item>
-                    <sidenav-item ui-sref="buy-orders">Orders</sidenav-item>
-                    <sidenav-item ng-click="settings()">Settings</sidenav-item>
-                </div>
+            <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
+                <div class="list-subheader subheader">Buy</div>
+                <sidenav-item ui-sref="buy-carts">Carts</sidenav-item>
+                <sidenav-item ui-sref="buy-orders">Orders</sidenav-item>
+                <sidenav-item ng-click="settings()">Settings</sidenav-item>
+            </div>
 
-                <div ng-controller="SellerManagementCtrl" ng-show="!currentAccount._is_guest">
-                    <div class="list-divider"></div>
-                    <div class="list-subheader subheader">Sell</div>
-                    <sidenav-item ui-sref="sell-catalogs">Catalogs</sidenav-item>
-                    <sidenav-item ui-sref="sell-orders">Orders</sidenav-item>
-                    <sidenav-item ng-click="settings()">Settings</sidenav-item>
-                </div>
+            <div class="list list-padding seam-bottom" ng-controller="SellerManagementCtrl" ng-show="!currentAccount._is_guest">
+                <div class="list-subheader subheader">Sell</div>
+                <sidenav-item ui-sref="sell-catalogs">Catalogs</sidenav-item>
+                <sidenav-item ui-sref="sell-orders">Orders</sidenav-item>
+                <sidenav-item ng-click="settings()">Settings</sidenav-item>
+            </div>
 
-                <div ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
-                    <div class="list-divider"></div>
-                    <div class="list-subheader subheader">Account</div>
-                    <sidenav-item ng-click="logout()">Logout</sidenav-item>
-                    <sidenav-item ng-click="settings()">Settings</sidenav-item>
-                </div>
+            <div class="list list-padding seam-bottom" ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
+                <div class="list-subheader subheader">Account</div>
+                <sidenav-item ng-click="logout()">Logout</sidenav-item>
+                <sidenav-item ng-click="settings()">Settings</sidenav-item>
+            </div>
 
-                <div ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
-                    <div class="list-divider"></div>
-                    <div class="list-subheader subheader">Account</div>
-                    <sidenav-item ng-click="login(1)">Login with Google</sidenav-item>
-                </div>
+            <div class="list list-padding seam-bottom" ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
+                <div class="list-subheader subheader">Account</div>
+                <sidenav-item ng-click="login(1)">Login with Google</sidenav-item>
+            </div>
 
-                <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
-                    <div class="list-divider"></div>
-                    <div class="list-subheader subheader">Administration</div>
-                    <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
-                </div>
+            <div class="list list-padding seam-bottom" ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
+                <div class="list-subheader subheader">Administration</div>
+                <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
+            </div>
 
-              <div>
-                <div class="list-divider"></div>
+              <div class="list list-padding">
                 <div class="list-subheader subheader">Support</div>
                 <sidenav-item ui-sref="about">About</sidenav-item>
                 <sidenav-item ui-sref="tour">Tour</sidenav-item>
@@ -86,9 +78,7 @@
                     </div>
                     <div class="md-toolbar-item md-breadcrumb">
                         <span class="md-toolbar-title">
-                            <span class="logo">
-                              <img src="/client/dist/static/logo_240_cut.png" />
-                            </span>
+                            Home
                         </span>
                     </div>
                 </div>

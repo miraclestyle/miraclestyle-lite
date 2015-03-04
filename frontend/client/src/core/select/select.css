@@ -16,8 +16,8 @@ md-input-container .as-md-input {
 }
 .select-icon {
     position: absolute;
-    right: 2px;
-    bottom: 2px;
+    right: 0px;
+    bottom: 5px;
 }
 .select-box {
     cursor: pointer;

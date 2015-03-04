@@ -39,14 +39,8 @@
 }
 .list-secondary-tile {
     position: absolute;
-    top: 50%;
     right: 16px;
     z-index: 2;
-    -webkit-transform: translateY(-50%);
-    -moz-transform: translateY(-50%);
-    -ms-transform: translateY(-50%);
-    -o-transform: translateY(-50%);
-    transform: translateY(-50%);
 }
 .list-divider {
     height: 1px;
@@ -54,9 +48,7 @@
     margin-bottom: 8px;
 }
 .list-subheader {
-    padding: 12px;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding:4px 16px 12px;
 }
 .list-subheader--is-pushed {
     margin-left: 56px;
@@ -88,6 +80,7 @@
     line-height: 24px;
     letter-spacing: 0.1px;
     text-align: left;
+    display: block;
 }
 .second {
     font-size: 14px;
@@ -95,6 +88,7 @@
     line-height: 20px;
     letter-spacing: 0.1px;
     text-align: left;
+    display: block;
 }
 .list-row-two-lines {
     padding-top: 14px;
@@ -106,6 +100,7 @@
 }
 .list-row-has-secondary .list-secondary-tile {
     right: 0px;
+    top: 0px;
 }
 
 .list-row-has-primary .list-content-tile {
@@ -113,4 +108,15 @@
 }
 .list-row-has-primary .list-primary-tile {
     left: 0px;
+}
+
+.seam-bottom {
+    border-bottom:1px solid rgba(0, 0, 0, 0.12);
+}
+.seam-top {
+    border-top:1px solid rgba(0, 0, 0, 0.12);
+}
+
+.list-row-two-lines .list-secondary-tile {
+    padding:12px 4px;
 }

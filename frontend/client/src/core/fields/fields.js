@@ -913,7 +913,7 @@
                             rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
                             list = {
                                 secondary: true,
-                                perLine: 2,
+                                perLine: 1,
                                 clickable: true
                             };
 

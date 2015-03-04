@@ -121,7 +121,8 @@
                                             $scope.dialog = {
                                                 templateBodyUrl: 'account/administer.html'
                                             };
-                                            $scope.args = {key: entity.key, state: entity.state};
+                                            //state: entity.state
+                                            $scope.args = {key: entity.key};
 
                                             /*
                                             sudoFields.state.ui.placeholder = 'Set state';

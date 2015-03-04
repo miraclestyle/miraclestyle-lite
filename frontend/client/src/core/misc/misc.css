@@ -209,16 +209,20 @@ a.block, .block, button.block {
     width: 0%;
 }
 .bottom-right-floating {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 11;
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  z-index: 11;
 }
 .bottom-right-floating-action {
-    background: rgba(255, 255, 255, 1);
-    padding: 5px;
     display: block;
 }
+
+.material-icon-white {
+    color: rgba(255, 255, 255, 1);
+    text-shadow: 1px 1px 1px black;
+}
+
 .pointable {
     cursor: pointer;
 }
@@ -234,6 +238,7 @@ pre {
 }
 .load-more {
     width: 100%;
+    margin:0px;
 }
 .no-things-available {
     color: #CCC;
@@ -253,6 +258,17 @@ pre {
     text-overflow: ellipsis;
     display: block;
 }
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+.trim {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.button,
 .caption,
 .label,
 .helper,
@@ -273,6 +289,21 @@ pre {
   font-family: inherit;
   text-decoration: none;
 }
+
+.headline {
+  margin:0px;
+}
+
+.button {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.87);
+}
+
 .caption,
 .label,
 .helper {
@@ -386,4 +417,9 @@ pre {
   letter-spacing: -0.1px;
   text-align: left;
   color: rgba(0, 0, 0, 0.54);
+}
+
+.material-icon {
+  font-size:24px;
+  line-height:24px;
 }

@@ -50,7 +50,8 @@
                 angular.forEach(images, function (image) {
                     h += image.proportion;
                 });
-                return Math.floor(width / h);
+                // Math.floor
+                return (width / h);
             },
             setHeight: function (images, height) {
 
@@ -95,7 +96,7 @@
                 var resize = function () {
                     var originalCanvas = 0,
                         run = function (check) {
-                            var canvas = element.outerWidth(true),
+                            var canvas = element.width(),
                                 images = [],
                                 margin = 1;
                             if (!canvas || (check && originalCanvas === canvas)) {
@@ -161,7 +162,7 @@
                             return;
                         }
                         var wrapper = element,
-                            canvasWidth = wrapper.outerWidth(true),
+                            canvasWidth = wrapper.width(),
                             values;
                         if (canvasWidth) {
                             values = helpers.grid.calculate(canvasWidth,

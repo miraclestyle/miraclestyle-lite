@@ -644,7 +644,8 @@
                                                     templateBodyUrl: 'catalog/administer.html'
                                                 };
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
-                                                $scope.args = {key: parentScope.entity.key, state: parentScope.entity.state};
+                                                // , state: parentScope.entity.state
+                                                $scope.args = {key: parentScope.entity.key};
 
                                                 /*
                                                 sudoFields.state.ui.placeholder = 'Set state';

@@ -14,13 +14,13 @@
     border-top: 0;
 }
 .panel-is-not-open .panel-title > a:hover {
-    background-color: #F9F9F9;
+    /* background-color: #F9F9F9; */
 }
 .panel-is-not-open .panel-title > a:active {
-    background-color: #F9F9F9;
+    /* background-color: #F9F9F9; */
 }
 .panel-is-open .panel-title > a:hover {
-    background-color: #F9F9F9;
+    /* background-color: #F9F9F9; */
 }
 .panel-is-open .panel-title > a:active {
     background-color: #F9F9F9;
@@ -32,12 +32,11 @@
     margin-top: 0;
     margin-bottom: 0;
     color: inherit;
+    position: relative;
 }
 .panel-title > a {
     color: inherit;
     display: block;
-    padding: 10px 16px;
-    text-align: center;
 }
 .panel-scroller {
     max-height: 200px;
@@ -46,6 +45,7 @@
 }
 .accordion-toggle {
     cursor: pointer;
+    padding:12px 72px 12px 16px;
 }
 .accordion-arrow {
     height: 24px;
@@ -54,10 +54,12 @@
     display: block;
     transition: transform 0.3s ease-in-out;
     -webkit-transition: -webkit-transform 0.3s ease-in-out;
-    float: right;
+    position: absolute;
+    right: 12px; 
+    top: 12px;
 }
 .accordion-title {
-    float: left;
+    text-align: left;
 }
 .accordion-arrow-toggled {
     transform: rotate(180deg);

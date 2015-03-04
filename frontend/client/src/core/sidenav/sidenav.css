@@ -6,8 +6,8 @@
  */
 md-sidenav {
   position: absolute;
-  width: 304px;
-  min-width: 304px;
+  width: 240px;
+  min-width: 240px;
   bottom: 0;
   z-index: 60;
   background-color: white;
@@ -36,8 +36,8 @@ md-sidenav {
     -webkit-transform: translate3d(0, 0, 0);
             transform: translate3d(0, 0, 0); }
   md-sidenav.md-locked-open {
-    width: 304px;
-    min-width: 304px; }
+    width: 240px;
+    min-width: 240px; }
   md-sidenav.md-locked-open, md-sidenav.md-locked-open.md-closed, md-sidenav.md-locked-open.md-closed.md-sidenav-left, md-sidenav.md-locked-open.md-closed, md-sidenav.md-locked-open.md-closed.md-sidenav-right, md-sidenav.md-locked-open-remove.md-closed {
     position: static;
     display: -webkit-flex;
@@ -56,8 +56,8 @@ md-sidenav {
             transform: translate3d(0%, 0, 0); }
   md-sidenav.md-closed.md-locked-open-add-active {
     transition: width 0.3s cubic-bezier(0.55, 0, 0.55, 0.2), min-width 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
-    width: 304px;
-    min-width: 304px;
+    width: 240px;
+    min-width: 240px;
     -webkit-transform: translate3d(0%, 0, 0);
             transform: translate3d(0%, 0, 0); }
 
@@ -67,6 +67,7 @@ md-sidenav {
 .md-sidenav-left, md-sidenav {
   left: 0;
   top: 0;
+  box-shadow:0px 0px 30px 4px rgba(0, 0, 0, 0.26);
   -webkit-transform: translate3d(0%, 0, 0);
           transform: translate3d(0%, 0, 0); }
   .md-sidenav-left.md-closed, md-sidenav.md-closed {
@@ -76,6 +77,7 @@ md-sidenav {
 .md-sidenav-right {
   left: 100%;
   top: 0;
+  box-shadow:0px 30px 30px 4px rgba(0, 0, 0, 0.26);
   -webkit-transform: translate3d(-100%, 0, 0);
           transform: translate3d(-100%, 0, 0); }
   .md-sidenav-right.md-closed {

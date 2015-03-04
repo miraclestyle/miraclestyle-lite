@@ -1,6 +1,6 @@
 <div ng-class="{'field-with-label': config.ui.label}" class="plugins-field structured-field structured-field-repeated">
  
-  <div class="clearfix margin-bottom-sides-16">
+  <div class="clearfix button-set list-row-single-line list-content-tile">
     <div class="pull-right">
       <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create()">
         Add
@@ -13,18 +13,17 @@
        class="list">
         <div ng-hide="ent._state == 'deleted'" 
              ng-repeat="ent in config.ui.specifics.parentArgs" 
-             ng-class="{'list-row-has-secondary': config.ui.specifics.listConfig.secondary}"
              current-item="ent"
-             class="no-move list-row no-padding clearfix">
+             class="no-move list-row list-row-two-lines list-row-has-secondary no-padding clearfix">
             <div class="delete-overlay"></div>
             <list-button class="list-row-two-lines" loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
                 <strong class="first ellipsis-text">{{ent.name}}</strong>
-                <span class="second">
+                <span class="second ellipsis-text">
                   <span ng-if="ent.active">Active</span><span ng-if="!ent.active">Inactive</span>, {{config.ui.specifics.showType(ent.kind)}}
                 </span>
             </list-button>
             <div class="list-secondary-tile">
-                  <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="md-button sort-handle"><icon type="action.reorder"></icon></a>
+                  <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" loading="!<%= config.ui.writableCompiled %>" type="button" draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="md-button sort-handle"><icon type="action.view-headline"></icon></a>
            </div>
         </div>
   </div>

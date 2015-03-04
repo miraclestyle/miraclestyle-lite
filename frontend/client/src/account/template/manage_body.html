@@ -26,7 +26,7 @@
         <accordion-group heading="{{accordions.groups[1].label}}" is-open="accordions.groups[1].open" is-disabled="accordions.groups[1].disabled">
            <div class="list">
             <div ng-repeat="ident in entity.identities" class="list-row no-padding list-row-has-secondary">
-               <list-button ng-disabled="ident.identity == args.primary_identity" ng-click="setPrimary(ident)">
+               <list-button class="list-row-two-lines" ng-disabled="ident.identity == args.primary_identity" ng-click="setPrimary(ident)">
                   <strong class="first">{{ident.identity|formatLoginProivider}}</strong>
                   <span class="second">
                     {{ident.email}}<span ng-if="ident.identity == args.primary_identity">, Primary</span>

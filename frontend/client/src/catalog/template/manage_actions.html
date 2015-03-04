@@ -1,12 +1,12 @@
 <simple-dialog>
     <action-dropdown-list>
-        <list-button ng-click="parent.actions.sudo()" ng-show="parent.args.ui.rule.action.sudo.executable">Administer</list-button>
+        <list-button class="first" ng-click="parent.actions.sudo()" ng-show="parent.args.ui.rule.action.sudo.executable">Administer</list-button>
 
-        <list-button ng-click="parent.actions.publish()" ng-show="parent.args.ui.rule.action.publish.executable && parent.args.action_id != 'create'">Publish</list-button>
+        <list-button class="first" ng-click="parent.actions.publish()" ng-show="parent.args.ui.rule.action.publish.executable && parent.args.action_id != 'create'">Publish</list-button>
 
-        <list-button ng-click="parent.actions.discontinue()" ng-show="parent.args.ui.rule.action.discontinue.executable">Discontinue</list-button>
+        <list-button class="first" ng-click="parent.actions.discontinue()" ng-show="parent.args.ui.rule.action.discontinue.executable">Discontinue</list-button>
 
-        <list-button ng-click="parent.actions.duplicate()" ng-show="parent.args.ui.rule.action.catalog_duplicate.executable">Duplicate</list-button>
+        <list-button class="first" ng-click="parent.actions.duplicate()" ng-show="parent.args.ui.rule.action.catalog_duplicate.executable">Duplicate</list-button>
 
     </action-dropdown-list>
 </simple-dialog>

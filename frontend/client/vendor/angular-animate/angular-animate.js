@@ -1,5 +1,5 @@
 /**
- * @license AngularJS v1.3.9
+ * @license AngularJS v1.3.14
  * (c) 2010-2014 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -481,16 +481,10 @@ angular.module('ngAnimate', ['ng'])
     }
     var $$jqLite;
     $provide.decorator('$animate',
-        ['$delegate', '$$q', '$injector', '$sniffer', '$$asyncCallback', '$rootScope', '$document', '$templateRequest', '$$jqLite',
- function($delegate,   $$q,   $injector,   $sniffer,  $$asyncCallback,   $rootScope,   $document,   $templateRequest,   $$$jqLite) {
+        ['$delegate', '$$q', '$injector', '$sniffer', '$rootElement', '$$asyncCallback', '$rootScope', '$document', '$templateRequest', '$$jqLite',
+ function($delegate,   $$q,   $injector,   $sniffer,   $rootElement,   $$asyncCallback,   $rootScope,   $document,   $templateRequest,   $$$jqLite) {
 
       $$jqLite = $$$jqLite;
-
-      try {
-        var $rootElement = $injector.get('$rootElement');
-      } catch(ingore) {
-        return;
-      }
       $rootElement.data(NG_ANIMATE_STATE, rootAnimateState);
 
       // Wait until all directive and route-related templates are downloaded and
@@ -1339,8 +1333,7 @@ angular.module('ngAnimate', ['ng'])
           } else if (lastAnimation.event == 'setClass') {
             animationsToCancel.push(lastAnimation);
             cleanup(element, className);
-          }
-          else if (runningAnimations[className]) {
+          } else if (runningAnimations[className]) {
             var current = runningAnimations[className];
             if (current.event == animationEvent) {
               skipAnimation = true;
@@ -1881,7 +1874,7 @@ angular.module('ngAnimate', ['ng'])
           return;
         }
 
-        if (!staggerTime && styles) {
+        if (!staggerTime && styles && Object.keys(styles).length > 0) {
           if (!timings.transitionDuration) {
             element.css('transition', timings.animationDuration + 's linear all');
             appliedStyles.push('transition');

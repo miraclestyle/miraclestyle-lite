@@ -30,7 +30,6 @@
 .image-image img {
     width: 100%;
 }
-
 img.horizontal, .horizontal {
     height: 100%;
     width: 100%;
@@ -58,6 +57,9 @@ img.vertical, .vertical {
     position: relative;
 }
 .image-slider {
-    position:relative;
-    float:left;
+    position: relative;
+    float: left;
+}
+.grid-wrapper {
+    margin: 1px;
 }

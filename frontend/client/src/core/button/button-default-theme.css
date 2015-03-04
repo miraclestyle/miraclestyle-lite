@@ -5,7 +5,7 @@ md-toolbar .md-button.md-THEME_NAME-theme.md-fab {
     border-radius: 2px;
 }
 .md-button.md-THEME_NAME-theme:not([disabled]):hover, .md-button.md-THEME_NAME-theme:not([disabled]):focus {
-    background-color: '{{background-500-0.2}}';
+    
 }
 .md-button.md-THEME_NAME-theme.md-primary {
     color: '{{primary-color}}';
@@ -27,10 +27,10 @@ md-toolbar .md-button.md-THEME_NAME-theme.md-fab {
 }
 .md-button.md-THEME_NAME-theme.md-raised {
     color: '{{background-contrast}}';
-    background-color: '{{background-50}}';
+    background-color: white;
 }
 .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):hover, .md-button.md-THEME_NAME-theme.md-raised:not([disabled]):focus {
-    background-color: '{{background-200}}';
+ 
 }
 .md-button.md-THEME_NAME-theme.md-warn {
     color: '{{warn-color}}';

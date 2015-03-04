@@ -1,7 +1,7 @@
-<div ng-class="{'structured-field-repeated' : config.repeated, 'field-with-label': config.ui.label}" class="image-field structured-field margin-sides-16">
+<div ng-class="{'structured-field-repeated' : config.repeated, 'margin-sides-16': !config.repeated, 'field-with-label': config.ui.label}" class="image-field structured-field">
       <% if (config.repeated) { %>
 
-       <div class="clearfix button-set margin-bottom-16">
+       <div class="clearfix button-set list-row-single-line list-content-tile">
         <div class="pull-right">
            <span ng-include="config.ui.specifics.mainActionsLayout.before"></span>
            <md-button type="button" loading="!<%= config.ui.writableCompiled %>" class="md-raised fake-button">
@@ -34,8 +34,8 @@
                     <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
                        ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" 
                        loading="!<%= config.ui.writableCompiled %>" 
-                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action sort-handle">
-                          <icon type="action.reorder"></icon>
+                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action material-icon-white sort-handle">
+                          <icon type="action.view-headline"></icon>
                     </a>
                 </div>
           </div>

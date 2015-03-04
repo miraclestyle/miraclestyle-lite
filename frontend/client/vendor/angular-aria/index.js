@@ -1,3 +1,2 @@
 require('./angular-aria');
-
-module.exports = angular-aria;
+module.exports = 'ngAria';

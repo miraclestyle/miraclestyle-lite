@@ -63,13 +63,12 @@ ANGULAR_VENDOR_JS = (
   'vendor/angular-aria/angular-aria.js',
   'vendor/angular-messages/angular-messages.js',
   'vendor/angular-dragdrop/src/angular-dragdrop.js',
+  'vendor/momentjs/min/moment.min.js',
+  'vendor/humanize-duration/humanize-duration.js',
   'vendor/angular-timer/dist/angular-timer.js',
   'vendor/angular-google-chart/ng-google-chart.js'
 )
-ANGULAR_VENDOR_CSS = ('vendor/material-design-icons/sprites/css-sprite/sprite-action-grey600.css',
-                     'vendor/material-design-icons/sprites/css-sprite/sprite-device-grey600.css',
-                     'vendor/material-design-icons/sprites/css-sprite/sprite-navigation-grey600.css',
-                     'vendor/material-design-icons/sprites/css-sprite/sprite-content-grey600.css')
+ANGULAR_VENDOR_CSS = ('vendor/material-design-iconic-font/css/material-design-iconic-font.min.css',)
 ANGULAR_TEMPLATE_FILES = []
 ANGULAR_STATIC_FILES = []
 ANGULAR_CSS_FILES = []

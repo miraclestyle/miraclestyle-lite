@@ -6,10 +6,6 @@
   background-color: '{{foreground-4}}'; 
 }
 
-.list-content-tile span.second {
+.second {
   color: '{{foreground-2}}'; 
-}
-
-.list-row-has-separator:after  {
-  border-color: '{{foreground-4}}'; 
 }

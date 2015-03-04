@@ -42,6 +42,7 @@ a.sort-handle {
     display: block;
     min-width: initial;
     min-height: initial;
+    margin:0px;
 }
 [ui-sortable] > *:not(.no-move) {
     cursor: move;

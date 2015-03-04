@@ -2871,7 +2871,8 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
                           'filters': {},
                           'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
     util.merge_dicts(self.search, default_search_cfg)
-    self.search = SuperSearchProperty(**self.search)
+    if isinstance(self.search, dict):
+      self.search = SuperSearchProperty(**self.search)
 
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.

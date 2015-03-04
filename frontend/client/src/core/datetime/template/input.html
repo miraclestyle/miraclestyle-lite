@@ -7,13 +7,13 @@
             <div class="date-control clearfix">
                 <div class="title">
                     <md-button class="t1" ng-click="calendar._incMonth(-1)" aria-label="Previous Month">
-                        <icon type="navigation.chevron_left"></icon>
+                        <icon type="navigation.chevron-left"></icon>
                     </md-button>
                     <div class="contain">
                         <span class="month-part">{{date | date:'MMMM'}} {{calendar._year}}</span>
                     </div>
                     <md-button class="t2" ng-click="calendar._incMonth(1)" aria-label="Next Month">
-                        <icon type="navigation.chevron_right"></icon>
+                        <icon type="navigation.chevron-right"></icon>
                     </md-button>
                 </div>
                 <div class="headers">
@@ -67,26 +67,26 @@
                         <div flex>
                             <div class="t1">
                                 <md-button ng-click="clock._incHours(1)" aria-label="Increment Hours" class="hours up">
-                                    <icon type="navigation.expand_less"></icon>
+                                    <icon type="navigation.expand-less"></icon>
                                 </md-button>
                                 <md-input-container>
                                     <input type="number" min="{{_hours24 ? 0 : 1}}" max="{{_hours24 ? 23 : 12}}" ng-model="clock._hours">
                                 </md-input-container>
                                 <md-button ng-click="clock._incHours(-1)" aria-label="Decrement Hours" class="hours down">
-                                    <icon type="navigation.expand_more"></icon>
+                                    <icon type="navigation.expand-more"></icon>
                                 </md-button> 
                             </div>
                         </div>
                         <div flex>
                             <div class="t2">
                                 <md-button ng-click="clock._incMinutes(1)" aria-label="Increment Minutes" class="minutes up">
-                                    <icon type="navigation.expand_less"></icon>
+                                    <icon type="navigation.expand-less"></icon>
                                 </md-button>
                                 <md-input-container>
                                     <input type="number" min="0" max="59" ng-model="clock._minutes">
                                 </md-input-container>
                                 <md-button ng-click="clock._incMinutes(-1)" aria-label="Decrement Minutes" class="minutes down">
-                                    <icon type="navigation.expand_more"></icon>
+                                    <icon type="navigation.expand-more"></icon>
                                 </md-button> 
                             </div>
                         </div>
