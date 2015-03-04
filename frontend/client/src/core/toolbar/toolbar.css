@@ -62,6 +62,19 @@ md-toolbar {
     letter-spacing: 0.05px;
     text-align: left;
 }
+
+.no-right-actions .md-toolbar-item.md-breadcrumb {
+    padding-right:16px;
+}
+
+.no-left-actions .md-toolbar-item.md-breadcrumb {
+    padding-left:16px;
+}
+
+.one-right-action .md-toolbar-item.md-breadcrumb {
+    padding-right:56px;
+}
+
 .md-toolbar-item.md-tools.actions-right {
     right: 0px;
     left: auto;

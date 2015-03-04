@@ -1,4 +1,6 @@
-<md-toolbar ng-class="{'no-right-actions': spec.hideRight, 'no-left-actions': spec.hideLeft}">
+<md-toolbar ng-class="{'no-right-actions': spec.hideRight,
+                       'no-left-actions': spec.hideLeft,
+                       'one-right-action': spec.hideSave || !spec.templateActionsUrl}">
     <div class="md-toolbar-tools with-actions">
         <div class="fill-height">
             <div ng-if="!spec.hideLeft" class="md-toolbar-item md-tools actions-left">
@@ -23,7 +25,7 @@
                   submit-if-files-no-complete="noComplete()" 
                   submit-if-files="save()"
                   submit-native="spec.submitNative"
-                  class="action">Save</md-button>
+                  class="action md-primary">Save</md-button>
 
                 <span ng-include="spec.templateLeft"></span>
 

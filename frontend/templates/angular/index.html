@@ -22,14 +22,14 @@
             <div class="list">
               <div>
                 <div class="list-divider"></div>
-                <div class="list-subheader">Explore</div>
+                <div class="list-subheader subheader">Explore</div>
                 <sidenav-item ui-sref="collections">Collections</sidenav-item>
                 <sidenav-item ui-sref="home">All</sidenav-item>
               </div>
 
                 <div ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
                     <div class="list-divider"></div>
-                    <div class="list-subheader">Buy</div>
+                    <div class="list-subheader subheader">Buy</div>
                     <sidenav-item ui-sref="buy-carts">Carts</sidenav-item>
                     <sidenav-item ui-sref="buy-orders">Orders</sidenav-item>
                     <sidenav-item ng-click="settings()">Settings</sidenav-item>
@@ -37,7 +37,7 @@
 
                 <div ng-controller="SellerManagementCtrl" ng-show="!currentAccount._is_guest">
                     <div class="list-divider"></div>
-                    <div class="list-subheader">Sell</div>
+                    <div class="list-subheader subheader">Sell</div>
                     <sidenav-item ui-sref="sell-catalogs">Catalogs</sidenav-item>
                     <sidenav-item ui-sref="sell-orders">Orders</sidenav-item>
                     <sidenav-item ng-click="settings()">Settings</sidenav-item>
@@ -45,26 +45,26 @@
 
                 <div ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
                     <div class="list-divider"></div>
-                    <div class="list-subheader">Account</div>
+                    <div class="list-subheader subheader">Account</div>
                     <sidenav-item ng-click="logout()">Logout</sidenav-item>
                     <sidenav-item ng-click="settings()">Settings</sidenav-item>
                 </div>
 
                 <div ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
                     <div class="list-divider"></div>
-                    <div class="list-subheader">Account</div>
+                    <div class="list-subheader subheader">Account</div>
                     <sidenav-item ng-click="login(1)">Login with Google</sidenav-item>
                 </div>
 
                 <div ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
                     <div class="list-divider"></div>
-                    <div class="list-subheader">Administration</div>
+                    <div class="list-subheader subheader">Administration</div>
                     <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
                 </div>
 
               <div>
                 <div class="list-divider"></div>
-                <div class="list-subheader">Support</div>
+                <div class="list-subheader subheader">Support</div>
                 <sidenav-item ui-sref="about">About</sidenav-item>
                 <sidenav-item ui-sref="tour">Tour</sidenav-item>
                 <sidenav-item ui-sref="terms">Privacy &amp; Terms</sidenav-item>
@@ -77,7 +77,7 @@
 
     <div layout="column" layout-fill tabIndex="-1" role="main">
         <md-toolbar>
-            <div class="md-toolbar-tools homepage-toolbar with-actions">
+            <div class="md-toolbar-tools homepage-toolbar with-actions no-right-actions">
                 <div class="fill-height">
                     <div class="md-toolbar-item md-tools">
                         <button md-ink-ripple-action ng-click="openMenu()" type="button" class="button-transparent homepage-menu button-action">

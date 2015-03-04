@@ -89,6 +89,7 @@
     text-align: left;
     width: 100%;
     margin-bottom: 10px;
+    line-height: 48px;
 }
 .time-date > .control > .slider > .date-control > .title:after, .time-date > .control > .slider > .date-control > .title:before {
     display: table;
@@ -262,7 +263,7 @@
 }
 .time-date.vertical {
     width: auto;
-    max-width:266px;
+    max-width: 260px;
 }
 .time-date.vertical > .display {
     width: 100%;
@@ -374,6 +375,9 @@
     top: 0px;
     min-width: initial;
     line-height:normal;
+    margin: 0px;
+    width: 48px;
+    height: 48px;
 }
 .title .t1 {
     left: 0px;
@@ -387,8 +391,8 @@
 .title .contain {
     text-align: center;
     margin: auto;
-    padding-right: 40px;
-    padding-left: 40px;
+    padding-right: 48px;
+    padding-left: 48px;
 }
 .time-inputs button {
     width: 100%;

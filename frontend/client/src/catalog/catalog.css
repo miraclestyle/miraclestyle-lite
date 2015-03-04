@@ -6,7 +6,7 @@ div.catalog-pricetag {
     z-index: 58;
     padding: 0px;
     visibility: hidden;
-    border-radius: 3px;
+    border-radius: 2px;
     -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
     box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
     background: white;
@@ -15,7 +15,7 @@ div.catalog-pricetag {
 li.catalog-new-pricetag {
     padding: 5px 10px;
     display: block;
-    border-radius: 3px;
+    border-radius: 2px;
     -webkit-box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
     box-shadow: 3px 3px 5px 0px rgba(0, 0, 0, 0.75);
     background: white;

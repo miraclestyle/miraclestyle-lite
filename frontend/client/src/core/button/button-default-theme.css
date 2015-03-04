@@ -2,7 +2,7 @@ md-toolbar .md-button.md-THEME_NAME-theme.md-fab {
     background-color: white;
 }
 .md-button.md-THEME_NAME-theme {
-    border-radius: 3px;
+    border-radius: 2px;
 }
 .md-button.md-THEME_NAME-theme:not([disabled]):hover, .md-button.md-THEME_NAME-theme:not([disabled]):focus {
     background-color: '{{background-500-0.2}}';
