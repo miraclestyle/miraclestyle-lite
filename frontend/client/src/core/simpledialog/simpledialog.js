@@ -356,30 +356,32 @@
                 options.popInTarget = angular.element((options.targetEvent || {}).target);
                 var closeButton = findCloseButton(),
                     directive = discoverDirective(options),
-                    dialogEl = element.find(directive),
-                    whatParent;
+                    dialogEl = element.find(directive);
 
                 configureAria(dialogEl);
-                if (options.disableParentScroll) {
-                    options.oldOverflowStyle = {
-                        'overflow-y': options.parent.css('overflow-y'),
-                        'overflow-x': options.parent.css('overflow-x')
-                    };
-                    options.parent.css('overflow', 'hidden');
+                options.disableScrollInfo = [];
+                if (!options.disableScroll) {
+                    options.disableScroll = [];
                 }
+                if (options.disableParentScroll) {
+                    options.disableScroll.push(options.parent);
+                }
+                angular.forEach(options.disableScroll, function (el) {
+                    options.disableScrollInfo.push({
+                        old: {
+                            'overflow-y': el.css('overflow-y'),
+                            'overflow-x': el.css('overflow-x')
+                        },
+                        element: el
+                    });
+                    el.css('overflow', 'hidden');
+                    el.css('overflow-wrap', el.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
+                });
 
                 if (options.hasBackdrop) {
                     options.backdrop = angular.element('<md-backdrop class="simple-dialog-backdrop" style="z-index: ' + options.zIndex + '">');
                     $mdTheming.inherit(options.backdrop, options.parent);
-                    whatParent = options.parent.parents('.modal-content:first');
-                    if (!whatParent.length) {
-                        whatParent = options.parent;
-                    }
-                    whatParent = options.parent.parents('md-sidenav:first');
-                    if (!whatParent.length) {
-                        whatParent = options.parent;
-                    }
-                    $animate.enter(options.backdrop, whatParent);
+                    $animate.enter(options.backdrop, options.parent);
                 }
 
                 dialogEl.css('z-index', options.zIndex + 1);
@@ -430,11 +432,12 @@
                 if (options.backdrop) {
                     $animate.leave(options.backdrop);
                 }
-                if (options.disableParentScroll) {
-                    options.parent.css(options.oldOverflowStyle);
-                    options.parent.css('overflow-wrap', options.parent.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
-                    $document[0].removeEventListener('scroll', options.captureScroll, true);
-                }
+                angular.forEach(options.disableScrollInfo, function (info) {
+                    info.element.css(info.old);
+                    info.element.css('overflow-wrap', info.element.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
+                });
+                options.disableScrollInfo = [];
+                $document[0].removeEventListener('scroll', options.captureScroll, true);
                 mdContextualMonitor.dequeue(options.rootElementKeyupCallback);
                 return dialogPopOut(element, options).then(function() {
                     options.scope.$destroy();

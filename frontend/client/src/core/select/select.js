@@ -182,66 +182,76 @@
                         select.multipleSelection = {};
                         select.collectActive();
 
-                        var attachTo = element.parents('md-content:first');
+                        var attachTo = element.parents('.modal:first').find('.modal-dialog:first');
 
                         if (!attachTo.length) {
-                            attachTo = element.parents('.fixed-height:first');
+                            attachTo = element.parents('body:first');
                         }
 
                         $simpleDialog.show({
                             template: underscoreTemplate.get('core/select/choices.html')({select: select}),
                             targetEvent: $event,
                             parent: attachTo,
+                            disableScroll: [element.parents('md-content:first'), element.parents('.fixed-height:first')],
                             onBeforeHide: function (dialogEl, options) {
                                 $(window).off('resize', options.resize);
                             },
                             onBeforeShow: function (dialogEl, options) {
-                                options.parent.css('overflow-wrap', options.parent.css('overflow-wrap') === 'normal' ? 'break-word' : 'normal');
                                 var nextDefer = $q.defer(),
                                     nextPromise = nextDefer.promise,
                                     animateSelect = function () {
                                         var target = element.parents('md-input-container:first');
                                         options.resize = function () {
-                                            var targetPosition = target.position(),
-                                                targetPaddingLeft = parseInt(target.css('paddingLeft'), 10),
+                                            var targetOffset = target.offset(),
+                                                elementOffset = element.offset(),
                                                 parent = options.parent,
+                                                parentOffset = parent.offset(),
+                                                paddingTop = 24,
+                                                paddingBottom = 24,
                                                 parentHeight = options.parent.height(),
-                                                parentScrollTop = parent.scrollTop(),
-                                                paddingTop = parseInt(parent.css('padding-top'), 10) || 24,
-                                                paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 24,
                                                 scrollElement = dialogEl.find('md-content'),
-                                                maxTop = paddingTop,
+                                                maxTop,
+                                                activeOffset,
                                                 active = dialogEl.find('.list-row-is-active'),
+                                                toolbar = attachTo.find('md-toolbar'),
+                                                toolbarHeight = 0,
                                                 newTop,
-                                                totalHeight;
-                                            targetPosition.left += targetPaddingLeft;
-                                            if (parentScrollTop > 0) {
-                                                maxTop = parentScrollTop + paddingTop;
+                                                totalHeight,
+                                                innerHeight;
+                                            if (active.length) {
+                                                activeOffset = active.offset();
                                             }
+                                            if (toolbar.length) {
+                                                toolbarHeight = toolbar.height();
+                                            }
+                                            maxTop = parentOffset.top + paddingTop + toolbarHeight;
+                                            innerHeight = parentHeight - (paddingBottom + paddingTop + toolbarHeight);
                                             dialogEl.width(target.width());
                                             if ((dialogEl.height() > parentHeight)
-                                                    || (scrollElement.prop('scrollHeight') > parentHeight)) {
+                                                    || (scrollElement.prop('scrollHeight') > parentHeight)
+                                                    || (dialogEl.height() > innerHeight)) {
                                                 dialogEl.css({
                                                     top: maxTop,
-                                                    left: targetPosition.left
-                                                }).height(options.parent.height() - (paddingBottom + paddingTop));
+                                                    left: elementOffset.left
+                                                }).height(innerHeight);
                                             } else {
-                                                dialogEl.css(targetPosition);
+                                                dialogEl.css(elementOffset);
                                                 if (active.length) {
                                                     // position the selection at center of active item
-                                                    newTop = (targetPosition.top + parentScrollTop) - (active.position().top + (element.height() / 4)) + paddingTop;
+                                                    newTop = elementOffset.top - activeOffset.top + (active.height() / 5);
                                                 } else {
                                                     // position the div at the center if no item is selected
-                                                    newTop = (targetPosition.top + parentScrollTop) - (dialogEl.height() / 2) + paddingTop;
+                                                    newTop = (targetOffset.top) - (dialogEl.height() / 2) + paddingTop;
                                                 }
-                                                if (newTop > maxTop) { // if newTop is larger then maxTop, attempt to check if that calculated top is possible
-                                                    totalHeight = newTop + dialogEl.height(); // if the top + dialogEl exceedes parentHeight
-                                                    if (totalHeight > (parentHeight + parentScrollTop)) {
-                                                        newTop = newTop - (totalHeight - (parentHeight + parentScrollTop - paddingBottom)); // new top is calculated by substracting the extra space from the entire space
+                                                if (newTop > maxTop) {
+                                                    totalHeight = newTop + dialogEl.height();
+                                                    if (totalHeight + 24 > parentHeight) {
+                                                        newTop = newTop - (totalHeight - (parentHeight - 24));
                                                         if (newTop < maxTop) {
                                                             newTop = maxTop;
                                                         }
                                                     }
+                                                    console.log(maxTop, totalHeight, parentHeight, dialogEl.height(), paddingTop, newTop);
                                                     dialogEl.css('top', newTop);
                                                 } else {
                                                     dialogEl.css('top', maxTop);
