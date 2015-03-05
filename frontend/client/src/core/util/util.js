@@ -626,7 +626,7 @@ function AriaService($$rAF, $log, $window) {
       if (defaultValue.length) {
         element.attr(attrName, defaultValue);
       } else {
-        $log.warn('ARIA: Attribute "', attrName, '", required for accessibility, is missing on node:', node);
+        //$log.warn('ARIA: Attribute "', attrName, '", required for accessibility, is missing on node:', node);
       }
 
     }

@@ -431,7 +431,7 @@
                         }
                     }
 
-                    if (normalizeEntity) {
+                    if (normalizeEntity && data) {
                         if (angular.isDefined(data.entities)) {
                             modelsUtil.normalizeMultiple(data.entities);
                         } else if (angular.isDefined(data.entity)) {

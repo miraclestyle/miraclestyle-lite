@@ -90,6 +90,7 @@
     width: 100%;
     margin-bottom: 10px;
     line-height: 48px;
+    position: relative;
 }
 .time-date > .control > .slider > .date-control > .title:after, .time-date > .control > .slider > .date-control > .title:before {
     display: table;
@@ -119,9 +120,9 @@
 }
 .time-date > .control > .slider > .date-control > .headers {
     font-weight: 500;
-    color: #737373;
     margin: auto;
     text-align: center;
+    color:rgba(0, 0, 0, 0.54);
     display: block;
 }
 .time-date > .control > .slider > .date-control > .headers > .day-cell {
@@ -130,11 +131,11 @@
 }
 .time-date > .control > .slider > .date-control .day-cell {
     float: left;
-    width: 36px;
-    height: 36px;
+    width: 35px;
+    height: 35px;
     padding: 6px;
     cursor: pointer;
-    border-radius: 32px;
+    border-radius: 35px;
     min-width: initial;
     margin-right: 1px;
     margin-left: 1px;
@@ -263,7 +264,7 @@
 }
 .time-date.vertical {
     width: auto;
-    max-width: 260px;
+    max-width: 274px;
 }
 .time-date.vertical > .display {
     width: 100%;
@@ -378,6 +379,8 @@
     margin: 0px;
     width: 48px;
     height: 48px;
+    padding: 0px;
+    overflow: hidden;
 }
 .title .t1 {
     left: 0px;

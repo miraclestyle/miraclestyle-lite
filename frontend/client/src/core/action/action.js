@@ -33,17 +33,21 @@
                                 options.resize = function () {
                                     var targetOffset = target.offset(),
                                         parent = options.parent,
-                                        paddingTop = parseInt(parent.css('padding-top'), 10) || 16,
-                                        paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 16,
+                                        paddingTop = parseInt(parent.css('padding-top'), 10) || 24,
+                                        paddingBottom = parseInt(parent.css('padding-bottom'), 10) || 24,
                                         newTop = targetOffset.top,
                                         newLeft = (targetOffset.left - (dialogEl.width() - target.outerWidth())) - 12,
-                                        height = parent.height() - (paddingBottom + paddingTop);
+                                        height = parent.height() - (paddingBottom + paddingTop),
+                                        maxLeft = parent.width() - dialogEl.width() - 16;
                                     newTop = targetOffset.top;
                                     if (newTop < 16) {
                                         newTop = 16;
                                     }
                                     if (newLeft < 16) {
                                         newLeft = 16;
+                                    }
+                                    if (newLeft > maxLeft) {
+                                        newLeft = maxLeft;
                                     }
                                     dialogEl.css({
                                         top: newTop,

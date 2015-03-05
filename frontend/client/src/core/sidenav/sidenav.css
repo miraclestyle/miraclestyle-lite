@@ -83,3 +83,7 @@ md-sidenav {
   .md-sidenav-right.md-closed {
     -webkit-transform: translate3d(0%, 0, 0);
             transform: translate3d(0%, 0, 0); }
+
+md-sidenav md-content {
+  min-height: 100%;
+}
