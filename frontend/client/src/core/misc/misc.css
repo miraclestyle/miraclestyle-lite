@@ -107,6 +107,9 @@ body .mb15 {
 .padding-16 {
     padding: 16px;
 }
+.padding-right-16 {
+    padding-right: 16px;
+}
 .padding-sides-0 {
     padding-left: 0px;
     padding-right: 0px;
@@ -209,20 +212,18 @@ a.block, .block, button.block {
     width: 0%;
 }
 .bottom-right-floating {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  z-index: 11;
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    z-index: 11;
 }
 .bottom-right-floating-action {
     display: block;
 }
-
 .material-icon-white {
     color: rgba(255, 255, 255, 1);
     text-shadow: 1px 1px 1px black;
 }
-
 .pointable {
     cursor: pointer;
 }
@@ -238,7 +239,7 @@ pre {
 }
 .load-more {
     width: 100%;
-    margin:0px;
+    margin: 0px;
 }
 .no-things-available {
     color: #CCC;
@@ -259,167 +260,122 @@ pre {
     display: block;
 }
 body {
-  font-family: 'Roboto', sans-serif;
+    font-family: 'Roboto', sans-serif;
 }
-
 .trim {
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
-
-.button,
-.caption,
-.label,
-.helper,
-.body1,
-.secondary,
-.body2,
-.menu,
-.subheader,
-.subhead,
-.primary,
-.text,
-.title,
-.headline,
-.display1,
-.display2,
-.display3,
-.display4 {
-  font-family: inherit;
-  text-decoration: none;
+.button, .caption, .label, .helper, .body1, .secondary, .body2, .menu, .subheader, .subhead, .primary, .text, .title, .headline, .display1, .display2, .display3, .display4 {
+    font-family: inherit;
+    text-decoration: none;
 }
-
 .headline {
-  margin:0px;
+    margin: 0px;
 }
-
 .button {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 24px;
-  letter-spacing: 0.1px;
-  text-align: center;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.87);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    text-align: center;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.87);
 }
-
-.caption,
-.label,
+.caption, .label, .helper {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.54);
+}
+.label, .helper {
+    line-height: 14px;
+}
 .helper {
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 20px;
-  letter-spacing: 0.2px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.54);
+    color: rgba(0, 0, 0, 0.26);
 }
-
-.label,
-.helper {
-  line-height: 14px;
+.body1, .secondary {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.87);
 }
-
-.helper {
-  color: rgba(0, 0, 0, 0.26);
+.body2, .menu, .subheader {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.87);
 }
-
-.body1,
-.secondary {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  letter-spacing: 0.1px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.87);
+.secondary, .subheader {
+    color: rgba(0, 0, 0, 0.54);
 }
-
-.body2,
-.menu,
-.subheader {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 24px;
-  letter-spacing: 0.1px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.87);
+.subhead, .primary, .text {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.87);
 }
-
-.secondary,
-.subheader {
-  color: rgba(0, 0, 0, 0.54);
-}
-
-.subhead,
-.primary,
 .text {
-  font-size: 16px;
-  font-weight: 400;
-  line-height:  24px;
-  letter-spacing: 0.1px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.87);
+    line-height: 20px;
 }
-
-.text {
-  line-height:  20px;
-}
-
 .title {
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 28px;
-  letter-spacing: 0.05px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.87);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 28px;
+    letter-spacing: 0.05px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.87);
 }
-
 .headline {
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 32px;
-  letter-spacing: 0px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.87);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 32px;
+    letter-spacing: 0px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.87);
 }
-
 .display1 {
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 40px;
-  letter-spacing: 0px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.54);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 40px;
+    letter-spacing: 0px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.54);
 }
-
 .display2 {
-  font-size: 45px;
-  font-weight: 400;
-  line-height: 48px;
-  letter-spacing: 0px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.54);
+    font-size: 45px;
+    font-weight: 400;
+    line-height: 48px;
+    letter-spacing: 0px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.54);
 }
-
 .display3 {
-  font-size: 56px;
-  font-weight: 400;
-  line-height: 62px;
-  letter-spacing: -0.05px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.54);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 62px;
+    letter-spacing: -0.05px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.54);
 }
-
 .display4 {
-  font-size: 112px;
-  font-weight: 300;
-  line-height: 124px;
-  letter-spacing: -0.1px;
-  text-align: left;
-  color: rgba(0, 0, 0, 0.54);
+    font-size: 112px;
+    font-weight: 300;
+    line-height: 124px;
+    letter-spacing: -0.1px;
+    text-align: left;
+    color: rgba(0, 0, 0, 0.54);
 }
-
 .material-icon {
-  font-size:24px;
-  line-height:24px;
+    font-size: 24px;
+    line-height: 24px;
 }

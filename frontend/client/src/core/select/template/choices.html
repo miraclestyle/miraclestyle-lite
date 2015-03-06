@@ -2,49 +2,48 @@
      <% if (select.search) { %>
      <div class="select-search" ng-form="select.search.form">
        <div class="select-search-input">
-         <icon type="action.search" class="select-search-search-icon"></icon>
-         <input tabindex="1" type="search" name="search" ng-change="select.search.doFind()" ng-model="<%= select.search.model %>" />
-         <icon type="navigation.cancel" ng-click="<%= select.search.model %> = '';" ng-show="<%= select.search.model %>.length" class="select-search-cancel-icon"></icon>
+         <input tabindex="1" placeholder="Search..." type="search" name="search" ng-change="select.search.doFind()" ng-model="<%= select.search.model %>" />
        </div>
-       <md-divider></md-divider>
     </div>
     <% } %>
     <md-content ng-class="{'has-search': select.search}">
-      <ul class="list list-padding">
-            <% if (select.multiple) { %>
+      <% if (select.multiple) { %>
+        <ul ng-show="select.anyChecks()" class="list list-padding seam-bottom">
+          <li class="list-subheader subheader">Selected Items</li>
+          <li md-ink-ripple-list ng-show="select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable" 
+                ng-repeat="item in select.items"
+                tabindex="{{$index + 2}}">
+                <div class="list-content-tile list-content-tile-one-line first">
+                   <md-checkbox class="md-tile-content list-row list-row-transparent" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                     <span ng-bind-html="select.view(item)"></span>
+                  </md-checkbox>
+                </div>
+          </li>
+        </ul>
+        <ul class="list list-padding">
+          <li class="list-subheader subheader">Unselected Items</li>
+          <li md-ink-ripple-list ng-show="!select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable " 
+                ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
+                tabindex="{{$index + 2}}">
+                <div class="list-content-tile list-content-tile-one-line first">
+                   <md-checkbox class="md-tile-content list-row list-row-transparent" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                     <span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span>
+                  </md-checkbox>
+                </div>
+          </li>
+        </ul>
 
-              <li ng-show="select.isChecked(item)" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable" 
-                    ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
-                    tabindex="{{$index + 2}}">
-                    <div class="list-content-tile list-content-tile-one-line">
-                       <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
-                         <span ng-bind-html="select.view(item)"></span>
-                      </md-checkbox>
-                    </div>
-              </li>
-
-              <li class="list-divider" ng-if="select.anyChecks()"></li>
-
-              <li ng-show="!select.isChecked(item)" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable " 
-                    ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
-                    tabindex="{{$index + 2}}">
-                    <div class="list-content-tile list-content-tile-one-line">
-                       <md-checkbox class="md-tile-content" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
-                         <span ng-bind-html="select.view(item)"></span>
-                      </md-checkbox>
-                    </div>
-              </li>
-
-              <% } else { %>
-                <li md-ink-ripple-list ng-class="{'list-row-is-active': select.isSelected(item)}" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
-                    ng-click="select.select(item)"
-                    ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
-                    tabindex="{{$index + 2}}">
-                    <div class="list-content-tile list-content-tile-one-line">
-                          <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
-                    </div>
-                </li>
-              <% } %>
-      </ul>
+        <% } else { %>
+          <ul class="list list-padding">
+            <li md-ink-ripple-list ng-class="{'list-row-is-active': select.isSelected(item)}" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
+                ng-click="select.select(item)"
+                ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
+                tabindex="{{$index + 2}}">
+                <div class="list-content-tile list-content-tile-one-line first">
+                      <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+                </div>
+            </li>
+          </ul>
+        <% } %>
     </md-content>
 </simple-dialog>

@@ -49,6 +49,9 @@ angular.module('material.components.card', [
 function mdCardDirective($mdTheming) {
   return {
     restrict: 'E',
+    transclude: true,
+    replace: true,
+    templateUrl: 'core/card/card.html',
     link: function($scope, $element, $attr) {
       $mdTheming($element);
     }

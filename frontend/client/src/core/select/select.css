@@ -24,13 +24,14 @@ md-input-container .as-md-input {
 }
 .select-search-input input[type="search"] {
     border: none;
-    padding: 12px;
+    padding: 18px 16px 17px;
     width: 100%;
     display: block;
     box-sizing: border-box;
     -webkit-box-sizing: border-box;
-    padding-left: 36px;
-    padding-right: 36px;
+    line-height: 20px;
+    font-size: 16px; font-weight: 400;  letter-spacing: 0.1px; text-align: left; color: rgba(0, 0, 0, 0.87);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 .select-search {
     background: white;
@@ -45,7 +46,7 @@ md-input-container .as-md-input {
     position: relative;
     z-index: 2;
     width: 100%;
-    min-height: 44px;
+    min-height: 56px;
 }
 .select-search md-input-container {
     padding-bottom: 0px;
