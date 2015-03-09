@@ -76,7 +76,7 @@
                                         Math.min(target.height() / dialogEl.height(), 1.0) + ')')
                                     .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
                                         if (ev.target === dialogEl[0]) {
-                                            nextPromise.resolve();
+                                            nextDefer.resolve();
                                         }
                                     });
                                 $$rAF(function () {
