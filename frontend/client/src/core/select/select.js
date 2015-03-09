@@ -20,6 +20,7 @@
                         select = {},
                         timeout,
                         ngModelPipelineCheckValue,
+                        dontOpen = false,
                         isErrorGetter;
                     containerCtrl.input = element;
                     $mdTheming(element);
@@ -45,10 +46,14 @@
                         }
                     });
                     element.on('click focus', function (ev) {
-                        containerCtrl.setFocused(true);
+                        if (!dontOpen) {
+                            containerCtrl.setFocused(true);
+                            select.open();
+                        }
+                        dontOpen = false;
                     });
                     element.on('blur', function (ev) {
-                        containerCtrl.setFocused(true);
+                        containerCtrl.setFocused(false);
                     });
                     scope.$on('$destroy', function () {
                         containerCtrl.setFocused(false);
@@ -173,6 +178,15 @@
                     select.close = angular.noop;
                     select.opened = false;
                     select.open = function ($event) {
+                        if (select.opened) {
+                            return;
+                        }
+                        select.opened = true;
+                        $timeout(function () {
+                            select.openSimpleDialog($event);
+                        }, 0, false);
+                    };
+                    select.openSimpleDialog = function ($event) {
                         if (element.attr('disabled')) {
                             return;
                         }
@@ -199,6 +213,7 @@
                             onBeforeShow: function (dialogEl, options) {
                                 var nextDefer = $q.defer(),
                                     nextPromise = nextDefer.promise,
+                                    nextActive = false,
                                     animateSelect = function () {
                                         var target = element.parents('md-input-container:first');
                                         options.resize = function () {
@@ -251,7 +266,6 @@
                                                             newTop = maxTop;
                                                         }
                                                     }
-                                                    console.log(maxTop, totalHeight, parentHeight, dialogEl.height(), paddingTop, newTop);
                                                     dialogEl.css('top', newTop);
                                                 } else {
                                                     dialogEl.css('top', maxTop);
@@ -271,13 +285,49 @@
                                             Math.min(target.height() / dialogEl.height(), 1.0) + ')')
                                             .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
                                                 if (ev.target === dialogEl[0]) {
-                                                    select.opened = true;
                                                     nextDefer.resolve();
+                                                    nextActive = dialogEl.find('.list-row-is-active:first');
+                                                    if (!nextActive.length) {
+                                                        nextActive = dialogEl.find('[tabindex="2"]');
+                                                    }
                                                     if (select.search) {
                                                         dialogEl.find('input[type="search"]').focus();
                                                     } else {
-                                                       // dialogEl.find('[tabindex="1"]').focus();
+                                                        nextActive.focus();
                                                     }
+                                                }
+                                            }).on('keyup', function (ev) {
+                                                if (!nextActive) {
+                                                    return;
+                                                }
+                                                var original = nextActive,
+                                                    doFocus = false,
+                                                    indx = -1;
+                                                if (ev.keyCode === $mdConstant.KEY_CODE.DOWN_ARROW) {
+                                                    nextActive = nextActive.next();
+                                                    doFocus = true;
+                                                } else if (ev.keyCode === $mdConstant.KEY_CODE.UP_ARROW) {
+                                                    nextActive = nextActive.prev();
+                                                    doFocus = true;
+                                                } else if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
+                                                    nextActive = dialogEl.find('.simple-dialog-option:focus');
+                                                    if (!nextActive.length) {
+                                                        nextActive = dialogEl.find('.list-row-is-active:first');
+                                                    }
+                                                    if (nextActive.length) {
+                                                        indx = dialogEl.find('.simple-dialog-option').index(nextActive);
+                                                    } else {
+                                                        indx = 0;
+                                                    }
+                                                    if (indx !== -1) {
+                                                        select.select(select.items[indx]);
+                                                    }
+                                                }
+                                                if (!nextActive.length && doFocus) {
+                                                    nextActive = original;
+                                                }
+                                                if (doFocus) {
+                                                    nextActive.focus();
                                                 }
                                             });
                                         $$rAF(function () {
@@ -299,6 +349,8 @@
                                 $scope.$on('$destroy', function () {
                                     select.opened = false;
                                     containerCtrl.setFocused(false);
+                                    dontOpen = true;
+                                    element.focus();
                                 });
                             }
                         });

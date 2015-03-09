@@ -184,7 +184,7 @@
 
                         $(window).triggerHandler('modal.open');
 
-                    });
+                    }, 0, false);
 
                     scope.close = function (evt) {
                         var modal = $modalStack.getTop();

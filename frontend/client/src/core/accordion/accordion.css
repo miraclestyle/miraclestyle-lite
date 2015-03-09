@@ -23,7 +23,7 @@
     /* background-color: #F9F9F9; */
 }
 .panel-is-open .panel-title > a:active {
-    background-color: #F9F9F9;
+    /*background-color: #F9F9F9;*/
 }
 .panel-heading {} .panel-heading > .dropdown .dropdown-toggle {
     color: inherit;
@@ -45,7 +45,7 @@
 }
 .accordion-toggle {
     cursor: pointer;
-    padding:12px 72px 12px 16px;
+    padding: 12px 72px 12px 16px;
 }
 .accordion-arrow {
     height: 24px;
@@ -55,7 +55,7 @@
     transition: transform 0.3s ease-in-out;
     -webkit-transition: -webkit-transform 0.3s ease-in-out;
     position: absolute;
-    right: 12px; 
+    right: 12px;
     top: 12px;
 }
 .accordion-title {

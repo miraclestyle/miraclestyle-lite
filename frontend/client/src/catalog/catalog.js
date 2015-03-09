@@ -67,7 +67,7 @@
         modelsConfig(function (models) {
             var toggleMenu = function ($scope, id) {
                 $scope.sidenavMenuID = id;
-                $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag-link'];
+                $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
                 $scope.toggling = false;
                 $scope.toggleMenu = function ($event) {
                     if ($scope.toggling) {

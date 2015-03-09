@@ -51,9 +51,6 @@
     background: none;
     overflow: visible;
 }
-.modal-medium .modal-footer {
-    position: static;
-}
 .modal-medium .modal-dialog {
     background: #FFFFFF;
     -webkit-box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
@@ -107,11 +104,15 @@
     -ms-flex-pack: end;
     justify-content: flex-end;
     min-height: 40px;
-    padding-bottom: 8px;
+    padding-bottom: 0px;
     padding-top: 0px;
     padding-left: 12px;
     padding-right: 12px;
     border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+.no-scroll .md-actions {
+    padding-bottom:8px;
+    border-top:none;
 }
 .md-dialog .md-actions > * {
     margin-left: 8px;

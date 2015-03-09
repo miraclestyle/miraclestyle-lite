@@ -1,4 +1,4 @@
-<div accordion-on-open="accordions">
+<div class="list-padding" accordion-on-open="accordions">
     <accordion close-others="accordions.closeOthers">
         <accordion-group ng-if="formBuilder[$index].length || accordion.include" ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
                 <div ng-if="accordion.include" ng-include="accordion.include"></div>

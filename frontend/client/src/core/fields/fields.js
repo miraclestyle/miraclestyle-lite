@@ -994,6 +994,7 @@
                                     if (deleteMode) {
                                         ui.helper.addClass('about-to-delete');
                                         item._state = 'deleted';
+                                        rootFormSetDirty();
                                     } else {
                                         ui.helper.removeClass('about-to-delete');
                                         item._state = null;

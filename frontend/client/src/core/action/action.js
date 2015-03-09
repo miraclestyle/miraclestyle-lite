@@ -7,7 +7,7 @@
             replace: true
         };
     }).directive('actionDropdown', function ($simpleDialog, $mdTheming,
-        $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers) {
+        $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
         return {
             replace: true,
             transclude: true,
@@ -19,7 +19,18 @@
                 if (!template) {
                     return;
                 }
+
+                dropdown.opened = false;
                 dropdown.open = function ($event) {
+                    if (dropdown.opened) {
+                        return;
+                    }
+                    dropdown.opened = true;
+                    $timeout(function () {
+                        dropdown.openSimpleDialog($event);
+                    }, 0, false);
+                };
+                dropdown.openSimpleDialog = function ($event) {
                     $simpleDialog.show({
                         templateUrl: template,
                         targetEvent: $event,
@@ -28,7 +39,7 @@
                             $(window).off('resize', options.resize);
                         },
                         onBeforeShow: function (dialogEl, options) {
-                            var animateSelect = function () {
+                            var nextDefer = $q.defer(), nextPromise = nextDefer.promise, animateSelect = function () {
                                 var target = element;
                                 options.resize = function () {
                                     var targetOffset = target.offset(),
@@ -65,13 +76,15 @@
                                         Math.min(target.height() / dialogEl.height(), 1.0) + ')')
                                     .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
                                         if (ev.target === dialogEl[0]) {
-                                            dropdown.opened = true;
+                                            nextPromise.resolve();
                                         }
                                     });
                                 $$rAF(function () {
                                     dialogEl.addClass('transition-in');
                                     dialogEl.css($mdConstant.CSS.TRANSFORM, '');
                                 });
+
+                                return nextPromise;
 
                             };
 

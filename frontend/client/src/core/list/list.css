@@ -113,7 +113,7 @@
 .list-row-two-lines .list-secondary-tile {
     padding: 12px 4px;
 }
-.list-row-is-clickable-and-hoverable:hover, .list-row-is-active {
+.list-row-is-clickable-and-hoverable:hover, .list-row-is-active, .list-row-is-clickable-and-hoverable:focus {
     background-color: #F5F5F5;
 }
 .list-row-transparent {
