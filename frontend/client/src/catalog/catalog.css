@@ -1,5 +1,5 @@
 
-div.catalog-pricetag {
+div.catalog-pricetag, li.catalog-new-pricetag {
     position: absolute;
     top: 20%;
     left: 20px;
@@ -13,13 +13,10 @@ div.catalog-pricetag {
     cursor: pointer;
 }
 li.catalog-new-pricetag {
-    padding: 5px 10px;
-    display: block;
-    border-radius: 2px;
-    -webkit-box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
-    box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
-    background: white;
-    cursor: pointer;
+    position:static;
+    left:auto;
+    top:auto;
+    visibility: visible;
 }
 .catalog-pricetag-dot {
     border-radius: 50%;
@@ -30,10 +27,12 @@ li.catalog-new-pricetag {
     top: 3px;
     left: 3px;
 }
-.catalog-pricetag a {
+.catalog-pricetag .catalog-pricetag-link, .catalog-new-pricetag .catalog-pricetag-link {
     text-decoration: none;
     display: block;
-    padding: 5px 10px;
+    padding: 6px 8px;
+    line-height:24px;
+    text-transform: inherit;
 }
 .catalog-pricetag button.button-transparent {
     text-decoration: none;
@@ -58,8 +57,8 @@ li.catalog-new-pricetag {
 .catalog-closer {
     position: fixed;
     z-index: 57;
-    left: 10px;
-    top: 10px;
+    left: 4px;
+    top: 4px;
 }
 .sidebar-seller-logo button {
     padding: 0px;

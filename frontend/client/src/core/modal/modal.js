@@ -178,13 +178,11 @@
                             }
                         });
 
-                        setTimeout(function () {
-                            $$rAF(cb);
-                        }, 1);
+                        $$rAF(cb);
 
                         $(window).triggerHandler('modal.open');
 
-                    }, 0, false);
+                    }, 50, false);
 
                     scope.close = function (evt) {
                         var modal = $modalStack.getTop();
@@ -607,7 +605,7 @@
                 });
             }
         };
-    }).factory('modals', function ($modal, $q, helpers) {
+    }).factory('modals', function ($modal, $q, helpers, GLOBAL_CONFIG) {
 
         var modals = {
             alert: function (message, extraConfig) {
@@ -619,7 +617,10 @@
                 return this.create($.extend({
                     message: message,
                     type: 'alert'
-                }, extraConfig));
+                }, extraConfig), {
+                    inDirection: false,
+                    outDirection: false
+                });
             },
             confirm: function (messageOrConfig, callbackOrConfig) {
                 var theConfig = {
@@ -684,6 +685,9 @@
                 return $modal.open(defaultModalConfig);
             }
         };
+        if (GLOBAL_CONFIG.debug) {
+            window._modals = modals;
+        }
         return modals;
     });
 

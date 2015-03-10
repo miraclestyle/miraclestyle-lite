@@ -135,6 +135,10 @@
                                                 field.ui.writable = true;
                                             });
 
+                                            $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                            $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                            $scope.validateForm = angular.bind($scope, helpers.form.validate);
+
                                             $scope.container = {};
                                             $scope.save = function () {
                                                 var promise;

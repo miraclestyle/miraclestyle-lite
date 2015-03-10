@@ -9,7 +9,7 @@
             <div grid-generator-items="entity._sellers" grid-generator="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}" class="grid-wrapper clearfix">
                 <div ng-repeat="seller in entity._sellers track by $index" on-ng-repeat-end class="grid-item grid-generator">
                     <button ng-click="view(seller)" class="button-transparent pointable">
-                        <img display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
+                        <img class="not-pointable" display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
                     </button>
                 </div>
             </div>

@@ -21,8 +21,8 @@
                 defer = $q.defer(),
                 promise = defer.promise;
             $scope.sellerDetail = false;
-            $scope.view = function (key) {
-                models['31'].viewModal(key);
+            $scope.view = function (key, config) {
+                models['31'].viewModal(key, config);
             };
 
             if ($stateParams.key) {
@@ -62,7 +62,9 @@
                     complete: function (response) {
                         var results = response.data.entities;
                         models['31'].formatPublicSearchResults(results);
-                        $scope.search.results.extend(results);
+                        angular.forEach(_.range(1, 50), function () {
+                            $scope.search.results.extend(results);
+                        });
                     }
                 })
             };

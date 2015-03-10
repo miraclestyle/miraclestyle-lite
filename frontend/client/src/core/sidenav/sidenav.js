@@ -164,6 +164,7 @@ function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $co
   function postLink(scope, element, attr, sidenavCtrl) {
     var triggeringElement = null;
     var promise = $q.when(true);
+    var working = false;
 
     var isLockedOpenParsed = $parse(attr.mdIsLockedOpen);
     var isLocked = function() {
@@ -244,6 +245,7 @@ function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $co
           if (scope.isOpen) {
             element.focus();
           }
+          working = false;
         })
       ]);
     }
@@ -256,11 +258,12 @@ function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $co
      * @returns {*}
      */
     function toggleOpen( isOpen ) {
-      if (scope.isOpen == isOpen ) {
+      if (scope.isOpen == isOpen || working) {
 
         return $q.when(true);
 
       } else {
+        working = true;
         var deferred = $q.defer();
 
         // Toggle value to force an async `updateIsOpen()` to run

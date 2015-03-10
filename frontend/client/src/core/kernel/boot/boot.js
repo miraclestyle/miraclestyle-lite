@@ -347,7 +347,8 @@ if (!Array.prototype.indexOf) {
             grid: {
                 maxWidth: 240,
                 minWidth: 180,
-                maxHeight: 360
+                maxHeight: 360,
+                margin: 1
             },
             imageSizes: _.range(50, 1650, 50), // loading ranges for get serving url
             social: {

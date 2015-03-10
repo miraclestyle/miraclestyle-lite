@@ -660,6 +660,9 @@
                                                 });
 
                                                 $scope.container = {};
+                                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                                $scope.validateForm = angular.bind($scope, helpers.form.validate);
                                                 $scope.save = function () {
                                                     var promise;
                                                     if (!$scope.container.form.$valid) {

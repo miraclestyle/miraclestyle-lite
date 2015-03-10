@@ -4,17 +4,17 @@
 
         <div class="modal-body">
 
-            <div ng-click="toggleMenu($event)" class="fixed-height relative overflow-x">
+            <div ng-click="toggleMenu($event)" class="fixed-height relative overflow-x unselectable">
                 <div ng-if="product.images.length" image-slider="product.images" md-ink-ripple-ignore="notRipplable" md-ink-ripple-fit class="image-slider">
                     <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
-                        <img slider-image="image" />
+                        <img class="not-pointable" slider-image="image" />
                     </div>
                 </div>
                 <div ng-if="!product.images.length">
                     <h1 class="no-things-available">No images available</h1>
                 </div>
                 <div class="catalog-closer">
-                    <button md-ink-ripple loading type="button" class="button-transparent catalog-close-button material-icon-white" ng-click="close()">
+                    <button md-ink-ripple loading type="button" class="button-transparent catalog-close-button material-icon-white button-square" ng-click="close()">
                         <icon type="navigation.close"></icon>
                     </button>
                 </div>

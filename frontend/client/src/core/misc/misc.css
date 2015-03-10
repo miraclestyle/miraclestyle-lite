@@ -383,3 +383,27 @@ body {
 .max-width-240 {
     max-width:240px;
 }
+
+.button-square {
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+}
+
+.button-block {
+    display:block;
+    padding:0px;
+}
+
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.not-pointable {
+    pointer-events: none
+}

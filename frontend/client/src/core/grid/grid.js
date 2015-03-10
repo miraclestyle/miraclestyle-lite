@@ -34,7 +34,7 @@
                     cover_width_rounded = Math.floor(cover_width);
                     sides = Math.floor((canvas_width % (cover_width_rounded * cover_count)) / 2);
                     cover_width_rounded = cover_width_rounded - (margin * 2);
-                    values = [cover_width_rounded, cover_count, sides, cover_width_rounded];
+                    values = [cover_width_rounded, cover_count, sides];
                     if (cover_count_raw > 4 || cover_count === 1) {
                         break;
                     }
@@ -204,6 +204,68 @@
                     $(window).off('resize modal.close mainMenu.hide', resize);
                 });
 
+            }
+        };
+    }).directive('gridScale', function (helpers, $timeout, GLOBAL_CONFIG) {
+        return {
+            controller: function ($scope, $element) {
+                var that = this,
+                    tracker = 0;
+                that.items = [];
+                that.config = {};
+                that.columns = 1;
+                that.getColumns = function () {
+                    var calc = helpers.grid.calculate($element.width(), that.config.maxWidth, that.config.minWidth, that.config.margin);
+                    that.columns = calc[1];
+                };
+                that.add = function (item) {
+                    tracker += 1;
+                    that.items.push(item);
+                    that.calculate(item);
+                    if (tracker === that.columns) {
+                        tracker = 0;
+                        //that.resize(true);
+                    }
+                };
+                that.remove = function (item) {
+                    that.items.remove(item);
+                };
+                that.calculate = function (item) {
+                    item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
+                };
+                that.resize = function (doAll) {
+                    that.getColumns();
+                    angular.forEach(that.items, function (item) {
+                        that.calculate(item);
+                        if (doAll) {
+                            if (that.config.square) {
+                                item.height(item.width());
+                            } else {
+                                item.height(helpers.newHeightByWidth(that.config.maxWidth, that.config.maxHeight, item.width()));
+                            }
+                        }
+                    });
+                };
+
+                $(window).on('resize', that.resize);
+
+                $scope.$on('$destroy', function () {
+                    $(window).off('resize', that.resize);
+                });
+            },
+            link: function (scope, element, attrs, ctrl) {
+                $.extend(ctrl.config, GLOBAL_CONFIG.grid, scope.$eval(attrs.gridScale) || {});
+                ctrl.getColumns();
+            }
+        };
+    }).directive('gridScaleItem', function (helpers) {
+        return {
+            require: '^gridScale',
+            link: function (scope, element, attrs, gridScaleCtrl) {
+                gridScaleCtrl.add(element);
+                scope.$on('$destroy', function () {
+                    gridScaleCtrl.remove(element);
+                });
             }
         };
     });

@@ -10,13 +10,13 @@
                    ng-click="howToDrag($event)"
                    jqyoui-draggable="{placeholder: 'keep'}">
                  <div class="catalog-pricetag-dot"></div>
-                 <div class="catalog-pricetag-link">Drag New Product</div>
+                 <div class="catalog-pricetag-link button-transparent">Drag New Product</div>
                </li>
         </ul>
     </div>
   </div>
   <div class="image-slider-outer">
-     <div image-slider-load-more="loadMoreImages(callback)" image-slider-manage-products="true" image-slider="args._images" class="image-slider"> 
+     <div image-slider-load-more="loadMoreImages(callback)" image-slider-manage-products="true" image-slider="args._images" class="image-slider unselectable"> 
          <div ng-hide="image._state == 'deleted'"
               ng-repeat="image in args._images track by $index" 
               class="image-slider-item"
@@ -24,7 +24,7 @@
               jqyoui-options="{accept: '.catalog-new-pricetag'}"
               jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
               >
-           <img slider-image="image" /> 
+           <img class="not-pointable" slider-image="image" /> 
            <div ng-repeat="pricetag in image.pricetags track by $index"
                 ng-model="image.pricetags"
                 ng-hide="pricetag._state == 'deleted' || !pricetag.key"
@@ -37,7 +37,7 @@
                 catalog-pricetag-position="pricetag">
                 <div class="catalog-pricetag-wrapper">
                   <div class="catalog-pricetag-dot"></div>
-                  <a class="catalog-pricetag-link" 
+                  <a class="catalog-pricetag-link button-transparent" 
                      loading 
                      draggable-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</a>
                 </div>

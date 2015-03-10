@@ -20,7 +20,7 @@
            fancy-grid-generator="config.ui.specifics.parentArgs" 
            ng-model="config.ui.specifics.parentArgs" 
            ng-class="{'grid-no-items': !config.ui.specifics.parentArgs.length}"
-           class="clearfix grid-wrapper">
+           class="clearfix grid-wrapper unselectable">
            
           <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
                ng-hide="image._state == 'deleted'"
@@ -28,13 +28,13 @@
                class="no-move image-image grid-item">
                 <div class="delete-overlay"></div>
                 <div class="img spaceout">
-                  <img display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
+                  <img class="not-pointable" display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
                 </div>
-                <div class="bottom-right-floating">
+                <div ng-show="!config.ui.specifics.sortableOptions.disabled" class="bottom-right-floating">
                     <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
                        ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" 
                        loading="!<%= config.ui.writableCompiled %>" 
-                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action material-icon-white sort-handle">
+                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action material-icon-white button-square sort-handle">
                           <icon type="action.view-headline"></icon>
                     </a>
                 </div>
@@ -59,7 +59,7 @@
              </md-button>
              
              <div class="uploaded-image">
-                <img display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
+                <img class="not-pointable" display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
              </div>
              <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
               <div ng-message="help"><%= config.ui.help %></div>
