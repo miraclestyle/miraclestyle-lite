@@ -524,9 +524,9 @@
 
                                     }
 
-                                    $scope.close = function () {
+                                    $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                         $scope.$close();
-                                    };
+                                    });
 
                                     $scope.save = function () {
                                         var promise, complete;

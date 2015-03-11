@@ -28,7 +28,7 @@
                     dropdown.opened = true;
                     $timeout(function () {
                         dropdown.openSimpleDialog($event);
-                    }, 0, false);
+                    });
                 };
                 dropdown.openSimpleDialog = function ($event) {
                     $simpleDialog.show({
@@ -94,13 +94,14 @@
                         },
                         controller: function ($scope) {
                             $scope.parent = scope;
+                            $scope.$on('$destroy', function () {
+                                dropdown.opened = false;
+                            });
                         }
                     });
                 };
                 dropdown.close = function () {
-                    $simpleDialog.hide().then(function () {
-                        dropdown.opened = false;
-                    });
+                    $simpleDialog.hide();
                 };
                 scope.dropdown = dropdown;
             }

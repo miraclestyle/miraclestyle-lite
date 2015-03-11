@@ -50,17 +50,26 @@
                         visibility: 'visible'
                     });
                 };
-                $timeout(resize);
+                $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
             }
         };
-    }).directive('productInstanceListView', function ($compile) {
+    }).directive('productInstanceCardView', function ($compile) {
         return {
             scope: {
-                val: '=productInstanceListView'
+                val: '=productInstanceCardView'
             },
-            templateUrl: 'catalog/product/product_instance_list_view.html'
+            templateUrl: 'catalog/product/product_instance_card_view.html',
+            link: function (scope) {
+                scope.showVariantLabel = function (variant) {
+                    return variant.split(':')[0];
+                };
+                scope.showVariantValue = function (variant) {
+                    var splitOpen = variant.split(':');
+                    return splitOpen.slice(1, splitOpen.length).join(':');
+                };
+            }
         };
     }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, $timeout) {
 
@@ -514,9 +523,9 @@
                                     models['23'].viewModal($scope.catalog._seller);
                                 };
 
-                                $scope.close = function () {
+                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope.$close();
-                                };
+                                });
                             }
                         });
                     });
@@ -674,9 +683,9 @@
                                                     });
                                                     return promise;
                                                 };
-                                                $scope.close = function () {
+                                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                                     $scope.$close();
-                                                };
+                                                });
                                             }
                                         });
                                     }
@@ -1040,7 +1049,8 @@
                                                     label: 'Product Instances',
                                                     path: ['_images', 'pricetags'],
                                                     specifics: {
-                                                        listView: 'product-instance-list-view',
+                                                        cards: true,
+                                                        cardView: 'product-instance-card-view',
                                                         getRootArgs: function () {
                                                             return $scope.args;
                                                         },

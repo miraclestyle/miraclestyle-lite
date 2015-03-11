@@ -604,12 +604,12 @@
                                     }
                                 };
 
-                                $scope.close = function () {
+                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope.$close();
                                     if (config.afterClose) {
                                         config.afterClose($scope);
                                     }
-                                };
+                                });
 
                                 if (angular.isDefined(config.scope)) {
                                     $.extend($scope, config.scope);

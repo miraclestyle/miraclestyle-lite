@@ -38,14 +38,30 @@
                         return false;
                     }
                     return true;
+                },
+                leave: function (cb) {
+                    var form = this.container.form;
+                    if (form.$pristine) {
+                        cb();
+                    } else {
+                        modals.confirm({
+                            confirm: cb,
+                            message: 'You have some unsaved changes, discard?',
+                            text: {
+                                ok: 'Discard'
+                            }
+                        });
+                    }
                 }
             });
 
-            modals.howToSort = function ($event) {
-                return modals.alert('Grab the button to start sorting.', {
-                    targetEvent: $event
-                });
-            };
+            $.extend(modals, {
+                howToSort: function ($event) {
+                    return modals.alert('Grab the button to start sorting.', {
+                        targetEvent: $event
+                    });
+                }
+            });
         })
         .directive('validFile', function () {
             return {
@@ -100,6 +116,7 @@
                             try {
                                 if (what === 'list') {
                                     value = helpers.splitLines(value);
+                                    value = _.uniq(value);
                                 }
                                 if (what === 'str') {
                                     if (angular.isArray(value)) {
@@ -445,11 +462,29 @@
                         nativeSubmit = $parse(attrs.submitNative),
                         execute,
                         click = function () {
+                            var fields = form.find('[name]'),
+                                promise,
+                                isNative,
+                                thingsHappened;
+                            fields.each(function () {
+                                var formElement = ctrl[$(this).attr('name')];
+                                if (formElement && !formElement.$valid) {
+                                    ctrl.$setDirty();
+                                    formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
+                                    formElement.$setDirty();
+                                    formElement.$setTouched();
+                                    thingsHappened = true;
+                                }
+                            });
+                            if (thingsHappened) {
+                                if (!scope.$$phase) {
+                                    scope.$apply();
+                                }
+                            }
                             if (check && !check(scope)) {
                                 return false;
                             }
-                            var promise,
-                                isNative = nativeSubmit(scope);
+                            isNative = nativeSubmit(scope);
                             files = form.find('input[type="file"]');
                             execute = false;
                             if (files.length) {
@@ -1195,12 +1230,13 @@
                                         $scope.parentArgs = config.ui.specifics.parentArgs;
                                         $scope.rootScope = config.ui.specifics.rootScope;
                                         $scope.entity = config.ui.specifics.entity;
-                                        $scope.close = function () {
+                                        $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                             $scope.$close();
                                             if (config.ui.specifics.afterClose) {
                                                 config.ui.specifics.afterClose($scope);
                                             }
-                                        };
+                                        });
+
                                         $scope.validateForm = function () {
                                             if (!$scope.container.form.$valid) {
                                                 $scope.$broadcast('invalidForm');

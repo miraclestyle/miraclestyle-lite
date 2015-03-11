@@ -19,3 +19,9 @@
 .cards {
     padding: 4px 8px;
 }
+.card-primary-action {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  padding-right: 72px;
+}

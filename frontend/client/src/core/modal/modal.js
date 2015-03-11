@@ -140,7 +140,7 @@
                             element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.inDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
                         } else {
                             noTransformCommand = true;
-                            element.css($mdConstant.CSS.TRANSFORM, 'translate3d(0px, -120%, 0px)');
+                            //element.css($mdConstant.CSS.TRANSFORM, 'translate3d(0px, -120%, 0px)');
                         }
 
                         if (scope.modalOptions.inDirection) {
@@ -185,12 +185,15 @@
                     }, 50, false);
 
                     scope.close = function (evt) {
-                        var modal = $modalStack.getTop();
+                        var modal = $modalStack.getTop(),
+                            defer = $q.defer();
+                            defer.resolve();
                         if (modal && modal.value.backdrop && modal.value.backdrop != 'static' && (evt.target === evt.currentTarget)) {
                             evt.preventDefault();
                             evt.stopPropagation();
-                            $modalStack.dismiss(modal.key, 'backdrop click');
+                            return $modalStack.dismiss(modal.key, 'backdrop click');
                         }
+                        return defer.promise;
                     };
                 }
             };
@@ -209,8 +212,8 @@
     })
 
     .factory('$modalStack', ['$transition', '$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
-        '$mdConstant',
-        function ($transition, $timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant) {
+        '$mdConstant', '$q',
+        function ($transition, $timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q) {
 
             var OPENED_MODAL_CLASS = 'modal-open';
             var backdropDomEl, backdropScope;
@@ -234,7 +237,7 @@
                 }
             });
 
-            function removeModalWindow(modalInstance) {
+            function removeModalWindow(modalInstance, defered) {
 
                 var body = $document.find('body').eq(0);
                 var modalWindow = openedWindows.get(modalInstance).value;
@@ -249,6 +252,7 @@
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
                     checkRemoveBackdrop();
                     $(window).triggerHandler('modal.close');
+                    defered.resolve();
                 });
             }
 
@@ -312,9 +316,8 @@
                     if (scope.modalOptions.transformOrigin) {
                         modalEl.removeClass('transfrom-origin-center-left transfrom-origin-center-right');
                     }
-                    modalEl
-                    .addClass('transition-out');
                     if (clickElement) {
+                        modalEl.addClass('transition-out');
                         var clickRect = clickElement.getBoundingClientRect();
                         var modalRect = modalEl[0].getBoundingClientRect();
                         var scaleX = Math.min(0.5, clickRect.width / modalRect.width);
@@ -325,6 +328,8 @@
                             (-modalRect.top + clickRect.top + clickRect.height / 2 - modalRect.height / 2) + 'px,' +
                             '0) scale(' + scaleX + ',' + scaleY + ')'
                         );
+                    } else {
+                        modalEl.addClass('transition-out-opacity');
                     }
                 }
 
@@ -404,27 +409,35 @@
 
             $modalStack._dequeue = function (modalWindow, modalInstance) {
                 mdContextualMonitor.dequeue(modalInstance.esc);
-                if (modalWindow.value.modalScope.modalOptions.resize) {
+                if (modalWindow.value && modalWindow.value.modalScope.modalOptions.resize) {
                     $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
                 }
             };
 
             $modalStack.close = function (modalInstance, result) {
-                var modalWindow = openedWindows.get(modalInstance);
+                var modalWindow = openedWindows.get(modalInstance),
+                    defered = $q.defer();
                 $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.resolve(result);
-                    removeModalWindow(modalInstance);
+                    removeModalWindow(modalInstance, defered);
+                } else {
+                    defered.resolve();
                 }
+                return defered.promise;
             };
 
             $modalStack.dismiss = function (modalInstance, reason) {
-                var modalWindow = openedWindows.get(modalInstance);
+                var modalWindow = openedWindows.get(modalInstance),
+                    defered = $q.defer();
                 $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.reject(reason);
-                    removeModalWindow(modalInstance);
+                    removeModalWindow(modalInstance, defered);
+                } else {
+                    defered.resolve();
                 }
+                return defered.promise;
             };
 
             $modalStack.dismissAll = function (reason) {
@@ -486,10 +499,10 @@
                             result: modalResultDeferred.promise,
                             opened: modalOpenedDeferred.promise,
                             close: function (result) {
-                                $modalStack.close(modalInstance, result);
+                                return $modalStack.close(modalInstance, result);
                             },
                             dismiss: function (reason) {
-                                $modalStack.dismiss(modalInstance, reason);
+                                return $modalStack.dismiss(modalInstance, reason);
                             }
                         };
 
@@ -617,10 +630,7 @@
                 return this.create($.extend({
                     message: message,
                     type: 'alert'
-                }, extraConfig), {
-                    inDirection: false,
-                    outDirection: false
-                });
+                }, extraConfig));
             },
             confirm: function (messageOrConfig, callbackOrConfig) {
                 var theConfig = {
@@ -645,16 +655,13 @@
                 config = helpers.alwaysObject(config);
                 helpers.extendDeep(theConfig, config);
                 theConfig.confirm = function () {
-                    if (angular.isFunction(config.confirm)) {
-                        config.confirm.call(this);
-                    }
-
-                    this.dismiss();
+                    this.dismiss().then(function () {
+                        if (angular.isFunction(config.confirm)) {
+                            config.confirm();
+                        }
+                    });
                 };
-                return this.create(theConfig, {
-                    inDirection: false,
-                    outDirection: false
-                });
+                return this.create(theConfig);
             },
             create: function (extraConfig, modalConfig) {
                 var config = {
@@ -664,15 +671,20 @@
                 helpers.extendDeep(config, extraConfig);
                 defaultModalConfig = {
                     fullScreen: false,
+                    inDirection: false,
+                    outDirection: false,
                     targetEvent: extraConfig && extraConfig.targetEvent,
                     templateUrl: 'core/misc/' + config.type + '.html',
                     controller: function ($scope) {
                         var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
                         config.dismiss = function () {
-                            if (callback) {
-                                callback.call(this);
-                            }
-                            $scope.$close();
+                            var close = $scope.$close();
+                            close.then(function () {
+                                if (callback) {
+                                    callback();
+                                }
+                            });
+                            return close;
                         };
 
                         if (!angular.isObject(extraConfig)) {

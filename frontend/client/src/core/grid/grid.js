@@ -42,7 +42,7 @@
                 return values;
             }
         };
-        helpers.fancyGrid = {
+        helpers.gridStacked = {
             getHeight: function (images, width, margin) {
                 margin = (margin * 2);
                 width -= images.length * margin;
@@ -89,7 +89,7 @@
             }
 
         };
-    }).directive('fancyGridGenerator', function (helpers, $timeout) {
+    }).directive('gridStacked', function (helpers, $timeout) {
 
         return {
             link: function (scope, element, attrs) {
@@ -102,12 +102,12 @@
                             if (!canvas || (check && originalCanvas === canvas)) {
                                 return; // do not measure if canvas is falsy or if the original canvas is the same as the current one
                             }
-                            angular.forEach(scope.$eval(attrs.fancyGridGenerator), function (image) {
+                            angular.forEach(scope.$eval(attrs.gridStacked), function (image) {
                                 if (image._state !== 'deleted') {
                                     images.push(angular.copy(image));
                                 }
                             });
-                            helpers.fancyGrid.calculate(canvas, images, 240, margin);
+                            helpers.gridStacked.calculate(canvas, images, 240, margin);
                             element.find('.grid-item').filter(function () {
                                 return $(this).css('display') !== 'none';
                             }).each(function (i) {
@@ -137,10 +137,10 @@
                     setTimeout(resize, 110);
                 });
                 scope.$on('itemDelete', function () {
-                    $timeout(resize);
+                    $timeout(resize, 0, false);
                 });
-                scope.$on(attrs.fancyGridGenerator + '.length', function () {
-                    $timeout(resize);
+                scope.$watch(attrs.gridStacked + '.length', function () {
+                    $timeout(resize, 0, false);
                 });
 
             }
@@ -214,9 +214,11 @@
                 that.items = [];
                 that.config = {};
                 that.columns = 1;
+                that.calc = [];
                 that.getColumns = function () {
                     var calc = helpers.grid.calculate($element.width(), that.config.maxWidth, that.config.minWidth, that.config.margin);
                     that.columns = calc[1];
+                    that.calc = calc;
                 };
                 that.add = function (item) {
                     tracker += 1;
@@ -229,8 +231,18 @@
                 };
                 that.remove = function (item) {
                     that.items.remove(item);
+                    that.resize();
                 };
                 that.calculate = function (item) {
+                    if (that.columns < 2 && $element.width() > that.config.maxWidth) {
+                        item.css('width', '100%');
+                        $element.css({
+                            marginLeft: that.calc[2],
+                            marginRight: that.calc[2]
+                        });
+                        return;
+                    }
+                    $element.css({marginLeft: '', marginRight: ''});
                     item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
                 };
                 that.resize = function (doAll) {

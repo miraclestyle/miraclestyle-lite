@@ -138,6 +138,9 @@
                                             $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
                                             $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                             $scope.validateForm = angular.bind($scope, helpers.form.validate);
+                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                                $scope.$close();
+                                            });
 
                                             $scope.container = {};
                                             $scope.save = function () {
@@ -150,9 +153,6 @@
                                                     updateState(response.data.entity);
                                                 });
                                                 return promise;
-                                            };
-                                            $scope.close = function () {
-                                                $scope.$close();
                                             };
                                         }
                                     });

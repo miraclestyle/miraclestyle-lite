@@ -6,12 +6,13 @@
             return {
                 replace: true,
                 transclude: true,
-                require: ['ngModel', '^?mdInputContainer'],
+                require: ['ngModel', '^?mdInputContainer', '^?form'],
                 templateUrl: 'core/select/input.html',
                 scope: true,
                 link: function (scope, element, attrs, ctrls) {
                     var ngModel = ctrls[0],
                         containerCtrl = ctrls[1],
+                        formCtrl = ctrls[2],
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
                         search = scope.$eval(attrs.search),
@@ -20,8 +21,7 @@
                         select = {},
                         timeout,
                         ngModelPipelineCheckValue,
-                        dontOpen = false,
-                        isErrorGetter;
+                        dontOpen = false;
                     containerCtrl.input = element;
                     $mdTheming(element);
                     ngModelPipelineCheckValue = function (arg) {
@@ -32,10 +32,9 @@
                         containerCtrl.setHasValue(s);
                         return arg;
                     };
-                    isErrorGetter = containerCtrl.isErrorGetter || function () {
+                    scope.$watch(function () {
                         return ngModel.$invalid && ngModel.$touched;
-                    };
-                    scope.$watch(isErrorGetter, containerCtrl.setInvalid);
+                    }, containerCtrl.setInvalid);
 
                     ngModel.$parsers.push(ngModelPipelineCheckValue);
                     ngModel.$formatters.push(ngModelPipelineCheckValue);
@@ -153,6 +152,7 @@
                             }
                         }
                         ngModel.$setViewValue(already);
+                        formCtrl.$setDirty();
                         ngModelPipelineCheckValue(already);
                     };
 
@@ -184,7 +184,7 @@
                         select.opened = true;
                         $timeout(function () {
                             select.openSimpleDialog($event);
-                        }, 0, false);
+                        });
                     };
                     select.openSimpleDialog = function ($event) {
                         if (element.attr('disabled')) {
@@ -214,6 +214,7 @@
                                 var nextDefer = $q.defer(),
                                     nextPromise = nextDefer.promise,
                                     nextActive = false,
+                                    firstTabbable = dialogEl.find('[tabindex="2"]'),
                                     animateSelect = function () {
                                         var target = element.parents('md-input-container:first');
                                         options.resize = function () {
@@ -232,9 +233,17 @@
                                                 toolbarHeight = 0,
                                                 newTop,
                                                 totalHeight,
+                                                wrapAround,
+                                                wrapAroundOffset,
+                                                nextActive,
                                                 innerHeight;
                                             if (active.length) {
                                                 activeOffset = active.offset();
+                                                wrapAroundOffset = activeOffset;
+                                                wrapAround = active;
+                                            } else {
+                                                wrapAroundOffset = firstTabbable.offset();
+                                                wrapAround = firstTabbable;
                                             }
                                             if (toolbar.length) {
                                                 toolbarHeight = toolbar.height();
@@ -274,6 +283,11 @@
                                             if (active.length && !select.multiple) {
                                                 scrollElement.scrollTop(scrollElement.scrollTop() - scrollElement.offset().top + active.offset().top);
                                             }
+
+                                            if (wrapAroundOffset) {
+                                                dialogEl.css($mdConstant.CSS.TRANSFORMORIGIN,
+                                                    (wrapAroundOffset.left + target.width() / 2) + 'px ' + (wrapAroundOffset.top + active.height() / 2 - scrollElement.scrollTop()) + 'px 0px');
+                                            }
                                         };
                                         options.resize();
                                         $(window).on('resize', function () {
@@ -288,7 +302,7 @@
                                                     nextDefer.resolve();
                                                     nextActive = dialogEl.find('.list-row-is-active:first');
                                                     if (!nextActive.length) {
-                                                        nextActive = dialogEl.find('[tabindex="2"]');
+                                                        nextActive = firstTabbable;
                                                     }
                                                     if (select.search) {
                                                         dialogEl.find('input[type="search"]').focus();
@@ -387,7 +401,7 @@
 
                                 $timeout(function () {
                                     $(window).triggerHandler('resize');
-                                });
+                                }, 0, false);
                             }
                         };
                         $.extend(select.search, search);
@@ -407,7 +421,7 @@
                             if (select.opened) {
                                 $timeout(function () {
                                     $(window).triggerHandler('resize');
-                                });
+                                }, 0, false);
                             }
                         }
                     });
