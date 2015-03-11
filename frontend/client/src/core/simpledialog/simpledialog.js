@@ -4,7 +4,7 @@
  * @license MIT
  * v0.7.1
  */
-(function() {
+(function () {
     'use strict';
 
     /**
@@ -84,7 +84,7 @@
     function SimpleDialogDirective($$rAF, $mdTheming) {
         return {
             restrict: 'E',
-            link: function(scope, element, attr) {
+            link: function (scope, element, attr) {
                 $mdTheming(element);
             }
         };
@@ -336,7 +336,7 @@
                 clickOutsideToClose: true,
                 targetEvent: null,
                 disableParentScroll: true,
-                transformTemplate: function(template) {
+                transformTemplate: function (template) {
                     return '<div class="simple-dialog-container">' + template + '</div>';
                 }
             };
@@ -345,8 +345,7 @@
                 return 'simple-dialog';
             }
 
-            function discoverContainerClass(container, options) {
-            }
+            function discoverContainerClass(container, options) {}
 
             // On show method for dialogs
             function onShow(scope, element, options) {
@@ -439,7 +438,7 @@
                 options.disableScrollInfo = [];
                 $document[0].removeEventListener('scroll', options.captureScroll, true);
                 mdContextualMonitor.dequeue(options.rootElementKeyupCallback);
-                return dialogPopOut(element, options).then(function() {
+                return dialogPopOut(element, options).then(function () {
                     options.scope.$destroy();
                     element.remove();
                     options.popInTarget && options.popInTarget.focus();
