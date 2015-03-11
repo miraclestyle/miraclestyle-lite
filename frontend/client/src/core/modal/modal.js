@@ -13,15 +13,17 @@
                         });
                     },
                     get: function (key) {
-                        for (var i = 0; i < stack.length; i++) {
-                            if (key == stack[i].key) {
+                        var i;
+                        for (i = 0; i < stack.length; i++) {
+                            if (key === stack[i].key) {
                                 return stack[i];
                             }
                         }
                     },
                     keys: function () {
-                        var keys = [];
-                        for (var i = 0; i < stack.length; i++) {
+                        var keys = [],
+                            i;
+                        for (i = 0; i < stack.length; i++) {
                             keys.push(stack[i].key);
                         }
                         return keys;
@@ -30,9 +32,10 @@
                         return stack[stack.length - 1];
                     },
                     remove: function (key) {
-                        var idx = -1;
-                        for (var i = 0; i < stack.length; i++) {
-                            if (key == stack[i].key) {
+                        var idx = -1,
+                            i;
+                        for (i = 0; i < stack.length; i++) {
+                            if (key === stack[i].key) {
                                 idx = i;
                                 break;
                             }
@@ -48,12 +51,7 @@
                 };
             }
         };
-    })
-
-    /**
-     * A helper directive for the $modal service. It creates a backdrop element.
-     */
-    .directive('modalBackdrop', ['$timeout', function ($timeout) {
+    }).directive('modalBackdrop', ['$timeout', function ($timeout) {
         return {
             restrict: 'EA',
             replace: true,
@@ -69,9 +67,7 @@
                 });
             }
         };
-    }])
-
-    .directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q',
+    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q',
         function ($modalStack, $timeout, $$rAF, $mdConstant, $q) {
             return {
                 restrict: 'EA',
@@ -86,8 +82,7 @@
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    var clickElement = scope.modalOptions.targetEvent && scope.modalOptions.targetEvent.target,
-                        noTransformCommand = false;
+                    var clickElement = scope.modalOptions.targetEvent && scope.modalOptions.targetEvent.target;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // attrs.windowClass
                     scope.size = attrs.size;
                     $timeout(function () {
@@ -101,8 +96,6 @@
                                     wheight = $(window).height() - 24 * 2,
                                     maxHeight,
                                     maxWidth,
-                                    minWidth = '',
-                                    minHeight = '',
                                     cwidth = modal.width(),
                                     cheight = modal.height(),
                                     overHeight = iheight >= wheight,
@@ -130,16 +123,14 @@
                             var scaleY = Math.min(0.5, clickRect.height / modalRect.height);
                             var halfscreen = ($(window).width() / 2);
                             var horiz = (clickRect.left < halfscreen ? 'right' : 'left');
-                           
+
                             element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
                                 (-modalRect.left + clickRect.left + clickRect.width / 2 - modalRect.width / 2) + 'px,' +
                                 (-modalRect.top + clickRect.top + clickRect.height / 2 - modalRect.height / 2) + 'px,' +
-                                '0) scale(' + scaleX + ',' + scaleY + ')'
-                            );
+                                '0) scale(' + scaleX + ',' + scaleY + ')');
                         } else if (scope.modalOptions.inDirection) {
                             element.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.inDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
                         } else {
-                            noTransformCommand = true;
                             //element.css($mdConstant.CSS.TRANSFORM, 'translate3d(0px, -120%, 0px)');
                         }
 
@@ -156,15 +147,15 @@
                             var cb = function () {
                                 element.addClass('visible')
                                     .addClass('transition-in');
-                                    if (scope.modalOptions.transformOrigin) {
-                                        element.addClass('transfrom-origin-center-' + horiz)
-                                    }
-                                    element
+                                if (scope.modalOptions.transformOrigin) {
+                                    element.addClass('transfrom-origin-center-' + horiz)
+                                }
+                                element
                                     .css($mdConstant.CSS.TRANSFORM, '');
                             };
                         }
-                        var deferred = $q.defer();
-                        deferred.promise.then(function () {
+                        var defer = $q.defer();
+                        defer.promise.then(function () {
                             if (!element[0].querySelectorAll('[autofocus]').length) {
                                 element[0].focus();
                             }
@@ -174,7 +165,7 @@
                         element.on($mdConstant.CSS.TRANSITIONEND, function finished(ev) {
                             if (ev.target === element[0]) {
                                 element.off($mdConstant.CSS.TRANSITIONEND, finished);
-                                deferred.resolve();
+                                defer.resolve();
                             }
                         });
 
@@ -187,7 +178,7 @@
                     scope.close = function (evt) {
                         var modal = $modalStack.getTop(),
                             defer = $q.defer();
-                            defer.resolve();
+                        defer.resolve();
                         if (modal && modal.value.backdrop && modal.value.backdrop != 'static' && (evt.target === evt.currentTarget)) {
                             evt.preventDefault();
                             evt.stopPropagation();
@@ -237,7 +228,7 @@
                 }
             });
 
-            function removeModalWindow(modalInstance, defered) {
+            function removeModalWindow(modalInstance, defer) {
 
                 var body = $document.find('body').eq(0);
                 var modalWindow = openedWindows.get(modalInstance).value;
@@ -252,7 +243,7 @@
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
                     checkRemoveBackdrop();
                     $(window).triggerHandler('modal.close');
-                    defered.resolve();
+                    defer.resolve();
                 });
             }
 
@@ -312,7 +303,7 @@
                         .css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (scope.modalOptions.outDirection === 'right' ? '' : '-') + '100%, 0px, 0px)');
                 } else {
                     modalEl
-                    .removeClass('transition-in');
+                        .removeClass('transition-in');
                     if (scope.modalOptions.transformOrigin) {
                         modalEl.removeClass('transfrom-origin-center-left transfrom-origin-center-right');
                     }
@@ -381,11 +372,11 @@
                 angularDomEl.attr({
                     'template-url': modal.windowTemplateUrl,
                     'window-class': modal.windowClass,
-                    'size': modal.size,
-                    'index': openedWindows.length() - 1,
+                    size: modal.size,
+                    index: openedWindows.length() - 1,
                     'modal-options': 'modalOptions',
-                    'animate': 'animate',
-                    'exiting': 'exiting'
+                    animate: 'animate',
+                    exiting: 'exiting'
                 }).html(modal.content);
 
                 var modalDomEl = $compile(angularDomEl)(modal.scope);
@@ -416,28 +407,28 @@
 
             $modalStack.close = function (modalInstance, result) {
                 var modalWindow = openedWindows.get(modalInstance),
-                    defered = $q.defer();
+                    defer = $q.defer();
                 $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.resolve(result);
-                    removeModalWindow(modalInstance, defered);
+                    removeModalWindow(modalInstance, defer);
                 } else {
-                    defered.resolve();
+                    defer.resolve();
                 }
-                return defered.promise;
+                return defer.promise;
             };
 
             $modalStack.dismiss = function (modalInstance, reason) {
                 var modalWindow = openedWindows.get(modalInstance),
-                    defered = $q.defer();
+                    defer = $q.defer();
                 $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
                     modalWindow.value.deferred.reject(reason);
-                    removeModalWindow(modalInstance, defered);
+                    removeModalWindow(modalInstance, defer);
                 } else {
-                    defered.resolve();
+                    defer.resolve();
                 }
-                return defered.promise;
+                return defer.promise;
             };
 
             $modalStack.dismissAll = function (reason) {
@@ -634,9 +625,10 @@
             },
             confirm: function (messageOrConfig, callbackOrConfig) {
                 var theConfig = {
-                    message: 'Are you sure you want to do this?',
-                    type: 'confirm'
-                }, config;
+                        message: 'Are you sure you want to do this?',
+                        type: 'confirm'
+                    },
+                    config;
 
                 if (angular.isFunction(callbackOrConfig)) {
                     config = {
@@ -665,9 +657,10 @@
             },
             create: function (extraConfig, modalConfig) {
                 var config = {
-                    message: '',
-                    type: 'notice'
-                }, defaultModalConfig;
+                        message: '',
+                        type: 'notice'
+                    },
+                    defaultModalConfig;
                 helpers.extendDeep(config, extraConfig);
                 defaultModalConfig = {
                     fullScreen: false,

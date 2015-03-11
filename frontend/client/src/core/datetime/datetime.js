@@ -419,7 +419,6 @@
                                     $scope.date = ngModel.$modelValue;
                                     var $close = $scope.$close;
                                     $scope.$close = function () {
-                                        open = false;
                                         $close();
                                     };
                                     $scope.select = function () {
@@ -427,6 +426,10 @@
                                         ngModel.$render();
                                         $scope.$close();
                                     };
+
+                                    $scope.$on('$destroy', function () {
+                                        open = false;
+                                    });
                                 }
                             });
                         });

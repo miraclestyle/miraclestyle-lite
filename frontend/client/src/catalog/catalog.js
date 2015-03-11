@@ -1155,9 +1155,9 @@
                                                 return promise;
                                             };
 
-                                            $scope.close = function () {
+                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                                 $scope.$close();
-                                            };
+                                            });
                                         }
                                     });
 
