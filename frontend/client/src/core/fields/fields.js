@@ -241,7 +241,7 @@
                             attrs['ng-required'] = 'config.required';
                         }
                         attrs['ng-model'] = config.ui.args;
-                        attrs.placeholder = '{{config.ui.placeholder}}';
+                        attrs.placeholder = config.ui.placeholder;
 
                         if (!angular.isArray(config.ui.writable)) {
                             attrs['ng-disabled'] = '!' + config.ui.writable;

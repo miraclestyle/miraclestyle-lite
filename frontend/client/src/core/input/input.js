@@ -74,6 +74,9 @@ function mdInputContainerDirective($mdTheming, $parse) {
     self.setHasValue = function(hasValue) {
       $element.toggleClass('md-input-has-value', !!hasValue);
     };
+    self.setNoFloat = function(hasValue) {
+      $element.toggleClass('md-input-no-float', !!hasValue);
+    };
     self.setInvalid = function(isInvalid) {
       $element.toggleClass('md-input-invalid', !!isInvalid);
     };
@@ -345,7 +348,6 @@ function placeholderDirective() {
 
     var placeholderText = attr.placeholder;
     element.removeAttr('placeholder');
-
     inputContainer.element.append('<div class="md-placeholder">' + placeholderText + '</div>');
   }
 }
