@@ -97,22 +97,8 @@
                         }
                     }
                     $scope.toggling = true;
-                    if (it.isOpen()) {
-                        $scope.closeMenu();
-                    } else {
-                        $scope.openMenu();
-                    }
-                };
-                $scope.closeMenu = function () {
                     $timeout(function () {
-                        $mdSidenav($scope.sidenavMenuID).close().then(function () {
-                            $scope.toggling = false;
-                        });
-                    });
-                };
-                $scope.openMenu = function () {
-                    $timeout(function () {
-                        $mdSidenav($scope.sidenavMenuID).open().then(function () {
+                        it[it.isOpen() ? 'close' : 'open']().then(function () {
                             $scope.toggling = false;
                         });
                     });
