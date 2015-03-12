@@ -220,10 +220,7 @@ a.block, .block, button.block {
 .bottom-right-floating-action {
     display: block;
 }
-.material-icon-white {
-    color: rgba(255, 255, 255, 1);
-    text-shadow: 0px 0px 2px black;
-}
+
 .pointable {
     cursor: pointer;
 }
@@ -375,10 +372,25 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.54);
 }
-.material-icon {
+.md-icon {
     font-size: 24px;
     line-height: 24px;
     vertical-align: middle;
+    color:rgba(0,0,0,0.54);
+}
+.md-icon-color-white {
+    color: rgba(255, 255, 255, 1);
+    text-shadow: 0px 0px 2px black;
+}
+
+.avatar .md-icon {
+    font-size:48px;
+    line-height: 48px;
+}
+
+.avatar {
+    padding:4px;
+    padding-left: 8px;
 }
 
 .max-width-240 {

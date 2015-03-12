@@ -299,6 +299,7 @@
                     var types = attrs.type.split('.');
                     scope.type = types[0];
                     scope.icon = types[1];
+                    scope.color = attrs.color || 'normal';
                 }
             };
         }).directive('contentListView', function () {
