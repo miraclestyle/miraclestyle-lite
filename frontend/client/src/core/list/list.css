@@ -21,9 +21,9 @@
 }
 .list-primary-tile {
     position: absolute;
-    top: 50%;
-    left: 16px;
-    margin-top: -20px;
+    left: 0px;
+    z-index: 2;
+    top: 0px;
 }
 .list-content-tile {
     padding-top: 0px;
@@ -100,9 +100,6 @@
 }
 .list-row-has-primary .list-content-tile {
     padding-left: 72px;
-}
-.list-row-has-primary .list-primary-tile {
-    left: 0px;
 }
 .seam-bottom {
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);

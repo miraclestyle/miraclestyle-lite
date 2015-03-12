@@ -10,19 +10,34 @@
       <% if (select.multiple) { %>
         <ul ng-show="select.anySelected()" class="list list-padding seam-bottom">
           <li class="list-subheader subheader">Selected Items</li>
-          <li md-ink-ripple-list ng-show="select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable" 
-                ng-repeat="item in select.items"
-                tabindex="{{$index + 2}}">
-                <div class="list-content-tile list-content-tile-one-line first">
-                   <md-checkbox class="md-tile-content list-row list-row-transparent" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
-                     <span ng-bind-html="select.view(item)"></span>
-                  </md-checkbox>
-                </div>
-          </li>
+            <!--
+            <li md-ink-ripple-list ng-show="select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable" 
+                  ng-repeat="item in select.items"
+                  tabindex="{{$index + 2}}">
+                  <div class="list-content-tile list-content-tile-one-line first">
+                     <md-checkbox class="md-tile-content list-row list-row-transparent" ng-model="select.multipleSelection[item.key || item]" ng-change="select.multipleSelect(item)" ng-true-value="true" ng-false-value="false" aria-label="{{select.view(item)}}">
+                       <span ng-bind-html="select.view(item)"></span>
+                    </md-checkbox>
+                  </div>
+            </li>-->
+            <li md-ink-ripple-list ng-show="select.isChecked(item)" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable list-row-has-primary"
+                  ng-repeat="item in select.items"
+                  ng-click="select.multipleSelect(item)"
+                  tabindex="{{$index + 2}}">
+                  <div class="list-content-tile list-content-tile-one-line first">
+                     <div class="list-primary-tile">
+                       <div class="button-square">
+                         <icon ng-show="!select.multipleSelection[item.key || item]" type="toggle.check-box-outline-blank"></icon>
+                         <icon ng-show="select.multipleSelection[item.key || item]" type="toggle.check-box"></icon>
+                       </div>
+                     </div>
+                     <span class="first" ng-bind-html="select.view(item)"></span>
+                  </div>
+            </li>
         </ul>
         <ul ng-show="select.anyUnselected()" class="list list-padding">
           <li class="list-subheader subheader">Unselected Items</li>
-          <li md-ink-ripple-list ng-show="!select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable " 
+          <!--<li md-ink-ripple-list ng-show="!select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable " 
                 ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                 tabindex="{{$index + 2}}">
                 <div class="list-content-tile list-content-tile-one-line first">
@@ -30,7 +45,21 @@
                      <span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span>
                   </md-checkbox>
                 </div>
-          </li>
+          </li>-->
+          <li md-ink-ripple-list ng-show="!select.isChecked(item)" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable list-row-has-primary"
+                  ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
+                  ng-click="select.multipleSelect(item)"
+                  tabindex="{{$index + 2}}">
+                  <div class="list-content-tile list-content-tile-one-line">
+                     <div class="list-primary-tile">
+                       <div class="button-square">
+                           <icon ng-show="!select.multipleSelection[item.key || item]" type="toggle.check-box-outline-blank"></icon>
+                         <icon ng-show="select.multipleSelection[item.key || item]" type="toggle.check-box"></icon>
+                       </div>
+                     </div>
+                     <span class="first" ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span>
+                  </div>
+            </li>
         </ul>
 
         <% } else { %>

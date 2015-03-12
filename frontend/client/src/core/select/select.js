@@ -139,9 +139,10 @@
                     select.multipleSelection = {};
                     select.multipleSelect = function (item) {
                         var hash = select.getHash(item),
-                            hasIt = select.multipleSelection[hash],
+                            hasIt = !select.multipleSelection[hash],
                             already = ngModel.$modelValue || [],
                             selected = $.inArray(hash, ngModel.$modelValue) !== -1;
+                        select.multipleSelection[hash] = hasIt;
                         if (!angular.isArray(select.item)) {
                             select.item = already;
                         }
