@@ -718,7 +718,7 @@ class CarrierLineRule(orm.BaseModel):
   _use_rule_engine = False
   
   condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
-  condition_operator = orm.SuperStringProperty('2', required=True, default='=', choices=('==', '>', '<', '>=', '<='), indexed=False)
+  condition_operator = orm.SuperStringProperty('2', required=True, default='==', choices=('==', '>', '<', '>=', '<='), indexed=False)
   condition_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
   price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=('fixed', 'variable'), indexed=False)
   price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
@@ -923,7 +923,7 @@ class DiscountLine(orm.BaseModel):
   product_categories = orm.SuperKeyProperty('3', kind='24', repeated=True, indexed=False)
   product_codes = orm.SuperStringProperty('4', repeated=True, indexed=False)
   condition_type = orm.SuperStringProperty('5', required=True, default='quantity', choices=('price', 'quantity'), indexed=False)
-  condition_operator = orm.SuperStringProperty('6', required=True, default='=', choices=('==', '>', '<', '>=', '<='), indexed=False)
+  condition_operator = orm.SuperStringProperty('6', required=True, default='==', choices=('==', '>', '<', '>=', '<='), indexed=False)
   condition_value = orm.SuperDecimalProperty('7', required=True, indexed=False)
   discount_value = orm.SuperDecimalProperty('8', required=True, indexed=False)
 

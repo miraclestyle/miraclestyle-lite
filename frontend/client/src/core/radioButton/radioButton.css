@@ -6,31 +6,34 @@
  */
 md-radio-button, .md-switch-thumb {
   display: block;
-  margin: 15px;
   white-space: nowrap;
-  cursor: pointer; }
+  cursor: pointer; 
+  position: relative;
+  margin-top: 12px;   
+  margin-bottom: 12px;
+}
   md-radio-button input, .md-switch-thumb input {
     display: none; }
   md-radio-button .md-container, .md-switch-thumb .md-container {
-    position: relative;
-    top: 4px;
+    top: 0px;
     display: inline-block;
-    width: 16px;
+    width: 24px;
     height: 16px;
-    cursor: pointer; }
+    cursor: pointer; 
+}
     md-radio-button .md-container .md-ripple-container, .md-switch-thumb .md-container .md-ripple-container {
       position: absolute;
       display: block;
       width: 48px;
       height: 48px;
-      left: -16px;
-      top: -16px; }
+      left: -13px;
+      top: -13px; }
   md-radio-button .md-off, .md-switch-thumb .md-off {
     position: absolute;
     top: 0px;
     left: 0px;
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
     border: solid 2px;
     border-radius: 50%;
     transition: border-color ease 0.28s; }
@@ -38,8 +41,8 @@ md-radio-button, .md-switch-thumb {
     position: absolute;
     top: 0;
     left: 0;
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     transition: -webkit-transform ease 0.28s;
     transition: transform ease 0.28s;
@@ -53,10 +56,12 @@ md-radio-button, .md-switch-thumb {
     display: inline-block;
     margin-left: 10px;
     margin-right: 10px;
-    vertical-align: middle;
+    /* vertical-align: middle; */
     white-space: normal;
     pointer-events: none;
-    width: auto; }
+    width: auto; 
+    line-height: 24px;
+}
   md-radio-button .circle, .md-switch-thumb .circle {
     border-radius: 50%; }
 

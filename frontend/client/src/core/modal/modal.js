@@ -188,10 +188,7 @@
                     };
                 }
             };
-        }
-    ])
-
-    .directive('modalTransclude', function () {
+        }]).directive('modalTransclude', function () {
         return {
             link: function ($scope, $element, $attrs, controller, $transclude) {
                 $transclude($scope.$parent, function (clone) {
@@ -200,9 +197,7 @@
                 });
             }
         };
-    })
-
-    .factory('$modalStack', ['$transition', '$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
+    }).factory('$modalStack', ['$transition', '$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
         '$mdConstant', '$q',
         function ($transition, $timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q) {
 
@@ -395,7 +390,6 @@
                     return true;
                 };
                 mdContextualMonitor.queue(modalInstance.esc);
-
             };
 
             $modalStack._dequeue = function (modalWindow, modalInstance) {

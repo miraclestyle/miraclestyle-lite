@@ -8,7 +8,7 @@
     <% } %>
     <md-content ng-class="{'has-search': select.search}">
       <% if (select.multiple) { %>
-        <ul ng-show="select.anyChecks()" class="list list-padding seam-bottom">
+        <ul ng-show="select.anySelected()" class="list list-padding seam-bottom">
           <li class="list-subheader subheader">Selected Items</li>
           <li md-ink-ripple-list ng-show="select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable" 
                 ng-repeat="item in select.items"
@@ -20,7 +20,7 @@
                 </div>
           </li>
         </ul>
-        <ul class="list list-padding">
+        <ul ng-show="select.anyUnselected()" class="list list-padding">
           <li class="list-subheader subheader">Unselected Items</li>
           <li md-ink-ripple-list ng-show="!select.isChecked(item)" class="simple-dialog-option list-row no-padding list-row-is-clickable-and-hoverable " 
                 ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"

@@ -42,12 +42,12 @@ a.sort-handle {
     display: block;
     min-width: initial;
     min-height: initial;
-    margin:0px;
+    margin: 0px;
+    line-height: initial;
 }
 [ui-sortable] > *:not(.no-move) {
     cursor: move;
 }
-
 .delete-overlay {
     display: none;
     position: absolute;
@@ -56,18 +56,15 @@ a.sort-handle {
     background: rgba(255, 0, 0, 0.52);
     z-index: 1;
 }
-
 .about-to-delete .delete-overlay {
     display: block;
 }
-
-.uploaded-image {  
+.uploaded-image {
     padding-top: 16px;
 }
 .uploaded-image img {
-    display:block;
+    display: block;
 }
-
 .ui-sortable-helper {
-    box-shadow:0px 2px 5px 2px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
 }

@@ -128,7 +128,12 @@
                         }
                         return ngModel.$modelValue === hash;
                     };
-                    select.anyChecks = function () {
+                    select.anyUnselected = function () {
+                        return true;
+                        return !select.multipleSelection || _.contains(select.multipleSelection, false);
+                    };
+                    select.anySelected = function () {
+                        return true;
                         return _.some(select.multipleSelection);
                     };
                     select.multipleSelection = {};
