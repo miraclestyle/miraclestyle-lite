@@ -318,6 +318,9 @@
                                 rootScope: 'rootScope', // pointer to rootScope that should be considered
                                 model: 'entity',
                                 autoLabel: label,
+                                directiveScope: function () {
+                                    return scope;
+                                },
                                 specifics: {}, // used for property specific configurations
                                 systemName: name,
                                 name: name,
@@ -428,6 +431,10 @@
                             console.warn('Field type: ' + config.type +
                                 ' is not supported.');
                         }
+
+                        scope.$on('$destroy', function () {
+                            config.ui.directiveScope = undefined;
+                        });
 
                     };
 

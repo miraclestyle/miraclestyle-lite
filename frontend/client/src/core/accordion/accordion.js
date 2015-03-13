@@ -218,7 +218,9 @@
             scope: {
                 heading: '@', // Interpolate the heading attribute onto this scope
                 isOpen: '=?',
-                isDisabled: '=?'
+                isDisabled: '=?',
+                action: '=?'
+
             },
             controller: function () {
                 this.setHeading = function (element) {
@@ -227,6 +229,13 @@
             },
             link: function (scope, element, attrs, accordionCtrl) {
                 accordionCtrl.addGroup(scope);
+
+                if (scope.action) {
+                    scope.toggleOpen = function () {
+                        scope.action();
+                    };
+                    return;
+                }
 
                 scope.$watch('isOpen', function (value) {
                     if (value) {

@@ -341,9 +341,9 @@
             modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordAccordion) {
 
             var modelsEditor = {
-                create: function (new_config) {
+                create: function (config) {
 
-                    var config = {
+                    var defaultConfig = {
                             showClose: true,
                             closeAfterSave: false,
                             action: 'update',
@@ -442,7 +442,7 @@
                         modelsEditorInstance;
 
                     // recurse the config adding only what is supplied by the `new_config`
-                    helpers.extendDeep(config, new_config);
+                    helpers.mergeDeep(config, defaultConfig);
 
                     // load all field specs from the arguments that are going to be used based on action and model provided
                     if (!angular.isDefined(config.fields) && angular.isDefined(config.kind) && angular.isDefined(config.action)) {
@@ -465,6 +465,7 @@
                     console.log('modelsEditor.config', config);
 
                     modelsEditorInstance = {
+                        config: config,
                         read: function (entity, args) {
                             if (args === undefined) {
                                 args = {
@@ -476,6 +477,7 @@
                                 $.extend(entity, response.data.entity);
                                 that.open(entity, args);
                             });
+                            return this;
                         },
                         prepare: function (entity, args) {
                             var that = this;
@@ -483,6 +485,7 @@
                                 $.extend(entity, response.data.entity);
                                 that.open(entity, args);
                             });
+                            return this;
                         },
                         open: function (entity, args) {
                             var opener = $modal,

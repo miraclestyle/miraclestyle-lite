@@ -536,6 +536,7 @@
                         noComplete = function ($scope) {
                             afterComplete($scope);
                         },
+                        modelsEditorInstance,
                         config = {
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
@@ -555,9 +556,6 @@
                                         label: false,
                                         specifics: {
                                             addNewText: 'Select Images',
-                                            mainActionsLayout: {
-                                                before: 'catalog/images_manage_button.html'
-                                            },
                                             sortableOptions: {
                                                 stop: function () {
                                                     if (fields._images.ui.specifics.parentArgs.length) {
@@ -1155,9 +1153,16 @@
                                         open: true,
                                         fields: ['name', 'discontinue_date'],
                                     }, {
-                                        label: 'Products',
+                                        label: 'Images',
                                         open: false,
                                         fields: ['_images']
+                                    }, {
+                                        label: 'Products',
+                                        open: false,
+                                        include: 'core/misc/blank.html',
+                                        action: function () {
+                                            config.getScope().addProducts.apply(fields._images.ui.directiveScope());
+                                        }
                                     }]
                                 }
                             }

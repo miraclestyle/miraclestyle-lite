@@ -1,10 +1,14 @@
 <div ng-class="{panel: true, 'panel-default' : true, 'panel-is-not-open' : !isOpen, 'panel-is-open' : isOpen}" class="panel panel-default">
   <div class="panel-heading">
     <h4 class="panel-title first">
-      <a class="accordion-toggle clearfix" ng-click="toggleOpen()" accordion-transclude="heading">
+      <a ng-if="!action" class="accordion-toggle clearfix" ng-click="toggleOpen()" accordion-transclude="heading">
             <span class="accordion-title ellipsis-text" ng-class="{'text-muted': isDisabled}">{{heading}}</span>
-            <icon type="navigation.expand-more" ng-class="{'accordion-arrow-toggled': isOpen}" class="accordion-arrow"></icon>
+            <icon type="{{action ? 'navigation.chevron-right' : 'navigation.expand-more'}}" ng-class="{'accordion-arrow-toggled': isOpen}" class="accordion-arrow"></icon>
       </a>
+      <button type="button" loading ng-if="action" class="accordion-toggle block clearfix" ng-click="toggleOpen()" accordion-transclude="heading">
+            <span class="accordion-title ellipsis-text" ng-class="{'text-muted': isDisabled}">{{heading}}</span>
+            <icon type="navigation.chevron-right" class="accordion-arrow"></icon>
+      </button>
     </h4>
   </div>
   <div class="panel-collapse" collapse="!isOpen">
