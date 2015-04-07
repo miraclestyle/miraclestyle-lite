@@ -332,7 +332,7 @@ class Order(orm.BaseExpando):
             ProductSpecs(),
             UpdateOrderLine(),
             OrderLineRemovals(),
-            PluginExec(),
+            PluginExec(), # @todo remove
             OrderLineFormat(),
             OrderCarrierFormat(),
             OrderFormat(),
@@ -362,7 +362,7 @@ class Order(orm.BaseExpando):
             Context(),
             OrderInit(),
             ProductSpecs(),
-            PluginExec(cfg={'kinds': ['113', '107']}), # carrier plugins
+            PluginExec(cfg={'kinds': ['113', '107']}), # @todo remove
             RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_order'}})
@@ -393,11 +393,12 @@ class Order(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
         'payment_method': orm.SuperVirtualKeyProperty(),
-        'billing_address_reference': orm.SuperVirtualKeyProperty(kind='14'),
-        'shipping_address_reference': orm.SuperVirtualKeyProperty(kind='14'),
+        'billing_address_reference': orm.SuperVirtualKeyProperty(kind='14'), # @todo convert to local structured 14
+        'shipping_address_reference': orm.SuperVirtualKeyProperty(kind='14'), # @todo convert to local structured 14
         'carrier': orm.SuperVirtualKeyProperty(kind='113'),
         '_lines': orm.SuperLocalStructuredProperty(OrderLine, repeated=True),
-        'read_arguments': orm.SuperJsonProperty()
+        'read_arguments': orm.SuperJsonProperty() 
+        # @todo include 'state' => choices => [checkout] optional
         },
       _plugin_groups=[
         orm.PluginGroup(

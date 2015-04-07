@@ -34,4 +34,5 @@ http://backend-dot-miraclestyle.appspot.com/api/endpoint
 Development Server run command:
 dev_appserver.py backend/app.yaml frontend/app.yaml dispatch.yaml  --port=9982 --require_indexes=yes --host=0.0.0.0 --log_level=debug --clear_datastore=yes
 
-appcfg.py update backend/app.yaml frontend/app.yaml
+appcfg.py update backend/app.yaml frontend/app.yaml backend/dispatch.yaml
+appcfg.py update_indexes backend/index.yaml
