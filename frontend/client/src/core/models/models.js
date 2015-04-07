@@ -338,7 +338,7 @@
             }
             return modelsUtil;
         }).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
-            modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordAccordion) {
+            modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes) {
 
             var modelsEditor = {
                 create: function (config) {
@@ -519,7 +519,7 @@
                                         var rule = $scope.args.ui.rule.field._records;
                                         $scope.historyConfig.key = $scope.entity.key;
                                         if (rule && rule.visible) {
-                                            recordAccordion.attach($scope.accordions);
+                                            //recordAccordion.attach($scope.accordions);
                                         }
                                     };
                                 config.getScope = function () {
@@ -623,8 +623,8 @@
                                 };
 
                                 // if no accordions are defined, use the auto accordion builder
-                                if (!angular.isDefined($scope.accordions)) {
-                                    $scope.accordions = {
+                                if (!angular.isDefined($scope.layouts)) {
+                                    $scope.layouts = {
                                         closeOthers: true,
                                         groups: [{
                                             label: 'General',
@@ -639,7 +639,7 @@
                                             if (!field.ui.initialLabel) {
                                                 field.ui.initialLabel = field.ui.label;
                                             }
-                                            $scope.accordions.groups.push({
+                                            $scope.layouts.groups.push({
                                                 label: inflector((field.ui.initialLabel || field.code_name), 'humanize'),
                                                 disabled: false,
                                                 open: false
@@ -647,20 +647,20 @@
 
                                             field.ui.label = false;
 
-                                            var next = $scope.accordions.groups.length - 1;
+                                            var next = $scope.layouts.groups.length - 1;
 
                                             if (!angular.isDefined($scope.formBuilder[next])) {
                                                 $scope.formBuilder[next] = [];
                                                 $scope.formBuilder[next].push(field);
                                             }
 
-                                            $scope.accordions.groups[0].disabled = false;
+                                            $scope.layouts.groups[0].disabled = false;
                                         } else {
                                             $scope.formBuilder['0'].push(field);
                                         }
                                     });
 
-                                    angular.forEach($scope.accordions.groups, function (group, i) {
+                                    angular.forEach($scope.layouts.groups, function (group, i) {
                                         if ($scope.formBuilder[i].length) {
                                             realTotal += 1;
                                         }
@@ -680,7 +680,7 @@
                                     }
 
                                 } else {
-                                    angular.forEach($scope.accordions.groups, function (group, i) {
+                                    angular.forEach($scope.layouts.groups, function (group, i) {
                                         $scope.formBuilder[i] = [];
                                         if (!angular.isDefined(group.fields)) {
                                             var wait = false;

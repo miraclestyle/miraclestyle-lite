@@ -1220,7 +1220,7 @@
                                             }
                                         }
 
-                                        $scope.accordions = {
+                                        $scope.layouts = {
                                             closeOthers: true,
                                             groups: [{
                                                 label: 'General',
@@ -1273,7 +1273,7 @@
                                             }
                                             field.ui.realPath.push(field.code_name);
                                             if (field.is_structured && formInputTypes[field.type]) {
-                                                $scope.accordions.groups.push({
+                                                $scope.layouts.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                     disabled: false,
                                                     key: field.code_name,
@@ -1282,13 +1282,13 @@
 
                                                 field.ui.label = false;
 
-                                                var next = $scope.accordions.groups.length - 1;
+                                                var next = $scope.layouts.groups.length - 1;
 
                                                 if (!angular.isDefined(formBuilder[next])) {
                                                     formBuilder[next] = [];
                                                     formBuilder[next].push(field);
                                                 }
-                                                $scope.accordions.groups[0].disabled = false;
+                                                $scope.layouts.groups[0].disabled = false;
                                             } else {
                                                 formBuilder['0'].push(field);
                                             }

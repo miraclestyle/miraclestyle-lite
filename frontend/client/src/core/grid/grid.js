@@ -133,9 +133,7 @@
                 scope.$on('itemOrderChanged', resize);
                 scope.$on('itemOrderSorting', resize);
                 scope.$on('ngRepeatEnd', resize);
-                scope.$on('accordionOpened', function () {
-                    setTimeout(resize, 110);
-                });
+ 
                 scope.$on('itemDelete', function () {
                     $timeout(resize, 0, false);
                 });
@@ -195,9 +193,6 @@
 
                 $(window).bind('resize modal.close mainMenu.hide', resize);
                 scope.$on('ngRepeatEnd', resize);
-                scope.$on('accordionOpened', function () {
-                    setTimeout(resize, 110);
-                });
                 scope.$on('itemDelete', resize);
                 scope.$watch(attrs.gridGeneratorItems + '.length', resize);
                 scope.$on('$destroy', function () {

@@ -4,13 +4,12 @@
         <div class="modal-body">
             <div class="fixed-height relative has-toolbar overflow-y">
                 <div class="modal-body-inner">
-                <div class="list-padding" accordion-on-open="accordions">
-                    <accordion close-others="accordions.closeOthers">
-                        <accordion-group ng-repeat="accordion in accordions.groups" heading="{{accordion.label}}" is-open="accordion.open" is-disabled="accordion.disabled">
-                               <div monitor-accordion-form-state="accordion" form-builder="formBuilder[$index]"></div>
-                        </accordion-group>
-                    </accordion>
-                </div>
+
+                    <div class="list list-padding seam-bottom" ng-if="formBuilder[$index].length || layout.include" ng-repeat="layout in layouts.groups" action="layout.action">
+                        <div class="list-subheader subheader">{{layout.label}}</div>
+                        <div ng-if="layout.include" ng-include="layout.include"></div>
+                        <div ng-if="!layout.include" form-builder="formBuilder[$index]"></div>
+                    </div>
 
             </div>
             </div>

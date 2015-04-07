@@ -395,7 +395,7 @@
                                     var is_new = false,
                                         inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
-                                            $scope.accordions = {
+                                            $scope.layouts = {
                                                 closeOthers: true,
                                                 groups: [{
                                                     label: 'General',
@@ -467,26 +467,26 @@
                                                 helpers.extendDeep(field, extra);
                                             }
                                             if (field.is_structured && formInputTypes[field.type]) {
-                                                $scope.accordions.groups.push({
+                                                $scope.layouts.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                     disabled: false,
                                                     open: false
                                                 });
 
                                                 field.ui.label = false;
-                                                next = $scope.accordions.groups.length - 1;
+                                                next = $scope.layouts.groups.length - 1;
 
                                                 if (!angular.isDefined($scope.formBuilder[next])) {
                                                     $scope.formBuilder[next] = [];
                                                     $scope.formBuilder[next].push(field);
                                                 }
-                                                $scope.accordions.groups[0].disabled = false;
+                                                $scope.layouts.groups[0].disabled = false;
                                             } else {
                                                 $scope.formBuilder['0'].push(field);
                                             }
                                         });
 
-                                        angular.forEach($scope.accordions.groups, function (group, i) {
+                                        angular.forEach($scope.layouts.groups, function (group, i) {
                                             if ($scope.formBuilder[i].length) {
                                                 realTotal += 1;
                                             }
@@ -625,7 +625,7 @@
                                     hideSave: true
                                 }
                             };
-                            $scope.accordions = {
+                            $scope.layouts = {
                                 closeOthers: true,
                                 groups: [{
                                     label: $scope.seller.name,
@@ -858,7 +858,7 @@
                             return args;
                         },
                         scope: {
-                            accordions: {
+                            layouts: {
                                 closeOthers: true,
                                 groups: [{
                                     label: 'General',

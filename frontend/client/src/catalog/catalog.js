@@ -1146,7 +1146,7 @@
                                     });
 
                                 },
-                                accordions: {
+                                layouts: {
                                     closeOthers: true,
                                     groups: [{
                                         label: 'General',

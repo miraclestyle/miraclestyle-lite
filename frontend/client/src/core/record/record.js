@@ -64,16 +64,5 @@
                 }
             });
 
-        }).factory('recordAccordion', function () {
-            return {
-                attach: function (accordions) {
-                    accordions.groups.push({
-                        label: 'History',
-                        key: 'history',
-                        open: false,
-                        include: 'core/record/list.html'
-                    });
-                }
-            };
         });
 }());
