@@ -536,7 +536,6 @@
                         noComplete = function ($scope) {
                             afterComplete($scope);
                         },
-                        modelsEditorInstance,
                         config = {
                             kind: this.kind,
                             action: (isNew ? 'create' : 'update'),
@@ -717,7 +716,7 @@
                                                 }
                                             });
                                             // set next arguments from initially loaded data from root scope
-                                            imagesReader.state(parentScope.config.ui.specifics.reader);
+                                            // imagesReader.state(parentScope.config.ui.specifics.reader);
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
@@ -1058,7 +1057,7 @@
                                                                     total = field.ui.specifics.parentArgs[0].sequence;
                                                                     angular.forEach(field.ui.specifics.parentArgs,
                                                                         function (ent, i) {
-                                                                            i = ((total) - i);
+                                                                            i = (total - i);
                                                                             cmp.push(ent.sequence);
                                                                             cmp2.push(i);
                                                                             ent.sequence = i;
@@ -1149,19 +1148,19 @@
                                 layouts: {
                                     closeOthers: true,
                                     groups: [{
-                                        label: 'General',
-                                        open: true,
+                                        label: false,
                                         fields: ['name', 'discontinue_date'],
                                     }, {
                                         label: 'Images',
-                                        open: false,
-                                        fields: ['_images']
+                                        include: 'core/misc/action.html',
+                                        action: function () {
+                                            modals.fields.remote(config.getScope(), fields._images);
+                                        }
                                     }, {
                                         label: 'Products',
-                                        open: false,
-                                        include: 'core/misc/blank.html',
+                                        include: 'core/misc/action.html',
                                         action: function () {
-                                            config.getScope().addProducts.apply(fields._images.ui.directiveScope());
+                                            config.getScope().addProducts();
                                         }
                                     }]
                                 }

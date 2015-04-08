@@ -627,7 +627,7 @@
                                     $scope.layouts = {
                                         closeOthers: true,
                                         groups: [{
-                                            label: 'General',
+                                            label: false,
                                             disabled: true,
                                             open: true
                                         }]

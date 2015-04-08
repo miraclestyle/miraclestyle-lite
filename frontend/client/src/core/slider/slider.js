@@ -52,7 +52,6 @@
                 scope.$on('readyImageSlider', function () {
                     resize();
                     measure();
-                    //parent.scroll(tryToLoad);
                     steadyScroll = new Steady({
                         throttle: 100,
                         scrollElement: parent.get(0),
@@ -65,12 +64,13 @@
                         }
                         var p = parent.get(0),
                             maxscroll,
-                            sense = maxscroll - parent.scrollLeft();
+                            sense;
                         if (!p) {
                             steadyScroll.stop();
                             return;
                         }
                         maxscroll = p.scrollWidth - p.clientWidth;
+                        sense = maxscroll - parent.scrollLeft();
                         if (sense < 300) {
                             return true;
                         }

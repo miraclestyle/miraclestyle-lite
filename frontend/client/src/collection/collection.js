@@ -70,9 +70,9 @@
                             layouts: {
                                 closeOthers: true,
                                 groups: [{
-                                    label: 'General',
+                                    label: false,
                                     open: true,
-                                    key: 'general'
+                                    key: false
                                 }, {
                                     label: 'Sellers'
                                 }]

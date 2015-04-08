@@ -398,7 +398,7 @@
                                             $scope.layouts = {
                                                 closeOthers: true,
                                                 groups: [{
-                                                    label: 'General',
+                                                    label: false,
                                                     disabled: false,
                                                     open: true
                                                 }]
@@ -524,12 +524,35 @@
 
                                     }
 
-                                    $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                        $scope.$close();
-                                    });
+                                    config.ui.specifics.toolbar = {
+                                        leftIcon: 'navigation.arrow-back',
+                                        hideSave: true
+                                    };
+                                    $scope.close = function () {
+                                        var save = $scope.save();
+                                        if (save) {
+                                            save.then(function () {
+                                                $scope.__close__ = undefined;
+                                                $scope.$close();
+                                            });
+                                        } else {
+                                            modals.confirm({
+                                                confirm: $scope.$close,
+                                                message: 'This data will not be saved because there are some fields required. Discard?',
+                                                text: {
+                                                    ok: 'Discard'
+                                                }
+                                            });
+                                        }
+                                    };
+
+                                    $scope.__close__ = $scope.close;
 
                                     $scope.save = function () {
-                                        var promise, complete;
+                                        var promise,
+                                            complete,
+                                            saveCompleteDefer = $q.defer(),
+                                            saveCompletePromise = saveCompleteDefer.promise;
                                         if (!$scope.validateForm()) {
                                             return;
                                         }
@@ -559,15 +582,17 @@
 
                                             if (newPromise && newPromise.then) {
                                                 newPromise.then(function () {
-                                                    $scope.close();
+                                                    saveCompleteDefer.resolve();
                                                 });
                                             } else {
-                                                $scope.close();
+                                                saveCompleteDefer.resolve();
                                             }
 
                                         };
 
-                                        rootFormSetDirty();
+                                        if ($scope.container.form.$dirty) {
+                                            rootFormSetDirty();
+                                        }
                                         if (promise && promise.then) {
                                             promise.then(complete);
 
@@ -575,6 +600,8 @@
                                             complete();
 
                                         }
+
+                                        return saveCompletePromise;
 
                                     };
 
@@ -861,9 +888,9 @@
                             layouts: {
                                 closeOthers: true,
                                 groups: [{
-                                    label: 'General',
+                                    label: false,
                                     open: true,
-                                    key: 'general',
+                                    key: false,
                                     fields: ['name', 'logo'],
                                 }, {
                                     label: 'Contents',

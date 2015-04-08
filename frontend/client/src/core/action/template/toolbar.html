@@ -3,12 +3,15 @@
                        'one-right-action': spec.hideSave || !spec.templateActionsUrl}">
     <div class="md-toolbar-tools with-actions">
         <div class="fill-height">
-
+        
             <div ng-if="!spec.hideLeft" class="md-toolbar-item md-tools actions-left">
                 <span ng-include="spec.templateLeft"></span>
-                <button md-ink-ripple-action ng-if="!spec.templateLeft" type="button" class="button-transparent button-square"
-                  loading ng-click="close()">
-                    <icon type="navigation.close"></icon>
+                <button md-ink-ripple-action 
+                        ng-if="!spec.templateLeft" 
+                        type="button"
+                        class="button-transparent button-square"
+                        loading ng-click="close()">
+                    <icon type="{{spec.leftIcon || 'navigation.close'}}"></icon>
                 </button>
             </div>
 

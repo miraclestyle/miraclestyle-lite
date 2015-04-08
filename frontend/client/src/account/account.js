@@ -179,7 +179,7 @@
                                 layouts: {
                                     closeOthers: true,
                                     groups: [{
-                                        label: 'General',
+                                        label: false,
                                         disabled: false,
                                         open: true
                                     }, {

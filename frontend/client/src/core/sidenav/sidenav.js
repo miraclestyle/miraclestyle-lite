@@ -301,7 +301,7 @@
              */
             function onKeyDown(ev) {
                 $timeout(function () {
-                  close(ev);
+                    close(ev);
                 });
                 return true;
             }

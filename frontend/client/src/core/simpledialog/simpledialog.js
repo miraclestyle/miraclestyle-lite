@@ -25,10 +25,19 @@
                 return id;
             },
             emptyHashery = function () {
-                if (!callbacks.length) {
+                if (!callbacks.length && window.location.hash.length) {
                     window.location.hash = '';
                     id = 1;
                 }
+            },
+            executeFirstInQueue = function (e) {
+                var next = callbacks.pop(),
+                    execute = (next && next(e));
+                if (!execute && next) {
+                    callbacks.push(next);
+                }
+                emptyHashery();
+                return execute;
             };
         return {
             dequeue: function (cb) {
@@ -41,21 +50,17 @@
             queue: function (cb) {
                 var hashPrefix = 'context-monitor-',
                     lastHash = window.location.hash,
-                    nextId = generateNextID(),
-                    executeFirstInQueue = function (e) {
-                        var next = callbacks.pop(),
-                            execute = (next && next(e));
-                        emptyHashery();
-                        return execute;
-                    };
+                    nextId = generateNextID();
                 if (!bound) {
                     $rootElement.on('keyup', function (e) {
                         if (e.keyCode !== $mdConstant.KEY_CODE.ESCAPE) {
                             return;
                         }
-                        executeFirstInQueue(e);
+                        if (!executeFirstInQueue(e)) {
+                            e.preventDefault();
+                        }
                     });
-                    $(window).bind('hashchange', function () {
+                    $(window).bind('hashchange', function (e) {
                         var newHash = window.location.hash,
                             isBack,
                             newHashId = parseInt(newHash.substr(hashPrefix.length + 1), 10),
@@ -67,7 +72,9 @@
                         //At the end of the func:
                         lastHash = newHash;
                         if (isBack) {
-                            executeFirstInQueue();
+                            if (!executeFirstInQueue()) {
+                                e.preventDefault();
+                            }
                         }
                     });
 
@@ -90,228 +97,6 @@
         };
     }
     SimpleDialogDirective.$inject = ["$$rAF", "$mdTheming"];
-
-    /**
-     * @ngdoc service
-     * @name $simpleDialog
-     * @module material.components.simpledialog
-     *
-     * @description
-     * `$simpleDialog` opens a dialog over the app and provides a simple promise API.
-     *
-     * ### Restrictions
-     *
-     * - The dialog is always given an isolate scope.
-     * - The dialog's template must have an outer `<md-simpledialog>` element.
-     *   Inside, use an `<md-content>` element for the dialog's content, and use
-     *   an element with class `md-actions` for the dialog's actions.
-     *
-     * @usage
-     * ##### HTML
-     *
-     * <hljs lang="html">
-     * <div  ng-app="demoApp" ng-controller="EmployeeController">
-     *   <md-button ng-click="showAlert()" class="md-raised md-warn">
-     *     Employee Alert!
-     *   </md-button>
-     *   <md-button ng-click="closeAlert()" ng-disabled="!hasAlert()" class="md-raised">
-     *     Close Alert
-     *   </md-button>
-     *   <md-button ng-click="showGreeting($event)" class="md-raised md-primary" >
-     *     Greet Employee
-     *   </md-button>
-     * </div>
-     * </hljs>
-     *
-     * ##### JavaScript
-     *
-     * <hljs lang="js">
-     * (function(angular, undefined){
-     *   "use strict";
-     *
-     *   angular
-     *     .module('demoApp', ['ngMaterial'])
-     *     .controller('EmployeeController', EmployeeEditor)
-     *     .controller('GreetingController', GreetingController);
-     *
-     *   // Fictitious Employee Editor to show how to use simple and complex dialogs.
-     *
-     *   function EmployeeEditor($scope, $simpleDialog) {
-     *     var alert;
-     *
-     *     $scope.showAlert = showAlert;
-     *     $scope.closeAlert = closeAlert;
-     *     $scope.showGreeting = showCustomGreeting;
-     *
-     *     $scope.hasAlert = function() { return !!alert };
-     *     $scope.userName = $scope.userName || 'Bobby';
-     *
-     *     // Dialog #1 - Show simple alert dialog and cache
-     *     // reference to dialog instance
-     *
-     *     function showAlert() {
-     *       alert = $simpleDialog.alert()
-     *         .title('Attention, ' + $scope.userName)
-     *         .content('This is an example of how easy dialogs can be!')
-     *         .ok('Close');
-     *
-     *       $simpleDialog
-     *           .show( alert )
-     *           .finally(function() {
-     *             alert = undefined;
-     *           });
-     *     }
-     *
-     *     // Close the specified dialog instance and resolve with 'finished' flag
-     *     // Normally this is not needed, just use '$simpleDialog.hide()' to close
-     *     // the most recent dialog popup.
-     *
-     *     function closeAlert() {
-     *       $simpleDialog.hide( alert, "finished" );
-     *       alert = undefined;
-     *     }
-     *
-     *     // Dialog #2 - Demonstrate more complex dialogs construction and popup.
-     *
-     *     function showCustomGreeting($event) {
-     *         $simpleDialog.show({
-     *           targetEvent: $event,
-     *           template:
-     *             '<md-simpledialog>' +
-     *
-     *             '  <md-content>Hello {{ employee }}!</md-content>' +
-     *
-     *             '  <div class="md-actions">' +
-     *             '    <md-button ng-click="closeDialog()">' +
-     *             '      Close Greeting' +
-     *
-     *             '    </md-button>' +
-     *             '  </div>' +
-     *             '</md-simpledialog>',
-     *           controller: 'GreetingController',
-     *           onComplete: afterShowAnimation,
-     *           locals: { employee: $scope.userName }
-     *         });
-     *
-     *         // When the 'enter' animation finishes...
-     *
-     *         function afterShowAnimation(scope, element, options) {
-     *            // post-show code here: DOM element focus, etc.
-     *         }
-     *     }
-     *   }
-     *
-     *   // Greeting controller used with the more complex 'showCustomGreeting()' custom dialog
-     *
-     *   function GreetingController($scope, $simpleDialog, employee) {
-     *     // Assigned from construction <code>locals</code> options...
-     *     $scope.employee = employee;
-     *
-     *     $scope.closeDialog = function() {
-     *       // Easily hides most recent dialog shown...
-     *       // no specific instance reference is needed.
-     *       $simpleDialog.hide();
-     *     };
-     *   }
-     *
-     * })(angular);
-     * </hljs>
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#alert
-     *
-     * @description
-     * Builds a preconfigured dialog with the specified message.
-     *
-     * @returns {obj} an `$simpleDialogPreset` with the chainable configuration methods:
-     *
-     * - $simpleDialogPreset#title(string) - sets title to string
-     * - $simpleDialogPreset#content(string) - sets content / message to string
-     * - $simpleDialogPreset#ok(string) - sets okay button text to string
-     *
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#confirm
-     *
-     * @description
-     * Builds a preconfigured dialog with the specified message. You can call show and the promise returned
-     * will be resolved only if the user clicks the confirm action on the dialog.
-     *
-     * @returns {obj} an `$simpleDialogPreset` with the chainable configuration methods:
-     *
-     * Additionally, it supports the following methods:
-     *
-     * - $simpleDialogPreset#title(string) - sets title to string
-     * - $simpleDialogPreset#content(string) - sets content / message to string
-     * - $simpleDialogPreset#ok(string) - sets okay button text to string
-     * - $simpleDialogPreset#cancel(string) - sets cancel button text to string
-     *
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#show
-     *
-     * @description
-     * Show a dialog with the specified options.
-     *
-     * @param {object} optionsOrPreset Either provide an `$simpleDialogPreset` returned from `alert()`,
-     * `confirm()` or an options object with the following properties:
-     *   - `templateUrl` - `{string=}`: The url of a template that will be used as the content
-     *   of the dialog.
-     *   - `template` - `{string=}`: Same as templateUrl, except this is an actual template string.
-     *   - `targetEvent` - `{DOMClickEvent=}`: A click's event object. When passed in as an option,
-     *     the location of the click will be used as the starting point for the opening animation
-     *     of the the dialog.
-     *   - `disableParentScroll` - `{boolean=}`: Whether to disable scrolling while the dialog is open.
-     *     Default true.
-     *   - `hasBackdrop` - `{boolean=}`: Whether there should be an opaque backdrop behind the dialog.
-     *     Default true.
-     *   - `clickOutsideToClose` - `{boolean=}`: Whether the user can click outside the dialog to
-     *     close it. Default true.
-     *     Default true.
-     *   - `controller` - `{string=}`: The controller to associate with the dialog. The controller
-     *     will be injected with the local `$hideDialog`, which is a function used to hide the dialog.
-     *   - `locals` - `{object=}`: An object containing key/value pairs. The keys will be used as names
-     *     of values to inject into the controller. For example, `locals: {three: 3}` would inject
-     *     `three` into the controller, with the value 3. If `bindToController` is true, they will be
-     *     copied to the controller instead.
-     *   - `bindToController` - `bool`: bind the locals to the controller, instead of passing them in
-     *   - `resolve` - `{object=}`: Similar to locals, except it takes promises as values, and the
-     *     dialog will not open until all of the promises resolve.
-     *   - `controllerAs` - `{string=}`: An alias to assign the controller to on the scope.
-     *   - `parent` - `{element=}`: The element to append the dialog to. Defaults to appending
-     *     to the root element of the application.
-     *   - `onComplete` `{function=}`: Callback function used to announce when the show() action is
-     *     finished.
-     *
-     * @returns {promise} A promise that can be resolved with `$simpleDialog.hide()` or
-     * rejected with `mdAdialog.cancel()`.
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#hide
-     *
-     * @description
-     * Hide an existing dialog and resolve the promise returned from `$simpleDialog.show()`.
-     *
-     * @param {*=} response An argument for the resolved promise.
-     */
-
-    /**
-     * @ngdoc method
-     * @name $simpleDialog#cancel
-     *
-     * @description
-     * Hide an existing dialog and reject the promise returned from `$simpleDialog.show()`.
-     *
-     * @param {*=} response An argument for the rejected promise.
-     */
 
     function SimpleDialogProvider($$interimElementProvider) {
 

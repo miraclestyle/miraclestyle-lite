@@ -451,13 +451,19 @@
                 body.addClass(OPENED_MODAL_CLASS);
 
                 modalInstance.esc = function (e) {
+                    var modalWindow = openedWindows.get(modalInstance);
                     if (e) {
                         e.preventDefault();
                     }
+                   
+                    if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope.__close__) {
+                        return modalWindow.value.modalScope.__close__();
+                    }
+
                     $rootScope.$apply(function () {
-                        modalInstance.withEscape = true;
                         $modalStack.dismiss(modalInstance, 'escape key press');
                     });
+
                     return true;
                 };
                 mdContextualMonitor.queue(modalInstance.esc);
@@ -470,12 +476,15 @@
                 }
             };
 
-            $modalStack.close = function (modalInstance, result) {
+            $modalStack.close = function (modalInstance, result, what) {
+                if (!what) {
+                    what = 'resolve';
+                }
                 var modalWindow = openedWindows.get(modalInstance),
                     defer = $q.defer();
                 $modalStack._dequeue(modalWindow, modalInstance);
                 if (modalWindow) {
-                    modalWindow.value.deferred.resolve(result);
+                    modalWindow.value.deferred[what](result);
                     removeModalWindow(modalInstance, defer);
                 } else {
                     defer.resolve();
@@ -484,16 +493,7 @@
             };
 
             $modalStack.dismiss = function (modalInstance, reason) {
-                var modalWindow = openedWindows.get(modalInstance),
-                    defer = $q.defer();
-                $modalStack._dequeue(modalWindow, modalInstance);
-                if (modalWindow) {
-                    modalWindow.value.deferred.reject(reason);
-                    removeModalWindow(modalInstance, defer);
-                } else {
-                    defer.resolve();
-                }
-                return defer.promise;
+                return $modalStack.close(modalInstance, reason, 'reject');
             };
 
             $modalStack.dismissAll = function (reason) {

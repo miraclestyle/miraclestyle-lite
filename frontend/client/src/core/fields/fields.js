@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (helpers, modals) {
+        .run(function (helpers, modals, $modal) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -60,6 +60,39 @@
                     return modals.alert('Grab the button to start sorting.', {
                         targetEvent: $event
                     });
+                },
+                fields: {
+                    remote: function (scope, field, config) {
+                        $modal.open({
+                            scope: scope,
+                            templateUrl: 'core/models/manage.html',
+                            controller: function ($scope) {
+                                $scope.dialog = {
+                                    templateBodyUrl: 'core/models/manage_body_default.html'
+                                };
+                                $scope.parentContainer = $scope.container;
+                                $scope.container = {};
+                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                    $scope.$close();
+                                });
+                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                $scope.formBuilder = {'0': [field]};
+                                $scope.layouts = {
+                                    groups: [{
+                                        label: false
+                                    }]
+                                };
+                                $scope.$watch('parentContainer.form.$dirty', function (neww, old) {
+                                    if (neww) {
+                                        $scope.formSetDirty();
+                                    } else {
+                                        $scope.formSetPristine();
+                                    }
+                                });
+                            }
+                        });
+                    }
                 }
             });
         })
@@ -67,7 +100,6 @@
             return {
                 require: 'ngModel',
                 link: function (scope, el, attrs, ngModel) {
-                    //change event is fired when file is selected
                     el.bind('change', function () {
                         scope.$apply(function () {
                             ngModel.$setViewValue(el.val());
@@ -212,8 +244,8 @@
             var types = formInputTypes,
                 utils = {
                     attrs: function (config) {
-                        var defaults = this.default_attrs(config),
-                            extra = this.extra_attrs(config),
+                        var defaults = this.defaultAttrs(config),
+                            extra = this.extraAttrs(config),
                             attrs = [];
 
                         angular.extend(defaults, extra);
@@ -224,7 +256,7 @@
 
                         return attrs.join(' ');
                     },
-                    default_attrs: function (config) {
+                    defaultAttrs: function (config) {
                         var attrs = {},
                             writableCompiled;
                         if (config.max_size) {
@@ -263,7 +295,7 @@
 
                         return attrs;
                     },
-                    extra_attrs: function (config) {
+                    extraAttrs: function (config) {
                         return config.ui.attrs;
                     },
                     label: function (config) {
@@ -476,6 +508,7 @@
                             fields.each(function () {
                                 var formElement = ctrl[$(this).attr('name')];
                                 if (formElement && !formElement.$valid) {
+                                    console.log(formElement);
                                     ctrl.$setDirty();
                                     formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
                                     formElement.$setDirty();
@@ -1068,7 +1101,7 @@
                         // disables sorting if the field is not writable
                         // writableCompiled is as-is specification
                         config.ui.init.add('checkDisabledStateForSortable', function () {
-                            var fieldIsWritable = $parse(config.ui.writableCompiled);
+                            var fieldIsWritable = $parse(config.ui.writableCompiled + '');
                             config.ui.specifics.sortableOptions.disabled = !fieldIsWritable(info.scope);
                         });
                         // watches list of arguments args != new
@@ -1223,7 +1256,7 @@
                                         $scope.layouts = {
                                             closeOthers: true,
                                             groups: [{
-                                                label: 'General',
+                                                label: false,
                                                 disabled: true,
                                                 open: true
                                             }]
@@ -1237,12 +1270,39 @@
                                         $scope.parentArgs = config.ui.specifics.parentArgs;
                                         $scope.rootScope = config.ui.specifics.rootScope;
                                         $scope.entity = config.ui.specifics.entity;
-                                        $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                            $scope.$close();
-                                            if (config.ui.specifics.afterClose) {
-                                                config.ui.specifics.afterClose($scope);
-                                            }
-                                        });
+                                        if (config.ui.specifics.remote) {
+                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                                $scope.$close();
+                                                if (config.ui.specifics.afterClose) {
+                                                    config.ui.specifics.afterClose($scope);
+                                                }
+                                            });
+
+                                        } else {
+                                            config.ui.specifics.toolbar = {
+                                                leftIcon: 'navigation.arrow-back',
+                                                hideSave: true
+                                            };
+                                            $scope.close = function () {
+                                                var save = $scope.save();
+                                                if (save) {
+                                                    save.then(function () {
+                                                        $scope.__close__ = undefined;
+                                                        $scope.$close();
+                                                    });
+                                                } else {
+                                                    modals.confirm({
+                                                        confirm: $scope.$close,
+                                                        message: 'This data will not be saved because there are some fields required. Discard?',
+                                                        text: {
+                                                            ok: 'Discard'
+                                                        }
+                                                    });
+                                                }
+                                            };
+
+                                            $scope.__close__ = $scope.close;
+                                        }
 
                                         $scope.validateForm = function () {
                                             if (!$scope.container.form.$valid) {
@@ -1308,7 +1368,9 @@
                                                 if (!$scope.validateForm()) { // check if the form is valid
                                                     return false;
                                                 }
-                                                $scope.rootFormSetDirty();
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.rootFormSetDirty();
+                                                }
                                                 var promise,
                                                     prepare = function () {
                                                         var readArgs = {},
@@ -1434,7 +1496,9 @@
                                                 if (angular.isDefined(config.ui.specifics.afterComplete)) {
                                                     config.ui.specifics.afterComplete($scope);
                                                 }
-                                                $scope.rootFormSetDirty();
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.rootFormSetDirty();
+                                                }
                                                 $scope.formSetPristine();
                                             };
 
@@ -1443,7 +1507,9 @@
                                                 if (angular.isDefined(config.ui.specifics.noComplete)) {
                                                     config.ui.specifics.noComplete($scope);
                                                 }
-                                                $scope.rootFormSetDirty();
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.rootFormSetDirty();
+                                                }
                                                 $scope.formSetPristine();
                                             };
 
@@ -1452,7 +1518,9 @@
                                                 if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
                                                     config.ui.specifics.afterCompleteError($scope, response);
                                                 }
-                                                $scope.rootFormSetDirty();
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.rootFormSetDirty();
+                                                }
                                                 $scope.formSetPristine();
                                             };
 
@@ -1464,8 +1532,12 @@
                                                 if (!$scope.validateForm()) { // check if the form is valid
                                                     return false;
                                                 }
-                                                $scope.rootFormSetDirty();
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.rootFormSetDirty();
+                                                }
                                                 var promise = null,
+                                                    saveCompleteDefer = $q.defer(),
+                                                    saveCompletePromise = saveCompleteDefer.promise,
                                                     complete = function () {
                                                         var completePromise = null,
                                                             total = 0;
@@ -1492,12 +1564,14 @@
                                                         if (completePromise && completePromise.then) {
                                                             completePromise.then(function () {
                                                                 $scope.formSetPristine();
+                                                                saveCompleteDefer.resolve();
                                                                 if (config.closeAfterSave) {
                                                                     $scope.close();
                                                                 }
                                                             });
                                                         } else {
                                                             $scope.formSetPristine();
+                                                            saveCompleteDefer.resolve();
                                                             if (config.closeAfterSave) {
                                                                 $scope.close();
                                                             }
@@ -1515,6 +1589,8 @@
                                                 } else {
                                                     complete();
                                                 }
+
+                                                return saveCompletePromise;
 
                                             };
                                         }

@@ -420,9 +420,3 @@ body {
 .not-pointable {
     pointer-events: none
 }
-
-[load-more-button] {
-  margin-right: 16px;
-  margin-left: 16px;
-  margin-bottom:6px;
-}
