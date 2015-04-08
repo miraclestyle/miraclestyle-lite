@@ -163,6 +163,11 @@
                             fields: [fields.addresses],
                             kind: this.kind,
                             action: 'update',
+                            scope: {
+                                layouts: {
+                                    groups: [{label: false, fields: ['addresses']}]
+                                }
+                            },
                             excludeFields: ['account', 'read_arguments'],
                             argumentLoader: function ($scope) {
                                 var args = this.defaultArgumentLoader($scope);
