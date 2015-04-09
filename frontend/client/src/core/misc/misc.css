@@ -420,3 +420,154 @@ body {
 .not-pointable {
     pointer-events: none
 }
+
+
+
+/*Fade animation, used on any element (e.g. backdrop) that requires fade effects.*/
+
+@-webkit-keyframes fade-in {
+  0% {opacity: 0;}
+  100% {opacity: 1;}
+}
+
+@keyframes fade-in {
+  0% {opacity: 0;}
+  100% {opacity: 1;}
+}
+
+@-webkit-keyframes fade-out {
+  0% {opacity: 1;}
+  100% {opacity: 0;}
+}
+
+@keyframes fade-out {
+  0% {opacity: 1;}
+  100% {opacity: 0;}
+}
+
+.fade {
+  -webkit-animation-delay: 0s;
+  -webkit-animation-duration: 0.3s;
+  -webkit-animation-timing-function: linear;
+  -webkit-animation-direction: normal;
+  -webkit-animation-fill-mode: both;
+
+  animation-delay: 0s;
+  animation-duration: 0.3s;
+  animation-timing-function: linear;
+  animation-direction: normal;
+  animation-fill-mode: both;
+}
+
+.fade:not(.out) {
+  -webkit-animation-delay: 0.1s;
+  -webkit-animation-name: fade-in;
+
+  animation-delay: 0.1s;
+  animation-name: fade-in;
+}
+
+.fade.out {
+  -webkit-animation-name: fade-out;
+  animation-name: fade-out;
+}
+
+/*Modification used for backdrop fade, in conjuction with animation on sliding side dialogs.*/
+
+.backdrop.fade.in {
+  -webkit-animation-delay: 0s;
+  animation-delay: 0s;
+}
+
+.backdrop.fade.out {
+  -webkit-animation-delay: 0.1s;
+  animation-delay: 0.1s;
+}
+
+/*Animation used for container/dialog sliding in and out of the screen.*/
+
+@-webkit-keyframes left-slide-in {
+  0% {left: -100%;}
+  100% {left: 0px;}
+}
+
+@-webkit-keyframes left-slide-out {
+  0% {left: 0px;}
+  100% {left: -100%;}
+}
+
+@-webkit-keyframes right-slide-in {
+  0% {right: -100%;}
+  100% {right: 0px;}
+}
+
+@-webkit-keyframes right-slide-out {
+  0% {right: 0px;}
+  100% {right: -100%;}
+}
+
+
+@keyframes left-slide-in {
+  0% {left: -100%;}
+  100% {left: 0px;}
+}
+
+@keyframes left-slide-out {
+  0% {left: 0px;}
+  100% {left: -100%;}
+}
+
+@keyframes right-slide-in {
+  0% {right: -100%;}
+  100% {right: 0px;}
+}
+
+@keyframes right-slide-out {
+  0% {right: 0px;}
+  100% {right: -100%;}
+}
+
+.slide {
+  -webkit-animation-delay: 0s;
+  -webkit-animation-duration: 0.3s;
+  -webkit-animation-direction: normal;
+  -webkit-animation-fill-mode: both;
+
+  animation-delay: 0s;
+  animation-duration: 0.3s;
+  animation-direction: normal;
+  animation-fill-mode: both;
+}
+
+.slide:not(.out) {
+  -webkit-animation-delay: 0.1s;
+  -webkit-animation-timing-function: cubic-bezier(0,0,0.4,1);
+
+  animation-delay: 0.1s;
+  animation-timing-function: cubic-bezier(0,0,0.4,1);
+}
+
+.slide.out {
+  -webkit-animation-timing-function: cubic-bezier(0.8,0,1,1);
+  animation-timing-function: cubic-bezier(0.8,0,1,1);
+}
+
+.drawer.slide.left:not(.out) {
+  -webkit-animation-name: left-slide-in;
+  animation-name: left-slide-in;
+}
+
+.drawer.slide.left.out {
+  -webkit-animation-name: left-slide-out;
+  animation-name: left-slide-out;
+}
+
+.drawer.slide.right:not(.out) {
+  -webkit-animation-name: right-slide-in;
+  animation-name: right-slide-in;
+}
+
+.drawer.slide.right.out {
+  -webkit-animation-name: right-slide-out;
+  animation-name: right-slide-out;
+}

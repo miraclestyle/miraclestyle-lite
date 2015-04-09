@@ -152,7 +152,7 @@
             },
             controller: '$mdSidenavController',
             compile: function (element) {
-                element.addClass('md-closed');
+                element.addClass('md-closed slide drawer out invisible');
                 element.attr('tabIndex', '-1');
                 return postLink;
             }
@@ -173,7 +173,7 @@
                 });
             };
             var backdrop = $compile(
-                '<md-backdrop class="md-sidenav-backdrop md-opaque ng-enter">'
+                '<md-backdrop class="md-sidenav-backdrop md-opaque fade">'
             )(scope);
 
             element.on('$destroy', sidenavCtrl.destroy);
@@ -240,9 +240,18 @@
                     // Capture upon opening..
                     triggeringElement = $document[0].activeElement;
                 }
+                element.before(backdrop);
+                if (isOpen) {
+                    element.removeClass('invisible');
+                }
                 return promise = $q.all([
-                    $animate[isOpen ? 'enter' : 'leave'](backdrop, parent),
-                    $animate[isOpen ? 'removeClass' : 'addClass'](element, 'md-closed').then(function () {
+                    $animate[isOpen ? 'removeClass' : 'addClass'](backdrop, 'out').then(function () {
+                        // If we opened, and haven't closed again before the animation finished
+                        if (!scope.isOpen) {
+                            backdrop.remove();
+                        }
+                    }),
+                    $animate[isOpen ? 'removeClass' : 'addClass'](element, 'out').then(function () {
                         // If we opened, and haven't closed again before the animation finished
                         if (scope.isOpen) {
                             element.focus();

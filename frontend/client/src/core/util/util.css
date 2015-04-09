@@ -1,16 +1,3 @@
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-/* Sizes:
-  0    <= size <= 600  Phone
-  600  <= size <= 960  Tablet
-  960  <= size <= 1200 Tablet-Landscape
-  1200 <= size         PC
-*/
-
 [layout] {
     box-sizing: border-box;
     display: -webkit-flex;
@@ -2818,27 +2805,6 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
     -webkit-appearance: none;
 }
 
-.md-shadow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    border-radius: inherit;
-    pointer-events: none;
-}
-
-.md-shadow-bottom-z-1 {
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-}
-
-.md-shadow-bottom-z-2 {
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4);
-}
-
-.md-shadow-animated.md-shadow {
-    transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
 /*
  * A container inside of a rippling element (eg a button),
  * which contains all of the individual ripples
