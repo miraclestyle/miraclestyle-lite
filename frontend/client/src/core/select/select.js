@@ -46,10 +46,14 @@
                     });
                     element.on('click focus', function (ev) {
                         if (!dontOpen) {
-                            containerCtrl.setFocused(true);
+                            //containerCtrl.setFocused(true);
                             select.open();
                         }
                         dontOpen = false;
+
+                        ev.preventDefault();
+                        ev.stopImmediatePropagation();
+                        ev.stopPropagation();
                     });
                     element.on('blur', function (ev) {
                         containerCtrl.setFocused(false);
@@ -311,7 +315,9 @@
                                                         nextActive = firstTabbable;
                                                     }
                                                     if (select.search) {
-                                                        dialogEl.find('input[type="search"]').focus();
+                                                        setTimeout(function () {
+                                                            dialogEl.find('input[type="search"]').focus();
+                                                        }, 100);
                                                     } else {
                                                         nextActive.focus();
                                                     }
@@ -353,6 +359,7 @@
                                         $$rAF(function () {
                                             dialogEl.addClass('transition-in');
                                             dialogEl.css($mdConstant.CSS.TRANSFORM, '');
+                                            dontOpen = false;
                                         });
 
                                     };
