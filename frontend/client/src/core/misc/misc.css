@@ -2,32 +2,41 @@
     display: table;
     content: " ";
 }
+
 .clearfix:after {
     clear: both;
 }
+
 .clear {
     clear: both;
 }
+
 .center-block {
     display: block;
     margin-right: auto;
     margin-left: auto;
 }
+
 .pull-right {
     float: right !important;
 }
+
 .pull-left {
     float: left !important;
 }
+
 .hide {
     display: none !important;
 }
+
 .show {
     display: block !important;
 }
+
 .invisible {
     visibility: hidden;
 }
+
 .text-hide {
     font: 0/0 a;
     color: transparent;
@@ -35,13 +44,16 @@
     background-color: transparent;
     border: 0;
 }
+
 .hidden {
     display: none !important;
     visibility: hidden !important;
 }
+
 .affix {
     position: fixed;
 }
+
 .fade {
     opacity: 0;
     -webkit-transition: opacity 0.25s ease;
@@ -49,15 +61,16 @@
     -o-transition: opacity 0.25s ease;
     transition: opacity 0.25s ease;
 }
-.fade.in {
-    opacity: 1;
-}
+
+
 .collapse {
     display: none;
 }
+
 .collapse.in {
     display: block;
 }
+
 .collapsing {
     position: relative;
     height: 0;
@@ -67,156 +80,197 @@
     -o-transition: height 0.1s ease;
     transition: height 0.1s ease;
 }
+
 .text-right {
     text-align: right;
 }
+
 .text-center {
     text-align: center;
 }
+
 .text-left {
     text-align: left;
 }
+
 .overflow-x {
     overflow-x: scroll;
     overflow-y: hidden;
 }
+
 .overflow-y {
     overflow-y: scroll;
     overflow-x: hidden;
 }
+
 .overflow-auto-y {
     overflow-y: auto;
     overflow-x: hidden;
 }
+
 .overflow-auto-x {
     overflow-x: auto;
     overflow-y: hidden;
 }
+
 .overflow-hidden {
     overflow: hidden;
 }
+
 body .mb15 {
     margin-bottom: 15px;
 }
+
 .relative {
     position: relative;
 }
+
 .padding-0 {
     padding: 0px;
 }
+
 .padding-16 {
     padding: 16px;
 }
+
 .padding-right-16 {
     padding-right: 16px;
 }
+
 .padding-sides-0 {
     padding-left: 0px;
     padding-right: 0px;
 }
+
 .padding-sides-16 {
     padding-right: 16px;
     padding-left: 16px;
 }
+
 .padding-top-sides-16 {
     padding-right: 16px;
     padding-top: 16px;
     padding-left: 16px;
 }
+
 .padding-bottom-sides-16 {
     padding-right: 16px;
     padding-bottom: 16px;
     padding-left: 16px;
 }
+
 .padding-24 {
     padding: 24px;
 }
+
 .padding-sides-24 {
     padding-right: 24px;
     padding-left: 24px;
 }
+
 .padding-top-sides-24 {
     padding-right: 24px;
     padding-top: 24px;
     padding-left: 24px;
 }
+
 .padding-bottom-sides-24 {
     padding-right: 24px;
     padding-bottom: 24px;
     padding-left: 24px;
 }
+
 .margin-0 {
     margin: 0px;
 }
+
 .margin-16 {
     margin: 16px;
 }
+
 .margin-top-16 {
     margin-top: 16px;
 }
+
 .margin-bottom-16 {
     margin-bottom: 16px;
 }
+
 .margin-top-bottom-16 {
     margin-top: 16px;
     margin-bottom: 16px;
 }
+
 .margin-sides-0 {
     margin-right: 0px;
     margin-left: 0px;
 }
+
 .margin-sides-16 {
     margin-right: 16px;
     margin-left: 16px;
 }
+
 .margin-top-sides-16 {
     margin-right: 16px;
     margin-top: 16px;
     margin-left: 16px;
 }
+
 .margin-bottom-sides-16 {
     margin-right: 16px;
     margin-bottom: 16px;
     margin-left: 16px;
 }
+
 .margin-24 {
     margin: 24px;
 }
+
 .margin-sides-24 {
     margin-right: 24px;
     margin-left: 24px;
 }
+
 .margin-top-sides-24 {
     margin-right: 24px;
     margin-top: 24px;
     margin-left: 24px;
 }
+
 .margin-bottom-sides-24 {
     margin-right: 24px;
     margin-bottom: 24px;
     margin-left: 24px;
 }
+
 a.block, .block, button.block {
     display: block;
 }
+
 .t60 {
     width: 60%;
 }
+
 .t40 {
     width: 40%;
 }
+
 .t100 {
     width: 100%;
 }
+
 .t0 {
     width: 0%;
 }
+
 .bottom-right-floating {
     position: absolute;
     bottom: 4px;
     right: 4px;
     z-index: 11;
 }
+
 .bottom-right-floating-action {
     display: block;
 }
@@ -224,6 +278,7 @@ a.block, .block, button.block {
 .pointable {
     cursor: pointer;
 }
+
 pre {
     overflow: auto;
     font-size: 13px;
@@ -234,14 +289,17 @@ pre {
     margin-bottom: 1em;
     font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, sans-serif;
 }
+
 .load-more {
     width: 100%;
     margin: 0px;
 }
+
 .no-things-available {
     color: #CCC;
     text-align: center;
 }
+
 .menu-item {
     position: relative;
     width: 100%;
@@ -249,6 +307,7 @@ pre {
     background: none;
     text-align: left;
 }
+
 .ellipsis-text {
     width: auto;
     white-space: nowrap;
@@ -256,21 +315,26 @@ pre {
     text-overflow: ellipsis;
     display: block;
 }
+
 body {
     font-family: 'Roboto', sans-serif;
 }
+
 .trim {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
 }
+
 .button, .caption, .label, .helper, .body1, .secondary, .body2, .menu, .subheader, .subhead, .primary, .text, .title, .headline, .display1, .display2, .display3, .display4 {
     font-family: inherit;
     text-decoration: none;
 }
+
 .headline {
     margin: 0px;
 }
+
 .button {
     font-size: 14px;
     font-weight: 500;
@@ -280,6 +344,7 @@ body {
     text-transform: uppercase;
     color: rgba(0, 0, 0, 0.87);
 }
+
 .caption, .label, .helper {
     font-size: 12px;
     font-weight: 400;
@@ -288,12 +353,15 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.54);
 }
+
 .label, .helper {
     line-height: 14px;
 }
+
 .helper {
     color: rgba(0, 0, 0, 0.26);
 }
+
 .body1, .secondary {
     font-size: 14px;
     font-weight: 400;
@@ -302,6 +370,7 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.87);
 }
+
 .body2, .menu, .subheader {
     font-size: 14px;
     font-weight: 500;
@@ -310,9 +379,11 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.87);
 }
+
 .secondary, .subheader {
     color: rgba(0, 0, 0, 0.54);
 }
+
 .subhead, .primary, .text {
     font-size: 16px;
     font-weight: 400;
@@ -321,9 +392,11 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.87);
 }
+
 .text {
     line-height: 20px;
 }
+
 .title {
     font-size: 20px;
     font-weight: 500;
@@ -332,6 +405,7 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.87);
 }
+
 .headline {
     font-size: 24px;
     font-weight: 400;
@@ -340,6 +414,7 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.87);
 }
+
 .display1 {
     font-size: 34px;
     font-weight: 400;
@@ -348,6 +423,7 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.54);
 }
+
 .display2 {
     font-size: 45px;
     font-weight: 400;
@@ -356,6 +432,7 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.54);
 }
+
 .display3 {
     font-size: 56px;
     font-weight: 400;
@@ -364,6 +441,7 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.54);
 }
+
 .display4 {
     font-size: 112px;
     font-weight: 300;
@@ -372,40 +450,42 @@ body {
     text-align: left;
     color: rgba(0, 0, 0, 0.54);
 }
+
 .md-icon {
     font-size: 24px;
     line-height: 24px;
     vertical-align: middle;
-    color:rgba(0,0,0,0.54);
+    color: rgba(0, 0, 0, 0.54);
 }
+
 .md-icon-color-white {
     color: rgba(255, 255, 255, 1);
     text-shadow: 0px 0px 2px black;
 }
 
 .avatar .md-icon {
-    font-size:48px;
+    font-size: 48px;
     line-height: 48px;
 }
 
 .avatar {
-    padding:4px;
+    padding: 4px;
     padding-left: 8px;
 }
 
 .max-width-240 {
-    max-width:240px;
+    max-width: 240px;
 }
 
 .button-square {
-  width: 48px;
-  height: 48px;
-  padding: 12px;
+    width: 48px;
+    height: 48px;
+    padding: 12px;
 }
 
 .button-block {
-    display:block;
-    padding:0px;
+    display: block;
+    padding: 0px;
 }
 
 .unselectable {
@@ -420,154 +500,222 @@ body {
 .not-pointable {
     pointer-events: none
 }
-
-
-
-/*Fade animation, used on any element (e.g. backdrop) that requires fade effects.*/
+/* webkit */
 
 @-webkit-keyframes fade-in {
-  0% {opacity: 0;}
-  100% {opacity: 1;}
-}
-
-@keyframes fade-in {
-  0% {opacity: 0;}
-  100% {opacity: 1;}
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 @-webkit-keyframes fade-out {
-  0% {opacity: 1;}
-  100% {opacity: 0;}
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+/* standard */
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 @keyframes fade-out {
-  0% {opacity: 1;}
-  100% {opacity: 0;}
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 .fade {
-  -webkit-animation-delay: 0s;
-  -webkit-animation-duration: 0.3s;
-  -webkit-animation-timing-function: linear;
-  -webkit-animation-direction: normal;
-  -webkit-animation-fill-mode: both;
-
-  animation-delay: 0s;
-  animation-duration: 0.3s;
-  animation-timing-function: linear;
-  animation-direction: normal;
-  animation-fill-mode: both;
+    -webkit-animation-delay: 0s;
+    -webkit-animation-duration: 0.3s;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-direction: normal;
+    -webkit-animation-fill-mode: both;
+    animation-delay: 0s;
+    animation-duration: 0.3s;
+    animation-timing-function: linear;
+    animation-direction: normal;
+    animation-fill-mode: both;
 }
 
-.fade:not(.out) {
-  -webkit-animation-delay: 0.1s;
-  -webkit-animation-name: fade-in;
-
-  animation-delay: 0.1s;
-  animation-name: fade-in;
+.fade.in {
+    -webkit-animation-delay: 0.1s;
+    -webkit-animation-name: fade-in;
+    animation-delay: 0.1s;
+    animation-name: fade-in;
 }
 
 .fade.out {
-  -webkit-animation-name: fade-out;
-  animation-name: fade-out;
+    -webkit-animation-name: fade-out;
+    animation-name: fade-out;
 }
-
 /*Modification used for backdrop fade, in conjuction with animation on sliding side dialogs.*/
 
 .backdrop.fade.in {
-  -webkit-animation-delay: 0s;
-  animation-delay: 0s;
+    -webkit-animation-delay: 0s;
+    animation-delay: 0s;
 }
 
 .backdrop.fade.out {
-  -webkit-animation-delay: 0.1s;
-  animation-delay: 0.1s;
+    -webkit-animation-delay: 0.1s;
+    animation-delay: 0.1s;
 }
 
+
 /*Animation used for container/dialog sliding in and out of the screen.*/
+/* webkit */
 
 @-webkit-keyframes left-slide-in {
-  0% {left: -100%;}
-  100% {left: 0px;}
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 0px;
+    }
 }
 
 @-webkit-keyframes left-slide-out {
-  0% {left: 0px;}
-  100% {left: -100%;}
+    0% {
+        left: 0px;
+    }
+    100% {
+        left: -100%;
+    }
 }
 
 @-webkit-keyframes right-slide-in {
-  0% {right: -100%;}
-  100% {right: 0px;}
+    0% {
+        right: -100%;
+    }
+    100% {
+        right: 0px;
+    }
 }
 
 @-webkit-keyframes right-slide-out {
-  0% {right: 0px;}
-  100% {right: -100%;}
+    0% {
+        right: 0px;
+    }
+    100% {
+        right: -100%;
+    }
 }
-
+/* standard */
 
 @keyframes left-slide-in {
-  0% {left: -100%;}
-  100% {left: 0px;}
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 0px;
+    }
 }
 
 @keyframes left-slide-out {
-  0% {left: 0px;}
-  100% {left: -100%;}
+    0% {
+        left: 0px;
+    }
+    100% {
+        left: -100%;
+    }
 }
 
 @keyframes right-slide-in {
-  0% {right: -100%;}
-  100% {right: 0px;}
+    0% {
+        right: -100%;
+    }
+    100% {
+        right: 0px;
+    }
 }
 
 @keyframes right-slide-out {
-  0% {right: 0px;}
-  100% {right: -100%;}
+    0% {
+        right: 0px;
+    }
+    100% {
+        right: -100%;
+    }
 }
 
 .slide {
-  -webkit-animation-delay: 0s;
-  -webkit-animation-duration: 0.3s;
-  -webkit-animation-direction: normal;
-  -webkit-animation-fill-mode: both;
-
-  animation-delay: 0s;
-  animation-duration: 0.3s;
-  animation-direction: normal;
-  animation-fill-mode: both;
+    -webkit-animation-delay: 0s;
+    -webkit-animation-duration: 0.3s;
+    -webkit-animation-direction: normal;
+    -webkit-animation-fill-mode: both;
+    animation-delay: 0s;
+    animation-duration: 0.3s;
+    animation-direction: normal;
+    animation-fill-mode: both;
 }
 
-.slide:not(.out) {
-  -webkit-animation-delay: 0.1s;
-  -webkit-animation-timing-function: cubic-bezier(0,0,0.4,1);
+.pop {
+    -webkit-animation-delay: 0s;
+    -webkit-animation-duration: 0.3s;
+    -webkit-animation-direction: normal;
+    -webkit-animation-fill-mode: both;
+    -webkit-animation-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
+    -webkit-transform-origin: center center;
+    animation-delay: 0s;
+    animation-duration: 0.3s;
+    animation-direction: normal;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
+    transform-origin: center center;
+}
 
-  animation-delay: 0.1s;
-  animation-timing-function: cubic-bezier(0,0,0.4,1);
+.slide.in {
+    -webkit-animation-delay: 0.1s;
+    -webkit-animation-timing-function: cubic-bezier(0, 0, 0.4, 1);
+    animation-delay: 0.1s;
+    animation-timing-function: cubic-bezier(0, 0, 0.4, 1);
 }
 
 .slide.out {
-  -webkit-animation-timing-function: cubic-bezier(0.8,0,1,1);
-  animation-timing-function: cubic-bezier(0.8,0,1,1);
+    -webkit-animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
 }
 
-.drawer.slide.left:not(.out) {
-  -webkit-animation-name: left-slide-in;
-  animation-name: left-slide-in;
+.drawer.slide.left.in {
+    -webkit-animation-name: left-slide-in;
+    animation-name: left-slide-in;
 }
 
 .drawer.slide.left.out {
-  -webkit-animation-name: left-slide-out;
-  animation-name: left-slide-out;
+    -webkit-animation-name: left-slide-out;
+    animation-name: left-slide-out;
 }
 
-.drawer.slide.right:not(.out) {
-  -webkit-animation-name: right-slide-in;
-  animation-name: right-slide-in;
+.drawer.slide.right.in {
+    -webkit-animation-name: right-slide-in;
+    animation-name: right-slide-in;
 }
 
 .drawer.slide.right.out {
-  -webkit-animation-name: right-slide-out;
-  animation-name: right-slide-out;
+    -webkit-animation-name: right-slide-out;
+    animation-name: right-slide-out;
+}
+
+.pop.in {
+    -webkit-animation-name: pop-in;
+    animation-name: pop-in;
+}
+
+.pop.out {
+    -webkit-animation-name: pop-out;
+    animation-name: pop-out;
 }

@@ -467,5 +467,37 @@
                 return _.template($templateCache.get(path));
             }
         };
+    }).factory('animationGenerator', function () {
+        var animationGenerator = {
+            prefix: function (thing) {
+                return (/WebKit/.test(navigator.userAgent) ? '-webkit-' : '') + thing;
+            },
+            compile: function (props) {
+                var str = '';
+                angular.forEach(props, function (value, key) {
+                    str += animationGenerator.prefix(key) + ': ' + value + ';' + "\n";
+                });
+                return str;
+            },
+            make: function (name, definition) {
+                var str = '@' + animationGenerator.prefix('keyframes') + ' ' + name + ' {' + "\n";
+
+                str += definition;
+
+                str += "\n" + '}';
+                return str;
+            },
+            single: function (name, codes) {
+                var id = 'temporary-animator',
+                    style = $('#' + id);
+                if (!style.length) {
+                    style = $('<style/>').attr('id', id);
+                    style.appendTo('head');
+                }
+                style.text(animationGenerator.make(name, codes));
+                return style;
+            }
+        };
+        return animationGenerator;
     });
 }());

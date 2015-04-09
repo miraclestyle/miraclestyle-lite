@@ -165,6 +165,7 @@
             var triggeringElement = null;
             var promise = $q.when(true);
             var working = false;
+            var nothing = true;
 
             var isLockedOpenParsed = $parse(attr.mdIsLockedOpen);
             var isLocked = function () {
@@ -228,7 +229,12 @@
              * @param isOpen
              */
             function updateIsOpen(isOpen) {
-                var parent = element.parent();
+                if (nothing) {
+                    nothing = false;
+                    return;
+                }
+                var parent = element.parent(),
+                    promises = [];
                 backdrop[isOpen ? 'on' : 'off']('click', function (ev) {
                     var that = this;
                     $timeout(function () {
@@ -241,24 +247,31 @@
                     triggeringElement = $document[0].activeElement;
                 }
                 element.before(backdrop);
+                var complete = function () {
+                    // If we opened, and haven't closed again before the animation finished
+                    if (scope.isOpen) {
+                        element.focus();
+                    }
+                    working = false;
+                }, backdropComplete = function () {
+                    // If we opened, and haven't closed again before the animation finished
+                    if (!scope.isOpen) {
+                        backdrop.remove();
+                    }
+                };
                 if (isOpen) {
-                    element.removeClass('invisible');
+                    element.removeClass('invisible out');
+                    backdrop.removeClass('out');
+                    promises.push($animate.addClass(backdrop, 'in').then(backdropComplete));
+                    promises.push($animate.addClass(element, 'in').then(complete));
+                } else {
+                    element.removeClass('in');
+                    backdrop.removeClass('in');
+                    promises.push($animate.addClass(backdrop, 'out').then(backdropComplete));
+                    promises.push($animate.addClass(element, 'out').then(complete));
                 }
-                return promise = $q.all([
-                    $animate[isOpen ? 'removeClass' : 'addClass'](backdrop, 'out').then(function () {
-                        // If we opened, and haven't closed again before the animation finished
-                        if (!scope.isOpen) {
-                            backdrop.remove();
-                        }
-                    }),
-                    $animate[isOpen ? 'removeClass' : 'addClass'](element, 'out').then(function () {
-                        // If we opened, and haven't closed again before the animation finished
-                        if (scope.isOpen) {
-                            element.focus();
-                        }
-                        working = false;
-                    })
-                ]);
+                promise = $q.all(promises);
+                return promise;
             }
 
             /**

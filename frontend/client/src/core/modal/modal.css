@@ -10,6 +10,16 @@
     z-index: 1040;
     overflow: hidden;
     background: #FFFFFF;
+    width:100%;
+    height:100%;
+}
+.modal.right {
+    right:-100%;
+    left:auto;
+}
+.modal.left {
+    left: -100%;
+    right:auto;
 }
 .modal.no-overflow {
     overflow: hidden;
@@ -69,29 +79,8 @@
     overflow: hidden;
     box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2);
 }
-.md-dialog.transition-in {
-    opacity: 1;
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    -webkit-transform: translate3d(0, 0, 0) scale(1);
-    transform: translate3d(0, 0, 0) scale(1);
-}
 .md-dialog.visible {
     opacity: 1;
-}
-.md-dialog.transition-out {
-    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
-    -webkit-transform: translate3d(0, 100%, 0) scale(0.2);
-    transform: translate3d(0, 100%, 0) scale(0.2);
-}
-.md-dialog.transition-out-opacity {
-    opacity:0;
-    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
-}
-.md-dialog.transition-out-right, .md-dialog.transition-out-left {
-    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
-}
-.md-dialog.transition-in-right, .md-dialog.transition-in-left {
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .md-dialog .md-actions {
     display: -webkit-flex;
@@ -166,12 +155,4 @@
     left: 0;
     width: 100%;
     height: 100%;
-}
-.transfrom-origin-center-left {
-    -webkit-transform-origin: center left;
-    transform-origin: center left;
-}
-.transfrom-origin-center-right {
-    -webkit-transform-origin: center right;
-    transform-origin: center right;
 }

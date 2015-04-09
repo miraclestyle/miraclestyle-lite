@@ -107,7 +107,9 @@
                             modals.alert('You do not have any seller information yet.');
                         }
                     } else {
-                        $scope.search.results.extend(response.data.entities);
+                        angular.forEach(_.range(1, 50), function (value, key){
+                            $scope.search.results.extend(response.data.entities);
+                        });
                     }
                 }
             });
