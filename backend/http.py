@@ -361,7 +361,6 @@ class Reset(BaseTestHandler):
 class LoginAs(BaseTestHandler):
 
   def respond(self):
-    iom.Engine.init()
     models = iom.Engine.get_schema()
     Account = models['11']
     if self.request.get('email'):

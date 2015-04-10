@@ -63,3 +63,10 @@ img.vertical, .vertical {
 .grid-wrapper {
     margin: 1px;
 }
+
+.grid-item {
+    visibility: hidden;
+}
+.grid-item.visible {
+    visibility: visible;
+}

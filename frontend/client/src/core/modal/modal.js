@@ -190,8 +190,7 @@
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    var clickElement = getClickElement(scope.modalOptions),
-                        promise;
+                    var clickElement = getClickElement(scope.modalOptions);
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
                     scope.size = attrs.size;
                     $timeout(function () {
@@ -245,7 +244,9 @@
                             );
                             cb = function () {
                                 element.addClass('pop in');
-                                clickElement.css('opacity', 0);
+                                $$rAF(function () {
+                                    clickElement.css('opacity', 0); // separate frame for opacity
+                                });
                             };
                         } else if (isFade) {
                             cb = function () {
@@ -253,18 +254,13 @@
                             };
                         }
 
-                        element.on($mdConstant.CSS.ANIMATIONEND, function (e) {
-                            if (e.target === element[0]) {
-                                $(window).triggerHandler('modal.visible');
-                            }
+                        element.oneAnimationEnd(function () {
+                            $(window).triggerHandler('modal.visible');
                         });
 
                         $(window).triggerHandler('modal.open');
 
-                        setTimeout(function () {
-                            $$rAF(cb);
-                        }, 60);
-
+                        $$rAF(cb); // frame for .addClass animation
 
                     }, 50, false);
 
@@ -327,7 +323,7 @@
 
                 //remove window DOM element
                 if (backdropDomEl.hasClass('opaque')) {
-                    backdropDomEl.removeClass('in').addClass('out').one($mdConstant.CSS.ANIMATIONEND, function () {
+                    backdropDomEl.removeClass('in').addClass('out').oneAnimationEnd(function () {
                         backdropDomEl.removeClass('opaque out');
                     });
                 }
@@ -405,15 +401,13 @@
                     domEl.removeClass('in').addClass('out');
                 });
 
-                domEl.on($mdConstant.CSS.ANIMATIONEND, function (e) {
-                    if (e.target === domEl[0]) {
-                        domEl.remove();
-                        if (done) {
-                            done();
-                        }
-                        if (clickElement) {
-                            clickElement.css('opacity', 1);
-                        }
+                domEl.oneAnimationEnd(function (e) {
+                    domEl.remove();
+                    if (done) {
+                        done();
+                    }
+                    if (clickElement) {
+                        clickElement.css('opacity', 1);
                     }
                 });
 

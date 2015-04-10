@@ -57,9 +57,7 @@
 
             $.extend(modals, {
                 howToSort: function ($event) {
-                    return modals.alert('Grab the button to start sorting.', {
-                        targetEvent: $event
-                    });
+                    return modals.alert('Grab the button to start sorting.');
                 },
                 fields: {
                     remote: function (scope, field, config) {
@@ -1317,11 +1315,6 @@
                                             config.ui.specifics.getScope = undefined;
                                         });
                                         angular.forEach(config.ui.specifics.formBuilder, function (field) {
-                                            //field = angular.copy(field); // why copy?
-                                            // @todo if we do not copy the field, then the field specific options will not be included in
-                                            // config tree
-                                            // this problem is presented in buyer settings when trying to select country and region combo
-                                            // the callbacks from previous dialog get referenced into the fields
                                             if (!field.ui.initialRealPath) {
                                                 field.ui.initialRealPath = angular.copy(field.ui.realPath);
                                             } else {

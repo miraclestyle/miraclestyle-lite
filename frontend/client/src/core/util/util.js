@@ -2296,6 +2296,8 @@ function InkRippleService($window, $timeout, $parse) {
     function onPressDown(ev) {
       if (!isRippleAllowed()) return;
 
+      var cls = 'ripple-animation';
+
       if (ignore && ev.target) {
         var target = $(ev.target),
             skip = false;
@@ -2326,13 +2328,7 @@ function InkRippleService($window, $timeout, $parse) {
                           'height': '48px',
                           'width': '48px'};
           ripple.css(worker.style);
-          element.append(ripple);
-          ripple.removeClass('ripple-animation ripple-action');
-          ripple.addClass('ripple-animation ripple-action');
-          $timeout(function() {
-            ripple.removeClass('ripple-animation ripple-action');
-            ripple.remove();
-          }, 400);
+          cls += ' ripple-action';
       } else {
         var parent_width = element.width();
         var parent_height = element.height();
@@ -2349,13 +2345,15 @@ function InkRippleService($window, $timeout, $parse) {
                         'margin-top': margin,
                         'margin-left': margin};
         ripple.css(worker.style);
-        ripple.removeClass('ripple-animation');
-        ripple.addClass('ripple-animation');
-        $timeout(function() {
-          ripple.removeClass('ripple-animation');
-          ripple.remove();
-        }, 600);
       }
+
+    $timeout(function() {
+      ripple.addClass(cls);
+      ripple.oneAnimationEnd(function () {
+        ripple.remove();
+      });
+    }, 0, false);
+
     }
 
     function onPressUp(ev) {

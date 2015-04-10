@@ -58,7 +58,7 @@ class AccountLoginInit(orm.BaseModel):
         context._email = info['email'].lower() # we lowercase the email because datastore data searches are case sensetive
         account = context.model.query(context.model.identities.identity == context._identity_id).get()
         if not account:
-          account = context.model.query(context.model.emails == context._email).get()
+          account = context.model.query(context.model.emails == context._email).get() # @todo remove
         if account:
           account.read()
           context._account = account
@@ -79,7 +79,7 @@ class AccountLoginWrite(orm.BaseModel):
       if entity._is_guest:
         entity = context.model()
         entity.read()
-        entity.emails = [context._email]
+        entity.emails = [context._email] # @todo remove
         entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=True)]
         entity.state = 'active'
         session = entity.new_session()
@@ -90,7 +90,7 @@ class AccountLoginWrite(orm.BaseModel):
         entity.record()
       else:
         if context._email not in entity.emails:
-          entity.emails.append(context._email)
+          entity.emails.append(context._email) # @todo remove
         used_identity = False
         for identity in entity.identities.value:
           if identity.identity == context._identity_id:
@@ -127,7 +127,7 @@ class AccountUpdateSet(orm.BaseModel):
     for identity in context._account.identities.value:
       if disassociate:
         if identity.identity in disassociate:
-          identity.associated = False
+          identity.associated = False # @todo _state = 'deleted'
       else:
         identity.associated = True
       if primary_identity:

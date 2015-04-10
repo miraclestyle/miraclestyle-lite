@@ -26,16 +26,6 @@ md-item-content md-checkbox {
 md-input-container md-checkbox, md-input-container md-switch {
     margin: 0px;
 }
-.button-set button {
-    margin-right: 4px;
-    margin-left: 4px;
-}
-.button-set button:last-child {
-    margin-right: 0px;
-}
-.button-set button:first-child {
-    margin-left: 0px;
-}
 a.sort-handle {
     cursor: move;
     padding: 12px;
@@ -60,12 +50,13 @@ a.sort-handle {
 .about-to-delete .delete-overlay {
     display: block;
 }
-.uploaded-image {
-    padding-top: 16px;
-}
 .uploaded-image img {
     display: block;
 }
 .ui-sortable-helper {
     box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
+}
+
+.image-field md-input-container [ng-message] {
+    position: static;
 }

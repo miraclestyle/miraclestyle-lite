@@ -21,6 +21,7 @@ import util
 import settings
 import mem
 import errors
+import threading
 
 
 class InputError(Exception):
@@ -119,16 +120,18 @@ class Engine:
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
     from models import account, base, buyer, catalog, collection, location, order, seller, unit
     from plugins import account, base, buyer, catalog, location, order, seller, unit
-    
+    util.log.debug('Initialize models...')
+    kinds = []
+    util.log.debug('Kind map %s has classes.' % len(orm.Model._kind_map))
     for model_kind, model in orm.Model._kind_map.iteritems():
       if hasattr(model, 'initialize'):
         if model.initialize.__self__ is model:
           model.initialize()
+          kinds.append(model_kind)
+    util.log.debug('Completed Initializing %s classes.' % len(kinds))
   
   @classmethod
   def get_schema(cls):
-    '''Calls init() and returns model structure as dict.'''
-    cls.init()
     return orm.Model._kind_map
   
   @classmethod
@@ -219,7 +222,6 @@ class Engine:
     context = Context()
     cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
-      cls.init()
       cls.get_models(context)
       cls.get_model(context, input)
       cls.get_action(context, input)
@@ -257,3 +259,6 @@ class Engine:
         ps.print_stats()
         util.log.debug(s.getvalue())
     return context.output
+
+
+Engine.init()

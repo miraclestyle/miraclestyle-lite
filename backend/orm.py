@@ -521,14 +521,13 @@ class _BaseModel(object):
     '''
       Initilization method for model. It must be called by iom upon loading all models into memory
     '''
+    cls._initialized = True
     fields = cls.get_fields()
+    got = []
     for field_key, field in fields.iteritems():
       if hasattr(field, 'initialized') and not field.initialized: # initialize() can only be called once
-        field.initialize()
         field.initialized = True
-    cls._initialized = True
-    if cls._initialized:
-       return False
+        field.initialize()
     return True
   
   def __repr__(self):
@@ -2871,8 +2870,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
                           'filters': {},
                           'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
     util.merge_dicts(self.search, default_search_cfg)
-    if isinstance(self.search, dict):
-      self.search = SuperSearchProperty(**self.search)
+    self.search = SuperSearchProperty(**self.search)
 
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.

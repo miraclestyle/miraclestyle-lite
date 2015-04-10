@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (helpers) {
+        .run(function (helpers, $mdConstant) {
             $.extend(helpers, {
                 closestLargestNumber: function (arr, closestTo) {
 
@@ -37,6 +37,26 @@
                     }
                 }
             });
+
+            var animationEnd = function (which, cb) {
+                return $(this).on($mdConstant.CSS.ANIMATIONEND, function kill(e) {
+                    if (e.target === this) {
+                        cb.call(this, e);
+                        if (which === 'one') {
+                            $(this).off($mdConstant.CSS.ANIMATIONEND, kill);
+                        }
+                    }
+                });
+            };
+
+            $.fn.oneAnimationEnd = function (cb) {
+                return animationEnd.call(this, 'one', cb);
+            };
+
+            $.fn.onAnimationEnd = function (cb) {
+                return animationEnd.call(this, 'on', cb);
+            };
+
         })
         .directive('displayImage', function (GLOBAL_CONFIG) {
             return {

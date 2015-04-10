@@ -488,6 +488,14 @@ body {
     padding: 0px;
 }
 
+.button-set {
+  padding:0px 12px;
+}
+
+.button-set-square {
+    padding:0px 4px;
+}
+
 .unselectable {
     -webkit-touch-callout: none;
     -webkit-user-select: none;

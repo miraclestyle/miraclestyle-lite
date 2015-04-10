@@ -32,14 +32,14 @@
                 jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
                 drag="entity.ui.rule.field._images.pricetags.writable" 
                 class="catalog-pricetag"
-                md-ink-ripple 
                 md-themable
+                md-ink-ripple
+                loading 
+                draggable-click="manageProduct(image, pricetag)"
                 catalog-pricetag-position="pricetag">
                 <div class="catalog-pricetag-wrapper">
                   <div class="catalog-pricetag-dot"></div>
-                  <a class="catalog-pricetag-link button-transparent" 
-                     loading 
-                     draggable-click="manageProduct(image, pricetag)">{{pricetag.value.name}}</a>
+                  <a class="catalog-pricetag-link button-transparent">{{pricetag.value.name}}</a>
                 </div>
            </div>
         </div>

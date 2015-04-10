@@ -14,12 +14,14 @@
                         height = parent.height();
 
                     scope.$apply(function () {
-                        callback(scope, {config: {
-                            position_left: x,
-                            position_top: y,
-                            image_width: width,
-                            image_height: height
-                        }});
+                        callback(scope, {
+                            config: {
+                                position_left: x,
+                                position_top: y,
+                                image_width: width,
+                                image_height: height
+                            }
+                        });
                     });
                 });
             }
@@ -28,28 +30,29 @@
         return {
             link: function (scope, element, attr) {
 
-                var pricetag = scope.$eval(attr.catalogPricetagPosition), resize = function () {
-                    var pa = $(element).parents('.image-slider-item:first'),
-                        sizes;
+                var pricetag = scope.$eval(attr.catalogPricetagPosition),
+                    resize = function () {
+                        var pa = $(element).parents('.image-slider-item:first'),
+                            sizes;
 
-                    sizes = models['31'].calculatePricetagPosition(
-                        pricetag.position_top,
-                        pricetag.position_left,
-                        pricetag.image_width,
-                        pricetag.image_height,
-                        pa.width(),
-                        pa.height()
-                    );
+                        sizes = models['31'].calculatePricetagPosition(
+                            pricetag.position_top,
+                            pricetag.position_left,
+                            pricetag.image_width,
+                            pricetag.image_height,
+                            pa.width(),
+                            pa.height()
+                        );
 
-                    pricetag._position_top = sizes[0];
-                    pricetag._position_left = sizes[1];
+                        pricetag._position_top = sizes[0];
+                        pricetag._position_left = sizes[1];
 
-                    $(element).css({
-                        top: pricetag._position_top,
-                        left: pricetag._position_left,
-                        visibility: 'visible'
-                    });
-                };
+                        $(element).css({
+                            top: pricetag._position_top,
+                            left: pricetag._position_left,
+                            visibility: 'visible'
+                        });
+                    };
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
@@ -140,21 +143,21 @@
                 },
                 viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts, config) {
                     var readArguments = {
-                            _seller: {},
-                            _images: {
+                        _seller: {},
+                        _images: {
+                            config: {
+                                keys: [imageKey]
+                            },
+                            pricetags: {
                                 config: {
-                                    keys: [imageKey]
+                                    keys: [pricetagKey]
                                 },
-                                pricetags: {
-                                    config: {
-                                        keys: [pricetagKey]
-                                    },
-                                    _product: {
-                                        _category: {}
-                                    }
+                                _product: {
+                                    _category: {}
                                 }
                             }
-                        };
+                        }
+                    };
                     config = helpers.alwaysObject(config);
                     this.actions.read({
                         key: catalogKey,
@@ -224,7 +227,9 @@
                                         // 4 rpcs
                                         read_arguments: {
                                             _images: {
-                                                config: {keys: [imageKey]},
+                                                config: {
+                                                    keys: [imageKey]
+                                                },
                                                 pricetags: {
                                                     config: {
                                                         keys: [pricetagKey]
@@ -233,7 +238,11 @@
                                                         _instances: {
                                                             config: {
                                                                 search: {
-                                                                    filters: [{field: 'variant_options', operator: 'ALL_IN', value: buildVariantSignature}]
+                                                                    filters: [{
+                                                                        field: 'variant_options',
+                                                                        operator: 'ALL_IN',
+                                                                        value: buildVariantSignature
+                                                                    }]
                                                                 }
                                                             }
                                                         }
@@ -248,11 +257,13 @@
                             },
                             fakeScope = makeFakeScope();
                         $modal.open({
-                            resolve: {productInstanceResponse: function () {
-                                return fakeScope.changeVariationPromise().then(function (response) {
-                                    return response;
-                                });
-                            }},
+                            resolve: {
+                                productInstanceResponse: function () {
+                                    return fakeScope.changeVariationPromise().then(function (response) {
+                                        return response;
+                                    });
+                                }
+                            },
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
                             targetEvent: config.targetEvent,
@@ -304,9 +315,7 @@
                                         var order = response.data.entity;
                                         if (order.id) {
                                             angular.forEach(order._lines, function (line) {
-                                                if (line.product._reference.parent.id === $scope.product.parent.id
-                                                        && line.product._reference.id === $scope.product.id
-                                                        && JSON.stringify($scope.currentVariation) === JSON.stringify(line.product.variant_signature)) {
+                                                if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && JSON.stringify($scope.currentVariation) === JSON.stringify(line.product.variant_signature)) {
                                                     $scope.productQuantity = parseInt(line.product.quantity, 10);
                                                     if ($scope.productQuantity > 0) {
                                                         $scope.hasThisProduct = true;
@@ -326,10 +335,10 @@
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
-                                                         'description', 'contents', 'availability'];
+                                            'description', 'contents', 'availability'];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
-                                    } catch (ignore) { }
+                                    } catch (ignore) {}
 
                                     if (product) {
                                         productInstance = product._instances[0];
@@ -362,7 +371,7 @@
 
                                 $scope.increaseQuantity = function () {
                                     $scope.disableUpdateCart = false;
-                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) +  1;
+                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) + 1;
                                 };
 
                                 $scope.decreaseQuantity = function () {
@@ -370,7 +379,7 @@
                                         return;
                                     }
                                     $scope.disableUpdateCart = false;
-                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) -  1;
+                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) - 1;
                                 };
 
                                 $scope.addToCart = function () {
@@ -454,7 +463,9 @@
                                 imagesReader = models['31'].reader({
                                     kind: $scope.catalog.kind,
                                     key: $scope.catalog.key,
-                                    next: {_images: $scope.catalog._next_read_arguments._images},
+                                    next: {
+                                        _images: $scope.catalog._next_read_arguments._images
+                                    },
                                     access: accessImages,
                                     complete: function (items) {
                                         $scope.catalog._images.extend(items);
@@ -592,7 +603,7 @@
                                 $scope.actions = {
                                     publish: function () {
                                         modals.confirm('Publish this catalog will make it not editable and visible to the public.' +
-                                                       ' Are you sure you want to do this?',
+                                            ' Are you sure you want to do this?',
                                             function () {
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
@@ -604,7 +615,7 @@
                                     },
                                     discontinue: function () {
                                         modals.confirm('By discontinuing this catalog you will remove it from public, and it will be delted after 40 days.' +
-                                                       ' Are you sure you want to do this?',
+                                            ' Are you sure you want to do this?',
                                             function () {
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
@@ -637,15 +648,9 @@
                                                 };
                                                 var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
                                                 // , state: parentScope.entity.state
-                                                $scope.args = {key: parentScope.entity.key};
-
-                                                /*
-                                                sudoFields.state.ui.placeholder = 'Set state';
-                                                sudoFields.index_state.ui.placeholder = 'Index action';
-                                                sudoFields.message.ui.placeholder = 'Message for the user';
-                                                sudoFields.note.ui.placeholder = 'Note for administrators';
-                                                */
-
+                                                $scope.args = {
+                                                    key: parentScope.entity.key
+                                                };
                                                 $scope.fields = [sudoFields.state, sudoFields.index_state, sudoFields.message, sudoFields.note];
                                                 angular.forEach($scope.fields, function (field) {
                                                     field.ui.writable = true;
@@ -713,10 +718,13 @@
                                                 access: accessImages,
                                                 complete: function (items) {
                                                     $scope.args._images.extend(items);
+                                                    fields._images.ui.specifics.readerSettings = imagesReader;
                                                 }
                                             });
                                             // set next arguments from initially loaded data from root scope
-                                            // imagesReader.state(parentScope.config.ui.specifics.reader);
+                                            if (fields._images.ui.specifics.reader) {
+                                                imagesReader.state(fields._images.ui.specifics.reader);
+                                            }
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
@@ -772,7 +780,9 @@
                                                         newImage = $scope.args._images[index];
                                                         if (angular.isDefined(newImage)) {
                                                             pricetag._state = 'deleted';
-                                                            exists = _.findWhere(newImage.pricetags, {key: pricetag.key});
+                                                            exists = _.findWhere(newImage.pricetags, {
+                                                                key: pricetag.key
+                                                            });
                                                             if (exists) {
                                                                 pricetag = exists;
                                                             }
@@ -1051,7 +1061,9 @@
                                                         },
                                                         sortableOptions: {
                                                             stop: function () {
-                                                                var field = $scope.fieldProduct.modelclass._instances, total, cmp = [], cmp2 = [],
+                                                                var field = $scope.fieldProduct.modelclass._instances,
+                                                                    total, cmp = [],
+                                                                    cmp2 = [],
                                                                     currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
                                                                 if (field.ui.specifics.parentArgs.length) {
                                                                     total = field.ui.specifics.parentArgs[0].sequence;

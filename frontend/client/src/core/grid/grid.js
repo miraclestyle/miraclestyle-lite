@@ -117,7 +117,7 @@
                                 $(this).css({
                                     width: images[i].width,
                                     height: images[i].height
-                                });
+                                }).addClass('visible');
                                 $(this).find('img').css({
                                     height: images[i].height
                                 });
@@ -133,7 +133,7 @@
                 scope.$on('itemOrderChanged', resize);
                 scope.$on('itemOrderSorting', resize);
                 scope.$on('ngRepeatEnd', resize);
- 
+
                 scope.$on('itemDelete', function () {
                     $timeout(resize, 0, false);
                 });
@@ -186,17 +186,19 @@
                                     }
                                 }
 
+                                $(this).addClass('visible');
+
                             });
 
                         }
                     };
 
-                $(window).bind('resize modal.close mainMenu.hide', resize);
+                $(window).bind('resize', resize);
                 scope.$on('ngRepeatEnd', resize);
                 scope.$on('itemDelete', resize);
                 scope.$watch(attrs.gridGeneratorItems + '.length', resize);
                 scope.$on('$destroy', function () {
-                    $(window).off('resize modal.close mainMenu.hide', resize);
+                    $(window).off('resize', resize);
                 });
 
             }
@@ -270,6 +272,9 @@
             require: '^gridScale',
             link: function (scope, element, attrs, gridScaleCtrl) {
                 gridScaleCtrl.add(element);
+                setTimeout(function () {
+                    element.addClass('visible');
+                }, 50);
                 scope.$on('$destroy', function () {
                     gridScaleCtrl.remove(element);
                 });
