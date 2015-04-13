@@ -853,6 +853,7 @@
                                     access: config.access,
                                     more: canLoadMore(config.next),
                                     config: config,
+                                    internal: false,
                                     state: function (config) {
                                         this.next = config.next;
                                         if (angular.isDefined(config.access)) {
@@ -880,13 +881,15 @@
                                         }
                                         var that = this,
                                             next = that.next,
-                                            promise;
+                                            promise,
+                                            oldNext;
 
                                         if (!next) {
                                             next = angular.copy(config.next);
                                         }
 
                                         if (!this.more) {
+                                            oldNext = next;
                                             angular.forEach(fields, function (value, key) {
                                                 if (angular.isUndefined(next[value])) {
                                                     next[value] = {};
@@ -894,6 +897,7 @@
                                                     next = next[value];
                                                 }
                                             });
+                                            next = oldNext;
                                         }
 
                                         this.loading = true;
@@ -923,9 +927,11 @@
                                             that.more = canLoadMore(loadedNext);
 
                                             if (that.more) {
-                                                that.next = response.data.entity._next_read_arguments;
+                                                that.next = loadedNext;
                                             }
-                                            $.extend(config.next, that.next);
+                                            if (!that.internal) {
+                                                $.extend(config.next, loadedNext);
+                                            }
                                         })['finally'](function () {
                                             reader.loading = false;
                                         });

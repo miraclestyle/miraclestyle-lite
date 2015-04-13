@@ -1142,7 +1142,9 @@
                             }
 
                             if (angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload) {
-                                config.ui.specifics.reader.load();
+                                $timeout(function () {
+                                    config.ui.specifics.reader.load();
+                                }, 100, false);
                             }
                         }
 
