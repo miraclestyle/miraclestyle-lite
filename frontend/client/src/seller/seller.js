@@ -859,7 +859,11 @@
                             listView: 'plugin-list-view'
                         }
                     };
+                    fields.name.ui.help = 'Name of the brand, company or store that you own or represent.';
+                    fields.logo.ui.help = 'Click on the right side upload icon to upload logo image of the brand, company, or store that you own or represent.';
+
                     fields.logo.ui.label = 'Select Logo';
+
                     fields.logo.ui.specifics = {
                         displayImageConfig: {
                             size: 240

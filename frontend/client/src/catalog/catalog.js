@@ -687,8 +687,8 @@
                                     // pricetag positioning and product editing...
                                     var parentScope = this;
                                     if (!parentScope.args._images || !parentScope.args._images.length) {
-                                        modals.alert('Add some images first!');
-                                        return false;
+                                       //  modals.alert('Add some images first!');
+                                        // return false;
                                     }
                                     $modal.open({
                                         templateUrl: 'core/models/manage.html',
@@ -718,13 +718,10 @@
                                                 access: accessImages,
                                                 complete: function (items) {
                                                     $scope.args._images.extend(items);
-                                                    fields._images.ui.specifics.readerSettings = imagesReader;
                                                 }
                                             });
-                                            // set next arguments from initially loaded data from root scope
-                                            if (fields._images.ui.specifics.reader) {
-                                                imagesReader.state(fields._images.ui.specifics.reader);
-                                            }
+
+                                            imagesReader.load();
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
@@ -886,11 +883,7 @@
                                                                 config: {
                                                                     keys: [pricetag.key],
                                                                 },
-                                                                _product: {
-                                                                    _instances: {
-                                                                        config: {}
-                                                                    }
-                                                                }
+                                                                _product: {}
                                                             }
                                                         }
                                                     }
@@ -964,6 +957,7 @@
                                                     render: false,
                                                     label: false,
                                                     specifics: {
+                                                        remoteAutoload: false,
                                                         modal: true,
                                                         beforeSave: function (fieldScope) {
                                                             fieldScope.setAction('update');
@@ -1183,19 +1177,13 @@
                         // get current seller
                         models['23'].current().then(function (response) {
                             modelsEditor.create(config).prepare({}, {
-                                seller: response.data.entity.key,
-                                read_arguments: {
-                                    _images: {}
-                                }
+                                seller: response.data.entity.key
                             });
                         });
 
                     } else {
                         modelsEditor.create(config).read(catalog, {
-                            key: catalog.key,
-                            read_arguments: {
-                                _images: {}
-                            }
+                            key: catalog.key
                         });
 
                     }

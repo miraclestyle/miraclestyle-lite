@@ -875,7 +875,7 @@
                                         this.more = canLoadMore(this.next);
                                     },
                                     load: function () {
-                                        if (!this.more || this.loading) {
+                                        if (this.more === false || this.loading) {
                                             return false;
                                         }
                                         var that = this,
@@ -884,6 +884,16 @@
 
                                         if (!next) {
                                             next = angular.copy(config.next);
+                                        }
+
+                                        if (!this.more) {
+                                            angular.forEach(fields, function (value, key) {
+                                                if (angular.isUndefined(next[value])) {
+                                                    next[value] = {};
+                                                } else {
+                                                    next = next[value];
+                                                }
+                                            });
                                         }
 
                                         this.loading = true;
@@ -915,6 +925,7 @@
                                             if (that.more) {
                                                 that.next = response.data.entity._next_read_arguments;
                                             }
+                                            $.extend(config.next, that.next);
                                         })['finally'](function () {
                                             reader.loading = false;
                                         });

@@ -215,18 +215,6 @@
                 }
             };
         }).directive('formBuilder', function ($compile, underscoreTemplate, modelsMeta) {
-            /**
-             * Main builder. It will construct a form based on a list of configuration params:
-             * [
-             * {
-             *    ... field data
-             *
-             *    ui : {... user defined dictionary }
-             * }
-             * ]
-             *
-             */
-
             return {
                 restrict: 'A',
                 require: '^form',
@@ -506,7 +494,6 @@
                             fields.each(function () {
                                 var formElement = ctrl[$(this).attr('name')];
                                 if (formElement && !formElement.$valid) {
-                                    console.log(formElement);
                                     ctrl.$setDirty();
                                     formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
                                     formElement.$setDirty();
@@ -1153,6 +1140,10 @@
                             if (angular.isDefined(config.ui.specifics.readerSettings)) {
                                 config.ui.specifics.reader.state(config.ui.specifics.readerSettings);
                             }
+
+                            if (angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload) {
+                                config.ui.specifics.reader.load();
+                            }
                         }
 
                         if (!config.repeated && config.ui.specifics.modal !== true) {
@@ -1326,22 +1317,25 @@
                                             }
                                             field.ui.realPath.push(field.code_name);
                                             if (field.is_structured && formInputTypes[field.type]) {
-                                                $scope.layouts.groups.push({
-                                                    label: inflector((field.ui.label || field.code_name), 'humanize'),
-                                                    disabled: false,
-                                                    key: field.code_name,
-                                                    open: false
-                                                });
+                                                var group = {
+                                                    label: inflector((field.ui.label || field.code_name), 'humanize')
+                                                }, next;
+                                                if (_.string.contains(field.type, 'Remote')) {
+                                                    group.include = 'core/misc/action.html';
+                                                    group.action = function () {
+                                                        modals.fields.remote($scope, field);
+                                                    };
+                                                }
+                                                $scope.layouts.groups.push(group);
 
                                                 field.ui.label = false;
 
-                                                var next = $scope.layouts.groups.length - 1;
+                                                next = $scope.layouts.groups.length - 1;
 
                                                 if (!angular.isDefined(formBuilder[next])) {
                                                     formBuilder[next] = [];
                                                     formBuilder[next].push(field);
                                                 }
-                                                $scope.layouts.groups[0].disabled = false;
                                             } else {
                                                 formBuilder['0'].push(field);
                                             }
@@ -1362,7 +1356,7 @@
                                                     return false;
                                                 }
                                                 if ($scope.container.form.$dirty) {
-                                                    $scope.rootFormSetDirty();
+                                                    //$scope.rootFormSetDirty();
                                                 }
                                                 var promise,
                                                     prepare = function () {
@@ -1490,7 +1484,7 @@
                                                     config.ui.specifics.afterComplete($scope);
                                                 }
                                                 if ($scope.container.form.$dirty) {
-                                                    $scope.rootFormSetDirty();
+                                                    //$scope.rootFormSetDirty();
                                                 }
                                                 $scope.formSetPristine();
                                             };
@@ -1501,7 +1495,7 @@
                                                     config.ui.specifics.noComplete($scope);
                                                 }
                                                 if ($scope.container.form.$dirty) {
-                                                    $scope.rootFormSetDirty();
+                                                    //$scope.rootFormSetDirty();
                                                 }
                                                 $scope.formSetPristine();
                                             };
@@ -1512,7 +1506,7 @@
                                                     config.ui.specifics.afterCompleteError($scope, response);
                                                 }
                                                 if ($scope.container.form.$dirty) {
-                                                    $scope.rootFormSetDirty();
+                                                    //$scope.rootFormSetDirty();
                                                 }
                                                 $scope.formSetPristine();
                                             };

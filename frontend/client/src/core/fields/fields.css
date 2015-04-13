@@ -60,3 +60,7 @@ a.sort-handle {
 .image-field md-input-container [ng-message] {
     position: static;
 }
+
+[ng-message="help"] {
+    color:rgba(0, 0, 0, 0.26);
+}

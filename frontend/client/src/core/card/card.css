@@ -5,6 +5,7 @@
     display: block;
     margin: 4px 0px;
     padding: 0px;
+    background: white;
 }
 .card-table, .card-table td {
     border-spacing: 0px;
