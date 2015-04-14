@@ -93,7 +93,7 @@
                     models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
 
                         if (!response.data.entity.id) {
-                            modals.alert('No cart available, please add some products to your cart before you can view it');
+                            modals.alert('cartNotFound');
                             return;
                         }
 
@@ -316,7 +316,7 @@
 
                                 $scope.checkout = function () {
                                     if ($scope.order.state !== 'checkout') {
-                                        modals.confirm('Are you sure you want to go to checkout? You will be in able to send messages to seller or cancel this order.', function () {
+                                        modals.confirm('toCheckout', function () {
                                             models['34'].actions.checkout({
                                                 key: $scope.order.key
                                             }).then(function (response) {
@@ -380,7 +380,7 @@
 
                                 $scope.cancel = function () {
                                     if ($scope.order.state === 'checkout') {
-                                        modals.confirm('Are you sure you want to cancel this order?', function () {
+                                        modals.confirm('cancelOrder', function () {
                                             models['34'].actions.cancel({
                                                 key: $scope.order.key
                                             }).then(function (response) {

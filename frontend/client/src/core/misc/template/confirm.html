@@ -1,15 +1,18 @@
 <div fit-in-modal class="modal-confirm no-scroll">
       <div class="modal-body max-height max-width-240">
           <div class="modal-body-inner padding-24">
-              <div ng-if="!config.templateUrl" ng-bind="config.message" class="confirm-message"></div>
-              <div class="alert-message" ng-if="config.templateUrl">
-                 <span ng-include="config.templateUrl"></span>
+              <div ng-if="config.templateUrl" ng-include="config.templateUrl" class="confirm-message"></div>
+              <div ng-if="!config.templateUrl" class="confirm-message">
+                <div ng-if="config.title" class="title padding-bottom-24">{{config.title}}</div>
+                <div ng-repeat="message in config.messages" class="confirmation-message padding-bottom-8">
+                  {{message}}
+                </div>
               </div>
           </div>
        </div>
 
       <div class="md-actions" layout="row"> 
-           <md-button type="button" ng-click="config.dismiss()">{{config.text.cancel || 'Cancel'}}</md-button>
-           <md-button type="button" class="md-primary" ng-click="config.confirm()">{{config.text.confirm || 'Yes'}}</md-button>
+           <md-button ng-if="!config.noSecondary" type="button" ng-click="config.dismiss()">{{config.text.cancel || 'Cancel'}}</md-button>
+           <md-button type="button" class="md-primary" ng-click="config.confirm()">{{config.text.primary || 'Yes'}}</md-button>
       </div>
 </div>

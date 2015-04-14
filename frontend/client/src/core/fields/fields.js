@@ -22,6 +22,23 @@
                 }
             });
             $.extend(helpers.form, {
+                wakeUp: function (form, dirty) {
+                    var happend = false;
+                    angular.forEach(form, function (formElement) {
+                        if (angular.isObject(formElement) && formElement.hasOwnProperty('$valid') && !formElement.$valid) {
+                            formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
+                            formElement.$setDirty();
+                            formElement.$setTouched();
+                            if (dirty) {
+                                form.$setDirty();
+                            }
+
+                            happend = true;
+                        }
+                    });
+
+                    return happend;
+                },
                 setDirty: function () {
                     if (this.container && this.container.form) {
                         this.container.form.$setDirty();
@@ -33,7 +50,9 @@
                     }
                 },
                 validate: function () {
-                    if (!this.container.form.$valid) {
+                    var form = this.container.form;
+                    if (!form.$valid) {
+                        helpers.form.wakeUp(form);
                         this.$broadcast('invalidForm');
                         return false;
                     }
@@ -44,20 +63,14 @@
                     if (form.$pristine) {
                         cb();
                     } else {
-                        modals.confirm({
-                            confirm: cb,
-                            message: 'You have some unsaved changes, discard?',
-                            text: {
-                                ok: 'Discard'
-                            }
-                        });
+                        modals.confirm('discard', cb);
                     }
                 }
             });
 
             $.extend(modals, {
                 howToSort: function ($event) {
-                    return modals.alert('Grab the button to start sorting.');
+                    return modals.alert('howToSort');
                 },
                 fields: {
                     remote: function (scope, field, config) {
@@ -90,7 +103,9 @@
                                 });
 
                                 $scope.$on('$destroy', function () {
-                                    field.ui.specifics.parentArgs.empty();
+                                    if (angular.isArray(field.ui.specifics.parentArgs)) {
+                                        field.ui.specifics.parentArgs.empty();
+                                    }
                                 });
                             }
                         });
@@ -479,7 +494,7 @@
 
                 }
             };
-        }).directive('submitIfFiles', function ($parse) {
+        }).directive('submitIfFiles', function ($parse, helpers) {
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ctrl) {
@@ -491,20 +506,9 @@
                         nativeSubmit = $parse(attrs.submitNative),
                         execute,
                         click = function () {
-                            var fields = form.find('[name]'),
-                                promise,
+                            var promise,
                                 isNative,
-                                thingsHappened;
-                            fields.each(function () {
-                                var formElement = ctrl[$(this).attr('name')];
-                                if (formElement && !formElement.$valid) {
-                                    ctrl.$setDirty();
-                                    formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
-                                    formElement.$setDirty();
-                                    formElement.$setTouched();
-                                    thingsHappened = true;
-                                }
-                            });
+                                thingsHappened = helpers.form.wakeUp(ctrl, true);
                             if (thingsHappened) {
                                 if (!scope.$$phase) {
                                     scope.$apply();
@@ -1051,7 +1055,7 @@
                                     itemScope = ui.item.scope(),
                                     item = itemScope.$eval(ui.item.attr('current-item'));
                                 division = ui.offset.left + helperWidth;
-                                if (division < (helperWidth / 1.5)) {
+                                if (division < (helperWidth / 2)) {
                                     deleteMode = true;
                                 }
                                 if (item) {
@@ -1145,8 +1149,10 @@
                                 config.ui.specifics.reader.state(config.ui.specifics.readerSettings);
                             }
 
-                            if (angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload) {
-                                config.ui.specifics.parentArgs.empty();
+                            if ((angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload) && rootArgs.id) {
+                                if (angular.isArray(config.ui.specifics.parentArgs)) {
+                                    config.ui.specifics.parentArgs.empty();
+                                }
                                 $timeout(function () {
                                     config.ui.specifics.reader.load();
                                 }, 100, false);
@@ -1284,27 +1290,14 @@
                                                         $scope.$close();
                                                     });
                                                 } else {
-                                                    modals.confirm({
-                                                        confirm: $scope.$close,
-                                                        message: 'This data will not be saved because there are some fields required. Discard?',
-                                                        text: {
-                                                            ok: 'Discard'
-                                                        }
-                                                    });
+                                                    modals.confirm('discardWithFieldsRequired', $scope.$close);
                                                 }
                                             };
 
                                             $scope.__close__ = $scope.close;
                                         }
 
-                                        $scope.validateForm = function () {
-                                            if (!$scope.container.form.$valid) {
-                                                $scope.$broadcast('invalidForm');
-                                                return false;
-                                            }
-
-                                            return true;
-                                        };
+                                        $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
                                         $scope.$on('$destroy', function () {
                                             config.ui.specifics.getScope = undefined;

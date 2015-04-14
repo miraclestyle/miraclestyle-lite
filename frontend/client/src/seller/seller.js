@@ -103,11 +103,9 @@
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        if (errors['not_found_' + sellerEntity.key]) {
-                            modals.alert('You do not have any seller information yet.');
-                        }
+                        modals.alert('sellerProfileNotFound');
                     } else {
-                        angular.forEach(_.range(1, 50), function (value, key){
+                        angular.forEach(_.range(1, 50), function (value, key) {
                             $scope.search.results.extend(response.data.entities);
                         });
                     }
@@ -162,9 +160,7 @@
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        if (errors['not_found_' + sellerEntity.key]) {
-                            modals.alert('You do not have any seller information yet.');
-                        }
+                        modals.alert('sellerProfileNotFound');
                     } else {
                         $scope.search.results.extend(response.data.entities);
                     }
@@ -255,13 +251,14 @@
                                     itemScope = ui.item.scope(),
                                     item = itemScope.$eval(ui.item.attr('current-item'));
                                 division = ui.offset.left + helperWidth;
-                                if (division < (helperWidth / 1.5)) {
+                                if (division < (helperWidth / 2)) {
                                     deleteMode = true;
                                 }
                                 if (item) {
                                     if (deleteMode) {
                                         ui.helper.addClass('about-to-delete');
                                         item._state = 'deleted';
+                                        rootFormSetDirty();
                                     } else {
                                         ui.helper.removeClass('about-to-delete');
                                         item._state = null;
@@ -538,13 +535,7 @@
                                                 $scope.$close();
                                             });
                                         } else {
-                                            modals.confirm({
-                                                confirm: $scope.$close,
-                                                message: 'This data will not be saved because there are some fields required. Discard?',
-                                                text: {
-                                                    ok: 'Discard'
-                                                }
-                                            });
+                                            modals.confirm('discardWithFieldsRequired', $scope.$close);
                                         }
                                     };
 
@@ -813,7 +804,6 @@
                                         notify: loadedCollection.notify
                                     }).then(function (newResponse) {
                                         var updatedCollection = newResponse.data.entity;
-                                        //modals.alert('Successfully ' + (removed ? 'removed seller from your' : 'added seller to your') +  ' colleciton.');
                                         $scope.alreadyInCollection = !removed;
                                         // update cache
                                         $.extend(loadedCollection, updatedCollection);

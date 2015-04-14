@@ -66,7 +66,7 @@ function MdSwitch(mdCheckboxDirective, $mdTheming, $mdUtil, $document, $mdConsta
       '<div class="md-container">' +
         '<div class="md-bar"></div>' +
         '<div class="md-thumb-container">' +
-          '<div class="md-thumb" md-ink-ripple md-ink-ripple-checkbox></div>' +
+          '<div class="md-thumb" md-ink-ripple-action></div>' +
         '</div>'+
       '</div>' +
       '<div ng-transclude class="md-label">' +

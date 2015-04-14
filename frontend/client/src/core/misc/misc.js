@@ -953,7 +953,10 @@
                                 if (angular.isObject(message) && message.data) {
                                     try {
                                         var response = angular.fromJson(message.data);
-                                        modals.alert(response.body);
+                                        modals.alert('channelNotifications', {
+                                            title: 'Notification from server',
+                                            messages: [response.body]
+                                        });
                                     } catch (ignore) {}
                                 }
                             }

@@ -442,7 +442,7 @@
                     }).then(function (response) {
                         var entity = response.data.entity;
                         if (!entity._images.length) {
-                            modals.alert('Catalog has no images, add some in order to view it');
+                            modals.alert('noImagesInCatalog');
                             return;
                         }
                         $modal.open({
@@ -602,38 +602,36 @@
 
                                 $scope.actions = {
                                     publish: function () {
-                                        modals.confirm('Publish this catalog will make it not editable and visible to the public.' +
-                                            ' Are you sure you want to do this?',
+                                        modals.confirm('publishCatalog',
                                             function () {
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
-                                                    modals.alert('Catalog published. It will be public in few minutes.');
+                                                    modals.alert('catalogPublished');
                                                     updateState(response.data.entity);
                                                 });
                                             });
                                     },
                                     discontinue: function () {
-                                        modals.confirm('By discontinuing this catalog you will remove it from public, and it will be delted after 40 days.' +
-                                            ' Are you sure you want to do this?',
+                                        modals.confirm('discontinueCatalog',
                                             function () {
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
-                                                    modals.alert('Catalog discontinued successfully.');
+                                                    modals.alert('catalogDiscontinued');
                                                     updateState(response.data.entity);
                                                 });
                                             });
                                     },
                                     duplicate: function () {
-                                        modals.confirm('Are you sure you want to duplicate this catalog?',
+                                        modals.confirm('duplicateCatalog',
                                             function () {
                                                 models['11'].channelNotifications().then(function (response) {
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
                                                     }).then(function (response) {
-                                                        modals.alert('You will be notified when the duplication is done.');
+                                                        modals.alert('duplicationInProgressCatalog');
                                                     });
                                                 });
                                             });
@@ -687,7 +685,7 @@
                                     // pricetag positioning and product editing...
                                     var parentScope = this;
                                     if (!parentScope.args.id) {
-                                        modals.alert('Add some images first!');
+                                        modals.alert('noImagesInCatalog');
                                         return false;
                                     }
                                     $modal.open({
@@ -912,9 +910,7 @@
                                             };
 
                                             $scope.howToDrag = function ($event) {
-                                                modals.alert('Drag the pricetag to desired place to add new pricetag.', {
-                                                    targetEvent: $event
-                                                });
+                                                modals.alert('howToDropPricetag');
                                             };
 
                                             $scope.createProduct = function (image, config) {
@@ -997,7 +993,7 @@
                                                             fieldScope.setAction('update');
                                                         },
                                                         duplicate: function () {
-                                                            modals.confirm('Are you sure you want to duplicate this pricetag?',
+                                                            modals.confirm('duplicateCatalogPricetag',
                                                                 function () {
                                                                     models['11'].channelNotifications().then(function (response) {
                                                                         models['31'].actions.catalog_pricetag_duplicate({
@@ -1016,7 +1012,7 @@
                                                                                 }
                                                                             }
                                                                         }).then(function (response) {
-                                                                            modals.alert('You will be notified when the duplication is done.');
+                                                                            modals.alert('duplicationInProgressCatalogPricetag');
                                                                         });
                                                                     });
                                                                 });
@@ -1083,7 +1079,7 @@
                                                             var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                                 currentArgs = currentFieldScope.args;
                                                             if (!currentArgs.variants.length) {
-                                                                modals.alert('Please create some variants first.');
+                                                                modals.alert('createVariantsFirst');
                                                                 return false;
                                                             }
                                                             this.manage.apply(this, arguments);
@@ -1094,7 +1090,7 @@
                                                                 choices = [],
                                                                 variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
                                                             if (!currentArgs.variants.length) {
-                                                                modals.alert('Please create some variants first.');
+                                                                modals.alert('createVariantsFirst');
                                                                 return false;
                                                             }
 
@@ -1155,7 +1151,6 @@
 
                                 },
                                 layouts: {
-                                    closeOthers: true,
                                     groups: [{
                                         label: false,
                                         fields: ['name', 'discontinue_date'],

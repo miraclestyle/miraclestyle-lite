@@ -77,3 +77,24 @@ span.select-item-multiple {
 li .ui-select-highlight {
     display: inline;
 }
+
+.modal-medium .simple-dialog-option {
+    opacity: 1;
+}
+
+.modal-medium .select-search-input input[type="search"] {
+    padding:24px 24px 17px;
+}
+
+.modal-medium .list-subheader {
+  padding: 4px 24px 12px;
+}
+
+.modal-medium .list-primary-tile {
+    left:12px;
+}
+
+.modal-medium .list-row-has-primary .list-content-tile {
+    padding-left:80px;
+    padding-right:24px;
+}

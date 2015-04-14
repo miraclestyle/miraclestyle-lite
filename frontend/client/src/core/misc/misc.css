@@ -180,6 +180,10 @@ body .mb15 {
     padding-left: 24px;
 }
 
+.padding-bottom-24 {
+    padding-bottom: 24px;
+}
+
 .margin-0 {
     margin: 0px;
 }
@@ -380,21 +384,14 @@ body {
     color: rgba(0, 0, 0, 0.87);
 }
 
-.secondary, .subheader {
-    color: rgba(0, 0, 0, 0.54);
-}
 
-.subhead, .primary, .text {
+.subhead, .primary, .text, .confirmation-message {
     font-size: 16px;
     font-weight: 400;
     line-height: 24px;
     letter-spacing: 0.1px;
     text-align: left;
     color: rgba(0, 0, 0, 0.87);
-}
-
-.text {
-    line-height: 20px;
 }
 
 .title {
@@ -448,6 +445,11 @@ body {
     line-height: 124px;
     letter-spacing: -0.1px;
     text-align: left;
+    color: rgba(0, 0, 0, 0.54);
+}
+
+
+.secondary, .subheader, .confirmation-message {
     color: rgba(0, 0, 0, 0.54);
 }
 

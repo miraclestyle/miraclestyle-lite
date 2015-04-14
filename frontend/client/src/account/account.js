@@ -12,12 +12,10 @@
         } else {
             if (data.errors) {
                 errors = JSON.parse(data.errors);
-                if (errors) {
-                    if (errors.action_denied) {
-                        modals.alert('Action you tried to perform is forbidden for this account.', function () {
-                            $state.go('home');
-                        });
-                    }
+                if (errors && errors.action_denied) {
+                    modals.alert('forbidden', function () {
+                        $state.go('home');
+                    });
                 }
             }
         }
@@ -198,7 +196,7 @@
                 },
                 logout: function (accountKey) {
                     var that = this;
-                    modals.confirm('Are you sure you want to logout?', function () {
+                    modals.confirm('maybeLogout', function () {
                         that.actions.logout({
                             key: accountKey
                         }).then(function (response) {

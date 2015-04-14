@@ -51,8 +51,8 @@
                     complete: function (response) {
                         var errors = response.data.errors;
                         if (errors) {
-                            if (errors['not_found_' + buyerEntity.key]) {
-                                modals.alert('You do not have any buyer information yet.');
+                            if (errors.buyer) {
+                                modals.alert('noBuyer');
                             }
                         } else {
                             $scope.search.results.extend(response.data.entities);

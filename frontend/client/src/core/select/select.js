@@ -2,7 +2,7 @@
     'use strict';
     angular.module('app')
         .directive('selectInput', function ($simpleDialog, $mdTheming,
-            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q) {
+            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
             return {
                 replace: true,
                 transclude: true,
@@ -134,11 +134,9 @@
                     };
                     select.anyUnselected = function () {
                         return true;
-                        return !select.multipleSelection || _.contains(select.multipleSelection, false);
                     };
                     select.anySelected = function () {
                         return true;
-                        return _.some(select.multipleSelection);
                     };
                     select.multipleSelection = {};
                     select.multipleSelect = function (item) {
@@ -147,6 +145,9 @@
                             already = ngModel.$modelValue || [],
                             selected = $.inArray(hash, ngModel.$modelValue) !== -1;
                         select.multipleSelection[hash] = hasIt;
+                        if (select.multiple) {
+                            return;
+                        }
                         if (!angular.isArray(select.item)) {
                             select.item = already;
                         }
@@ -165,6 +166,24 @@
                         formCtrl.$setDirty();
                         ngModelPipelineCheckValue(already);
                     };
+
+                    select.completeMultiSelection = function () {
+                        var selected = [],
+                            founds = [];
+                        angular.forEach(select.items, function (item) {
+                            var hash = select.getHash(item);
+                            if (select.multipleSelection[hash]) {
+                                selected.push(hash);
+                                founds.push(item);
+                            }
+                        });
+                        ngModel.$setViewValue(selected);
+                        formCtrl.$setDirty();
+                        ngModelPipelineCheckValue(selected);
+                        select.item = founds;
+                        select.close();
+                    };
+
 
                     select.collectActive = function () {
                         angular.forEach(select.items, function (item) {
@@ -206,16 +225,28 @@
                         select.multipleSelection = {};
                         select.collectActive();
 
-                        var attachTo = element.parents('.modal:first').find('.modal-dialog:first');
+                        var attachTo = element.parents('.modal:first').find('.modal-dialog:first'),
+                            choices,
+                            root;
 
                         if (!attachTo.length) {
                             attachTo = element.parents('body:first');
                         }
 
-                        $simpleDialog.show({
-                            template: underscoreTemplate.get('core/select/choices.html')({select: select}),
+                        choices = underscoreTemplate.get('core/select/choices.html')({select: select});
+                        root = choices;
+                        if (select.multiple) {
+                            root = underscoreTemplate.get('core/select/multiple.html')().replace('{{content}}', choices);
+                            $event = undefined;
+                        }
+
+                        (select.multiple ? $modal.open : $simpleDialog.show)({
+                            template: root,
                             targetEvent: $event,
                             parent: attachTo,
+                            inDirection: false,
+                            outDirection: false,
+                            fullScreen: false,
                             disableScroll: [element.parents('md-content:first'), element.parents('.fixed-height:first')],
                             onBeforeHide: function (dialogEl, options) {
                                 $(window).off('resize', options.resize);
@@ -370,7 +401,11 @@
                             },
                             controller: function ($scope) {
                                 select.close = function () {
-                                    $simpleDialog.hide();
+                                    if (select.multiple) {
+                                        $scope.$close();
+                                    } else {
+                                        $simpleDialog.hide();
+                                    }
                                 };
                                 $scope.select = select;
                                 $scope.$on('$destroy', function () {

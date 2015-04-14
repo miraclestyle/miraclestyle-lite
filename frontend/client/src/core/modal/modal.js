@@ -689,21 +689,12 @@
     }).factory('modals', function ($modal, $q, helpers, GLOBAL_CONFIG) {
 
         var modals = {
-            alert: function (message, extraConfig) {
-                if (angular.isFunction(extraConfig)) {
-                    extraConfig = {
-                        ok: extraConfig
-                    };
-                }
-                return this.create($.extend({
-                    message: message,
-                    type: 'alert'
-                }, extraConfig));
+            alert: function (key, callbackOrConfig, messageOrConfig) {
+                return modals.confirm(key, callbackOrConfig, messageOrConfig, true);
             },
-            confirm: function (messageOrConfig, callbackOrConfig) {
+            confirm: function (key, callbackOrConfig, messageOrConfig, alert) {
                 var theConfig = {
-                        message: 'Are you sure you want to do this?',
-                        type: 'confirm'
+                        message: key + ' missing config, see core/config/config.js'
                     },
                     config;
 
@@ -722,7 +713,8 @@
                     }
                 }
                 config = helpers.alwaysObject(config);
-                helpers.extendDeep(theConfig, config);
+                helpers.extendDeep(theConfig, config, GLOBAL_CONFIG[!alert ? 'confirmations' : 'alerts'][key]);
+                theConfig.noSecondary = alert;
                 theConfig.confirm = function () {
                     this.dismiss().then(function () {
                         if (angular.isFunction(config.confirm)) {
@@ -734,8 +726,7 @@
             },
             create: function (extraConfig, modalConfig) {
                 var config = {
-                        message: '',
-                        type: 'notice'
+                        message: ''
                     },
                     defaultModalConfig;
                 helpers.extendDeep(config, extraConfig);
@@ -743,8 +734,7 @@
                     fullScreen: false,
                     inDirection: false,
                     outDirection: false,
-                    targetEvent: extraConfig && extraConfig.targetEvent,
-                    templateUrl: 'core/misc/' + config.type + '.html',
+                    templateUrl: 'core/misc/confirm.html',
                     controller: function ($scope) {
                         var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
                         config.dismiss = function () {
@@ -760,6 +750,11 @@
                         if (!angular.isObject(extraConfig)) {
                             extraConfig = {};
                         }
+
+                        if (config.message && !config.messages) {
+                            config.messages = [config.message];
+                        }
+
                         $scope.config = config;
                     }
                 };

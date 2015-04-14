@@ -1,4 +1,6 @@
+<% if (!select.multiple) { %>
 <simple-dialog>
+<% } %>
      <% if (select.search) { %>
      <div class="select-search" ng-form="select.search.form">
        <div class="select-search-input">
@@ -75,4 +77,6 @@
           </ul>
         <% } %>
     </md-content>
+<% if (!select.multiple) { %>
 </simple-dialog>
+<% } %>
