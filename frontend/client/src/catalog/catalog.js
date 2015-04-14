@@ -686,9 +686,9 @@
                                     // this function is completely custom, meaning that the entire workflow defined here is for
                                     // pricetag positioning and product editing...
                                     var parentScope = this;
-                                    if (!parentScope.args._images || !parentScope.args._images.length) {
-                                       //  modals.alert('Add some images first!');
-                                        // return false;
+                                    if (!parentScope.args.id) {
+                                        modals.alert('Add some images first!');
+                                        return false;
                                     }
                                     $modal.open({
                                         templateUrl: 'core/models/manage.html',
@@ -711,10 +711,12 @@
                                             $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                             $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
+                                            $scope.args._images = [];
+
                                             imagesReader = models['31'].reader({
                                                 kind: '31',
                                                 key: $scope.args.key,
-                                                next: $scope.args._next_read_arguments,
+                                                next: {_images: {}},
                                                 access: accessImages,
                                                 complete: function (items) {
                                                     $scope.args._images.extend(items);
@@ -1056,7 +1058,8 @@
                                                         sortableOptions: {
                                                             stop: function () {
                                                                 var field = $scope.fieldProduct.modelclass._instances,
-                                                                    total, cmp = [],
+                                                                    total,
+                                                                    cmp = [],
                                                                     cmp2 = [],
                                                                     currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
                                                                 if (field.ui.specifics.parentArgs.length) {
@@ -1132,13 +1135,13 @@
 
                                             $scope.save = function () {
                                                 var promise;
+                                                $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);
                                                     var newArgs = $scope.rootScope.config.argumentLoader($scope);
                                                     parentScope.args = angular.copy(newArgs);
                                                     $scope.args = angular.copy(newArgs);
-                                                    parentScope.config.ui.specifics.reader.state(imagesReader);
                                                     $scope.formSetPristine();
                                                 });
                                                 return promise;

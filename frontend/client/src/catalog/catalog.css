@@ -2,7 +2,7 @@ div.catalog-pricetag, li.catalog-new-pricetag {
     position: absolute;
     top: 20%;
     left: 20px;
-    z-index: 58;
+    z-index: 55;
     padding: 0px;
     visibility: hidden;
     border-radius: 2px;

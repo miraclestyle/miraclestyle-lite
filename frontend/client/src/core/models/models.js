@@ -3,7 +3,6 @@
     angular.module('app')
         .value('modelsInfo', {})
         .value('currentAccount', {}).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {
-
             var modelsMeta = {},
                 standardize = function (fields) {
                     angular.forEach(fields, function (field, field_key) {
@@ -159,8 +158,6 @@
 
                 return data;
             };
-
-            // expose this to global intentionally, this is used mostly for console debugging @todo remove in production
             if (GLOBAL_CONFIG.debug) {
                 window._modelsMeta = modelsMeta;
             }
@@ -371,13 +368,13 @@
                                     }
 
                                 });
-
                                 if ($scope.entity.key) {
                                     args.key = entityCopy.key;
                                 }
-
+                                if ($scope.entity.id) {
+                                    args.id = entityCopy.id;
+                                }
                                 args.ui = entityCopy.ui;
-
                                 // every entity has _read_arguments when retrieved from database
                                 // argument loader will attach that to its next rpc
                                 // to ensure that entity that has been fetched from database
@@ -570,14 +567,12 @@
                                         if (angular.isDefined(config.afterSaveError)) {
                                             config.afterSaveError($scope, response);
                                         }
-
                                     });
 
                                     return promise;
                                 };
 
                                 $scope.complete = function (response) {
-
                                     $.extend($scope.entity, response.data.entity);
                                     var newArgs = config.argumentLoader($scope);
                                     $.extend($scope.args, newArgs);
@@ -625,24 +620,18 @@
                                 // if no accordions are defined, use the auto accordion builder
                                 if (!angular.isDefined($scope.layouts)) {
                                     $scope.layouts = {
-                                        closeOthers: true,
                                         groups: [{
-                                            label: false,
-                                            disabled: true,
-                                            open: true
+                                            label: false
                                         }]
                                     };
 
                                     angular.forEach(config.fields, function (field) {
                                         if (field.is_structured && formInputTypes[field.type]) {
-
                                             if (!field.ui.initialLabel) {
                                                 field.ui.initialLabel = field.ui.label;
                                             }
                                             $scope.layouts.groups.push({
-                                                label: inflector((field.ui.initialLabel || field.code_name), 'humanize'),
-                                                disabled: false,
-                                                open: false
+                                                label: inflector((field.ui.initialLabel || field.code_name), 'humanize')
                                             });
 
                                             field.ui.label = false;
@@ -660,24 +649,6 @@
                                         }
                                     });
 
-                                    angular.forEach($scope.layouts.groups, function (group, i) {
-                                        if ($scope.formBuilder[i].length) {
-                                            realTotal += 1;
-                                        }
-                                        if (found !== false) {
-                                            return;
-                                        }
-                                        if ($scope.formBuilder[i].length) {
-                                            group.open = true;
-                                            found = group;
-                                        } else {
-                                            group.open = false;
-                                        }
-                                    });
-
-                                    if (realTotal === 1) {
-                                        found.disabled = true;
-                                    }
 
                                 } else {
                                     angular.forEach($scope.layouts.groups, function (group, i) {
@@ -830,6 +801,7 @@
                                     console.error('path must be array, ' + typeof config.access + ' given');
                                     return;
                                 }
+
                                 var fields,
                                     canLoadMore = function (nextReadArguments) {
                                         return helpers.getProperty(nextReadArguments, fields.join('.') + '.config.more');
@@ -842,7 +814,36 @@
                                             }
                                         });
                                     },
-                                    reader;
+                                    reader,
+                                    readArgs,
+                                    readRootArgs;
+
+                                if (angular.isUndefined(config.next)) {
+                                    readArgs = {};
+                                    readRootArgs = config.args;
+                                    config.next = readArgs;
+                                    angular.forEach(config.access, function (part, i) {
+                                        // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
+                                        // properties in datastore that begin with an number, which we do not
+                                        if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
+                                            readArgs[part] = {
+                                                config: {}
+                                            };
+                                            readArgs = readArgs[part];
+                                        }
+                                        // produce read path for the rpc
+                                        readRootArgs = readRootArgs[part];
+                                        if (angular.isUndefined(readRootArgs)) {
+                                            return;
+                                        }
+                                        if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
+                                            if (!angular.isDefined(readArgs.config.keys)) {
+                                                readArgs.config.keys = [];
+                                            }
+                                            readArgs.config.keys.push(readRootArgs.key);
+                                        }
+                                    });
+                                }
 
                                 // fields are now _images, pricetags, _product, _instances
                                 init(config.access);
@@ -853,7 +854,6 @@
                                     access: config.access,
                                     more: canLoadMore(config.next),
                                     config: config,
-                                    internal: false,
                                     state: function (config) {
                                         this.next = config.next;
                                         if (angular.isDefined(config.access)) {
@@ -929,9 +929,6 @@
                                             if (that.more) {
                                                 that.next = loadedNext;
                                             }
-                                            if (!that.internal) {
-                                                $.extend(config.next, loadedNext);
-                                            }
                                         })['finally'](function () {
                                             reader.loading = false;
                                         });
@@ -1005,7 +1002,6 @@
                 models.initialized = true;
             };
 
-            // expose models to window for debugging @todo remove when in production
             if (GLOBAL_CONFIG.debug) {
                 window._models = models;
             }

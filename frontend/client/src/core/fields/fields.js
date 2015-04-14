@@ -88,6 +88,10 @@
                                         $scope.formSetPristine();
                                     }
                                 });
+
+                                $scope.$on('$destroy', function () {
+                                    field.ui.specifics.parentArgs.empty();
+                                });
                             }
                         });
                     }
@@ -1130,7 +1134,7 @@
                             config.ui.specifics.reader = models[rootArgs.action_model].reader({
                                 kind: rootArgs.action_model,
                                 key: rootArgs.key,
-                                next: rootArgs._next_read_arguments,
+                                args: rootArgs,
                                 access: config.ui.realPath,
                                 complete: function (items) {
                                     config.ui.specifics.parentArgs.extend(items);
@@ -1142,6 +1146,7 @@
                             }
 
                             if (angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload) {
+                                config.ui.specifics.parentArgs.empty();
                                 $timeout(function () {
                                     config.ui.specifics.reader.load();
                                 }, 100, false);
@@ -1245,11 +1250,8 @@
                                         }
 
                                         $scope.layouts = {
-                                            closeOthers: true,
                                             groups: [{
-                                                label: false,
-                                                disabled: true,
-                                                open: true
+                                                label: false
                                             }]
                                         };
 
@@ -1357,9 +1359,6 @@
                                                 if (!$scope.validateForm()) { // check if the form is valid
                                                     return false;
                                                 }
-                                                if ($scope.container.form.$dirty) {
-                                                    //$scope.rootFormSetDirty();
-                                                }
                                                 var promise,
                                                     prepare = function () {
                                                         var readArgs = {},
@@ -1393,16 +1392,17 @@
                                                             if (angular.isArray(readRootArgs)) {
                                                                 readRootArgsAsList = readRootArgs;
                                                             } else {
+                                                                if (angular.isDefined(readRootArgsAsList)) {
+                                                                    readRootArgsAsList.empty();
+                                                                    readRootArgsAsList.push(readRootArgs);
+                                                                    readRootArgsAsList = undefined;
+                                                                }
                                                                 if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
                                                                     if (!angular.isDefined(readArgs.config.keys)) {
                                                                         readArgs.config.keys = [];
                                                                     }
                                                                     readArgs.config.keys.push(readRootArgs.key);
-                                                                    if (angular.isDefined(readRootArgsAsList)) {
-                                                                        readRootArgsAsList.splice(0, readRootArgsAsList.length); // empty the list
-                                                                        readRootArgsAsList.push(readRootArgs);
-                                                                        readRootArgsAsList = undefined;
-                                                                    }
+
                                                                 }
                                                             }
                                                         });
@@ -1450,6 +1450,7 @@
                                                     var keepAccess = angular.copy($scope.args.ui.access),
                                                         // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
                                                         value = getResult(response, keepAccess);
+
                                                     $.extend($scope.args, value); // modify current args
                                                     $scope.args.ui.access = keepAccess; // reference back original access path
                                                     if (isNew) {
@@ -1480,13 +1481,11 @@
                                                 $scope.response = response;
                                                 var keepAccess = angular.copy($scope.args.ui.access),
                                                     value = getResult(response, keepAccess);
+
                                                 $.extend($scope.args, value);
                                                 $scope.args.ui.access = keepAccess;
                                                 if (angular.isDefined(config.ui.specifics.afterComplete)) {
                                                     config.ui.specifics.afterComplete($scope);
-                                                }
-                                                if ($scope.container.form.$dirty) {
-                                                    //$scope.rootFormSetDirty();
                                                 }
                                                 $scope.formSetPristine();
                                             };
@@ -1496,9 +1495,6 @@
                                                 if (angular.isDefined(config.ui.specifics.noComplete)) {
                                                     config.ui.specifics.noComplete($scope);
                                                 }
-                                                if ($scope.container.form.$dirty) {
-                                                    //$scope.rootFormSetDirty();
-                                                }
                                                 $scope.formSetPristine();
                                             };
 
@@ -1506,9 +1502,6 @@
                                                 // fired when it failed to send http-form-data rpc
                                                 if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
                                                     config.ui.specifics.afterCompleteError($scope, response);
-                                                }
-                                                if ($scope.container.form.$dirty) {
-                                                    //$scope.rootFormSetDirty();
                                                 }
                                                 $scope.formSetPristine();
                                             };
