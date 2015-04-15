@@ -1,22 +1,21 @@
 <div fit-in-modal>
 
     <form ng-submit="save()" name="container.form">
-
         <div class="modal-body">
-
+        
+            <div class="catalog-closer">
+                <button md-ink-ripple-action loading type="button" class="button-transparent catalog-close-button button-square" ng-click="close()">
+                    <icon color="white" type="navigation.close"></icon>
+                </button>
+            </div>
             <div ng-click="toggleMenu($event)" class="fixed-height relative overflow-x unselectable">
-                <div ng-if="product.images.length" image-slider="product.images" md-ink-ripple-ignore="notRipplable" md-ink-ripple-fit class="image-slider">
+                <div ng-if="product.images.length" image-slider="product.images" md-ink-ripple-ignore="notRipplable" md-ink-ripple-fit ripple-light class="image-slider">
                     <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
                         <img class="not-pointable" slider-image="image" />
                     </div>
                 </div>
                 <div ng-if="!product.images.length">
                     <h1 class="no-things-available">No images available</h1>
-                </div>
-                <div class="catalog-closer">
-                    <button md-ink-ripple-action loading type="button" class="button-transparent catalog-close-button button-square" ng-click="close()">
-                        <icon color="white" type="navigation.close"></icon>
-                    </button>
                 </div>
             </div>
 

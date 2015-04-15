@@ -2315,9 +2315,9 @@ function InkRippleService($window, $timeout, $parse) {
       worker.style = {'top': '0', 'left': '0'};
       var ripple = angular.element('<div class="ripple-active"></div>');
       ripple.css(worker.style);
-      if (element.attr('ripple-dark')) {
+      if (element[0].hasAttribute('ripple-dark')) {
         ripple.addClass('ripple-dark');
-      } else if (element.attr('ripple-light')) {
+      } else if (element[0].hasAttribute('ripple-light')) {
         ripple.addClass('ripple-light');
       }
       element.append(ripple);

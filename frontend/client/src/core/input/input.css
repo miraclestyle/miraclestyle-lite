@@ -148,8 +148,8 @@ md-input-container.md-input-focused label, md-input-container.md-input-no-float 
 }
 
 md-input-container.md-input-focused .md-input, md-input-container .md-input.ng-invalid.ng-dirty {
-    padding-bottom: 6px;
-    border-width: 0 0 2px 0;
+ 
+    border-width: 0 0 1px 0;
 }
 
 md-input-container .md-input[disabled], md-input-container .as-md-input[disabled] {

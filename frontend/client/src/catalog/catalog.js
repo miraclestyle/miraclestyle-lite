@@ -186,6 +186,7 @@
                                         choices: (v.allow_custom_value ? null : v.options),
                                         code_name: 'option_' + i,
                                         ui: {
+                                            help: v.description,
                                             label: v.name,
                                             writable: true,
                                             attrs: {

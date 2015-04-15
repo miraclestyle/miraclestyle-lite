@@ -634,26 +634,10 @@
             $.extend(models['23'], {
                 viewModal: function (seller, removedOrAdded) {
                     $modal.open({
-                        templateUrl: 'core/models/manage.html',
+                        templateUrl: 'seller/view.html',
                         controller: function ($scope, currentAccount) {
                             var cartData;
                             $scope.seller = seller;
-                            $scope.dialog = {
-                                templateBodyUrl: 'seller/view_body.html',
-                                toolbar: {
-                                    templateActionsUrl: 'seller/view_actions.html',
-                                    hideSave: true
-                                }
-                            };
-                            $scope.layouts = {
-                                closeOthers: true,
-                                groups: [{
-                                    label: $scope.seller.name,
-                                    open: true
-                                }, {
-                                    label: 'Feedback'
-                                }]
-                            };
 
                             $scope.alreadyInCollection = false;
                             $scope.loadedCollection = models['18'].current().then(function (response) {

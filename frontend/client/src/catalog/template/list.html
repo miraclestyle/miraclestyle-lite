@@ -1,24 +1,24 @@
 <div class="list list-padding">
     <div class="clearfix button-set list-row list-row-one-line list-content-tile">
-          <div class="pull-right">
+        <div class="pull-right">
             <span class="fieldset-button">
               <md-button class="md-raised" type="button" loading ng-click="create()">Create</md-button>
             </span>
-          </div>
         </div>
+    </div>
 
-        <div autoload-on-vertical-scroll-end="scrollEnd" grid-scale="{square: true}" class="grid-wrapper clearfix">
-            <div ng-repeat="result in search.results track by $index" grid-scale-item class="grid-item grid-generator">
-                <button md-ink-ripple md-no-stretch loading ng-click="manage(result, {targetEvent: $event})" class="button-transparent button-block padding-0">
-                    <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
+    <div autoload-on-vertical-scroll-end="scrollEnd" grid-scale="{square: true}" class="grid-wrapper clearfix">
+        <div ng-repeat="result in search.results track by $index" grid-scale-item class="grid-item grid-generator">
+            <button md-ink-ripple ripple-light loading ng-click="manage(result, {targetEvent: $event})" class="button-transparent button-block padding-0">
+                <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
+            </button>
+            <div class="bottom-right-floating">
+                <button md-ink-ripple-action loading class="button-transparent bottom-right-floating-action button-square" ng-click="preview(result.key, {targetEvent: $event})">
+                    <icon color="white" type="action.view-carousel"></icon>
                 </button>
-                <div class="bottom-right-floating">
-                    <button md-ink-ripple-action loading class="button-transparent bottom-right-floating-action button-square" ng-click="preview(result.key, {targetEvent: $event})">
-                        <icon color="white" type="action.view-carousel"></icon>
-                    </button>
-                </div>
             </div>
         </div>
+    </div>
 
-        <div load-more-button="search.pagination"></div>
+    <div load-more-button="search.pagination"></div>
 </div>

@@ -11,6 +11,10 @@
     clear: both;
 }
 
+.line-height-0 {
+    line-height: 0px;
+}
+
 .center-block {
     display: block;
     margin-right: auto;
@@ -61,7 +65,6 @@
     -o-transition: opacity 0.25s ease;
     transition: opacity 0.25s ease;
 }
-
 
 .collapse {
     display: none;
@@ -145,6 +148,10 @@ body .mb15 {
 .padding-sides-16 {
     padding-right: 16px;
     padding-left: 16px;
+}
+
+.padding-top-8 {
+    padding-top: 8px;
 }
 
 .padding-top-sides-16 {
@@ -384,7 +391,6 @@ body {
     color: rgba(0, 0, 0, 0.87);
 }
 
-
 .subhead, .primary, .text, .confirmation-message {
     font-size: 16px;
     font-weight: 400;
@@ -448,7 +454,6 @@ body {
     color: rgba(0, 0, 0, 0.54);
 }
 
-
 .secondary, .subheader, .confirmation-message {
     color: rgba(0, 0, 0, 0.54);
 }
@@ -491,11 +496,11 @@ body {
 }
 
 .button-set {
-  padding:0px 12px;
+    padding: 0px 12px;
 }
 
 .button-set-square {
-    padding:0px 4px;
+    padding: 0px 4px;
 }
 
 .unselectable {
@@ -584,8 +589,6 @@ body {
     -webkit-animation-delay: 0.1s;
     animation-delay: 0.1s;
 }
-
-
 /*Animation used for container/dialog sliding in and out of the screen.*/
 /* webkit */
 

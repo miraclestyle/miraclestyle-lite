@@ -1,0 +1,54 @@
+<div fit-in-modal>
+
+    <div class="modal-body">
+      <div class="fixed-height relative overflow-y">
+            <div class="catalog-closer">
+                   <button md-ink-ripple-action md-themable loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
+                     <icon color="white" type="navigation.close"></icon>
+                   </button>
+           </div>
+            <div class="modal-body-inner">
+                <div class="list">
+                    <div class="full-logo">
+                        <img class="not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
+                    </div>
+                </div>
+                <div class="list seam-bottom list-padding">
+                    <div class="list-row list-content-tile list-row-avatar">
+                        <span class="display1">{{seller.name}}</span>
+                    </div>
+                    <div class="list-row list-content-tile list-row-avatar">
+                        <div ng-if="chartConfig" resize-chart google-chart chart="chartConfig"></div>
+                        <div ng-if="!chartConfig">
+                            <h1 class="no-things-available">No feedback stats available</h1>
+                        </div>
+                    </div>
+
+                    <div class="list-row list-content-tile list-row-two-lines">
+                        <div class="feedback-stats">
+                            <span class="first">Positive feedback in last 12 months: {{feedbackStats[0]}}%</span>
+                            <span class="second">{{feedbackStats[1]}} positive feedbacks, of {{feedbackStats[2]}} total feedbacks.</span>
+                        </div>
+                    </div>
+                   <div class="list-row list-content-tile button-set">
+                        <md-button ng-click="toggleCollection()" loading type="button" class="md-raised">
+                            <span ng-if="alreadyInCollection">Follow</span>
+                            <span ng-if="!alreadyInCollection">Unfollow</span>
+                        </md-button>
+                    </div>
+                </div>
+                <div class="list seam-bottom list-padding">
+                     <div ng-repeat="content in seller._content.documents track by content.key" class="list-row no-padding">
+                       <list-button ng-click="viewContent(content)">
+                          <strong class="first ellipsis-text">{{content.title}}</strong>
+                       </list-button>
+                    </div>
+                </div>
+
+                <div class="list list-padding">
+                      
+                </div>
+            </div>
+      </div>
+    </div> 
+</div>
