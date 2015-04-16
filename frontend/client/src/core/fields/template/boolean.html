@@ -1,8 +1,19 @@
-<md-input-container>
+<md-input-container class="padding-0">
      <% if (config.ui.specifics.type === 'switch') { %>
-         <md-switch ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
+         <md-switch md-ink-ripple ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
            <%= config.ui.compiled.label %>
          </md-switch>
+     <% } else if (config.ui.specifics.type === 'radio') { %>
+            <md-radio-group class="<%= config.ui.attrs['class'] %> list list-row-has-primary" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
+                <md-radio-button md-ink-ripple class="list-content-tile list-row" ng-value="true" aria-label="{{ config.ui.specifics.trueLabel }}">
+                    {{ config.ui.specifics.trueLabel }}
+                </md-radio-button>
+
+                <md-radio-button class="list-content-tile list-row" ng-value="false" aria-label="{{ config.ui.specifics.falseLabel }}">
+                    {{ config.ui.specifics.falseLabel }}
+                </md-radio-button>
+
+            </md-radio-group>
      <% } else if (config.ui.specifics.type === 'checkbox') { %>
          <md-checkbox ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
            <%= config.ui.compiled.label %>

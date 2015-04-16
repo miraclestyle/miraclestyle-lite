@@ -4,17 +4,28 @@
  * @license MIT
  * v0.7.1
  */
+
 md-content {
-  display: block;
-  position: relative;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch; }
-  md-content[md-scroll-y] {
+    display: block;
+    position: relative;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+md-content[md-scroll-y] {
     overflow-y: auto;
-    overflow-x: hidden; }
-  md-content[md-scroll-x] {
+    overflow-x: hidden;
+}
+
+md-content[md-scroll-x] {
     overflow-x: auto;
-    overflow-y: hidden; }
+    overflow-y: hidden;
+}
 
 .md-padding {
-  padding: 16px; }
+    padding: 16px;
+}
+
+md-content.md-default-theme {
+    background-color: rgb(255, 255, 255);
+}

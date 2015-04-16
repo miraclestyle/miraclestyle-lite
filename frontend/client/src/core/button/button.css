@@ -40,43 +40,54 @@
     transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), -webkit-transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
 .md-button:focus {
     outline: none;
 }
+
 .md-button.ng-hide {
     transition: none;
 }
+
 .md-button.md-cornered {
     border-radius: 0;
 }
+
 .md-button.md-icon {
     padding: 0;
     background: none;
 }
+
 .md-button.md-raised {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
 }
+
 .md-button:not([disabled]).md-raised:focus, .md-button:not([disabled]).md-raised:hover, .md-button:not([disabled]).md-fab:focus, .md-button:not([disabled]).md-fab:hover {
-/*    -webkit-transform: translate3d(0, -1px, 0);
+    /*    -webkit-transform: translate3d(0, -1px, 0);
     transform: translate3d(0, -1px, 0);*/
 }
+
 .md-toast-open-top .md-button.md-fab-top-left, .md-toast-open-top .md-button.md-fab-top-right {
     -webkit-transform: translate3d(0, 42px, 0);
     transform: translate3d(0, 42px, 0);
 }
+
 .md-toast-open-top .md-button.md-fab-top-left:not([disabled]):focus, .md-toast-open-top .md-button.md-fab-top-left:not([disabled]):hover, .md-toast-open-top .md-button.md-fab-top-right:not([disabled]):focus, .md-toast-open-top .md-button.md-fab-top-right:not([disabled]):hover {
     -webkit-transform: translate3d(0, 41px, 0);
     transform: translate3d(0, 41px, 0);
 }
+
 .md-toast-open-bottom .md-button.md-fab-bottom-left, .md-toast-open-bottom .md-button.md-fab-bottom-right {
     -webkit-transform: translate3d(0, -42px, 0);
     transform: translate3d(0, -42px, 0);
 }
+
 .md-toast-open-bottom .md-button.md-fab-bottom-left:not([disabled]):focus, .md-toast-open-bottom .md-button.md-fab-bottom-left:not([disabled]):hover, .md-toast-open-bottom .md-button.md-fab-bottom-right:not([disabled]):focus, .md-toast-open-bottom .md-button.md-fab-bottom-right:not([disabled]):hover {
     -webkit-transform: translate3d(0, -43px, 0);
     transform: translate3d(0, -43px, 0);
 }
+
 .md-button-group {
     display: -webkit-flex;
     display: -ms-flexbox;
@@ -86,6 +97,7 @@
     flex: 1;
     width: 100%;
 }
+
 .md-button-group > .md-button {
     -webkit-flex: 1;
     -ms-flex: 1;
@@ -99,18 +111,22 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .md-button-group > .md-button:first-child {
     border-radius: 2px 0px 0px 2px;
 }
+
 .md-button-group > .md-button:last-child {
     border-right-width: 1px;
     border-radius: 0px 2px 2px 0px;
 }
+
 .md-shadow-bottom-z-1, .md-button.md-raised:not([disabled]), .md-button.md-fab {
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
 }
+
 .md-button.md-raised:not([disabled]) {
-  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
 }
 
 .md-button.md-raised:active {
@@ -139,4 +155,72 @@
     text-decoration: none;
     cursor: pointer;
     overflow: hidden;
+}
+
+.md-button.md-default-theme {
+    border-radius: 2px;
+}
+
+.md-button.md-default-theme:not([disabled]):hover, .md-button.md-default-theme:not([disabled]):focus {}
+
+.md-button.md-default-theme.md-primary {
+    color: rgb(158, 158, 158);
+}
+
+.md-button.md-default-theme.md-primary.md-raised, .md-button.md-default-theme.md-primary.md-fab {
+    color: rgba(0, 0, 0, 0.87);
+    background-color: rgb(158, 158, 158);
+}
+
+.md-button.md-default-theme.md-primary.md-raised:not([disabled]):hover, .md-button.md-default-theme.md-primary.md-raised:not([disabled]):focus, .md-button.md-default-theme.md-primary.md-fab:not([disabled]):hover, .md-button.md-default-theme.md-primary.md-fab:not([disabled]):focus {
+    background-color: rgb(117, 117, 117);
+}
+
+.md-button.md-default-theme.md-raised:not([disabled]):hover, .md-button.md-default-theme.md-raised:not([disabled]):focus {}
+
+.md-button.md-default-theme.md-raised {
+    color: rgba(0, 0, 0, 0.87);
+    background-color: white;
+}
+
+.md-button.md-default-theme[disabled], .md-button.md-default-theme.md-raised[disabled], .md-button.md-default-theme.md-fab[disabled] {
+    color: rgba(0, 0, 0, 0.26);
+    background-color: transparent;
+    cursor: not-allowed;
+}
+
+.md-button.md-default-theme.md-warn {
+    color: rgb(244, 67, 54);
+}
+
+.md-button.md-default-theme.md-warn.md-raised, .md-button.md-default-theme.md-warn.md-fab {
+    color: rgb(255, 255, 255);
+    background-color: rgb(244, 67, 54);
+}
+
+.md-button.md-default-theme.md-warn.md-raised:not([disabled]):hover, .md-button.md-default-theme.md-warn.md-raised:not([disabled]):focus, .md-button.md-default-theme.md-warn.md-fab:not([disabled]):hover, .md-button.md-default-theme.md-warn.md-fab:not([disabled]):focus {
+    background-color: rgb(211, 47, 47);
+}
+
+.md-button.md-default-theme.md-fab {
+    border-radius: 50%;
+    background-color: rgb(176, 190, 197);
+    color: rgba(255, 255, 255, 0.87);
+}
+
+.md-button.md-default-theme.md-fab:not([disabled]):hover, .md-button.md-default-theme.md-fab:not([disabled]):focus {
+    background-color: rgb(69, 90, 100);
+}
+
+.md-button.md-default-theme.md-accent {
+    color: rgb(176, 190, 197);
+}
+
+.md-button.md-default-theme.md-accent.md-raised, .md-button.md-default-theme.md-accent.md-fab {
+    color: rgba(255, 255, 255, 0.87);
+    background-color: rgb(176, 190, 197);
+}
+
+.md-button.md-default-theme.md-accent.md-raised:not([disabled]):hover, .md-button.md-default-theme.md-accent.md-raised:not([disabled]):focus, .md-button.md-default-theme.md-accent.md-fab:not([disabled]):hover, .md-button.md-default-theme.md-accent.md-fab:not([disabled]):focus {
+    background-color: rgb(69, 90, 100);
 }

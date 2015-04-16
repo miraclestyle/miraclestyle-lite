@@ -90,8 +90,8 @@ li .ui-select-highlight {
   padding: 4px 24px 12px;
 }
 
-.modal-medium .list-primary-tile {
-    left:12px;
+.modal-medium .list-primary-tile .avatar-small {
+    padding-left:12px;
 }
 
 .modal-medium .list-row-has-primary .list-content-tile {

@@ -37,8 +37,7 @@ class BuildAngularDynamics(base.Angular):
   def respond(self):
     if settings.DEBUG:
       self.response.headers['Content-Type'] = 'application/x-javascript; charset=utf-8'
-      gets = settings.build(templates=True,  material_css=True, js_and_css=False, statics=False, write=False)
-      self.response.write(gets['default-theme.js'])
+      gets = settings.build(templates=True, js_and_css=False, statics=False, write=False)
       self.response.write(gets['templates.js'])
 
 settings.ROUTES.append((r'/build/angular/index.html', BuildAngularIndexHTML))

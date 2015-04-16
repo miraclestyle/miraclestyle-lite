@@ -3,10 +3,12 @@
     padding: 0;
     list-style: none;
 }
+
 .list-padding {
     padding-top: 8px;
     padding-bottom: 8px;
 }
+
 .list-row-has-separator:after {
     content: '';
     position: absolute;
@@ -16,61 +18,75 @@
     height: 1px;
     border-bottom: 1px solid;
 }
+
 .list-row-is-clickable {
     cursor: pointer;
 }
+
 .list-primary-tile {
     position: absolute;
     left: 0px;
     z-index: 2;
     top: 0px;
 }
+
 .list-content-tile {
     padding-top: 0px;
     padding-bottom: 0px;
     padding-left: 16px;
     padding-right: 16px;
 }
+
 .second {
     display: block;
 }
+
 .second {
     font-size: 14px;
 }
+
 .list-secondary-tile {
     position: absolute;
     right: 16px;
     z-index: 2;
 }
+
 .list-divider {
     height: 1px;
     margin-top: 8px;
     margin-bottom: 8px;
 }
+
 .list-subheader {
     padding: 4px 16px 12px;
 }
+
 .list-subheader--is-pushed {
     margin-left: 56px;
 }
+
 .list-row-is-clickable-and-hoverable {
     cursor: pointer;
 }
+
 .list-row {
     position: relative;
     padding-top: 12px;
     padding-bottom: 12px;
     background: white;
 }
+
 .list-row.no-padding {
     padding: 0px;
 }
+
 .list-inline-block {
     display: inline-block;
     list-style: none;
     margin: 0px;
     padding: 0px;
 }
+
 .first {
     font-size: 16px;
     font-weight: 400;
@@ -79,6 +95,7 @@
     text-align: left;
     display: block;
 }
+
 .second {
     font-size: 14px;
     font-weight: 400;
@@ -87,26 +104,33 @@
     text-align: left;
     display: block;
 }
+
 .list-row-two-lines {
     padding-top: 14px;
     padding-bottom: 14px;
 }
+
 .list-row-has-secondary .list-content-tile {
     padding-right: 72px;
 }
+
 .list-row-has-secondary .list-secondary-tile {
     right: 0px;
     top: 0px;
 }
+
 .list-row-has-primary .list-content-tile {
     padding-left: 72px;
 }
+
 .seam-bottom {
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
+
 .seam-top {
     border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
+
 .list-row-two-lines .list-secondary-tile {
     padding: 12px 4px;
 }
@@ -118,10 +142,36 @@
 .list-row-is-clickable-and-hoverable:hover, .list-row-is-active, .list-row-is-clickable-and-hoverable:focus {
     background-color: #F5F5F5;
 }
+
 .list-row-transparent {
     background: transparent;
 }
+
 .list-row-avatar {
-    padding-top:16px;
-    padding-bottom:16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.list-subheader {
+    color: rgba(0, 0, 0, 0.54);
+}
+
+.second {
+    color: rgba(0, 0, 0, 0.54);
+}
+
+.avatar {
+    padding: 4px 8px 4px 16px;
+}
+
+.avatar-small {
+    padding: 0 4px;
+}
+
+.list-row-three-lines .avatar-small {
+    padding-bottom:40px;
+}
+
+.list-row-two-lines .avatar-small {
+    padding:12px 4px;
 }

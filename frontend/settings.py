@@ -76,53 +76,53 @@ ANGULAR_CSS_PATHS = []
 ANGULAR_JAVASCRIPT_FILES = []
 ANGULAR_JAVASCRIPT_PATHS = []
 ANGULAR_ACTIVE_COMPONENTS = [
-    "core/kernel/boot",
-    "core/kernel",
-    "core/config",
-    "core/backdrop",
-    "core/button",
-    "core/card",
-    "core/checkbox",
-    "core/content",
-    "core/util",
-    "core/divider",
-    "core/input",
-    "core/progressCircular",
-    "core/progressLinear",
-    "core/radioButton",
-    "core/sidenav",
-    "core/simpledialog",
-    "core/list",
-    "core/sticky",
-    "core/subheader",
-    "core/swipe",
-    "core/switch",
-    "core/textField", 
-    "core/toolbar",
-    "core/action", 
-    "core/cache", 
-    "core/datetime", 
-    "core/fields", 
-    "core/grid",
-    "core/misc", 
-    "core/modal", 
-    "core/models", 
-    "core/record", 
-    "core/responsive", 
-    "core/select", 
-    "core/slider", 
-    "core/social", 
-    "core/upload",
-    "account",
-    "buyer", 
-    "catalog", 
-    "collection",
-    "home", 
-    "location", 
-    "order", 
-    "seller",
-    "admin",
-    "core/kernel/init"
+    'core/kernel/boot',
+    'core/kernel',
+    'core/config',
+    'core/backdrop',
+    'core/button',
+    'core/card',
+    'core/checkbox',
+    'core/content',
+    'core/util',
+    'core/divider',
+    'core/input',
+    'core/progressCircular',
+    'core/progressLinear',
+    'core/radioButton',
+    'core/sidenav',
+    'core/simpledialog',
+    'core/list',
+    'core/sticky',
+    'core/subheader',
+    'core/swipe',
+    'core/switch',
+    'core/textField', 
+    'core/toolbar',
+    'core/action', 
+    'core/cache', 
+    'core/datetime', 
+    'core/fields', 
+    'core/grid',
+    'core/misc', 
+    'core/modal', 
+    'core/models', 
+    'core/record', 
+    'core/responsive', 
+    'core/select', 
+    'core/slider', 
+    'core/social', 
+    'core/upload',
+    'account',
+    'buyer', 
+    'catalog', 
+    'collection',
+    'home', 
+    'location', 
+    'order', 
+    'seller',
+    'admin',
+    'core/kernel/init'
 ]
 
 ANGULAR_JAVASCRIPT_PATHS.extend(ANGULAR_VENDOR_JS)
@@ -178,7 +178,7 @@ def _empty_dir(d):
     for d in dirs:
       shutil.rmtree(os.path.join(root, d))
 
-def build(templates=True, statics=True, js_and_css=True, write=False, material_css=True, inform=True):
+def build(templates=True, statics=True, js_and_css=True, write=False, inform=True):
   dist = os.path.join(CLIENT_DIR, 'dist')
   paths = {}
   buff = {}
@@ -192,28 +192,12 @@ def build(templates=True, statics=True, js_and_css=True, write=False, material_c
   for p in ['app.js', 'style.css', 'static', 'templates.js']:
       paths[p] = os.path.join(dist, p)
       buff[p] = u''
-  if material_css:
-    default_theme_js_buff = u''
-    default_theme_js = os.path.join(CLIENT_COMPONENTS_DIR, 'core', 'util', 'default-theme.js')
-    for c in ANGULAR_ACTIVE_COMPONENTS:
-      name = '%s-default-theme.css' % c.split('/')[-1]
-      try:
-        with read(os.path.join(CLIENT_COMPONENTS_DIR, c, name)) as f:
-          default_theme_js_buff += f.read().replace('\n', '').replace('"', '\"')
-        out('Material design css theme: %s' % name)
-      except:
-        pass
-    default_theme_js_buff = u"""angular.module("material.core").constant("$MD_THEME_CSS", "%s");""" % default_theme_js_buff
-    buff['default-theme.js'] = default_theme_js_buff
   if js_and_css:
     for t, b in [('JAVASCRIPT', 'app.js'), ('CSS', 'style.css')]:
         for files in globals().get('ANGULAR_%s_FILES' % t):
             with read(files) as f:
                 buff[b] += f.read()
     if write:
-      if 'default-theme.js' in buff:
-        buff['app.js'] += buff['default-theme.js']
-        del buff['default-theme.js']
       for b, w in buff.iteritems():
           if w:
             out('Writing %s' % paths[b])

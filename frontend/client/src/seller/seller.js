@@ -309,6 +309,15 @@
                                 }
                             },
                             '107': {
+                                exclusion: {
+                                    ui: {
+                                        specifics: {
+                                            type: 'radio',
+                                            trueLabel: 'Applies to all locations except to those listed in the Locations section.',
+                                            falseLabel: 'Applies only to the locations listed in the Locations section.'
+                                        }
+                                    }
+                                },
                                 locations: {
                                     ui: {
                                         specifics: locationSpec
