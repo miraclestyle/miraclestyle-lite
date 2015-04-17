@@ -364,7 +364,7 @@ class LoginAs(BaseTestHandler):
     models = iom.Engine.get_schema()
     Account = models['11']
     if self.request.get('email'):
-      account = Account.query(Account.emails == self.request.get('email')).get()
+      account = Account.query(Account.identities.email == self.request.get('email')).get()
       if account:
         account.read()
         session = account.new_session()

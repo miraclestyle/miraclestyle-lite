@@ -29,6 +29,7 @@ class AccountSession(orm.BaseModel):
   
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, indexed=False)
   session_id = orm.SuperStringProperty('2', required=True, indexed=False)
+  ip_address = orm.SuperStringProperty('3', required=True, indexed=False)
 
 
 class AccountIdentity(orm.BaseModel):
@@ -39,8 +40,7 @@ class AccountIdentity(orm.BaseModel):
   
   identity = orm.SuperStringProperty('1', required=True)  # This property stores provider name joined with ID.
   email = orm.SuperStringProperty('2', required=True)
-  associated = orm.SuperBooleanProperty('3', required=True, default=True) # @todo remove
-  primary = orm.SuperBooleanProperty('4', required=True, default=True)
+  primary = orm.SuperBooleanProperty('3', required=True, default=True)
 
 
 # @todo We need to trigger account_discontinue on catalogs during account suspension!
@@ -53,7 +53,6 @@ class Account(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   identities = orm.SuperStructuredProperty(AccountIdentity, '3', repeated=True)  # Soft limit 100 instances.
-  emails = orm.SuperStringProperty('4', repeated=True)  # Soft limit 100 instances. @todo remove
   state = orm.SuperStringProperty('5', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))  # @todo Not sure what to do here? Shall we disable indexing here?
   sessions = orm.SuperLocalStructuredProperty(AccountSession, '6', repeated=True)  # Soft limit 100 instances.
   
@@ -99,7 +98,7 @@ class Account(orm.BaseExpando):
     orm.Action(
       key=orm.Action.build_key('11', 'login'),
       arguments={
-        'login_method': orm.SuperStringProperty(required=True, choices=settings.LOGIN_METHODS.keys()),
+        'login_method': orm.SuperStringProperty(required=True, choices=[f['type'] for f in settings.LOGIN_METHODS]),
         'code': orm.SuperStringProperty(),
         'error': orm.SuperStringProperty()
         },
@@ -415,6 +414,6 @@ class Account(orm.BaseExpando):
       session_id = hashlib.md5(random_chars(30)).hexdigest()
       if session_id not in session_ids:
         break
-    session = AccountSession(session_id=session_id)
+    session = AccountSession(session_id=session_id, ip_address=self.ip_address)
     account.sessions = [session]
     return session

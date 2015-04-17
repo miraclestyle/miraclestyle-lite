@@ -85,8 +85,8 @@ GOOGLE_OAUTH2 = {
    'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
    'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
    'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : '%s/api/account/login/google' % OAUTH2_REDIRECT_URI,
-   'type' : 1,
+   'redirect_uri' : '%s/api/account/login/1' % OAUTH2_REDIRECT_URI,
+   'type' : '1',
    'accountinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
 
@@ -96,15 +96,23 @@ FACEBOOK_OAUTH2 = {
    'scope'        : ",".join(['email']),
    'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
    'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : '%s/api/account/login/facebook' % OAUTH2_REDIRECT_URI,
-   'type' : 2,
+   'redirect_uri' : '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
+   'type' : '2',
    'accountinfo' : 'https://graph.facebook.com/me',
 }
 
-LOGIN_METHODS = {
-    'google': {'oauth2': GOOGLE_OAUTH2},
-    'facebook': {'oauth2': FACEBOOK_OAUTH2},
+TWITTER_OAUTH2 = {
+   'client_id'    : 'fu60ucDMP0J27e3QlYbFTQ',
+   'client_secret': 'bd9cE1GzBrkpgxqKDD3QGCvm8LHpxcTCeVliXOmoQ20',
+   'scope'        : ",".join(['email']),
+   'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
+   'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
+   'redirect_uri' : '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
+   'type' : '2',
+   'accountinfo' : 'https://graph.facebook.com/me',
 }
+
+LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2]
 
 # Payment Methods
 AVAILABLE_PAYMENT_METHODS = ['paypal']

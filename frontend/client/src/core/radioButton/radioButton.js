@@ -231,7 +231,7 @@
                 '<div class="avatar-small"><div><icon class="button-square" type="toggle.radio-button-on"></icon>' +
                 '<icon class="button-square" type="toggle.radio-button-off"></icon></div>' +
                 '</div></div>' +
-                '<div ng-transclude class="md-label first"></div>',
+                '<div ng-transclude class="md-label"></div>',
             link: link
         };
 

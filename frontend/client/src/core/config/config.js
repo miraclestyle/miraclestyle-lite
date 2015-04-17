@@ -11,12 +11,33 @@
                     primary: 'Discard'
                 }
             },
+            disconnectSignInMethod: {
+                title: 'Disconnect this method?',
+                message: 'If this is the only sign in method connected to your Miraclestyle account, you will permanently lose access to the account and all of it\'s data once this action is completed!',
+                text: {
+                    primary: 'Disconnect'
+                }
+            },
+            connectSignInMethod: {
+                title: 'Connect this method?',
+                message: 'If this sign in method is already connected to another Miraclestyle account you will have to disconnect it before you proceed with this acction!',
+                text: {
+                    primary: 'Connect'
+                }
+            },
             discard: {
                 title: 'Discard unsaved changes?',
                 message: 'There are some unsaved changes on the form you are trying to close. If you discard them, the changes will be lost permanently, and the form will revert to previously saved state.',
                 text: {
                     primary: 'Discard'
                 }
+            },
+            maybeLogout: {
+                title: 'Confirm Logout',
+                message: 'Are you sure you want to logout?',
+                text: {
+                    primary: 'Logout'
+                },
             }
         });
 

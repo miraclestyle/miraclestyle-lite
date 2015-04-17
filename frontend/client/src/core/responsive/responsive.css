@@ -4,6 +4,9 @@
 #is-tablet {
     visibility: hidden;
 }
+#is-desktoplike {
+    visibility: hidden;
+}
 @media screen and (orientation: portrait) {
     /* Portrait styles here */
     
@@ -18,6 +21,16 @@
     
     #is-landscape {
         visibility: visible;
+    }
+}
+
+@media screen and (min-width: 960px) {
+    #is-desktoplike {
+        visibility: visible;
+    }
+
+    .modal-medium .modal-dialog, .max-width-confirmation {
+        min-width: 360px;
     }
 }
 

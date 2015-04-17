@@ -16,14 +16,24 @@ md-radio-button, .md-switch-thumb {
     line-height: 24px;
 }
 
-md-radio-button .md-icon-radio-button-on {
-    display: none;
+md-radio-button .md-icon {
+    opacity: 0;
+    position: absolute;
+    transition-delay: 0s;
+    transition-duration: 0.2s;
+    transition-timing-function: linear;
+    transition-property: opacity;
+    color:rgba(117, 117, 117, 1);
 }
 
-.md-checked .md-icon-radio-button-off {
-    display:none;   
+md-radio-button .md-icon-radio-button-on {
+    opacity:0;
+}
+
+md-radio-button .md-icon-radio-button-off {
+    opacity:1;
 }
 
 .md-checked .md-icon-radio-button-on {
-    display: block;
+    opacity:1;
 }

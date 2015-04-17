@@ -21,20 +21,34 @@
     </ul>
     <div class="list list-padding">
         <div class="list-subheader subheader">Sign In Methods</div>
-        <div ng-repeat="ident in entity.identities" class="list-row no-padding list-row-has-secondary">
-           <list-button class="list-row-two-lines" ng-disabled="ident.identity == args.primary_identity" ng-click="setPrimary(ident)">
-              <strong class="first">{{ident.identity|formatLoginProivider}}</strong>
-              <span class="second">
-                {{ident.email}}<span ng-if="ident.identity == args.primary_identity">, Primary</span>
-              </span>
-           </list-button>
-           <div class="list-secondary-tile">
-              <md-button loading type="button" ng-disabled="!entity.ui.rule.field.identities.writable" class="button" ng-click="disassociate(ident)">
-                    <span ng-show="!isAssociated(ident)">Associate</span>
-                    <span ng-show="isAssociated(ident)">Disassociate</span>
-              </md-button>
-           </div>
-         </div>
+
+         <button 
+              type="button"
+              md-ink-ripple
+              ng-repeat="ident in identities"
+              ng-click="maybeDisconnect(ident)"
+              class="menu-item list-row list-row-has-primary"
+              ng-class="{'list-row-two-lines': ident.email && !ident.primary,
+                         'list-row-three-lines': ident.primary}">
+              <div class="list-content-tile">
+                <div class="list-primary-tile">
+                   <div class="avatar-small">
+                     <div class="button-square">
+                       <icon ng-show="!ident.associated && ident.associated !== undefined" type="toggle.check-box-outline-blank"></icon>
+                       <icon ng-show="ident.associated || ident.associated === undefined" type="toggle.check-box"></icon>
+                     </div>
+                   </div>
+                </div>
+                <strong class="first">{{ident.identity|formatLoginProivider}}</strong>
+                <span ng-if="ident.email" class="second">
+                  {{ident.email}}
+                </span>
+                <span ng-if="ident.primary" class="second">
+                  All notifications are directed to this email.
+                </span>
+              </div>
+         </button>
+
     </div>
     <!-- records -->
  </div>

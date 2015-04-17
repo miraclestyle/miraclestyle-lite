@@ -26,7 +26,7 @@ class AccountLoginInit(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    login_methods = self.cfg.get('methods', {})
+    login_methods = self.cfg.get('methods', [])
     context._account = context.model.current_account()
     context.account = context.model.current_account()
     kwargs = {'account': context.account, 'action': context.action}
@@ -35,12 +35,15 @@ class AccountLoginInit(orm.BaseModel):
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
-    oauth2_cfg = login_methods[login_method]['oauth2']
+    for login in login_methods:
+      if login['type'] == login_method:
+        oauth2_cfg = login
+        break
     client = oauth2.Client(**oauth2_cfg)
     context.output['authorization_url'] = client.get_authorization_code_uri()
     urls = {}
-    for urls_login_method, cfg in login_methods.iteritems():
-      urls_oauth2_cfg = cfg['oauth2']
+    for cfg in login_methods:
+      urls_oauth2_cfg = cfg
       urls_client = oauth2.Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()
     context.output['authorization_urls'] = urls
@@ -57,8 +60,6 @@ class AccountLoginInit(orm.BaseModel):
         context._identity_id = '%s-%s' % (info['id'], identity)
         context._email = info['email'].lower() # we lowercase the email because datastore data searches are case sensetive
         account = context.model.query(context.model.identities.identity == context._identity_id).get()
-        if not account:
-          account = context.model.query(context.model.emails == context._email).get() # @todo remove
         if account:
           account.read()
           context._account = account
@@ -79,7 +80,6 @@ class AccountLoginWrite(orm.BaseModel):
       if entity._is_guest:
         entity = context.model()
         entity.read()
-        entity.emails = [context._email] # @todo remove
         entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=True)]
         entity.state = 'active'
         session = entity.new_session()
@@ -89,18 +89,22 @@ class AccountLoginWrite(orm.BaseModel):
         entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
         entity.record()
       else:
-        if context._email not in entity.emails:
-          entity.emails.append(context._email) # @todo remove
         used_identity = False
         for identity in entity.identities.value:
           if identity.identity == context._identity_id:
-            identity.associated = True
             if identity.email != context._email:
               identity.email = context._email
+            identity.primary = True
             used_identity = True
             break
         if not used_identity:
-          entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=False)]
+          identity = AccountIdentity(identity=context._identity_id, email=context._email, primary=True)
+          entity.identities = [identity]
+        for ident in entity.identities.value:
+          if ident == identity:
+            continue
+          else:
+            ident.primary = False
         session = entity.new_session()
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       context.model.set_current_account(entity, session)
@@ -122,16 +126,18 @@ class AccountLogoutOutput(orm.BaseModel):
 class AccountUpdateSet(orm.BaseModel):
   
   def run(self, context):
-    primary_identity = context.input.get('primary_identity')
+    primary_canceled = False
     disassociate = context.input.get('disassociate')
     for identity in context._account.identities.value:
       if disassociate:
         if identity.identity in disassociate:
-          identity.associated = False # @todo _state = 'deleted'
+          identity._state = 'deleted'
+          if identity.primary:
+            primary_canceled = True
       else:
-        identity.associated = True
-      if primary_identity:
-        identity.primary = False
-        if identity.identity == primary_identity:
+        identity._state = None
+    if primary_canceled:
+      for identity in context._account.identities.value:
+        if identity._state != 'deleted':
           identity.primary = True
-          identity.associated = True
+          break

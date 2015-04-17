@@ -84,11 +84,12 @@ class Client(object):
       if data is not None:
         data = urllib.urlencode(data)
       response = urlfetch.fetch(url=url, payload=data, method=method)
+      print response.content
       if response.status_code == status:
         return json.loads(response.content)
       else:
         raise OAuth2ResourceError(getattr(response, 'content', None))
-    except TypeError, OAuth2ResourceError:
+    except (TypeError, OAuth2ResourceError):
       return None
   
   @property
@@ -113,7 +114,10 @@ class Client(object):
     data = urllib.urlencode(data)
     response = urlfetch.fetch(url=url, payload=data, method=urlfetch.POST, headers={'Content-Type': 'application/x-www-form-urlencoded'})
     if response and response.status_code == 200:
-      return json.loads(response.content)
+      try:
+        return json.loads(response.content)
+      except ValueError as e:
+        return dict(urlparse.parse_qsl(response.content))
     return None
   
   def get_authorization_code_uri(self, **params):
