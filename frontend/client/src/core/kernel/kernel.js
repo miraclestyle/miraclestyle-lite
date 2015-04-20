@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app').factory('errorHandling',
-        function ($modal) {
+        function ($modal, modals) {
             var translations = {
                     action_denied: function (reason) {
                         return 'You do not have permission to perform this action.';
@@ -41,24 +41,19 @@
                         return v;
                     },
                     modal: function (errors) {
-                        $modal.open({
-                            templateUrl: 'core/models/manage.html',
-                            controller: function ($scope) {
-                                $scope.dialog = {
-                                    templateBodyUrl: 'core/misc/errors.html',
-                                    toolbar: {
-                                        title: 'Error',
-                                        hideSave: true
-                                    }
-                                };
-                                $scope.errors = [];
+                        modals.alert(null, {
+                            title: 'Error while performing an action',
+                            templateUrl: 'core/misc/errors.html',
+                            text: {
+                                primary: 'Got it'
+                            },
+                            errors: (function () {
+                                var formatErrors = [];
                                 angular.forEach(errors, function (error, key) {
-                                    $scope.errors.push([key, errorHandling.translate(key, error)]);
+                                    formatErrors.push([key, errorHandling.translate(key, error)]);
                                 });
-                                $scope.close = function () {
-                                    $scope.$close();
-                                };
-                            }
+                                return formatErrors;
+                            }())
                         });
                     }
                 };

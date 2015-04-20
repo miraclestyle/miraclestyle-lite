@@ -2878,7 +2878,8 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
     background: rgba(255, 255, 255, 0.20);
 }
 
-[md-ink-ripple], [md-ink-ripple-action], [md-ink-ripple-fit], [md-ink-ripple-list] {
+.ripple-presence {
   overflow:hidden;
   position:relative;
+  transform: rotate(0.000001deg);
 }

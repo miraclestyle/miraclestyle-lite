@@ -258,7 +258,7 @@
                                     if (deleteMode) {
                                         ui.helper.addClass('about-to-delete');
                                         item._state = 'deleted';
-                                        rootFormSetDirty();
+                                        info.scope.formSetDirty();
                                     } else {
                                         ui.helper.removeClass('about-to-delete');
                                         item._state = null;
@@ -280,7 +280,7 @@
                                         }
                                     });
                                 if (!cmp.equals(cmp2)) {
-                                    rootFormSetDirty();
+                                    info.scope.formSetDirty();
                                 }
                                 info.scope.$broadcast('itemOrderChanged');
                                 info.scope.$apply();

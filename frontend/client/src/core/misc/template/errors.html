@@ -1,9 +1,5 @@
-<div class="padding-16">
-  <h2>Errors occurred while attempting to perform an action</h2>
-  <ul>
-    <li ng-repeat="error in errors">
-      <span ng-if="error[0] !== 'traceback'" ng-bind-html="error[1]"></span>
-      <pre ng-if="error[0] === 'traceback'">{{error[1]}}</pre>
-   </li>
-  </ul>
+<div ng-if="config.title" class="title padding-bottom-24">{{config.title}}</div>
+<div ng-repeat="error in config.errors" class="confirmation-message padding-bottom-8">
+  <span ng-if="error[0] !== 'traceback'" ng-bind-html="error[1]"></span>
+  <pre ng-if="error[0] === 'traceback'">{{error[1]}}</pre>
 </div>

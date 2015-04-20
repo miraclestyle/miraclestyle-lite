@@ -572,7 +572,8 @@
                                                     if (fields._images.ui.specifics.parentArgs.length) {
                                                         var total = fields._images.ui.specifics.parentArgs[0].sequence,
                                                             cmp = [],
-                                                            cmp2 = [];
+                                                            cmp2 = [],
+                                                            scope = fields._images.ui.directiveScope();
                                                         angular.forEach(fields._images.ui.specifics.parentArgs,
                                                             function (ent, i) {
                                                                 i = (total - i);
@@ -583,9 +584,9 @@
                                                             });
 
                                                         if (!cmp.equals(cmp2)) {
-                                                            $scope.formSetDirty();
+                                                            scope.formSetDirty();
                                                         }
-                                                        $scope.$broadcast('itemOrderChanged');
+                                                        scope.$broadcast('itemOrderChanged');
 
                                                     }
                                                 }

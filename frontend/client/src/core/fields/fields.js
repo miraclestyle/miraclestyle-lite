@@ -78,6 +78,8 @@
                             scope: scope,
                             templateUrl: 'core/models/manage.html',
                             controller: function ($scope) {
+                                var save = scope.save,
+                                    complete = scope.complete;
                                 $scope.dialog = {
                                     templateBodyUrl: 'core/models/manage_body_default.html'
                                 };
@@ -101,6 +103,19 @@
                                         $scope.formSetPristine();
                                     }
                                 });
+
+                                $scope.save = function () {
+                                    var maybePromise = save.call(scope);
+                                    if (maybePromise) {
+                                        maybePromise.then($scope.formSetPristine);
+                                    }
+                                    return maybePromise;
+                                };
+
+                                $scope.complete = function (response) {
+                                    complete.call(scope, response);
+                                    $scope.formSetPristine();
+                                };
 
                                 $scope.$on('$destroy', function () {
                                     if (angular.isArray(field.ui.specifics.parentArgs)) {
@@ -662,6 +677,9 @@
                         }
 
                         if (config.choices) {
+                            if (info.config.ui.attrs['repeated-text'] !== undefined) {
+                                delete info.config.ui.attrs['repeated-text'];
+                            }
                             return this._SelectBox(info);
                         }
 
@@ -1062,7 +1080,7 @@
                                     if (deleteMode) {
                                         ui.helper.addClass('about-to-delete');
                                         item._state = 'deleted';
-                                        rootFormSetDirty();
+                                        info.scope.formSetDirty();
                                     } else {
                                         ui.helper.removeClass('about-to-delete');
                                         item._state = null;
@@ -1082,7 +1100,7 @@
                                         ent.ui.access[ent.ui.access.length - 1] = i;
                                     });
                                 if (!cmp.equals(cmp2)) {
-                                    rootFormSetDirty();
+                                    info.scope.formSetDirty();
                                 }
                                 info.scope.$broadcast('itemOrderChanged');
                                 info.scope.$apply();

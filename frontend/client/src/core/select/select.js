@@ -44,9 +44,8 @@
                             select.open();
                         }
                     });
-                    element.on('click focus', function (ev) {
+                    element.on('click', function (ev) {
                         if (!dontOpen) {
-                            //containerCtrl.setFocused(true);
                             select.open();
                         }
                         dontOpen = false;

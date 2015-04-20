@@ -255,14 +255,15 @@
                         }
 
                         element.oneAnimationEnd(function () {
+                            element.addClass('visible');
                             $(window).triggerHandler('modal.visible');
                         });
 
                         $(window).triggerHandler('modal.open');
 
-                        $$rAF(cb); // frame for .addClass animation
+                        $$rAF(cb); // frame for .addClass
 
-                    }, 50, false);
+                    }, 50, false); // execute code after first digest
 
                     scope.close = function (evt) {
                         var modal = $modalStack.getTop(),

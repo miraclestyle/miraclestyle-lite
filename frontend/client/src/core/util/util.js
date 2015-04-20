@@ -2275,6 +2275,8 @@ function InkRippleService($window, $timeout, $parse) {
         break;
     }
 
+    element.addClass('ripple-presence');
+
     // expose onInput for ripple testing
     if (options.mousedown) {
       element.on('$md.pressdown', onPressDown)
@@ -2286,6 +2288,7 @@ function InkRippleService($window, $timeout, $parse) {
     return function detach() {
       element.off('$md.pressdown', onPressDown)
         .off('$md.pressup', onPressUp);
+      element.removeClass('ripple-presence');
     };
 
 
