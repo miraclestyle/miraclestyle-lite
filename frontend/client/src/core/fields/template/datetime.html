@@ -1,6 +1,8 @@
 <md-input-container>
     <label><%= config.ui.compiled.label %></label>
-    <input ng-readonly="true" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
+    <div md-ink-ripple>
+        <input ng-readonly="true" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
+    </div>
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
       <div ng-message="help"><%= config.ui.help %></div>
       <div ng-message="required">The field is required.</div>

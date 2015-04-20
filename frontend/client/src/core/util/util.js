@@ -2324,12 +2324,15 @@ function InkRippleService($window, $timeout, $parse) {
         ripple.addClass('ripple-light');
       }
       element.append(ripple);
- 
-      if (element[0].hasAttribute('md-ink-ripple-action')) {
+      var squared = element[0].hasAttribute('md-ink-ripple-action');
+      if (element[0].hasAttribute('squared')) {
+        squared = true;
+      }
+      if (squared) {
           worker.style = {'top': '0px',
                           'left': '0px',
-                          'height': '48px',
-                          'width': '48px'};
+                          'height': element.outerWidth() + 'px',
+                          'width':  element.outerWidth() + 'px'};
           ripple.css(worker.style);
           cls += ' ripple-action';
       } else {

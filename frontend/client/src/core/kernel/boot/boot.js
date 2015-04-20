@@ -354,6 +354,9 @@ if (!Array.prototype.indexOf) {
             date: {
                 format: 'yyyy-MM-dd HH:mm:ss Z'
             },
+            toolbar: {
+                titles: {}
+            },
             confirmations: {},
             alerts: {},
             defaultImage: 'http://placehold.it/240x100',

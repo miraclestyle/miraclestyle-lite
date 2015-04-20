@@ -51,8 +51,6 @@
                         dontOpen = false;
 
                         ev.preventDefault();
-                        ev.stopImmediatePropagation();
-                        ev.stopPropagation();
                     });
                     element.on('blur', function (ev) {
                         containerCtrl.setFocused(false);
@@ -410,7 +408,7 @@
                                 $scope.$on('$destroy', function () {
                                     select.opened = false;
                                     containerCtrl.setFocused(false);
-                                    dontOpen = true;
+                                    //dontOpen = true;
                                     element.focus();
                                 });
                             }

@@ -54,12 +54,23 @@
                 title: 'Upload Images',
                 message: 'Catalog has no images, add some in order to administer products.'
             },
-            sort: {
+            howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
                            'Remove the item by dragging it outside the left edge of the screen.'],
                 text: {
                     primary: 'Got it'
+                }
+            }
+        });
+
+        $.extend(GLOBAL_CONFIG.toolbar.titles, {
+            buyer: {
+                __self__: 'Buyer',
+                addresses: {
+                    __self__: 'Addresses',
+                    edit: 'Edit Address',
+                    add: 'Add Address'
                 }
             }
         });

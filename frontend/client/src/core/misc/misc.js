@@ -681,10 +681,10 @@
                             field = that.filters[filter[0]];
                             field.required = 'search.indexID != null && search.send.filters.length';
                             field.code_name = 'filter_' + filter[0];
-                            field.ui = {
+                            $.extend(field.ui, {
                                 args: 'search.send.filters[\'' + i + '\'].value',
                                 writable: true
-                            };
+                            });
 
                             if (reset) {
                                 that.send.filters.push({

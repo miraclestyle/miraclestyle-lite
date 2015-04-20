@@ -74,7 +74,7 @@
                     };
                 }
             };
-        }).run(function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
+        }).run(function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint, toolbarTitle) {
 
             modelsConfig(function (models) {
 
@@ -94,7 +94,7 @@
                             addressFields = fields.addresses.modelclass,
                             that = this,
                             config;
-                        fields.addresses.ui = {
+                        $.extend(fields.addresses.ui, {
                             label: false,
                             specifics: {
                                 listView: 'buyer-address-list-view',
@@ -148,7 +148,7 @@
                                 }
 
                             }
-                        };
+                        });
                         /*
                         addressFields.country.ui.placeholder = 'Select address country (e.g., USA). This value is Required!';
                         addressFields.region.ui.placeholder = 'Select address region (e.g., California). This value is Optional!';
@@ -163,6 +163,9 @@
                             fields: [fields.addresses],
                             kind: this.kind,
                             action: 'update',
+                            toolbar: {
+                                title: toolbarTitle.get('buyer.addresses')
+                            },
                             scope: {
                                 layouts: {
                                     groups: [{label: false, fields: ['addresses']}]

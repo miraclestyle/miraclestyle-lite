@@ -1003,6 +1003,10 @@
                                 clickable: true
                             };
 
+                        if (!config.ui.specifics.toolbar) {
+                            config.ui.specifics.toolbar = {};
+                        }
+
                         config.ui.specifics.sortMode = true;
                         defaultFields = defaultFields.sort(helpers.fields.sorter);
 
@@ -1238,6 +1242,11 @@
                                                 }
 
                                                 return value;
+                                            },
+                                            setEditTitle = function () {
+                                                if (angular.isDefined(config.ui.specifics.toolbar.titleEdit)) {
+                                                    config.ui.specifics.toolbar.title = config.ui.specifics.toolbar.titleEdit;
+                                                }
                                             };
 
                                         config.ui.specifics.getScope = function () {
@@ -1264,6 +1273,14 @@
                                             isNew = true;
                                         } else if (!config.ui.specifics.modal && arg.ui) {
                                             length = _.last(arg.ui.access);
+                                        }
+
+                                        if (isNew) {
+                                            if (config.ui.specifics.toolbar.titleAdd) {
+                                                config.ui.specifics.toolbar.title = config.ui.specifics.toolbar.titleAdd;
+                                            }
+                                        } else {
+                                            setEditTitle();
                                         }
 
                                         if (angular.isDefined(arg.ui)) {
@@ -1296,10 +1313,10 @@
                                             });
 
                                         } else {
-                                            config.ui.specifics.toolbar = {
+                                            $.extend(config.ui.specifics.toolbar, {
                                                 leftIcon: 'navigation.arrow-back',
                                                 hideSave: true
-                                            };
+                                            });
                                             $scope.close = function () {
                                                 var save = $scope.save();
                                                 if (save) {
@@ -1478,6 +1495,8 @@
                                                     }
                                                     $scope.formSetPristine();
 
+                                                    setEditTitle();
+
                                                 }, function (response) {
                                                     // here handle error...
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {
@@ -1582,6 +1601,8 @@
                                                 } else {
                                                     complete();
                                                 }
+
+                                                setEditTitle();
 
                                                 return saveCompletePromise;
 

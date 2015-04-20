@@ -409,7 +409,7 @@
 
                         $$rAF(function () {
                             $modal.open({
-                                windowClass: 'modal-medium',
+                                windowClass: 'modal-medium datepicker-pop',
                                 targetEvent: false,
                                 inDirection: false,
                                 outDirection: false,

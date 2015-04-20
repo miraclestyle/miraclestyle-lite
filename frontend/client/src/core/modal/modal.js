@@ -37,78 +37,7 @@
 
         };
 
-    angular.module('app').factory('$transition', ['$q', '$timeout', '$rootScope', function ($q, $timeout, $rootScope) {
-
-        var $transition = function (element, trigger, options) {
-            options = options || {};
-            var deferred = $q.defer(),
-                endEventName = $transition[options.animation ? 'animationEndEventName' : 'transitionEndEventName'],
-
-                transitionEndHandler = function (event) {
-                    $rootScope.$apply(function () {
-                        element.unbind(endEventName, transitionEndHandler);
-                        deferred.resolve(element);
-                    });
-                };
-
-            if (endEventName) {
-                element.bind(endEventName, transitionEndHandler);
-            }
-
-            // Wrap in a timeout to allow the browser time to update the DOM before the transition is to occur
-            $timeout(function () {
-                if (angular.isString(trigger)) {
-                    element.addClass(trigger);
-                } else if (angular.isFunction(trigger)) {
-                    trigger(element);
-                } else if (angular.isObject(trigger)) {
-                    element.css(trigger);
-                }
-                //If browser does not support transitions, instantly resolve
-                if (!endEventName) {
-                    deferred.resolve(element);
-                }
-            });
-
-            // Add our custom cancel function to the promise that is returned
-            // We can call this if we are about to run a new transition, which we know will prevent this transition from ending,
-            // i.e. it will therefore never raise a transitionEnd event for that transition
-            deferred.promise.cancel = function () {
-                if (endEventName) {
-                    element.unbind(endEventName, transitionEndHandler);
-                }
-                deferred.reject('Transition cancelled');
-            };
-
-            return deferred.promise;
-        };
-
-        // Work out the name of the transitionEnd event
-        var transElement = document.createElement('trans'),
-            transitionEndEventNames = {
-                'WebkitTransition': 'webkitTransitionEnd',
-                'MozTransition': 'transitionend',
-                'OTransition': 'oTransitionEnd',
-                'transition': 'transitionend'
-            },
-            animationEndEventNames = {
-                'WebkitTransition': 'webkitAnimationEnd',
-                'MozTransition': 'animationend',
-                'OTransition': 'oAnimationEnd',
-                'transition': 'animationend'
-            };
-
-        function findEndEventName(endEventNames) {
-            for (var name in endEventNames) {
-                if (transElement.style[name] !== undefined) {
-                    return endEventNames[name];
-                }
-            }
-        }
-        $transition.transitionEndEventName = findEndEventName(transitionEndEventNames);
-        $transition.animationEndEventName = findEndEventName(animationEndEventNames);
-        return $transition;
-    }]).factory('$$stackedMap', function () {
+    angular.module('app').factory('$$stackedMap', function () {
         return {
             createNew: function () {
                 var stack = [];
@@ -169,7 +98,6 @@
 
                 scope.animate = false;
 
-                //trigger CSS transitions
                 $timeout(function () {
                     scope.animate = true;
                 });
@@ -192,6 +120,9 @@
                 link: function (scope, element, attrs) {
                     var clickElement = getClickElement(scope.modalOptions);
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
+                    if (attrs.windowClass) {
+                        element.addClass(attrs.windowClass);
+                    }
                     scope.size = attrs.size;
                     $timeout(function () {
                         var where = scope.modalOptions.inDirection,
@@ -199,15 +130,19 @@
                             isFromClick = clickElement,
                             isFade = (!isSlide && !isFromClick),
                             isConfirmation = !scope.modalOptions.fullScreen,
-                            cb;
+                            cb,
+                            modal,
+                            spec,
+                            iwidth,
+                            iheight;
                         if (isSlide) {
                             cb = function () {
                                 element.addClass(where + ' slide drawer visible in');
                             };
                         } else if (isConfirmation) {
-                            var modal = element.find('.modal-dialog'),
-                                iwidth = modal.width(),
-                                iheight = modal.height();
+                            modal = element.find('.modal-dialog');
+                            iwidth = modal.width();
+                            iheight = modal.height();
                             scope.modalOptions.resize = function () {
                                 var wwidth = $(window).width() - 40 * 2,
                                     wheight = $(window).height() - 24 * 2,
@@ -235,13 +170,12 @@
                         }
 
                         if (clickElement) {
-                            var spec = getPositionOverClickElement(clickElement, element);
-                            animationGenerator.single('pop-in', '' + 
+                            spec = getPositionOverClickElement(clickElement, element);
+                            animationGenerator.single('pop-in',
                                 '0% {top: ' + spec.top + 'px; left: ' + spec.left + 'px; transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }' +
                                 '1% { opacity:1; }' +
                                 '75% { top: 0px; left: 0px;}' +
-                                '100% { top: 0px; left: 0px; transform: scale(1, 1);opacity:1;}'
-                            );
+                                '100% { top: 0px; left: 0px; transform: scale(1, 1);opacity:1;}');
                             cb = function () {
                                 element.addClass('pop in');
                                 $$rAF(function () {
@@ -256,10 +190,11 @@
 
                         element.oneAnimationEnd(function () {
                             element.addClass('visible');
-                            $(window).triggerHandler('modal.visible');
+                            $(window).triggerHandler('modal.visible', [element]);
+                            scope.modalOptions.opened = true;
                         });
 
-                        $(window).triggerHandler('modal.open');
+                        $(window).triggerHandler('modal.open', [element]);
 
                         $$rAF(cb); // frame for .addClass
 
@@ -269,7 +204,7 @@
                         var modal = $modalStack.getTop(),
                             defer = $q.defer();
                         defer.resolve();
-                        if (modal && modal.value.backdrop && modal.value.backdrop != 'static' && (evt.target === evt.currentTarget)) {
+                        if (modal && modal.value.backdrop && modal.value.backdrop !== 'static' && (evt.target === evt.currentTarget)) {
                             evt.preventDefault();
                             evt.stopPropagation();
                             return $modalStack.dismiss(modal.key, 'backdrop click');
@@ -288,19 +223,19 @@
                 });
             }
         };
-    }).factory('$modalStack', ['$transition', '$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
+    }).factory('$modalStack', ['$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
         '$mdConstant', '$q', 'animationGenerator', '$animate', '$$rAF',
-        function ($transition, $timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animate, $$rAF) {
+        function ($timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animate, $$rAF) {
 
-            var OPENED_MODAL_CLASS = 'modal-open';
-            var backdropDomEl, backdropScope;
-            var openedWindows = $$stackedMap.createNew();
-            var $modalStack = {};
+            var OPENED_MODAL_CLASS = 'modal-open',
+                openedWindows = $$stackedMap.createNew(),
+                $modalStack = {};
 
             function backdropIndex() {
-                var topBackdropIndex = -1;
-                var opened = openedWindows.keys();
-                for (var i = 0; i < opened.length; i++) {
+                var topBackdropIndex = -1,
+                    opened = openedWindows.keys(),
+                    i;
+                for (i = 0; i < opened.length; i++) {
                     if (openedWindows.get(opened[i]).value.backdrop) {
                         topBackdropIndex = i;
                     }
@@ -308,101 +243,24 @@
                 return topBackdropIndex;
             }
 
-            $rootScope.$watch(backdropIndex, function (newBackdropIndex) {
-                if (backdropScope) {
-                    backdropScope.index = newBackdropIndex;
-                }
-            });
-
-            function removeModalWindow(modalInstance, defer) {
-
-                var body = $document.find('body').eq(0);
-                var modalWindow = openedWindows.get(modalInstance).value;
-
-                //clean up the stack
-                openedWindows.remove(modalInstance);
-
-                //remove window DOM element
-                if (backdropDomEl.hasClass('opaque')) {
-                    backdropDomEl.removeClass('in').addClass('out').oneAnimationEnd(function () {
-                        backdropDomEl.removeClass('opaque out');
-                    });
-                }
-                removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, 300, function () {
-                    modalWindow.modalScope.$destroy();
-                    body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
-                    checkRemoveBackdrop();
-                    $(window).triggerHandler('modal.close');
-                    defer.resolve();
-                });
-            }
-
-            function checkRemoveBackdrop() {
-                //remove backdrop if no longer needed
-                if (backdropDomEl && backdropIndex() == -1) {
-                    var backdropScopeRef = backdropScope;
-                    removeAfterAnimateOld(backdropDomEl, backdropScope, 150, function () {
-                        backdropScopeRef.$destroy();
-                        backdropScopeRef = null;
-                    });
-
-                    backdropDomEl = undefined;
-                    backdropScope = undefined;
-                }
-            }
-
-            function removeAfterAnimateOld(domEl, scope, emulateTime, done) {
-                // Closing animation
-                scope.animate = false;
-
-                var transitionEndEventName = $transition.transitionEndEventName;
-                if (transitionEndEventName) {
-                    // transition out
-                    var timeout = $timeout(afterAnimating, emulateTime);
-
-                    domEl.bind(transitionEndEventName, function () {
-                        $timeout.cancel(timeout);
-                        afterAnimating();
-                        scope.$apply();
-                    });
-                } else {
-                    // Ensure this call is async
-                    $timeout(afterAnimating);
-                }
-
-                function afterAnimating() {
-                    if (afterAnimating.done) {
-                        return;
-                    }
-                    afterAnimating.done = true;
-
-                    domEl.remove();
-                    if (done) {
-                        done();
-                    }
-                }
-            }
-
-            function removeAfterAnimate(domEl, scope, emulateTime, done) {
-                // Closing animation
-
-                var where = scope.modalOptions.inDirection,
-                    clickElement = getClickElement(scope.modalOptions);
+            function removeAfterAnimate(domEl, scope, done) {
+                var clickElement = getClickElement(scope.modalOptions),
+                    spec,
+                    demise;
 
                 if (clickElement) {
-                    var spec = getPositionOverClickElement(clickElement, domEl);
-                    animationGenerator.single('pop-out', '' +
+                    spec = getPositionOverClickElement(clickElement, domEl);
+                    animationGenerator.single('pop-out',
                         '0% { opacity:1;top: 0px; left: 0px; transform: scale(1, 1);}' +
-                        '75% { top: 0px; left: 0px;}' + 
-                        '100% { opacity:1;top: ' + spec.top + 'px; left: ' + spec.left + 'px; transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }'
-                    );
+                        '75% { top: 0px; left: 0px;}' +
+                        '100% { opacity:1;top: ' + spec.top + 'px; left: ' + spec.left + 'px; transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }');
                 }
 
                 $$rAF(function () {
                     domEl.removeClass('in').addClass('out');
                 });
 
-                domEl.oneAnimationEnd(function (e) {
+                demise = function (e) {
                     domEl.remove();
                     if (done) {
                         done();
@@ -410,43 +268,85 @@
                     if (clickElement) {
                         clickElement.css('opacity', 1);
                     }
-                });
 
+                    domEl = undefined;
+                };
+
+                domEl.oneAnimationEnd(demise);
+
+                setTimeout(function () {
+                    if (domEl) {
+                        demise();
+                    }
+                }, 600);
+
+            }
+
+            function removeModalWindow(modalInstance, defer) {
+
+                var body = $document.find('body').eq(0),
+                    modalWindow = openedWindows.get(modalInstance).value,
+                    backdropDomEl = modalWindow.backdropDomEl,
+                    backdropScope = modalWindow.backdropScope;
+
+                //clean up the stack
+                openedWindows.remove(modalInstance);
+
+                //remove window DOM element
+                backdropDomEl.removeClass('in').addClass('out').oneAnimationEnd(function () {
+                    backdropDomEl.remove();
+                    backdropScope.$destroy();
+                    modalWindow.backdropScope = undefined;
+                    modalWindow.backdropDomEl = undefined;
+                });
+                removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
+                    modalWindow.modalScope.$destroy();
+                    body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
+                    $(window).triggerHandler('modal.close');
+                    defer.resolve();
+                });
             }
 
             $modalStack.open = function (modalInstance, modal) {
 
-                openedWindows.add(modalInstance, {
-                    deferred: modal.deferred,
-                    modalScope: modal.scope,
-                    backdrop: modal.backdrop
-                });
+                var backdropDomEl,
+                    backdropScope,
+                    body,
+                    config = {
+                        deferred: modal.deferred,
+                        modalScope: modal.scope,
+                        backdrop: modal.backdrop
+                    },
+                    currBackdropIndex,
+                    angularBackgroundDomEl,
+                    modalDomEl,
+                    angularDomEl;
+
+                openedWindows.add(modalInstance, config);
 
                 modal.scope.modalOptions = {
                     inDirection: modal.inDirection,
                     outDirection: modal.outDirection,
                     targetEvent: modal.targetEvent,
                     fullScreen: modal.fullScreen,
-                    transformOrigin: modal.transformOrigin
+                    transformOrigin: modal.transformOrigin,
+                    opened: false
                 };
 
-                var body = $document.find('body').eq(0),
-                    currBackdropIndex = backdropIndex();
+                body = $document.find('body').eq(0);
+                currBackdropIndex = backdropIndex();
 
-                if (currBackdropIndex >= 0 && !backdropDomEl) {
-                    backdropScope = $rootScope.$new(true);
-                    backdropScope.index = currBackdropIndex;
-                    var angularBackgroundDomEl = angular.element('<div modal-backdrop></div>');
-                    angularBackgroundDomEl.attr('backdrop-class', modal.backdropClass);
-                    backdropDomEl = $compile(angularBackgroundDomEl)(backdropScope);
-                    body.append(backdropDomEl);
-                }
+                backdropScope = $rootScope.$new(true);
+                backdropScope.index = currBackdropIndex;
+                angularBackgroundDomEl = angular.element('<div class="opaque" modal-backdrop></div>');
+                angularBackgroundDomEl.attr('backdrop-class', modal.backdropClass);
+                backdropDomEl = $compile(angularBackgroundDomEl)(backdropScope);
+                body.append(backdropDomEl);
 
-                if (!modal.fullScreen) {
-                    backdropDomEl.addClass('opaque in');
-                }
+                config.backdropDomEl = backdropDomEl;
+                config.backdropScope = backdropScope;
 
-                var angularDomEl = angular.element('<div modal-window></div>');
+                angularDomEl = angular.element('<div modal-window></div>');
 
                 angularDomEl.attr({
                     'template-url': modal.windowTemplateUrl,
@@ -458,7 +358,7 @@
                     exiting: 'exiting'
                 }).html(modal.content);
 
-                var modalDomEl = $compile(angularDomEl)(modal.scope);
+                modalDomEl = $compile(angularDomEl)(modal.scope);
                 openedWindows.top().value.modalDomEl = modalDomEl;
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
@@ -468,7 +368,6 @@
                     if (e) {
                         e.preventDefault();
                     }
-
                     if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope.__close__) {
                         return modalWindow.value.modalScope.__close__();
                     }
@@ -522,10 +421,7 @@
             };
 
             return $modalStack;
-        }
-    ])
-
-    .provider('$modal', function () {
+        }]).provider('$modal', function () {
 
         var $modalProvider = {
             options: {
@@ -597,7 +493,6 @@
                             var ctrlInstance, ctrlLocals = {};
                             var resolveIter = 1;
 
-                            //controllers
                             if (modalOptions.controller) {
                                 ctrlLocals.$scope = modalScope;
                                 ctrlLocals.$modalInstance = modalInstance;

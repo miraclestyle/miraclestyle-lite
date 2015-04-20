@@ -32,6 +32,10 @@
     .modal-medium .modal-dialog, .max-width-confirmation {
         min-width: 360px;
     }
+
+    .modal-medium.datepicker-pop .modal-dialog {
+        min-width: 240px;
+    }
 }
 
 @media screen and (max-width: 1024px) {

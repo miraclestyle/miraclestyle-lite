@@ -74,7 +74,7 @@
                 };
             }
         };
-    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, $timeout) {
+    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, toolbarTitle, $timeout) {
 
         modelsConfig(function (models) {
             var toggleMenu = function ($scope, id) {
@@ -336,7 +336,8 @@
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
-                                            'description', 'contents', 'availability'];
+                                            'description', 'contents', 'availability'
+                                        ];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
                                     } catch (ignore) {}
@@ -562,33 +563,31 @@
                             afterCompleteError: afterComplete,
                             init: function ($scope) {
 
-                                $.extend(fields._images, {
-                                    ui: {
-                                        label: false,
-                                        specifics: {
-                                            addNewText: 'Select Images',
-                                            sortableOptions: {
-                                                stop: function () {
-                                                    if (fields._images.ui.specifics.parentArgs.length) {
-                                                        var total = fields._images.ui.specifics.parentArgs[0].sequence,
-                                                            cmp = [],
-                                                            cmp2 = [],
-                                                            scope = fields._images.ui.directiveScope();
-                                                        angular.forEach(fields._images.ui.specifics.parentArgs,
-                                                            function (ent, i) {
-                                                                i = (total - i);
-                                                                cmp.push(ent.sequence);
-                                                                cmp2.push(i);
-                                                                ent.sequence = i;
-                                                                ent.ui.access[ent.ui.access.length - 1] = i;
-                                                            });
+                                $.extend(fields._images.ui, {
+                                    label: false,
+                                    specifics: {
+                                        addNewText: 'Select Images',
+                                        sortableOptions: {
+                                            stop: function () {
+                                                if (fields._images.ui.specifics.parentArgs.length) {
+                                                    var total = fields._images.ui.specifics.parentArgs[0].sequence,
+                                                        cmp = [],
+                                                        cmp2 = [],
+                                                        scope = fields._images.ui.directiveScope();
+                                                    angular.forEach(fields._images.ui.specifics.parentArgs,
+                                                        function (ent, i) {
+                                                            i = (total - i);
+                                                            cmp.push(ent.sequence);
+                                                            cmp2.push(i);
+                                                            ent.sequence = i;
+                                                            ent.ui.access[ent.ui.access.length - 1] = i;
+                                                        });
 
-                                                        if (!cmp.equals(cmp2)) {
-                                                            scope.formSetDirty();
-                                                        }
-                                                        scope.$broadcast('itemOrderChanged');
-
+                                                    if (!cmp.equals(cmp2)) {
+                                                        scope.formSetDirty();
                                                     }
+                                                    scope.$broadcast('itemOrderChanged');
+
                                                 }
                                             }
                                         }
@@ -680,11 +679,9 @@
                                 };
                             },
                             noComplete: noComplete,
-                            scope: { // scope for this modal dialog
+                            scope: {
                                 historyConfig: true,
                                 addProducts: function () {
-                                    // this function is completely custom, meaning that the entire workflow defined here is for
-                                    // pricetag positioning and product editing...
                                     var parentScope = this;
                                     if (!parentScope.args.id) {
                                         modals.alert('noImagesInCatalog');
@@ -716,7 +713,9 @@
                                             imagesReader = models['31'].reader({
                                                 kind: '31',
                                                 key: $scope.args.key,
-                                                next: {_images: {}},
+                                                next: {
+                                                    _images: {}
+                                                },
                                                 access: accessImages,
                                                 complete: function (items) {
                                                     $scope.args._images.extend(items);
@@ -897,7 +896,6 @@
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     $scope.fieldProduct.ui.specifics.toolbar = {
-                                                        title: 'Manage Product',
                                                         templateActionsUrl: 'catalog/product/manage_actions.html'
                                                     };
                                                     pricetag._product = product;
@@ -941,174 +939,170 @@
                                             };
 
                                             $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
-                                            $.extend($scope.fieldProduct, {
-                                                ui: {
-                                                    init: function (field) {
-                                                        field.config.ui.specifics.remove = function (product, close) {
-                                                            // removing the actual product removes the pricetag actually
-                                                            $scope.pricetag._state = 'deleted';
-                                                            $scope.formSetDirty();
-                                                            close();
+                                            $.extend($scope.fieldProduct.ui, {
+                                                init: function (field) {
+                                                    field.config.ui.specifics.remove = function (product, close) {
+                                                        // removing the actual product removes the pricetag actually
+                                                        $scope.pricetag._state = 'deleted';
+                                                        $scope.formSetDirty();
+                                                        close();
+                                                    };
+                                                },
+                                                args: 'pricetag._product',
+                                                parentArgs: 'pricetag',
+                                                path: ['_images', 'pricetags', '_product'],
+                                                render: false,
+                                                label: false,
+                                                specifics: {
+                                                    remoteAutoload: false,
+                                                    modal: true,
+                                                    beforeSave: function (fieldScope) {
+                                                        fieldScope.setAction('update');
+                                                        // before saving entity, set the name and unit price for the pricetag.
+                                                        var findPricetag = _.last(fieldScope.sendRootArgs._images[0].pricetags);
+                                                        findPricetag.value = {
+                                                            name: fieldScope.args.name,
+                                                            price: fieldScope.args.unit_price
                                                         };
                                                     },
-                                                    args: 'pricetag._product',
-                                                    parentArgs: 'pricetag',
-                                                    path: ['_images', 'pricetags', '_product'],
-                                                    render: false,
-                                                    label: false,
-                                                    specifics: {
-                                                        remoteAutoload: false,
-                                                        modal: true,
-                                                        beforeSave: function (fieldScope) {
-                                                            fieldScope.setAction('update');
-                                                            // before saving entity, set the name and unit price for the pricetag.
-                                                            var findPricetag = _.last(fieldScope.sendRootArgs._images[0].pricetags);
-                                                            findPricetag.value = {
-                                                                name: fieldScope.args.name,
-                                                                price: fieldScope.args.unit_price
-                                                            };
-                                                        },
-                                                        templateFooterUrl: 'catalog/product/manage_footer.html',
-                                                        getRootArgs: function () {
-                                                            // root args is data that gets sent with rpc
-                                                            return $scope.args;
-                                                        },
-                                                        afterClose: function (fieldProductScope) {
-                                                            // after close hook
-                                                            $scope.pricetag._product = null;
-                                                            if (!fieldProductScope.args.key) {
-                                                                $scope.image.pricetags.remove($scope.pricetag); // remove the pricetag if we did not commit the product
-                                                            }
-                                                        },
-                                                        afterSave: function (fieldScope) {
-                                                            // after save hook
-                                                            fieldScope.setAction('product_upload_images');
-                                                            var updatedPricetag = fieldScope.response.data.entity._images[0].pricetags[0];
-                                                            $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
-                                                        },
-                                                        afterComplete: function (fieldScope) {
-                                                            // after complete hook
-                                                            fieldScope.setAction('update');
-                                                        },
-                                                        noComplete: function (fieldScope) {
-                                                            // hook for no complete event - complete event only fires if there are images to be uploaded
-                                                            fieldScope.setAction('update');
-                                                        },
-                                                        duplicate: function () {
-                                                            modals.confirm('duplicateCatalogPricetag',
-                                                                function () {
-                                                                    models['11'].channelNotifications().then(function (response) {
-                                                                        models['31'].actions.catalog_pricetag_duplicate({
-                                                                            key: $scope.entity.key,
-                                                                            channel: response.token,
-                                                                            read_arguments: {
-                                                                                _images: {
+                                                    templateFooterUrl: 'catalog/product/manage_footer.html',
+                                                    getRootArgs: function () {
+                                                        // root args is data that gets sent with rpc
+                                                        return $scope.args;
+                                                    },
+                                                    afterClose: function (fieldProductScope) {
+                                                        // after close hook
+                                                        $scope.pricetag._product = null;
+                                                        if (!fieldProductScope.args.key) {
+                                                            $scope.image.pricetags.remove($scope.pricetag); // remove the pricetag if we did not commit the product
+                                                        }
+                                                    },
+                                                    afterSave: function (fieldScope) {
+                                                        // after save hook
+                                                        fieldScope.setAction('product_upload_images');
+                                                        var updatedPricetag = fieldScope.response.data.entity._images[0].pricetags[0];
+                                                        $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
+                                                    },
+                                                    afterComplete: function (fieldScope) {
+                                                        // after complete hook
+                                                        fieldScope.setAction('update');
+                                                    },
+                                                    noComplete: function (fieldScope) {
+                                                        // hook for no complete event - complete event only fires if there are images to be uploaded
+                                                        fieldScope.setAction('update');
+                                                    },
+                                                    duplicate: function () {
+                                                        modals.confirm('duplicateCatalogPricetag',
+                                                            function () {
+                                                                models['11'].channelNotifications().then(function (response) {
+                                                                    models['31'].actions.catalog_pricetag_duplicate({
+                                                                        key: $scope.entity.key,
+                                                                        channel: response.token,
+                                                                        read_arguments: {
+                                                                            _images: {
+                                                                                config: {
+                                                                                    keys: [$scope.image.key]
+                                                                                },
+                                                                                pricetags: {
                                                                                     config: {
-                                                                                        keys: [$scope.image.key]
-                                                                                    },
-                                                                                    pricetags: {
-                                                                                        config: {
-                                                                                            keys: [$scope.pricetag.key]
-                                                                                        }
+                                                                                        keys: [$scope.pricetag.key]
                                                                                     }
                                                                                 }
                                                                             }
-                                                                        }).then(function (response) {
-                                                                            modals.alert('duplicationInProgressCatalogPricetag');
-                                                                        });
+                                                                        }
+                                                                    }).then(function (response) {
+                                                                        modals.alert('duplicationInProgressCatalogPricetag');
                                                                     });
                                                                 });
-                                                        }
+                                                            });
                                                     }
                                                 }
                                             });
 
-                                            $scope.fieldProduct.modelclass.images.ui = {
+                                            $.extend($scope.fieldProduct.modelclass.images.ui, {
                                                 name: 'images'
-                                            };
+                                            });
 
-                                            $scope.fieldProduct.modelclass._instances.modelclass.images.ui = {
+                                            $.extend($scope.fieldProduct.modelclass._instances.modelclass.images.ui, {
                                                 name: 'images'
-                                            };
+                                            });
 
-                                            $.extend($scope.fieldProduct.modelclass._instances, {
-                                                ui: {
-                                                    label: 'Product Instances',
-                                                    path: ['_images', 'pricetags'],
-                                                    specifics: {
-                                                        cards: true,
-                                                        cardView: 'product-instance-card-view',
-                                                        getRootArgs: function () {
-                                                            return $scope.args;
-                                                        },
-                                                        beforeSave: function (fieldScope) {
-                                                            fieldScope.setAction('update');
-                                                        },
-                                                        afterSave: function (fieldScope) {
-                                                            fieldScope.setAction('product_instance_upload_images');
-                                                        },
-                                                        afterComplete: function (fieldScope) {
-                                                            fieldScope.setAction('update');
-                                                        },
-                                                        noComplete: function (fieldScope) {
-                                                            fieldScope.setAction('update');
-                                                        },
-                                                        sortableOptions: {
-                                                            stop: function () {
-                                                                var field = $scope.fieldProduct.modelclass._instances,
-                                                                    total,
-                                                                    cmp = [],
-                                                                    cmp2 = [],
-                                                                    currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
-                                                                if (field.ui.specifics.parentArgs.length) {
-                                                                    total = field.ui.specifics.parentArgs[0].sequence;
-                                                                    angular.forEach(field.ui.specifics.parentArgs,
-                                                                        function (ent, i) {
-                                                                            i = (total - i);
-                                                                            cmp.push(ent.sequence);
-                                                                            cmp2.push(i);
-                                                                            ent.sequence = i;
-                                                                            ent.ui.access[ent.ui.access.length - 1] = i;
-                                                                        });
-                                                                    if (!cmp.equals(cmp2)) {
-                                                                        currentFieldScope.formSetDirty();
-                                                                    }
-                                                                    currentFieldScope.$broadcast('itemOrderChanged');
+                                            $.extend($scope.fieldProduct.modelclass._instances.ui, {
+                                                label: 'Product Instances',
+                                                path: ['_images', 'pricetags'],
+                                                specifics: {
+                                                    cards: true,
+                                                    cardView: 'product-instance-card-view',
+                                                    getRootArgs: function () {
+                                                        return $scope.args;
+                                                    },
+                                                    beforeSave: function (fieldScope) {
+                                                        fieldScope.setAction('update');
+                                                    },
+                                                    afterSave: function (fieldScope) {
+                                                        fieldScope.setAction('product_instance_upload_images');
+                                                    },
+                                                    afterComplete: function (fieldScope) {
+                                                        fieldScope.setAction('update');
+                                                    },
+                                                    noComplete: function (fieldScope) {
+                                                        fieldScope.setAction('update');
+                                                    },
+                                                    sortableOptions: {
+                                                        stop: function () {
+                                                            var field = $scope.fieldProduct.modelclass._instances,
+                                                                total,
+                                                                cmp = [],
+                                                                cmp2 = [],
+                                                                currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
+                                                            if (field.ui.specifics.parentArgs.length) {
+                                                                total = field.ui.specifics.parentArgs[0].sequence;
+                                                                angular.forEach(field.ui.specifics.parentArgs,
+                                                                    function (ent, i) {
+                                                                        i = (total - i);
+                                                                        cmp.push(ent.sequence);
+                                                                        cmp2.push(i);
+                                                                        ent.sequence = i;
+                                                                        ent.ui.access[ent.ui.access.length - 1] = i;
+                                                                    });
+                                                                if (!cmp.equals(cmp2)) {
+                                                                    currentFieldScope.formSetDirty();
                                                                 }
+                                                                currentFieldScope.$broadcast('itemOrderChanged');
                                                             }
-                                                        },
-                                                        create: function () {
-                                                            var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
-                                                                currentArgs = currentFieldScope.args;
-                                                            if (!currentArgs.variants.length) {
-                                                                modals.alert('createVariantsFirst');
-                                                                return false;
-                                                            }
-                                                            this.manage.apply(this, arguments);
-                                                        },
-                                                        init: function () {
-                                                            var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
-                                                                currentArgs = currentFieldScope.args,
-                                                                choices = [],
-                                                                variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
-                                                            if (!currentArgs.variants.length) {
-                                                                modals.alert('createVariantsFirst');
-                                                                return false;
-                                                            }
+                                                        }
+                                                    },
+                                                    create: function () {
+                                                        var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
+                                                            currentArgs = currentFieldScope.args;
+                                                        if (!currentArgs.variants.length) {
+                                                            modals.alert('createVariantsFirst');
+                                                            return false;
+                                                        }
+                                                        this.manage.apply(this, arguments);
+                                                    },
+                                                    init: function () {
+                                                        var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
+                                                            currentArgs = currentFieldScope.args,
+                                                            choices = [],
+                                                            variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
+                                                        if (!currentArgs.variants.length) {
+                                                            modals.alert('createVariantsFirst');
+                                                            return false;
+                                                        }
 
-                                                            angular.forEach(currentArgs.variants, function (variant) {
-                                                                if (variant.allow_custom_value) {
-                                                                    return;
-                                                                }
-                                                                angular.forEach(variant.options, function (variantOpt) {
-                                                                    choices.push(variant.name + ': ' + variantOpt);
-                                                                });
+                                                        angular.forEach(currentArgs.variants, function (variant) {
+                                                            if (variant.allow_custom_value) {
+                                                                return;
+                                                            }
+                                                            angular.forEach(variant.options, function (variantOpt) {
+                                                                choices.push(variant.name + ': ' + variantOpt);
                                                             });
+                                                        });
 
-                                                            variantOptions.choices = choices;
-                                                        },
-                                                        excludeFields: ['created', 'sequence']
-                                                    }
+                                                        variantOptions.choices = choices;
+                                                    },
+                                                    excludeFields: ['created', 'sequence']
                                                 }
                                             });
 

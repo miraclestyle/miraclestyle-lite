@@ -827,7 +827,7 @@
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config;
                     fields._content.ui.label = false;
-                    fields._content.modelclass.documents.ui = {
+                    $.extend(fields._content.modelclass.documents.ui, {
                         label: false,
                         specifics: {
                             listView: 'content-list-view',
@@ -835,13 +835,13 @@
                                 perLine: 1
                             }
                         }
-                    };
-                    fields._plugin_group.modelclass.plugins.ui = {
+                    });
+                    $.extend(fields._plugin_group.modelclass.plugins.ui, {
                         label: false,
                         specifics: {
                             listView: 'plugin-list-view'
                         }
-                    };
+                    });
                     fields.name.ui.help = 'Name of the brand, company or store that you own or represent.';
                     fields.logo.ui.help = 'Click on the right side upload icon to upload logo image of the brand, company, or store that you own or represent.';
 

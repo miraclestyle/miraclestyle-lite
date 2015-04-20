@@ -4,16 +4,17 @@
         .value('modelsInfo', {})
         .value('currentAccount', {}).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {
             var modelsMeta = {},
-                standardize = function (fields) {
+                standardize = function (kind, fields) {
                     angular.forEach(fields, function (field, field_key) {
                         if (field.ui === undefined) {
                             field.ui = {};
                         }
+                        field.__rootKind__ = kind;
                         if (field.code_name === null) {
                             field.code_name = field_key;
                         }
                         if (field.modelclass !== undefined) {
-                            standardize(field.modelclass);
+                            standardize(kind, field.modelclass);
                         }
                     });
 
@@ -54,7 +55,7 @@
 
                 fields = angular.copy(info.fields);
 
-                standardize(fields);
+                standardize(kind_id, fields);
 
                 return fields;
             };
@@ -89,13 +90,13 @@
                     }
                     fields = angular.copy(getAction['arguments']);
 
-                    standardize(fields);
+                    standardize(kind_id, fields);
                     return fields;
                 }
 
                 angular.forEach(info.mapped_actions, function (action) {
                     fields = angular.copy(action['arguments']);
-                    standardize(fields);
+                    standardize(kind_id, fields);
                     actionArguments[action.id] = fields;
                 });
 
@@ -111,7 +112,7 @@
                 }
                 actions = info.mapped_actions;
                 angular.forEach(actions, function (action) {
-                    standardize(action['arguments']);
+                    standardize(kind_id, action['arguments']);
                 });
 
                 return actions;
@@ -524,6 +525,10 @@
                                 };
                                 modelsUtil.normalize(entity);
 
+                                if (!config.toolbar) {
+                                    config.toolbar = {};
+                                }
+
                                 $scope.container = {
                                     action: endpoint.url
                                 };
@@ -606,6 +611,22 @@
                                     $scope.$close();
                                     if (config.afterClose) {
                                         config.afterClose($scope);
+                                    }
+                                });
+
+
+                                $scope.$watch('entity.id', function (neww) {
+                                    var toolbar = $scope.dialog.toolbar;
+                                    if (toolbar) {
+                                        if (neww) {
+                                            if (angular.isDefined(toolbar.titleEdit)) {
+                                                toolbar.title = toolbar.titleEdit;
+                                            }
+                                        } else {
+                                            if (angular.isDefined(toolbar.titleAdd)) {
+                                                toolbar.title = toolbar.titleAdd;
+                                            }
+                                        }
                                     }
                                 });
 
