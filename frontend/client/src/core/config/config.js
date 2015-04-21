@@ -65,14 +65,13 @@
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
-            buyer: {
-                __self__: 'Buyer',
-                addresses: {
-                    __self__: 'Addresses',
-                    edit: 'Edit Address',
-                    add: 'Add Address'
-                }
-            }
+            seller: 'Seller',
+            edit31: 'Edit Catalog',
+            add31: 'Create Catalog',
+            viewImages: 'Images',
+            viewProducts: 'Products',
+            editProduct: 'Edit Product',
+            addProduct: 'Add Product'
         });
 
 

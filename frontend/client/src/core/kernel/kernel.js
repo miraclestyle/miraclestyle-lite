@@ -109,6 +109,31 @@
                 of = this.getProperty(obj, path);
                 of[last] = value;
             },
+            forceSetProperty: function (obj, prop, value) {
+                var next = obj,
+                    prev,
+                    last;
+                if (!angular.isArray(prop)) {
+                    prop = prop.split('.');
+                }
+                if (prop.length === 1) {
+                    obj[prop.join('')] = value;
+                    return;
+                }
+                angular.forEach(prop, function (key, i) {
+                    prev = next;
+                    next = next[key];
+                    last = i === (prop.length - 1);
+                    if (angular.isUndefined(next) && !last) {
+                        next = {};
+                        prev[key] = next;
+                    }
+
+                    if (last) {
+                        prev[key] = value;
+                    }
+                });
+            },
             getProperty: function (obj, prop) {
                 //console.trace('helpers.getProperty', obj, prop);
                 var path = prop;

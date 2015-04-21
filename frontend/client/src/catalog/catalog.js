@@ -74,7 +74,7 @@
                 };
             }
         };
-    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, toolbarTitle, $timeout) {
+    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, $timeout) {
 
         modelsConfig(function (models) {
             var toggleMenu = function ($scope, id) {
@@ -555,7 +555,9 @@
                             modalConfig: modalConfig,
                             fields: _.toArray(fields),
                             toolbar: {
-                                templateActionsUrl: (isNew ? false : 'catalog/manage_actions.html')
+                                templateActionsUrl: (isNew ? false : 'catalog/manage_actions.html'),
+                                titleEdit: 'seller.edit31',
+                                titleAdd: 'seller.add31'
                             },
                             afterSave: afterSave,
                             afterSaveError: afterSave,
@@ -693,7 +695,8 @@
                                         controller: function ($scope, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
-                                                setupCurrentPricetag;
+                                                setupCurrentPricetag,
+                                                getTitle;
                                             accessImages.push(fields._images.code_name);
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
                                             $scope.config = parentScope.rootScope.config;
@@ -709,6 +712,24 @@
                                             $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
                                             $scope.args._images = [];
+
+                                            getTitle = function () {
+                                                return 'viewProducts';
+                                            };
+
+                                            $scope.config.__title__.push(getTitle);
+                                            $scope.$on('$destroy', function () {
+                                                $scope.config.__title__.remove(getTitle);
+                                                fields._images.__title__.remove(getTitle);
+                                                fields._images.modelclass.pricetags.__title__.remove(getTitle);
+                                                fields._images.modelclass.pricetags.modelclass._product.__title__.remove(getTitle);
+                                            });
+
+                                            fields._images.__title__ = $scope.config.__title__.concat();
+                                            fields._images.modelclass.pricetags.__title__ = fields._images.__title__.concat();
+                                            fields._images.modelclass.pricetags.modelclass._product.__title__ = fields._images.__title__.concat();
+
+                                            $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config.__title__);
 
                                             imagesReader = models['31'].reader({
                                                 kind: '31',
@@ -1106,23 +1127,17 @@
                                                 }
                                             });
 
-                                            $.extend($scope.fieldProduct.modelclass.contents, {
-                                                ui: {
-                                                    specifics: {}
-                                                }
+                                            $.extend($scope.fieldProduct.modelclass.contents.ui, {
+                                                specifics: {}
                                             });
 
-                                            $.extend($scope.fieldProduct.modelclass.images, {
-                                                ui: {
-                                                    name: 'images',
-                                                    specifics: {}
-                                                }
+                                            $.extend($scope.fieldProduct.modelclass.images.ui, {
+                                                name: 'images',
+                                                specifics: {}
                                             });
 
-                                            $.extend($scope.fieldProduct.modelclass.variants, {
-                                                ui: {
-                                                    specifics: {}
-                                                }
+                                            $.extend($scope.fieldProduct.modelclass.variants.ui, {
+                                                specifics: {}
                                             });
 
                                             $scope.save = function () {

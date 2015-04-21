@@ -70,7 +70,7 @@
                 }
                 return out;
             };
-        }).run(function (modelsConfig, channelApi, channelNotifications, endpoint, toolbarTitle, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS) {
+        }).run(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS) {
 
             var getProvider = function (ident) {
                 return ident.identity.split('-')[1];
@@ -110,8 +110,7 @@
                                 kind: this.kind,
                                 templateBodyUrl: 'account/manage_body.html',
                                 toolbar: {
-                                    templateActionsUrl: 'account/manage_actions.html',
-                                    title: toolbarTitle.get('account')
+                                    templateActionsUrl: 'account/manage_actions.html'
                                 },
                                 init: function ($scope) {
                                     var entity = $scope.entity,

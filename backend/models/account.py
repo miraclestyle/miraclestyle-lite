@@ -381,6 +381,10 @@ class Account(orm.BaseExpando):
   @classmethod
   def current_account_session(cls):
     return mem.temp_get('current_account_session')
+
+  @staticmethod
+  def hash_session_id(session_id):
+    return hashlib.md5('%s%s' % (session_id, settings.AUTH_SALT1)).hexdigest()
   
   def session_by_id(self, session_id):
     for session in self.sessions.value:
@@ -397,10 +401,10 @@ class Account(orm.BaseExpando):
     if not session_id:
       return False # Fail silently if the session id is not found in the split sequence.
     account_key = orm.Key(urlsafe=account_key)
-    if account_key.kind() != cls.get_kind():
+    if account_key.kind() != cls.get_kind() or account_key.id() == 'system':
       return False # Fail silently if the kind is not valid
     account = account_key.get()
-    if account and account.key_id != 'system':
+    if account:
       account.read()
       session = account.session_by_id(session_id)
       if session:

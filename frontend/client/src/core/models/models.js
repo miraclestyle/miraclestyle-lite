@@ -4,17 +4,16 @@
         .value('modelsInfo', {})
         .value('currentAccount', {}).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {
             var modelsMeta = {},
-                standardize = function (kind, fields) {
+                standardize = function (fields) {
                     angular.forEach(fields, function (field, field_key) {
                         if (field.ui === undefined) {
                             field.ui = {};
                         }
-                        field.__rootKind__ = kind;
                         if (field.code_name === null) {
                             field.code_name = field_key;
                         }
                         if (field.modelclass !== undefined) {
-                            standardize(kind, field.modelclass);
+                            standardize(field.modelclass);
                         }
                     });
 
@@ -55,7 +54,7 @@
 
                 fields = angular.copy(info.fields);
 
-                standardize(kind_id, fields);
+                standardize(fields);
 
                 return fields;
             };
@@ -90,13 +89,13 @@
                     }
                     fields = angular.copy(getAction['arguments']);
 
-                    standardize(kind_id, fields);
+                    standardize(fields);
                     return fields;
                 }
 
                 angular.forEach(info.mapped_actions, function (action) {
                     fields = angular.copy(action['arguments']);
-                    standardize(kind_id, fields);
+                    standardize(fields);
                     actionArguments[action.id] = fields;
                 });
 
@@ -112,7 +111,7 @@
                 }
                 actions = info.mapped_actions;
                 angular.forEach(actions, function (action) {
-                    standardize(kind_id, action['arguments']);
+                    standardize(action['arguments']);
                 });
 
                 return actions;
@@ -495,6 +494,7 @@
                                     done = {},
                                     found = false,
                                     realTotal = 0,
+                                    rootTitle,
                                     madeHistory = false,
                                     makeHistory = function () {
                                         if (madeHistory || !$scope.entity.id) {
@@ -519,7 +519,9 @@
                                         if (rule && rule.visible) {
                                             //recordAccordion.attach($scope.accordions);
                                         }
-                                    };
+                                    },
+                                    editTitle = 'edit' + config.kind,
+                                    addTitle = 'add' + config.kind;
                                 config.getScope = function () {
                                     return $scope;
                                 };
@@ -527,6 +529,14 @@
 
                                 if (!config.toolbar) {
                                     config.toolbar = {};
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleEdit)) {
+                                    config.toolbar.titleEdit = editTitle;
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleAdd)) {
+                                    config.toolbar.titleAdd = addTitle;
                                 }
 
                                 $scope.container = {
@@ -614,20 +624,27 @@
                                     }
                                 });
 
-
-                                $scope.$watch('entity.id', function (neww) {
-                                    var toolbar = $scope.dialog.toolbar;
-                                    if (toolbar) {
-                                        if (neww) {
-                                            if (angular.isDefined(toolbar.titleEdit)) {
-                                                toolbar.title = toolbar.titleEdit;
-                                            }
-                                        } else {
-                                            if (angular.isDefined(toolbar.titleAdd)) {
-                                                toolbar.title = toolbar.titleAdd;
-                                            }
+                                rootTitle = function () {
+                                    var toolbar = $scope.dialog.toolbar,
+                                        out;
+                                    if ($scope.entity.id) {
+                                        if (angular.isDefined(toolbar.titleEdit)) {
+                                            toolbar.title = helpers.toolbar.title(toolbar.titleEdit);
                                         }
+                                        out = toolbar.titleEdit;
+                                    } else {
+                                        if (angular.isDefined(toolbar.titleAdd)) {
+                                            toolbar.title = helpers.toolbar.title(toolbar.titleAdd);
+                                        }
+                                        out = toolbar.titleAdd;
                                     }
+                                    return out;
+                                };
+                                config.__title__ = [rootTitle];
+                                $scope.$watch('entity.id', rootTitle);
+
+                                angular.forEach(config.fields, function (field) {
+                                    field.__title__ = config.__title__.concat();
                                 });
 
                                 if (angular.isDefined(config.scope)) {

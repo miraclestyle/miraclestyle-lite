@@ -79,9 +79,15 @@
                             templateUrl: 'core/models/manage.html',
                             controller: function ($scope) {
                                 var save = scope.save,
-                                    complete = scope.complete;
+                                    complete = scope.complete,
+                                    getTitle;
+                                getTitle = function () {
+                                    return 'view' + helpers.toolbar.makeTitle(field.code_name);
+                                };
+                                field.__title__.push(getTitle);
                                 $scope.dialog = {
-                                    templateBodyUrl: 'core/models/manage_body_default.html'
+                                    templateBodyUrl: 'core/models/manage_body_default.html',
+                                    toolbar: {}
                                 };
                                 $scope.parentContainer = $scope.container;
                                 $scope.container = {};
@@ -90,7 +96,9 @@
                                 });
                                 $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                 $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-                                $scope.formBuilder = {'0': [field]};
+                                $scope.formBuilder = {
+                                    '0': [field]
+                                };
                                 $scope.layouts = {
                                     groups: [{
                                         label: false
@@ -102,6 +110,10 @@
                                     } else {
                                         $scope.formSetPristine();
                                     }
+                                });
+
+                                $scope.$watch('entity.id', function () {
+                                    $scope.dialog.toolbar.title = helpers.toolbar.buildTitle(field.__title__);
                                 });
 
                                 $scope.save = function () {
@@ -121,6 +133,7 @@
                                     if (angular.isArray(field.ui.specifics.parentArgs)) {
                                         field.ui.specifics.parentArgs.empty();
                                     }
+                                    field.__title__.remove(getTitle);
                                 });
                             }
                         });
@@ -400,7 +413,6 @@
                                 attrs: {}
                             }
                         };
-
                         helpers.mergeDeep(supplied_config, config);
                         config = supplied_config;
 
@@ -486,6 +498,7 @@
 
                         scope.$on('$destroy', function () {
                             config.ui.directiveScope = undefined;
+                            config.ui.form = undefined;
                         });
 
                     };
@@ -1191,7 +1204,21 @@
                                 config.ui.specifics.getScope = function () {
                                     return $scope;
                                 };
+                                if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
+                                    config.ui.specifics.toolbar.titleAdd = 'add' + config.code_name;
+                                }
+                                if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
+                                    config.ui.specifics.toolbar.titleEdit = 'edit' + config.code_name;
+                                }
+                                var getTitle = function () {
+                                    return config.ui.specifics.toolbar.titleEdit;
+                                };
+                                config.__title__.push(getTitle);
+                                angular.forEach(config.ui.specifics.fields, function (field) {
+                                    field.__title__ = config.__title__.concat();
+                                });
                                 $scope.$on('$destroy', function () {
+                                    config.__title__.remove(getTitle);
                                     config.ui.specifics.getScope = undefined;
                                 });
                             };
@@ -1200,8 +1227,8 @@
 
                             config.ui.specifics.remove = function (arg) {
                                 arg._state = 'deleted';
-                                info.scope.$emit('itemDelete', arg); // @todo handle this
-                                info.scope.$broadcast('itemDelete', arg); // @todo handle this
+                                info.scope.$emit('itemDelete', arg);
+                                info.scope.$broadcast('itemDelete', arg);
                                 rootFormSetDirty();
                             };
 
@@ -1215,15 +1242,15 @@
                                         config: config
                                     }),
                                     controller: function ($scope, modelsUtil) {
-                                        var isNew = false,
-                                            length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
+                                        var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
                                             formBuilder = {
                                                 '0': []
                                             },
+                                            getTitle,
                                             getResult = function (response, access) {
                                                 var accessPath = [],
                                                     value,
-                                                    isNewAndRepeated = (isNew && config.repeated);
+                                                    isNewAndRepeated = ($scope.isNew && config.repeated);
                                                 angular.forEach(access, function (path, i) {
                                                     var parse = parseInt(path, 10);
                                                     if (!isNaN(parse)) {
@@ -1242,16 +1269,13 @@
                                                 }
 
                                                 return value;
-                                            },
-                                            setEditTitle = function () {
-                                                if (angular.isDefined(config.ui.specifics.toolbar.titleEdit)) {
-                                                    config.ui.specifics.toolbar.title = config.ui.specifics.toolbar.titleEdit;
-                                                }
                                             };
 
                                         config.ui.specifics.getScope = function () {
                                             return $scope;
                                         };
+
+                                        $scope.isNew = false;
 
                                         $scope.rootFormSetDirty = rootFormSetDirty;
                                         $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
@@ -1270,18 +1294,11 @@
                                             if (angular.isDefined(defaultArgs)) {
                                                 $.extend(arg, defaultArgs);
                                             }
-                                            isNew = true;
+                                            $scope.isNew = true;
                                         } else if (!config.ui.specifics.modal && arg.ui) {
                                             length = _.last(arg.ui.access);
                                         }
 
-                                        if (isNew) {
-                                            if (config.ui.specifics.toolbar.titleAdd) {
-                                                config.ui.specifics.toolbar.title = config.ui.specifics.toolbar.titleAdd;
-                                            }
-                                        } else {
-                                            setEditTitle();
-                                        }
 
                                         if (angular.isDefined(arg.ui)) {
                                             arg.ui.access = angular.copy(config.ui.realPath);
@@ -1350,8 +1367,9 @@
                                             field.ui.realPath.push(field.code_name);
                                             if (field.is_structured && formInputTypes[field.type]) {
                                                 var group = {
-                                                    label: inflector((field.ui.label || field.code_name), 'humanize')
-                                                }, next;
+                                                        label: inflector((field.ui.label || field.code_name), 'humanize')
+                                                    },
+                                                    next;
                                                 if (_.string.contains(field.type, 'Remote')) {
                                                     group.include = 'core/misc/action.html';
                                                     group.action = function () {
@@ -1481,11 +1499,11 @@
 
                                                     $.extend($scope.args, value); // modify current args
                                                     $scope.args.ui.access = keepAccess; // reference back original access path
-                                                    if (isNew) {
+                                                    if ($scope.isNew) {
                                                         if (config.repeated) {
                                                             $scope.parentArgs.unshift($scope.args); // preappend arg if they are new
                                                         }
-                                                        isNew = false;
+                                                        $scope.isNew = false;
                                                     }
                                                     $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
                                                     // re-run prepare to ensure proper paths for complete hook
@@ -1494,8 +1512,6 @@
                                                         config.ui.specifics.afterSave($scope);
                                                     }
                                                     $scope.formSetPristine();
-
-                                                    setEditTitle();
 
                                                 }, function (response) {
                                                     // here handle error...
@@ -1555,9 +1571,9 @@
                                                             total = 0;
 
                                                         if (config.repeated) {
-                                                            if (isNew) {
+                                                            if ($scope.isNew) {
                                                                 $scope.parentArgs.unshift($scope.args);
-                                                                isNew = false;
+                                                                $scope.isNew = false;
                                                                 total = $scope.parentArgs.length - 1;
                                                                 angular.forEach($scope.parentArgs, function (item, i) {
                                                                     i = total - i;
@@ -1601,9 +1617,6 @@
                                                 } else {
                                                     complete();
                                                 }
-
-                                                setEditTitle();
-
                                                 return saveCompletePromise;
 
                                             };
@@ -1619,9 +1632,35 @@
                                             config.ui.specifics.init($scope);
                                         }
 
+                                        if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
+                                            config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
+                                        }
+                                        if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
+                                            config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
+                                        }
+
+                                        getTitle = function () {
+                                            return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
+                                        };
+
+                                        config.__title__.push(getTitle);
+
+                                        $scope.$watch('isNew', function () {
+                                            config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config.__title__);
+                                        });
+
+                                        angular.forEach(config.ui.specifics.fields, function (field) {
+                                            field.__title__ = config.__title__.concat();
+                                        });
+
+                                        $scope.$on('$destroy', function () {
+                                            config.__title__.remove(getTitle);
+                                        });
+
                                     }
                                 });
                             };
+
 
                             config.ui.specifics.create = config.ui.specifics.manage;
 

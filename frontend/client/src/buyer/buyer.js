@@ -74,7 +74,7 @@
                     };
                 }
             };
-        }).run(function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint, toolbarTitle) {
+        }).run(function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
 
             modelsConfig(function (models) {
 
@@ -160,12 +160,9 @@
                         addressFields.telephone.ui.placeholder = 'Type in contact telephone number. Prefix phone with plus (+) sign, and all calling codes, starting with country code (e.g., ). This value is Optional.';
                         */
                         config = {
-                            fields: [fields.addresses],
+                            fields: _.toArray(fields),
                             kind: this.kind,
                             action: 'update',
-                            toolbar: {
-                                title: toolbarTitle.get('buyer.addresses')
-                            },
                             scope: {
                                 layouts: {
                                     groups: [{label: false, fields: ['addresses']}]

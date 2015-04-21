@@ -15,37 +15,44 @@
             'material.core',
             'material.components.content'
         ])
-        .factory('toolbarTitle', function (GLOBAL_CONFIG) {
-            var toolbarTitle = {
-                get: function (keys, separator) {
-                    var splits = keys.split('.'),
+        .directive('mdToolbar', mdToolbarDirective).run(function (helpers, GLOBAL_CONFIG) {
+            if (angular.isUndefined(helpers.toolbar)) {
+                helpers.toolbar = {};
+            }
+            $.extend(helpers.toolbar, {
+                title: function (keys, separator) {
+                    var splits,
                         gets = GLOBAL_CONFIG.toolbar.titles,
                         complete = [];
                     if (!separator) {
                         separator = ' / ';
                     }
+                    if (!angular.isArray(keys)) {
+                        splits = keys.split('.');
+                    } else {
+                        splits = keys;
+                    }
                     angular.forEach(splits, function (key, i) {
-                        if (angular.isUndefined(gets) || angular.isUndefined(gets[key])) {
-                            return;
-                        }
-                        gets = gets[key];
-                        if (angular.isObject(gets)) {
-                            if (angular.isDefined(gets.__self__)) {
-                                complete.push(gets.__self__);
-                            }
-                        } else {
-                            complete.push(gets);
-                        }
+                        var get = gets[key];
+                        complete.push(angular.isDefined(get) ? get : key);
                     });
                     if (!complete.length) {
-                        return 'Missing: ' + keys;
+                        return keys;
                     }
                     return complete.join(separator);
+                },
+                buildTitle: function (callbacks) {
+                    var paths = [];
+                    angular.forEach(callbacks, function (cb) {
+                        paths.push(cb());
+                    });
+                    return helpers.toolbar.title(paths.join('.'));
+                },
+                makeTitle: function (word) {
+                    return _.string.capitalize(_.string.camelize(word));
                 }
-            };
-            return toolbarTitle;
-        })
-        .directive('mdToolbar', mdToolbarDirective);
+            });
+        });
 
     function mdToolbarDirective($$rAF, $mdConstant, $mdUtil, $mdTheming) {
 
