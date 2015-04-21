@@ -75,7 +75,9 @@
             editPluginGroup: false,
             settings: 'Settings',
             addPlugins: 'Add Plugin',
-            editPlugins: 'Edit Plugin'
+            editPlugins: 'Edit Plugin',
+            addVariants: 'Add Variant',
+            editVariants: 'Edit Variant'
         });
 
 

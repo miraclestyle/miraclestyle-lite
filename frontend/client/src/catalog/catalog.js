@@ -916,9 +916,10 @@
                                                         realPath = ['_images', ii, 'pricetags', image.pricetags.indexOf(pricetag), '_product'];
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
-                                                    $scope.fieldProduct.ui.specifics.toolbar = {
-                                                        templateActionsUrl: 'catalog/product/manage_actions.html'
-                                                    };
+                                                    if (!$scope.fieldProduct.ui.specifics.toolbar) {
+                                                        $scope.fieldProduct.ui.specifics.toolbar = {};
+                                                    }
+                                                    $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
                                                     pricetag._product = product;
                                                     $scope.fieldProduct.modelclass._instances.ui.specifics.readerSettings = {
                                                         next: response.data.entity._next_read_arguments

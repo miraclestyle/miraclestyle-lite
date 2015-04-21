@@ -109,9 +109,7 @@
                             config = {
                                 kind: this.kind,
                                 templateBodyUrl: 'account/manage_body.html',
-                                toolbar: {
-                                    templateActionsUrl: 'account/manage_actions.html'
-                                },
+                                toolbar: {},
                                 init: function ($scope) {
                                     var entity = $scope.entity,
                                         updateFields = ['state', 'ui.rule', 'created', 'updated'],
@@ -139,6 +137,10 @@
                                             });
                                         };
                                     recompute();
+
+                                    if (entity.ui.rule.action.sudo.executable) {
+                                        config.toolbar.templateActionsUrl = 'account/manage_actions.html';
+                                    }
 
                                     $scope.args.disassociate = [];
                                     $scope.maybeDisconnect = function (identity) {
