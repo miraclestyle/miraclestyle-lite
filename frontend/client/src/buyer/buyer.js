@@ -168,6 +168,9 @@
                                     groups: [{label: false, fields: ['addresses']}]
                                 }
                             },
+                            toolbar: {
+                                titleEdit: 'buyer.viewAddresses'
+                            },
                             excludeFields: ['account', 'read_arguments'],
                             argumentLoader: function ($scope) {
                                 var args = this.defaultArgumentLoader($scope);

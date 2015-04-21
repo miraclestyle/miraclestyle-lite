@@ -1166,6 +1166,13 @@
 
                         buildPaths();
 
+                        if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
+                            config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
+                        }
+                        if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
+                            config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
+                        }
+
                         if (config.ui.specifics.remote) {
                             // construct reference to root arguments
                             rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
@@ -1204,12 +1211,6 @@
                                 config.ui.specifics.getScope = function () {
                                     return $scope;
                                 };
-                                if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
-                                    config.ui.specifics.toolbar.titleAdd = 'add' + config.code_name;
-                                }
-                                if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
-                                    config.ui.specifics.toolbar.titleEdit = 'edit' + config.code_name;
-                                }
                                 var getTitle = function () {
                                     return config.ui.specifics.toolbar.titleEdit;
                                 };
@@ -1630,13 +1631,6 @@
                                         // call constructor
                                         if (angular.isFunction(config.ui.specifics.init)) {
                                             config.ui.specifics.init($scope);
-                                        }
-
-                                        if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
-                                            config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
-                                        }
-                                        if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
-                                            config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
                                         }
 
                                         getTitle = function () {

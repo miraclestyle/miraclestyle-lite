@@ -23,9 +23,13 @@
                 title: function (keys, separator) {
                     var splits,
                         gets = GLOBAL_CONFIG.toolbar.titles,
-                        complete = [];
+                        complete = [],
+                        initial = gets[keys];
                     if (!separator) {
                         separator = ' / ';
+                    }
+                    if (angular.isDefined(initial)) {
+                        return initial.join(separator);
                     }
                     if (!angular.isArray(keys)) {
                         splits = keys.split('.');
@@ -34,6 +38,9 @@
                     }
                     angular.forEach(splits, function (key, i) {
                         var get = gets[key];
+                        if (get === false) {
+                            return;
+                        }
                         complete.push(angular.isDefined(get) ? get : key);
                     });
                     if (!complete.length) {

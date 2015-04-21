@@ -400,7 +400,7 @@
                                     config: config
                                 }),
                                 controller: function ($scope, modelsUtil) {
-                                    var is_new = false,
+                                    var getTitle,
                                         inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
                                             $scope.layouts = {
@@ -422,17 +422,31 @@
                                             }
                                             return {};
                                         };
-
+                                    config.ui.specifics.toolbar = {
+                                        leftIcon: 'navigation.arrow-back',
+                                        hideSave: true
+                                    };
+                                    if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
+                                        config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
+                                    }
+                                    if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
+                                        config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
+                                    }
+                                    getTitle = function () {
+                                        return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
+                                    };
+                                    config.__title__.push(getTitle);
+                                    $scope.isNew = false;
                                     if (!arg) {
                                         arg = {};
+                                        $scope.isNew = true;
                                     } else {
                                         modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
-                                                config.ui.specifics.parentArgs.length);
+                                            config.ui.specifics.parentArgs.length);
                                     }
                                     $scope.info = {
                                         build: true
                                     };
-
                                     $scope.config = config;
                                     $scope.setNewArg = function () {
                                         if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
@@ -441,7 +455,7 @@
                                             };
                                             modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
                                                 config.ui.specifics.parentArgs.length, false);
-                                            is_new = true;
+                                            $scope.isNew = true;
 
                                             $scope.args = arg;
                                             $scope.getFormBuilder();
@@ -467,6 +481,7 @@
                                         fields.sort(helpers.fields.sorter);
                                         config.ui.specifics.fields = fields;
                                         angular.forEach(fields, function (field) {
+                                            field.__title__ = config.__title__.concat();
                                             field.ui.name = 'plugin.' + field.code_name;
                                             field.ui.writable = true;
                                             var extra = getPluginFieldOverrides(kind, field.code_name),
@@ -531,11 +546,6 @@
                                         $scope.getFormBuilder();
 
                                     }
-
-                                    config.ui.specifics.toolbar = {
-                                        leftIcon: 'navigation.arrow-back',
-                                        hideSave: true
-                                    };
                                     $scope.close = function () {
                                         var save = $scope.save();
                                         if (save) {
@@ -566,9 +576,9 @@
                                         complete = function () {
                                             var newPromise = null,
                                                 total = 0;
-                                            if (is_new) {
+                                            if ($scope.isNew) {
                                                 $scope.parentArgs.unshift($scope.args);
-                                                is_new = false;
+                                                $scope.isNew = false;
                                                 total = $scope.parentArgs.length;
                                                 angular.forEach($scope.parentArgs, function (item, i) {
                                                     i = total - i;
@@ -603,9 +613,19 @@
 
                                         }
 
+                                        $scope.isNew = false;
+
                                         return saveCompletePromise;
 
                                     };
+                                    $scope.$on('$destroy', function () {
+                                        config.__title__.remove(getTitle);
+                                        config.ui.specifics.getScope = undefined;
+                                    });
+
+                                    $scope.$watch('isNew', function () {
+                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config.__title__);
+                                    });
 
                                 }
                             });
@@ -858,7 +878,8 @@
                         action: 'update',
                         fields: _.toArray(fields),
                         toolbar: {
-                            submitNative: true
+                            submitNative: true,
+                            titleEdit: 'seller.settings'
                         },
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {

@@ -71,7 +71,11 @@
             viewImages: 'Images',
             viewProducts: 'Products',
             editProduct: 'Edit Product',
-            addProduct: 'Add Product'
+            addProduct: 'Add Product',
+            editPluginGroup: false,
+            settings: 'Settings',
+            addPlugins: 'Add Plugin',
+            editPlugins: 'Edit Plugin'
         });
 
 
