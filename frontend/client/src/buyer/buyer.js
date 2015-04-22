@@ -91,7 +91,6 @@
                     },
                     manageModal: function (accountKey) {
                         var fields = modelsMeta.getActionArguments(this.kind, 'update'),
-                            addressFields = fields.addresses.modelclass,
                             that = this,
                             config;
                         $.extend(fields.addresses.ui, {
@@ -101,8 +100,7 @@
                                 listConfig: {
                                     perLine: 3
                                 },
-                                sortFields: ['country', 'region', 'city', 'postal_code',
-                                    'street', 'name', 'email', 'telephone'],
+                                sortFields: ['country', 'region', 'city', 'postal_code', 'street', 'name'],
                                 afterSave: function () {
                                     endpoint.removeCache(that.getCacheKey('current'));
                                 },
@@ -149,16 +147,6 @@
 
                             }
                         });
-                        /*
-                        addressFields.country.ui.placeholder = 'Select address country (e.g., USA). This value is Required!';
-                        addressFields.region.ui.placeholder = 'Select address region (e.g., California). This value is Optional!';
-                        addressFields.city.ui.placeholder = 'Type in address city name (e.g., Beverly Hills). This value is Required!';
-                        addressFields.postal_code.ui.placeholder = 'Type in address postal code (e.g., 90210). This value is Required!';
-                        addressFields.street.ui.placeholder = 'Type in address street (e.g., Rodeo Drive). This value is Required!';
-                        addressFields.name.ui.placeholder = 'Type in contact name (e.g., John Doe). This value is Required!'; // example
-                        addressFields.email.ui.placeholder = 'Type in contact email (e.g., johndoe@example.com). This value is Optional.';
-                        addressFields.telephone.ui.placeholder = 'Type in contact telephone number. Prefix phone with plus (+) sign, and all calling codes, starting with country code (e.g., ). This value is Optional.';
-                        */
                         config = {
                             fields: _.toArray(fields),
                             kind: this.kind,

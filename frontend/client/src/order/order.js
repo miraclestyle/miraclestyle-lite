@@ -39,8 +39,272 @@
             }
             return formatted;
         };
-    }).run(function (modelsMeta, modelsConfig, $modal, modals, helpers, endpoint, $q, $filter, currentAccount) {
+    }).run(function (modelsMeta, modelsConfig, $modal, modals, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
         modelsConfig(function (models) {
+            $.extend(models['34'], {
+                current: function (sellerKey) {
+                    var that = this;
+                    return models['19'].current().then(function (response) {
+                        var buyer = response.data.entity;
+                        return that.actions.view_order({
+                            buyer: buyer.key,
+                            seller: sellerKey
+                        }, {
+                            cache: that.getCacheKey('current' + sellerKey),
+                            cacheType: 'memory'
+                        });
+                    });
+                },
+                adminManageModal: function (order) {
+                    return this.manageModal(order, order._seller, undefined, {
+                        sellerMode: true
+                    });
+                },
+                manageModal: function (order, seller, buyer, config) {
+                    config = helpers.alwaysObject(config);
+                    var args, that = this, cartMode = config.cartMode, sellerMode = config.sellerMode, rpc = {};
+                    if (!cartMode) {
+                        args = {
+                            key: order.key,
+                            read_arguments: {
+                                _lines: {config: {
+                                    options: {
+                                        limit: 0
+                                    }
+                                }},
+                                _messages: {
+                                    _agent: {}
+                                }
+                            }
+                        };
+                    } else {
+                        args  = {
+                            buyer: buyer.key,
+                            seller: seller.key,
+                            read_arguments: {
+                                _messages: {
+                                    _agent: {}
+                                }
+                            }
+                        };
+                    }
+
+                    models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
+
+                        if (!response.data.entity.id) {
+                            modals.alert('cartNotFound');
+                            return;
+                        }
+
+                        $modal.open({
+                            templateUrl: 'order/view.html',
+                            controller: function ($scope) {
+                                var locals = {
+                                    updateLiveEntity: function (response) {
+                                        var messages = $scope.order._messages;
+                                        $.extend($scope.order, response.data.entity);
+                                        $scope.order._messages = messages;
+                                    },
+                                    reactOnStateChange: function (response) {
+                                        helpers.update($scope.order, response.data.entity, ['state', 'ui']);
+                                        locals.reactOnUpdate();
+                                    },
+                                    reactOnUpdate: function () {
+                                        if (order) {
+                                            $.extend(order, $scope.order);
+                                        }
+                                        if (that.getCache('current' + $scope.seller.key)) {
+                                            that.current($scope.seller.key).then(function (response) {
+                                                $.extend(response.data.entity, $scope.order);
+                                            });
+                                        }
+                                    },
+                                    logMessageAction: modelsMeta.getActionArguments('34', 'log_message')
+                                };
+
+                                $.extend(locals.logMessageAction.message.ui, {
+                                    label: false,
+                                    args: 'messages.draft.message',
+                                    parentArgs: 'messages.draft',
+                                    writable: true,
+                                    placeholder: 'Type message here.',
+                                    attrs: {'native-placeholder': ''}
+                                });
+
+                                $scope.dialog = {
+                                    toolbar: {
+                                        templateRight: 'order/toolbar_actions.html'
+                                    }
+                                };
+
+                                $scope.stage = {
+                                    current: 1,
+                                    next: function () {
+                                        $scope.stage.current += 1;
+                                        var cb = $scope.stage['callStage' + $scope.stage.current];
+                                        if (cb) {
+                                            cb();
+                                        }
+                                    }
+                                };
+                                $scope.cmd = {};
+                                $scope.container = {};
+                                $scope.cartMode = cartMode;
+                                $scope.sellerMode = sellerMode;
+                                $scope.order = response.data.entity;
+                                $scope.seller = seller;
+                                $scope.currentAccount = currentAccount;
+                                $scope.addresses = {
+                                    sameAsBilling: false,
+                                    shipping: {},
+                                    billing: {},
+                                    fields: {
+                                        shipping: {},
+                                        billing: {}
+                                    },
+                                    useSaved: function () {}
+                                };
+
+                                $scope.payment = {
+                                    method: $scope.order.payment_method
+                                };
+
+                                $scope.carrier = {
+                                    selected: $scope.order.carrier ? $scope.order.carrier.reference : null,
+                                    available: []
+                                };
+
+                                $scope.messages = {
+                                    reader: models['34'].reader({
+                                        kind: '34',
+                                        key: $scope.order.key,
+                                        next: $scope.order._next_read_arguments,
+                                        access: ['_messages'],
+                                        complete: function (items) {
+                                            $scope.order._messages.extend(items);
+                                        }
+                                    }),
+                                    toggling: false,
+                                    draft: {
+                                        message: null,
+                                        key: $scope.order.key,
+                                    },
+                                    field: locals.logMessageAction.message,
+                                    nav: function () {
+                                        return $mdSidenav('right_messages');
+                                    },
+                                    send: function () {
+
+                                    },
+                                    close: function () {
+                                        return $scope.message.toggle(true);
+                                    },
+                                    toggle: function (close) {
+                                        if ($scope.messages.toggling) {
+                                            return;
+                                        }
+                                        var it = $scope.messages.nav(),
+                                            isOpen = it.isOpen();
+                                        console.log(it);
+                                        $scope.messages.toggling = true;
+                                        if (close === true) {
+                                            isOpen = true;
+                                        }
+                                        $timeout(function () {
+                                            it[isOpen ? 'close' : 'open']().then(function () {
+                                                $scope.messages.toggling = false;
+                                            });
+                                        });
+                                    }
+                                };
+
+                                $scope.feedback = {
+                                    admin: function () {},
+                                    buyer: function () {},
+                                    seller: function () {}
+                                };
+
+                                $scope.cmd.order = {
+                                    update: function (extra) {
+                                        var data = {
+                                            key: $scope.order.key,
+                                            payment_method: $scope.payment.method,
+                                            _lines: $scope.order._lines
+                                        };
+                                        if ($scope.stage.current > 1) {
+                                            $.extend(data, {
+                                                billing_address: $scope.addresses.billing,
+                                                shipping_address: $scope.addresses.shipping
+                                            });
+                                        }
+
+                                        if ($scope.stage.current > 2) {
+                                            data.carrier = $scope.carriers.selected;
+                                        }
+
+                                        $.extend(data, extra);
+                                        return models['34'].actions.update(data).then(function (response) {
+                                            locals.updateLiveEntity(response);
+                                            locals.reactOnUpdate();
+                                        });
+                                    },
+                                    checkout: function () {
+                                        if ($scope.order.state !== 'checkout') {
+                                            return $scope.orderCmd.update({
+                                                state: 'checkout'
+                                            });
+                                        }
+                                    },
+                                    cancel: function () {
+                                        if ($scope.order.state === 'checkout') {
+                                            modals.confirm('cancelOrder', function () {
+                                                models['34'].actions.cancel({
+                                                    key: $scope.order.key
+                                                }).then(function (response) {
+                                                    models['34'].removeCache('current' + seller.key);
+                                                    $scope.close();
+                                                });
+                                            });
+                                        }
+                                    }
+                                };
+
+                                $scope.cmd.line = {
+                                    view: function (line) {
+                                        var path = line.product._reference;
+                                        models['31'].viewProductModal(path.parent.parent.parent.key,
+                                                                      path.parent.parent.key, path.pricetag.key,
+                                                                      line.product.variant_signature, {events: {addToCart: locals.updateLiveEntity}});
+                                    },
+                                    remove: function (line) {
+                                        line.quantity = 0;
+                                    }
+                                };
+
+                                $scope.close = function () {
+                                    $scope.$close();
+                                };
+
+                                $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
+                                $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
+                                $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
+
+                            }
+                        });
+
+
+                    });
+
+                }
+            });
+
+        });
+
+        // old
+        modelsConfig(function (models) {
+            if (models) {
+                return;
+            }
             $.extend(models['34'], {
                 current: function (sellerKey) {
                     var that = this;

@@ -346,7 +346,7 @@
         };
 
         function postLink(scope, element, attr, inputContainer) {
-            if (!inputContainer) return;
+            if (!inputContainer || element[0].hasAttribute('native-placeholder')) return;
 
             var placeholderText = attr.placeholder;
             element.removeAttr('placeholder');

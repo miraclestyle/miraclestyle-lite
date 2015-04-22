@@ -727,3 +727,97 @@ body {
     -webkit-animation-name: pop-out;
     animation-name: pop-out;
 }
+
+.messages-box {
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 1);
+    display: block;
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+    z-index: 11;
+    max-height: 77px;
+    min-height: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.messages {
+    top: 100px;
+    bottom: 57px;
+    display: block;
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+}
+
+.messages-list {
+    padding: 4px 0px;
+}
+
+.message-row {
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    margin: 0px;
+}
+
+.message-footer {
+    padding: 4px 0px;
+}
+
+.message-row.leftside {
+    padding: 4px 56px 4px 8px;
+}
+
+.message-row.rightside {
+    padding: 4px 8px 4px 56px;
+}
+
+.message {
+    border-radius: 2px;
+    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+    background: white;
+}
+
+.message-inner {
+    padding: 8px;
+}
+
+.message-author {
+    bottom: 0px;
+    padding: 8px;
+    display: block;
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0px;
+}
+
+.messages-box md-input-container {
+    padding:18px 56px 18px 16px;
+}
+.messages-box textarea {
+  padding: 0px;
+  border: none;
+}
+.messages-box [ng-messages] {
+    display: none;
+}
+.rightside .message-author {
+    left: -56px;
+}
+
+.leftside .message-author {
+    right: -56px;
+}

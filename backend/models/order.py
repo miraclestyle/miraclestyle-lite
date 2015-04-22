@@ -244,8 +244,7 @@ class Order(orm.BaseExpando):
       orm.ActionPermission('34', [orm.Action.build_key('34', 'log_message')], True,
                            '(account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
                            or (entity._original.seller_reference \
-                           and entity._original.seller_reference._root == account.key)))) \
-                           and entity._original.state == "checkout"'),
+                           and entity._original.seller_reference._root == account.key))))'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "checkout"'),
@@ -332,7 +331,6 @@ class Order(orm.BaseExpando):
             ProductSpecs(),
             UpdateOrderLine(),
             OrderLineRemovals(),
-            PluginExec(), # @todo remove
             OrderLineFormat(),
             OrderCarrierFormat(),
             OrderFormat(),
@@ -361,8 +359,8 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             OrderInit(),
+            PluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
             ProductSpecs(),
-            PluginExec(cfg={'kinds': ['113', '107']}), # @todo remove
             RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_order'}})
@@ -393,12 +391,12 @@ class Order(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='34', required=True),
         'payment_method': orm.SuperVirtualKeyProperty(),
-        'billing_address_reference': orm.SuperVirtualKeyProperty(kind='14'), # @todo convert to local structured 14
-        'shipping_address_reference': orm.SuperVirtualKeyProperty(kind='14'), # @todo convert to local structured 14
+        'billing_address': orm.SuperLocalStructuredProperty('14'),
+        'shipping_address': orm.SuperLocalStructuredProperty('14'),
         'carrier': orm.SuperVirtualKeyProperty(kind='113'),
         '_lines': orm.SuperLocalStructuredProperty(OrderLine, repeated=True),
-        'read_arguments': orm.SuperJsonProperty() 
-        # @todo include 'state' => choices => [checkout] optional
+        'state': orm.SuperStringProperty(choices=('checkout',)),
+        'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(
@@ -406,6 +404,7 @@ class Order(orm.BaseExpando):
             Context(),
             Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
             Set(cfg={'d': {'_order.payment_method': 'input.payment_method',
+                           '_order.state': 'input.state',
                            '_order._lines': 'input._lines'}}),
             OrderLineRemovals(),
             ProductSpecs(),
@@ -460,31 +459,6 @@ class Order(orm.BaseExpando):
             Set(cfg={'d': {'output.entities': '_entities',
                            'output.cursor': '_cursor',
                            'output.more': '_more'}})
-            ]
-          )
-        ]
-      ),
-    orm.Action(
-      key=orm.Action.build_key('34', 'checkout'), # checkout needs to run last pluginExec to make sure that all data that seller and buyer provided are synced one more for last time before "big freeze"
-      arguments={
-        'key': orm.SuperKeyProperty(kind='34', required=True)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            Set(cfg={'s': {'_order.state': 'checkout'}}),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            RulePrepare(),
-            Set(cfg={'d': {'output.entity': '_order'}})
             ]
           )
         ]

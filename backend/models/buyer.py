@@ -31,9 +31,7 @@ class BuyerLocation(orm.BaseExpando):
   
   _expando_fields = {
     'region': orm.SuperStringProperty('8'),
-    'region_code': orm.SuperStringProperty('9'),
-    'email': orm.SuperStringProperty('10'),
-    'telephone': orm.SuperStringProperty('11')
+    'region_code': orm.SuperStringProperty('9')
     }
 
 
@@ -52,11 +50,6 @@ class BuyerAddress(orm.BaseExpando):
   
   _default_indexed = False
   
-  _expando_fields = {
-    'email': orm.SuperStringProperty('7'),
-    'telephone': orm.SuperStringProperty('8')
-    }
-  
   _virtual_fields = {
     '_country': orm.SuperReferenceProperty(target_field='country'),
     '_region': orm.SuperReferenceProperty(target_field='region')
@@ -74,9 +67,7 @@ class BuyerAddress(orm.BaseExpando):
                          region_code=location_region.code,
                          city=location.city,
                          postal_code=location.postal_code,
-                         street=location.street,
-                         email=location.email,
-                         telephone=location.telephone)
+                         street=location.street)
 
 
 class Buyer(orm.BaseExpando):

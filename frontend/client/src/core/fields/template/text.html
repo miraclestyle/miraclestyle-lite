@@ -1,5 +1,5 @@
 <md-input-container>
-    <label><%= config.ui.compiled.label %></label>
+    <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
     <textarea class="<%= config.ui.attrs['class'] %>"
             name="<%= config.ui.name %>" 
             <%= config.ui.compiled.attrs %> ></textarea>

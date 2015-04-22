@@ -42,8 +42,8 @@ md-input-container label, md-input-container .md-placeholder {
     -webkit-font-smoothing: antialiased;
     padding-left: 0px;
     z-index: 1;
-    -webkit-transform: translate3d(0, 24px, 0) scale(1);
-    transform: translate3d(0, 24px, 0) scale(1);
+    transform: translate3d(0, 27px, 0) scale(1);
+    -webkit-transform: translate3d(0, 27px, 0) scale(1);
     -webkit-transform-origin: left top;
     transform-origin: left top;
     transition: -webkit-transform cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;

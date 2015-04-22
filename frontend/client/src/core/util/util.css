@@ -2882,4 +2882,5 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
   overflow:hidden;
   position:relative;
   transform: rotate(0.000001deg);
+  -webkit-transform: rotate(0.000001deg);
 }

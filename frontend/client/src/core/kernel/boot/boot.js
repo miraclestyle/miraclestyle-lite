@@ -352,7 +352,7 @@ if (!Array.prototype.indexOf) {
                 modelsMeta: '/api/model_meta'
             },
             date: {
-                format: 'yyyy-MM-dd HH:mm:ss Z'
+                format: 'yyyy-MM-dd HH:mm:ss'
             },
             toolbar: {
                 titles: {}
