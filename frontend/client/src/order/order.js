@@ -174,6 +174,15 @@
                                     available: []
                                 };
 
+                                $scope.format = {
+                                    variantLabel: function (variant) {
+                                        return Object.keys(variant)[0];
+                                    },
+                                    variantValue: function (variant) {
+                                        return variant[$scope.format.variantLabel(variant)];
+                                    }
+                                };
+
                                 $scope.messages = {
                                     reader: models['34'].reader({
                                         kind: '34',
@@ -193,8 +202,27 @@
                                     nav: function () {
                                         return $mdSidenav('right_messages');
                                     },
-                                    send: function () {
-
+                                    send: function (action) {
+                                        models['34'].actions[action]($scope.messages.draft).then(function (response) {
+                                            $scope.messages.draft.message = '';
+                                            $scope.order._messages.unshift(response.data.entity._messages[0]);
+                                            locals.reactOnStateChange(response);
+                                        });
+                                    },
+                                    logMessage: function () {
+                                        return this.send('log_message');
+                                    },
+                                    reviewFeedback: function () {
+                                        return this.send('review_feedback');
+                                    },
+                                    sudoFeedback: function () {
+                                        return this.send('sudo_feedback');
+                                    },
+                                    leaveFeedback: function () {
+                                        return this.send('leave_feedback');
+                                    },
+                                    reportFeedback: function () {
+                                        return this.send('report_feedback');
                                     },
                                     close: function () {
                                         return $scope.message.toggle(true);
@@ -215,7 +243,7 @@
                                                 $scope.messages.toggling = false;
                                             });
                                         });
-                                    }
+                                    },
                                 };
 
                                 $scope.feedback = {

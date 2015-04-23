@@ -139,12 +139,6 @@ input.product-quantity-input {
     position: static;
 }
 
-.card-action-top-right {
-    top: 4px;
-    right: 4px;
-    position: absolute;
-    z-index: 1;
-}
 
 .full-logo img {
     width: 100%;

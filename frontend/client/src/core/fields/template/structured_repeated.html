@@ -32,12 +32,14 @@
            ng-repeat="ent in config.ui.specifics.parentArgs"
            current-item="ent"
            class="relative clearfix button-transparent card no-move">
-            <div class="delete-overlay"></div>
+           <div class="card-inner">
+              <div class="delete-overlay"></div>
               <button 
                 loading 
                 ng-click="config.ui.specifics.manage(ent)" 
                 type="button" md-ink-ripple 
-                class="card-primary-action button-transparent">
+                class="card-primary-action menu-item">
+
                   <% if (config.ui.specifics.cardView) { %>
                     <span <%=config.ui.specifics.cardView %>="ent"
                           <%=config.ui.specifics.cardView %>-config="config"></span>
@@ -45,16 +47,18 @@
                   <strong class="first ellipsis-text">{{ent|output:config.ui.specifics.fields[0].code_name}}</strong>
                   <% } %> 
               </button>
-              <div ng-if="config.ui.specifics.listConfig.secondary" class="card-action-top-right">
-                    <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
-                       ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
-                       loading="!<%= config.ui.writableCompiled %>" 
-                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)"
-                       md-ink-ripple-action
-                       class="button-transparent button-square sort-handle">
-                        <icon type="action.view-headline"></icon>
-                    </a>
-              </div>
+
+            </div>
+            <div ng-if="config.ui.specifics.listConfig.secondary" class="card-action-top-right">
+                  <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
+                     ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
+                     loading="!<%= config.ui.writableCompiled %>" 
+                     draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)"
+                     md-ink-ripple-action
+                     class="button-transparent button-square sort-handle">
+                      <icon type="action.view-headline"></icon>
+                  </a>
+            </div>
       </div>
       <% } else { %>
 

@@ -21,36 +21,6 @@
         .directive('mdMaxlength', mdMaxlengthDirective)
         .directive('placeholder', placeholderDirective);
 
-    /**
-     * @ngdoc directive
-     * @name mdInputContainer
-     * @module material.components.input
-     *
-     * @restrict E
-     *
-     * @description
-     * `<md-input-container>` is the parent of any input or textarea element.
-     *
-     * Input and textarea elements will not behave properly unless the md-input-container
-     * parent is provided.
-     *
-     * @param md-is-error {expression=} When the given expression evaluates to true, the input container will go into error state. Defaults to erroring if the input has been touched and is invalid.
-     *
-     * @usage
-     * <hljs lang="html">
-     *
-     * <md-input-container>
-     *   <label>Username</label>
-     *   <input type="text" ng-model="user.name">
-     * </md-input-container>
-     *
-     * <md-input-container>
-     *   <label>Description</label>
-     *   <textarea ng-model="user.description"></textarea>
-     * </md-input-container>
-     *
-     * </hljs>
-     */
     function mdInputContainerDirective($mdTheming, $parse) {
         ContainerCtrl.$inject = ["$scope", "$element", "$attrs"];
         return {
@@ -107,75 +77,6 @@
         };
     }
 
-    /**
-     * @ngdoc directive
-     * @name input
-     * @restrict E
-     * @module material.components.input
-     *
-     * @description
-     * Must be placed as a child of an `<md-input-container>`.
-     *
-     * Behaves like the [AngularJS input directive](https://docs.angularjs.org/api/ng/directive/input).
-     *
-     * @usage
-     * <hljs lang="html">
-     * <md-input-container>
-     *   <label>Color</label>
-     *   <input type="text" ng-model="color" required md-maxlength="10">
-     * </md-input-container>
-     * </hljs>
-     * <h3>With Errors (uses [ngMessages](https://docs.angularjs.org/api/ngMessages))</h3>
-     * <hljs lang="html">
-     * <form name="userForm">
-     *   <md-input-container>
-     *     <label>Last Name</label>
-     *     <input name="lastName" ng-model="lastName" required md-maxlength="10" minlength="4">
-     *     <div ng-messages="userForm.lastName.$error" ng-show="userForm.bio.$dirty">
-     *       <div ng-message="required">This is required!</div>
-     *       <div ng-message="md-maxlength">That's too long!</div>
-     *       <div ng-message="minlength">That's too short!</div>
-     *     </div>
-     *   </md-input-container>
-     * </form>
-     * </hljs>
-     *
-     * @param {number=} md-maxlength The maximum number of characters allowed in this input. If this is specified, a character counter will be shown underneath the input.
-     */
-    /**
-     * @ngdoc directive
-     * @name textarea
-     * @restrict E
-     * @module material.components.input
-     *
-     * @description
-     * Must be placed as a child of an `<md-input-container>`.
-     *
-     * Behaves like the [AngularJS input directive](https://docs.angularjs.org/api/ng/directive/textarea).
-     *
-     * @usage
-     * <hljs lang="html">
-     * <md-input-container>
-     *   <label>Description</label>
-     *   <textarea ng-model="description" required minlength="15" md-maxlength="20"></textarea>
-     * </md-input-container>
-     * </hljs>
-     * <h3>With Errors (uses [ngMessages](https://docs.angularjs.org/api/ngMessages))</h3>
-     * <hljs lang="html">
-     * <form name="userForm">
-     *   <md-input-container>
-     *     <label>Biography</label>
-     *     <textarea name="bio" ng-model="biography" required md-maxlength="150"></textarea>
-     *     <div ng-messages="userForm.bio.$error" ng-show="userForm.bio.$dirty">
-     *       <div ng-message="required">This is required!</div>
-     *       <div ng-message="md-maxlength">That's too long!</div>
-     *     </div>
-     *   </md-input-container>
-     * </form>
-     * </hljs>
-     *
-     * @param {number=} md-maxlength The maximum number of characters allowed in this input. If this is specified, a character counter will be shown underneath the input.
-     */
     function inputTextareaDirective($mdUtil, $window, $compile, $animate) {
         return {
             restrict: 'E',
@@ -267,7 +168,7 @@
                 });
 
                 function growTextarea() {
-                    node.style.height = "auto";
+                    //node.style.height = "auto";
                     var line = node.scrollHeight - node.offsetHeight;
                     node.scrollTop = 0;
                     var height = node.offsetHeight + (line > 0 ? line : 0);

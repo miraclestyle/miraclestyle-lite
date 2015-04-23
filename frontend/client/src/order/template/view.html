@@ -28,7 +28,49 @@
                 <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
                 <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
                 <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
-                 <div class="item-list">
+
+                <div class="cards">
+
+                  <div class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
+                      <div class="card-inner">
+                          <button 
+                            loading 
+                            ng-click="cmd.line.view(line)" 
+                            type="button" md-ink-ripple 
+                            class="card-primary-action menu-item">
+                              <h1 class="headline">{{line.product.name}}</h1>
+                              <span class="first">{{line.product.code}}</span>
+                              <span class="first">{{line.product.unit_price|formatCurrency:order.currency}}</span>
+                              <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
+                              <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
+                              <input type="hidden" value="{{line.product.quantity}}" name="quantity_{{line.sequence}}" />
+                              <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
+                              <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
+                              <table class="card-table">
+                                  <tbody>
+                                      <tr ng-repeat="variant in line.product.variant_signature track by $index">
+                                          <td class="first info">{{format.variantLabel(variant)}}</td>
+                                          <td class="first">{{format.variantValue(variant)}}</td>
+                                      </tr>
+                                      <tr>
+                                          <td class="first info">Quantity ({{line.product.uom.symbol}})</td>
+                                          <td class="first">{{line.product.quantity}}</td>
+                                      </tr>
+                                  </tbody>
+                              </table>
+                        </button>
+                      </div>
+                      <div class="card-action-top-right">
+                        <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
+                           md-ink-ripple-action
+                           draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="button-square sort-handle">
+                              <icon type="action.delete"></icon>
+                        </a>
+                    </div>
+                  </div>
+ 
+
+                 <!--<div class="item-list">
                     <div class="item clearfix" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
                         <div class="item-left">
                             <div class="order-line-product-name">
@@ -74,33 +116,42 @@
                             <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
                         </div>
                     </div>
+                </div>-->
+
+                <div class="card">
+                    <div class="card-inner">
+                        <div class="padding-16 clearfix">
+                          <h1 class="headline">Order Summary</h1>
+                          <table class="pull-right card-table">
+                          <tbody>
+                            <tr>
+                              <td class="first info">Shipping &amp; Handling</td>
+                              <td class="first">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
+                            </tr>
+                            <tr>
+                              <td class="first info">Net Total</td>
+                              <td class="first">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
+                            </tr>
+                            <tr>
+                              <td class="first info">Taxes</td>
+                              <td class="first">{{order.tax_amount|formatCurrency:order.currency}}</td>
+                            </tr>
+                            <tr>
+                              <td class="first info">Total</td>
+                              <td class="first">{{order.total_amount|formatCurrency:order.currency}}</td>
+                            </tr>
+                            <tr>
+                              <td class="first info">Currency</td>
+                              <td class="first">{{order.currency.name}} ({{order.currency.code}})</td>
+                            </tr>
+                           </tbody>
+                           </table>
+                         </div>
+                    </div>
                 </div>
-                <div class="order-totals clearfix">
-                    <table class="pull-right">
-                      <tbody>
-                        <tr class="order-carrier-subtotal">
-                          <td class="order-label">Shipping &amp; Handling</td>
-                          <td class="order-value">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
-                        </tr>
-                        <tr class="order-untaxed_amount">
-                          <td class="order-label">Net Total</td>
-                          <td class="order-value">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
-                        </tr>
-                        <tr class="order-tax_amount">
-                          <td class="order-label">Taxes</td>
-                          <td class="order-value">{{order.tax_amount|formatCurrency:order.currency}}</td>
-                        </tr>
-                        <tr class="order-total_amount">
-                          <td class="order-label">Total</td>
-                          <td class="order-value">{{order.total_amount|formatCurrency:order.currency}}</td>
-                        </tr>
-                        <tr class="order-currency">
-                          <td class="order-label">Currency</td>
-                          <td class="order-value">{{order.currency.name}} ({{order.currency.code}})</td>
-                        </tr>
-                      </tbody>
-                    </table>
+
                 </div>
+ 
    
                </div>
             </div>
@@ -113,7 +164,7 @@
   <md-content>
       <div class="list">
           <div class="sidebar-seller-logo">
-            <button md-ink-ripple type="button" class="button-transparent" loading ng-click="misc.sellerDetail()">
+            <button md-ink-ripple ripple-light type="button" class="button-transparent" loading ng-click="misc.sellerDetail()">
                <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
             </button>
           </div>
@@ -146,9 +197,19 @@
             </div>
             <div load-more-button="messages.reader"></div>
           </div>
+
            <div class="clearfix messages-box">
-              <div ng-form name="container.messages">
+             <div class="messages-send">
+                <button md-ink-ripple-action 
+                        type="button"
+                        class="button-transparent button-square"
+                        loading="!container.messages.$valid" ng-click="messages.logMessage()">
+                    <icon type="communication.send"></icon>
+                </button>
+             </div>
+              <div class="messages-send-wrapper relative" ng-form name="container.messages">
                 <div form-input="messages.field"></div>
+
               </div>
            </div>
       </div>

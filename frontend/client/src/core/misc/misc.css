@@ -740,10 +740,6 @@ body {
     margin: 0px;
     padding: 0px;
     z-index: 11;
-    max-height: 77px;
-    min-height: 16px;
-    overflow-x: hidden;
-    overflow-y: auto;
 }
 
 .messages {
@@ -805,19 +801,42 @@ body {
 }
 
 .messages-box md-input-container {
-    padding:18px 56px 18px 16px;
+    padding: 18px 56px 18px 16px;
 }
+
 .messages-box textarea {
-  padding: 0px;
-  border: none;
+    padding: 0px;
+    border: none;
+    min-height: 20px;
+    height: 0px;
 }
+
 .messages-box [ng-messages] {
     display: none;
 }
+
 .rightside .message-author {
     left: -56px;
 }
 
 .leftside .message-author {
     right: -56px;
+}
+
+.messages-send-wrapper {
+    max-height: 56px;
+    min-height: 56px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.messages-send {
+    top: 0px;
+    padding: 4px;
+    display: block;
+    position: absolute;
+    box-sizing: border-box;
+    margin: 0px;
+    right: 0px;
+    z-index:15;
 }
