@@ -352,44 +352,68 @@
                                     $scope.$close();
                                 };
 
-                                $scope.lineSorting = {
-                                    disabled: false,
-                                    axis: 'x',
+                                $scope.lineDrag = {
+                                    options: {
+                                        disabled: false,
+                                        axis: 'x',
+                                        handle: '.sort-handle',
+                                        drag: function (e, ui) {
+                                            console.log(e, ui);
+                                            return;
+                                            var deleteMode,
+                                                division,
+                                                helperWidth = ui.helper.width(),
+                                                itemScope = ui.item.scope(),
+                                                item = itemScope.$eval(ui.item.attr('current-item'));
+                                            division = ui.offset.left + helperWidth;
+                                            if (division < (helperWidth / 2)) {
+                                                deleteMode = true;
+                                            }
+                                            if (item) {
+                                                if (deleteMode) {
+                                                    ui.helper.addClass('about-to-delete');
+                                                    item._state = 'deleted';
+                                                } else {
+                                                    ui.helper.removeClass('about-to-delete');
+                                                    item._state = null;
+                                                }
+                                            }
+                                        },
+                                        stop: function (e, ui) {
+                                            $scope.$apply();
+                                        }
+                                    },
                                     whatSortMeans: function () {
                                         modals.alert('howToDeleteLine');
                                     },
-                                    handle: '.sort-handle',
-                                    start: function (e, ui) {
-                                        if (locals.customPlaceholder === null) {
-                                            locals.customPlaceholder = ui.helper.clone().attr('style', '').css('visibility', 'hidden');
-                                            ui.helper.after(locals.customPlaceholder);
-                                        }
-                                    },
-                                    sort: function (e, ui) {
+                                    onDrag: function (e, ui, line) {
                                         var deleteMode,
                                             division,
-                                            helperWidth = ui.helper.width(),
-                                            itemScope = ui.item.scope(),
-                                            item = itemScope.$eval(ui.item.attr('current-item'));
+                                            helperWidth = ui.helper.width();
                                         division = ui.offset.left + helperWidth;
                                         if (division < (helperWidth / 2)) {
                                             deleteMode = true;
                                         }
-                                        if (item) {
+                                        if (line) {
                                             if (deleteMode) {
                                                 ui.helper.addClass('about-to-delete');
-                                                item._state = 'deleted';
                                             } else {
                                                 ui.helper.removeClass('about-to-delete');
-                                                item._state = null;
                                             }
                                         }
                                     },
-                                    stop: function (e, ui) {
-                                        $scope.$apply();
-                                        if (locals.customPlaceholder !== null) {
-                                            locals.customPlaceholder.remove();
-                                            locals.customPlaceholder = null;
+                                    onStop: function (e, ui, line) {
+                                        if (ui.helper.hasClass('about-to-delete')) {
+                                            ui.helper.animate({
+                                                left: (ui.helper.width() * 2) * -1
+                                            }, function () {
+                                                line._state = 'deleted';
+                                                $scope.$apply();
+                                            });
+                                        } else {
+                                            ui.helper.animate(ui.originalPosition, function () {
+                                                ui.helper.attr('style', '');
+                                            });
                                         }
                                     }
                                 };

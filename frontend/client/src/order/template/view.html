@@ -30,8 +30,8 @@
                 <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
                 <div class="cards">
-                  <div ng-model="order._lines" ui-sortable="lineSorting">
-                    <div class="card" current-item="line" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
+ 
+                    <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
                         <button 
                               loading 
                               ng-click="cmd.line.view(line)" 
@@ -81,12 +81,10 @@
                              draggable-click="lineSorting.whatSortMeans($event)" class="button-square sort-handle">
                                 <icon type="action.delete"></icon>
                           </a>
-                      </div>
+                        </div>
 
 
-                    </div>
-                  </div>
- 
+                    </div> 
 
                 <div class="card">
                     <div class="card-inner">
