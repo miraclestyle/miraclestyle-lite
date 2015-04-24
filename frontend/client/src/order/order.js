@@ -119,6 +119,7 @@
                             templateUrl: 'order/view.html',
                             controller: function ($scope) {
                                 var locals = {
+                                    customPlaceholder: null,
                                     updateLiveEntity: function (response) {
                                         var messages = $scope.order._messages;
                                         $.extend($scope.order, response.data.entity);
@@ -351,8 +352,6 @@
                                     $scope.$close();
                                 };
 
-                                var gr = null;
-
                                 $scope.lineSorting = {
                                     disabled: false,
                                     axis: 'x',
@@ -360,6 +359,12 @@
                                         modals.alert('howToDeleteLine');
                                     },
                                     handle: '.sort-handle',
+                                    start: function (e, ui) {
+                                        if (locals.customPlaceholder === null) {
+                                            locals.customPlaceholder = ui.helper.clone().attr('style', '').css('visibility', 'hidden');
+                                            ui.helper.after(locals.customPlaceholder);
+                                        }
+                                    },
                                     sort: function (e, ui) {
                                         var deleteMode,
                                             division,
@@ -379,16 +384,13 @@
                                                 item._state = null;
                                             }
                                         }
-                                        if (gr === null) {
-                                            gr = ui.helper.clone().attr('style', '').css('visibility', 'hidden');
-                                            ui.helper.after(gr);
-                                        }
                                     },
                                     stop: function (e, ui) {
                                         $scope.$apply();
-                                        console.log('stop');
-                                        gr.remove();
-                                        gr = null;
+                                        if (locals.customPlaceholder !== null) {
+                                            locals.customPlaceholder.remove();
+                                            locals.customPlaceholder = null;
+                                        }
                                     }
                                 };
 
