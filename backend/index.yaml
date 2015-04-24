@@ -131,7 +131,6 @@ indexes:
   ancestor: yes
   properties:
   - name: '1'
-    direction: desc
 
 # CatalogProductInstance.variant_options == 'thing', sequence desc
 - kind: '27'

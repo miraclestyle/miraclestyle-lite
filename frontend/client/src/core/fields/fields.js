@@ -69,9 +69,6 @@
             });
 
             $.extend(modals, {
-                howToSort: function ($event) {
-                    return modals.alert('howToSort');
-                },
                 fields: {
                     remote: function (scope, field, config) {
                         $modal.open({
@@ -1079,7 +1076,9 @@
                             },
                             axis: false,
                             containment: false,
-                            whatSortMeans: modals.howToSort,
+                            whatSortMeans: function () {
+                                modals.alert('howToSort');
+                            },
                             handle: '.sort-handle',
                             tolerance: 'pointer',
                             helper: 'clone',

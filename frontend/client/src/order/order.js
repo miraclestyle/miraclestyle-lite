@@ -29,6 +29,20 @@
 
             }
         };
+    }).directive('alwaysScrollToBottom', function ($timeout) {
+        return {
+            link: function (scope, element, attrs) {
+                var cb = function () {
+                    element.scrollTop(element[0].scrollHeight);
+                };
+
+                scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
+                    if (neww !== old) {
+                        cb();
+                    }
+                });
+            }
+        };
     }).filter('displayTaxes', function () {
         return function (value) {
             var formatted = '';
@@ -62,23 +76,28 @@
                 },
                 manageModal: function (order, seller, buyer, config) {
                     config = helpers.alwaysObject(config);
-                    var args, that = this, cartMode = config.cartMode, sellerMode = config.sellerMode, rpc = {};
+                    var args, that = this,
+                        cartMode = config.cartMode,
+                        sellerMode = config.sellerMode,
+                        rpc = {};
                     if (!cartMode) {
                         args = {
                             key: order.key,
                             read_arguments: {
-                                _lines: {config: {
-                                    options: {
-                                        limit: 0
+                                _lines: {
+                                    config: {
+                                        options: {
+                                            limit: 0
+                                        }
                                     }
-                                }},
+                                },
                                 _messages: {
                                     _agent: {}
                                 }
                             }
                         };
                     } else {
-                        args  = {
+                        args = {
                             buyer: buyer.key,
                             seller: seller.key,
                             read_arguments: {
@@ -128,7 +147,10 @@
                                     parentArgs: 'messages.draft',
                                     writable: true,
                                     placeholder: 'Type message here.',
-                                    attrs: {'native-placeholder': ''}
+                                    attrs: {
+                                        'native-placeholder': '',
+                                        'class': 'primary'
+                                    }
                                 });
 
                                 $scope.dialog = {
@@ -187,25 +209,30 @@
                                     reader: models['34'].reader({
                                         kind: '34',
                                         key: $scope.order.key,
-                                        next: $scope.order._next_read_arguments,
+                                        next: {
+                                            _messages: angular.copy($scope.order._next_read_arguments._messages)
+                                        },
                                         access: ['_messages'],
                                         complete: function (items) {
-                                            $scope.order._messages.extend(items);
+                                            $scope.order._messages.prepend(items);
                                         }
                                     }),
                                     toggling: false,
+                                    open: false,
                                     draft: {
                                         message: null,
-                                        key: $scope.order.key,
+                                        key: $scope.order.key
                                     },
                                     field: locals.logMessageAction.message,
                                     nav: function () {
                                         return $mdSidenav('right_messages');
                                     },
+                                    sent: false,
                                     send: function (action) {
                                         models['34'].actions[action]($scope.messages.draft).then(function (response) {
                                             $scope.messages.draft.message = '';
-                                            $scope.order._messages.unshift(response.data.entity._messages[0]);
+                                            $scope.messages.sent = !$scope.messages.sent;
+                                            $scope.order._messages.push(response.data.entity._messages[0]);
                                             locals.reactOnStateChange(response);
                                         });
                                     },
@@ -233,7 +260,6 @@
                                         }
                                         var it = $scope.messages.nav(),
                                             isOpen = it.isOpen();
-                                        console.log(it);
                                         $scope.messages.toggling = true;
                                         if (close === true) {
                                             isOpen = true;
@@ -241,6 +267,7 @@
                                         $timeout(function () {
                                             it[isOpen ? 'close' : 'open']().then(function () {
                                                 $scope.messages.toggling = false;
+                                                $scope.messages.open = !isOpen;
                                             });
                                         });
                                     },
@@ -301,16 +328,68 @@
                                     view: function (line) {
                                         var path = line.product._reference;
                                         models['31'].viewProductModal(path.parent.parent.parent.key,
-                                                                      path.parent.parent.key, path.pricetag.key,
-                                                                      line.product.variant_signature, {events: {addToCart: locals.updateLiveEntity}});
+                                            path.parent.parent.key, path.pricetag.key,
+                                            line.product.variant_signature, {
+                                                events: {
+                                                    addToCart: locals.updateLiveEntity
+                                                }
+                                            });
                                     },
                                     remove: function (line) {
                                         line.quantity = 0;
+                                        line._state = 'deleted';
+                                    }
+                                };
+
+                                $scope.cmd.seller = {
+                                    view: function () {
+                                        models['23'].viewModal($scope.seller);
                                     }
                                 };
 
                                 $scope.close = function () {
                                     $scope.$close();
+                                };
+
+                                var gr = null;
+
+                                $scope.lineSorting = {
+                                    disabled: false,
+                                    axis: 'x',
+                                    whatSortMeans: function () {
+                                        modals.alert('howToDeleteLine');
+                                    },
+                                    handle: '.sort-handle',
+                                    sort: function (e, ui) {
+                                        var deleteMode,
+                                            division,
+                                            helperWidth = ui.helper.width(),
+                                            itemScope = ui.item.scope(),
+                                            item = itemScope.$eval(ui.item.attr('current-item'));
+                                        division = ui.offset.left + helperWidth;
+                                        if (division < (helperWidth / 2)) {
+                                            deleteMode = true;
+                                        }
+                                        if (item) {
+                                            if (deleteMode) {
+                                                ui.helper.addClass('about-to-delete');
+                                                item._state = 'deleted';
+                                            } else {
+                                                ui.helper.removeClass('about-to-delete');
+                                                item._state = null;
+                                            }
+                                        }
+                                        if (gr === null) {
+                                            gr = ui.helper.clone().attr('style', '').css('visibility', 'hidden');
+                                            ui.helper.after(gr);
+                                        }
+                                    },
+                                    stop: function (e, ui) {
+                                        $scope.$apply();
+                                        console.log('stop');
+                                        gr.remove();
+                                        gr = null;
+                                    }
                                 };
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
@@ -354,24 +433,29 @@
                 },
                 manageModal: function (order, seller, buyer, config) {
                     config = helpers.alwaysObject(config);
-                    var args, that = this, cartMode = config.cartMode, sellerMode = config.sellerMode, rpc = {};
+                    var args, that = this,
+                        cartMode = config.cartMode,
+                        sellerMode = config.sellerMode,
+                        rpc = {};
 
                     if (!cartMode) {
                         args = {
                             key: order.key,
                             read_arguments: {
-                                _lines: {config: {
-                                    options: {
-                                        limit: 0
+                                _lines: {
+                                    config: {
+                                        options: {
+                                            limit: 0
+                                        }
                                     }
-                                }},
+                                },
                                 _messages: {
                                     _agent: {}
                                 }
                             }
                         };
                     } else {
-                        args  = {
+                        args = {
                             buyer: buyer.key,
                             seller: seller.key,
                             read_arguments: {
@@ -393,7 +477,8 @@
                             templateUrl: 'order/view.html',
                             controller: function ($scope) {
                                 var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate, updateLiveEntity,
-                                    orderActionsFields = modelsMeta.getActionArguments('34'), prepareMessageFields,
+                                    orderActionsFields = modelsMeta.getActionArguments('34'),
+                                    prepareMessageFields,
                                     displayAddress = function (address) {
                                         var addr = [];
                                         angular.forEach(['name', 'street', 'city', '_region.name', 'postal_code', '_country.name', 'email', 'telephone'], function (field) {
@@ -639,7 +724,7 @@
                                     send: function (action) {
                                         models['34'].actions[action]($scope.newMessage).then(function (response) {
                                             $scope.newMessage.message = '';
-                                            $scope.order._messages.unshift(response.data.entity._messages[0]);
+                                            $scope.order._messages.push(response.data.entity._messages[0]);
                                             reactOnStateChange(response);
                                         });
                                     },
@@ -690,8 +775,12 @@
                                 $scope.viewProduct = function (line) {
                                     var path = line.product._reference;
                                     models['31'].viewProductModal(path.parent.parent.parent.key,
-                                                                  path.parent.parent.key, path.pricetag.key,
-                                                                  line.product.variant_signature, {events: {addToCart: updateLiveEntity}});
+                                        path.parent.parent.key, path.pricetag.key,
+                                        line.product.variant_signature, {
+                                            events: {
+                                                addToCart: updateLiveEntity
+                                            }
+                                        });
                                 };
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');

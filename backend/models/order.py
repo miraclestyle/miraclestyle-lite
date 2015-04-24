@@ -201,14 +201,14 @@ class Order(orm.BaseExpando):
           'filters': [],
           'orders': [{
             'field': 'created',
-            'operator': 'desc'
+            'operator': 'asc'
           }]
         },
         'cfg': {
           'indexes': [{
             'ancestor': True,
             'filters': [],
-            'orders': [('created', ['desc'])]
+            'orders': [('created', ['asc'])]
           }],
         }
       }),
