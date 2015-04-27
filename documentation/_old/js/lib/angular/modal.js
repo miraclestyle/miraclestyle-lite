@@ -119,6 +119,7 @@ angular.module('app.ui.modal', ['app.ui.transition'])
       var $modalStack = {};
 
       function backdropIndex() {
+        return openedWindows.length();
         var topBackdropIndex = -1;
         var opened = openedWindows.keys();
         for (var i = 0; i < opened.length; i++) {
@@ -131,7 +132,7 @@ angular.module('app.ui.modal', ['app.ui.transition'])
 
       $rootScope.$watch(backdropIndex, function(newBackdropIndex){
         if (backdropScope) {
-          backdropScope.index = newBackdropIndex;
+          //backdropScope.index = newBackdropIndex;
         }
       });
 

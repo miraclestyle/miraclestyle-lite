@@ -18,47 +18,6 @@
         ])
         .directive('mdRadioGroup', mdRadioGroupDirective)
         .directive('mdRadioButton', mdRadioButtonDirective);
-
-    /**
-     * @ngdoc directive
-     * @module material.components.radioButton
-     * @name mdRadioGroup
-     *
-     * @restrict E
-     *
-     * @description
-     * The `<md-radio-group>` directive identifies a grouping
-     * container for the 1..n grouped radio buttons; specified using nested
-     * `<md-radio-button>` tags.
-     *
-     * As per the [material design spec](http://www.google.com/design/spec/style/color.html#color-ui-color-application)
-     * the radio button is in the accent color by default. The primary color palette may be used with
-     * the `md-primary` class.
-     *
-     * Note: `<md-radio-group>` and `<md-radio-button>` handle tabindex differently
-     * than the native `<input type='radio'>` controls. Whereas the native controls
-     * force the user to tab through all the radio buttons, `<md-radio-group>`
-     * is focusable, and by default the `<md-radio-button>`s are not.
-     *
-     * @param {string} ng-model Assignable angular expression to data-bind to.
-     * @param {boolean=} md-no-ink Use of attribute indicates flag to disable ink ripple effects.
-     *
-     * @usage
-     * <hljs lang="html">
-     * <md-radio-group ng-model="selected">
-     *
-     *   <md-radio-button
-     *        ng-repeat="d in colorOptions"
-     *        ng-value="d.value" aria-label="{{ d.label }}">
-     *
-     *          {{ d.label }}
-     *
-     *   </md-radio-button>
-     *
-     * </md-radio-group>
-     * </hljs>
-     *
-     */
     function mdRadioGroupDirective($mdUtil, $mdConstant, $mdTheming) {
         RadioGroupController.prototype = createRadioGroupControllerProto();
 
@@ -181,44 +140,7 @@
     }
     mdRadioGroupDirective.$inject = ["$mdUtil", "$mdConstant", "$mdTheming"];
 
-    /**
-     * @ngdoc directive
-     * @module material.components.radioButton
-     * @name mdRadioButton
-     *
-     * @restrict E
-     *
-     * @description
-     * The `<md-radio-button>`directive is the child directive required to be used within `<md-radio-group>` elements.
-     *
-     * While similar to the `<input type="radio" ng-model="" value="">` directive,
-     * the `<md-radio-button>` directive provides ink effects, ARIA support, and
-     * supports use within named radio groups.
-     *
-     * @param {string} ngModel Assignable angular expression to data-bind to.
-     * @param {string=} ngChange Angular expression to be executed when input changes due to user
-     *    interaction with the input element.
-     * @param {string} ngValue Angular expression which sets the value to which the expression should
-     *    be set when selected.*
-     * @param {string} value The value to which the expression should be set when selected.
-     * @param {string=} name Property name of the form under which the control is published.
-     * @param {string=} ariaLabel Adds label to radio button for accessibility.
-     * Defaults to radio button's text. If no default text is found, a warning will be logged.
-     *
-     * @usage
-     * <hljs lang="html">
-     *
-     * <md-radio-button value="1" aria-label="Label 1">
-     *   Label 1
-     * </md-radio-button>
-     *
-     * <md-radio-button ng-model="color" ng-value="specialValue" aria-label="Green">
-     *   Green
-     * </md-radio-button>
-     *
-     * </hljs>
-     *
-     */
+
     function mdRadioButtonDirective($mdAria, $mdUtil, $mdTheming) {
 
         var CHECKED_CSS = 'md-checked';

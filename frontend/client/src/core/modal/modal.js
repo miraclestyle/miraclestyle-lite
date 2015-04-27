@@ -211,6 +211,8 @@
                         }
                         return defer.promise;
                     };
+
+                    scope.backdropClose = scope.close;
                 }
             };
         }
@@ -232,6 +234,7 @@
                 $modalStack = {};
 
             function backdropIndex() {
+                return openedWindows.length() - 1;
                 var topBackdropIndex = -1,
                     opened = openedWindows.keys(),
                     i;
@@ -425,7 +428,7 @@
 
         var $modalProvider = {
             options: {
-                backdrop: true, //can be also false or 'static'
+                backdrop: false, //can be also false or 'static'
                 inDirection: 'right',
                 outDirection: 'right',
                 fullScreen: true

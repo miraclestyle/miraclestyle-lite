@@ -139,8 +139,39 @@
                                             });
                                         }
                                     },
-                                    logMessageAction: modelsMeta.getActionArguments('34', 'log_message')
+                                    logMessageAction: modelsMeta.getActionArguments('34', 'log_message'),
+                                    orderUpdateFields: modelsMeta.getActionArguments('34', 'update'),
+                                    billingAddressFields: [],
+                                    shippingAddressFields: [],
+                                    sorter: function (field, b) {
+                                        var indx = models['19'].manageModalFieldsOrder.indexOf(field.code_name);
+                                        if (indx === -1) {
+                                            indx = 99999;
+                                        }
+                                        return indx - b;
+                                    }
                                 };
+
+                                angular.forEach(locals.orderUpdateFields.shipping_address.modelclass, function (value) {
+                                    $.extend(value.ui, {
+                                        args: 'addresses.shipping.' + value.code_name,
+                                        parentArgs: 'addresses.shipping',
+                                        writable: true
+                                    });
+                                    locals.shippingAddressFields.push(value);
+                                });
+
+                                angular.forEach(locals.orderUpdateFields.billing_address.modelclass, function (value) {
+                                    $.extend(value.ui, {
+                                        args: 'addresses.billing.' + value.code_name,
+                                        parentArgs: 'addresses.billing',
+                                        writable: true
+                                    });
+                                    locals.billingAddressFields.push(value);
+                                });
+
+                                locals.billingAddressFields.sort(locals.sorter);
+                                locals.shippingAddressFields.sort(locals.sorter);
 
                                 $.extend(locals.logMessageAction.message.ui, {
                                     label: false,
@@ -162,12 +193,25 @@
 
                                 $scope.stage = {
                                     current: 1,
-                                    next: function () {
-                                        $scope.stage.current += 1;
-                                        var cb = $scope.stage['callStage' + $scope.stage.current];
-                                        if (cb) {
-                                            cb();
-                                        }
+                                    out: [],
+                                    isOut: function (indx) {
+                                        return $.inArray(indx, $scope.stage.out) !== -1;
+                                    },
+                                    toCheckout: function () {
+                                        $scope.stage.out.push(1);
+                                        $scope.stage.current = 2;
+                                    },
+                                    toDeliveryMethod: function () {
+                                        $scope.stage.out.push(2);
+                                        $scope.stage.current = 3;
+                                    },
+                                    toReviewOrder: function () {
+                                        $scope.stage.out.push(3);
+                                        $scope.stage.current = 4;
+                                    },
+                                    reset: function () {
+                                        $scope.stage.out = [];
+                                        $scope.stage.current = 1;
                                     }
                                 };
                                 $scope.cmd = {};
@@ -178,12 +222,50 @@
                                 $scope.seller = seller;
                                 $scope.currentAccount = currentAccount;
                                 $scope.addresses = {
-                                    sameAsBilling: false,
+                                    sameAsBilling: true,
                                     shipping: {},
                                     billing: {},
+                                    browse: function (type) {
+                                        var parentScope = $scope;
+                                        models['19'].current().then(function (response) {
+                                            $modal.open({
+                                                backdrop: true,
+                                                fullScreen: false,
+                                                templateUrl: 'order/browse_addresses.html',
+                                                controller: function ($scope) {
+                                                    $scope.addresses = response.data.entity.addresses;
+                                                    $scope.select = function (ent) {
+                                                        angular.forEach(ent, function (value, key) {
+                                                            parentScope.addresses[type][key] = value;
+                                                        });
+                                                        $scope.$close();
+                                                    };
+                                                    $scope.manage = function () {
+                                                        models['19'].manageModal(response.data.entity.parent.key, function () {
+                                                            models['19'].current().then(function (response) {
+                                                                $scope.addresses = response.data.entity.addresses;
+                                                            });
+                                                        });
+                                                    };
+                                                }
+                                            });
+                                        });
+                                    },
                                     fields: {
-                                        shipping: {},
-                                        billing: {}
+                                        shipping: locals.shippingAddressFields,
+                                        billing: locals.billingAddressFields,
+                                        sameAsBilling: {
+                                            type: 'SuperBooleanProperty',
+                                            code_name: 'sameAsBilling',
+                                            ui: {
+                                                writable: true,
+                                                parentArgs: 'addresses',
+                                                args: 'addresses.sameAsBilling',
+                                                specifics: {
+                                                    type: 'checkbox'
+                                                }
+                                            }
+                                        }
                                     },
                                     useSaved: function () {}
                                 };
@@ -357,28 +439,7 @@
                                         disabled: false,
                                         axis: 'x',
                                         handle: '.sort-handle',
-                                        drag: function (e, ui) {
-                                            console.log(e, ui);
-                                            return;
-                                            var deleteMode,
-                                                division,
-                                                helperWidth = ui.helper.width(),
-                                                itemScope = ui.item.scope(),
-                                                item = itemScope.$eval(ui.item.attr('current-item'));
-                                            division = ui.offset.left + helperWidth;
-                                            if (division < (helperWidth / 2)) {
-                                                deleteMode = true;
-                                            }
-                                            if (item) {
-                                                if (deleteMode) {
-                                                    ui.helper.addClass('about-to-delete');
-                                                    item._state = 'deleted';
-                                                } else {
-                                                    ui.helper.removeClass('about-to-delete');
-                                                    item._state = null;
-                                                }
-                                            }
-                                        },
+                                        distance: 8,
                                         stop: function (e, ui) {
                                             $scope.$apply();
                                         }

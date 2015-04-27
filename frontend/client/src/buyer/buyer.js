@@ -89,7 +89,8 @@
                             cacheType: 'memory'
                         });
                     },
-                    manageModal: function (accountKey) {
+                    manageModalFieldsOrder: ['country', 'region', 'city', 'postal_code', 'street', 'name'],
+                    manageModal: function (accountKey, afterSave) {
                         var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                             that = this,
                             config;
@@ -100,10 +101,7 @@
                                 listConfig: {
                                     perLine: 3
                                 },
-                                sortFields: ['country', 'region', 'city', 'postal_code', 'street', 'name'],
-                                afterSave: function () {
-                                    endpoint.removeCache(that.getCacheKey('current'));
-                                },
+                                sortFields: that.manageModalFieldsOrder,
                                 beforeSave: function ($scope, info) {
                                     var promises = [],
                                         updatedAddress = $scope.args,
@@ -151,6 +149,12 @@
                             fields: _.toArray(fields),
                             kind: this.kind,
                             action: 'update',
+                            afterSave: function () {
+                                endpoint.removeCache(that.getCacheKey('current'));
+                                if (angular.isDefined(afterSave)) {
+                                    afterSave();
+                                }
+                            },
                             scope: {
                                 layouts: {
                                     groups: [{label: false, fields: ['addresses']}]

@@ -1,0 +1,81 @@
+<div class="cards">
+    <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
+        <button loading ng-click="cmd.line.view(line)" type="button" md-ink-ripple class="menu-item card-inner">
+            <div class="delete-overlay"></div>
+            <div class="card-primary-action">
+                <h1 class="headline">{{line.product.name}}</h1>
+                <span class="first">{{line.product.code}}</span>
+                <span class="first">{{line.product.unit_price|formatCurrency:order.currency}}</span>
+                <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
+                <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
+                <input type="hidden" value="{{line.product.quantity}}" name="quantity_{{line.sequence}}" />
+                <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
+                <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
+                <table class="card-table">
+                    <tbody>
+                        <tr ng-repeat="variant in line.product.variant_signature track by $index">
+                            <td class="first info">{{format.variantLabel(variant)}}</td>
+                            <td class="first">{{format.variantValue(variant)}}</td>
+                        </tr>
+                        <tr>
+                            <td class="first info">Quantity ({{line.product.uom.symbol}})</td>
+                            <td class="first">{{line.product.quantity}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <div class="clearfix padding-16">
+                <table class="pull-right card-table">
+                    <tbody>
+                        <tr>
+                            <td class="first info">Subtotal</td>
+                            <td class="first">{{line.discount_subtotal|formatCurrency:order.currency}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </button>
+        <div class="card-action-top-right">
+            <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" md-ink-ripple-action draggable-click="lineDrag.whatSortMeans($event)" class="button-square sort-handle">
+                <icon type="action.delete"></icon>
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-inner">
+            <div class="padding-16 clearfix">
+                <h1 class="headline">Order Summary</h1>
+                <table class="pull-right card-table">
+                    <tbody>
+                        <tr>
+                            <td class="first info">Shipping &amp; Handling</td>
+                            <td ng-if="stage.current > 1" class="first">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
+                            <td ng-if="stage.current === 1" class="first">To be calculated.</td>
+                        </tr>
+                        <tr>
+                            <td class="first info">Net Total</td>
+                            <td class="first">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
+                        </tr>
+                        <tr>
+                            <td class="first info">Taxes</td>
+                            <td ng-if="stage.current > 1" class="first">{{order.tax_amount|formatCurrency:order.currency}}</td>
+                            <td ng-if="stage.current === 1" class="first">To be calculated.</td>
+                        </tr>
+                        <tr>
+                            <td class="first info">Total</td>
+                            <td class="first">{{order.total_amount|formatCurrency:order.currency}}</td>
+                        </tr>
+                        <tr>
+                            <td class="first info">Currency</td>
+                            <td class="first">{{order.currency.name}} ({{order.currency.code}})</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

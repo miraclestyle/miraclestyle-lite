@@ -775,7 +775,7 @@
                                             function (neww, old) {
                                                 if (neww !== old) {
                                                     var args = info.scope.$eval(info.config.ui.parentArgs);
-                                                    args.region = null;
+                                                    //args.region = null;
                                                     config.ui.specifics.initial(); // refresh results
                                                 }
                                             });

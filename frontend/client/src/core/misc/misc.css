@@ -21,6 +21,14 @@
     margin-left: auto;
 }
 
+.menu-item {
+    position: relative;
+    width: 100%;
+    border: none;
+    background: none;
+    text-align: left;
+}
+
 .pull-right {
     float: right !important;
 }
@@ -134,6 +142,11 @@ body .mb15 {
 
 .padding-16 {
     padding: 16px;
+}
+
+.padding-top-bottom-16 {
+    padding-bottom: 16px;
+    padding-top: 16px;
 }
 
 .padding-right-16 {
@@ -311,13 +324,6 @@ pre {
     text-align: center;
 }
 
-.menu-item {
-    position: relative;
-    width: 100%;
-    border: none;
-    background: none;
-    text-align: left;
-}
 
 .ellipsis-text {
     width: auto;

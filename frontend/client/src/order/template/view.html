@@ -1,184 +1,153 @@
 <div fit-in-modal>
-  <form method="post" target="_blank" name="container.paypalForm" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
-    <action-toolbar spec="dialog.toolbar"></action-toolbar>
-    <div class="modal-body">
-      <div class="fixed-height relative overflow-y has-toolbar">
-            <div class="modal-body-inner">
-              <div class="order">
-                <input type="hidden" name="cmd" value="_cart" />
-                <input type="hidden" name="upload" value="1" />
-                <input type="hidden" name="charset" value="utf-8" />
-                <input type="hidden" name="invoice" value="{{order.key}}" />
-                <input type="hidden" name="no_shipping" value="2">
-                <input type="hidden" name="business" value="{{order._payment_method.business}}" />
-                <input type="hidden" name="return" value="{{completePath}}" />
-                <input type="hidden" name="cancel_return" value="{{cancelPath}}" />
-                <input type="hidden" name="notify_url" value="{{notifyUrl}}" />
-                <input type="hidden" name="rm" value="1" />
-                <input type="hidden" name="currency_code" value="{{order.currency.code}}" />
-                <input type="hidden" name="custom" value="{{order.key}}" />
-                <input type="hidden" name="address_override" value="1" />
-                <input type="hidden" name="first_name" value="{{order.shipping_address.name}}" />
-                <input type="hidden" name="address1" value="{{order.shipping_address.street}}" />
-                <input ng-if="order.shipping_address.street2" type="hidden" name="address2" value="{{order.shipping_address.street2}}" />
-                <input type="hidden" name="city" value="{{order.shipping_address.city}}" />
-                <input ng-if="order.shipping_address.country_code === 'US'" type="hidden" name="state" value="{{order.shipping_address.region_code|substr:3}}" />
-                <input ng-if="order.shipping_address.postal_code" type="hidden" name="zip" value="{{order.shipping_address.postal_code}}" />
-                <input type="hidden" name="country" value="{{order.shipping_address.country_code}}" />
-                <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
-                <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
-                <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
+    <form method="post" target="_blank" name="container.paypalForm" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
+        <action-toolbar spec="dialog.toolbar"></action-toolbar>
+        <div class="modal-body">
+            <div class="fixed-height relative overflow-y has-toolbar">
+                <div class="modal-body-inner">
+                    <div class="order">
+                        <input type="hidden" name="cmd" value="_cart" />
+                        <input type="hidden" name="upload" value="1" />
+                        <input type="hidden" name="charset" value="utf-8" />
+                        <input type="hidden" name="invoice" value="{{order.key}}" />
+                        <input type="hidden" name="no_shipping" value="2">
+                        <input type="hidden" name="business" value="{{order._payment_method.business}}" />
+                        <input type="hidden" name="return" value="{{completePath}}" />
+                        <input type="hidden" name="cancel_return" value="{{cancelPath}}" />
+                        <input type="hidden" name="notify_url" value="{{notifyUrl}}" />
+                        <input type="hidden" name="rm" value="1" />
+                        <input type="hidden" name="currency_code" value="{{order.currency.code}}" />
+                        <input type="hidden" name="custom" value="{{order.key}}" />
+                        <input type="hidden" name="address_override" value="1" />
+                        <input type="hidden" name="first_name" value="{{order.shipping_address.name}}" />
+                        <input type="hidden" name="address1" value="{{order.shipping_address.street}}" />
+                        <input ng-if="order.shipping_address.street2" type="hidden" name="address2" value="{{order.shipping_address.street2}}" />
+                        <input type="hidden" name="city" value="{{order.shipping_address.city}}" />
+                        <input ng-if="order.shipping_address.country_code === 'US'" type="hidden" name="state" value="{{order.shipping_address.region_code|substr:3}}" />
+                        <input ng-if="order.shipping_address.postal_code" type="hidden" name="zip" value="{{order.shipping_address.postal_code}}" />
+                        <input type="hidden" name="country" value="{{order.shipping_address.country_code}}" />
+                        <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
+                        <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
+                        <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
-                <div class="cards">
- 
-                    <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
-                        <button 
-                              loading 
-                              ng-click="cmd.line.view(line)" 
-                              type="button"
-                              md-ink-ripple  
-                              class="menu-item card-inner">
-                            <div class="delete-overlay"></div>
-                            <div class="card-primary-action">
-                                <h1 class="headline">{{line.product.name}}</h1>
-                                <span class="first">{{line.product.code}}</span>
-                                <span class="first">{{line.product.unit_price|formatCurrency:order.currency}}</span>
-                                <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
-                                <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
-                                <input type="hidden" value="{{line.product.quantity}}" name="quantity_{{line.sequence}}" />
-                                <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
-                                <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
-                                <table class="card-table">
-                                    <tbody>
-                                        <tr ng-repeat="variant in line.product.variant_signature track by $index">
-                                            <td class="first info">{{format.variantLabel(variant)}}</td>
-                                            <td class="first">{{format.variantValue(variant)}}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="first info">Quantity ({{line.product.uom.symbol}})</td>
-                                            <td class="first">{{line.product.quantity}}</td>
-                                        </tr>
-                                    </tbody>
-                                </table> 
+                        <div class="order-stage in" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
+                          <div ng-include="'order/lines.html'"></div>
+                          <div class="list">
+                            <list-button class="first text-center order-next-stage" 
+                                         ng-click="stage.toCheckout()">Proceed To Checkout</list-button>
                           </div>
-
-
-                        <div class="clearfix padding-16">
-                         <table class="pull-right card-table">
-                            <tbody>
-                              <tr>
-                                <td class="first info">Subtotal</td>
-                                <td class="first">{{line.discount_subtotal|formatCurrency:order.currency}}</td>
-                              </tr>
-                         </tbody>
-                         </table>
                         </div>
-                          
-                        </button>
-                        <div class="card-action-top-right">
-                          <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
-                             md-ink-ripple-action
-                             draggable-click="lineSorting.whatSortMeans($event)" class="button-square sort-handle">
-                                <icon type="action.delete"></icon>
-                          </a>
+                        <div class="order-stage" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
+                            <div class="list list-padding seam-bottom">
+                              <div class="list-subheader subheader">Billing Info</div>
+                              <button md-ink-ripple-list
+                                      ng-click="addresses.browse('billing')" 
+                                      type="button" 
+                                      class="list-row list-row-two-lines list-row-is-clickable list-row-has-primary menu-item">
+                                      <div class="list-content-tile">
+                                        <div class="list-primary-tile">
+                                          <div class="avatar">
+                                            <icon type="navigation.arrow-drop-down-circle"></icon>
+                                          </div>
+                                        </div>
+                                        <div class="first">Use Saved Address</div>
+                                        <div class="second">Populate address fields below.</div>
+                                      </div>
+                              </button>
+                              <div ng-form="container.billing">
+                                 <div form-builder="addresses.fields.billing"></div>
+                              </div>
+                            </div>
+
+                            <div class="list list-padding seam-bottom">
+                              <div class="list-subheader subheader">Shipping Info</div>
+                              <div form-input="addresses.fields.sameAsBilling"></div>
+                              <div ng-if="!addresses.sameAsBilling" ng-form="container.shipping">
+                                  <button md-ink-ripple-list
+                                          ng-click="addresses.browse('shipping')" 
+                                          type="button" 
+                                          class="list-row list-row-two-lines list-row-is-clickable list-row-has-primary menu-item">
+                                          <div class="list-content-tile">
+                                            <div class="list-primary-tile">
+                                              <div class="avatar">
+                                                <icon type="navigation.arrow-drop-down-circle"></icon>
+                                              </div>
+                                            </div>
+                                            <div class="first">Use Saved Address</div>
+                                            <div class="second">Populate address fields below.</div>
+                                          </div>
+                                  </button>
+                                 <div form-builder="addresses.fields.shipping"></div>
+                              </div>
+                            </div>
+
+                            <list-button class="first text-center order-next-stage"
+                                         ng-click="stage.toDeliveryMethod()">Select Delivery Method</list-button>
+                            
                         </div>
-
-
-                    </div> 
-
-                <div class="card">
-                    <div class="card-inner">
-                        <div class="padding-16 clearfix">
-                          <h1 class="headline">Order Summary</h1>
-                          <table class="pull-right card-table">
-                          <tbody>
-                            <tr>
-                              <td class="first info">Shipping &amp; Handling</td>
-                              <td class="first">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
-                            </tr>
-                            <tr>
-                              <td class="first info">Net Total</td>
-                              <td class="first">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
-                            </tr>
-                            <tr>
-                              <td class="first info">Taxes</td>
-                              <td class="first">{{order.tax_amount|formatCurrency:order.currency}}</td>
-                            </tr>
-                            <tr>
-                              <td class="first info">Total</td>
-                              <td class="first">{{order.total_amount|formatCurrency:order.currency}}</td>
-                            </tr>
-                            <tr>
-                              <td class="first info">Currency</td>
-                              <td class="first">{{order.currency.name}} ({{order.currency.code}})</td>
-                            </tr>
-                           </tbody>
-                           </table>
-                         </div>
+                        <div class="order-stage" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
+                            <h1>Select Delivery Method</h1>
+                            <list-button class="first text-center order-next-stage"
+                                         ng-click="stage.toReviewOrder()">Review Your Order</list-button>
+                        </div>
+                        <div class="order-stage" ng-class="{'in': stage.current === 4, 'out': stage.current !== 4}">
+                            <div ng-include="'order/lines.html'"></div>
+                            <div class="list">
+                              <list-button class="first text-center order-next-stage" ng-click="stage.reset()">Pay with Paypal</list-button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                </div>
- 
-   
-               </div>
             </div>
-      </div>
-    </div>
-  </form>
+        </div>
+    </form>
 </div>
 
 <md-sidenav md-swipe-right="messages.close()" layout="column" class="right md-closed" md-component-id="right_messages">
-  <md-content>
-      <div class="list">
-          <div class="sidebar-seller-logo">
-            <button md-ink-ripple ripple-light type="button" class="button-transparent" loading ng-click="cmd.seller.view()">
-               <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
-            </button>
-          </div>
-          <div always-scroll-to-bottom="['messages.open', 'messages.sent']" class="messages overflow-auto-y">
-            <div reverse="true" load-more-button="messages.reader"></div>
-            <div class="messages-list">
-              <div class="message-row clearfix" ng-repeat="message in order._messages"
-                 ng-init="isYou = message._agent.key === currentAccount.key;
+    <md-content>
+        <div class="list">
+            <div class="sidebar-seller-logo">
+                <button md-ink-ripple ripple-light type="button" class="button-transparent" loading ng-click="cmd.seller.view()">
+                    <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
+                </button>
+            </div>
+            <div always-scroll-to-bottom="['messages.open', 'messages.sent']" class="messages overflow-auto-y">
+                <div reverse="true" load-more-button="messages.reader"></div>
+                <div class="messages-list">
+                    <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="isYou = message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
                           isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
-                          "
-                 ng-class="{'leftside': isYou, 'rightside': !isYou}">
-                 <div class="message">
-                     <div class="message-inner">
-                        <div ng-if="thing" class="first">A Title?</div>
-                        <div class="message-body second">
-                           {{message.body}}
+                          " ng-class="{'leftside': isYou, 'rightside': !isYou}">
+                        <div class="message">
+                            <div class="message-inner">
+                                <div ng-if="thing" class="first">A Title?</div>
+                                <div class="message-body second">
+                                    {{message.body}}
+                                </div>
+                                <div class="message-footer helper">
+                                    {{message|output:'created'}}
+                                </div>
+                            </div>
+                            <div class="message-author secondary">
+                                <span ng-if="isYou">You</span>
+                                <span ng-if="isBuyer">Buyer</span>
+                                <span ng-if="isSeller">Seller</span>
+                                <span ng-if="message._agent._root_admin && !isYou && !isSeller">Administrator</span>
+                            </div>
                         </div>
-                        <div class="message-footer helper">
-                            {{message|output:'created'}}
-                        </div>
-                      </div>
-                      <div class="message-author secondary">
-                          <span ng-if="isYou">You</span>
-                          <span ng-if="isBuyer">Buyer</span>
-                          <span ng-if="isSeller">Seller</span>
-                          <span ng-if="message._agent._root_admin && !isYou && !isSeller">Administrator</span>
-                       </div>
-                 </div>
-              </div>
+                    </div>
+                </div>
             </div>
-          </div>
 
-           <div class="clearfix messages-box">
-             <div class="messages-send">
-                <button md-ink-ripple-action 
-                        type="button"
-                        class="button-transparent button-square"
-                        loading="!container.messages.$valid" ng-click="messages.logMessage()">
-                    <icon type="communication.send"></icon>
-                </button>
-             </div>
-              <div class="messages-send-wrapper relative" ng-form name="container.messages">
-                <div form-input="messages.field"></div>
-              </div>
-           </div>
-      </div>
-  </md-content>
+            <div class="clearfix messages-box">
+                <div class="messages-send">
+                    <button md-ink-ripple-action type="button" class="button-transparent button-square" loading="!container.messages.$valid" ng-click="messages.logMessage()">
+                        <icon type="communication.send"></icon>
+                    </button>
+                </div>
+                <div class="messages-send-wrapper relative" ng-form name="container.messages">
+                    <div form-input="messages.field"></div>
+                </div>
+            </div>
+        </div>
+    </md-content>
 </md-sidenav>
