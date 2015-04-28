@@ -143,8 +143,9 @@
                                     orderUpdateFields: modelsMeta.getActionArguments('34', 'update'),
                                     billingAddressFields: [],
                                     shippingAddressFields: [],
-                                    sorter: function (field, b) {
-                                        var indx = models['19'].manageModalFieldsOrder.indexOf(field.code_name);
+                                    sorter: function (field, prev) {
+                                        var indx = models['19'].manageModalFieldsOrder.indexOf(field.code_name),
+                                            b = models['19'].manageModalFieldsOrder.indexOf(prev.code_name);
                                         if (indx === -1) {
                                             indx = 99999;
                                         }
@@ -191,6 +192,14 @@
                                     }
                                 };
 
+                                $scope.$watch('order.state', function (neww, old) {
+                                    var title = 'Cart';
+                                    if (neww === 'complete') {
+                                        title = 'Order';
+                                    }
+                                    $scope.dialog.toolbar.title = title;
+                                });
+
                                 $scope.stage = {
                                     current: 1,
                                     out: [],
@@ -202,14 +211,41 @@
                                         $scope.stage.current = 2;
                                     },
                                     toDeliveryMethod: function () {
-                                        $scope.stage.out.push(2);
-                                        $scope.stage.current = 3;
+                                        var valid = $scope.addresses.form.billing.$valid,
+                                            addressing = {billing_address: $scope.addresses.billing};
+                                        if (!$scope.addresses.sameAsBilling) {
+                                            valid = $scope.addresses.form.shipping.$valid;
+                                            addressing.shipping_address = $scope.addresses.shipping;
+                                        } else {
+                                            addressing.shipping_address = $scope.addresses.billing;
+                                        }
+                                        if (valid) {
+                                            $scope.cmd.order.update(addressing).then(function () {
+                                                $scope.stage.out.push(2);
+                                                $scope.stage.current = 3;
+                                            });
+                                        } else {
+                                            helpers.form.wakeUp($scope.addresses.form.billing);
+                                            helpers.form.wakeUp($scope.addresses.form.shipping);
+                                        }
                                     },
                                     toReviewOrder: function () {
-                                        $scope.stage.out.push(3);
-                                        $scope.stage.current = 4;
+                                        modals.confirm('toCheckout', function () {
+                                            if ($scope.carrier.form.$valid) {
+                                                // state = 'checkout' is needed here
+                                                $scope.cmd.order.update({
+                                                    carrier: $scope.carrier.selected,
+                                                    state: 'checkout'
+                                                }).then(function () {
+                                                    $scope.stage.out.push(3);
+                                                    $scope.stage.current = 4;
+                                                });
+                                            } else {
+                                                helpers.form.wakeUp($scope.carrier.form);
+                                            }
+                                        });
                                     },
-                                    reset: function () {
+                                    complete: function () {
                                         $scope.stage.out = [];
                                         $scope.stage.current = 1;
                                     }
@@ -223,6 +259,7 @@
                                 $scope.currentAccount = currentAccount;
                                 $scope.addresses = {
                                     sameAsBilling: true,
+                                    form: {},
                                     shipping: {},
                                     billing: {},
                                     browse: function (type) {
@@ -276,7 +313,8 @@
 
                                 $scope.carrier = {
                                     selected: $scope.order.carrier ? $scope.order.carrier.reference : null,
-                                    available: []
+                                    available: (response.data.carriers ? response.data.carriers : []),
+                                    form: null
                                 };
 
                                 $scope.format = {
@@ -357,9 +395,16 @@
                                 };
 
                                 $scope.feedback = {
-                                    admin: function () {},
-                                    buyer: function () {},
-                                    seller: function () {}
+                                    canShowButton: function () {
+                                        var maybe = false;
+                                        angular.forEach(['leave_feedback', 'review_feedback', 'sudo_feedback'], function (k) {
+                                            if (!maybe) {
+                                                maybe = $scope.order.ui.rule.action[k].executable;
+                                            }
+                                        });
+                                        return maybe;
+                                    },
+                                    showAction: function () {}
                                 };
 
                                 $scope.cmd.order = {
@@ -369,29 +414,12 @@
                                             payment_method: $scope.payment.method,
                                             _lines: $scope.order._lines
                                         };
-                                        if ($scope.stage.current > 1) {
-                                            $.extend(data, {
-                                                billing_address: $scope.addresses.billing,
-                                                shipping_address: $scope.addresses.shipping
-                                            });
-                                        }
-
-                                        if ($scope.stage.current > 2) {
-                                            data.carrier = $scope.carriers.selected;
-                                        }
-
                                         $.extend(data, extra);
                                         return models['34'].actions.update(data).then(function (response) {
                                             locals.updateLiveEntity(response);
                                             locals.reactOnUpdate();
+                                            $scope.carrier.available = response.data.carriers;
                                         });
-                                    },
-                                    checkout: function () {
-                                        if ($scope.order.state !== 'checkout') {
-                                            return $scope.orderCmd.update({
-                                                state: 'checkout'
-                                            });
-                                        }
                                     },
                                     cancel: function () {
                                         if ($scope.order.state === 'checkout') {
@@ -478,6 +506,11 @@
                                         }
                                     }
                                 };
+
+                                if ($scope.order.state === 'checkout' || $scope.order.state === 'complete') {
+                                    $scope.stage.out.extend([1, 2, 3]);
+                                    $scope.stage.current = 4;
+                                }
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
                                 $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);

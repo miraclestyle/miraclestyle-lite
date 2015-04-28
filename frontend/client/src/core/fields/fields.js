@@ -25,7 +25,10 @@
                 wakeUp: function (form, dirty) {
                     var happend = false;
                     angular.forEach(form, function (formElement) {
-                        if (angular.isObject(formElement) && formElement.hasOwnProperty('$valid') && !formElement.$valid) {
+                        if (angular.isObject(formElement)
+                                && formElement.hasOwnProperty('$valid')
+                                && !formElement.$valid
+                                && angular.isFunction(formElement.$setViewValue)) {
                             formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
                             formElement.$setDirty();
                             formElement.$setTouched();

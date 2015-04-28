@@ -163,8 +163,8 @@ class Order(orm.BaseExpando):
   state = orm.SuperStringProperty('3', required=True, default='cart', choices=('cart', 'checkout', 'completed', 'canceled'))
   date = orm.SuperDateTimeProperty('4', required=True)
   seller_reference = orm.SuperKeyProperty('5', kind='23', required=True)
-  billing_address = orm.SuperLocalStructuredProperty('121', '6', required=True)
-  shipping_address = orm.SuperLocalStructuredProperty('121', '7', required=True)
+  billing_address = orm.SuperLocalStructuredProperty('121', '6')
+  shipping_address = orm.SuperLocalStructuredProperty('121', '7')
   currency = orm.SuperLocalStructuredProperty('17', '8', required=True)
   untaxed_amount = orm.SuperDecimalProperty('9', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
@@ -238,9 +238,6 @@ class Order(orm.BaseExpando):
                             or ((not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference" \
                                 and input["search"]["filters"][0]["value"]._root == account.key) \
                                 or (not account._is_guest and "ancestor" in input["search"] and input["search"]["ancestor"]._root == account.key)))'),
-      orm.ActionPermission('34', [orm.Action.build_key('34', 'checkout')], True,
-                           'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'log_message')], True,
                            '(account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
                            or (entity._original.seller_reference \
@@ -285,7 +282,7 @@ class Order(orm.BaseExpando):
                            and entity._original.state == "cart" and action.key_id_str == "update_line"'),
       orm.FieldPermission('34', ['state'], True, True,
                           '(action.key_id_str == "update_line" and entity.state == "cart") \
-                          or (action.key_id_str == "checkout" and entity.state == "checkout") \
+                          or (action.key_id_str == "update" and entity.state == "checkout") \
                           or (action.key_id_str == "cancel" and entity.state == "canceled") \
                           or (action.key_id_str == "complete" and entity.state == "completed")'),
       orm.FieldPermission('34', ['payment_status', '_messages'], True, True,

@@ -18,6 +18,7 @@
         ])
         .directive('mdRadioGroup', mdRadioGroupDirective)
         .directive('mdRadioButton', mdRadioButtonDirective);
+
     function mdRadioGroupDirective($mdUtil, $mdConstant, $mdTheming) {
         RadioGroupController.prototype = createRadioGroupControllerProto();
 

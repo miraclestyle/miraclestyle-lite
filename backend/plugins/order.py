@@ -326,40 +326,12 @@ class AddressRule(orm.BaseModel):
     if not self.active:
       return # inactive plugin
     self.read() # read locals
-    order = context._order
-    valid_addresses = []
-    default_address = None
-    address_reference_key = '%s_address_reference' % self.address_type
     address_key = '%s_address' % self.address_type
-    addresses_key = '%s_addresses' % self.address_type
-    input_address_reference = context.input.get(address_reference_key)
-    order_address = getattr(order, address_key)
-    order_address = order_address.value
-    buyer_addresses = order.key_parent.get()
-    buyer_addresses.read() # read locals
-    if buyer_addresses is None:
-      raise PluginError('no_address')
-    for buyer_address in buyer_addresses.addresses.value:
-      if self.validate_address(buyer_address):
-        if not filter(lambda x: x.key == buyer_address.key, valid_addresses):
-          valid_addresses.append(buyer_address)
-    if not len(valid_addresses):
-      raise PluginError('no_valid_address')
-    context.output[addresses_key] = valid_addresses
-    input_address_value = filter(lambda x: x.key == input_address_reference, valid_addresses)
-    order_address_value = None
-    if order_address:
-      order_address_value = filter(lambda x: x.key == order_address.reference, valid_addresses)
-    if input_address_value:
-      default_address = input_address_value[0]
-    elif order_address_value:
-      default_address = order_address_value[0]
-    else:
-      default_address = valid_addresses[0]
-    if default_address:
-      setattr(order, address_key, default_address.get_location())
-    else:
-      raise PluginError('no_address_found')
+    address = context.input.get(address_key)
+    if address:
+      if not self.validate_address(address):
+        raise PluginError('invalid_address')
+      setattr(context._order, address_key, address.get_location())
   
   def validate_address(self, address):
     '''

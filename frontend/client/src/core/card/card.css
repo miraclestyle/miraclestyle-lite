@@ -27,6 +27,7 @@
 
 .card-table td.info {
     padding-right: 16px;
+    vertical-align: top;
 }
 
 .cards {

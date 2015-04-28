@@ -1,3 +1,18 @@
+<md-button 
+    ng-show="order.ui.rule.action.cancel.executable"
+    loading="container.form.$pristine"
+    type="button" 
+    ng-click="cmd.order.cancel()"
+    class="action">Cancel</md-button>
+
+<md-button 
+    ng-show="feedback.canShowButton()"
+    loading="container.form.$pristine"
+    type="button" 
+    ng-click="feedback.showAction()"
+    class="action">Feedback</md-button>
+
+
 <button md-ink-ripple-action 
         type="button"
         class="button-transparent button-square"
