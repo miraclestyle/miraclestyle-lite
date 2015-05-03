@@ -790,10 +790,8 @@ class _BaseModel(object):
           if not value.has_value():
             continue # if there's no value to copy skip it
           value = value.value
-        try:
-          value = copy.deepcopy(value)
-        except Exception as e:
-          print 'Failed to deepcopy %s' % (field_key, field, self)
+        copied = copy.deepcopy(value)
+        value = copied
         if is_property_value_type:
           new_entity_value = getattr(new_entity, field_key)
           new_entity_value.set(value)

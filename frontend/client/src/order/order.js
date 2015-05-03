@@ -84,6 +84,11 @@
                         args = {
                             key: order.key,
                             read_arguments: {
+                                _lines: {
+                                    config: {
+                                        limit: 0
+                                    }
+                                },
                                 _messages: {
                                     _agent: {}
                                 }

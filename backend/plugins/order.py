@@ -474,7 +474,7 @@ class PayPalPayment(PaymentMethod):
         # ipn will retry for x amount of times till it gives up
         # so we might as well use `return` statement to exit silently
     body = 'Paypal Payment action %s' % ipn_payment_status # @todo modify accordingly
-    new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
+    new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], action=context.action.key, ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
     new_order_message._clone_properties() # this is a hack, because we put all properties indexed = True
     new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
     new_order_message._properties['ipn']._set_value(new_order_message, request['body'])

@@ -344,7 +344,7 @@
                 if (angular.isDefined(get)) {
                     return get;
                 }
-                return get;
+                return key;
             };
         }).filter('propsFilter', function () {
             return function (items, props) {

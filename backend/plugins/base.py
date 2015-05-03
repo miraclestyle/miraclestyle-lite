@@ -123,6 +123,8 @@ class Write(orm.BaseModel):
       for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = get_attr(context, value)
       entity.write(record_arguments)
+      import json
+      print json.dumps(entity._field_permissions, indent=2)
 
 
 class Delete(orm.BaseModel):

@@ -246,7 +246,7 @@ class Order(orm.BaseExpando):
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "checkout"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'complete')], True,
-                           'account._is_taskqueue and entity._original.state == "checkout"'),
+                           'entity._original.state == "checkout"'),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'leave_feedback')], True,
                            'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "completed" and entity._is_feedback_allowed \
