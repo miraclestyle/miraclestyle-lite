@@ -5,7 +5,9 @@
         </span>
 
         <span ng-if="select.item && select.multiple">
-            <span class="select-item-multiple" ng-repeat="it in select.item">{{select.view(it)}}</span>
+            <span class="select-item-multiple" ng-repeat="it in select.item">
+                    {{select.view(it)}}<span ng-if="!$last">,&nbsp;</span>
+            </span>
         </span>
 
         <span ng-if="!select.item">

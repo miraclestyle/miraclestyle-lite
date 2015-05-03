@@ -105,9 +105,7 @@
                     if (errors) {
                         modals.alert('sellerProfileNotFound');
                     } else {
-                        angular.forEach(_.range(1, 50), function (value, key) {
-                            $scope.search.results.extend(response.data.entities);
-                        });
+                        $scope.search.results.extend(response.data.entities);
                     }
                 }
             });
@@ -378,7 +376,8 @@
                                 attrs: {
                                     'ng-change': 'setNewArg()'
                                 },
-                                writable: true
+                                writable: true,
+                                required: true
                             },
                             code_name: 'kind'
                         },
@@ -567,7 +566,7 @@
                                             complete,
                                             saveCompleteDefer = $q.defer(),
                                             saveCompletePromise = saveCompleteDefer.promise;
-                                        if (!$scope.validateForm()) {
+                                        if (!$scope.validateForm() || !$scope.info.kind) {
                                             return;
                                         }
 
@@ -669,7 +668,6 @@
                         controller: function ($scope, currentAccount) {
                             var cartData;
                             $scope.seller = seller;
-
                             $scope.alreadyInCollection = false;
                             $scope.loadedCollection = models['18'].current().then(function (response) {
                                 var collection = response.data.entity;

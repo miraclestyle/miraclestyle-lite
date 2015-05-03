@@ -33,7 +33,7 @@ DOMAINS_PER_CRON = 10
 SETUP_ELAPSED_TIME = 15
 
 # User settings.
-ROOT_ADMINS = ('elvinkosova@gmail.com', 'edis.sehalic@gmail.com')
+ROOT_ADMINS = ('elvinkosova@gmail.com', 'vertazzar@gmail.com')
 
 # Record settings.
 RECORDS_PAGE = 10

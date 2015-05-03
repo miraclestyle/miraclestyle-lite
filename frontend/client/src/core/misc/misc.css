@@ -149,6 +149,11 @@ body .mb15 {
     padding-top: 16px;
 }
 
+.padding-top-bottom-12 {
+    padding-bottom: 12px;
+    padding-top: 12px;
+}
+
 .padding-right-16 {
     padding-right: 16px;
 }

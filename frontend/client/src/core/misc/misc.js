@@ -333,8 +333,18 @@
             return {
                 templateUrl: 'core/misc/sidenav_item.html',
                 transclude: true,
-                replace: true,
-                link: function (scope, element, attrs) {}
+                replace: true
+            };
+        }).filter('labelize', function (GLOBAL_CONFIG) {
+            return function (key, group) {
+                if (angular.isUndefined(group)) {
+                    group = 'default';
+                }
+                var get = GLOBAL_CONFIG.labels[group][key];
+                if (angular.isDefined(get)) {
+                    return get;
+                }
+                return get;
             };
         }).filter('propsFilter', function () {
             return function (items, props) {
@@ -344,7 +354,9 @@
                     items.forEach(function (item) {
                         var itemMatches = false,
                             keys = Object.keys(props),
-                            i, prop, text;
+                            i,
+                            prop,
+                            text;
                         for (i = 0; i < keys.length; i++) {
                             prop = keys[i];
                             text = props[prop].toLowerCase();
@@ -365,6 +377,10 @@
 
                 return out;
             };
+        }).filter('capitalize', function () {
+            return function (obj) {
+                return _.str.capitalize(obj);
+            };
         }).filter('output', function (modelsMeta, outputTypes, $cacheFactory) {
 
             var types = outputTypes,
@@ -379,7 +395,9 @@
             return function (obj, key, args) {
 
                 var input = obj[key],
-                    fields, field, format;
+                    fields,
+                    field,
+                    format;
 
                 if (obj.kind) {
                     fields = getFields(obj.kind);
@@ -418,9 +436,7 @@
                 if (!angular.isNumber(amount) || isNaN(amount)) {
                     return '';
                 }
-                var isNegative = amount < 0,
-                    parts = [],
-                    number;
+
 
                 // @todo this code is incomplete
 
@@ -460,48 +476,156 @@
                   "positive_currency_symbol_precedes": true,
                   "negative_sign_position": 1
                 }
+
+                s = '<' + number + '>';
+                symb = currency.symbol;
+                smb = currency.symbol
+                if (smb) {
+                    precedes = (isNegative && currency.negative_currency_symbol_precedes || currency.positive_currency_symbol_precedes)
+                    separated = (isNegative && currency.negative_separate_by_space || currency.positive_separate_by_space)
+
+                    if (precedes) {
+                        s = smb + (separated ? ' ' : '') + s
+                    }
+                    else {
+                        s = s + (separated ? ' ' : '') + smb
+                    }
+                }
+
+                sign_pos = isNegative && currency.negative_sign_position || currency.positive_sign_position;
+                sign = isNegative && currency.negative_sign || currency.positive_sign;
+
+                if (sign_pos == 0) {
+                    s = '(' + s + ')'
+                }
+                else if (sign_pos == 1) {
+                    s = sign + s
+                }
+                else if (sign_pos == 2) {
+                    s = s + sign
+                }
+                else if (sign_pos == 3) {
+                    s = s.replace('<', sign)
+                }
+                else if (sign_pos == 4) {
+                    s = s.replace('>', sign)
+                }
+                else {
+                    # the default if nothing specified;
+                    # this should be the most fitting sign position
+                    s = sign + s
+                }
+
+                s = s.replace('<', '').replace('>', '')
+
+
+                @classmethod
+                def currency(cls, lang, val, currency, symbol=True, grouping=False):
+                    """
+                    Formats val according to the currency settings in lang.
+                    """
+                    # Code from currency in locale.py
+                    if not lang:
+                        lang = cls(
+                            decimal_point=cls.default_decimal_point(),
+                            thousands_sep=cls.default_thousands_sep(),
+                            grouping=cls.default_grouping(),
+                            )
+
+                    # check for illegal values
+                    digits = currency.digits
+                    if digits == 127:
+                        raise ValueError("Currency formatting is not possible using "
+                                         "the 'C' locale.")
+
+                    s = cls.format(lang, '%%.%if' % digits, abs(val), grouping,
+                            monetary=currency)
+                    # '<' and '>' are markers if the sign must be inserted
+                    # between symbol and value
+                    s = '<' + s + '>'
+
+                    if symbol:
+                        smb = currency.symbol
+                        precedes = (val < 0 and currency.n_cs_precedes
+                            or currency.p_cs_precedes)
+                        separated = (val < 0 and currency.n_sep_by_space
+                            or currency.p_sep_by_space)
+
+                        if precedes:
+                            s = smb + (separated and ' ' or '') + s
+                        else:
+                            s = s + (separated and ' ' or '') + smb
+
+                    sign_pos = val < 0 and currency.n_sign_posn or currency.p_sign_posn
+                    sign = val < 0 and currency.negative_sign or currency.positive_sign
+
+                    if sign_pos == 0:
+                        s = '(' + s + ')'
+                    elif sign_pos == 1:
+                        s = sign + s
+                    elif sign_pos == 2:
+                        s = s + sign
+                    elif sign_pos == 3:
+                        s = s.replace('<', sign)
+                    elif sign_pos == 4:
+                        s = s.replace('>', sign)
+                    else:
+                        # the default if nothing specified;
+                        # this should be the most fitting sign position
+                        s = sign + s
+
+                    return s.replace('<', '').replace('>', '')
+
+
                  */
+                var isNegative = amount < 0,
+                    number,
+                    s,
+                    smb,
+                    precedes,
+                    separated,
+                    sign_pos,
+                    sign;
 
                 amount = Math.abs(amount);
                 number = numberFilter(amount, currency.digits);
 
-                if (currency.negative_sign_position && isNegative) {
-                    if (currency.negative_currency_symbol_precedes) {
-                        parts.push(currency.symbol);
-                    }
+                s = '<' + number + '>';
+                smb = currency.symbol;
+                if (smb) {
+                    precedes = (isNegative && currency.negative_currency_symbol_precedes || currency.positive_currency_symbol_precedes);
+                    separated = (isNegative && currency.negative_separate_by_space || currency.positive_separate_by_space);
 
-                    if (currency.negative_sign !== 'None' && currency.negative_sign) {
-                        parts.push(currency.negative_sign);
-                    }
-                } else {
-                    if (!isNegative && currency.positive_sign_position) {
-                        if (currency.negative_currency_symbol_precedes) {
-                            parts.push(currency.symbol);
-                        }
-                        if (currency.positive_sign !== 'None' && currency.positive_sign) {
-                            parts.push(currency.positive_sign);
-                        }
-                    }
-                }
-                parts.push(number);
-
-                if (!currency.negative_sign_position && isNegative) {
-                    if (currency.negative_currency_symbol_precedes) {
-                        parts.push(currency.symbol);
-                    }
-                    parts.push(currency.negative_sign);
-                } else {
-                    if (!isNegative && !currency.positive_currency_symbol_precedes) {
-                        if (currency.negative_currency_symbol_precedes) {
-                            parts.push(currency.symbol);
-                        }
-                        if (currency.positive_sign !== 'None' && currency.positive_sign) {
-                            parts.push(currency.positive_sign);
-                        }
+                    if (precedes) {
+                        s = smb + (separated ? ' ' : '') + s;
+                    } else {
+                        s = s + (separated ? ' ' : '') + smb;
                     }
                 }
 
-                return parts.join('').replace(/\u00A4/g, '');
+                sign_pos = isNegative && currency.negative_sign_position || currency.positive_sign_position;
+                sign = isNegative && currency.negative_sign || currency.positive_sign;
+                if (!sign) {
+                    sign = '';
+                }
+
+                if (sign_pos === 0) {
+                    s = '(' + s + ')';
+                } else if (sign_pos === 1) {
+                    s = sign + s;
+                } else if (sign_pos === 2) {
+                    s = s + sign;
+                } else if (sign_pos === 3) {
+                    s = s.replace('<', sign);
+                } else if (sign_pos === 4) {
+                    s = s.replace('>', sign);
+                } else {
+                    s = sign + s;
+                }
+
+                s = s.replace('<', '').replace('>', '');
+
+                return s;
             };
         }]).filter('substr', function () {
             return function (str) {

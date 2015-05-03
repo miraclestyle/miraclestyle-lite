@@ -265,6 +265,7 @@ class Order(orm.BaseExpando):
                            and entity._original.feedback_adjustment not in ["reported", "sudo"]' ),
       orm.ActionPermission('34', [orm.Action.build_key('34', 'sudo_feedback')], True,
                            'account._root_admin and entity._original.state == "completed" \
+                           and entity._original.feedback_adjustment in ["reported"]\
                            and entity._is_feedback_allowed'),
       # @todo Implement field permissions!
       orm.FieldPermission('34', ['created', 'updated', 'state', 'date', 'seller_reference',
@@ -280,13 +281,16 @@ class Order(orm.BaseExpando):
                                  'payment_method', '_lines', '_messages', 'carrier', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                            and entity._original.state == "cart" and action.key_id_str == "update_line"'),
+      orm.FieldPermission('34', ['payment_method'], True, True,
+                          'not account._is_guest and entity._original.key_root == account.key \
+                           and entity._original.state == "cart" and action.key_id_str == "update"'),
       orm.FieldPermission('34', ['state'], True, True,
                           '(action.key_id_str == "update_line" and entity.state == "cart") \
                           or (action.key_id_str == "update" and entity.state == "checkout") \
                           or (action.key_id_str == "cancel" and entity.state == "canceled") \
                           or (action.key_id_str == "complete" and entity.state == "completed")'),
-      orm.FieldPermission('34', ['payment_status', '_messages'], True, True,
-                          'account._is_taskqueue and action.key_id_str == "complete"'), # writable when in complete action mode
+      orm.FieldPermission('34', ['payment_status', 'state', '_messages'], True, True,
+                          'action.key_id_str == "complete"'), # writable when in complete action mode, cant be in taskqueue because request comes from paypal IPN
       orm.FieldPermission('34', ['_messages'], True, True,
                           'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
                            or (entity._original.seller_reference \
@@ -417,6 +421,7 @@ class Order(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
+            RulePrepare(),
             Set(cfg={'d': {'output.entity': '_order'}})
             ]
           )
@@ -719,6 +724,8 @@ class Order(orm.BaseExpando):
   @property
   def _is_feedback_allowed(self):
     # if the order.date is not older than x days
+    if settings.DEBUG:
+      return True
     return self.date > (datetime.datetime.now() - datetime.timedelta(days=settings.FEEDBACK_ALLOWED_DAYS))
   
   def _get_payment_method(self):

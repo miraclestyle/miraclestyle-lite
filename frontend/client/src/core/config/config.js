@@ -71,6 +71,21 @@
             }
         });
 
+
+        $.extend(GLOBAL_CONFIG.labels, {
+            'order': {
+                checkout: 'Checkout',
+                completed: 'Completed',
+                cart: 'Cart',
+                sudo: 'Administered',
+                review: 'Review',
+                reported: 'Reported',
+                positive: 'Positive',
+                negative: 'Negative',
+                neutral: 'Neutral'
+            }
+        });
+
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
             seller: 'Seller',
             edit31: 'Edit Catalog',

@@ -148,7 +148,6 @@ md-input-container.md-input-focused label, md-input-container.md-input-no-float 
 }
 
 md-input-container.md-input-focused .md-input, md-input-container .md-input.ng-invalid.ng-dirty {
- 
     border-width: 0 0 1px 0;
 }
 
@@ -165,10 +164,17 @@ input[readonly="true"] {
 md-input-container.md-default-theme .md-input, md-input-container.md-default-theme .as-md-input {
     color: rgba(0, 0, 0, 0.87);
     border-color: rgba(0, 0, 0, 0.12);
- 
 }
 
 md-input-container.md-default-theme .md-input::-webkit-input-placeholder, md-input-container.md-default-theme .md-input::-moz-placeholder, md-input-container.md-default-theme .md-input:-moz-placeholder, md-input-container.md-default-theme .md-input:-ms-input-placeholder, md-input-container.md-default-theme .as-md-input::-webkit-input-placeholder, md-input-container.md-default-theme .as-md-input::-moz-placeholder, md-input-container.md-default-theme .as-md-input:-moz-placeholder, md-input-container.md-default-theme .as-md-input:-ms-input-placeholder {
+    font-family: inherit;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    text-align: left;
+    text-transform: none;
     color: rgba(0, 0, 0, 0.26);
 }
 
@@ -222,3 +228,12 @@ md-input-container.md-default-theme:not(.md-input-invalid).md-input-focused.md-a
     color: rgb(96, 125, 139);
 }
 
+textarea.full-width {
+    padding: 24px 24px 23px;
+    overflow: auto;
+    height: 88px;
+    outline: none;
+    cursor: text;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    width: 100%;
+}

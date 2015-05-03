@@ -443,16 +443,11 @@ class PayPalPayment(PaymentMethod):
   def complete(self, context):
     if not self.active:
       return
-    # @todo Remove settings from here, from ALL PLUGINS!!
-    if settings.PAYPAL_SANDBOX:
-      url = settings.PAYPAL_WEBSCR_SANDBOX
-    else:
-      url = settings.PAYPAL_WEBSCR
     request = context.input['request']
     ipn = request['params']
     order = context._order
     # validate if the request came from ipn
-    result = urlfetch.fetch(url=url,
+    result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
                             payload='cmd=_notify-validate&%s' % request['body'],
                             method=urlfetch.POST,
                             headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
@@ -878,11 +873,16 @@ class OrderProcessPayment(orm.BaseModel):
 class SetMessage(orm.BaseModel):
   
   _kind = 119
+
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
   def run(self, context):
     OrderMessage = context.models['35']
     # this could be extended to allow params
-    context._order._messages = [OrderMessage(agent=context.account.key, _agent=context.account, body=context.input['message'], action=context.action.key)]
+    data = dict(agent=context.account.key, _agent=context.account, body=context.input['message'], action=context.action.key)
+    for key, value in self.cfg.get('additional', {}).iteritems():
+      data[key] = get_attr(context, value)
+    context._order._messages = [OrderMessage(**data)]
 
 class DiscountLine(orm.BaseModel):
 

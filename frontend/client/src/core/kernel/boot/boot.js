@@ -357,6 +357,7 @@ if (!Array.prototype.indexOf) {
             toolbar: {
                 titles: {}
             },
+            labels: {},
             confirmations: {},
             alerts: {},
             defaultImage: 'http://placehold.it/240x100',

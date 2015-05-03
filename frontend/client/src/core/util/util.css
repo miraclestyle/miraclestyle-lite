@@ -2815,6 +2815,7 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
     0% {
         opacity: 1;
         transform: scale(0, 0);
+        -webkit-transform: scale(0, 0);
     }
     50% {
         opacity: 1;
@@ -2822,6 +2823,7 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
     100% {
         opacity: 0;
         transform: scale(1, 1);
+        -webkit-transform: scale(1, 1);
     }
 }
 
@@ -2829,6 +2831,7 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
     0% {
         opacity: 1;
         transform: scale(0, 0);
+        -webkit-transform: scale(0, 0);
     }
     50% {
         opacity: 1;
@@ -2836,27 +2839,29 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
     100% {
         opacity: 0;
         transform: scale(1, 1);
+        -webkit-transform: scale(1, 1);
     }
 }
 
 .ripple-animation {
-    -webkit-animation-delay: 0s;
-    -webkit-animation-duration: 0.6s;
-    -webkit-animation-direction: normal;
-    -webkit-animation-fill-mode: backwards;
-    -webkit-animation-timing-function: cubic-bezier(0, 0, 0.75, 1);
-    -webkit-animation-name: ripple;
     animation-delay: 0s;
     animation-duration: 0.6s;
     animation-direction: normal;
     animation-fill-mode: backwards;
     animation-timing-function: cubic-bezier(0, 0, 0.75, 1);
     animation-name: ripple;
+    -webkit-animation-delay: 0s;
+    -webkit-animation-duration: 0.6s;
+    -webkit-animation-direction: normal;
+    -webkit-animation-fill-mode: backwards;
+    -webkit-animation-timing-function: cubic-bezier(0, 0, 0.75, 1);
+    -webkit-animation-name: ripple;
+
 }
 
 .ripple-animation.ripple-action {
-    -webkit-animation-duration: 0.4s;
     animation-duration: 0.4s;
+    -webkit-animation-duration: 0.4s;
 }
 
 .ripple-active {

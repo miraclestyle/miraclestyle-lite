@@ -790,7 +790,10 @@ class _BaseModel(object):
           if not value.has_value():
             continue # if there's no value to copy skip it
           value = value.value
-        value = copy.deepcopy(value)
+        try:
+          value = copy.deepcopy(value)
+        except Exception as e:
+          print 'Failed to deepcopy %s' % (field_key, field, self)
         if is_property_value_type:
           new_entity_value = getattr(new_entity, field_key)
           new_entity_value.set(value)
@@ -1760,14 +1763,12 @@ class StructuredPropertyValue(PropertyValue):
             exists = ent.key
             if exists is not None:
               exists = existing.get(ent.key.urlsafe())
+            else:
+              ent._state = 'created'
             if exists is not None:
               exists.populate_from(ent)
               new_list.append(exists)
             else:
-              '''
-              if ent._state is None:
-                ent._state = 'created'
-              '''
               new_list.append(ent)
           del property_value[:] 
           property_value.extend(new_list)

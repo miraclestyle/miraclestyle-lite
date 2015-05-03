@@ -1,5 +1,5 @@
 <div fit-in-modal>
-    <form method="post" target="_blank" name="container.paypalForm" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
+    <form method="post" target="_blank" name="container.paypal" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
         <action-toolbar spec="dialog.toolbar"></action-toolbar>
         <div class="modal-body">
             <div class="fixed-height relative overflow-y has-toolbar">
@@ -29,14 +29,14 @@
                         <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
                         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
-                        <div class="order-stage" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
+                        <div ng-if="stage.current !== 4" class="order-stage" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
                           <div ng-include="'order/lines.html'"></div>
                           <div class="list">
                             <list-button class="first text-center order-next-stage" 
                                          ng-click="stage.toCheckout()">Proceed To Checkout</list-button>
                           </div>
                         </div>
-                        <div class="order-stage" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
+                        <div ng-if="stage.current !== 4" class="order-stage" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
                             <div class="list list-padding seam-bottom">
                               <div class="list-subheader subheader">Billing Info</div>
                               <button md-ink-ripple-list
@@ -84,16 +84,15 @@
                                          ng-click="stage.toDeliveryMethod()">Select Delivery Method</list-button>
                             
                         </div>
-                        <div class="order-stage" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
+                        <div ng-if="stage.current !== 4" class="order-stage" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
                               <div ng-form="carrier.form" class="list list-padding seam-bottom">
                                 <div class="list-subheader subheader">Delivery Methods</div>
-                                     <md-radio-group class="list list-row-has-primary">
+                                     <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
                                       <md-radio-button ng-repeat="available_carrier in carrier.available" 
                                                        md-ink-ripple
                                                        class="list-content-tile list-row-two-lines list-row"
-                                                       ng-value="true" 
+                                                       ng-value="available_carrier.key" 
                                                        aria-label="available_carrier.name"
-                                                       ng-model="carrier.selected"
                                                        ng-required="true">
                                           <span class="first">{{available_carrier.price|formatCurrency:order.currency}}</span>
                                           <span class="second">{{available_carrier.name}}</span>
@@ -105,8 +104,8 @@
                         </div>
                         <div class="order-stage" ng-class="{'in': stage.current === 4, 'out': stage.current !== 4}">
                             <div ng-include="'order/lines.html'"></div>
-                            <div class="list">
-                              <list-button class="first text-center order-next-stage" ng-click="stage.complete()">Pay with Paypal</list-button>
+                            <div ng-if="stage.canShowPay()" class="list">
+                              <button md-ink-ripple md-themable type="submit" loading class="first text-center order-next-stage list-row menu-item list-content-tile block list-row-is-clickable">Pay with Paypal</button>
                             </div>
                         </div>
                     </div>
@@ -133,7 +132,10 @@
                           " ng-class="{'leftside': isYou, 'rightside': !isYou}">
                         <div class="message">
                             <div class="message-inner">
-                                <div ng-if="thing" class="first">A Title?</div>
+                                <div ng-if="message._action === 'leave_feedback'" class="first">Feedback</div>
+                                <div ng-if="message._action === 'review_feedback'" class="first">Review Feedback</div>
+                                <div ng-if="message._action === 'report_feedback'" class="first">Report Feedback</div>
+                                <div ng-if="message._action === 'sudo_feedback'" class="first">Feedback</div>
                                 <div class="message-body second">
                                     {{message.body}}
                                 </div>

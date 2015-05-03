@@ -92,6 +92,7 @@
                                 $scope.parentContainer = $scope.container;
                                 $scope.container = {};
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                    $scope.formSetPristine();
                                     $scope.$close();
                                 });
                                 $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
@@ -104,6 +105,10 @@
                                         label: false
                                     }]
                                 };
+
+                                $scope.$on('itemDelete', function () {
+                                    $scope.formSetDirty();
+                                });
                                 $scope.$watch('parentContainer.form.$dirty', function (neww, old) {
                                     if (neww) {
                                         $scope.formSetDirty();
@@ -1266,7 +1271,7 @@
                                                 }
                                                 value = helpers.getProperty(response.data.entity, accessPath);
                                                 if (isNewAndRepeated && value.length) {
-                                                    value = _.findWhere({
+                                                    value = _.findWhere(value, {
                                                         _state: 'created'
                                                     });
                                                 }
@@ -1499,7 +1504,6 @@
                                                     var keepAccess = angular.copy($scope.args.ui.access),
                                                         // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
                                                         value = getResult(response, keepAccess);
-
                                                     $.extend($scope.args, value); // modify current args
                                                     $scope.args.ui.access = keepAccess; // reference back original access path
                                                     if ($scope.isNew) {

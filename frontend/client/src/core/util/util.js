@@ -2279,15 +2279,16 @@ function InkRippleService($window, $timeout, $parse) {
 
     // expose onInput for ripple testing
     if (options.mousedown) {
-      element.on('$md.pressdown', onPressDown)
-        .on('$md.pressup', onPressUp);
+      element.on('$md.pressdown', onPressDown);
+        //.on('click', onPressDown);
     }
  
 
     // Publish self-detach method if desired...
     return function detach() {
-      element.off('$md.pressdown', onPressDown)
-        .off('$md.pressup', onPressUp);
+      element.off('$md.pressdown', onPressDown);
+        //.off('$md.pressup', onPressUp);
+        //.off('click', onPressDown);
       element.removeClass('ripple-presence');
     };
 
@@ -2344,8 +2345,8 @@ function InkRippleService($window, $timeout, $parse) {
           parent_diagonal = 2000;
         }
         var margin = -(parent_diagonal/2);
-        worker.style = {'top': (ev.pointer.y - element_position.top),
-                        'left': (ev.pointer.x - element_position.left),
+        worker.style = {'top': (ev.clientY - element_position.top),
+                        'left': (ev.clientX - element_position.left),
                         'height': parent_diagonal,
                         'width': parent_diagonal,
                         'margin-top': margin,

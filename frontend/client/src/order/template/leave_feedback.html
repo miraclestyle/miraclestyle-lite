@@ -1,0 +1,22 @@
+<div fit-in-modal class="modal-confirm no-scroll">
+      <div class="modal-body max-height max-width-confirmation">
+          <div class="modal-body-inner">
+                <div ng-form="feedback.form">
+                    <div form-input="feedback.messageField" class="feedback-textarea"></div>
+                    <div class="feedback-choices padding-top-bottom-12 ">
+                         <md-radio-group ng-model="feedback.choice" class="list list-row-has-primary">
+                              <md-radio-button ng-repeat="feedback in feedback.choices" 
+                                               md-ink-ripple
+                                               class="list-content-tile list-row"
+                                               ng-value="feedback.key"
+                                               aria-label="feedback.key|labelize:'order'"
+                                               ng-required="true">
+                                  <span class="first">{{feedback.key|labelize:'order'}}</span>
+                              </md-radio-button>
+                          </md-radio-group>
+                    </div>
+                </div>
+          </div>
+       </div>
+      <div ng-include="'core/misc/confirm_footer.html'"></div>
+</div>

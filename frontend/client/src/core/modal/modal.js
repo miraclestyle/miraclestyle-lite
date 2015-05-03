@@ -118,13 +118,17 @@
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    var clickElement = getClickElement(scope.modalOptions);
+                    var clickElement = getClickElement(scope.modalOptions),
+                        ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
                     if (attrs.windowClass) {
                         element.addClass(attrs.windowClass);
                     }
                     scope.size = attrs.size;
-                    $timeout(function () {
+                    scope.$isRendered = true;
+                    // Observe function will be called on next digest cycle after compilation, ensuring that the DOM is ready.
+                    // In order to use this way of finding whether DOM is ready, we need to observe a scope property used in modal's template.
+                    ready = function () {
                         var where = scope.modalOptions.inDirection,
                             isSlide = (where && !clickElement),
                             isFromClick = clickElement,
@@ -172,10 +176,10 @@
                         if (clickElement) {
                             spec = getPositionOverClickElement(clickElement, element);
                             animationGenerator.single('pop-in',
-                                '0% {top: ' + spec.top + 'px; left: ' + spec.left + 'px; transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }' +
+                                '0% {top: ' + spec.top + 'px; left: ' + spec.left + 'px; -webkit-transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }' +
                                 '1% { opacity:1; }' +
                                 '75% { top: 0px; left: 0px;}' +
-                                '100% { top: 0px; left: 0px; transform: scale(1, 1);opacity:1;}');
+                                '100% { top: 0px; left: 0px; -webkit-transform: scale(1, 1); transform: scale(1, 1);opacity:1;}');
                             cb = function () {
                                 element.addClass('pop in');
                                 $$rAF(function () {
@@ -198,7 +202,12 @@
 
                         $$rAF(cb); // frame for .addClass
 
-                    }, 50, false); // execute code after first digest
+                    };
+                    attrs.$observe('modalRender', function (value) {
+                        if (value === 'true') {
+                            $timeout(ready, 50, false);
+                        }
+                    });
 
                     scope.close = function (evt) {
                         var modal = $modalStack.getTop(),
@@ -254,9 +263,9 @@
                 if (clickElement) {
                     spec = getPositionOverClickElement(clickElement, domEl);
                     animationGenerator.single('pop-out',
-                        '0% { opacity:1;top: 0px; left: 0px; transform: scale(1, 1);}' +
+                        '0% { opacity:1;top: 0px; left: 0px; -webkit-transform: scale(1, 1); transform: scale(1, 1);}' +
                         '75% { top: 0px; left: 0px;}' +
-                        '100% { opacity:1;top: ' + spec.top + 'px; left: ' + spec.left + 'px; transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }');
+                        '100% { opacity:1;top: ' + spec.top + 'px; left: ' + spec.left + 'px; -webkit-transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }');
                 }
 
                 $$rAF(function () {
@@ -392,6 +401,7 @@
             };
 
             $modalStack.close = function (modalInstance, result, what) {
+                console.trace(this);
                 if (!what) {
                     what = 'resolve';
                 }
@@ -615,13 +625,17 @@
                 helpers.extendDeep(theConfig, config, GLOBAL_CONFIG[!alert ? 'confirmations' : 'alerts'][key]);
                 theConfig.noSecondary = alert;
                 theConfig.confirm = function () {
+                    var that = this;
+                    if (config.noAutoDismiss) {
+                        return config.confirm.call(that);
+                    }
                     this.dismiss().then(function () {
                         if (angular.isFunction(config.confirm)) {
-                            config.confirm();
+                            config.confirm.call(that);
                         }
                     });
                 };
-                return this.create(theConfig);
+                return this.create(theConfig, theConfig.modal);
             },
             create: function (extraConfig, modalConfig) {
                 var config = {
@@ -640,7 +654,7 @@
                             var close = $scope.$close();
                             close.then(function () {
                                 if (callback) {
-                                    callback();
+                                    callback.call($scope);
                                 }
                             });
                             return close;
@@ -655,6 +669,8 @@
                         }
 
                         $scope.config = config;
+                        $.extend($scope, config.scope);
+                        config.scope = undefined;
                     }
                 };
                 $.extend(defaultModalConfig, modalConfig);

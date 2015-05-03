@@ -371,7 +371,7 @@ class Account(orm.BaseExpando):
     account_key = cls.build_key('system')
     account = account_key.get()
     if not account:
-      identities = [AccountIdentity(email='System', identity='1-0', associated=True, primary=True)]
+      identities = [AccountIdentity(email='System', identity='1-0', primary=True)]
       account = cls(key=account_key, state='active', emails=['System'], identities=identities)
       account._use_rule_engine = False
       account.put()

@@ -287,13 +287,13 @@
                 if (options.onBeforeHide) {
                     options.onBeforeHide(dialogEl, options);
                 }
-                dialogEl.addClass('transition-out').removeClass('transition-in');
                 var promise = dialogTransitionEnd(dialogEl);
                 promise.then(function () {
                     if (options.onAfterHide) {
                         options.onAfterHide(dialogEl, options);
                     }
                 });
+                dialogEl.removeClass('transition-in').addClass('transition-out');
                 return promise;
             }
 
@@ -315,8 +315,6 @@
 
             function dialogTransitionEnd(dialogEl) {
                 var deferred = $q.defer();
-                dialogEl.on($mdConstant.CSS.TRANSITIONEND, finished);
-
                 function finished(ev) {
                     //Make sure this transitionend didn't bubble up from a child
                     if (ev.target === dialogEl[0]) {
@@ -324,6 +322,7 @@
                         deferred.resolve();
                     }
                 }
+                dialogEl.on($mdConstant.CSS.TRANSITIONEND, finished);
                 return deferred.promise;
             }
 

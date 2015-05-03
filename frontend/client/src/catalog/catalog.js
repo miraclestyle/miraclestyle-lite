@@ -77,7 +77,7 @@
     }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, $timeout) {
 
         modelsConfig(function (models) {
-            var toggleMenu = function ($scope, id) {
+            var setupToggleMenu = function ($scope, id) {
                 $scope.sidenavMenuID = id;
                 $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
                 $scope.toggling = false;
@@ -106,6 +106,22 @@
                         });
                     });
                 };
+            }, recomputeRealPath = function (field1, level) {
+                if (!level) {
+                    level = 0;
+                }
+                var field2 = field1.modelclass;
+                angular.forEach(field2, function (value) {
+                    if (value.ui.realPath) {
+                        var con = field1.ui.realPath.concat();
+                        con.push(value.code_name);
+                        value.ui.realPath = con;
+                        value.ui.initialRealPath = con;
+                        if (value.modelclass) {
+                            recomputeRealPath(value, level + 1);
+                        }
+                    }
+                });
             };
             $.extend(models['31'], {
                 formatPublicSearchResults: function (results) {
@@ -164,7 +180,7 @@
                         read_arguments: readArguments
                     }).then(function (response) {
                         var catalog = response.data.entity,
-                            makeFakeScope = function () {
+                            fakeScope = (function () {
                                 var $scope = {};
                                 $scope.product = catalog._images[0].pricetags[0]._product;
                                 $scope.originalProduct = angular.copy($scope.product);
@@ -255,8 +271,7 @@
                                 };
 
                                 return $scope;
-                            },
-                            fakeScope = makeFakeScope();
+                            }());
                         $modal.open({
                             resolve: {
                                 productInstanceResponse: function () {
@@ -272,7 +287,7 @@
                             controller: function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey;
                                 $.extend($scope, fakeScope);
-                                toggleMenu($scope, 'right_product_sidenav');
+                                setupToggleMenu($scope, 'right_product_sidenav');
                                 $scope.resetVariation = function () {
                                     this.resetVariantProduct();
                                     $scope.variationApplied = false;
@@ -452,7 +467,7 @@
                             windowClass: 'no-overflow',
                             targetEvent: config.targetEvent,
                             controller: function ($scope) {
-                                toggleMenu($scope, 'right_catalog_sidenav');
+                                setupToggleMenu($scope, 'right_catalog_sidenav');
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = '31';
                                 $scope.logoImageConfig = {};
@@ -914,16 +929,14 @@
                                                         ii = $scope.args._images.indexOf(image),
                                                         product = responseEntity._images[0].pricetags[0]._product,
                                                         realPath = ['_images', ii, 'pricetags', image.pricetags.indexOf(pricetag), '_product'];
-                                                    product.ui.access = realPath; // override normalizeEntity auto generated path
-                                                    $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     if (!$scope.fieldProduct.ui.specifics.toolbar) {
                                                         $scope.fieldProduct.ui.specifics.toolbar = {};
                                                     }
                                                     $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
                                                     pricetag._product = product;
-                                                    $scope.fieldProduct.modelclass._instances.ui.specifics.readerSettings = {
-                                                        next: response.data.entity._next_read_arguments
-                                                    };
+                                                    product.ui.access = realPath; // override normalizeEntity auto generated path
+                                                    $scope.fieldProduct.ui.realPath = realPath; // set same path
+                                                    recomputeRealPath($scope.fieldProduct);
                                                     $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
 
                                                 })['finally'](function () {
@@ -951,12 +964,12 @@
                                                         ui: {
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]
                                                         }
-                                                    },
-                                                    realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product'];
+                                                    };
 
                                                 image.pricetags.push(newPricetag); // append new pricetag to image
                                                 setupCurrentPricetag(image, newPricetag); // set current
-                                                $scope.fieldProduct.ui.realPath = realPath; // set correct pathing for the new product
+                                                $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product']; // set correct pathing for the new product
+                                                recomputeRealPath($scope.fieldProduct);
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };
 

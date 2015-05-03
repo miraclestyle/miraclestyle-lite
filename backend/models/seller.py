@@ -247,7 +247,7 @@ class Seller(orm.BaseExpando):
           currency = plugin.currency
       if currency is not None:
         currency = currency.get_async()
-      return currency
+    return currency
   
   @classmethod
   def prepare_key(cls, input, **kwargs):

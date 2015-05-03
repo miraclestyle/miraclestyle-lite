@@ -84,13 +84,6 @@
                         args = {
                             key: order.key,
                             read_arguments: {
-                                _lines: {
-                                    config: {
-                                        options: {
-                                            limit: 0
-                                        }
-                                    }
-                                },
                                 _messages: {
                                     _agent: {}
                                 }
@@ -126,15 +119,15 @@
                                         $scope.order._messages = messages;
                                     },
                                     reactOnStateChange: function (response) {
-                                        helpers.update($scope.order, response.data.entity, ['state', 'ui']);
+                                        helpers.update($scope.order, response.data.entity, ['state', 'feedback_adjustment', 'feedback', 'ui']);
                                         locals.reactOnUpdate();
                                     },
                                     reactOnUpdate: function () {
                                         if (order) {
                                             $.extend(order, $scope.order);
                                         }
-                                        if (that.getCache('current' + $scope.seller.key)) {
-                                            that.current($scope.seller.key).then(function (response) {
+                                        if (that.getCache('current' + seller.key)) {
+                                            that.current(seller.key).then(function (response) {
                                                 $.extend(response.data.entity, $scope.order);
                                             });
                                         }
@@ -194,7 +187,7 @@
 
                                 $scope.$watch('order.state', function (neww, old) {
                                     var title = 'Cart';
-                                    if (neww === 'complete') {
+                                    if (neww === 'completed') {
                                         title = 'Order';
                                     }
                                     $scope.dialog.toolbar.title = title;
@@ -203,6 +196,9 @@
                                 $scope.stage = {
                                     current: 1,
                                     out: [],
+                                    canShowPay: function () {
+                                        return $scope.order.state === 'checkout';
+                                    },
                                     isOut: function (indx) {
                                         return $.inArray(indx, $scope.stage.out) !== -1;
                                     },
@@ -212,7 +208,9 @@
                                     },
                                     toDeliveryMethod: function () {
                                         var valid = $scope.addresses.form.billing.$valid,
-                                            addressing = {billing_address: $scope.addresses.billing};
+                                            addressing = {
+                                                billing_address: $scope.addresses.billing
+                                            };
                                         if (!$scope.addresses.sameAsBilling) {
                                             valid = $scope.addresses.form.shipping.$valid;
                                             addressing.shipping_address = $scope.addresses.shipping;
@@ -303,8 +301,7 @@
                                                 }
                                             }
                                         }
-                                    },
-                                    useSaved: function () {}
+                                    }
                                 };
 
                                 $scope.payment = {
@@ -360,18 +357,6 @@
                                     logMessage: function () {
                                         return this.send('log_message');
                                     },
-                                    reviewFeedback: function () {
-                                        return this.send('review_feedback');
-                                    },
-                                    sudoFeedback: function () {
-                                        return this.send('sudo_feedback');
-                                    },
-                                    leaveFeedback: function () {
-                                        return this.send('leave_feedback');
-                                    },
-                                    reportFeedback: function () {
-                                        return this.send('report_feedback');
-                                    },
                                     close: function () {
                                         return $scope.message.toggle(true);
                                     },
@@ -404,7 +389,117 @@
                                         });
                                         return maybe;
                                     },
-                                    showAction: function () {}
+                                    showAction: function () {
+                                        var parentScope = $scope,
+                                            leaveFeedbackArgs = modelsMeta.getActionArguments('34', 'leave_feedback');
+                                        $.extend(leaveFeedbackArgs.message.ui, {
+                                            writable: true,
+                                            parentArgs: 'feedback',
+                                            args: 'feedback.message',
+                                            label: false,
+                                            placeholder: 'Please, write comment here. Comments appear in the messages feed.',
+                                            attrs: {
+                                                'native-placeholder': '',
+                                                'class': 'full-width'
+                                            }
+                                        });
+                                        if ($scope.order.ui.rule.action.leave_feedback.executable || $scope.order.ui.rule.action.sudo_feedback.executable) {
+                                            $modal.open({
+                                                fullScreen: false,
+                                                inDirection: false,
+                                                outDirection: false,
+                                                templateUrl: 'order/leave_feedback.html',
+                                                controller: function ($scope) {
+                                                    $scope.config = {};
+                                                    $scope.feedback = {
+                                                        form: null,
+                                                        messageField: leaveFeedbackArgs.message,
+                                                        message: '',
+                                                        choice: 'neutral',
+                                                        choices: [{
+                                                            key: 'positive'
+                                                        }, {
+                                                            key: 'negative'
+                                                        }, {
+                                                            key: 'neutral'
+                                                        }]
+                                                    };
+                                                    $scope.config.dismiss = function () {
+                                                        return $scope.$close();
+                                                    };
+
+                                                    $scope.config.text = {
+                                                        primary: 'Leave Feedback'
+                                                    };
+
+                                                    $scope.config.confirm = function () {
+                                                        if ($scope.feedback.form.$valid) {
+                                                            models['34'].actions[parentScope.order.ui.rule.action.leave_feedback.executable ? 'leave_feedback' : 'sudo_feedback']({
+                                                                key: parentScope.order.key,
+                                                                message: $scope.feedback.message,
+                                                                feedback: $scope.feedback.choice
+                                                            }).then(function (response) {
+                                                                parentScope.order._messages.push(response.data.entity._messages[0]);
+                                                                locals.reactOnStateChange(response);
+                                                                $scope.config.dismiss();
+                                                            });
+                                                        } else {
+                                                            helpers.form.wakeUp($scope.feedback.form);
+                                                        }
+                                                    };
+                                                }
+                                            });
+                                        } else {
+                                            $modal.open({
+                                                fullScreen: false,
+                                                inDirection: false,
+                                                outDirection: false,
+                                                templateUrl: 'order/seller_feedback.html',
+                                                controller: function ($scope) {
+                                                    $scope.config = {};
+                                                    $scope.feedback = {
+                                                        form: null,
+                                                        messageField: leaveFeedbackArgs.message,
+                                                        message: '',
+                                                        choice: 'review_feedback',
+                                                        choices: [{
+                                                            key: 'review_feedback',
+                                                            name: 'Review Feedback',
+                                                            help: 'Ask Buyer to review feedback.'
+                                                        }, {
+                                                            key: 'report_feedback',
+                                                            name: 'Report Feedback',
+                                                            help: 'Ask Admin to intervene.'
+                                                        }]
+                                                    };
+                                                    $scope.config.dismiss = function () {
+                                                        return $scope.$close();
+                                                    };
+
+                                                    $scope.config.text = {
+                                                        primary: 'Leave Feedback'
+                                                    };
+
+                                                    $scope.order = parentScope.order;
+
+                                                    $scope.config.confirm = function () {
+                                                        if ($scope.feedback.form.$valid) {
+                                                            models['34'].actions[$scope.feedback.choice]({
+                                                                key: parentScope.order.key,
+                                                                message: $scope.feedback.message
+                                                            }).then(function (response) {
+                                                                parentScope.order._messages.push(response.data.entity._messages[0]);
+                                                                locals.reactOnStateChange(response);
+                                                                $scope.config.dismiss();
+                                                            });
+                                                        } else {
+                                                            helpers.form.wakeUp($scope.feedback.form);
+                                                        }
+                                                    };
+                                                }
+                                            });
+                                        }
+                                    }
                                 };
 
                                 $scope.cmd.order = {
@@ -419,6 +514,7 @@
                                             locals.updateLiveEntity(response);
                                             locals.reactOnUpdate();
                                             $scope.carrier.available = response.data.carriers;
+                                            $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
                                         });
                                     },
                                     cancel: function () {
@@ -496,8 +592,8 @@
                                             ui.helper.animate({
                                                 left: (ui.helper.width() * 2) * -1
                                             }, function () {
-                                                line._state = 'deleted';
-                                                $scope.$apply();
+                                                $scope.cmd.line.remove(line);
+                                                $scope.cmd.order.update();
                                             });
                                         } else {
                                             ui.helper.animate(ui.originalPosition, function () {
@@ -507,7 +603,7 @@
                                     }
                                 };
 
-                                if ($scope.order.state === 'checkout' || $scope.order.state === 'complete') {
+                                if ($scope.order.state === 'checkout' || $scope.order.state === 'completed') {
                                     $scope.stage.out.extend([1, 2, 3]);
                                     $scope.stage.current = 4;
                                 }
@@ -515,408 +611,6 @@
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
                                 $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
                                 $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
-
-                            }
-                        });
-
-
-                    });
-
-                }
-            });
-
-        });
-
-        // old
-        modelsConfig(function (models) {
-            if (models) {
-                return;
-            }
-            $.extend(models['34'], {
-                current: function (sellerKey) {
-                    var that = this;
-                    return models['19'].current().then(function (response) {
-                        var buyer = response.data.entity;
-                        return that.actions.view_order({
-                            buyer: buyer.key,
-                            seller: sellerKey
-                        }, {
-                            cache: that.getCacheKey('current' + sellerKey),
-                            cacheType: 'memory'
-                        });
-                    });
-                },
-                adminManageModal: function (order) {
-                    return this.manageModal(order, order._seller, undefined, {
-                        sellerMode: true
-                    });
-                },
-                manageModal: function (order, seller, buyer, config) {
-                    config = helpers.alwaysObject(config);
-                    var args, that = this,
-                        cartMode = config.cartMode,
-                        sellerMode = config.sellerMode,
-                        rpc = {};
-
-                    if (!cartMode) {
-                        args = {
-                            key: order.key,
-                            read_arguments: {
-                                _lines: {
-                                    config: {
-                                        options: {
-                                            limit: 0
-                                        }
-                                    }
-                                },
-                                _messages: {
-                                    _agent: {}
-                                }
-                            }
-                        };
-                    } else {
-                        args = {
-                            buyer: buyer.key,
-                            seller: seller.key,
-                            read_arguments: {
-                                _messages: {
-                                    _agent: {}
-                                }
-                            }
-                        };
-                    }
-
-                    models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
-
-                        if (!response.data.entity.id) {
-                            modals.alert('cartNotFound');
-                            return;
-                        }
-
-                        $modal.open({
-                            templateUrl: 'order/view.html',
-                            controller: function ($scope) {
-                                var billing_addresses, shipping_addresses, reactOnStateChange, reactOnUpdate, updateLiveEntity,
-                                    orderActionsFields = modelsMeta.getActionArguments('34'),
-                                    prepareMessageFields,
-                                    displayAddress = function (address) {
-                                        var addr = [];
-                                        angular.forEach(['name', 'street', 'city', '_region.name', 'postal_code', '_country.name', 'email', 'telephone'], function (field) {
-                                            var v = helpers.getProperty(address, field);
-                                            if (v !== null && v !== undefined) {
-                                                addr.push(v);
-                                            }
-                                        });
-                                        return addr.join(', ');
-                                    },
-                                    carriers,
-                                    messageSenderActions = ['log_message', 'leave_feedback', 'review_feedback', 'sudo_feedback'],
-                                    getMessageField = function () {
-                                        var action;
-                                        angular.forEach(messageSenderActions, function (act) {
-                                            if ($scope.order.ui.rule.action[act].executable) {
-                                                action = act;
-                                            }
-                                        });
-                                        if (!action) {
-                                            return false;
-                                        }
-                                        return orderActionsFields[action].message;
-                                    },
-                                    getFeedbackField = function () {
-                                        var action = false;
-                                        if ($scope.order.ui.rule.action.sudo_feedback.executable) {
-                                            action = 'sudo_feedback';
-                                        }
-                                        if ($scope.order.ui.rule.action.leave_feedback.executable) {
-                                            action = 'leave_feedback';
-                                        }
-                                        if (!action) {
-                                            return false;
-                                        }
-                                        return orderActionsFields[action].feedback;
-                                    },
-                                    messageField, feedbackField;
-
-                                $scope.canShowMessageBox = function () {
-                                    var truth = false;
-                                    angular.forEach(messageSenderActions, function (act) {
-                                        if ($scope.order.ui.rule.action[act].executable) {
-                                            truth = true;
-                                        }
-                                    });
-                                    return truth;
-                                };
-                                $scope.container = {};
-                                $scope.selection = {};
-                                $scope.cartMode = cartMode;
-                                $scope.sellerMode = sellerMode;
-                                $scope.order = response.data.entity;
-                                $scope.seller = seller;
-                                $scope.currentAccount = currentAccount;
-                                $scope.newMessage = {
-                                    message: null,
-                                    key: $scope.order.key
-                                };
-                                carriers = response.data.carriers || ($scope.order.carrier ? [{
-                                    name: $scope.order.carrier.description,
-                                    price: $scope.order.carrier.unit_price,
-                                    key: $scope.order.carrier.reference
-                                }] : []);
-                                carriers = $.map(carriers, function (item) {
-                                    if (!item) {
-                                        return '';
-                                    }
-                                    if (!angular.isDefined(item.original_name)) {
-                                        item.original_name = item.name;
-                                    }
-                                    item.name = item.original_name + ' (' + $filter('formatCurrency')(item.price, $scope.order.currency) + ')';
-                                    return item;
-                                });
-
-                                if (cartMode) {
-                                    billing_addresses = response.data.billing_addresses;
-                                    shipping_addresses = response.data.shipping_addresses;
-                                    $scope.selection.billing_address = $scope.order.billing_address.reference;
-                                    $scope.selection.shipping_address = $scope.order.shipping_address.reference;
-                                } else {
-                                    angular.forEach(['country', 'region'], function (field) {
-                                        $scope.order.billing_address['_' + field] = {
-                                            name: $scope.order.billing_address[field]
-                                        };
-                                        $scope.order.shipping_address['_' + field] = {
-                                            name: $scope.order.billing_address[field]
-                                        };
-                                    });
-                                    billing_addresses = [$scope.order.billing_address, $scope.order.shipping_address];
-                                    shipping_addresses = billing_addresses;
-                                    $scope.selection.billing_address = $scope.order.billing_address.key;
-                                    $scope.selection.shipping_address = $scope.order.shipping_address.key;
-                                }
-                                $scope.selection.payment_method = $scope.order.payment_method;
-                                $scope.selection.carrier = $scope.order.carrier ? $scope.order.carrier.reference : null;
-                                $scope.fields = {
-                                    billingAddress: {
-                                        kind: orderActionsFields.update.billing_address_reference.kind,
-                                        type: 'SuperKeyProperty',
-                                        code_name: 'selection_billing_address',
-                                        required: orderActionsFields.update.billing_address_reference.required,
-                                        ui: {
-                                            args: 'selection.billing_address',
-                                            label: 'Billing Address',
-                                            init: function (info) {
-                                                info.config.ui.specifics.view = displayAddress;
-                                            },
-                                            writable: 'order.ui.rule.field.billing_address.reference.writable',
-                                            specifics: {
-                                                entities: function () {
-                                                    return billing_addresses;
-                                                }
-                                            }
-                                        }
-                                    },
-                                    shippingAddress: {
-                                        kind: orderActionsFields.update.shipping_address_reference.kind,
-                                        type: 'SuperKeyProperty',
-                                        code_name: 'selection_shipping_address',
-                                        required: orderActionsFields.update.shipping_address_reference.required,
-                                        ui: {
-                                            args: 'selection.shipping_address',
-                                            label: 'Shipping Address',
-                                            writable: 'order.ui.rule.field.shipping_address.reference.writable',
-                                            init: function (info) {
-                                                info.config.ui.specifics.view = displayAddress;
-                                            },
-                                            specifics: {
-                                                entities: function () {
-                                                    return shipping_addresses;
-                                                }
-                                            }
-                                        }
-                                    },
-                                    carrier: {
-                                        kind: orderActionsFields.update.carrier.kind,
-                                        type: 'SuperKeyProperty',
-                                        code_name: 'selection_carrier',
-                                        required: orderActionsFields.update.carrier.required,
-                                        ui: {
-                                            args: 'selection.carrier',
-                                            label: 'Delivery Method',
-                                            writable: 'order.ui.rule.field.carrier.writable',
-                                            specifics: {
-                                                entities: function () {
-                                                    return carriers;
-                                                }
-                                            }
-                                        }
-                                    }
-                                };
-
-                                prepareMessageFields = function () {
-                                    messageField = getMessageField();
-                                    feedbackField = getFeedbackField();
-
-                                    // this must refresh based on state change
-                                    if (messageField) {
-                                        $.extend(messageField.ui, {
-                                            args: 'newMessage.message',
-                                            parentArgs: 'newMessage',
-                                            writable: true
-                                        });
-                                        messageField.required = false;
-                                    }
-                                    if (feedbackField) {
-                                        $.extend(feedbackField.ui, {
-                                            args: 'newMessage.feedback',
-                                            parentArgs: 'newMessage',
-                                            writable: true
-                                        });
-                                        feedbackField.required = false;
-                                    }
-                                    $scope.fields.feedback = feedbackField;
-                                    $scope.fields.message = messageField;
-                                };
-
-                                reactOnStateChange = function (response) {
-                                    helpers.update($scope.order, response.data.entity, ['state', 'ui']);
-                                    reactOnUpdate();
-                                    prepareMessageFields();
-                                };
-                                reactOnUpdate = function () {
-                                    if (order) {
-                                        $.extend(order, $scope.order);
-                                    }
-                                    if (that.getCache('current' + seller.key)) {
-                                        that.current(seller.key).then(function (response) {
-                                            $.extend(response.data.entity, $scope.order);
-                                        });
-                                    }
-                                };
-                                updateLiveEntity = function (response) {
-                                    var messages = $scope.order._messages;
-                                    $.extend($scope.order, response.data.entity);
-                                    $scope.order._messages = messages;
-                                };
-                                $scope.update = function () {
-                                    models['34'].actions.update({
-                                        key: $scope.order.key,
-                                        payment_method: $scope.selection.payment_method,
-                                        carrier: $scope.selection.carrier,
-                                        billing_address_reference: ((cartMode && !sellerMode) ? $scope.selection.billing_address : $scope.order.billing_address.reference),
-                                        shipping_address_reference: ((cartMode && !sellerMode) ? $scope.selection.shipping_address : $scope.order.shipping_address.reference),
-                                        _lines: $scope.order._lines
-                                    }).then(function (response) {
-                                        updateLiveEntity(response);
-                                        reactOnUpdate();
-                                    });
-                                };
-
-                                $scope.checkout = function () {
-                                    if ($scope.order.state !== 'checkout') {
-                                        modals.confirm('toCheckout', function () {
-                                            models['34'].actions.checkout({
-                                                key: $scope.order.key
-                                            }).then(function (response) {
-                                                reactOnStateChange(response);
-                                            });
-                                        });
-                                    }
-                                };
-
-                                $scope.formSetPaypalFormPristine = function () {
-                                    if ($scope.container && $scope.container.paypalForm) {
-                                        $scope.container.paypalForm.$setPristine();
-                                    }
-                                };
-                                $scope.formSetPaypalFormDirty = function () {
-                                    if ($scope.container && $scope.container.paypalForm) {
-                                        $scope.container.paypalForm.$setDirty();
-                                    }
-                                };
-
-
-                                $scope.removeLine = function (line) {
-                                    line.product.quantity = 0;
-                                    $scope.formSetPaypalFormDirty();
-                                };
-
-                                $scope.messaging = {
-                                    send: function (action) {
-                                        models['34'].actions[action]($scope.newMessage).then(function (response) {
-                                            $scope.newMessage.message = '';
-                                            $scope.order._messages.push(response.data.entity._messages[0]);
-                                            reactOnStateChange(response);
-                                        });
-                                    },
-                                    logMessage: function () {
-                                        return this.send('log_message');
-                                    },
-                                    reviewFeedback: function () {
-                                        return this.send('review_feedback');
-                                    },
-                                    sudoFeedback: function () {
-                                        return this.send('sudo_feedback');
-                                    },
-                                    leaveFeedback: function () {
-                                        return this.send('leave_feedback');
-                                    },
-                                    reportFeedback: function () {
-                                        return this.send('report_feedback');
-                                    }
-                                };
-
-                                $scope.canShowMessageBox = function () {
-                                    var truth = false;
-                                    angular.forEach(messageSenderActions, function (act) {
-                                        if ($scope.order.ui.rule.action[act].executable) {
-                                            truth = act;
-                                        }
-                                    });
-                                    return truth;
-                                };
-
-                                $scope.cancel = function () {
-                                    if ($scope.order.state === 'checkout') {
-                                        modals.confirm('cancelOrder', function () {
-                                            models['34'].actions.cancel({
-                                                key: $scope.order.key
-                                            }).then(function (response) {
-                                                models['34'].removeCache('current' + seller.key);
-                                                $scope.close();
-                                            });
-                                        });
-                                    }
-                                };
-
-                                $scope.close = function () {
-                                    $scope.$close();
-                                };
-
-                                $scope.viewProduct = function (line) {
-                                    var path = line.product._reference;
-                                    models['31'].viewProductModal(path.parent.parent.parent.key,
-                                        path.parent.parent.key, path.pricetag.key,
-                                        line.product.variant_signature, {
-                                            events: {
-                                                addToCart: updateLiveEntity
-                                            }
-                                        });
-                                };
-
-                                $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
-                                $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
-                                $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
-                                $scope.messagesReader = models['34'].reader({
-                                    kind: '34',
-                                    key: $scope.order.key,
-                                    next: $scope.order._next_read_arguments,
-                                    access: ['_messages'],
-                                    complete: function (items) {
-                                        $scope.order._messages.extend(items);
-                                    }
-                                });
-
-                                prepareMessageFields();
 
                             }
                         });

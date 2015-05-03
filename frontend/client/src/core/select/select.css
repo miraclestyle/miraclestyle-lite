@@ -63,12 +63,6 @@ md-input-container .as-md-input {
 }
 span.select-item-multiple {
     display: inline-block;
-    background: #EEE;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    padding: 2px;
-    padding-left: 6px;
-    padding-right: 6px;
 }
 .ui-select-highlight {
     font-weight: bold;
