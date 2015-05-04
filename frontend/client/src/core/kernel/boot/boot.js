@@ -377,7 +377,7 @@ if (!Array.prototype.indexOf) {
             },
             admin: {
                 listTemplates: {},
-                menu: [{name: 'Catalogs', kind: 31}, {name: 'Users', kind: 11}, {name: 'Orders', kind: '34'}], // admin paths shown in the menu
+                menu: [{name: 'Accounts', kind: 11}, {name: 'Catalogs', kind: 31}, {name: 'Orders', kind: '34'}], // admin paths shown in the menu
                 listViewDirective: ['31', '11', '34'],
                 listTitles: {
                     '31': 'Catalogs',

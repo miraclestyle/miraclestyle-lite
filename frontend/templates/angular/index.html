@@ -22,15 +22,16 @@
             </div>
             <div class="list list-padding seam-bottom">
                 <div class="list-subheader subheader">Explore</div>
-                <sidenav-item ui-sref="collections">Collections</sidenav-item>
+                <sidenav-item ui-sref="following">Following</sidenav-item>
                 <sidenav-item ui-sref="home">All</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
                 <div class="list-subheader subheader">Buy</div>
+                <sidenav-item ng-click="following()">Following</sidenav-item>
                 <sidenav-item ui-sref="buy-carts">Carts</sidenav-item>
                 <sidenav-item ui-sref="buy-orders">Orders</sidenav-item>
-                <sidenav-item ng-click="settings()">Settings</sidenav-item>
+                <sidenav-item ng-click="settings()">Addresses</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="SellerManagementCtrl" ng-show="!currentAccount._is_guest">
@@ -42,13 +43,13 @@
 
             <div class="list list-padding seam-bottom" ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
                 <div class="list-subheader subheader">Account</div>
-                <sidenav-item ng-click="logout()">Logout</sidenav-item>
+                <sidenav-item ng-click="logout()">Sign Out</sidenav-item>
                 <sidenav-item ng-click="settings()">Settings</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
                 <div class="list-subheader subheader">Account</div>
-                <sidenav-item ng-click="login(1)">Login with Google</sidenav-item>
+                <sidenav-item ng-click="login(1)">Sign in with Google</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">

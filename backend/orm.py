@@ -778,7 +778,7 @@ class _BaseModel(object):
     '''
     model = self.__class__
     new_entity = model(_deepcopy=True)
-    new_entity.key = copy.deepcopy(self.key)
+    new_entity.key = copy.deepcopy(self.key, memo)
     new_entity._state = self._state
     new_entity._sequence = self._sequence
     for field_key, field in self.get_fields().iteritems():
@@ -790,8 +790,11 @@ class _BaseModel(object):
           if not value.has_value():
             continue # if there's no value to copy skip it
           value = value.value
-        copied = copy.deepcopy(value)
-        value = copied
+        try:
+          value = copy.deepcopy(value, memo)
+        except Exception as e:
+          print 'Failed copying %s.%s: %s, tried copying: %s' % (field_key, self.__class__.__name__, e, value)
+          continue
         if is_property_value_type:
           new_entity_value = getattr(new_entity, field_key)
           new_entity_value.set(value)

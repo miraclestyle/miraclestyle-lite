@@ -42,7 +42,7 @@
                     models['23'].viewModal($scope.sellerDetail);
                 };
             }
-            if ($state.current.name === 'collections') {
+            if ($state.current.name === 'following') {
                 promise = models['18'].current();
                 promise.then(function (response) {
                     $scope.search.pagination.args.search.filters = [{field: 'ancestor', operator: 'IN', value: response.data.entity.sellers}];

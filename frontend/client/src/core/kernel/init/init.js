@@ -8,8 +8,8 @@
                 templateUrl: 'home/index.html',
                 controller: 'HomePageCtrl'
             })
-            .state('collections', {
-                url: '/collections',
+            .state('following', {
+                url: '/following',
                 templateUrl: 'home/index.html',
                 controller: 'HomePageCtrl'
             })
