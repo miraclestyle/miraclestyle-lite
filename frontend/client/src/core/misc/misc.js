@@ -335,13 +335,20 @@
                 transclude: true,
                 replace: true
             };
-        }).filter('labelize', function (GLOBAL_CONFIG) {
+        }).filter('labelize', function (GLOBAL_CONFIG, $log) {
             return function (key, group) {
                 if (angular.isUndefined(group)) {
                     group = 'default';
                 }
-                var get = GLOBAL_CONFIG.labels[group][key];
+                var getGroup = GLOBAL_CONFIG.labels[group],
+                    get;
+                if (angular.isUndefined(getGroup)) {
+                    $log.warn('Group is not defined: ' + group);
+                    return key;
+                }
+                get = getGroup[key];
                 if (angular.isDefined(get)) {
+                    $log.warn('Path for label not found: ' + group + '.' + key);
                     return get;
                 }
                 return key;

@@ -220,8 +220,8 @@ class Account(orm.BaseExpando):
       arguments={
         'key': orm.SuperKeyProperty(kind='11', required=True),
         'state': orm.SuperStringProperty(required=True, choices=('active', 'suspended')),
-        'message': orm.SuperStringProperty(required=True),
-        'note': orm.SuperStringProperty()
+        'message': orm.SuperTextProperty(required=True),
+        'note': orm.SuperTextProperty()
         },
       _plugin_groups=[
         orm.PluginGroup(

@@ -162,38 +162,51 @@
 
                                     $scope.actions.sudo = function () {
                                         $modal.open({
-                                            templateUrl: 'core/models/manage.html',
+                                            fullScreen: false,
+                                            templateUrl: 'account/administer.html',
                                             controller: function ($scope) {
                                                 var sudoFields = modelsMeta.getActionArguments(that.kind, 'sudo');
-                                                $scope.dialog = {
-                                                    templateBodyUrl: 'account/administer.html'
-                                                };
                                                 $scope.args = {
-                                                    key: entity.key
+                                                    key: entity.key,
+                                                    state: entity.state
                                                 };
-                                                $scope.fields = [sudoFields.state, sudoFields.message, sudoFields.note];
+                                                $scope.fields = sudoFields;
                                                 angular.forEach($scope.fields, function (field) {
-                                                    field.ui.writable = true;
+                                                    $.extend(field.ui, {
+                                                        writable: true,
+                                                        label: false,
+                                                        attrs: {
+                                                            'native-placeholder': '',
+                                                            'class': 'full-width'
+                                                        }
+                                                    });
                                                 });
 
-                                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-                                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                                $scope.fields.message.ui.placeholder = 'Write message to user!';
+                                                $scope.fields.note.ui.placeholder = 'Write note to admins!';
                                                 $scope.validateForm = angular.bind($scope, helpers.form.validate);
-                                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                                    $scope.$close();
-                                                });
 
                                                 $scope.container = {};
-                                                $scope.save = function () {
-                                                    var promise;
-                                                    if (!$scope.container.form.$valid) {
-                                                        return false;
+                                                $scope.config = {};
+
+                                                $scope.config.dismiss = function () {
+                                                    return $scope.$close();
+                                                };
+
+                                                $scope.config.text = {
+                                                    primary: 'Ok'
+                                                };
+
+                                                $scope.config.confirm = function () {
+                                                    if ($scope.validateForm()) {
+                                                        var promise = models[that.kind].actions.sudo($scope.args);
+                                                        promise.then(function (response) {
+                                                            updateState(response.data.entity);
+                                                            $scope.config.dismiss();
+                                                        });
+                                                    } else {
+                                                        helpers.form.wakeUp($scope.container.form);
                                                     }
-                                                    promise = models[that.kind].actions.sudo($scope.args);
-                                                    promise.then(function (response) {
-                                                        updateState(response.data.entity);
-                                                    });
-                                                    return promise;
                                                 };
                                             }
                                         });

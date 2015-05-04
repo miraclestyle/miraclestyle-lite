@@ -1,1 +1,23 @@
- <div class="margin-top-16" form-builder="fields"></div>
+<div fit-in-modal class="modal-confirm no-scroll">
+      <div class="modal-body max-height max-width-confirmation">
+          <div class="modal-body-inner">
+                <div ng-form="container.form">
+                    <div form-input="fields.note" class="confirmation-textarea"></div>
+                    <div form-input="fields.message" class="confirmation-textarea"></div>
+                    <div class="padding-top-bottom-12 ">
+                         <md-radio-group ng-model="args.state" class="list list-row-has-primary">
+                              <md-radio-button ng-repeat="state in fields.state.choices" 
+                                               md-ink-ripple
+                                               class="list-content-tile list-row"
+                                               ng-value="state"
+                                               aria-label="state|labelize:'account'"
+                                               ng-required="true">
+                                  <span class="first">{{state|labelize:'account'}}</span>
+                              </md-radio-button>
+                          </md-radio-group>
+                    </div>
+                </div>
+          </div>
+       </div>
+      <div ng-include="'core/misc/confirm_footer.html'"></div>
+</div>

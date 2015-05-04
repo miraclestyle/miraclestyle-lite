@@ -851,3 +851,11 @@ body {
     right: 0px;
     z-index:15;
 }
+
+.confirmation-textarea md-input-container {
+    padding:0px;
+}
+
+.confirmation-textarea [ng-messages] {
+    display:none;
+}

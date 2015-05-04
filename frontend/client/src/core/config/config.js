@@ -73,7 +73,7 @@
 
 
         $.extend(GLOBAL_CONFIG.labels, {
-            'order': {
+            order: {
                 checkout: 'Checkout',
                 completed: 'Completed',
                 cart: 'Cart',
