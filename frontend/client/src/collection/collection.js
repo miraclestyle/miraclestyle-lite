@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, currentAccount, modelsMeta, modelsEditor) {
+    angular.module('app').run(function (modelsConfig, endpoint, currentAccount, modelsMeta, modelsEditor, $timeout) {
         modelsConfig(function (models) {
             var read_arguments = {
                 _sellers: {
@@ -24,12 +24,41 @@
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config,
                         that = this;
+                    fields.notify.ui.label = 'E-mail me when a catalog is published or discontinued by the seller that I\'m following.';
                     config = {
                         kind: this.kind,
                         action: 'update',
                         fields: _.toArray(fields),
+                        toolbar: {
+                            hideSave: true
+                        },
                         templateBodyUrl: 'collection/manage_body.html',
                         excludeFields: ['account', 'read_arguments'],
+                        init: function ($scope) {
+                            var timeouts = [];
+                            $scope.close = $scope.$close;
+                            $scope.$watch('args.notify', function (neww, old) {
+                                var notthis,
+                                    cancelTimeouts = function (notthis) {
+                                        if (timeouts.length) {
+                                            angular.forEach(timeouts, function (timeout) {
+                                                if (timeout !== notthis) {
+                                                    $timeout.cancel(timeout);
+                                                }
+                                            });
+                                            timeouts = [];
+                                        }
+                                    };
+                                if (neww !== old) {
+                                    cancelTimeouts();
+                                    notthis = $timeout(function () {
+                                        $scope.save();
+                                        cancelTimeouts(notthis);
+                                    }, 1000);
+                                    timeouts.push(notthis);
+                                }
+                            });
+                        },
                         afterComplete: function ($scope) {
                             $scope.entity._sellers.iremove(function (seller) {
                                 return $.inArray(seller.key, $scope.entity.sellers) === -1;

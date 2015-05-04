@@ -125,7 +125,7 @@ class Seller(orm.BaseExpando):
                            'action.key_id_str not in ["cron", "cron_generate_feedback_stats"] and not account._is_guest and entity._original.root_entity._original.state == "active"'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron_generate_feedback_stats')], True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
-      orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue or account._is_cron'),
+      orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.FieldPermission('23', ['name', 'logo', '_content', '_plugin_group', '_records'], True, True,
                           'action.key_id_str not in ["cron", "cron_generate_feedback_stats"] and not account._is_guest and entity._original.key_root == account.key'),
       orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue and action.key_id_str == "cron"'),

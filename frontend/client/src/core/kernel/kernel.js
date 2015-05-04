@@ -489,6 +489,7 @@
         };
     }).factory('animationGenerator', function () {
         var animationGenerator = {
+            classNamePrefix: 'tmp-',
             prefix: function (thing) {
                 return (/WebKit/.test(navigator.userAgent) ? '-webkit-' : '') + thing;
             },
@@ -504,18 +505,26 @@
 
                 str += definition;
 
-                str += "\n" + '}';
+                str += "\n" + '} .' + animationGenerator.classNamePrefix + name + '{' + animationGenerator.prefix('animation-name') + ':' + name + ';}';
                 return str;
             },
             single: function (name, codes) {
-                var id = 'temporary-animator',
+                var nextuid = _.uniqueId(),
+                    id = 'temporary-animator' + nextuid,
                     style = $('#' + id);
+                name = name + nextuid;
                 if (!style.length) {
                     style = $('<style/>').attr('id', id);
                     style.appendTo('head');
                 }
                 style.text(animationGenerator.make(name, codes));
-                return style;
+                return {
+                    name: name,
+                    className: animationGenerator.classNamePrefix + name,
+                    destroy: function () {
+                        style.remove();
+                    }
+                };
             }
         };
         return animationGenerator;

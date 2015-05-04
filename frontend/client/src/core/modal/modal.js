@@ -138,7 +138,8 @@
                             modal,
                             spec,
                             iwidth,
-                            iheight;
+                            iheight,
+                            animator;
                         if (isSlide) {
                             cb = function () {
                                 element.addClass(where + ' slide drawer visible in');
@@ -175,13 +176,13 @@
 
                         if (clickElement) {
                             spec = getPositionOverClickElement(clickElement, element);
-                            animationGenerator.single('pop-in',
+                            animator = animationGenerator.single('pop-in',
                                 '0% {top: ' + spec.top + 'px; left: ' + spec.left + 'px; -webkit-transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }' +
                                 '1% { opacity:1; }' +
                                 '75% { top: 0px; left: 0px;}' +
                                 '100% { top: 0px; left: 0px; -webkit-transform: scale(1, 1); transform: scale(1, 1);opacity:1;}');
                             cb = function () {
-                                element.addClass('pop in');
+                                element.addClass('pop ' + animator.className).data('animator', animator);
                                 $$rAF(function () {
                                     clickElement.css('opacity', 0); // separate frame for opacity
                                 });
@@ -258,18 +259,26 @@
             function removeAfterAnimate(domEl, scope, done) {
                 var clickElement = getClickElement(scope.modalOptions),
                     spec,
-                    demise;
+                    demise,
+                    animator,
+                    inclass = 'in',
+                    outclass = 'out',
+                    popin;
 
                 if (clickElement) {
                     spec = getPositionOverClickElement(clickElement, domEl);
-                    animationGenerator.single('pop-out',
+                    popin = domEl.data('animator');
+                    animator = animationGenerator.single('pop-out',
                         '0% { opacity:1;top: 0px; left: 0px; -webkit-transform: scale(1, 1); transform: scale(1, 1);}' +
                         '75% { top: 0px; left: 0px;}' +
                         '100% { opacity:1;top: ' + spec.top + 'px; left: ' + spec.left + 'px; -webkit-transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }');
+
+                    outclass = animator.className;
+                    inclass = popin.className;
                 }
 
                 $$rAF(function () {
-                    domEl.removeClass('in').addClass('out');
+                    domEl.removeClass(inclass).addClass(outclass);
                 });
 
                 demise = function (e) {
@@ -282,6 +291,14 @@
                     }
 
                     domEl = undefined;
+
+                    if (popin) {
+                        popin.destroy();
+                    }
+
+                    if (animator) {
+                        animator.destroy();
+                    }
                 };
 
                 domEl.oneAnimationEnd(demise);

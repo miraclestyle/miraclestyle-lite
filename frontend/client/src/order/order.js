@@ -89,6 +89,10 @@
                                         limit: 0
                                     }
                                 },
+                                _seller: {
+                                    _feedback: {},
+                                    _content: {}
+                                },
                                 _messages: {
                                     _agent: {}
                                 }
@@ -99,6 +103,10 @@
                             buyer: buyer.key,
                             seller: seller.key,
                             read_arguments: {
+                                _seller: {
+                                    _feedback: {},
+                                    _content: {}
+                                },
                                 _messages: {
                                     _agent: {}
                                 }

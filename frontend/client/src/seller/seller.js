@@ -677,110 +677,108 @@
                                 return collection;
                             });
 
-                            if ($scope.seller._feedback && $scope.seller._feedback.feedbacks) {
-                                cartData = [];
+                            cartData = [];
 
-                                angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
-                                    feedback.positive_count = _.random(0, 100);
-                                    feedback.negative_count = _.random(0, 100);
-                                    feedback.neutral_count = _.random(0, 100);
-                                    cartData.push({
-                                        c: [{
-                                            v: dateFilter(feedback.date, 'MMM')
-                                        }, {
-                                            v: feedback.positive_count
-                                        }, {
-                                            v: feedback.negative_count
-                                        }, {
-                                            v: feedback.neutral_count
-                                        }]
-                                    });
-
+                            angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
+                                feedback.positive_count = _.random(0, 100);
+                                feedback.negative_count = _.random(0, 100);
+                                feedback.neutral_count = _.random(0, 100);
+                                cartData.push({
+                                    c: [{
+                                        v: dateFilter(feedback.date, 'MMM')
+                                    }, {
+                                        v: feedback.positive_count
+                                    }, {
+                                        v: feedback.negative_count
+                                    }, {
+                                        v: feedback.neutral_count
+                                    }]
                                 });
 
-                                $scope.chartConfig = {
-                                    type: "ColumnChart",
-                                    data: {
-                                        cols: [{
-                                            id: "months",
-                                            label: "Months",
-                                            type: "string"
-                                        }, {
-                                            id: "positive",
-                                            label: "Positive",
-                                            type: "number"
-                                        }, {
-                                            id: "negative",
-                                            label: "Negative",
-                                            type: "number"
-                                        }, {
-                                            id: "neutral",
-                                            label: "Neutral",
-                                            type: "number"
-                                        }],
-                                        rows: cartData
-                                    },
-                                    options: {
-                                        colors: ['green', 'red', 'gray'],
-                                        series: {
-                                            0: {
-                                                axis: 'positive'
-                                            },
-                                            1: {
-                                                axis: 'negative'
-                                            },
-                                            3: {
-                                                axis: 'neutral'
-                                            }
+                            });
+
+                            $scope.chartConfig = {
+                                type: "ColumnChart",
+                                data: {
+                                    cols: [{
+                                        id: "months",
+                                        label: "Months",
+                                        type: "string"
+                                    }, {
+                                        id: "positive",
+                                        label: "Positive",
+                                        type: "number"
+                                    }, {
+                                        id: "negative",
+                                        label: "Negative",
+                                        type: "number"
+                                    }, {
+                                        id: "neutral",
+                                        label: "Neutral",
+                                        type: "number"
+                                    }],
+                                    rows: cartData
+                                },
+                                options: {
+                                    colors: ['green', 'red', 'gray'],
+                                    series: {
+                                        0: {
+                                            axis: 'positive'
                                         },
-                                        axes: {
-                                            y: {
-                                                positive: {
-                                                    label: 'Positive'
-                                                },
-                                                negative: {
-                                                    label: 'Negative',
-                                                    side: 'right'
-                                                },
-                                                neutral: {
-                                                    label: 'Neutral',
-                                                    side: 'right'
-                                                }
+                                        1: {
+                                            axis: 'negative'
+                                        },
+                                        3: {
+                                            axis: 'neutral'
+                                        }
+                                    },
+                                    axes: {
+                                        y: {
+                                            positive: {
+                                                label: 'Positive'
+                                            },
+                                            negative: {
+                                                label: 'Negative',
+                                                side: 'right'
+                                            },
+                                            neutral: {
+                                                label: 'Neutral',
+                                                side: 'right'
                                             }
                                         }
                                     }
-                                };
+                                }
+                            };
 
 
-                                $scope.feedbackStats = (function () {
-                                    var positive_count = 0,
-                                        neutral_count = 0,
-                                        negative_count = 0,
-                                        positive_average,
-                                        negative_average,
-                                        neutral_average,
-                                        score,
-                                        values = [];
+                            $scope.feedbackStats = (function () {
+                                var positive_count = 0,
+                                    neutral_count = 0,
+                                    negative_count = 0,
+                                    positive_average,
+                                    negative_average,
+                                    neutral_average,
+                                    score,
+                                    values = [];
 
-                                    positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
-                                    negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
-                                    neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
+                                positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
+                                negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
+                                neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
 
-                                    if ((positive_count - negative_count) > 0) {
-                                        score = positive_count - negative_count;
-                                    } else {
-                                        score = 0;
-                                    }
-                                    values[0] = positive_count;
-                                    values[1] = neutral_count;
-                                    values[2] = negative_count;
-                                    values[3] = positive_average;
-                                    values[4] = negative_average;
-                                    values[5] = neutral_average;
-                                    values[6] = score;
-                                    return values;
-                                }());
-                            }
+                                if ((positive_count - negative_count) > 0) {
+                                    score = positive_count - negative_count;
+                                } else {
+                                    score = 0;
+                                }
+                                values[0] = positive_count;
+                                values[1] = neutral_count;
+                                values[2] = negative_count;
+                                values[3] = positive_average;
+                                values[4] = negative_average;
+                                values[5] = neutral_average;
+                                values[6] = score;
+                                return values;
+                            }());
 
 
                             $scope.viewContent = function (content) {
