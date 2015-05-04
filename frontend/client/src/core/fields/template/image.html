@@ -32,7 +32,9 @@
                 <div ng-show="!config.ui.specifics.sortableOptions.disabled" class="bottom-right-floating">
                     <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
                        ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" 
-                       loading="!<%= config.ui.writableCompiled %>" 
+                       loading="!<%= config.ui.writableCompiled %>"
+                       md-ink-ripple-action
+                       ripple-light
                        draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action button-square sort-handle">
                           <icon color="white" type="action.view-headline"></icon>
                     </a>
