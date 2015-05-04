@@ -74,7 +74,7 @@
                                 this.args.sellers.remove(seller.key);
                                 this.entity._sellers.remove(seller);
                             },
-                            view: function (seller) {
+                            view: function (seller, event) {
                                 var thisScope = this;
                                 models['23'].actions.read({
                                     account: seller.parent.key,
@@ -84,15 +84,18 @@
                                         _feedback: {}
                                     }
                                 }).then(function (response) {
-                                    models['23'].viewModal(response.data.entity, function (updatedCollection) {
-                                        thisScope.entity._sellers.iremove(function (seller) {
-                                            return $.inArray(seller.key, updatedCollection.sellers) === -1;
-                                        });
-                                        var rmkey = function (sellerKey) {
-                                            return $.inArray(sellerKey, updatedCollection.sellers) === -1;
-                                        };
-                                        thisScope.entity.sellers.iremove(rmkey);
-                                        thisScope.args.sellers.iremove(rmkey);
+                                    models['23'].viewModal(response.data.entity, {
+                                        targetEvent: event,
+                                        removedOrAdded: function (updatedCollection) {
+                                            thisScope.entity._sellers.iremove(function (seller) {
+                                                return $.inArray(seller.key, updatedCollection.sellers) === -1;
+                                            });
+                                            var rmkey = function (sellerKey) {
+                                                return $.inArray(sellerKey, updatedCollection.sellers) === -1;
+                                            };
+                                            thisScope.entity.sellers.iremove(rmkey);
+                                            thisScope.args.sellers.iremove(rmkey);
+                                        }
                                     });
                                 });
                             },

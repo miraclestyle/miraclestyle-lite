@@ -662,9 +662,13 @@
             };
 
             $.extend(models['23'], {
-                viewModal: function (seller, removedOrAdded) {
+                viewModal: function (seller, config) {
+                    config = helpers.alwaysObject(config);
+                    var removedOrAdded = config.removedOrAdded,
+                        targetEvent = config.targetEvent;
                     $modal.open({
                         templateUrl: 'seller/view.html',
+                        targetEvent: targetEvent,
                         controller: function ($scope, currentAccount) {
                             var cartData;
                             $scope.seller = seller;
@@ -678,6 +682,38 @@
                             });
 
                             cartData = [];
+
+                            $scope.catalogs = [];
+
+                            $scope.search = {
+                                results: [],
+                                pagination: models['31'].paginate({
+                                    kind: '31',
+                                    args: {
+                                        search: {
+                                            filters: [{field: 'ancestor', operator: 'IN', value: $scope.seller.key}]
+                                        }
+                                    },
+                                    config: {
+                                        normalizeEntity: false
+                                    },
+                                    action: 'public_search',
+                                    complete: function (response) {
+                                        var results = response.data.entities;
+                                        models['31'].formatPublicSearchResults(results);
+                                        $scope.search.results.extend(results);
+                                    }
+                                })
+                            };
+                            $scope.scrollEnd = {loader: false};
+                            $scope.scrollEnd.loader = $scope.search.pagination;
+                            $scope.search.pagination.load();
+
+                            $scope.viewCatalog = function (result, event) {
+                                models['31'].viewModal(result.key, {
+                                    targetEvent: event
+                                });
+                            };
 
                             angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
                                 feedback.positive_count = _.random(0, 100);

@@ -63,10 +63,6 @@
                         var results = response.data.entities;
                         models['31'].formatPublicSearchResults(results);
                         $scope.search.results.extend(results);
-                        /*
-                        angular.forEach(_.range(1, 50), function () {
-                            $scope.search.results.extend(results);
-                        });*/
                     }
                 })
             };
