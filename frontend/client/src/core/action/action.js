@@ -80,7 +80,7 @@
                                         }
                                     });
                                 $$rAF(function () {
-                                    dialogEl.addClass('transition-in');
+                                    dialogEl.addClass('transition-in').addClass('opacity-in');
                                     dialogEl.css($mdConstant.CSS.TRANSFORM, '');
                                 });
 

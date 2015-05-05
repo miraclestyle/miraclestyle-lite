@@ -239,7 +239,10 @@
                         });
                         return;
                     }
-                    $element.css({marginLeft: '', marginRight: ''});
+                    $element.css({
+                        marginLeft: '',
+                        marginRight: ''
+                    });
                     item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
                 };
                 that.resize = function (doAll) {

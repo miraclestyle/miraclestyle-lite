@@ -1,17 +1,3 @@
-// Source: http://code.google.com/p/gflot/source/browse/trunk/flot/base64.js?r=153
-
-/* Copyright (C) 1999 Masanao Izumo <iz@onicos.co.jp>
- * Version: 1.0
- * LastModified: Dec 25 1999
- * This library is free.  You can redistribute it and/or modify it.
- */
-
-/*
- * Interfaces:
- * b64 = base64encode(data);
- * data = base64decode(b64);
- */
-
 (function () {
 
     var base64EncodeChars =
@@ -330,18 +316,14 @@ if (!Array.prototype.indexOf) {
                       'material.core.theming',
                       'material.components.backdrop',
                       'material.components.button',
-                      'material.components.card',
                       'material.components.checkbox',
                       'material.components.content',
                       'material.components.simpledialog',
-                      'material.components.divider',
                       'material.components.input',
                       'material.components.progressCircular',
                       'material.components.progressLinear',
                       'material.components.radioButton',
                       'material.components.sidenav',
-                      'material.components.sticky',
-                      'material.components.subheader',
                       'material.components.swipe',
                       'material.components.switch',
                       'material.components.textField',

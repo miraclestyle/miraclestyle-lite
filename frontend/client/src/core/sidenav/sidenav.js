@@ -1,19 +1,6 @@
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function () {
     'use strict';
 
-    /**
-     * @ngdoc module
-     * @name material.components.sidenav
-     *
-     * @description
-     * A Sidenav QP component.
-     */
     angular.module('material.components.sidenav', [
             'material.core',
             'material.components.backdrop'
@@ -22,40 +9,6 @@
         .directive('mdSidenav', SidenavDirective)
         .controller('$mdSidenavController', SidenavController);
 
-
-    /**
-     * @private
-     * @ngdoc service
-     * @name $mdSidenav
-     * @module material.components.sidenav
-     *
-     * @description
-     * `$mdSidenav` makes it easy to interact with multiple sidenavs
-     * in an app.
-     *
-     * @usage
-     * <hljs lang="js">
-     * // Toggle the given sidenav
-     * $mdSidenav(componentId).toggle();
-     * </hljs>
-     * <hljs lang="js">
-     * // Open the given sidenav
-     * $mdSidenav(componentId).open();
-     * </hljs>
-     * <hljs lang="js">
-     * // Close the given sidenav
-     * $mdSidenav(componentId).close();
-     * </hljs>
-     * <hljs lang="js">
-     * // Exposes whether given sidenav is set to be open
-     * $mdSidenav(componentId).isOpen();
-     * </hljs>
-     * <hljs lang="js">
-     * // Exposes whether given sidenav is locked open
-     * // If this is true, the sidenav will be open regardless of isOpen()
-     * $mdSidenav(componentId).isLockedOpen();
-     * </hljs>
-     */
     function SidenavService($mdComponentRegistry, $q) {
         return function (handle) {
             var errorMsg = "SideNav '" + handle + "' is not available!";
@@ -87,63 +40,6 @@
     }
     SidenavService.$inject = ["$mdComponentRegistry", "$q"];
 
-    /**
-     * @ngdoc directive
-     * @name mdSidenav
-     * @module material.components.sidenav
-     * @restrict E
-     *
-     * @description
-     *
-     * A Sidenav component that can be opened and closed programatically.
-     *
-     * By default, upon opening it will slide out on top of the main content area.
-     *
-     * @usage
-     * <hljs lang="html">
-     * <div layout="row" ng-controller="MyController">
-     *   <md-sidenav md-component-id="left" class="md-sidenav-left">
-     *     Left Nav!
-     *   </md-sidenav>
-     *
-     *   <md-content>
-     *     Center Content
-     *     <md-button ng-click="openLeftMenu()">
-     *       Open Left Menu
-     *     </md-button>
-     *   </md-content>
-     *
-     *   <md-sidenav md-component-id="right"
-     *     md-is-locked-open="$media('min-width: 333px')"
-     *     class="md-sidenav-right">
-     *     Right Nav!
-     *   </md-sidenav>
-     * </div>
-     * </hljs>
-     *
-     * <hljs lang="js">
-     * var app = angular.module('myApp', ['ngMaterial']);
-     * app.controller('MyController', function($scope, $mdSidenav) {
-     *   $scope.openLeftMenu = function() {
-     *     $mdSidenav('left').toggle();
-     *   };
-     * });
-     * </hljs>
-     *
-     * @param {expression=} md-is-open A model bound to whether the sidenav is opened.
-     * @param {string=} md-component-id componentId to use with $mdSidenav service.
-     * @param {expression=} md-is-locked-open When this expression evalutes to true,
-     * the sidenav 'locks open': it falls into the content's flow instead
-     * of appearing over it. This overrides the `is-open` attribute.
-     *
-     * A $media() function is exposed to the is-locked-open attribute, which
-     * can be given a media query or one of the `sm`, `gt-sm`, `md`, `gt-md`, `lg` or `gt-lg` presets.
-     * Examples:
-     *
-     *   - `<md-sidenav md-is-locked-open="shouldLockOpen"></md-sidenav>`
-     *   - `<md-sidenav md-is-locked-open="$media('min-width: 1000px')"></md-sidenav>`
-     *   - `<md-sidenav md-is-locked-open="$media('sm')"></md-sidenav>` (locks open on small screens)
-     */
     function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $mdTheming, $q, $document, mdContextualMonitor) {
         return {
             restrict: 'E',
@@ -248,17 +144,18 @@
                 }
                 element.before(backdrop);
                 var complete = function () {
-                    // If we opened, and haven't closed again before the animation finished
-                    if (scope.isOpen) {
-                        element.focus();
-                    }
-                    working = false;
-                }, backdropComplete = function () {
-                    // If we opened, and haven't closed again before the animation finished
-                    if (!scope.isOpen) {
-                        backdrop.remove();
-                    }
-                };
+                        // If we opened, and haven't closed again before the animation finished
+                        if (scope.isOpen) {
+                            element.focus();
+                        }
+                        working = false;
+                    },
+                    backdropComplete = function () {
+                        // If we opened, and haven't closed again before the animation finished
+                        if (!scope.isOpen) {
+                            backdrop.remove();
+                        }
+                    };
                 if (isOpen) {
                     element.removeClass('invisible out');
                     backdrop.removeClass('out');

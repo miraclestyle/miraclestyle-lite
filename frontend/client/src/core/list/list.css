@@ -9,16 +9,6 @@
     padding-bottom: 8px;
 }
 
-.list-row-has-separator:after {
-    content: '';
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 1px;
-    border-bottom: 1px solid;
-}
-
 .list-row-is-clickable {
     cursor: pointer;
 }
@@ -169,13 +159,13 @@
 }
 
 .list-row-three-lines .avatar-small {
-    padding-bottom:40px;
+    padding-bottom: 40px;
 }
 
 .list-row-two-lines .avatar-small {
-    padding:12px 4px;
+    padding: 12px 4px;
 }
 
 .list-row-two-lines .avatar {
-    padding:12px 8px 12px 16px;
+    padding: 12px 8px 12px 16px;
 }

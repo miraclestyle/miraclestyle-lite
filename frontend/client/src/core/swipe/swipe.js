@@ -1,77 +1,30 @@
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-(function() {
-'use strict';
+(function () {
+    'use strict';
+    var module = angular.module('material.components.swipe', []);
 
+    ['SwipeLeft', 'SwipeRight'].forEach(function (name) {
+        var directiveName = 'md' + name;
+        var eventName = '$md.' + name.toLowerCase();
 
-/**
- * @ngdoc module
- * @name material.components.swipe
- * @description Swipe module!
- */
-/**
- * @ngdoc directive
- * @module material.components.swipe
- * @name mdSwipeLeft
- *
- * @restrict A
- *
- * @description
- * The md-swipe-left directives allows you to specify custom behavior when an element is swiped
- * left.
- *
- * @usage
- * <hljs lang="html">
- * <div md-swipe-left="onSwipeLeft()">Swipe me left!</div>
- * </hljs>
- */
+        module.directive(directiveName, /*@ngInject*/ ["$parse", function ($parse) {
+            return {
+                restrict: 'A',
+                link: postLink
+            };
 
-/**
- * @ngdoc directive
- * @module material.components.swipe
- * @name mdSwipeRight
- *
- * @restrict A
- *
- * @description
- * The md-swipe-right directives allows you to specify custom behavior when an element is swiped
- * right.
- *
- * @usage
- * <hljs lang="html">
- * <div md-swipe-right="onSwipeRight()">Swipe me right!</div>
- * </hljs>
- */
+            function postLink(scope, element, attr) {
+                var fn = $parse(attr[directiveName]);
 
-var module = angular.module('material.components.swipe',[]);
+                element.on(eventName, function (ev) {
+                    scope.$apply(function () {
+                        fn(scope, {
+                            $event: ev
+                        });
+                    });
+                });
 
-['SwipeLeft', 'SwipeRight'].forEach(function(name) {
-  var directiveName = 'md' + name;
-  var eventName = '$md.' + name.toLowerCase();
-
-  module.directive(directiveName, /*@ngInject*/ ["$parse", function($parse) {
-    return {
-      restrict: 'A',
-      link: postLink
-    };
-
-    function postLink(scope, element, attr) {
-      var fn = $parse(attr[directiveName]);
-
-      element.on(eventName, function(ev) {
-        scope.$apply(function() {
-          fn(scope, {
-            $event: ev
-          });
-        });
-      });
-
-    }
-  }]);
-});
+            }
+        }]);
+    });
 
 })();

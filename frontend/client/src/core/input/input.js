@@ -1,15 +1,4 @@
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function () {
-
-    /**
-     * @ngdoc module
-     * @name material.components.input
-     */
 
     angular.module('material.components.input', [
             'material.core'

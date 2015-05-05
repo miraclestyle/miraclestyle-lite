@@ -48,14 +48,16 @@
     z-index: 1;
     padding: 4px;
 }
+
 .card-action-bottom-right {
-    top:auto;
-    bottom:4px;
+    top: auto;
+    bottom: 4px;
 }
 
 .card .delete-overlay {
     border-radius: 2px;
 }
+
 .card-primary-action .card-footer {
     margin-right: -56px;
 }
@@ -64,4 +66,6 @@
     background: white;
 }
 
-.cards .ui-sortable-placeholder {display:none;}
+.cards .ui-sortable-placeholder {
+    display: none;
+}

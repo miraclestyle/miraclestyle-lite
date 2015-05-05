@@ -1,6 +1,7 @@
 .modal-open {
     overflow: hidden;
 }
+
 .modal {
     position: fixed;
     top: 0;
@@ -10,30 +11,36 @@
     z-index: 1040;
     overflow: hidden;
     background: #FFFFFF;
-    width:100%;
-    height:100%;
+    width: 100%;
+    height: 100%;
 }
+
 .modal.right {
-    right:-100%;
-    left:auto;
+    right: -100%;
+    left: auto;
 }
+
 .modal.left {
     left: -100%;
-    right:auto;
+    right: auto;
 }
+
 .modal.no-overflow {
     overflow: hidden;
 }
+
 .modal-dialog {
     position: relative;
     z-index: 1050;
     width: auto;
 }
+
 .modal-content {
     position: relative;
     outline: none;
     background-clip: padding-box;
 }
+
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -42,48 +49,59 @@
     left: 0;
     z-index: 1030;
 }
+
 .modal-backdrop.opaque {
     background-color: rgba(0, 0, 0, 0.12);
 }
+
 .modal-body {
     position: relative;
     padding: 0px;
     padding-bottom: 0px;
 }
+
 .modal-body.scrollable {
     overflow-y: scroll;
 }
+
 .modal-small .modal-dialog {
     width: 40%;
     margin: auto;
 }
+
 .modal-small, .modal-medium, .modal-large {
     background: none;
     overflow: visible;
 }
+
 .modal-medium .modal-dialog {
     background: #FFFFFF;
     -webkit-box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
     box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
     background-clip: padding-box;
 }
+
 .modal-medium .modal-body {
     padding-bottom: 0px;
-    overflow-y:auto;
-    overflow-x:hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
+
 .modal-small .modal-dialog {
     width: 40%;
     margin: auto;
 }
+
 .md-dialog {
     opacity: 0;
     overflow: hidden;
     box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2);
 }
+
 .md-dialog.visible {
     opacity: 1;
 }
+
 .md-dialog .md-actions {
     display: -webkit-flex;
     display: -ms-flexbox;
@@ -105,23 +123,27 @@
     padding-right: 12px;
     border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
+
 .no-scroll .md-actions {
-    padding-bottom:8px;
-    border-top:none;
+    padding-bottom: 8px;
+    border-top: none;
 }
 
 .md-dialog .md-actions > * {
     margin-left: 8px;
 }
+
 .md-dialog .md-actions .md-button {
     margin-left: 4px;
     margin-right: 4px;
 }
+
 .md-dialog.md-content-overflow .md-actions {
     border-top: 1px solid;
 }
+
 .modal-medium .modal-dialog {
-    box-shadow:0px 12px 30px 4px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
     min-width: 240px;
     max-width: 100%;
     max-height: 100%;
@@ -138,6 +160,7 @@
     flex-direction: column;
     border-radius: 2px;
 }
+
 .md-dialog.modal-medium {
     -webkit-box-shadow: none;
     box-shadow: none;
@@ -159,5 +182,3 @@
     width: 100%;
     height: 100%;
 }
-
-

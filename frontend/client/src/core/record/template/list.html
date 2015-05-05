@@ -1,14 +1,12 @@
-<div>
-    <div class="list list-padding">
-            <list-button class="list-row-three-lines" ng-repeat="record in history.records" ng-click="history.view(record)">
-                <strong class="first ellipsis-text">{{record._action}}</strong>
-                <span class="second ellipsis-text">
-                    {{record._agent}}
-                </span>
-                <span class="second ellipsis-text">
-                    {{record|output: 'logged'}}
-                </span>
-            </list-button>
-    </div>
-    <div load-more-button="history.reader"></div>
+<div class="list list-padding">
+    <list-button class="list-row-three-lines" ng-repeat="record in history.records" ng-click="history.view(record)">
+        <strong class="first ellipsis-text">{{record._action}}</strong>
+        <span class="second ellipsis-text">
+            {{record._agent}}
+        </span>
+        <span class="second ellipsis-text">
+            {{record|output: 'logged'}}
+        </span>
+    </list-button>
 </div>
+<div load-more-button="history.reader"></div>

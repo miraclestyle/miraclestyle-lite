@@ -1,10 +1,4 @@
-﻿/**
- * AngularJS directives for social sharing buttons - Facebook Like, Google+, Twitter and Pinterest
- * @author Jason Watmore <jason@pointblankdevelopment.com.au> (http://jasonwatmore.com)
- * @version 1.0.0
- * Refactored code
- */
-(function () {
+﻿(function () {
     'use strict';
     angular.module('app').directive('fbLike', ['$window', '$rootScope', 'GLOBAL_CONFIG',
         function ($window, $rootScope, GLOBAL_CONFIG) {
@@ -47,7 +41,8 @@
                     }
                 }
             };
-        }]).directive('gplus', ['$window', function ($window) {
+        }
+    ]).directive('gplus', ['$window', function ($window) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {

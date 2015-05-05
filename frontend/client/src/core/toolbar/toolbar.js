@@ -1,16 +1,6 @@
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function () {
     'use strict';
 
-    /**
-     * @ngdoc module
-     * @name material.components.toolbar
-     */
     angular.module('material.components.toolbar', [
             'material.core',
             'material.components.content'

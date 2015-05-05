@@ -131,15 +131,6 @@ input.product-quantity-input {
     width: 100%;
 }
 
-.product-name {
-    margin: 0px;
-}
-
-.manage-product-actions {
-    position: static;
-}
-
-
 .full-logo img {
     width: 100%;
     height: auto;

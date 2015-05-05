@@ -1,14 +1,6 @@
 <div ng-class="{'field-with-label': config.ui.label}" class="plugins-field structured-field structured-field-repeated">
  
-  <!--<div class="clearfix button-set list-row-single-line list-content-tile">
-    <div class="pull-right">
-      <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create()">
-        Add
-      </md-button>
-    </div>
-  </div>-->
-
-    <button loading="!<%= config.ui.writableCompiled %>" 
+  <button loading="!<%= config.ui.writableCompiled %>" 
           md-ink-ripple-list ng-click="config.ui.specifics.create()" 
           type="button" 
           class="list-row list-row-one-line list-row-avatar list-row-is-clickable list-row-has-primary menu-item">

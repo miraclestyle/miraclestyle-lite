@@ -1,16 +1,6 @@
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
 (function () {
     'use strict';
 
-    /**
-     * @ngdoc module
-     * @name material.components.simpledialog
-     */
     angular.module('material.components.simpledialog', ['material.core', 'material.components.backdrop'])
         .factory('mdContextualMonitor', mdContextualMonitor)
         .directive('simpleDialog', SimpleDialogDirective)
@@ -318,9 +308,9 @@
 
             function dialogTransitionEnd(dialogEl) {
                 var deferred = $q.defer();
+
                 function finished(ev) {
                     //Make sure this transitionend didn't bubble up from a child
-                    console.log(ev, this);
                     if (ev.target === dialogEl[0]) {
                         dialogEl.off($mdConstant.CSS.TRANSITIONEND, finished);
                         deferred.resolve();

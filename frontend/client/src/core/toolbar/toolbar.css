@@ -1,10 +1,3 @@
-/*!
- * Angular Material Design
- * https://github.com/angular/material
- * @license MIT
- * v0.7.1
- */
-
 md-toolbar {
     display: -webkit-flex;
     display: -ms-flexbox;
@@ -19,6 +12,7 @@ md-toolbar {
     background-color: white;
     box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
 }
+
 .md-toolbar-tools {
     width: 100%;
     height: 56px;
@@ -28,22 +22,27 @@ md-toolbar {
     padding: 0 16px;
     margin: 0;
 }
+
 .md-toolbar-tools > * {
     font-size: inherit;
 }
+
 .md-toolbar-tools h2, .md-toolbar-tools h3 {
     font-weight: normal;
 }
+
 .md-toolbar-tools a {
     color: inherit;
     text-decoration: none;
 }
+
 .md-toolbar-tools .md-tools {
     position: absolute;
     left: 0px;
     top: 0px;
     padding: 4px;
 }
+
 .md-toolbar-tools .md-button {
     margin-top: auto;
     margin-bottom: auto;
@@ -52,9 +51,11 @@ md-toolbar {
     padding: 6px 8px;
     margin: 6px 4px;
 }
+
 .md-toolbar-title {
     display: inline-block;
 }
+
 .md-toolbar-item.md-breadcrumb {
     padding: 14px 144px 14px 56px;
     font-size: 20px;
@@ -65,15 +66,15 @@ md-toolbar {
 }
 
 .no-right-actions .md-toolbar-item.md-breadcrumb {
-    padding-right:16px;
+    padding-right: 16px;
 }
 
 .no-left-actions .md-toolbar-item.md-breadcrumb {
-    padding-left:16px;
+    padding-left: 16px;
 }
 
 .one-right-action .md-toolbar-item.md-breadcrumb {
-    padding-right:56px;
+    padding-right: 56px;
 }
 
 .md-toolbar-item.md-tools.actions-right {
@@ -81,6 +82,7 @@ md-toolbar {
     left: auto;
     padding: 4px;
 }
+
 .one-right-action .md-toolbar-item.md-tools.actions-right {
-    padding:4px;
+    padding: 4px;
 }
