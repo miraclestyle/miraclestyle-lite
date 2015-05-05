@@ -655,43 +655,7 @@
                                             });
                                     },
                                     sudo: function () {
-                                        var parentScope = $scope;
-                                        $modal.open({
-                                            templateUrl: 'core/models/manage.html',
-                                            controller: function ($scope) {
-                                                $scope.dialog = {
-                                                    templateBodyUrl: 'catalog/administer.html'
-                                                };
-                                                var sudoFields = modelsMeta.getActionArguments('31', 'sudo');
-                                                // , state: parentScope.entity.state
-                                                $scope.args = {
-                                                    key: parentScope.entity.key
-                                                };
-                                                $scope.fields = [sudoFields.state, sudoFields.index_state, sudoFields.message, sudoFields.note];
-                                                angular.forEach($scope.fields, function (field) {
-                                                    field.ui.writable = true;
-                                                });
-
-                                                $scope.container = {};
-                                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-                                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
-                                                $scope.validateForm = angular.bind($scope, helpers.form.validate);
-                                                $scope.save = function () {
-                                                    var promise;
-                                                    if (!$scope.container.form.$valid) {
-                                                        return false;
-                                                    }
-                                                    promise = models['31'].actions.sudo($scope.args);
-                                                    promise.then(function (response) {
-                                                        updateState(response.data.entity);
-                                                    });
-                                                    return promise;
-                                                };
-                                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                                    $scope.$close();
-                                                });
-                                            }
-                                        });
+                                        modals.models.sudo($scope.entity, {templateUrl: 'catalog/administer.html', onConfirm: updateState});
                                     }
                                 };
                             },

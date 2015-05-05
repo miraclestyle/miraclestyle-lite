@@ -1,6 +1,64 @@
 (function () {
     'use strict';
     angular.module('app')
+        .run(function (modals, helpers, models, $modal, modelsMeta) {
+            if (!modals.models) {
+                modals.models = {};
+            }
+            modals.models.sudo = function (entity, config) {
+                var defaults = {
+                    fullScreen: false,
+                    templateUrl: null,
+                    controller: function ($scope) {
+                        var sudoFields = modelsMeta.getActionArguments(entity.kind, 'sudo');
+                        $scope.args = {};
+                        $scope.fields = sudoFields;
+                        angular.forEach($scope.fields, function (field) {
+                            $.extend(field.ui, {
+                                writable: true,
+                                label: false,
+                                attrs: {
+                                    'native-placeholder': '',
+                                    'class': 'full-width'
+                                }
+                            });
+                            $scope.args[field.code_name] = entity[field.code_name];
+                        });
+
+                        $scope.fields.message.ui.placeholder = 'Write message to user!';
+                        $scope.fields.note.ui.placeholder = 'Write note to admins!';
+                        $scope.validateForm = angular.bind($scope, helpers.form.validate);
+
+                        $scope.container = {};
+                        $scope.config = {};
+
+                        $scope.config.dismiss = function () {
+                            return $scope.$close();
+                        };
+
+                        $scope.config.text = {
+                            primary: 'Ok'
+                        };
+
+                        $scope.config.confirm = function () {
+                            if ($scope.validateForm()) {
+                                var promise = models[entity.kind].actions.sudo($scope.args);
+                                promise.then(function (response) {
+                                    if (config.onConfirm) {
+                                        config.onConfirm(response.data.entity);
+                                    }
+                                    $scope.config.dismiss();
+                                });
+                            } else {
+                                helpers.form.wakeUp($scope.container.form);
+                            }
+                        };
+                    }
+                };
+                $.extend(defaults, config);
+                $modal.open(defaults);
+            };
+        })
         .value('modelsInfo', {})
         .value('currentAccount', {}).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {
             var modelsMeta = {},

@@ -49,7 +49,7 @@
                   <div autoload-on-vertical-scroll-end="scrollEnd" grid-scale="{square: true}" class="grid-wrapper clearfix">
                       <div ng-repeat="result in search.results track by $index" grid-scale-item class="grid-item grid-generator">
                           <button md-ink-ripple ripple-light loading ng-click="viewCatalog(result, $event)" class="button-transparent button-block padding-0">
-                              <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
+                              <img class="not-pointable" display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
                           </button>
                       </div>
                   </div>
