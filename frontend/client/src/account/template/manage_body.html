@@ -1,4 +1,4 @@
-<div>
+<div ng-init="layout = layouts.groups[2]">
      <ul class="list list-padding seam-bottom">
           <li class="list-row list-row-two-lines">
                 <div class="list-content-tile list-content-tile-two-lines">
@@ -19,7 +19,7 @@
               </div>
           </li>
     </ul>
-    <div class="list list-padding">
+    <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Sign In Methods</div>
 
          <button 
@@ -50,5 +50,5 @@
          </button>
 
     </div>
-    <!-- records -->
+    <div ng-include="layout.include"></div>
  </div>

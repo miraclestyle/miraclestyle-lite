@@ -393,7 +393,7 @@
             }
             return modelsUtil;
         }).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
-            modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes) {
+            modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordBrowser) {
 
             var modelsEditor = {
                 create: function (config) {
@@ -575,7 +575,7 @@
                                         var rule = $scope.args.ui.rule.field._records;
                                         $scope.historyConfig.key = $scope.entity.key;
                                         if (rule && rule.visible) {
-                                            //recordAccordion.attach($scope.accordions);
+                                            $scope.layouts.groups.push(recordBrowser.attach($scope.historyConfig));
                                         }
                                     },
                                     editTitle = 'edit' + config.kind,
@@ -775,6 +775,12 @@
                                         }
                                     });
                                 }
+
+                                $scope.$watch('dialog.toolbar.title', function (neww) {
+                                    if ($scope.historyConfig) {
+                                        $scope.historyConfig.title = neww;
+                                    }
+                                });
 
                                 // call config constructor, needed for posible after variable setup configurations
                                 config.defaultInit($scope);
