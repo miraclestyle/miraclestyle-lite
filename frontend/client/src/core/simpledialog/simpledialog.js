@@ -294,6 +294,9 @@
                     }
                 });
                 dialogEl.removeClass('transition-in').addClass('transition-out');
+                setTimeout(function () {
+                    dialogEl.addClass('opacity-out');
+                }, 50);
                 return promise;
             }
 
@@ -317,6 +320,7 @@
                 var deferred = $q.defer();
                 function finished(ev) {
                     //Make sure this transitionend didn't bubble up from a child
+                    console.log(ev, this);
                     if (ev.target === dialogEl[0]) {
                         dialogEl.off($mdConstant.CSS.TRANSITIONEND, finished);
                         deferred.resolve();

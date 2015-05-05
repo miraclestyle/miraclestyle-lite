@@ -105,8 +105,7 @@
                         return this.manageModal(account);
                     },
                     manageModal: function (account) {
-                        var that = this,
-                            config = {
+                        var config = {
                                 kind: this.kind,
                                 templateBodyUrl: 'account/manage_body.html',
                                 toolbar: {

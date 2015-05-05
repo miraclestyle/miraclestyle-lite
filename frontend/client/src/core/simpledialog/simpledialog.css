@@ -4,15 +4,19 @@
  * @license MIT
  * v0.7.1
  */
+
 md-backdrop {
     z-index: 50;
 }
+
 md-backdrop.simple-dialog-backdrop {
     z-index: 79;
 }
+
 .simple-dialog-option {
     opacity: 0;
 }
+
 simple-dialog {
     opacity: 0;
     position: absolute;
@@ -28,25 +32,32 @@ simple-dialog {
     overflow: hidden;
     border-radius: 2px;
     min-width: 112px;
+    background: white;
 }
+
 simple-dialog.transition-in {
-    opacity: 1;
     transition: -webkit-transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transition: transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transition-duration: 200ms;
-    background: white;
 }
-simple-dialog.transition-in .simple-dialog-option {
+
+simple-dialog.opacity-in .simple-dialog-option {
     opacity: 1;
 }
-simple-dialog.visible {
+
+simple-dialog.opacity-in {
     opacity: 1;
 }
-simple-dialog.transition-out {
+
+simple-dialog.opacity-out {
     opacity: 0;
+}
+
+simple-dialog.transition-out {
     transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
     transition-duration: 250ms;
 }
+
 simple-dialog md-content {
     -webkit-order: 1;
     -ms-flex-order: 1;
@@ -54,6 +65,7 @@ simple-dialog md-content {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
 }
+
 simple-dialog .md-actions {
     display: -webkit-flex;
     display: -ms-flexbox;
@@ -74,9 +86,11 @@ simple-dialog .md-actions {
     padding-left: 16px;
     padding-right: 16px;
 }
+
 simple-dialog .md-actions > * {
     margin-left: 8px;
 }
+
 simple-dialog.md-content-overflow .md-actions {
     border-top: 1px solid;
 }

@@ -325,6 +325,7 @@ if (!Array.prototype.indexOf) {
                       'timer', 
                       'googlechart', 
                       'material.core',
+                      'material.core.gestures',
                       'material.core.theming.palette',
                       'material.core.theming',
                       'material.components.backdrop',

@@ -859,3 +859,8 @@ body {
 .confirmation-textarea [ng-messages] {
     display:none;
 }
+
+button::-moz-focus-inner { /* Thanks firefox */
+    border: 0;
+    padding: 0;
+}
