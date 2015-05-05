@@ -24,12 +24,13 @@
 
             $scope.scrollEnd = {loader: false};
 
-            $scope.view = function (order) {
+            $scope.view = function (order, event) {
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
                     models['34'].manageModal(order, order._seller, buyer, {
-                        cartMode: carts
+                        cartMode: carts,
+                        targetEvent: event
                     });
                 });
             };
