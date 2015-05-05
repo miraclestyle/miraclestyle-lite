@@ -34,6 +34,18 @@
                 url: {
                     abs: function (part) {
                         return window.location.protocol + '//' + window.location.host + '/' + part;
+                    },
+                    urlsafe: function (str) {
+                        return window.btoa(str).replace('=', '-');
+                    },
+                    urlunsafe: function (str) {
+                        return window.atob(str.replace('-', '='));
+                    },
+                    jsonFromUrlsafe: function (str) {
+                        return angular.fromJson(helpers.url.urlunsafe(str));
+                    },
+                    jsonToUrlsafe: function (str) {
+                        return helpers.url.urlsafe(angular.toJson(str));
                     }
                 }
             });
@@ -812,10 +824,10 @@
                             field = that.filters[filter[0]];
                             field.required = 'search.indexID != null && search.send.filters.length';
                             field.code_name = 'filter_' + filter[0];
-                            $.extend(field.ui, {
+                            field.ui = {
                                 args: 'search.send.filters[\'' + i + '\'].value',
                                 writable: true
-                            });
+                            };
 
                             if (reset) {
                                 that.send.filters.push({

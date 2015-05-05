@@ -1,10 +1,11 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('MainMenuCtrl', function ($scope, currentAccount, GLOBAL_CONFIG, $mdSidenav, $timeout) {
+        .controller('MainMenuCtrl', function ($scope, currentAccount, GLOBAL_CONFIG, $mdSidenav, $timeout, helpers) {
             $scope.currentAccount = currentAccount;
             $scope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $scope.JSON = JSON;
+            $scope.helpers = helpers;
             $scope.closeMenu = function () {
                 $timeout(function () {
                     $mdSidenav('left').close();

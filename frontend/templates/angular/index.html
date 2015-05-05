@@ -54,7 +54,7 @@
 
             <div class="list list-padding seam-bottom" ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
                 <div class="list-subheader subheader">Administration</div>
-                <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: JSON.stringify({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
+                <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: helpers.url.jsonToUrlsafe({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
             </div>
 
               <div class="list list-padding">

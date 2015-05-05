@@ -331,7 +331,9 @@
                                         var order = response.data.entity;
                                         if (order.id) {
                                             angular.forEach(order._lines, function (line) {
-                                                if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && JSON.stringify($scope.currentVariation) === JSON.stringify(line.product.variant_signature)) {
+                                                if (line.product._reference.parent.id === $scope.product.parent.id
+                                                        && line.product._reference.id === $scope.product.id
+                                                        && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
                                                     $scope.productQuantity = parseInt(line.product.quantity, 10);
                                                     if ($scope.productQuantity > 0) {
                                                         $scope.hasThisProduct = true;

@@ -1,14 +1,14 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, $rootScope) {
+        .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, $rootScope, helpers) {
 
             var kind = $stateParams.kind,
                 query = null,
                 args = {};
 
             try {
-                query = JSON.parse($stateParams.query);
+                query = helpers.url.jsonFromUrlsafe($stateParams.query);
                 args = query;
             } catch (ignore) {}
 
@@ -27,7 +27,7 @@
                 doSearch: function () {
                     $state.go('admin-list', {
                         kind: this.kind,
-                        query: JSON.stringify({
+                        query: helpers.url.jsonToUrlsafe({
                             search : this.send
                         })
                     });

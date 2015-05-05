@@ -29,7 +29,7 @@
                 $state.go('home');
             } else {
                 if (data.errors) {
-                    errors = JSON.parse(data.errors);
+                    errors = angular.fromJson(data.errors);
                     if (errors && errors.action_denied) {
                         modals.alert('forbidden', function () {
                             $state.go('home');
@@ -109,7 +109,9 @@
                             config = {
                                 kind: this.kind,
                                 templateBodyUrl: 'account/manage_body.html',
-                                toolbar: {},
+                                toolbar: {
+                                    titleEdit: 'account.settings'
+                                },
                                 init: function ($scope) {
                                     var entity = $scope.entity,
                                         updateFields = ['state', 'ui.rule', 'created', 'updated'],

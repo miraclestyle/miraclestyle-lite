@@ -1,34 +1,10 @@
-<div class="order-reference">
-  {{ent.id}}
-</div>
-<div class="order-date">
-  {{ent|output:'date'}}
-</div>
-<div class="order-total">
-  {{ent.total_amount|formatCurrency:ent.currency}}
-</div>
-<div class="order-seller-name">
-  <span class="order-label">Seller:</span>
-  <span class="order-value">{{ent._seller.name}}</span>
-</div>
-<div class="order-buyer-id">
-  <span class="order-label">Buyer:</span>
-  <span class="order-value">{{ent.parent.parent.id}}</span>
-</div>
-<div class="order-state">
-  <span class="order-label">State:</span>
-  <span class="order-value">{{ent.state}}</span>
-</div>
-<div class="order-updated"> <!-- Temporary here -->
-  <span class="order-label">Updated:</span>
-  <span class="order-value">{{ent|output:'updated'}}</span>
-</div>
-<div class="order-payment_status" ng-show="ent.payment_status">
-  <span class="order-label">Payment:</span>
-  <span class="order-value">{{ent.payment_status}}</span>
-</div>
-<div class="order-feedback" ng-show="ent.feedback">
-  <span class="order-label">Feedback:</span>
-  <span class="order-value">{{ent.feedback}}</span>
-  <span class="order-value" ng-show="ent.feedback_adjustment">({{ent.feedback_adjustment}})</span>
-</div>
+
+<strong class="first ellipsis-text">
+    #{{ent.id}}
+</strong>
+<span class="second">
+    State: {{ent.state}}
+</span>
+<span class="second">
+    Updated: {{ent|output:'updated'}}
+</span>
