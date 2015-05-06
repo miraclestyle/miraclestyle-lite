@@ -12,11 +12,14 @@ import inspect
 import copy
 import urllib
 
+import performance
 import orm
 import mem
 import iom
 import settings
 import util
+
+HTTP_PERFORMANCE_TEXT = 'HTTP.%s in %sms'
 
 
 def json_output(s, **kwargs):
@@ -78,6 +81,7 @@ class RequestHandler(webapp2.RequestHandler):
     self.current_csrf = None
     self._input = None
   
+  @performance.profile(HTTP_PERFORMANCE_TEXT)
   def get_input(self):
     if self._input is not None:
       return self._input
@@ -106,6 +110,7 @@ class RequestHandler(webapp2.RequestHandler):
     self._input = dicts
     return self._input
   
+  @performance.profile(HTTP_PERFORMANCE_TEXT)
   def json_output(self, s, **kwargs):
     ''' Wrapper for json output for self usage to avoid imports from backend http '''
     return json_output(s, **kwargs)
@@ -139,6 +144,7 @@ class RequestHandler(webapp2.RequestHandler):
     self.abort(404)
     self.response.write('<h1>404 Not found</h1>')
   
+  @performance.profile(HTTP_PERFORMANCE_TEXT)
   def load_current_account(self):
     ''' Loads current user from the local thread and sets it as self.current_account for easier handler access to it.
     Along with that, also sets if the request came from taskqueue or cron, based on app engine headers.
@@ -151,6 +157,7 @@ class RequestHandler(webapp2.RequestHandler):
       current_account.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
       self.current_account = current_account
   
+  @performance.profile(HTTP_PERFORMANCE_TEXT)
   def load_csrf(self):
     if self.current_csrf is None and self.autoload_current_account:
       input = self.get_input()
@@ -164,7 +171,7 @@ class RequestHandler(webapp2.RequestHandler):
   
   @orm.toplevel
   def dispatch(self):
-    start = time.time()
+    dispatch_time = performance.Profile()
     self.load_current_account()
     self.load_csrf()
     self.validate_csrf()
@@ -175,8 +182,7 @@ class RequestHandler(webapp2.RequestHandler):
     finally:
       util.log.debug('Release In-memory Cache')
       mem.storage.__release_local__()
-      total = (time.time() - start) * 1000
-      util.log.debug('Finished request in %s ms' % total)
+      util.log.debug('Finished request in %s ms' % dispatch_time.miliseconds)
       
 
 class Endpoint(RequestHandler):

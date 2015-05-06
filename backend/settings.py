@@ -18,7 +18,7 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input an
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True
 DO_LOGS = True # logging on application level
-PROFILING = True # profiling of every function call using cProfile. Debug must be on
+PROFILING = False # profiling of every function call using cProfile. Debug must be on
 PROFILING_SORT = ('cumulative', ) # 'time'
 
 # Notify

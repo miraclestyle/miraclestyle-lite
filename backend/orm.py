@@ -1415,6 +1415,7 @@ class _BaseModel(object):
   def _set_next_read_arguments(self):
     # this function sets next_read_arguments for the entity that was read
     # purpose of inner function scan is to completely iterate all structured properties which have value and options
+    # @todo this is slow
     if self is self._root:
       def scan(value, field_key, field, value_options):
         if isinstance(value, PropertyValue) and hasattr(value, 'value_options') and value.has_value():
