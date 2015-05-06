@@ -24,7 +24,6 @@
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config,
                         that = this;
-                    fields.notify.ui.label = 'E-mail me when a catalog is published or discontinued by the seller that I\'m following.';
                     config = {
                         kind: this.kind,
                         action: 'update',

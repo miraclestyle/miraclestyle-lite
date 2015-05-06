@@ -81,7 +81,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
   def run(self, context):
     catalog_image = None
     catalog_images = context._catalog._images.value # @todo this is a problem
-    if len(catalog_images) < 2 and context.action.key.id() != 'catalog_upload_images':
+    if catalog_images and len(catalog_images) < 2 and context.action.key.id() != 'catalog_upload_images':
       CatalogImage = context.models['30']
       catalog_image = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).get()
     elif catalog_images is not None:

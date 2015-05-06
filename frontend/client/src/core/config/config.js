@@ -96,6 +96,9 @@
         $.extend(GLOBAL_CONFIG.fields.label, {
             '23-update': {
                 logo: 'Seller Logo'
+            },
+            '18-update': {
+                notify: 'E-mail me when a catalog is published or discontinued by the seller that I\'m following.'
             }
         });
 

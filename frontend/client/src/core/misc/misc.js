@@ -117,6 +117,7 @@
             return {
                 link: function (scope, element, attrs) {
 
+
                     if (angular.isDefined(attrs.loading)) {
                         scope.$watch(attrs.loading, function ngBooleanAttrWatchAction(value) {
                             if (value) {
