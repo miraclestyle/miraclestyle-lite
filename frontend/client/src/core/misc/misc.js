@@ -360,9 +360,9 @@
                 }
                 get = getGroup[key];
                 if (angular.isDefined(get)) {
-                    $log.warn('Path for label not found: ' + group + '.' + key);
                     return get;
                 }
+                $log.warn('Path for label not found: ' + group + '.' + key);
                 return key;
             };
         }).filter('propsFilter', function () {
