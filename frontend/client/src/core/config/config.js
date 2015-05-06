@@ -3,7 +3,7 @@
 
     angular.module('app').config(function (GLOBAL_CONFIG) {
 
-        $.extend(GLOBAL_CONFIG.confirmations, {
+        $.extend(GLOBAL_CONFIG.modals.confirmations, {
             discardWithFieldsRequired: {
                 title: 'Discard unsaved changes?',
                 message: 'There are some unsaved changes on the form you are trying to close. If you discard them, the item you are trying to add will not be added.',
@@ -41,7 +41,7 @@
             }
         });
 
-        $.extend(GLOBAL_CONFIG.alerts, {
+        $.extend(GLOBAL_CONFIG.modals.alerts, {
             forbidden: {
                 title: 'Action Denied',
                 message: 'Action you tried to perform is forbidden for this account.'
@@ -86,6 +86,19 @@
             }
         });
 
+        $.extend(GLOBAL_CONFIG.fields.help, {
+            '23-update': {
+                name: 'Name of the brand, company or store that you own or represent.',
+                logo: 'Click on the right side upload icon to upload logo image of the brand, company, or store that you own or represent.'
+            }
+        });
+
+        $.extend(GLOBAL_CONFIG.fields.label, {
+            '23-update': {
+                logo: 'Seller Logo'
+            }
+        });
+
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
             seller: 'Seller',
             edit31: 'Edit Catalog',
@@ -96,8 +109,8 @@
             addProduct: 'Add Product',
             editPluginGroup: false,
             settings: 'Settings',
-            addPlugins: 'Add Plugin',
-            editPlugins: 'Edit Plugin',
+            addPlugins: 'Add Rule',
+            editPlugins: 'Edit Rule',
             addVariants: 'Add Variant',
             editVariants: 'Edit Variant'
         });

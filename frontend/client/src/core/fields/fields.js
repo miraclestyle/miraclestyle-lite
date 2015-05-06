@@ -19,6 +19,70 @@
                         p2 = 999999;
                     }
                     return p1 - p2;
+                },
+                utils: {
+                    attrs: function (config) {
+                        var defaults = this.defaultAttrs(config),
+                            extra = this.extraAttrs(config),
+                            attrs = [];
+
+                        angular.extend(defaults, extra);
+
+                        angular.forEach(defaults, function (value, key) {
+                            attrs.push(key + (value ? '="' + value + '"' : ''));
+                        });
+
+                        return attrs.join(' ');
+                    },
+                    defaultAttrs: function (config) {
+                        var attrs = {},
+                            writableCompiled;
+                        if (config.max_size) {
+                            attrs['ng-maxlength'] = 'config.max_size';
+                        }
+
+                        if (config.ui.pattern !== undefined) {
+                            attrs['ng-pattern'] = config.pattern;
+                        }
+
+                        if (angular.isString(config.required)) {
+                            attrs['ng-required'] = config.required;
+                        } else {
+                            attrs['ng-required'] = 'config.required';
+                        }
+                        attrs['ng-model'] = config.ui.args;
+                        attrs.placeholder = config.ui.placeholder;
+
+                        if (!angular.isArray(config.ui.writable)) {
+                            attrs['ng-disabled'] = '!' + config.ui.writable;
+                            config.ui.writableCompiled = config.ui.writable;
+                        } else {
+                            writableCompiled = config.ui.model + '.ui.rule.field' + $.map(config.ui.writable,
+                                function (item) {
+                                    return "['" + helpers.addslashes(item) + "']";
+                                }).join('') + '.writable';
+
+                            attrs['ng-disabled'] = '!' + writableCompiled;
+
+                            config.ui.writableCompiled = writableCompiled;
+                        }
+
+                        if (attrs.readonly) {
+                            delete attrs['ng-disabled'];
+                        }
+
+                        return attrs;
+                    },
+                    extraAttrs: function (config) {
+                        return config.ui.attrs;
+                    },
+                    label: function (config) {
+                        var use = '{{config.ui.label}}';
+                        if (config.ui.label === undefined) {
+                            use = '{{config.ui.autoLabel|inflector:humanize}}';
+                        }
+                        return use;
+                    }
                 }
             });
             $.extend(helpers.form, {
@@ -84,7 +148,7 @@
                                 getTitle = function () {
                                     return 'view' + helpers.toolbar.makeTitle(field.code_name);
                                 };
-                                field.__title__.push(getTitle);
+                                field._title_.push(getTitle);
                                 $scope.dialog = {
                                     templateBodyUrl: 'core/models/manage_body_default.html',
                                     toolbar: {}
@@ -118,7 +182,7 @@
                                 });
 
                                 $scope.$watch('entity.id', function () {
-                                    $scope.dialog.toolbar.title = helpers.toolbar.buildTitle(field.__title__);
+                                    $scope.dialog.toolbar.title = helpers.toolbar.buildTitle(field._title_);
                                 });
 
                                 $scope.save = function () {
@@ -138,7 +202,7 @@
                                     if (angular.isArray(field.ui.specifics.parentArgs)) {
                                         field.ui.specifics.parentArgs.empty();
                                     }
-                                    field.__title__.remove(getTitle);
+                                    field._title_.remove(getTitle);
                                 });
                             }
                         });
@@ -277,73 +341,10 @@
             };
         })
         .directive('formInput', function ($compile, underscoreTemplate,
-            formInputTypes, helpers) {
+            formInputTypes, helpers, GLOBAL_CONFIG) {
 
             var types = formInputTypes,
-                utils = {
-                    attrs: function (config) {
-                        var defaults = this.defaultAttrs(config),
-                            extra = this.extraAttrs(config),
-                            attrs = [];
-
-                        angular.extend(defaults, extra);
-
-                        angular.forEach(defaults, function (value, key) {
-                            attrs.push(key + (value ? '="' + value + '"' : ''));
-                        });
-
-                        return attrs.join(' ');
-                    },
-                    defaultAttrs: function (config) {
-                        var attrs = {},
-                            writableCompiled;
-                        if (config.max_size) {
-                            attrs['ng-maxlength'] = 'config.max_size';
-                        }
-
-                        if (config.ui.pattern !== undefined) {
-                            attrs['ng-pattern'] = config.pattern;
-                        }
-
-                        if (angular.isString(config.required)) {
-                            attrs['ng-required'] = config.required;
-                        } else {
-                            attrs['ng-required'] = 'config.required';
-                        }
-                        attrs['ng-model'] = config.ui.args;
-                        attrs.placeholder = config.ui.placeholder;
-
-                        if (!angular.isArray(config.ui.writable)) {
-                            attrs['ng-disabled'] = '!' + config.ui.writable;
-                            config.ui.writableCompiled = config.ui.writable;
-                        } else {
-                            writableCompiled = config.ui.model + '.ui.rule.field' + $.map(config.ui.writable,
-                                function (item) {
-                                    return "['" + helpers.addslashes(item) + "']";
-                                }).join('') + '.writable';
-
-                            attrs['ng-disabled'] = '!' + writableCompiled;
-
-                            config.ui.writableCompiled = writableCompiled;
-                        }
-
-                        if (attrs.readonly) {
-                            delete attrs['ng-disabled'];
-                        }
-
-                        return attrs;
-                    },
-                    extraAttrs: function (config) {
-                        return config.ui.attrs;
-                    },
-                    label: function (config) {
-                        var use = '{{config.ui.label}}';
-                        if (config.ui.label === undefined) {
-                            use = '{{config.ui.autoLabel|inflector:humanize}}';
-                        }
-                        return use;
-                    }
-                };
+                utils = helpers.fields.utils;
 
             return {
                 restrict: 'A',
@@ -461,6 +462,18 @@
 
                         if (!angular.isDefined(config.ui.realPath)) {
                             config.ui.realPath = [name];
+                        }
+
+                        if (angular.isUndefined(config.ui.help)) {
+                            if (angular.isDefined(GLOBAL_CONFIG.fields.help[config._maker_])) {
+                                config.ui.help = GLOBAL_CONFIG.fields.help[config._maker_][config.code_name];
+                            }
+                        }
+
+                        if (angular.isUndefined(config.ui.label)) {
+                            if (angular.isDefined(GLOBAL_CONFIG.fields.label[config._maker_])) {
+                                config.ui.label = GLOBAL_CONFIG.fields.label[config._maker_][config.code_name];
+                            }
                         }
 
                         if (types[config.type] !== undefined) {
@@ -1221,12 +1234,12 @@
                                 var getTitle = function () {
                                     return config.ui.specifics.toolbar.titleEdit;
                                 };
-                                config.__title__.push(getTitle);
+                                config._title_.push(getTitle);
                                 angular.forEach(config.ui.specifics.fields, function (field) {
-                                    field.__title__ = config.__title__.concat();
+                                    field._title_ = config._title_.concat();
                                 });
                                 $scope.$on('$destroy', function () {
-                                    config.__title__.remove(getTitle);
+                                    config._title_.remove(getTitle);
                                     config.ui.specifics.getScope = undefined;
                                 });
                             };
@@ -1643,18 +1656,18 @@
                                             return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
                                         };
 
-                                        config.__title__.push(getTitle);
+                                        config._title_.push(getTitle);
 
                                         $scope.$watch('isNew', function () {
-                                            config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config.__title__);
+                                            config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
                                         });
 
                                         angular.forEach(config.ui.specifics.fields, function (field) {
-                                            field.__title__ = config.__title__.concat();
+                                            field._title_ = config._title_.concat();
                                         });
 
                                         $scope.$on('$destroy', function () {
-                                            config.__title__.remove(getTitle);
+                                            config._title_.remove(getTitle);
                                         });
 
                                     }

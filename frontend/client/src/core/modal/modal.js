@@ -639,7 +639,7 @@
                     }
                 }
                 config = helpers.alwaysObject(config);
-                helpers.extendDeep(theConfig, config, GLOBAL_CONFIG[!alert ? 'confirmations' : 'alerts'][key]);
+                helpers.extendDeep(theConfig, config, GLOBAL_CONFIG.modals[!alert ? 'confirmations' : 'alerts'][key]);
                 theConfig.noSecondary = alert;
                 theConfig.confirm = function () {
                     var that = this;

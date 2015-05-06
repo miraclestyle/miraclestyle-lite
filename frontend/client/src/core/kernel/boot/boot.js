@@ -340,9 +340,15 @@ if (!Array.prototype.indexOf) {
             toolbar: {
                 titles: {}
             },
+            fields: {
+                help: {},
+                label: {}
+            },
             labels: {},
-            confirmations: {},
-            alerts: {},
+            modals: {
+                confirmations: {},
+                alerts: {}
+            },
             defaultImage: 'http://placehold.it/240x100',
             defaultLogo: 'http://placehold.it/240x100',
             defaultCatalogCover: 'http://placehold.it/240x240',

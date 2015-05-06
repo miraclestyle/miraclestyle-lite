@@ -62,7 +62,7 @@
         .value('modelsInfo', {})
         .value('currentAccount', {}).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {
             var modelsMeta = {},
-                standardize = function (fields) {
+                standardize = function (fields, maker) {
                     angular.forEach(fields, function (field, field_key) {
                         if (field.ui === undefined) {
                             field.ui = {};
@@ -70,8 +70,10 @@
                         if (field.code_name === null) {
                             field.code_name = field_key;
                         }
+
+                        field._maker_ = maker;
                         if (field.modelclass !== undefined) {
-                            standardize(field.modelclass);
+                            standardize(field.modelclass, field.modelclass_kind);
                         }
                     });
 
@@ -112,7 +114,7 @@
 
                 fields = angular.copy(info.fields);
 
-                standardize(fields);
+                standardize(fields, kind_id);
 
                 return fields;
             };
@@ -147,13 +149,13 @@
                     }
                     fields = angular.copy(getAction['arguments']);
 
-                    standardize(fields);
+                    standardize(fields, kind_id + '-' + action);
                     return fields;
                 }
 
                 angular.forEach(info.mapped_actions, function (action) {
                     fields = angular.copy(action['arguments']);
-                    standardize(fields);
+                    standardize(fields, kind_id + '-' + action.id);
                     actionArguments[action.id] = fields;
                 });
 
@@ -169,7 +171,7 @@
                 }
                 actions = info.mapped_actions;
                 angular.forEach(actions, function (action) {
-                    standardize(action['arguments']);
+                    standardize(action['arguments'], kind_id + '-' + action.id);
                 });
 
                 return actions;
@@ -698,11 +700,11 @@
                                     }
                                     return out;
                                 };
-                                config.__title__ = [rootTitle];
+                                config._title_ = [rootTitle];
                                 $scope.$watch('entity.id', rootTitle);
 
                                 angular.forEach(config.fields, function (field) {
-                                    field.__title__ = config.__title__.concat();
+                                    field._title_ = config._title_.concat();
                                 });
 
                                 if (angular.isDefined(config.scope)) {

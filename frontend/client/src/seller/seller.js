@@ -436,7 +436,7 @@
                                     getTitle = function () {
                                         return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
                                     };
-                                    config.__title__.push(getTitle);
+                                    config._title_.push(getTitle);
                                     $scope.isNew = false;
                                     if (!arg) {
                                         arg = {};
@@ -482,7 +482,7 @@
                                         fields.sort(helpers.fields.sorter);
                                         config.ui.specifics.fields = fields;
                                         angular.forEach(fields, function (field) {
-                                            field.__title__ = config.__title__.concat();
+                                            field._title_ = config._title_.concat();
                                             field.ui.name = 'plugin.' + field.code_name;
                                             field.ui.writable = true;
                                             var extra = getPluginFieldOverrides(kind, field.code_name),
@@ -620,12 +620,12 @@
 
                                     };
                                     $scope.$on('$destroy', function () {
-                                        config.__title__.remove(getTitle);
+                                        config._title_.remove(getTitle);
                                         config.ui.specifics.getScope = undefined;
                                     });
 
                                     $scope.$watch('isNew', function () {
-                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config.__title__);
+                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
                                     });
 
                                 }
@@ -715,106 +715,110 @@
                                 });
                             };
 
-                            angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
-                                feedback.positive_count = _.random(0, 100);
-                                feedback.negative_count = _.random(0, 100);
-                                feedback.neutral_count = _.random(0, 100);
-                                cartData.push({
-                                    c: [{
-                                        v: dateFilter(feedback.date, 'MMM')
-                                    }, {
-                                        v: feedback.positive_count
-                                    }, {
-                                        v: feedback.negative_count
-                                    }, {
-                                        v: feedback.neutral_count
-                                    }]
+                            if ($scope.seller._feedback) {
+
+                                angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
+                                    feedback.positive_count = _.random(0, 100);
+                                    feedback.negative_count = _.random(0, 100);
+                                    feedback.neutral_count = _.random(0, 100);
+                                    cartData.push({
+                                        c: [{
+                                            v: dateFilter(feedback.date, 'MMM')
+                                        }, {
+                                            v: feedback.positive_count
+                                        }, {
+                                            v: feedback.negative_count
+                                        }, {
+                                            v: feedback.neutral_count
+                                        }]
+                                    });
+
                                 });
 
-                            });
-
-                            $scope.chartConfig = {
-                                type: "ColumnChart",
-                                data: {
-                                    cols: [{
-                                        id: "months",
-                                        label: "Months",
-                                        type: "string"
-                                    }, {
-                                        id: "positive",
-                                        label: "Positive",
-                                        type: "number"
-                                    }, {
-                                        id: "negative",
-                                        label: "Negative",
-                                        type: "number"
-                                    }, {
-                                        id: "neutral",
-                                        label: "Neutral",
-                                        type: "number"
-                                    }],
-                                    rows: cartData
-                                },
-                                options: {
-                                    colors: ['green', 'red', 'gray'],
-                                    series: {
-                                        0: {
-                                            axis: 'positive'
-                                        },
-                                        1: {
-                                            axis: 'negative'
-                                        },
-                                        3: {
-                                            axis: 'neutral'
-                                        }
+                                $scope.chartConfig = {
+                                    type: "ColumnChart",
+                                    data: {
+                                        cols: [{
+                                            id: "months",
+                                            label: "Months",
+                                            type: "string"
+                                        }, {
+                                            id: "positive",
+                                            label: "Positive",
+                                            type: "number"
+                                        }, {
+                                            id: "negative",
+                                            label: "Negative",
+                                            type: "number"
+                                        }, {
+                                            id: "neutral",
+                                            label: "Neutral",
+                                            type: "number"
+                                        }],
+                                        rows: cartData
                                     },
-                                    axes: {
-                                        y: {
-                                            positive: {
-                                                label: 'Positive'
+                                    options: {
+                                        colors: ['green', 'red', 'gray'],
+                                        series: {
+                                            0: {
+                                                axis: 'positive'
                                             },
-                                            negative: {
-                                                label: 'Negative',
-                                                side: 'right'
+                                            1: {
+                                                axis: 'negative'
                                             },
-                                            neutral: {
-                                                label: 'Neutral',
-                                                side: 'right'
+                                            3: {
+                                                axis: 'neutral'
+                                            }
+                                        },
+                                        axes: {
+                                            y: {
+                                                positive: {
+                                                    label: 'Positive'
+                                                },
+                                                negative: {
+                                                    label: 'Negative',
+                                                    side: 'right'
+                                                },
+                                                neutral: {
+                                                    label: 'Neutral',
+                                                    side: 'right'
+                                                }
                                             }
                                         }
                                     }
-                                }
-                            };
+                                };
 
 
-                            $scope.feedbackStats = (function () {
-                                var positive_count = 0,
-                                    neutral_count = 0,
-                                    negative_count = 0,
-                                    positive_average,
-                                    negative_average,
-                                    neutral_average,
-                                    score,
-                                    values = [];
+                                $scope.feedbackStats = (function () {
+                                    var positive_count = 0,
+                                        neutral_count = 0,
+                                        negative_count = 0,
+                                        positive_average,
+                                        negative_average,
+                                        neutral_average,
+                                        score,
+                                        values = [];
 
-                                positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
-                                negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
-                                neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
+                                    positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
+                                    negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
+                                    neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
 
-                                if ((positive_count - negative_count) > 0) {
-                                    score = positive_count - negative_count;
-                                } else {
-                                    score = 0;
-                                }
-                                values[0] = positive_count;
-                                values[1] = neutral_count;
-                                values[2] = negative_count;
-                                values[3] = positive_average;
-                                values[4] = negative_average;
-                                values[5] = neutral_average;
-                                values[6] = score;
-                                return values;
-                            }());
+                                    if ((positive_count - negative_count) > 0) {
+                                        score = positive_count - negative_count;
+                                    } else {
+                                        score = 0;
+                                    }
+                                    values[0] = positive_count;
+                                    values[1] = neutral_count;
+                                    values[2] = negative_count;
+                                    values[3] = positive_average;
+                                    values[4] = negative_average;
+                                    values[5] = neutral_average;
+                                    values[6] = score;
+                                    return values;
+                                }());
+
+                            }
 
 
                             $scope.viewContent = function (content) {
@@ -896,10 +900,6 @@
                             listView: 'plugin-list-view'
                         }
                     });
-                    fields.name.ui.help = 'Name of the brand, company or store that you own or represent.';
-                    fields.logo.ui.help = 'Click on the right side upload icon to upload logo image of the brand, company, or store that you own or represent.';
-
-                    fields.logo.ui.label = 'Select Logo';
 
                     fields.logo.ui.specifics = {
                         displayImageConfig: {

@@ -698,19 +698,19 @@
                                                 return 'viewProducts';
                                             };
 
-                                            $scope.config.__title__.push(getTitle);
+                                            $scope.config._title_.push(getTitle);
                                             $scope.$on('$destroy', function () {
-                                                $scope.config.__title__.remove(getTitle);
-                                                fields._images.__title__.remove(getTitle);
-                                                fields._images.modelclass.pricetags.__title__.remove(getTitle);
-                                                fields._images.modelclass.pricetags.modelclass._product.__title__.remove(getTitle);
+                                                $scope.config._title_.remove(getTitle);
+                                                fields._images._title_.remove(getTitle);
+                                                fields._images.modelclass.pricetags._title_.remove(getTitle);
+                                                fields._images.modelclass.pricetags.modelclass._product._title_.remove(getTitle);
                                             });
 
-                                            fields._images.__title__ = $scope.config.__title__.concat();
-                                            fields._images.modelclass.pricetags.__title__ = fields._images.__title__.concat();
-                                            fields._images.modelclass.pricetags.modelclass._product.__title__ = fields._images.__title__.concat();
+                                            fields._images._title_ = $scope.config._title_.concat();
+                                            fields._images.modelclass.pricetags._title_ = fields._images._title_.concat();
+                                            fields._images.modelclass.pricetags.modelclass._product._title_ = fields._images._title_.concat();
 
-                                            $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config.__title__);
+                                            $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
 
                                             imagesReader = models['31'].reader({
                                                 kind: '31',
