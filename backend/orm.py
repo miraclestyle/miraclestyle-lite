@@ -502,14 +502,9 @@ class _BaseModel(object):
   _delete_custom_indexes = None
  
   def __init__(self, *args, **kwargs):
-    _deepcopied = '_deepcopy' in kwargs
-    if _deepcopied:
-      kwargs.pop('_deepcopy')
     self._state = kwargs.pop('_state', None)
     self._sequence = kwargs.pop('_sequence', None)
     super(_BaseModel, self).__init__(*args, **kwargs)
-    if not _deepcopied:
-      self.make_original()
     self._output = []
     self._search_documents_write = []
     self._search_documents_delete = []
@@ -658,13 +653,11 @@ class _BaseModel(object):
   def _post_get_hook(cls, key, future):
     entity = future.get_result()
     if entity is not None and entity.key:
-      entity.make_original()
       entity._make_async_calls()
   
   @classmethod
   def _from_pb(cls, pb, set_key=True, ent=None, key=None):
     entity = super(_BaseModel, cls)._from_pb(pb, set_key, ent, key)
-    entity.make_original()
     if entity.key: # make async calls only if the key is present, meaning that the entity is loaded from datastore and not in preparation mode
       entity._make_async_calls()
     return entity
@@ -777,7 +770,7 @@ class _BaseModel(object):
     
     '''
     model = self.__class__
-    new_entity = model(_deepcopy=True)
+    new_entity = model()
     new_entity.key = copy.deepcopy(self.key, memo)
     new_entity._state = self._state
     new_entity._sequence = self._sequence
