@@ -89,6 +89,8 @@
         <md-content ui-view md-scroll-y flex></md-content>
     </div>
 
+    <snackbar></snackbar>
+
     <script type="text/javascript" src="/_ah/channel/jsapi"></script>
     {% for js in settings.ANGULAR_JAVASCRIPT_PATHS %}
     <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>

@@ -384,13 +384,17 @@ body {
     color: rgba(0, 0, 0, 0.26);
 }
 
-.body1, .secondary {
+.body1, .secondary, .brief {
     font-size: 14px;
     font-weight: 400;
     line-height: 20px;
     letter-spacing: 0.1px;
     text-align: left;
     color: rgba(0, 0, 0, 0.87);
+}
+
+.brief {
+    color:white;
 }
 
 .body2, .menu, .subheader {

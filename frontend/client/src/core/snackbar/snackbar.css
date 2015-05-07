@@ -1,0 +1,77 @@
+.snackbar {
+    display: block;
+    overflow: hidden;
+    position: fixed;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+    background: rgba(0, 0, 0, 0.80);
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    z-index: 10000;
+}
+
+.snackbar-inner {
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.snackbar-inner.oneline {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.snackbar-inner.multiline {
+    padding-top: 24px;
+    padding-bottom: 24px;
+
+}
+
+
+
+.snackbar.slide.out {
+    animation-name: bottom-slide-out;
+    -webkit-animation-name: bottom-slide-out;
+}
+
+.snackbar.slide.in {
+    animation-name: bottom-slide-in;
+    -webkit-animation-name: bottom-slide-in;
+}
+
+@-webkit-keyframes bottom-slide-in {
+    0% {
+        bottom: -100%;
+    }
+    100% {
+        bottom: 0px;
+    }
+}
+
+@-webkit-keyframes bottom-slide-out {
+    0% {
+        bottom: 0px;
+    }
+    100% {
+        bottom: -100%;
+    }
+}
+
+@keyframes bottom-slide-in {
+    0% {
+        bottom: -100%;
+    }
+    100% {
+        bottom: 0px;
+    }
+}
+
+@keyframes bottom-slide-out {
+    0% {
+        bottom: 0px;
+    }
+    100% {
+        bottom: -100%;
+    }
+}
