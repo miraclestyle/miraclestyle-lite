@@ -18,6 +18,10 @@ import sys
 import uuid
 import inspect
 
+import cProfile
+import cStringIO
+import pstats
+
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
@@ -25,6 +29,7 @@ from google.appengine.ext.ndb.model import _BaseValue
 from google.appengine.ext import blobstore
 from google.appengine.api import search, datastore_errors
 
+import performance
 import mem
 import util
 import settings
@@ -1411,11 +1416,10 @@ class _BaseModel(object):
       self.key = self.build_key(random_uuid4, parent=self.key.parent(), namespace=self.key.namespace())
     else:
       self.key = self.build_key(random_uuid4)
-  
+
   def _set_next_read_arguments(self):
     # this function sets next_read_arguments for the entity that was read
     # purpose of inner function scan is to completely iterate all structured properties which have value and options
-    # @todo this is slow
     if self is self._root:
       def scan(value, field_key, field, value_options):
         if isinstance(value, PropertyValue) and hasattr(value, 'value_options') and value.has_value():
