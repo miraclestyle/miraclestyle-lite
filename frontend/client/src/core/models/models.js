@@ -779,7 +779,7 @@
                                 }
 
                                 $scope.$watch('dialog.toolbar.title', function (neww) {
-                                    if ($scope.historyConfig) {
+                                    if (angular.isObject($scope.historyConfig)) {
                                         $scope.historyConfig.title = neww;
                                     }
                                 });

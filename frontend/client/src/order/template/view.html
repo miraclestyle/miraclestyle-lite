@@ -185,15 +185,17 @@
                           " ng-class="{'leftside': isYou, 'rightside': !isYou}">
                         <div class="message">
                             <div class="message-inner">
-                                <div ng-if="message._action === 'leave_feedback'" class="first">Feedback</div>
-                                <div ng-if="message._action === 'review_feedback'" class="first">Review Feedback</div>
-                                <div ng-if="message._action === 'report_feedback'" class="first">Report Feedback</div>
-                                <div ng-if="message._action === 'sudo_feedback'" class="first">Feedback</div>
-                                <div ng-if="message._action === 'complete'" class="first">Payment Completed</div>
+ 
                                 <div class="message-body second">
                                     {{message.body}}
                                 </div>
                                 <div class="message-footer helper">
+                                  <span ng-if="message._action === 'leave_feedback'">Feedback left on</span>
+                                  <span ng-if="message._action === 'review_feedback'">Feedback reviewed on</span>
+                                  <span ng-if="message._action === 'report_feedback'">Feedback reported on</span>
+                                  <span ng-if="message._action === 'sudo_feedback'">Feedback administered on</span>
+                                  <span ng-if="message._action === 'complete'">Payment completed on</span>
+                                  <span ng-if="message._action === 'log_message'">Message left on</span>
                                     {{message|output:'created'}}
                                 </div>
                             </div>
