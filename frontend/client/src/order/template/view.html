@@ -2,7 +2,7 @@
     <form method="post" target="_blank" name="container.paypal" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
         <action-toolbar spec="dialog.toolbar"></action-toolbar>
         <div class="modal-body">
-            <div class="fixed-height relative overflow-y has-toolbar">
+            <div class="fixed-height relative has-toolbar">
                 <div class="modal-body-inner">
                     <div class="order">
                         <input type="hidden" name="cmd" value="_cart" />
@@ -29,7 +29,7 @@
                         <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
                         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
-                        <div ng-if="stage.current !== 4" class="order-stage" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
+                        <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
                           <div ng-include="'order/lines.html'"></div>
                           <div class="list">
 
@@ -44,7 +44,7 @@
 
                           </div>
                         </div>
-                        <div ng-if="stage.current !== 4" class="order-stage" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
+                        <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
                             <div class="list list-padding seam-bottom">
                               <div class="list-subheader subheader">Billing Info</div>
                               <button md-ink-ripple-list
@@ -105,7 +105,7 @@
  
                             
                         </div>
-                        <div ng-if="stage.current !== 4" class="order-stage" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
+                        <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
                               <div ng-form="carrier.form" class="list list-padding seam-bottom">
                                 <div class="list-subheader subheader">Delivery Methods</div>
                                      <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
@@ -138,7 +138,7 @@
                             </div>
  
                         </div>
-                        <div class="order-stage" ng-class="{'in': stage.current === 4, 'out': stage.current !== 4}">
+                        <div class="order-stage fixed-height" ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
                             <div ng-include="'order/lines.html'"></div>
                             <div ng-if="stage.canShowPay()" class="list">
 

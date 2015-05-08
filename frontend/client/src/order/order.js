@@ -208,6 +208,7 @@
                                 });
 
                                 $scope.stage = {
+                                    checkout: null,
                                     current: 1,
                                     out: [],
                                     canShowPay: function () {
@@ -620,6 +621,7 @@
                                 if ($scope.order.state === 'checkout' || $scope.order.state === 'completed') {
                                     $scope.stage.out.extend([1, 2, 3]);
                                     $scope.stage.current = 4;
+                                    $scope.stage.checkout = 1;
                                 }
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
