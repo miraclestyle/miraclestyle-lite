@@ -1,0 +1,29 @@
+Source code has:
+File ./documentation/code/misc.py has 1 recursive functions:
+ transaction
+File ./backend/orm.py has 8 recursive functions:
+ delete_structured
+ scan
+ get_async_results
+File ./backend/plugins/catalog.py has 1 recursive functions:
+ parse_structure
+File ./backend/iom.py has 1 recursive functions:
+ execute_plugins
+File ./backend/models/base.py has 1 recursive functions:
+ mapper
+File ./frontend/settings.py has 2 recursive functions:
+ read
+ __discover_host_url
+File ./backend/util.py has 2 recursive functions:
+ merge_dicts
+ override_dict
+File ./backend/plugins/location.py has 1 recursive functions:
+ make_complete_name_for_subdivision
+File ./backend/plugins/unit.py has 1 recursive functions:
+ __eval
+File ./documentation/code/business.py has 1 recursive functions:
+ transaction
+File ./documentation/code/performance_tester_io.py has 1 recursive functions:
+ execute_plugins
+
+

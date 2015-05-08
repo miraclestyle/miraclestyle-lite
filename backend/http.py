@@ -157,7 +157,6 @@ class RequestHandler(webapp2.RequestHandler):
       current_account.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None) # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
       self.current_account = current_account
   
-  @performance.profile(HTTP_PERFORMANCE_TEXT)
   def load_csrf(self):
     if self.current_csrf is None and self.autoload_current_account:
       input = self.get_input()

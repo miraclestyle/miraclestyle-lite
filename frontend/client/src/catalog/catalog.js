@@ -934,7 +934,7 @@
 
                                                 image.pricetags.push(newPricetag); // append new pricetag to image
                                                 setupCurrentPricetag(image, newPricetag); // set current
-                                                $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length, '_product']; // set correct pathing for the new product
+                                                $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product']; // set correct pathing for the new product
                                                 recomputeRealPath($scope.fieldProduct);
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };

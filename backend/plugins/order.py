@@ -47,6 +47,7 @@ class OrderInit(orm.BaseModel):
       order.state = 'cart'
       order.date = datetime.datetime.now()
       order.seller_reference = seller_key
+      order.make_original()
       seller = seller_key.get()
       seller.read() # read locals
     else:

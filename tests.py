@@ -1,78 +1,56 @@
-import timeit
-import sys
-import time
+import ast
+import os
+import codecs
 
-sys.setrecursionlimit(200000)
-
-def recurse():
-    recurse()
-
-recurse()
-
-STACK = 10000
-
-class Increaser:
-
+class FindRecursiveFunctions(ast.NodeVisitor):
     def __init__(self):
-        self.n = 0
+        self._current_func = None
+        self.recursive_funcs = set()
 
-    def incr(self):
-        self.n += 1
-        return self.n
-
-n1 = Increaser()
-n2 = Increaser()
-
-def test_recursion2():
-    while True:
+    def generic_visit(self, node):
+        if node.__class__ is ast.FunctionDef:
+            self._current_func = node.name
         try:
-            if n1.incr() == STACK:
-                raise Exception('stop')
-        except:
-            break
+            if node.__class__ is ast.Call and node.func.id == self._current_func:
+                lineno = None
+                if hasattr(node, 'lineno'):
+                    lineno = node.lineno
+                    # (self._current_func, lineno)
+                self.recursive_funcs.add(self._current_func)
+        except AttributeError as e:
+            pass
+        super(FindRecursiveFunctions, self).generic_visit(node)
 
-def test_recursion():
-    try:
-        if n2.incr() == STACK:
-            raise Exception('stop')
-        test_recursion()
-    except:
+files_with_recursion = {}
+ignore = ['project-documentation.py', 'documentation/code/misc.py', 'temp.py', 'tests.py']
+for dirname, dirnames, filenames in os.walk('.'):
+    for f in filenames:
+      if f.startswith('.') or not f.endswith('.py'):
+        continue
+      cont = False
+      for ig in ignore:
+        if f.endswith(ig):
+            cont = True
+            break
+      if cont:
+        continue
+      abs_path = os.path.join(dirname, f)
+      rf = codecs.open(abs_path, 'r', 'utf-8')
+      code = rf.read()
+      try:
+          firstline = code.splitlines()[0]
+          code = code[len(firstline):]
+      except IndexError as e:
         pass
+      print abs_path
+      tree = ast.parse(code)
+      finder = FindRecursiveFunctions()
+      finder.visit(tree)
+      if finder.recursive_funcs:
+        files_with_recursion[abs_path] = finder.recursive_funcs
 
-print 'Test recursion'
-start = time.time()
-test_recursion()
-print 'in %sms' % ((time.time() - start) * 1000)
-
-print 'Test While'
-start = time.time()
-test_recursion2()
-print 'in %sms' % ((time.time() - start) * 1000)
-
-
-setup = """
-class Increaser:
-
-    def __init__(self):
-        self.n = 0
-
-    def incr(self):
-        self.n += 1
-        return self.n
-
-n1 = Increaser()
-n2 = Increaser()
-
-def test_recursion2():
-    while True:
-        try:
-            if n1.incr() == STACK:
-                raise Exception('stop')
-        except:
-            break
-
-"""
-
-print timeit.timeit('test_recursion2()', setup=setup, number=1)
-
-exit()
+print 'Source code has:'
+for f, items in files_with_recursion.iteritems():
+    print 'File %s has %s recursive functions:' % (f, len(items))
+    for item in items:
+        print ' %s' % (item)

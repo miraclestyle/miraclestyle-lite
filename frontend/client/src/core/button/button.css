@@ -1,3 +1,12 @@
+.md-button, .md-button-text {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
 .md-button {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -11,13 +20,6 @@
     background: transparent;
     white-space: nowrap;
     min-width: 64px;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 24px;
-    letter-spacing: 0.1px;
-    text-align: center;
-    text-transform: uppercase;
     font-style: inherit;
     font-variant: inherit;
     font-size: inherit;

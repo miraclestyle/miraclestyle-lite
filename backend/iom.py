@@ -25,9 +25,6 @@ import errors
 import threading
 
 
-ENGINE_PERFORMANCE_TEXT = 'Engine.%s executed in %sms'
-
-
 class InputError(Exception):
   
   def __init__(self, input_error):
@@ -68,7 +65,6 @@ class Context():
 class Engine:
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def process_blob_input(cls, input):
     uploaded_blobs = []
     for key, value in input.iteritems():
@@ -86,7 +82,6 @@ class Engine:
       mem.temp_set(settings.BLOBKEYMANAGER_KEY, blobs)
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def process_blob_state(cls, state):
     blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
@@ -107,7 +102,6 @@ class Engine:
             delete_blobs.append(blob)
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def process_blob_output(cls):
     blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
@@ -123,7 +117,6 @@ class Engine:
           blobstore.delete(delete_blobs)
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
     from models import account, base, buyer, catalog, collection, location, order, seller, unit
@@ -139,17 +132,14 @@ class Engine:
     util.log.debug('Completed Initializing %s classes.' % len(kinds))
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def get_schema(cls):
     return orm.Model._kind_map
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def get_models(cls, context):
     context.models = orm.Model._kind_map
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def get_model(cls, context, input):
     model_key = input.get('action_model')
     model = orm.Model._kind_map.get(model_key)
@@ -158,7 +148,6 @@ class Engine:
       raise InvalidModel(model_key)
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def get_action(cls, context, input):
     action_id = input.get('action_id')
     model_kind = context.model.get_kind()
@@ -168,7 +157,6 @@ class Engine:
       raise InvalidAction(context.action)
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def process_action_input(cls, context, input):
     input_error = {}
     for key, argument in context.action.arguments.items():
@@ -233,7 +221,6 @@ class Engine:
         util.log.debug('Completed action in %sms' % action_time.miliseconds)
   
   @classmethod
-  @performance.profile(ENGINE_PERFORMANCE_TEXT)
   def run(cls, input):
     if settings.PROFILING:
       pr = cProfile.Profile()
