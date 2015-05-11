@@ -167,8 +167,8 @@
             $scope.scrollEnd.loader = $scope.search.pagination;
             $scope.search.pagination.load();
         });
-    }).run(function ($window, modelsConfig, modelsMeta,
-        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter) {
+    }).run(function (modelsConfig, modelsMeta,
+        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG) {
 
         modelsConfig(function (models) {
             formInputTypes.SuperPluginStorageProperty = function (info) {

@@ -1073,24 +1073,24 @@
                                                             }
                                                         }
                                                     },
-                                                    create: function () {
+                                                    canCreate: function () {
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                             currentArgs = currentFieldScope.args;
+                                                        if (!currentArgs.id) {
+                                                            modals.alert('saveProductFirst');
+                                                            return false;
+                                                        }
                                                         if (!currentArgs.variants.length) {
                                                             modals.alert('createVariantsFirst');
                                                             return false;
                                                         }
-                                                        this.manage.apply(this, arguments);
+                                                        return true;
                                                     },
                                                     init: function () {
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                             currentArgs = currentFieldScope.args,
                                                             choices = [],
                                                             variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
-                                                        if (!currentArgs.variants.length) {
-                                                            modals.alert('createVariantsFirst');
-                                                            return false;
-                                                        }
 
                                                         angular.forEach(currentArgs.variants, function (variant) {
                                                             if (variant.allow_custom_value) {

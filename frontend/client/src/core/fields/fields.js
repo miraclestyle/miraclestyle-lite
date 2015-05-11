@@ -510,8 +510,8 @@
                             $compile(element.contents())(scope);
 
                         } else {
-                            console.warn('Field type: ' + config.type +
-                                ' is not supported.');
+                            /* console.warn('Field type: ' + config.type +
+                                ' is not supported.'); */
                         }
 
                         scope.$on('$destroy', function () {
@@ -1199,7 +1199,7 @@
                             config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
                         }
 
-                        if (config.ui.specifics.remote) {
+                        if (config.ui.specifics.remote && config.repeated && rootArgs.id && info.scope.args.id) {
                             // construct reference to root arguments
                             rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
                             // assign "load more" logic
@@ -1217,7 +1217,7 @@
                                 config.ui.specifics.reader.state(config.ui.specifics.readerSettings);
                             }
 
-                            if ((angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload) && rootArgs.id) {
+                            if ((angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload)) {
                                 if (angular.isArray(config.ui.specifics.parentArgs)) {
                                     config.ui.specifics.parentArgs.empty();
                                 }
@@ -1400,12 +1400,16 @@
                                                 if (_.string.contains(field.type, 'Remote')) {
                                                     group.include = 'core/misc/action.html';
                                                     group.action = function () {
-                                                        modals.fields.remote($scope, field);
+                                                        var test = true;
+                                                        if (field.ui.specifics.canCreate) {
+                                                            test = field.ui.specifics.canCreate();
+                                                        }
+                                                        if (test) {
+                                                            modals.fields.remote($scope, field);
+                                                        }
                                                     };
                                                 }
                                                 $scope.layouts.groups.push(group);
-
-                                                field.ui.label = false;
 
                                                 next = $scope.layouts.groups.length - 1;
 
@@ -1680,8 +1684,13 @@
                                 });
                             };
 
+                            if (angular.isUndefined(config.ui.specifics.create)) {
+                                config.ui.specifics.create = config.ui.specifics.manage;
+                            }
 
-                            config.ui.specifics.create = config.ui.specifics.manage;
+                            info.scope.$on('$destroy', function () {
+                                config.ui.specifics.create = undefined;
+                            });
 
                         }
 
