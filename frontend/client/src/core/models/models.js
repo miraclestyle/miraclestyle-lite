@@ -58,6 +58,26 @@
                 $.extend(defaults, config);
                 $modal.open(defaults);
             };
+
+            if (!helpers.models) {
+                helpers.models = {};
+            }
+            $.extend(helpers.models, {
+                isEntityListEmpty: function (entities) {
+                    var empty = (!entities || entities.length === 0),
+                        emptyFactory;
+                    if (!empty) {
+                        emptyFactory = 0;
+                        angular.forEach(entities, function (value) {
+                            if (value._state === 'deleted') {
+                                emptyFactory += 1;
+                            }
+                        });
+                        empty = (emptyFactory === entities.length);
+                    }
+                    return empty;
+                }
+            });
         })
         .value('modelsInfo', {})
         .value('currentAccount', {}).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {

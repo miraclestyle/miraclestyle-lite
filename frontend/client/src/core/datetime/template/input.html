@@ -63,35 +63,38 @@
  
             <div class="time-control">
                 <div class="time-inputs">
-                    <div layout="row">
-                        <div flex>
-                            <div class="t1">
-                                <md-button ng-click="clock._incHours(1)" aria-label="Increment Hours" class="hours up">
-                                    <icon type="navigation.expand-less"></icon>
-                                </md-button>
-                                <md-input-container>
-                                    <input type="number" min="{{_hours24 ? 0 : 1}}" max="{{_hours24 ? 23 : 12}}" ng-model="clock._hours">
-                                </md-input-container>
-                                <md-button ng-click="clock._incHours(-1)" aria-label="Decrement Hours" class="hours down">
-                                    <icon type="navigation.expand-more"></icon>
-                                </md-button> 
-                            </div>
-                        </div>
-                        <div flex>
-                            <div class="t2">
-                                <md-button ng-click="clock._incMinutes(1)" aria-label="Increment Minutes" class="minutes up">
-                                    <icon type="navigation.expand-less"></icon>
-                                </md-button>
-                                <md-input-container>
-                                    <input type="number" min="0" max="59" ng-model="clock._minutes">
-                                </md-input-container>
-                                <md-button ng-click="clock._incMinutes(-1)" aria-label="Decrement Minutes" class="minutes down">
-                                    <icon type="navigation.expand-more"></icon>
-                                </md-button> 
-                            </div>
-                        </div>
-                    </div>
-                    
+                    <table class="t100">
+                        <thead>
+                            <tr>
+                                <td>
+                                    <div class="t1">
+                                        <md-button ng-click="clock._incHours(1)" aria-label="Increment Hours" class="hours up">
+                                            <icon type="navigation.expand-less"></icon>
+                                        </md-button>
+                                        <md-input-container>
+                                            <input type="number" min="{{_hours24 ? 0 : 1}}" max="{{_hours24 ? 23 : 12}}" ng-model="clock._hours">
+                                        </md-input-container>
+                                        <md-button ng-click="clock._incHours(-1)" aria-label="Decrement Hours" class="hours down">
+                                            <icon type="navigation.expand-more"></icon>
+                                        </md-button> 
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="t2">
+                                        <md-button ng-click="clock._incMinutes(1)" aria-label="Increment Minutes" class="minutes up">
+                                            <icon type="navigation.expand-less"></icon>
+                                        </md-button>
+                                        <md-input-container>
+                                            <input type="number" min="0" max="59" ng-model="clock._minutes">
+                                        </md-input-container>
+                                        <md-button ng-click="clock._incMinutes(-1)" aria-label="Decrement Minutes" class="minutes down">
+                                            <icon type="navigation.expand-more"></icon>
+                                        </md-button> 
+                                    </div>
+                                </td>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
                 <div ng-if="!_hours24" class="buttons">
                     <md-button class="md-raised" ng-click="clock.setAM()" aria-label="Switch AM/PM">{{date | date:'a'}}</md-button>

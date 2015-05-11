@@ -66,32 +66,6 @@
     position: fixed;
 }
 
-.fade {
-    opacity: 0;
-    -webkit-transition: opacity 0.25s ease;
-    -moz-transition: opacity 0.25s ease;
-    -o-transition: opacity 0.25s ease;
-    transition: opacity 0.25s ease;
-}
-
-.collapse {
-    display: none;
-}
-
-.collapse.in {
-    display: block;
-}
-
-.collapsing {
-    position: relative;
-    height: 0;
-    overflow: hidden;
-    -webkit-transition: height 0.1s ease;
-    -moz-transition: height 0.1s ease;
-    -o-transition: height 0.1s ease;
-    transition: height 0.1s ease;
-}
-
 .text-right {
     text-align: right;
 }
@@ -182,6 +156,10 @@ body .mb15 {
     padding-right: 16px;
     padding-bottom: 16px;
     padding-left: 16px;
+}
+
+.padding-bottom-8 {
+    padding-bottom: 8px;
 }
 
 .padding-24 {
@@ -574,6 +552,7 @@ body {
     animation-timing-function: linear;
     animation-direction: normal;
     animation-fill-mode: both;
+    opacity: 0;
 }
 
 .fade.in {
@@ -884,14 +863,14 @@ button::-moz-focus-inner {
 }
 
 .wide-arrow-right {
-  width: 0px;
-  height: 0px;
-  border-top: 24px solid transparent;
-  border-bottom: 24px solid transparent;
-  border-right: 16px solid rgba(0, 0, 0, 0.54);
-  display: block;
-  position: relative;
-  box-sizing: border-box;
+    width: 0px;
+    height: 0px;
+    border-top: 24px solid transparent;
+    border-bottom: 24px solid transparent;
+    border-right: 16px solid rgba(0, 0, 0, 0.54);
+    display: block;
+    position: relative;
+    box-sizing: border-box;
 }
 
 .wide-arrow-down .pager {
@@ -903,8 +882,26 @@ button::-moz-focus-inner {
     box-sizing: border-box;
 }
 
-
 .block-center {
-    margin-left:auto;
-    margin-right:auto;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.help {
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 24px 40px;
+    color: rgba(0, 0, 0, 0.26);
+}
+
+.help-item {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    text-align: left;
+    text-transform: none;
+    padding-bottom: 8px;
 }

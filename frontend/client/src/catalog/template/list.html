@@ -20,5 +20,10 @@
         </div>
     </div>
 
+
+    <!-- help -->
+    <div ng-if="helpers.models.isEntityListEmpty(search.results)" help-render="GLOBAL_CONFIG.emptyHelp.catalog.list"></div>
+    <!-- end help -->
+
     <div load-more-button="search.pagination"></div>
 </div>

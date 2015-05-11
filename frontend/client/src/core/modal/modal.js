@@ -95,12 +95,9 @@
             templateUrl: 'core/modal/backdrop.html',
             link: function (scope, element, attrs) {
                 scope.backdropClass = attrs.backdropClass || '';
-
-                scope.animate = false;
-
                 $timeout(function () {
-                    scope.animate = true;
-                });
+                    element.addClass('in');
+                }, 0, false);
             }
         };
     }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator',
@@ -397,8 +394,8 @@
                     if (e) {
                         e.preventDefault();
                     }
-                    if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope.__close__) {
-                        return modalWindow.value.modalScope.__close__();
+                    if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope._close_) {
+                        return modalWindow.value.modalScope._close_();
                     }
 
                     $rootScope.$apply(function () {
@@ -412,13 +409,12 @@
 
             $modalStack._dequeue = function (modalWindow, modalInstance) {
                 mdContextualMonitor.dequeue(modalInstance.esc);
-                if (modalWindow.value && modalWindow.value.modalScope.modalOptions.resize) {
+                if (modalWindow && modalWindow.value && modalWindow.value.modalScope.modalOptions.resize) {
                     $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
                 }
             };
 
             $modalStack.close = function (modalInstance, result, what) {
-                console.trace(this);
                 if (!what) {
                     what = 'resolve';
                 }

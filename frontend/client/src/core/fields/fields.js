@@ -685,7 +685,7 @@
             };
         }).factory('formInputTypes', function (underscoreTemplate, $timeout, $parse,
             endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
-            errorHandling, modals) {
+            errorHandling, modals, GLOBAL_CONFIG) {
 
             var inflector = $filter('inflector'),
                 formInputTypes = {
@@ -1159,6 +1159,12 @@
                             }
                         });
 
+                        if (angular.isUndefined(config.ui.specifics.emptyHelp)) {
+                            if (angular.isDefined(GLOBAL_CONFIG.fields.emptyHelp[config._maker_])) {
+                                config.ui.specifics.emptyHelp = GLOBAL_CONFIG.fields.emptyHelp[config._maker_][config.code_name];
+                            }
+                        }
+
                         buildPaths = function () {
                             // builds form fields
                             // it appends needed paths depending on hierarchy depth
@@ -1359,7 +1365,7 @@
                                                 var save = $scope.save();
                                                 if (save) {
                                                     save.then(function () {
-                                                        $scope.__close__ = undefined;
+                                                        $scope._close_ = undefined;
                                                         $scope.$close();
                                                     });
                                                 } else {
@@ -1367,7 +1373,7 @@
                                                 }
                                             };
 
-                                            $scope.__close__ = $scope.close;
+                                            $scope._close_ = $scope.close;
                                         }
 
                                         $scope.validateForm = angular.bind($scope, helpers.form.validate);

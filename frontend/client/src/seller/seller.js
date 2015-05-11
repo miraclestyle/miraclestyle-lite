@@ -551,7 +551,7 @@
                                         var save = $scope.save();
                                         if (save) {
                                             save.then(function () {
-                                                $scope.__close__ = undefined;
+                                                $scope._close_ = undefined;
                                                 $scope.$close();
                                             });
                                         } else {
@@ -559,7 +559,7 @@
                                         }
                                     };
 
-                                    $scope.__close__ = $scope.close;
+                                    $scope._close_ = $scope.close;
 
                                     $scope.save = function () {
                                         var promise,

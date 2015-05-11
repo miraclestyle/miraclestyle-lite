@@ -1,11 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('MainMenuCtrl', function ($scope, currentAccount, GLOBAL_CONFIG, $mdSidenav, $timeout, helpers) {
-            $scope.currentAccount = currentAccount;
-            $scope.GLOBAL_CONFIG = GLOBAL_CONFIG;
-            $scope.JSON = JSON;
-            $scope.helpers = helpers;
+        .controller('MainMenuCtrl', function ($scope, $mdSidenav, $timeout) {
             $scope.closeMenu = function () {
                 $timeout(function () {
                     $mdSidenav('left').close();
@@ -16,6 +12,12 @@
                     $mdSidenav('left').open();
                 });
             };
+        })
+        .run(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
+            $rootScope.currentAccount = currentAccount;
+            $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
+            $rootScope.JSON = JSON;
+            $rootScope.helpers = helpers;
         })
         .controller('HomePageCtrl', function ($scope, models, modals, $state, $stateParams, $q, modelsMeta) {
             var args = {search: {}},

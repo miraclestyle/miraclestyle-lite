@@ -342,7 +342,8 @@ if (!Array.prototype.indexOf) {
             },
             fields: {
                 help: {},
-                label: {}
+                label: {},
+                emptyHelp: {}
             },
             labels: {},
             modals: {
@@ -358,6 +359,7 @@ if (!Array.prototype.indexOf) {
                 maxHeight: 360,
                 margin: 1
             },
+            emptyHelp: {},
             imageSizes: _.range(50, 1650, 50), // loading ranges for get serving url
             social: {
                 facebook: {

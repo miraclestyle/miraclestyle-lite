@@ -57,7 +57,8 @@
             howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
-                           'Remove the item by dragging it outside the left edge of the screen.'],
+                    'Remove the item by dragging it outside the left edge of the screen.'
+                ],
                 text: {
                     primary: 'Got it'
                 }
@@ -99,6 +100,26 @@
             },
             '18-update': {
                 notify: 'E-mail me when a catalog is published or discontinued by the seller that I\'m following.'
+            }
+        });
+
+
+        $.extend(GLOBAL_CONFIG.fields.emptyHelp, {
+            '19-update': {
+                addresses: ['Saved addresses are convenience that saves your time and energy during shopping cart checkout. Use saved addresses to populate addressing fields during shopping cart checkout, instead of doing so manually. Your saved addresses will appear in the order you have manually ordered them.',
+                    'Click "Add" action to add new address.',
+                    'Click on an address to edit address.',
+                    'Use drag handle to reorder an address by dragging it within its group.',
+                    'Use drag handle to remove an address by dragging it outside the left edge of the screen.']
+            }
+        });
+
+        $.extend(GLOBAL_CONFIG.emptyHelp, {
+            catalog: {
+                list: ['Product catalogs are integral part of Miraclestyle platform. Product catalog is a collection of images that represent products or services to sell. Each image can have multiple price tags attached. Each price tag is custom positioned on the image it is attached to and links to a product or service details. Product or service details contain information detailing the characteristics of the product or service to be sold. Product is integrated with the shopping cart system to allow direct online purchases. Product catalog can be shared and embedded to third party web sites, similar to you tube video for example. Created catalog initially assumes draft state and is not visible to the general public. While in draft state catalog can be edited. Published catalog is accessible to the general public until it expires or is discontinued. With exception of a product "Availability" field, published catalog cannot be edited. However, published catalog can be duplicated and duplicate will initially be in draft state ready for editing. Discontinued catalog is not accessible to the general public, and will eventually be entirely removed from the Miraclestyle. However, products of discontinued catalog will remain accessible for the next 180 days to those who have purchased them. Discontinued catalog cannot be edited or duplicated.',
+                    'Click "Create" action to create new catalog.',
+                    'Click on a catalog image to edit catalog.',
+                    'Click on a catalog view icon, located in the lower right corner of a catalog image, to view catalog as it would appear to the general public.']
             }
         });
 

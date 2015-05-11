@@ -70,6 +70,14 @@
             };
 
         })
+        .directive('helpRender', function () {
+            return {
+                scope: {
+                    help: '=helpRender'
+                },
+                templateUrl: 'core/misc/help_render.html'
+            };
+        })
         .directive('displayImage', function (GLOBAL_CONFIG) {
             return {
                 scope: {

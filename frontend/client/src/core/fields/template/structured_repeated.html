@@ -21,10 +21,12 @@
           </div>
   </button>
 <% }%>
+
 <div <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
            ui-sortable="config.ui.specifics.sortableOptions" 
            <% } %> 
-    ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': !config.ui.specifics.parentArgs.length}" class="<% if (config.ui.specifics.cards) { %>cards<% } else { %>list<% }%>">
+    ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': config.ui.specifics.isEmptyList()}" class="<% if (config.ui.specifics.cards) { %>cards<% } else { %>list<% }%>">
+
 
       <% if (config.ui.specifics.cards) { %>
       <div
@@ -91,7 +93,9 @@
       <% } %>
 </div>
 
-<div ng-if="!config.ui.specifics.parentArgs.length" ng-include="config.ui.specifics.emptyHelpText"></div>
+<!-- help -->
+<div ng-if="helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs)" help-render="config.ui.specifics.emptyHelp"></div>
+<!-- end help -->
 
 <% if (config.ui.specifics.remote) { %>
 <div load-more-button="config.ui.specifics.reader"></div>
