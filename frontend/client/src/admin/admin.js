@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, $rootScope, helpers) {
+        .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, helpers) {
 
             var kind = $stateParams.kind,
                 query = null,
@@ -17,7 +17,7 @@
                 kind: kind
             };
 
-            $rootScope.pageTitle = 'Administer ' + $scope.config.titles[kind];
+            $scope.setPageToolbarTitle('administer.' + $scope.config.titles[kind]);
 
             $scope.manage = function (entity) {
                 models[kind].adminManageModal(entity);

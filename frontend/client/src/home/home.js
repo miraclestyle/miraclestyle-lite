@@ -18,11 +18,26 @@
             $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $rootScope.JSON = JSON;
             $rootScope.helpers = helpers;
+            $rootScope.pageToolbarTitle = '';
+            $rootScope.setPageTitle = function (title, notToolbarTitle) {
+                $rootScope.pageTitle = helpers.toolbar.title(title);
+                if (!notToolbarTitle) {
+                    $rootScope.pageToolbarTitle = $rootScope.pageTitle;
+                }
+            };
+            $rootScope.setPageToolbarTitle = function (title, notPageTitle) {
+                $rootScope.pageToolbarTitle = helpers.toolbar.title(title);
+                if (!notPageTitle) {
+                    $rootScope.pageTitle = $rootScope.pageToolbarTitle;
+                }
+            };
         })
         .controller('HomePageCtrl', function ($scope, models, modals, $state, $stateParams, $q, modelsMeta) {
             var args = {search: {}},
                 defer = $q.defer(),
                 promise = defer.promise;
+
+            $scope.setPageToolbarTitle('home');
             $scope.sellerDetail = false;
             $scope.view = function (key, config) {
                 models['31'].viewModal(key, config);

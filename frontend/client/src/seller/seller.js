@@ -47,8 +47,7 @@
                 };
             }
         };
-    }).controller('SellerManagementCtrl', function ($scope, endpoint,
-        currentAccount, models) {
+    }).controller('SellerManagementCtrl', function ($scope, endpoint, currentAccount, models) {
 
         $scope.settings = function () {
             models['23'].manageModal(currentAccount.key);
@@ -56,7 +55,7 @@
 
     }).controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
 
-        $rootScope.pageTitle = 'Sell Catalogs';
+        $scope.setPageToolbarTitle('seller.catalogs');
 
         var newEntity = function (entity) {
             if (!_.findWhere($scope.search.results, {
@@ -116,11 +115,11 @@
             $scope.search.pagination.load();
         });
 
-    }).controller('SellOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $rootScope, $state) {
+    }).controller('SellOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
-        $rootScope.pageTitle = 'Seller ' + (carts ? 'Carts' : 'Orders');
+        $scope.setPageToolbarTitle('seller.' + (carts ? 'carts' : 'orders'));
 
         $scope.search = {
             results: [],

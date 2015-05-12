@@ -3,6 +3,6 @@
     <input class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
       <div ng-message="help"><%= config.ui.help %></div>
-      <div ng-message="required">This field requires "text" value!</div>
+      <div ng-message="required">This field requires "<span ng-if="config.ui.attrs['check-numeric'] !== undefined">number</span><span ng-if="config.ui.attrs['check-numeric'] === undefined">text</span>" value!</div>
     </div>
 </md-input-container>

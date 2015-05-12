@@ -1,5 +1,5 @@
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
-    border-color: red;
+    border-color: rgba(255, 0, 0, 0.87);
 }
 .fake-button {
     position: relative;

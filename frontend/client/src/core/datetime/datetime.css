@@ -1,7 +1,3 @@
-.visuallyhidden {
-    visibility: hidden;
-}
-
 .time-date > .control > .full-title {
     display: none;
     background-color: #00796b;

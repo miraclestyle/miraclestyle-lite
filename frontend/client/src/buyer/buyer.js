@@ -11,11 +11,11 @@
                 models['18'].manageModal(currentAccount.key);
             };
 
-        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $rootScope, $state) {
+        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $state) {
 
             var carts = $state.current.name === 'buy-carts';
 
-            $rootScope.pageTitle = 'Buyer ' + (carts ? 'Carts' : 'Orders');
+            $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
 
             $scope.search = {
                 results: [],

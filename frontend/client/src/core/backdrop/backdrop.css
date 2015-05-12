@@ -12,10 +12,6 @@ md-backdrop.md-dialog-backdrop {
     z-index: 79;
 }
 
-md-backdrop.md-bottom-sheet-backdrop {
-    z-index: 69;
-}
-
 md-backdrop.md-sidenav-backdrop {
     z-index: 59;
 }

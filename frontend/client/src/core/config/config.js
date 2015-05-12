@@ -136,7 +136,12 @@
             addPlugins: 'Add Rule',
             editPlugins: 'Edit Rule',
             addVariants: 'Add Variant',
-            editVariants: 'Edit Variant'
+            editVariants: 'Edit Variant',
+            home: ['Home'],
+            buyer: 'Buyer',
+            carts: 'Carts',
+            orders: 'Orders',
+            catalogs: 'Catalogs',
         });
 
 

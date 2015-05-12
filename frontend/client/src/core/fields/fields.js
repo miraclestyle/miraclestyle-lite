@@ -1916,7 +1916,7 @@
                                 // small delay to prevent an infinite loop
                                 $timeout(function () {
                                     active = false;
-                                }, 1);
+                                }, 1, false);
 
                             }
                         }
