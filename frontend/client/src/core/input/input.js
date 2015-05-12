@@ -90,10 +90,6 @@
                 element.attr('id', 'input_' + $mdUtil.nextUid());
             }
 
-            if (element[0].tagName.toLowerCase() === 'textarea') {
-                setupTextarea();
-            }
-
             function ngModelPipelineCheckValue(arg) {
                 containerCtrl.setHasValue(!ngModelCtrl.$isEmpty(arg));
                 return arg;
@@ -132,46 +128,6 @@
                 containerCtrl.setHasValue(false);
                 containerCtrl.input = null;
             });
-
-            function setupTextarea() {
-                var node = element[0];
-                var onChangeTextarea = $mdUtil.debounce(growTextarea, 1);
-
-                function pipelineListener(value) {
-                    onChangeTextarea();
-                    return value;
-                }
-
-                if (ngModelCtrl) {
-                    ngModelCtrl.$formatters.push(pipelineListener);
-                    ngModelCtrl.$viewChangeListeners.push(pipelineListener);
-                } else {
-                    onChangeTextarea();
-                }
-                element.on('keydown input', onChangeTextarea);
-                element.on('scroll', onScroll);
-                angular.element($window).on('resize', onChangeTextarea);
-
-                scope.$on('$destroy', function () {
-                    angular.element($window).off('resize', onChangeTextarea);
-                });
-
-                function growTextarea() {
-                    //node.style.height = "auto";
-                    var line = node.scrollHeight - node.offsetHeight;
-                    node.scrollTop = 0;
-                    var height = node.offsetHeight + (line > 0 ? line : 0);
-                    node.style.height = height + 'px';
-                }
-
-                function onScroll(e) {
-                    node.scrollTop = 0;
-                    // for smooth new line adding
-                    var line = node.scrollHeight - node.offsetHeight;
-                    var height = node.offsetHeight + line;
-                    node.style.height = height + 'px';
-                }
-            }
         }
     }
     inputTextareaDirective.$inject = ["$mdUtil", "$window", "$compile", "$animate"];

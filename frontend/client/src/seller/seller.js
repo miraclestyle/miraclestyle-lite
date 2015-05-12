@@ -81,7 +81,8 @@
 
         $scope.search = {
             results: [],
-            pagination: {}
+            pagination: {},
+            loaded: false
         };
 
         $scope.scrollEnd = {
@@ -107,6 +108,8 @@
                     } else {
                         $scope.search.results.extend(response.data.entities);
                     }
+
+                    $scope.search.loaded = true;
                 }
             });
             $scope.scrollEnd.loader = $scope.search.pagination;
@@ -370,6 +373,7 @@
                         selectKinds: {
                             type: 'SuperStringProperty',
                             choices: kinds,
+                            required: true,
                             ui: {
                                 args: 'info.kind',
                                 label: 'Plugins',
@@ -377,7 +381,6 @@
                                     'ng-change': 'setNewArg()'
                                 },
                                 writable: true,
-                                required: true
                             },
                             code_name: 'kind'
                         },

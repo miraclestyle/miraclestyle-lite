@@ -1073,7 +1073,7 @@
                                                             }
                                                         }
                                                     },
-                                                    canCreate: function () {
+                                                    canOpen: function () {
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                             currentArgs = currentFieldScope.args;
                                                         if (!currentArgs.id) {
@@ -1149,6 +1149,10 @@
                                         label: 'Images',
                                         include: 'core/misc/action.html',
                                         action: function () {
+                                            if (!config.getScope().args.id) {
+                                                modals.alert('saveCatalogFirst');
+                                                return;
+                                            }
                                             modals.fields.remote(config.getScope(), fields._images);
                                         }
                                     }, {

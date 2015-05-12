@@ -22,7 +22,7 @@
 
 
     <!-- help -->
-    <div ng-if="helpers.models.isEntityListEmpty(search.results)" help-render="GLOBAL_CONFIG.emptyHelp.catalog.list"></div>
+    <div ng-if="helpers.models.isEntityListEmpty(search.results) && search.loaded" help-render="GLOBAL_CONFIG.emptyHelp.catalog.list"></div>
     <!-- end help -->
 
     <div load-more-button="search.pagination"></div>

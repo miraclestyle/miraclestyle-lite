@@ -11,5 +11,9 @@
                     </button>
                 </div>
             </div>
+
+            <!-- help -->
+            <div ng-if="helpers.models.isEntityListEmpty(entity._sellers)" help-render="config.keyedFields._sellers.emptyHelp"></div>
+            <!-- end help -->
         </div>
  </div>
