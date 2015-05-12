@@ -84,6 +84,7 @@ ANGULAR_JAVASCRIPT_PATHS = []
 ANGULAR_ACTIVE_COMPONENTS = [
     'core/kernel/boot',
     'core/kernel',
+    'core/backdrop',
     'core/config',
     'core/button',
     'core/card',
