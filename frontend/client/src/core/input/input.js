@@ -10,7 +10,7 @@
         .directive('mdMaxlength', mdMaxlengthDirective)
         .directive('placeholder', placeholderDirective);
 
-    function mdInputContainerDirective($mdTheming, $parse) {
+    function mdInputContainerDirective($parse) {
         ContainerCtrl.$inject = ["$scope", "$element", "$attrs"];
         return {
             restrict: 'E',
@@ -19,7 +19,7 @@
         };
 
         function postLink(scope, element, attr) {
-            $mdTheming(element);
+
         }
 
         function ContainerCtrl($scope, $element, $attrs) {
@@ -49,7 +49,7 @@
             });
         }
     }
-    mdInputContainerDirective.$inject = ["$mdTheming", "$parse"];
+    mdInputContainerDirective.$inject = ["$parse"];
 
     function labelDirective() {
         return {

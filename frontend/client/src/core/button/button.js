@@ -6,7 +6,7 @@
         ])
         .directive('mdButton', MdButtonDirective);
 
-    function MdButtonDirective($mdInkRipple, $mdTheming, $mdAria) {
+    function MdButtonDirective($mdInkRipple, $mdAria) {
 
         return {
             restrict: 'E',
@@ -28,7 +28,6 @@
 
         function postLink(scope, element, attr) {
             var node = element[0];
-            $mdTheming(element);
             $mdInkRipple.attachButtonBehavior(scope, element);
 
             var elementHasText = node.textContent.trim();
@@ -46,5 +45,5 @@
         }
 
     }
-    MdButtonDirective.$inject = ["$mdInkRipple", "$mdTheming", "$mdAria"];
+    MdButtonDirective.$inject = ["$mdInkRipple", "$mdAria"];
 })();

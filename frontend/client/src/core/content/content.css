@@ -19,6 +19,6 @@ md-content[md-scroll-x] {
     padding: 16px;
 }
 
-md-content.md-default-theme {
+md-content {
     background-color: rgb(255, 255, 255);
 }

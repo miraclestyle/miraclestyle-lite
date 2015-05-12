@@ -312,16 +312,11 @@ if (!Array.prototype.indexOf) {
                       'googlechart', 
                       'material.core',
                       'material.core.gestures',
-                      'material.core.theming.palette',
-                      'material.core.theming',
-                      'material.components.backdrop',
                       'material.components.button',
                       'material.components.checkbox',
                       'material.components.content',
                       'material.components.simpledialog',
                       'material.components.input',
-                      'material.components.progressCircular',
-                      'material.components.progressLinear',
                       'material.components.radioButton',
                       'material.components.sidenav',
                       'material.components.swipe',
@@ -385,13 +380,7 @@ if (!Array.prototype.indexOf) {
             $locationProvider.hashPrefix('!');
             $locationProvider.html5Mode(true);
         });
-    angular.module('app', GLOBAL_CONFIG.modules)
-        .config(function ($mdThemingProvider) {
-            $mdThemingProvider.theme('default')
-                .primaryPalette('grey')
-                .accentPalette('blue-grey')
-                .warnPalette('red');
-        });
+    angular.module('app', GLOBAL_CONFIG.modules);
 }());
 
 $(function () {

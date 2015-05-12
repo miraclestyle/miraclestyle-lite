@@ -16,6 +16,6 @@ md-backdrop.md-sidenav-backdrop {
     z-index: 59;
 }
 
-md-backdrop.md-opaque.md-default-theme {
+md-backdrop.md-opaque {
     background-color: rgba(0, 0, 0, 0.12);
 }

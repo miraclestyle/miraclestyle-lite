@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    angular.module('material.components.simpledialog', ['material.core', 'material.components.backdrop'])
+    angular.module('material.components.simpledialog', ['material.core'])
         .factory('mdContextualMonitor', mdContextualMonitor)
         .directive('simpleDialog', SimpleDialogDirective)
         .provider('$simpleDialog', SimpleDialogProvider);
@@ -78,21 +78,18 @@
     mdContextualMonitor.$inject = ["$rootElement", "$mdConstant"];
 
 
-    function SimpleDialogDirective($$rAF, $mdTheming) {
+    function SimpleDialogDirective($$rAF) {
         return {
-            restrict: 'E',
-            link: function (scope, element, attr) {
-                $mdTheming(element);
-            }
+            restrict: 'E'
         };
     }
-    SimpleDialogDirective.$inject = ["$$rAF", "$mdTheming"];
+    SimpleDialogDirective.$inject = ["$$rAF"];
 
     function SimpleDialogProvider($$interimElementProvider) {
 
         var alertDialogMethods = ['title', 'content', 'ariaLabel', 'ok'];
 
-        dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$mdTheming", "$$rAF", "$q", "$simpleDialog", "mdContextualMonitor"];
+        dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$$rAF", "$q", "$simpleDialog", "mdContextualMonitor"];
         return $$interimElementProvider('$simpleDialog')
             .setDefaults({
                 methods: ['disableParentScroll', 'hasBackdrop', 'clickOutsideToClose', 'targetEvent'],
@@ -102,7 +99,7 @@
 
         /* @ngInject */
         function dialogDefaultOptions($timeout, $rootElement, $compile, $animate, $mdAria, $document,
-            $mdUtil, $mdConstant, $mdTheming, $$rAF, $q, $simpleDialog, mdContextualMonitor) {
+            $mdUtil, $mdConstant, $$rAF, $q, $simpleDialog, mdContextualMonitor) {
             return {
                 hasBackdrop: true,
                 isolateScope: true,
@@ -154,7 +151,6 @@
 
                 if (options.hasBackdrop) {
                     options.backdrop = angular.element('<md-backdrop class="simple-dialog-backdrop" style="z-index: ' + options.zIndex + '">');
-                    $mdTheming.inherit(options.backdrop, options.parent);
                     $animate.enter(options.backdrop, options.parent);
                 }
 

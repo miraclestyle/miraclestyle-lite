@@ -7,14 +7,12 @@
         .directive('mdContent', mdContentDirective);
 
 
-    function mdContentDirective($mdTheming) {
+    function mdContentDirective() {
         return {
             restrict: 'E',
             controller: ['$scope', '$element', ContentController],
             link: function (scope, element, attr) {
                 var node = element[0];
-
-                $mdTheming(element);
                 scope.$broadcast('$mdContentLoaded', element);
 
                 iosScrollFix(element[0]);
@@ -26,7 +24,7 @@
             this.$element = $element;
         }
     }
-    mdContentDirective.$inject = ["$mdTheming"];
+    mdContentDirective.$inject = [];
 
     function iosScrollFix(node) {
         // IOS FIX:

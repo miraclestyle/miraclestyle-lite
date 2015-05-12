@@ -6,7 +6,7 @@
         ])
         .directive('mdCheckbox', MdCheckboxDirective);
 
-    function MdCheckboxDirective(inputDirective, $mdInkRipple, $mdAria, $mdConstant, $mdTheming, $mdUtil) {
+    function MdCheckboxDirective(inputDirective, $mdAria, $mdConstant, $mdUtil) {
         inputDirective = inputDirective[0];
         var CHECKED_CSS = 'md-checked';
 
@@ -35,8 +35,6 @@
             return function postLink(scope, element, attr, ngModelCtrl) {
                 ngModelCtrl = ngModelCtrl || $mdUtil.fakeNgModel();
                 var checked = false;
-                $mdTheming(element);
-
                 $mdAria.expectWithText(element, 'aria-label');
 
                 // Reuse the original input[type=checkbox] directive from Angular core.
@@ -79,6 +77,6 @@
             };
         }
     }
-    MdCheckboxDirective.$inject = ["inputDirective", "$mdInkRipple", "$mdAria", "$mdConstant", "$mdTheming", "$mdUtil"];
+    MdCheckboxDirective.$inject = ["inputDirective", "$mdAria", "$mdConstant", "$mdUtil"];
 
 })();

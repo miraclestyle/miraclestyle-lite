@@ -5,7 +5,7 @@
   <div class="clearfix">
 
       <div class="catalog-closer">
-           <button md-ink-ripple-action ripple-light md-themable loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
+           <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
              <icon color="white" type="navigation.close"></icon>
            </button>
       </div>
@@ -19,7 +19,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button md-ink-ripple md-themable type="button" class="button-transparent catalog-pricetag-link " loading ng-click="viewProduct(image, pricetag, {targetEvent: $event})">
+                         <button md-ink-ripple type="button" class="button-transparent catalog-pricetag-link " loading ng-click="viewProduct(image, pricetag, {targetEvent: $event})">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>

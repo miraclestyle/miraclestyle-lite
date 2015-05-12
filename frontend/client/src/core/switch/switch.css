@@ -102,48 +102,48 @@ md-switch:not(.md-dragging) .md-bar, md-switch:not(.md-dragging) .md-thumb {
     transition-delay: 0.05s;
 }
 
-md-switch.md-default-theme.md-checked.md-primary .md-thumb {
+md-switch.md-checked.md-primary .md-thumb {
     background-color: rgb(158, 158, 158);
 }
 
-md-switch.md-default-theme.md-checked.md-primary .md-bar {
+md-switch.md-checked.md-primary .md-bar {
     background-color: rgba(158, 158, 158, 0.5);
 }
 
-md-switch.md-default-theme:focus .md-label:not(:empty) {
+md-switch:focus .md-label:not(:empty) {
     border-color: rgba(0, 0, 0, 0.87);
     border-style: dotted;
 }
 
-md-switch.md-default-theme .md-thumb {
+md-switch .md-thumb {
     background-color: rgb(250, 250, 250);
 }
 
-md-switch.md-default-theme .md-bar {
+md-switch .md-bar {
     background-color: rgb(158, 158, 158);
 }
 
-md-switch.md-default-theme[disabled] .md-thumb {
+md-switch[disabled] .md-thumb {
     background-color: rgb(189, 189, 189);
 }
 
-md-switch.md-default-theme[disabled] .md-bar {
+md-switch[disabled] .md-bar {
     background-color: rgba(0, 0, 0, 0.12);
 }
 
-md-switch.md-default-theme.md-checked.md-warn .md-thumb {
+md-switch.md-checked.md-warn .md-thumb {
     background-color: rgb(244, 67, 54);
 }
 
-md-switch.md-default-theme.md-checked.md-warn .md-bar {
+md-switch.md-checked.md-warn .md-bar {
     background-color: rgba(244, 67, 54, 0.5);
 }
 
 
-md-switch.md-default-theme.md-checked .md-thumb {
+md-switch.md-checked .md-thumb {
     background-color: rgb(176, 190, 197);
 }
 
-md-switch.md-default-theme.md-checked .md-bar {
+md-switch.md-checked .md-bar {
     background-color: rgba(176, 190, 197, 0.5);
 }

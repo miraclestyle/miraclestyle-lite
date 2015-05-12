@@ -2,8 +2,7 @@
     'use strict';
 
     angular.module('material.components.sidenav', [
-            'material.core',
-            'material.components.backdrop'
+            'material.core'
         ])
         .factory('$mdSidenav', SidenavService)
         .directive('mdSidenav', SidenavDirective)
@@ -40,7 +39,7 @@
     }
     SidenavService.$inject = ["$mdComponentRegistry", "$q"];
 
-    function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $mdTheming, $q, $document, mdContextualMonitor) {
+    function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
         return {
             restrict: 'E',
             scope: {
@@ -74,7 +73,6 @@
             )(scope);
 
             element.on('$destroy', sidenavCtrl.destroy);
-            $mdTheming.inherit(backdrop, element);
 
             var initialWidth = element.css('width');
             var resize = function () {
@@ -240,7 +238,7 @@
 
         }
     }
-    SidenavDirective.$inject = ["$timeout", "$animate", "$parse", "$mdMedia", "$mdConstant", "$compile", "$mdTheming", "$q", "$document", "mdContextualMonitor"];
+    SidenavDirective.$inject = ["$timeout", "$animate", "$parse", "$mdMedia", "$mdConstant", "$compile", "$q", "$document", "mdContextualMonitor"];
 
     /*
      * @private

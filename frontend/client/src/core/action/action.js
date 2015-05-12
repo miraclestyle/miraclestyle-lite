@@ -6,8 +6,7 @@
             transclude: true,
             replace: true
         };
-    }).directive('actionDropdown', function ($simpleDialog, $mdTheming,
-        $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
+    }).directive('actionDropdown', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
         return {
             replace: true,
             transclude: true,
@@ -106,7 +105,7 @@
                 scope.dropdown = dropdown;
             }
         };
-    }).directive('actionToolbar', function ($mdInkRipple) {
+    }).directive('actionToolbar', function () {
         return {
             transclude: true,
             replace: true,

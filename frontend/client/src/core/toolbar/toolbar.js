@@ -51,13 +51,12 @@
             });
         });
 
-    function mdToolbarDirective($$rAF, $mdConstant, $mdUtil, $mdTheming) {
+    function mdToolbarDirective($$rAF, $mdConstant, $mdUtil) {
 
         return {
             restrict: 'E',
             controller: angular.noop,
             link: function (scope, element, attr) {
-                $mdTheming(element);
 
                 if (angular.isDefined(attr.mdScrollShrink)) {
                     setupScrollShrink();
@@ -140,5 +139,5 @@
         };
 
     }
-    mdToolbarDirective.$inject = ["$$rAF", "$mdConstant", "$mdUtil", "$mdTheming"];
+    mdToolbarDirective.$inject = ["$$rAF", "$mdConstant", "$mdUtil"];
 })();

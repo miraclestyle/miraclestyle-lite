@@ -9,7 +9,7 @@
         .directive('mdTextFloat', mdTextFloatDirective);
 
 
-    function mdTextFloatDirective($mdTheming, $mdUtil, $parse, $log) {
+    function mdTextFloatDirective($mdUtil, $parse, $log) {
         return {
             restrict: 'E',
             replace: true,
@@ -35,8 +35,7 @@
                         };
 
                         scope.inputType = attrs.type || "text";
-                    },
-                    post: $mdTheming
+                    }
                 };
             },
             template: '<md-input-group tabindex="-1">' +
@@ -45,7 +44,7 @@
                 '</md-input-group>'
         };
     }
-    mdTextFloatDirective.$inject = ["$mdTheming", "$mdUtil", "$parse", "$log"];
+    mdTextFloatDirective.$inject = ["$mdUtil", "$parse", "$log"];
 
     function mdInputGroupDirective($log) {
         return {

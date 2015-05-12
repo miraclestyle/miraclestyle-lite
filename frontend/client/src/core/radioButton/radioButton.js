@@ -19,7 +19,7 @@
         .directive('mdRadioGroup', mdRadioGroupDirective)
         .directive('mdRadioButton', mdRadioButtonDirective);
 
-    function mdRadioGroupDirective($mdUtil, $mdConstant, $mdTheming) {
+    function mdRadioGroupDirective($mdUtil, $mdConstant) {
         RadioGroupController.prototype = createRadioGroupControllerProto();
 
         return {
@@ -32,7 +32,7 @@
         };
 
         function linkRadioGroup(scope, element, attr, ctrls) {
-            $mdTheming(element);
+ 
             var rgCtrl = ctrls[0];
             var ngModelCtrl = ctrls[1] || $mdUtil.fakeNgModel();
 
@@ -139,10 +139,10 @@
         }
 
     }
-    mdRadioGroupDirective.$inject = ["$mdUtil", "$mdConstant", "$mdTheming"];
+    mdRadioGroupDirective.$inject = ["$mdUtil", "$mdConstant"];
 
 
-    function mdRadioButtonDirective($mdAria, $mdUtil, $mdTheming) {
+    function mdRadioButtonDirective($mdAria, $mdUtil) {
 
         var CHECKED_CSS = 'md-checked';
 
@@ -160,8 +160,6 @@
 
         function link(scope, element, attr, rgCtrl) {
             var lastChecked;
-
-            $mdTheming(element);
             configureAria(element, scope);
 
             rgCtrl.add(render);
@@ -220,6 +218,6 @@
             }
         }
     }
-    mdRadioButtonDirective.$inject = ["$mdAria", "$mdUtil", "$mdTheming"];
+    mdRadioButtonDirective.$inject = ["$mdAria", "$mdUtil"];
 
 })();

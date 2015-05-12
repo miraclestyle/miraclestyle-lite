@@ -1,8 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .directive('selectInput', function ($simpleDialog, $mdTheming,
-            $mdInkRipple, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
+        .directive('selectInput', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
             return {
                 replace: true,
                 transclude: true,
@@ -23,7 +22,6 @@
                         ngModelPipelineCheckValue,
                         dontOpen = false;
                     containerCtrl.input = element;
-                    $mdTheming(element);
                     ngModelPipelineCheckValue = function (arg) {
                         var s = !ngModel.$isEmpty(arg);
                         if (angular.isArray(arg)) {
