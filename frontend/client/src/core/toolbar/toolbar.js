@@ -19,7 +19,7 @@
                         separator = ' / ';
                     }
                     if (angular.isDefined(initial)) {
-                        return initial.join(separator);
+                        return angular.isArray(initial) ? initial.join(separator) : initial;
                     }
                     if (!angular.isArray(keys)) {
                         splits = keys.split('.');

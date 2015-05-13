@@ -666,10 +666,6 @@
                                 historyConfig: true,
                                 addProducts: function () {
                                     var parentScope = this;
-                                    if (!parentScope.args.id) {
-                                        modals.alert('noImagesInCatalog');
-                                        return false;
-                                    }
                                     $modal.open({
                                         templateUrl: 'core/models/manage.html',
                                         windowClass: 'no-overflow',
@@ -1159,6 +1155,10 @@
                                         label: 'Products',
                                         include: 'core/misc/action.html',
                                         action: function () {
+                                            if (!config.getScope().args.id) {
+                                                modals.alert('saveCatalogFirst');
+                                                return;
+                                            }
                                             config.getScope().addProducts();
                                         }
                                     }]

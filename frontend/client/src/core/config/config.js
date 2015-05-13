@@ -50,10 +50,6 @@
                 title: 'Buyer address required',
                 message: 'You did not provide any buyer information.'
             },
-            noImagesInCatalog: {
-                title: 'Upload Images',
-                message: 'Catalog has no images, add some in order to administer products.'
-            },
             howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
@@ -137,7 +133,7 @@
             editPlugins: 'Edit Rule',
             addVariants: 'Add Variant',
             editVariants: 'Edit Variant',
-            home: ['Home'],
+            home: 'Home',
             buyer: 'Buyer',
             carts: 'Carts',
             orders: 'Orders',
