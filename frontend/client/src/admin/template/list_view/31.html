@@ -1,7 +1,48 @@
-<strong class="first ellipsis-text">{{ent.name}}</strong>
-<span class="second">
-    State: {{ent.state}}
-</span>
-<span class="second">
-    Created: {{ent|output:'created'}}, Updated: {{ent|output:'updated'}}
-</span>
+<div class="cards">
+    <div class="card" ng-repeat="catalog in search.results">
+        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(catalog)">
+            <div class="padding-16">
+                <h1 class="headline">#{{catalog.id}}</h1>
+                <span class="first">{{catalog|output:'created'}}</span>
+                <span class="first">{{catalog.total_amount|formatCurrency:catalog.currency}}</span>
+                <table class="card-table">
+                    <tbody>
+
+
+                        <tr>
+                            <td class="first info">Seller</td>
+                            <td class="first">#{{catalog.parent.parent.id}}</td>
+                        </tr>
+
+                        <tr>
+                            <td class="first info">Name</td>
+                            <td class="first">{{catalog.name}}</td>
+                        </tr>
+
+                        <tr>
+                            <td class="first info">State</td>
+                            <td class="first">{{catalog.state|labelize:"catalog"}}</td>
+                        </tr>
+
+                        <tr>
+                            <td class="first info">Updated</td>
+                            <td class="first">{{catalog|output:'updated'}}</td>
+                        </tr>
+                        
+                        <tr>
+                            <td class="first info">Publish Date</td>
+                            <td class="first">{{catalog|output:'published'}}</td>
+                        </tr>
+
+                        <tr>
+                            <td class="first info">Discontinue Date</td>
+                            <td class="first">{{catalog|output:'discontinue_date'}}</td>
+                        </tr>
+ 
+                    </tbody>
+                </table>
+            </div>
+         </button>
+    </div>
+</div>
+<div load-more-button="search.pagination"></div>

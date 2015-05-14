@@ -1,9 +1,25 @@
-<strong class="first ellipsis-text">
-    {{ent._primary_email}}
-</strong>
-<span class="second">
-    State: {{ent.state}}
-</span>
-<span class="second">
-    Created: {{ent|output:'created'}}, Last update: {{ent|output:'updated'}}
-</span>
+<div class="cards">
+    <div class="card" ng-repeat="user in search.results track by ent.key">
+        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(user)">
+            <div class="padding-16">
+                <h1 class="headline">#{{user.id}}</h1>
+                <span class="first">{{user|output:'created'}}</span>
+                <table class="card-table">
+                    <tbody>
+
+                        <tr>
+                            <td class="first info">State</td>
+                            <td class="first">{{user.state|labelize:"user"}}</td>
+                        </tr>
+                        <tr>
+                            <td class="first info">Updated</td>
+                            <td class="first">{{user|output:'updated'}}</td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+         </button>
+    </div>
+</div>
+<div load-more-button="search.pagination"></div>

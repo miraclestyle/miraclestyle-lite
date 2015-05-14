@@ -364,7 +364,11 @@ if (!Array.prototype.indexOf) {
             admin: {
                 listTemplates: {},
                 menu: [{name: 'Accounts', kind: 11}, {name: 'Catalogs', kind: 31}, {name: 'Orders', kind: '34'}], // admin paths shown in the menu
-                listViewDirective: ['31', '11', '34'],
+                listViewDirective: {
+                    31: true,
+                    11: true,
+                    34: true
+                },
                 listTitles: {
                     '31': 'catalogs',
                     '11': 'users',

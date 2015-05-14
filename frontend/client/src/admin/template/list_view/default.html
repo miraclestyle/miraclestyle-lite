@@ -1,2 +1,8 @@
-<strong class="first ellipsis-text">{{ent.name}}</strong>
-<span class="second">{{ent|output:'created'}}</span>
+<div class="list">
+    <div ng-repeat="ent in search.results track by ent.key" class="list-row no-padding">
+        <list-button ng-click="manage(ent)">
+            <strong class="first ellipsis-text">{{ent.name}}</strong>
+            <span class="second">{{ent|output:'created'}}</span>
+        </list-button>
+    </div>
+</div>

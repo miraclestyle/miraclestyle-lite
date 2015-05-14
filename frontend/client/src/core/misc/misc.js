@@ -464,10 +464,7 @@
                 if (!angular.isNumber(amount) || isNaN(amount)) {
                     return '';
                 }
-
-
-                // @todo this code is incomplete
-
+ 
                 /*
                 {
                   "name": "US Dollar",

@@ -109,7 +109,8 @@
                                 kind: this.kind,
                                 templateBodyUrl: 'account/manage_body.html',
                                 toolbar: {
-                                    titleEdit: 'account.settings'
+                                    titleEdit: 'account.settings',
+                                    hideSave: true
                                 },
                                 init: function ($scope) {
                                     var entity = $scope.entity,
