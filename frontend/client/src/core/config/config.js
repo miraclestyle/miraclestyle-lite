@@ -111,6 +111,22 @@
         });
 
         $.extend(GLOBAL_CONFIG.emptyHelp, {
+            order: {
+                buyer: {
+                    list: ['No recorded orders m8']
+                },
+                seller: {
+                    list: ['No recorded orders m8']
+                }
+            },
+            cart: {
+                buyer: {
+                    list: ['No recorded carts m8']
+                },
+                seller: {
+                    list: ['No recorded carts m8']
+                }
+            },
             catalog: {
                 list: ['Product catalogs are integral part of Miraclestyle platform. Product catalog is a collection of images that represent products or services to sell. Each image can have multiple price tags attached. Each price tag is custom positioned on the image it is attached to and links to a product or service details. Product or service details contain information detailing the characteristics of the product or service to be sold. Product is integrated with the shopping cart system to allow direct online purchases. Product catalog can be shared and embedded to third party web sites, similar to you tube video for example. Created catalog initially assumes draft state and is not visible to the general public. While in draft state catalog can be edited. Published catalog is accessible to the general public until it expires or is discontinued. With exception of a product "Availability" field, published catalog cannot be edited. However, published catalog can be duplicated and duplicate will initially be in draft state ready for editing. Discontinued catalog is not accessible to the general public, and will eventually be entirely removed from the Miraclestyle. However, products of discontinued catalog will remain accessible for the next 180 days to those who have purchased them. Discontinued catalog cannot be edited or duplicated.',
                     'Click "Create" action to create new catalog.',

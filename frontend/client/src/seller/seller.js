@@ -118,15 +118,19 @@
             $scope.search.pagination.load();
         });
 
-    }).controller('SellOrdersController', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $state) {
+    }).controller('SellOrdersController', function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
         $scope.setPageToolbarTitle('seller.' + (carts ? 'carts' : 'orders'));
 
+        $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cart.seller.list : GLOBAL_CONFIG.emptyHelp.order.seller.list);
+
+
         $scope.search = {
             results: [],
-            pagination: {}
+            pagination: {},
+            loaded: false
         };
 
         $scope.scrollEnd = {
@@ -167,6 +171,8 @@
                     } else {
                         $scope.search.results.extend(response.data.entities);
                     }
+
+                    $scope.search.loaded = true;
                 }
             });
             $scope.scrollEnd.loader = $scope.search.pagination;

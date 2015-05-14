@@ -75,7 +75,12 @@
                 scope: {
                     help: '=helpRender'
                 },
-                templateUrl: 'core/misc/help_render.html'
+                templateUrl: 'core/misc/help_render.html',
+                link: function (scope, element, attrs) {
+                    if (!scope.help) {
+                        //scope.help = [attrs.helpRender];
+                    }
+                }
             };
         })
         .directive('displayImage', function (GLOBAL_CONFIG) {
