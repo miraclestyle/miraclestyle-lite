@@ -47,35 +47,38 @@
                 };
             }
         };
-    }).controller('SellerManagementCtrl', function ($scope, endpoint, currentAccount, models) {
+    }).controller('SellerManagementController', function ($scope, endpoint, currentAccount, models) {
 
         $scope.settings = function () {
             models['23'].manageModal(currentAccount.key);
         };
 
-    }).controller('SellCatalogsCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
+    }).controller('SellCatalogsController', function ($scope, modals, helpers, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
 
         $scope.setPageToolbarTitle('seller.catalogs');
 
         var newEntity = function (entity) {
-            if (!_.findWhere($scope.search.results, {
-                    key: entity.key
-                })) {
-                $scope.search.results.unshift(entity);
-            }
-        };
+                if (!_.findWhere($scope.search.results, {
+                        key: entity.key
+                    })) {
+                    $scope.search.results.unshift(entity);
+                }
+            };
 
         $scope.create = function () {
             models['31'].manageModal(undefined, newEntity);
         };
 
-        $scope.preview = function (key, config) {
-            config.targetEvent.target = $(config.targetEvent.target).parents('.grid-item:first').get(0);
-            models['31'].previewModal(key, config);
+        $scope.preview = function (key, $event) {
+            models['31'].previewModal(key, {
+                popFrom: $event.target
+            });
         };
 
-        $scope.manage = function (entity, config) {
-            models['31'].manageModal(entity, newEntity, config);
+        $scope.manage = function (entity, $event) {
+            models['31'].manageModal(entity, newEntity, {
+                popFrom: $event.target
+            });
         };
 
         $scope.search = {
@@ -115,7 +118,7 @@
             $scope.search.pagination.load();
         });
 
-    }).controller('SellOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $state) {
+    }).controller('SellOrdersController', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
@@ -667,10 +670,10 @@
                 viewModal: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded,
-                        targetEvent = config.targetEvent;
+                        popFrom = config.popFrom;
                     $modal.open({
                         templateUrl: 'seller/view.html',
-                        targetEvent: targetEvent,
+                        popFrom: popFrom,
                         controller: function ($scope, currentAccount) {
                             var cartData;
                             $scope.seller = seller;
@@ -693,7 +696,11 @@
                                     kind: '31',
                                     args: {
                                         search: {
-                                            filters: [{field: 'ancestor', operator: 'IN', value: $scope.seller.key}]
+                                            filters: [{
+                                                field: 'ancestor',
+                                                operator: 'IN',
+                                                value: $scope.seller.key
+                                            }]
                                         }
                                     },
                                     config: {
@@ -707,13 +714,15 @@
                                     }
                                 })
                             };
-                            $scope.scrollEnd = {loader: false};
+                            $scope.scrollEnd = {
+                                loader: false
+                            };
                             $scope.scrollEnd.loader = $scope.search.pagination;
                             $scope.search.pagination.load();
 
                             $scope.viewCatalog = function (result, event) {
                                 models['31'].viewModal(result.key, {
-                                    targetEvent: event
+                                    popFrom: event.target
                                 });
                             };
 

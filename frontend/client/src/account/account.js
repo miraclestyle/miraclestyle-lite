@@ -22,7 +22,7 @@
             });
             return mappedLoginProviders;
         })
-        .controller('AccountLoginStatusCtrl', function ($scope, $location, $state, modals) {
+        .controller('AccountLoginStatusController', function ($scope, $location, $state, modals) {
             var data = $location.search(),
                 errors;
             if (data.success) {
@@ -37,7 +37,7 @@
                     }
                 }
             }
-        }).controller('LoginLinksCtrl', function ($scope, endpoint, currentAccount, models) {
+        }).controller('LoginLinksController', function ($scope, endpoint, currentAccount, models) {
 
             $scope.authorization_urls = {};
             if (currentAccount._is_guest === undefined || currentAccount._is_guest) {
@@ -53,7 +53,7 @@
                 window.location.href = $scope.authorization_urls[type];
             };
 
-        }).controller('AccountManagementCtrl', function ($scope, currentAccount, models, modelsUtil) {
+        }).controller('AccountManagementController', function ($scope, currentAccount, models, modelsUtil) {
 
             $scope.settings = function () {
                 models['11'].manageModal(currentAccount);

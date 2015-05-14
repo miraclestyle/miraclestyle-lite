@@ -9,11 +9,11 @@
 
     <div autoload-on-vertical-scroll-end="scrollEnd" grid-scale="{square: true}" class="grid-wrapper clearfix">
         <div ng-repeat="result in search.results track by $index" grid-scale-item class="grid-item grid-generator">
-            <button md-ink-ripple ripple-light loading ng-click="manage(result, {targetEvent: $event})" class="button-transparent button-block padding-0">
+            <button md-ink-ripple ripple-light loading ng-click="manage(result, {popFrom: $event})" class="button-transparent button-block padding-0">
                 <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
             </button>
             <div class="bottom-right-floating">
-                <button md-ink-ripple-action ripple-light loading class="button-transparent bottom-right-floating-action button-square" ng-click="preview(result.key, {targetEvent: $event})">
+                <button md-ink-ripple-action ripple-light loading class="button-transparent bottom-right-floating-action button-square" ng-click="preview(result.key, $event)">
                     <icon color="white" type="action.view-carousel"></icon>
                 </button>
             </div>

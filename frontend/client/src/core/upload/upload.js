@@ -17,7 +17,7 @@
 // </div>
 //
 //  angular.module('app', ['ngUpload'])
-//    .controller('mainCtrl', function($scope) {
+//    .controller('mainController', function($scope) {
 //      $scope.loading = function() {
 //        console.log('loading...');
 //      }

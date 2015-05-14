@@ -14,7 +14,7 @@
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'> {% for style in settings.ANGULAR_CSS_PATHS %}
     <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
 </head>
-<body ng-controller="MainMenuCtrl" layout="row">
+<body ng-controller="MainMenuController" layout="row">
     <md-sidenav md-swipe-left="closeMenu()" layout="column" class="left md-closed" md-component-id="left">
         <md-content>
             <div class="bar-logo">
@@ -26,7 +26,7 @@
                 <sidenav-item ui-sref="home">All</sidenav-item>
             </div>
 
-            <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementCtrl">
+            <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
                 <div class="list-subheader subheader">Buy</div>
                 <sidenav-item ng-click="manageCollection()">Following</sidenav-item>
                 <sidenav-item ui-sref="buy-carts">Carts</sidenav-item>
@@ -34,20 +34,20 @@
                 <sidenav-item ng-click="settings()">Addresses</sidenav-item>
             </div>
 
-            <div class="list list-padding seam-bottom" ng-controller="SellerManagementCtrl" ng-show="!currentAccount._is_guest">
+            <div class="list list-padding seam-bottom" ng-controller="SellerManagementController" ng-show="!currentAccount._is_guest">
                 <div class="list-subheader subheader">Sell</div>
                 <sidenav-item ui-sref="sell-catalogs">Catalogs</sidenav-item>
                 <sidenav-item ui-sref="sell-orders">Orders</sidenav-item>
                 <sidenav-item ng-click="settings()">Settings</sidenav-item>
             </div>
 
-            <div class="list list-padding seam-bottom" ng-controller="AccountManagementCtrl" ng-show="!currentAccount._is_guest">
+            <div class="list list-padding seam-bottom" ng-controller="AccountManagementController" ng-show="!currentAccount._is_guest">
                 <div class="list-subheader subheader">Account</div>
                 <sidenav-item ng-click="logout()">Sign Out</sidenav-item>
                 <sidenav-item ng-click="settings()">Settings</sidenav-item>
             </div>
 
-            <div class="list list-padding seam-bottom" ng-controller="LoginLinksCtrl" ng-show="currentAccount._is_guest">
+            <div class="list list-padding seam-bottom" ng-controller="LoginLinksController" ng-show="currentAccount._is_guest">
                 <div class="list-subheader subheader">Account</div>
                 <sidenav-item ng-click="login(1)">Sign in with Google</sidenav-item>
             </div>

@@ -6,47 +6,47 @@
             .state('home', {
                 url: '/',
                 templateUrl: 'home/index.html',
-                controller: 'HomePageCtrl'
+                controller: 'HomePageController'
             })
             .state('following', {
                 url: '/following',
                 templateUrl: 'home/index.html',
-                controller: 'HomePageCtrl'
+                controller: 'HomePageController'
             })
             .state('seller-info', {
                 url: '/seller/:key',
-                controller: 'HomePageCtrl',
+                controller: 'HomePageController',
                 templateUrl: 'home/index.html'
             })
             .state('sell-catalogs', {
                 url: '/sell/catalogs',
-                controller: 'SellCatalogsCtrl',
+                controller: 'SellCatalogsController',
                 templateUrl: 'catalog/list.html'
             })
             .state('sell-orders', {
                 url: '/sell/orders',
-                controller: 'SellOrdersCtrl',
+                controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('sell-carts', {
                 url: '/sell/carts',
-                controller: 'SellOrdersCtrl',
+                controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-orders', {
                 url: '/buy/orders',
-                controller: 'BuyOrdersCtrl',
+                controller: 'BuyOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-carts', {
                 url: '/buy/carts',
-                controller: 'BuyOrdersCtrl',
+                controller: 'BuyOrdersController',
                 templateUrl: 'buyer/carts.html'
             })
             .state('login-status', {
                 url: '/login/status',
                 template: '',
-                controller: 'AccountLoginStatusCtrl'
+                controller: 'AccountLoginStatusController'
             })
             .state('admin-list', {
                 url: '/admin/list/:kind/:query',
@@ -64,7 +64,7 @@
 
                     return defaults;
                 },
-                controller: 'AdminListCtrl'
+                controller: 'AdminListController'
             });
 
     }).run(function (modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {

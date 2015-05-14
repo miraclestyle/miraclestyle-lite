@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('MainMenuCtrl', function ($scope, $mdSidenav, $timeout) {
+        .controller('MainMenuController', function ($scope, $mdSidenav, $timeout) {
             $scope.closeMenu = function () {
                 $timeout(function () {
                     $mdSidenav('left').close();
@@ -32,15 +32,17 @@
                 }
             };
         })
-        .controller('HomePageCtrl', function ($scope, models, modals, $state, $stateParams, $q, modelsMeta) {
+        .controller('HomePageController', function ($scope, models, modals, $state, $stateParams, $q, modelsMeta) {
             var args = {search: {}},
                 defer = $q.defer(),
                 promise = defer.promise;
 
             $scope.setPageToolbarTitle('home');
             $scope.sellerDetail = false;
-            $scope.view = function (key, config) {
-                models['31'].viewModal(key, config);
+            $scope.view = function (key, $event) {
+                models['31'].viewModal(key, {
+                    popFrom: $event.target
+                });
             };
 
             if ($stateParams.key) {

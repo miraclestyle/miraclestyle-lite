@@ -15,7 +15,7 @@
        grid-scale="{maxHeight: maxHeight}"
        class="grid-wrapper clearfix">
         <div ng-repeat="result in search.results track by $index" grid-scale-item class="grid-item grid-generator">
-            <button md-ink-ripple ripple-light loading ng-click="view(result.key, {targetEvent: $event})" class="button-transparent button-block">
+            <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
                 <img class="not-pointable" display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:240}" />
             </button>
             <button md-ink-ripple ripple-light ng-if="!sellerDetail" loading ui-sref="seller-info({key: result.seller_account_key})" class="button-transparent button-block seller-logo-bellow">

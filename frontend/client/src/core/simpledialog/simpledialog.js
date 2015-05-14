@@ -92,7 +92,7 @@
         dialogDefaultOptions.$inject = ["$timeout", "$rootElement", "$compile", "$animate", "$mdAria", "$document", "$mdUtil", "$mdConstant", "$$rAF", "$q", "$simpleDialog", "mdContextualMonitor"];
         return $$interimElementProvider('$simpleDialog')
             .setDefaults({
-                methods: ['disableParentScroll', 'hasBackdrop', 'clickOutsideToClose', 'targetEvent'],
+                methods: ['disableParentScroll', 'hasBackdrop', 'clickOutsideToClose', 'popFrom'],
                 options: dialogDefaultOptions
             });
 
@@ -106,7 +106,7 @@
                 onShow: onShow,
                 onRemove: onRemove,
                 clickOutsideToClose: true,
-                targetEvent: null,
+                popFrom: null,
                 disableParentScroll: true,
                 transformTemplate: function (template) {
                     return '<div class="simple-dialog-container">' + template + '</div>';
@@ -124,7 +124,7 @@
                 // Incase the user provides a raw dom element, always wrap it in jqLite
                 options.parent = angular.element(options.parent);
 
-                options.popInTarget = angular.element((options.targetEvent || {}).target);
+                options.popInTarget = angular.element(options.popFrom);
                 var closeButton = findCloseButton(),
                     directive = discoverDirective(options),
                     dialogEl = element.find(directive);

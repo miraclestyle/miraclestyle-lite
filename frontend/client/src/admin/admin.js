@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('AdminListCtrl', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, helpers) {
+        .controller('AdminListController', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, helpers) {
 
             var kind = $stateParams.kind,
                 query = null,

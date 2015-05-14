@@ -2,6 +2,12 @@
     'use strict';
     angular.module('app').run(function (helpers) {
         helpers.grid = {
+            click: function (targetEvent) {
+                if (!$(targetEvent.target).hasClass('grid-item')) {
+                    targetEvent.target = $(targetEvent.target).parents('.grid-item:first').get(0);
+                }
+                return targetEvent.target;
+            },
             calculate: function (canvas_width, max_width, min_width, margin) {
                 /*
                 velicina covera je uvek izmedju 240x360px i 180x270px

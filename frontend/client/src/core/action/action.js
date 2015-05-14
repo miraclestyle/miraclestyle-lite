@@ -32,7 +32,7 @@
                 dropdown.openSimpleDialog = function ($event) {
                     $simpleDialog.show({
                         templateUrl: template,
-                        targetEvent: $event,
+                        popFrom: $event.target,
                         parent: element.parents(attrs.parent),
                         onBeforeHide: function (dialogEl, options) {
                             $(window).off('resize', options.resize);

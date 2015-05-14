@@ -676,7 +676,7 @@ mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
          * <hljs lang="js">
          * $mdCompiler.compile({
          *   templateUrl: 'modal.html',
-         *   controller: 'ModalCtrl',
+         *   controller: 'ModalController',
          *   locals: {
          *     modal: myModalInstance;
          *   }
@@ -1947,21 +1947,6 @@ mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
                         $type: name
                     });
 
-                    // This creates a preset class which has setter methods for every
-                    // method given in the `.addPreset()` function, as well as every
-                    // method given in the `.setDefaults()` function.
-                    //
-                    // @example
-                    // .setDefaults({
-                    //   methods: ['hasBackdrop', 'clickOutsideToClose', 'escapeToClose', 'targetEvent'],
-                    //   options: dialogDefaultOptions
-                    // })
-                    // .addPreset('alert', {
-                    //   methods: ['title', 'ok'],
-                    //   options: alertDialogOptions
-                    // })
-                    //
-                    // Set values will be passed to the options when interimElemnt.show() is called.
                     function Preset(opts) {
                         this._options = angular.extend({}, presetDefaults, opts);
                     }

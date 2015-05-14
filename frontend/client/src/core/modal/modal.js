@@ -2,10 +2,7 @@
     'use strict';
 
     var getClickElement = function (options) {
-            var clickElement = options.targetEvent && options.targetEvent.target;
-            if (!clickElement) {
-                clickElement = options && options.emitFrom;
-            }
+            var clickElement = options.popFrom;
             return (clickElement ? $(clickElement) : clickElement);
         },
         getPositionOverClickElement = function (clickElement, element) {
@@ -353,7 +350,7 @@
                 modal.scope.modalOptions = {
                     inDirection: modal.inDirection,
                     outDirection: modal.outDirection,
-                    targetEvent: modal.targetEvent,
+                    popFrom: modal.popFrom,
                     fullScreen: modal.fullScreen,
                     transformOrigin: modal.transformOrigin,
                     opened: false
@@ -545,7 +542,7 @@
                                 outDirection: modalOptions.outDirection,
                                 fullScreen: modalOptions.fullScreen,
                                 transformOrigin: modalOptions.transformOrigin,
-                                targetEvent: modalOptions.targetEvent
+                                popFrom: modalOptions.popFrom
                             });
 
                         }, function resolveError(reason) {

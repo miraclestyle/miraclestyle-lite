@@ -84,7 +84,7 @@
                                     }
                                 }).then(function (response) {
                                     models['23'].viewModal(response.data.entity, {
-                                        targetEvent: event,
+                                        popFrom: event.target,
                                         removedOrAdded: function (updatedCollection) {
                                             thisScope.entity._sellers.iremove(function (seller) {
                                                 return $.inArray(seller.key, updatedCollection.sellers) === -1;

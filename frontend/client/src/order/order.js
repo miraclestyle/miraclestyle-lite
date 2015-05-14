@@ -123,7 +123,7 @@
 
                         $modal.open({
                             templateUrl: 'order/view.html',
-                            targetEvent: config.targetEvent,
+                            popFrom: config.popFrom,
                             controller: function ($scope) {
                                 var locals = {
                                     customPlaceholder: null,

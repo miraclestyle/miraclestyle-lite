@@ -410,7 +410,7 @@
                         $$rAF(function () {
                             $modal.open({
                                 windowClass: 'modal-medium datepicker-pop',
-                                targetEvent: false,
+                                popFrom: false,
                                 inDirection: false,
                                 outDirection: false,
                                 templateUrl: 'core/datetime/popup.html',

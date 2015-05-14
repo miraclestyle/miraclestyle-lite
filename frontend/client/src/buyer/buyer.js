@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('BuyerManagementCtrl', function ($scope, endpoint, currentAccount, models) {
+        .controller('BuyerManagementController', function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
                 models['19'].manageModal(currentAccount.key);
@@ -11,7 +11,7 @@
                 models['18'].manageModal(currentAccount.key);
             };
 
-        }).controller('BuyOrdersCtrl', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $state) {
+        }).controller('BuyOrdersController', function ($scope, modals, modelsEditor, modelsMeta, models, modelsUtil, $state) {
 
             var carts = $state.current.name === 'buy-carts';
 
@@ -30,7 +30,7 @@
                 }).then(function (buyer) {
                     models['34'].manageModal(order, order._seller, buyer, {
                         cartMode: carts,
-                        targetEvent: event
+                        popFrom: event.target
                     });
                 });
             };

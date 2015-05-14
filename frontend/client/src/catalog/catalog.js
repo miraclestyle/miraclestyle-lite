@@ -282,7 +282,7 @@
                             },
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
-                            targetEvent: config.targetEvent,
+                            popFrom: config.popFrom,
                             transformOrigin: true,
                             controller: function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey;
@@ -467,7 +467,7 @@
                         $modal.open({
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
-                            targetEvent: config.targetEvent,
+                            popFrom: config.popFrom,
                             controller: function ($scope) {
                                 setupToggleMenu($scope, 'right_catalog_sidenav');
                                 $scope.catalog = entity;
@@ -530,9 +530,11 @@
                                 // cache current user's cart
                                 models['34'].current($scope.catalog._seller.key);
 
-                                $scope.viewProduct = function (image, pricetag, config) {
-                                    config.targetEvent.target = $(config.targetEvent.target).parents('.catalog-pricetag:first').get(0);
-                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, null, config);
+                                $scope.viewProduct = function (image, pricetag, $event) {
+                                    //config.targetEvent.target = $(config.targetEvent.target).parents('.catalog-pricetag:first').get(0);
+                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, null, {
+                                        popFrom: $event.target
+                                    });
                                 };
 
                                 $scope.sellerDetails = function () {
