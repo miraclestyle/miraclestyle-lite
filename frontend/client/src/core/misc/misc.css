@@ -823,6 +823,10 @@ body {
     overflow-y: auto;
 }
 
+.message-body {
+    word-wrap: break-word;
+}
+
 .messages-send {
     top: 0px;
     padding: 4px;

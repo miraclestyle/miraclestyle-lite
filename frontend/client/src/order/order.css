@@ -48,8 +48,6 @@
 }
 
 .order-reset-button {
-    /**/
-    
     padding: 0px;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -61,4 +59,10 @@
     font-size: 0px;
     padding-top: 8px;
     padding-bottom: 8px;
+}
+
+.order-expanding-address {
+    transition-property: height;
+    transition-timing-function: cubic-bezier(0.8,0,0.4,1);
+    transition-duration: 300ms;
 }

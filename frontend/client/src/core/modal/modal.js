@@ -171,10 +171,10 @@
                         if (clickElement) {
                             spec = getPositionOverClickElement(clickElement, element);
                             animator = animationGenerator.single('pop-in',
-                                '0% {top: ' + spec.top + 'px; left: ' + spec.left + 'px; -webkit-transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }' +
+                                '0% {top: ' + spec.top + 'px; left: ' + spec.left + 'px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(' + spec.scale.x + ', ' + spec.scale.y + '); }' +
                                 '1% { opacity:1; }' +
                                 '75% { top: 0px; left: 0px;}' +
-                                '100% { top: 0px; left: 0px; -webkit-transform: scale(1, 1); transform: scale(1, 1);opacity:1;}');
+                                '100% { top: 0px; left: 0px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(1, 1);opacity:1;}');
                             cb = function () {
                                 element.addClass('pop ' + animator.className).data('animator', animator);
                                 $$rAF(function () {
@@ -239,15 +239,6 @@
 
             function backdropIndex() {
                 return openedWindows.length() - 1;
-                var topBackdropIndex = -1,
-                    opened = openedWindows.keys(),
-                    i;
-                for (i = 0; i < opened.length; i++) {
-                    if (openedWindows.get(opened[i]).value.backdrop) {
-                        topBackdropIndex = i;
-                    }
-                }
-                return topBackdropIndex;
             }
 
             function removeAfterAnimate(domEl, scope, done) {
@@ -263,9 +254,9 @@
                     spec = getPositionOverClickElement(clickElement, domEl);
                     popin = domEl.data('animator');
                     animator = animationGenerator.single('pop-out',
-                        '0% { opacity:1;top: 0px; left: 0px; -webkit-transform: scale(1, 1); transform: scale(1, 1);}' +
+                        '0% { opacity:1;top: 0px; left: 0px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(1, 1);}' +
                         '75% { top: 0px; left: 0px;}' +
-                        '100% { opacity:1;top: ' + spec.top + 'px; left: ' + spec.left + 'px; -webkit-transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); transform: scale(' + spec.scale.x + ', ' + spec.scale.y + '); }');
+                        '100% { opacity:1;top: ' + spec.top + 'px; left: ' + spec.left + 'px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(' + spec.scale.x + ', ' + spec.scale.y + '); }');
 
                     outclass = animator.className;
                     inclass = popin.className;
@@ -352,7 +343,6 @@
                     outDirection: modal.outDirection,
                     popFrom: modal.popFrom,
                     fullScreen: modal.fullScreen,
-                    transformOrigin: modal.transformOrigin,
                     opened: false
                 };
 
@@ -541,7 +531,6 @@
                                 inDirection: modalOptions.inDirection,
                                 outDirection: modalOptions.outDirection,
                                 fullScreen: modalOptions.fullScreen,
-                                transformOrigin: modalOptions.transformOrigin,
                                 popFrom: modalOptions.popFrom
                             });
 

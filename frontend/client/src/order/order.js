@@ -29,6 +29,29 @@
 
             }
         };
+    }).directive('toggleExpand', function ($timeout) {
+        return {
+            link: function (scope, element, attrs) {
+                var height,
+                    decider = function (neww, old) {
+                        if (angular.isUndefined(height)) {
+                            return;
+                        }
+                        element.css('overflow', 'hidden');
+                        if (neww) {
+                            element.height(height);
+                        } else {
+                            element.height(0);
+                        }
+                    };
+                $timeout(function () {
+                    height = element.height();
+                    decider(scope.$eval(attrs.toggleExpand));
+                }, 0, false);
+
+                scope.$watch(attrs.toggleExpand, decider);
+            }
+        };
     }).directive('alwaysScrollToBottom', function ($timeout) {
         return {
             link: function (scope, element, attrs) {

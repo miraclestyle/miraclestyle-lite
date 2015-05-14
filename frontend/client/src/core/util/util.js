@@ -52,6 +52,10 @@
             return webkit ? ('webkit' + name.charAt(0).toUpperCase() + name.substring(1)) : name;
         }
 
+        function cssVendorProperty(name) {
+            return webkit ? '-webkit-' + name : name;
+        }
+
         return {
             KEY_CODE: {
                 ENTER: 13,
@@ -61,6 +65,17 @@
                 UP_ARROW: 38,
                 RIGHT_ARROW: 39,
                 DOWN_ARROW: 40
+            },
+            RAW_CSS: {
+                TRANSFORM: cssVendorProperty('transform'),
+                TRANSFORMORIGIN: cssVendorProperty('transformOrigin'),
+                TRANSITION: cssVendorProperty('transition'),
+                TRANSITION_DURATION: cssVendorProperty('transitionDuration'),
+                ANIMATION_PLAY_STATE: cssVendorProperty('animationPlayState'),
+                ANIMATION_DURATION: cssVendorProperty('animationDuration'),
+                ANIMATION_NAME: cssVendorProperty('animationName'),
+                ANIMATION_TIMING: cssVendorProperty('animationTimingFunction'),
+                ANIMATION_DIRECTION: cssVendorProperty('animationDirection')
             },
             CSS: {
                 /* Constants */
