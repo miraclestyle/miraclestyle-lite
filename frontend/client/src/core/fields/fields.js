@@ -1399,7 +1399,7 @@
                                                         ui: {
                                                             group: {
                                                                 help: field.ui.groupHelp,
-                                                                label: field.ui.label,
+                                                                label: field.ui.groupLabel,
                                                                 name: field.ui.groupBy,
                                                                 fields: [],
                                                                 messages: function () {

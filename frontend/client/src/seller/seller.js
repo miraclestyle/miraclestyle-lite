@@ -211,7 +211,7 @@
                             ui: {
                                 groupBy: what,
                                 groupHelp: help,
-                                label: label
+                                groupLabel: label
                             }
                         };
                     },
