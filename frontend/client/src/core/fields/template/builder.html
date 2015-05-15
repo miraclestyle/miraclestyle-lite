@@ -1,1 +1,12 @@
-<div ng-repeat="config in configurations" form-input="config"></div>
+<div ng-repeat="config in configurations">
+    <div ng-if="config.ui.group" class="fields-grouping fields-grouping-{{config.ui.group.name}}">
+        <div class="field-grouping-wrapper clearfix">
+            <div ng-repeat="field in config.ui.group.fields" class="field-grouping" form-input="field"></div>
+        </div>
+        <div ng-if="config.ui.group.shouldShowMessages()" ng-class="{'is-help-erroric': !config.ui.group.messages().help}" ng-messages="config.ui.group.messages()">
+          <div ng-message="help">{{config.ui.group.help}}</div>
+          <div ng-message="required">This field requires "text" value!</div>
+        </div>
+    </div>
+    <div ng-if="!config.ui.group" form-input="config"></div>
+</div>

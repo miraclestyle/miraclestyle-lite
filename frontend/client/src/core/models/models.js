@@ -927,6 +927,7 @@
                                 }
 
                                 var fields,
+                                    model = this,
                                     canLoadMore = function (nextReadArguments) {
                                         return helpers.getProperty(nextReadArguments, fields.join('.') + '.config.more');
                                     },
@@ -1026,7 +1027,7 @@
 
                                         this.loading = true;
 
-                                        promise = (config.read ? config.read(next) : models[config.kind].actions.read({
+                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read({
                                             key: config.key,
                                             read_arguments: next
                                         }));

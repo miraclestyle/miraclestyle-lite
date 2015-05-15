@@ -1,5 +1,5 @@
-<md-input-container>
-    <label><%= config.ui.compiled.label %></label>
+<md-input-container ng-class="{'no-label': config.ui.label === false}">
+    <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
     <div md-ink-ripple>
         <input ng-readonly="true" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
     </div>

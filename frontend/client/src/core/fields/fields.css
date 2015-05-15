@@ -64,3 +64,58 @@ a.sort-handle {
 [ng-message="help"] {
     color:rgba(0, 0, 0, 0.26);
 }
+.field-grouping {
+    float:left;
+}
+
+.fields-grouping md-input-container.no-label {
+    padding-top:19px;
+}
+
+.field-grouping md-input-container {
+    padding: 0px;
+    padding-left: 16px;
+}
+
+.fields-grouping [ng-messages] {
+  padding-left: 16px;
+  font-size: 12px;
+  padding-right: 16px;
+  line-height: 14px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  min-height: 22px;
+  position:relative;
+}
+
+.fields-grouping [ng-message] {
+    position:absolute;
+    -webkit-font-smoothing: antialiased;
+}
+
+.fields-grouping [ng-message].ng-enter {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition-delay: 0.2s;
+}
+
+.fields-grouping [ng-message].ng-leave {
+    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+
+.fields-grouping [ng-message].ng-enter,
+.fields-grouping [ng-message].ng-leave.ng-leave-active {
+    opacity: 0;
+    -webkit-transform: translate3d(0, -20%, 0);
+    transform: translate3d(0, -20%, 0);
+}
+
+.fields-grouping [ng-message].ng-leave,
+.fields-grouping [ng-message].ng-enter.ng-enter-active {
+    opacity: 1;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+}
+
+.fields-grouping .is-help-erroric {
+    color: rgba(255, 0, 0, 0.87);
+}

@@ -58,12 +58,12 @@
         $scope.setPageToolbarTitle('seller.catalogs');
 
         var newEntity = function (entity) {
-                if (!_.findWhere($scope.search.results, {
-                        key: entity.key
-                    })) {
-                    $scope.search.results.unshift(entity);
-                }
-            };
+            if (!_.findWhere($scope.search.results, {
+                    key: entity.key
+                })) {
+                $scope.search.results.unshift(entity);
+            }
+        };
 
         $scope.create = function () {
             models['31'].manageModal(undefined, newEntity);
@@ -197,6 +197,23 @@
                     lineSpec = {
                         listView: 'default-line-list-view'
                     },
+                    exclusionSpec = {
+                        ui: {
+                            specifics: {
+                                type: 'radio',
+                                trueLabel: 'Applies to all locations except to those listed in the Locations section.',
+                                falseLabel: 'Applies only to the locations listed in the Locations section.'
+                            }
+                        }
+                    },
+                    groupBy = function (what, help) {
+                        return {
+                            ui: {
+                                groupBy: what,
+                                groupHelp: help
+                            }
+                        };
+                    },
                     locationSpec = {
                         listView: 'address-rule-location-list-view',
                         sortFields: ['country', 'region', 'postal_codes'],
@@ -309,8 +326,17 @@
                                                 specifics: {
                                                     listView: 'carrier-line-rule-list-view'
                                                 }
+                                            },
+                                            modelclass: {
+                                                condition_type: groupBy('conditional', 'Condition under which this price applies.'),
+                                                condition_operator: groupBy('conditional'),
+                                                condition_value: groupBy('conditional'),
+                                                price_type: groupBy('price', 'Price formula that calculates the price.'),
+                                                price_operator: groupBy('price'),
+                                                price_value: groupBy('price')
                                             }
                                         },
+                                        exclusion: exclusionSpec,
                                         locations: {
                                             ui: {
                                                 specifics: locationSpec
@@ -320,15 +346,7 @@
                                 }
                             },
                             '107': {
-                                exclusion: {
-                                    ui: {
-                                        specifics: {
-                                            type: 'radio',
-                                            trueLabel: 'Applies to all locations except to those listed in the Locations section.',
-                                            falseLabel: 'Applies only to the locations listed in the Locations section.'
-                                        }
-                                    }
-                                },
+                                exclusion: exclusionSpec,
                                 locations: {
                                     ui: {
                                         specifics: locationSpec
@@ -339,6 +357,11 @@
                                 lines: {
                                     ui: {
                                         specifics: lineSpec
+                                    },
+                                    modelclass: {
+                                        condition_type: groupBy('conditional', 'Condition under which this price applies.'),
+                                        condition_operator: groupBy('conditional'),
+                                        condition_value: groupBy('conditional')
                                     }
                                 }
                             },
@@ -365,6 +388,7 @@
                                         }
                                     }
                                 },
+                                exclusion: exclusionSpec,
                                 locations: {
                                     ui: {
                                         specifics: locationSpec
@@ -384,7 +408,7 @@
                             required: true,
                             ui: {
                                 args: 'info.kind',
-                                label: 'Plugins',
+                                label: 'Rule',
                                 attrs: {
                                     'ng-change': 'setNewArg()'
                                 },
@@ -957,7 +981,7 @@
                                     label: 'Contents',
                                     fields: ['_content']
                                 }, {
-                                    label: 'Plugins',
+                                    label: 'Rules',
                                     fields: ['_plugin_group'],
                                 }]
                             }

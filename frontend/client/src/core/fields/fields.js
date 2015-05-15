@@ -398,13 +398,16 @@
                                         return this.root[config.ui.name];
                                     },
                                     hasErrors: function () {
+                                        if (!this.field()) {
+                                            return false;
+                                        }
                                         return Object.keys(this.field().$error).length;
                                     },
                                     messages: function () {
                                         return ((this.field().$dirty && this.hasErrors()) ? this.field().$error : false) || config.ui;
                                     },
                                     shouldShowMessages: function () {
-                                        if (!this.field()) {
+                                        if (!this.field() || config.ui.hideMessages) {
                                             return false;
                                         }
                                         return this.field().$dirty || config.ui.help;
@@ -1268,6 +1271,8 @@
                                             formBuilder = {
                                                 '0': []
                                             },
+                                            groupBysIndx = [],
+                                            groupBysMap = {},
                                             getTitle,
                                             getResult = function (response, access) {
                                                 var accessPath = [],
@@ -1387,6 +1392,48 @@
                                                 field.ui.realPath.push(length);
                                             }
                                             field.ui.realPath.push(field.code_name);
+                                            if (field.ui.groupBy) {
+                                                field.ui.hideMessages = true;
+                                                if (!groupBysMap[field.ui.groupBy]) {
+                                                    var gr = {
+                                                        ui: {
+                                                            group: {
+                                                                help: field.ui.groupHelp,
+                                                                name: field.ui.groupBy,
+                                                                fields: [],
+                                                                messages: function () {
+                                                                    var messages = {
+                                                                        help: true
+                                                                    };
+                                                                    angular.forEach(gr.ui.group.fields, function (field) {
+                                                                        if (field.ui.form.hasErrors() && field.ui.form.field().$dirty) {
+                                                                            messages = field.ui.form.messages();
+                                                                        }
+                                                                    });
+                                                                    return messages;
+                                                                },
+                                                                shouldShowMessages: function () {
+                                                                    var maybe = false;
+                                                                    angular.forEach(gr.ui.group.fields, function (field) {
+                                                                        if (field.ui.form.hasErrors()) {
+                                                                            maybe = true;
+                                                                        }
+                                                                    });
+                                                                    return maybe || gr.ui.group.help;
+                                                                }
+                                                            }
+                                                        }
+                                                    };
+                                                    groupBysMap[field.ui.groupBy] = gr;
+                                                    groupBysIndx.push(field.ui.groupBy);
+
+                                                    formBuilder['0'].push(groupBysMap[field.ui.groupBy]);
+                                                } else {
+                                                    field.ui.label = false;
+                                                }
+                                                groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
+                                                return;
+                                            }
                                             if (field.is_structured && formInputTypes[field.type]) {
                                                 var group = {
                                                         label: inflector((field.ui.label || field.code_name), 'humanize')

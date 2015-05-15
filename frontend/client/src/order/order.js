@@ -363,7 +363,6 @@
 
                                 $scope.messages = {
                                     reader: models['34'].reader({
-                                        kind: '34',
                                         key: $scope.order.key,
                                         next: {
                                             _messages: angular.copy($scope.order._next_read_arguments._messages)

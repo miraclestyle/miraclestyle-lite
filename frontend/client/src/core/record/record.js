@@ -35,7 +35,6 @@
                                                     }
                                                 }
                                             },
-                                            kind: config.kind,
                                             complete: function (records) {
                                                 $scope.history.records.extend(records);
                                             }

@@ -480,7 +480,6 @@
                                 accessImages.push('_images');
 
                                 imagesReader = models['31'].reader({
-                                    kind: $scope.catalog.kind,
                                     key: $scope.catalog.key,
                                     next: {
                                         _images: $scope.catalog._next_read_arguments._images
@@ -711,7 +710,6 @@
                                             $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
 
                                             imagesReader = models['31'].reader({
-                                                kind: '31',
                                                 key: $scope.args.key,
                                                 next: {
                                                     _images: {}

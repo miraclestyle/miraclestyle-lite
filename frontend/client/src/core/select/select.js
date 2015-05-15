@@ -238,6 +238,7 @@
                         (select.multiple ? $modal.open : $simpleDialog.show)({
                             template: root,
                             popFrom: ($event ? $event.target : undefined),
+                            targetEvent: $event,
                             parent: attachTo,
                             inDirection: false,
                             outDirection: false,
