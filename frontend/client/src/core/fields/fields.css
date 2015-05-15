@@ -68,10 +68,6 @@ a.sort-handle {
     float:left;
 }
 
-.fields-grouping md-input-container.no-label {
-    padding-top:19px;
-}
-
 .field-grouping md-input-container {
     padding: 0px;
     padding-left: 16px;
@@ -118,4 +114,11 @@ a.sort-handle {
 
 .fields-grouping .is-help-erroric {
     color: rgba(255, 0, 0, 0.87);
+}
+.fields-grouping-label {
+  font-size: 12px;
+  padding:8px 0px 0px;
+  color: rgba(0, 0, 0, 0.54);
+  padding-left: 16px;
+  padding-right: 16px;
 }

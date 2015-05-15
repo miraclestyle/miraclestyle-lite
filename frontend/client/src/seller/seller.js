@@ -206,11 +206,12 @@
                             }
                         }
                     },
-                    groupBy = function (what, help) {
+                    groupBy = function (what, label, help) {
                         return {
                             ui: {
                                 groupBy: what,
-                                groupHelp: help
+                                groupHelp: help,
+                                label: label
                             }
                         };
                     },
@@ -328,10 +329,10 @@
                                                 }
                                             },
                                             modelclass: {
-                                                condition_type: groupBy('conditional', 'Condition under which this price applies.'),
+                                                condition_type: groupBy('conditional', 'Condition', 'Condition under which this price applies.'),
                                                 condition_operator: groupBy('conditional'),
                                                 condition_value: groupBy('conditional'),
-                                                price_type: groupBy('price', 'Price formula that calculates the price.'),
+                                                price_type: groupBy('price', 'Price', 'Price formula that calculates the price.'),
                                                 price_operator: groupBy('price'),
                                                 price_value: groupBy('price')
                                             }
@@ -359,7 +360,7 @@
                                         specifics: lineSpec
                                     },
                                     modelclass: {
-                                        condition_type: groupBy('conditional', 'Condition under which this price applies.'),
+                                        condition_type: groupBy('conditional', 'Condition', 'Condition under which this price applies.'),
                                         condition_operator: groupBy('conditional'),
                                         condition_value: groupBy('conditional')
                                     }

@@ -1399,6 +1399,7 @@
                                                         ui: {
                                                             group: {
                                                                 help: field.ui.groupHelp,
+                                                                label: field.ui.label,
                                                                 name: field.ui.groupBy,
                                                                 fields: [],
                                                                 messages: function () {
@@ -1428,9 +1429,8 @@
                                                     groupBysIndx.push(field.ui.groupBy);
 
                                                     formBuilder['0'].push(groupBysMap[field.ui.groupBy]);
-                                                } else {
-                                                    field.ui.label = false;
                                                 }
+                                                field.ui.label = false;
                                                 groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
                                                 return;
                                             }

@@ -1,5 +1,6 @@
 <div ng-repeat="config in configurations">
-    <div ng-if="config.ui.group" class="fields-grouping fields-grouping-{{config.ui.group.name}}">
+    <div ng-if="config.ui.group" class="fields-grouping">
+        <label class="fields-grouping-label" ng-if="config.ui.group.label">{{config.ui.group.label}}</label>
         <div class="field-grouping-wrapper clearfix">
             <div ng-repeat="field in config.ui.group.fields" class="field-grouping" form-input="field"></div>
         </div>
