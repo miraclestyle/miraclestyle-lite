@@ -1594,9 +1594,16 @@ class BaseExpando(_BaseModel, Expando):
       if prop:
         if value is None:
           self._clone_properties()
+          # @todo setattr invokes del keyword here which deletes the entity
+          # that is fine in some cases, but here it isnt since it will delete any entity bypassing the _state = 'deleted'
+          # meaning that if user sends _images = [] for the catalog product, this setattr will delete those
+          # images without user specifying _state = 'deleted' on them
+          # the prop._delete_value triggers proper logic, but still the behaviour should not be like that
+          # either change the behaviour of the argument logic or this
           if prop._name in self._properties:
-            prop._delete_value(self)
-            del self._properties[prop._name]
+            #prop._delete_value(self)
+            #del self._properties[prop._name]
+            pass
           return
         self._properties[prop._name] = prop
         prop._set_value(self, value)

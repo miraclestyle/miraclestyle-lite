@@ -84,7 +84,6 @@ class Client(object):
       if data is not None:
         data = urllib.urlencode(data)
       response = urlfetch.fetch(url=url, payload=data, method=method)
-      print response.content
       if response.status_code == status:
         return json.loads(response.content)
       else:

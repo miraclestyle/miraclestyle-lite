@@ -68,6 +68,12 @@ class Image(orm.BaseExpando):
     'proportion': orm.SuperFloatProperty('6')
     }
 
+  def __setattr__2(self, name, value, **kwds): # @todo remove this later
+    if name == '_state' and value == 'deleted':
+      import traceback
+      traceback.print_stack()
+    return super(Image, self).__setattr__(name, value, **kwds)
+
 
 #########################################################
 ########## Superior properties implementation! ##########
@@ -111,7 +117,7 @@ class _ImagePropertyValue(object):
         # Less consuming memory write, can be only used when using brute force copy.
         # There is no copy feature in cloudstorage sdk, so we have to implement our own!
         while True:
-          blob_segment = readonly_blob.read(1000000)  # Read 1mb per write, that should be enough.
+          blob_segment = readonly_blob.read(2000000)  # Read 2mb per write, that should be enough.
           if not blob_segment:
             break
           writable_blob.write(blob_segment)

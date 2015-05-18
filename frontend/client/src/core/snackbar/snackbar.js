@@ -5,7 +5,11 @@
             show: $.noop,
             hide: $.noop,
             showK: function (key) {
-                return snackbar.show(GLOBAL_CONFIG.snackbar.messages[key]);
+                var gets = GLOBAL_CONFIG.snackbar.messages[key];
+                if (angular.isUndefined(gets)) {
+                    gets = key;
+                }
+                return snackbar.show(gets);
             }
         };
         if (GLOBAL_CONFIG.debug) {

@@ -80,6 +80,32 @@ class CatalogProcessCoverSet(orm.BaseModel):
   
   def run(self, context):
     catalog_image = None
+    catalog_images = context._catalog._images.value
+    if not catalog_images:
+      CatalogImage = context.models['30']
+      catalog_images = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).fetch(1)
+    catalog_cover = context._catalog.cover.value
+    if catalog_images:
+      for catalog_image in catalog_images:
+        if catalog_image._state == 'deleted':
+          catalog_image = None
+        else:
+          break
+    if catalog_image:
+      if catalog_cover:
+        if catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
+          context._catalog.cover = copy.deepcopy(catalog_image)
+          context._catalog.cover.value.sequence = 0
+          context._catalog.cover.process()
+      else:
+        context._catalog.cover = copy.deepcopy(catalog_image)
+        context._catalog.cover.value.sequence = 0
+        context._catalog.cover.process()
+    elif catalog_cover:
+      catalog_cover._state = 'deleted'
+    return
+
+    catalog_image = None
     catalog_images = context._catalog._images.value # @todo this is a problem
     if catalog_images and len(catalog_images) < 2 and context.action.key.id() != 'catalog_upload_images':
       CatalogImage = context.models['30']

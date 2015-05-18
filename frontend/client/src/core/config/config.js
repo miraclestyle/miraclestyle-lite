@@ -5,8 +5,8 @@
 
         $.extend(GLOBAL_CONFIG.modals.confirmations, {
             discardWithFieldsRequired: {
-                title: 'Discard unsaved changes?',
-                message: 'There are some unsaved changes on the form you are trying to close. If you discard them, the item you are trying to add will not be added.',
+                title: 'Discard changes?',
+                message: 'There are some invalid changes on the form you are trying to leave. If you discard them, the changes will not be applied and will be lost permanently.',
                 text: {
                     primary: 'Discard'
                 }
@@ -135,7 +135,11 @@
             }
         });
 
-        $.extend(GLOBAL_CONFIG.fields.radioLabels, {
+        if (!GLOBAL_CONFIG.fields.radioLabel) {
+            GLOBAL_CONFIG.fields.radioLabel = {};
+        }
+
+        $.extend(GLOBAL_CONFIG.fields.radioLabel, {
             pluginLocation: {
                 trueLabel: 'Applies to all locations except to those listed in the Locations section.',
                 falseLabel: 'Applies only to the locations listed in the Locations section.'
@@ -163,6 +167,10 @@
                 'Click on a catalog image to edit catalog.',
                 'Click on a catalog view icon, located in the lower right corner of a catalog image, to view catalog as it would appear to the general public.'
             ]
+        });
+
+        $.extend(GLOBAL_CONFIG.snackbar.messages, {
+            changesSaved: 'Changes saved.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

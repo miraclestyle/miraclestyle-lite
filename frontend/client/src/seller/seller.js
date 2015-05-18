@@ -179,7 +179,7 @@
             $scope.search.pagination.load();
         });
     }).run(function (modelsConfig, modelsMeta,
-        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG) {
+        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
 
         modelsConfig(function (models) {
             formInputTypes.SuperPluginStorageProperty = function (info) {

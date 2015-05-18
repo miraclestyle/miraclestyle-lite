@@ -74,7 +74,7 @@
                 };
             }
         };
-    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout) {
+    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar) {
 
         modelsConfig(function (models) {
             var setupToggleMenu = function ($scope, id) {
@@ -629,7 +629,7 @@
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
-                                                    modals.alert('catalogPublished');
+                                                    snackbar.showK('catalogPublished');
                                                     updateState(response.data.entity);
                                                 });
                                             });
@@ -640,7 +640,7 @@
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
                                                 }).then(function (response) {
-                                                    modals.alert('catalogDiscontinued');
+                                                    snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
                                                 });
                                             });
@@ -653,7 +653,7 @@
                                                         key: $scope.entity.key,
                                                         channel: response.token
                                                     }).then(function (response) {
-                                                        modals.alert('duplicationInProgressCatalog');
+                                                        snackbar.showK('duplicationInProgressCatalog');
                                                     });
                                                 });
                                             });
@@ -1010,7 +1010,7 @@
                                                                             }
                                                                         }
                                                                     }).then(function (response) {
-                                                                        modals.alert('duplicationInProgressCatalogPricetag');
+                                                                        snackbar.showK('duplicationInProgressCatalogPricetag');
                                                                     });
                                                                 });
                                                             });
@@ -1075,11 +1075,11 @@
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                             currentArgs = currentFieldScope.args;
                                                         if (!currentArgs.id) {
-                                                            modals.alert('saveProductFirst');
+                                                            snackbar.showK('saveProductFirst');
                                                             return false;
                                                         }
                                                         if (!currentArgs.variants.length) {
-                                                            modals.alert('createVariantsFirst');
+                                                            snackbar.showK('createVariantsFirst');
                                                             return false;
                                                         }
                                                         return true;
@@ -1128,6 +1128,7 @@
                                                     parentScope.args = angular.copy(newArgs);
                                                     $scope.args = angular.copy(newArgs);
                                                     $scope.formSetPristine();
+                                                    snackbar.showK('changesSaved');
                                                 });
                                                 return promise;
                                             };
@@ -1148,7 +1149,7 @@
                                         include: 'core/misc/action.html',
                                         action: function () {
                                             if (!config.getScope().args.id) {
-                                                modals.alert('saveCatalogFirst');
+                                                snackbar.showK('saveCatalogFirst');
                                                 return;
                                             }
                                             modals.fields.remote(config.getScope(), fields._images);
@@ -1158,7 +1159,12 @@
                                         include: 'core/misc/action.html',
                                         action: function () {
                                             if (!config.getScope().args.id) {
-                                                modals.alert('saveCatalogFirst');
+                                                snackbar.showK('saveCatalogFirst');
+                                                return;
+                                            }
+
+                                            if (!config.getScope().entity.cover) {
+                                                snackbar.showK('uploadImagesFirst');
                                                 return;
                                             }
                                             config.getScope().addProducts();

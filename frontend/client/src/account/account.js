@@ -70,7 +70,7 @@
                 }
                 return out;
             };
-        }).run(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS) {
+        }).run(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
                 return ident.identity.split('-')[1];
@@ -149,7 +149,10 @@
                                         if (identity.email && identity.associated === undefined) {
                                             modals.confirm('disconnectSignInMethod', function () {
                                                 $scope.args.disassociate.push(identity.identity);
-                                                $scope.save().then(recompute);
+                                                $scope.save().then(function () {
+                                                    recompute();
+                                                    snackbar.showK('identityDisconnected');
+                                                });
                                             });
                                         } else {
                                             modals.confirm('connectSignInMethod', function () {

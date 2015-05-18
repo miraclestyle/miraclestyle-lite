@@ -191,7 +191,6 @@ class UploadImages(orm.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     images_path = self.cfg.get('images_path')
-    print context.input
     manager = get_attr(context, entity_path)
     if manager is not None and hasattr(manager, 'add') and callable(manager.add):
       manager.add(get_attr(context, images_path))

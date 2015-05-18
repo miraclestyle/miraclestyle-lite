@@ -415,7 +415,7 @@
             }
             return modelsUtil;
         }).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
-            modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordBrowser) {
+            modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordBrowser, snackbar) {
 
             var modelsEditor = {
                 create: function (config) {
@@ -657,6 +657,8 @@
                                             config.afterSave($scope);
                                         }
                                         $scope.formSetPristine();
+
+                                        snackbar.showK('changesSaved');
                                     }, function (response) {
                                         // here handle error...
                                         if (angular.isDefined(config.afterSaveError)) {

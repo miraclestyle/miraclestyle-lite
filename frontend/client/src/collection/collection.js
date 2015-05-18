@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout) {
+    angular.module('app').run(function (modelsConfig, endpoint, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
         modelsConfig(function (models) {
             var read_arguments = {
                 _sellers: {
@@ -52,6 +52,7 @@
                                     cancelTimeouts();
                                     notthis = $timeout(function () {
                                         $scope.save();
+                                        snackbar.showK('changesSaved');
                                         cancelTimeouts(notthis);
                                     }, 1000);
                                     timeouts.push(notthis);

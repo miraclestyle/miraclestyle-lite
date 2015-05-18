@@ -372,6 +372,7 @@ body {
 
 .brief {
     color: white;
+    line-height: 14px;
 }
 
 .body2, .menu, .subheader {

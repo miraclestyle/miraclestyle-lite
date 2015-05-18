@@ -685,7 +685,7 @@
             };
         }).factory('formInputTypes', function (underscoreTemplate, $timeout, $parse,
             endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
-            errorHandling, modals, GLOBAL_CONFIG) {
+            errorHandling, modals, GLOBAL_CONFIG, snackbar) {
 
             var inflector = $filter('inflector'),
                 formInputTypes = {
@@ -703,6 +703,8 @@
                     },
                     SuperStringProperty: function (info) {
                         var config = info.config;
+
+
                         if (config.ui.attrs.type === undefined) {
                             config.ui.attrs.type = 'text';
                         }
@@ -716,7 +718,7 @@
 
                         if (info.config.repeated) {
                             info.config.ui.attrs['repeated-text'] = '';
-                            return 'text';
+                            return this.SuperTextProperty(info);
                         }
 
                         return 'string';
@@ -1584,6 +1586,8 @@
                                                         config.ui.specifics.afterSave($scope);
                                                     }
                                                     $scope.formSetPristine();
+
+                                                    snackbar.showK('changesSaved');
 
                                                 }, function (response) {
                                                     // here handle error...
