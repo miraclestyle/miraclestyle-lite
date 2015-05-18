@@ -600,7 +600,7 @@
                                         disabled: false,
                                         axis: 'x',
                                         handle: '.sort-handle',
-                                        distance: 8,
+                                        distance: 10,
                                         stop: function (e, ui) {
                                             $scope.$apply();
                                         }
@@ -629,8 +629,10 @@
                                             ui.helper.animate({
                                                 left: (ui.helper.width() * 2) * -1
                                             }, function () {
-                                                $scope.cmd.line.remove(line);
-                                                $scope.cmd.order.update();
+                                                $timeout(function () {
+                                                    $scope.cmd.line.remove(line);
+                                                    $scope.cmd.order.update();
+                                                });
                                             });
                                         } else {
                                             ui.helper.animate(ui.originalPosition, function () {
