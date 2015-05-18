@@ -70,7 +70,7 @@
                 }
                 return out;
             };
-        }).run(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS) {
+        }).run(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS) {
 
             var getProvider = function (ident) {
                 return ident.identity.split('-')[1];
@@ -185,15 +185,10 @@
                                     },
                                     actions: {},
                                     layouts: {
-                                        closeOthers: true,
                                         groups: [{
-                                            label: false,
-                                            disabled: false,
-                                            open: true
+                                            label: false
                                         }, {
-                                            label: 'Login Methods',
-                                            disabled: false,
-                                            open: false
+                                            label: GLOBAL_CONFIG.subheaders.loginMethods
                                         }]
                                     }
                                 }

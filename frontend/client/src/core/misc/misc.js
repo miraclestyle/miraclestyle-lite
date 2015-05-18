@@ -687,7 +687,7 @@
                 }
             };
             return outputTypes;
-        }).factory('searchBuilder', function (modelsMeta) {
+        }).factory('searchBuilder', function (modelsMeta, GLOBAL_CONFIG) {
             var create = function () {
                 var make = {
                     kind: null,
@@ -703,7 +703,7 @@
                             required: true,
                             ui: {
                                 args: 'search.indexID',
-                                label: 'Search Options',
+                                label: GLOBAL_CONFIG.fields.label.search.indexID,
                                 writable: true,
                                 attrs: {
                                     'ng-change': 'search.makeFilters()'
@@ -716,7 +716,7 @@
                             required: 'search.indexes[search.indexID].ancestor',
                             ui: {
                                 args: 'search.send.ancestor',
-                                label: 'Ancestor',
+                                label: GLOBAL_CONFIG.fields.label.search.ancestor,
                                 writable: true
                             }
                         },
@@ -855,7 +855,7 @@
                                 code_name: 'op_' + i,
                                 required: field.required,
                                 ui: {
-                                    label: 'Operator',
+                                    label: GLOBAL_CONFIG.fields.label.search.operator,
                                     writable: true,
                                     args: 'search.send.filters[\'' + i + '\'].operator'
                                 }

@@ -74,7 +74,7 @@
                 };
             }
         };
-    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, $mdSidenav, $timeout) {
+    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout) {
 
         modelsConfig(function (models) {
             var setupToggleMenu = function ($scope, id) {
@@ -283,7 +283,6 @@
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
-                            transformOrigin: true,
                             controller: function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey;
                                 $.extend($scope, fakeScope);
@@ -353,8 +352,7 @@
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
-                                            'description', 'contents', 'availability'
-                                        ];
+                                            'description', 'contents', 'availability'];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
                                     } catch (ignore) {}
@@ -530,9 +528,13 @@
                                 models['34'].current($scope.catalog._seller.key);
 
                                 $scope.viewProduct = function (image, pricetag, $event) {
-                                    //config.targetEvent.target = $(config.targetEvent.target).parents('.catalog-pricetag:first').get(0);
+                                    var target = $event.target,
+                                        theTarget = $(target).parents('.catalog-pricetag:first');
+                                    if (theTarget.length) {
+                                        target = theTarget.get(0);
+                                    }
                                     that.viewProductModal($scope.catalog.key, image.key, pricetag.key, null, {
-                                        popFrom: $event.target
+                                        popFrom: target
                                     });
                                 };
 
@@ -586,7 +588,6 @@
                                 $.extend(fields._images.ui, {
                                     label: false,
                                     specifics: {
-                                        addNewText: 'Select Images',
                                         sortableOptions: {
                                             stop: function () {
                                                 if (fields._images.ui.specifics.parentArgs.length) {
@@ -930,6 +931,7 @@
 
                                                 image.pricetags.push(newPricetag); // append new pricetag to image
                                                 setupCurrentPricetag(image, newPricetag); // set current
+                                                $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = false;
                                                 $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product']; // set correct pathing for the new product
                                                 recomputeRealPath($scope.fieldProduct);
                                                 $scope.fieldProduct.ui.specifics.create();
@@ -1025,7 +1027,7 @@
                                             });
 
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
-                                                label: 'Product Instances',
+                                                label: GLOBAL_CONFIG.subheaders.productInstances,
                                                 path: ['_images', 'pricetags'],
                                                 specifics: {
                                                     cards: true,
@@ -1142,7 +1144,7 @@
                                         label: false,
                                         fields: ['name', 'discontinue_date'],
                                     }, {
-                                        label: 'Images',
+                                        label: GLOBAL_CONFIG.subheaders.catalogImages,
                                         include: 'core/misc/action.html',
                                         action: function () {
                                             if (!config.getScope().args.id) {
@@ -1152,7 +1154,7 @@
                                             modals.fields.remote(config.getScope(), fields._images);
                                         }
                                     }, {
-                                        label: 'Products',
+                                        label: GLOBAL_CONFIG.subheaders.catalogProducts,
                                         include: 'core/misc/action.html',
                                         action: function () {
                                             if (!config.getScope().args.id) {

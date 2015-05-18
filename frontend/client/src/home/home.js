@@ -32,7 +32,7 @@
                 }
             };
         })
-        .controller('HomePageController', function ($scope, models, modals, $state, $stateParams, $q, modelsMeta) {
+        .controller('HomePageController', function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {search: {}},
                 defer = $q.defer(),
                 promise = defer.promise;
@@ -41,7 +41,7 @@
             $scope.sellerDetail = false;
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
-                    popFrom: $event.target
+                    popFrom: helpers.grid.realEventTarget($event.target)
                 });
             };
 

@@ -2,11 +2,13 @@
     'use strict';
     angular.module('app').run(function (helpers) {
         helpers.grid = {
-            click: function (targetEvent) {
-                if (!$(targetEvent.target).hasClass('grid-item')) {
-                    targetEvent.target = $(targetEvent.target).parents('.grid-item:first').get(0);
+            realEventTarget: function (target) {
+                var theTarget = $(target),
+                    parentTarget = theTarget.parents('.grid-item:first');
+                if (!theTarget.hasClass('grid-item') && parentTarget.length) {
+                    target = parentTarget.get(0);
                 }
-                return targetEvent.target;
+                return target;
             },
             calculate: function (canvas_width, max_width, min_width, margin) {
                 /*

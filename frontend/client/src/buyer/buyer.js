@@ -11,13 +11,13 @@
                 models['18'].manageModal(currentAccount.key);
             };
 
-        }).controller('BuyOrdersController', function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
+        }).controller('BuyOrdersController', function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
             var carts = $state.current.name === 'buy-carts';
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
 
-            $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cart.buyer.list : GLOBAL_CONFIG.emptyHelp.order.buyer.list);
+            $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartBuyerList : GLOBAL_CONFIG.emptyHelp.orederBuyerList);
 
             $scope.search = {
                 results: [],
@@ -27,13 +27,13 @@
 
             $scope.scrollEnd = {loader: false};
 
-            $scope.view = function (order, event) {
+            $scope.view = function (order, $event) {
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
                     models['34'].manageModal(order, order._seller, buyer, {
                         cartMode: carts,
-                        popFrom: event.target
+                        popFrom: helpers.grid.realEventTarget($event.target)
                     });
                 });
             };

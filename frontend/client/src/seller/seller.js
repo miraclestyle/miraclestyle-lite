@@ -71,13 +71,13 @@
 
         $scope.preview = function (key, $event) {
             models['31'].previewModal(key, {
-                popFrom: $event.target
+                popFrom: helpers.grid.realEventTarget($event.target)
             });
         };
 
         $scope.manage = function (entity, $event) {
             models['31'].manageModal(entity, newEntity, {
-                popFrom: $event.target
+                popFrom: helpers.grid.realEventTarget($event.target)
             });
         };
 
@@ -124,7 +124,7 @@
 
         $scope.setPageToolbarTitle('seller.' + (carts ? 'carts' : 'orders'));
 
-        $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cart.seller.list : GLOBAL_CONFIG.emptyHelp.order.seller.list);
+        $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartSellerList : GLOBAL_CONFIG.emptyHelp.orderSellerList);
 
 
         $scope.search = {
@@ -201,8 +201,8 @@
                         ui: {
                             specifics: {
                                 type: 'radio',
-                                trueLabel: 'Applies to all locations except to those listed in the Locations section.',
-                                falseLabel: 'Applies only to the locations listed in the Locations section.'
+                                trueLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.trueLabel,
+                                falseLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.falseLabel
                             }
                         }
                     },
@@ -329,10 +329,10 @@
                                                 }
                                             },
                                             modelclass: {
-                                                condition_type: groupBy('conditional', 'Condition', 'Condition under which this price applies.'),
+                                                condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['124-update'].condition_type, GLOBAL_CONFIG.fields.help['124-update'].condition_type),
                                                 condition_operator: groupBy('conditional'),
                                                 condition_value: groupBy('conditional'),
-                                                price_type: groupBy('price', 'Price', 'Price formula that calculates the price.'),
+                                                price_type: groupBy('price', GLOBAL_CONFIG.fields.label['124-update'].price_type, GLOBAL_CONFIG.fields.help['124-update'].price_type),
                                                 price_operator: groupBy('price'),
                                                 price_value: groupBy('price')
                                             }
@@ -360,7 +360,7 @@
                                         specifics: lineSpec
                                     },
                                     modelclass: {
-                                        condition_type: groupBy('conditional', 'Condition', 'Condition under which this price applies.'),
+                                        condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
                                         condition_operator: groupBy('conditional'),
                                         condition_value: groupBy('conditional')
                                     }
@@ -409,7 +409,7 @@
                             required: true,
                             ui: {
                                 args: 'info.kind',
-                                label: 'Rule',
+                                label: GLOBAL_CONFIG.fields.label.plugins.kind,
                                 attrs: {
                                     'ng-change': 'setNewArg()'
                                 },
@@ -441,11 +441,8 @@
                                         inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
                                             $scope.layouts = {
-                                                closeOthers: true,
                                                 groups: [{
-                                                    label: false,
-                                                    disabled: false,
-                                                    open: true
+                                                    label: false
                                                 }]
                                             };
                                             $scope.formBuilder = {
@@ -751,9 +748,9 @@
                             $scope.scrollEnd.loader = $scope.search.pagination;
                             $scope.search.pagination.load();
 
-                            $scope.viewCatalog = function (result, event) {
+                            $scope.viewCatalog = function (result, $event) {
                                 models['31'].viewModal(result.key, {
-                                    popFrom: event.target
+                                    popFrom: helpers.grid.realEventTarget($event.target)
                                 });
                             };
 
@@ -972,17 +969,14 @@
                         },
                         scope: {
                             layouts: {
-                                closeOthers: true,
                                 groups: [{
                                     label: false,
-                                    open: true,
-                                    key: false,
                                     fields: ['name', 'logo'],
                                 }, {
-                                    label: 'Contents',
+                                    label: GLOBAL_CONFIG.subheaders.sellerContents,
                                     fields: ['_content']
                                 }, {
-                                    label: 'Rules',
+                                    label: GLOBAL_CONFIG.subheaders.sellerPlugins,
                                     fields: ['_plugin_group'],
                                 }]
                             }

@@ -3,7 +3,10 @@
     angular.module('app').factory('snackbar', ['GLOBAL_CONFIG', function (GLOBAL_CONFIG) {
         var snackbar = {
             show: $.noop,
-            hide: $.noop
+            hide: $.noop,
+            showK: function (key) {
+                return snackbar.show(GLOBAL_CONFIG.snackbar.messages[key]);
+            }
         };
         if (GLOBAL_CONFIG.debug) {
             window._snackbar = snackbar;

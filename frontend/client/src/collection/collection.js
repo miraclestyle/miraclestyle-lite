@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, currentAccount, modelsMeta, modelsEditor, $timeout) {
+    angular.module('app').run(function (modelsConfig, endpoint, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout) {
         modelsConfig(function (models) {
             var read_arguments = {
                 _sellers: {
@@ -73,7 +73,7 @@
                                 this.args.sellers.remove(seller.key);
                                 this.entity._sellers.remove(seller);
                             },
-                            view: function (seller, event) {
+                            view: function (seller, $event) {
                                 var thisScope = this;
                                 models['23'].actions.read({
                                     account: seller.parent.key,
@@ -84,7 +84,7 @@
                                     }
                                 }).then(function (response) {
                                     models['23'].viewModal(response.data.entity, {
-                                        popFrom: event.target,
+                                        popFrom: helpers.grid.realEventTarget($event.target),
                                         removedOrAdded: function (updatedCollection) {
                                             thisScope.entity._sellers.iremove(function (seller) {
                                                 return $.inArray(seller.key, updatedCollection.sellers) === -1;
@@ -99,13 +99,10 @@
                                 });
                             },
                             layouts: {
-                                closeOthers: true,
                                 groups: [{
-                                    label: false,
-                                    open: true,
-                                    key: false
+                                    label: false
                                 }, {
-                                    label: 'Sellers'
+                                    label: GLOBAL_CONFIG.subheaders.collectionSeller
                                 }]
                             }
                         }

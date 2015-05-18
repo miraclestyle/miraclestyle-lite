@@ -1,11 +1,11 @@
 (function () {
     'use strict';
     angular.module('app')
-        .factory('recordBrowser', function (models, $modal) {
+        .factory('recordBrowser', function (models, GLOBAL_CONFIG, $modal) {
             return {
                 attach: function (config) {
                     return {
-                        label: 'History',
+                        label: GLOBAL_CONFIG.subheaders.history,
                         include: 'core/misc/action.html',
                         action: function () {
                             $modal.open({

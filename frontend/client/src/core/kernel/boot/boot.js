@@ -335,6 +335,10 @@ if (!Array.prototype.indexOf) {
             toolbar: {
                 titles: {}
             },
+            snackbar: {
+                messages: {}
+            },
+            subheaders: {},
             fields: {
                 help: {},
                 label: {},
