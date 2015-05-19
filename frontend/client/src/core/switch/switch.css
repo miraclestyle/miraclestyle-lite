@@ -43,6 +43,7 @@ md-switch:not([disabled]) .md-dragging, md-switch:not([disabled]).md-dragging .m
 md-switch .md-label {
     border-color: transparent;
     border-width: 0px;
+    padding-right:72px;
 }
 
 md-switch .md-bar {

@@ -74,6 +74,7 @@
                 checkout: 'Checkout',
                 completed: 'Completed',
                 cart: 'Cart',
+                canceled: 'Canceled',
                 sudo: 'Administered',
                 review: 'Review',
                 reported: 'Reported',

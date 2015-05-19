@@ -33,7 +33,7 @@
                 }).then(function (buyer) {
                     models['34'].manageModal(order, order._seller, buyer, {
                         cartMode: carts,
-                        popFrom: helpers.grid.realEventTarget($event.target)
+                        popFrom: ($event ? helpers.grid.realEventTarget($event.target) : false)
                     });
                 });
             };

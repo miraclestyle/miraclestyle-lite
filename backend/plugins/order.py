@@ -54,7 +54,7 @@ class OrderInit(orm.BaseModel):
       defaults = {'_lines' : {'config': {'search': {'options': {'limit': 0}}}}}
       if 'read_arguments' in context.input:
         override_dict(defaults, context.input.get('read_arguments'))
-      order.read(defaults)  # @todo It is possible that we will have to read more stuff here.
+      order.read(defaults)
     context._order = order
 
 

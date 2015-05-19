@@ -76,7 +76,7 @@
             }
             return formatted;
         };
-    }).run(function (modelsMeta, modelsConfig, $modal, modals, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
+    }).run(function (modelsMeta, modelsConfig, $modal, modals, snackbar, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
         modelsConfig(function (models) {
             $.extend(models['34'], {
                 current: function (sellerKey) {
@@ -304,6 +304,8 @@
                                             $modal.open({
                                                 backdrop: true,
                                                 fullScreen: false,
+                                                inDirection: false,
+                                                outDirection: false,
                                                 templateUrl: 'order/browse_addresses.html',
                                                 controller: function ($scope) {
                                                     $scope.addresses = response.data.entity.addresses;
@@ -608,6 +610,9 @@
                                     whatSortMeans: function () {
                                         modals.alert('howToDeleteLine');
                                     },
+                                    onStart: function (e, ui, line) {
+                                        $(ui.helper).find('.sort-handle').addClass('dragged');
+                                    },
                                     onDrag: function (e, ui, line) {
                                         var deleteMode,
                                             division,
@@ -631,7 +636,9 @@
                                             }, function () {
                                                 $timeout(function () {
                                                     $scope.cmd.line.remove(line);
-                                                    $scope.cmd.order.update();
+                                                    $scope.cmd.order.update().then(function () {
+                                                        snackbar.showK('cartUpdated');
+                                                    });
                                                 });
                                             });
                                         } else {

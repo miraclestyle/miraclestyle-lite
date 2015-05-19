@@ -159,6 +159,8 @@
     -ms-flex-direction: column;
     flex-direction: column;
     border-radius: 2px;
+    min-width: 280px;
+    max-width: 560px;
 }
 
 .md-dialog.modal-medium {

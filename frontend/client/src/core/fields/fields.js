@@ -182,8 +182,8 @@
                                     $scope.dialog.toolbar.title = helpers.toolbar.buildTitle(field._title_);
                                 });
 
-                                $scope.save = function () {
-                                    var maybePromise = save.call(scope);
+                                $scope.save = function (dontShowMessage) {
+                                    var maybePromise = save.call(scope, dontShowMessage);
                                     if (maybePromise) {
                                         maybePromise.then($scope.formSetPristine);
                                     }
@@ -580,7 +580,7 @@
                                     return false;
                                 }
                             }
-                            promise = submit(scope);
+                            promise = submit(scope, {dontShowMessage: execute});
                             if (promise && angular.isObject(promise) && promise.then) {
                                 promise.then(function () {
                                     if (execute) {
@@ -1476,7 +1476,7 @@
                                             };
                                             // copy of root args used for packing the customized arguments
                                             $scope.sendRootArgs = {};
-                                            $scope.save = function () {
+                                            $scope.save = function (dontShowMessage) {
                                                 if (!$scope.validateForm()) { // check if the form is valid
                                                     return false;
                                                 }
@@ -1586,8 +1586,10 @@
                                                         config.ui.specifics.afterSave($scope);
                                                     }
                                                     $scope.formSetPristine();
-
-                                                    snackbar.showK('changesSaved');
+                                                    console.trace(dontShowMessage);
+                                                    if (!dontShowMessage) {
+                                                        snackbar.showK('changesSaved');
+                                                    }
 
                                                 }, function (response) {
                                                     // here handle error...
@@ -1610,6 +1612,8 @@
                                                     config.ui.specifics.afterComplete($scope);
                                                 }
                                                 $scope.formSetPristine();
+
+                                                snackbar.showK('changesSaved');
                                             };
 
                                             $scope.noComplete = function () {

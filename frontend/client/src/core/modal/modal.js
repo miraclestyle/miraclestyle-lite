@@ -248,11 +248,10 @@
                     animator,
                     inclass = 'in',
                     outclass = 'out',
-                    popin;
-
-                if (clickElement) {
-                    spec = getPositionOverClickElement(clickElement, domEl);
                     popin = domEl.data('animator');
+
+                if (clickElement && popin) {
+                    spec = getPositionOverClickElement(clickElement, domEl);
                     animator = animationGenerator.single('pop-out',
                         '0% { opacity:1;top: 0px; left: 0px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(1, 1);}' +
                         '75% { top: 0px; left: 0px;}' +
@@ -402,6 +401,7 @@
             };
 
             $modalStack.close = function (modalInstance, result, what) {
+                console.trace(this);
                 if (!what) {
                     what = 'resolve';
                 }

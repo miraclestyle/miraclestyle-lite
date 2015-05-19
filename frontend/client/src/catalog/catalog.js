@@ -432,6 +432,8 @@
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
                                         }
+
+                                        snackbar.showK('cartUpdated');
                                     });
                                 };
 

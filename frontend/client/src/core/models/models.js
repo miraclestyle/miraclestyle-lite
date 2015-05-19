@@ -8,6 +8,9 @@
             modals.models.sudo = function (entity, config) {
                 var defaults = {
                     fullScreen: false,
+                    popFrom: false,
+                    inDirection: false,
+                    outDirection: false,
                     templateUrl: null,
                     controller: function ($scope) {
                         var sudoFields = modelsMeta.getActionArguments(entity.kind, 'sudo');
@@ -641,7 +644,7 @@
                                     config.action = action;
                                 };
 
-                                $scope.save = function () {
+                                $scope.save = function (dontShowMessage) {
                                     if (!$scope.validateForm()) {
                                         return false;
                                     }
@@ -657,8 +660,9 @@
                                             config.afterSave($scope);
                                         }
                                         $scope.formSetPristine();
-
-                                        snackbar.showK('changesSaved');
+                                        if (!dontShowMessage) {
+                                            snackbar.showK('changesSaved');
+                                        }
                                     }, function (response) {
                                         // here handle error...
                                         if (angular.isDefined(config.afterSaveError)) {
@@ -683,6 +687,7 @@
                                         });
                                     }
                                     $scope.formSetPristine();
+                                    snackbar.showK('changesSaved');
                                     console.log('modelsEditor.complete', $scope);
 
                                 };
@@ -700,11 +705,14 @@
                                 };
 
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                    $scope._close_ = undefined;
                                     $scope.$close();
                                     if (config.afterClose) {
                                         config.afterClose($scope);
                                     }
                                 });
+
+                                $scope._close_ = $scope.close;
 
                                 rootTitle = function () {
                                     var toolbar = $scope.dialog.toolbar,

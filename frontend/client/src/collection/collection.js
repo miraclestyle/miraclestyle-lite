@@ -51,8 +51,9 @@
                                 if (neww !== old) {
                                     cancelTimeouts();
                                     notthis = $timeout(function () {
-                                        $scope.save();
-                                        snackbar.showK('changesSaved');
+                                        $scope.save().then(function () {
+                                            snackbar.showK('changesSaved');
+                                        });
                                         cancelTimeouts(notthis);
                                     }, 1000);
                                     timeouts.push(notthis);

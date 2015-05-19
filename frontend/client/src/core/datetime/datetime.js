@@ -413,8 +413,8 @@
                                 popFrom: false,
                                 inDirection: false,
                                 outDirection: false,
-                                templateUrl: 'core/datetime/popup.html',
                                 fullScreen: false,
+                                templateUrl: 'core/datetime/popup.html',
                                 controller: function ($scope) {
                                     $scope.date = ngModel.$modelValue;
                                     var $close = $scope.$close;
