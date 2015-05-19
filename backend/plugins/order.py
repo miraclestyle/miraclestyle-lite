@@ -319,8 +319,8 @@ class AddressRule(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  exclusion = orm.SuperBooleanProperty('3', required=True, default=False, indexed=False)
-  address_type = orm.SuperStringProperty('4', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
+  address_type = orm.SuperStringProperty('3', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
+  exclusion = orm.SuperBooleanProperty('4', required=True, default=False, indexed=False)
   locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '5', repeated=True, indexed=False)
   
   def run(self, context):
@@ -583,14 +583,15 @@ class Tax(orm.BaseModel):
     for line in order._lines.value:
       if line._state == 'deleted':
         continue
+      product = line.product.value
       taxes = line.taxes.value
       if not taxes:
         taxes = []
       for tax in taxes:
         if tax.key_id_str == self.key_id_str:
           tax._state = 'deleted'
-      if (self.product_categories and self.product_categories.count(copy_product.category.key)) \
-      or (self.product_codes and self.product_codes.count(copy_product.code)) \
+      if (self.product_categories and self.product_categories.count(product.category.value.key)) \
+      or (self.product_codes and self.product_codes.count(product.code)) \
       or (not self.carriers and not self.product_categories and not self.product_codes):
         if allowed:
           tax_exists = False

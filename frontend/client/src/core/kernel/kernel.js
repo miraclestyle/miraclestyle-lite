@@ -134,7 +134,7 @@
                     }
                 });
             },
-            getProperty: function (obj, prop) {
+            getProperty: function (obj, prop, defaultMaybe) {
                 //console.trace('helpers.getProperty', obj, prop);
                 var path = prop;
                 if (!angular.isArray(path)) {
@@ -144,9 +144,12 @@
                     try {
                         obj = obj[path];
                     } catch (e) {
-                        return undefined;
+                        return defaultMaybe;
                     }
                 });
+                if (angular.isUndefined(obj)) {
+                    return defaultMaybe;
+                }
                 return obj;
 
             },

@@ -180,7 +180,7 @@
                                     label: false,
                                     args: 'messages.draft.message',
                                     parentArgs: 'messages.draft',
-                                    writable: true,
+                                    writable: 'order.ui.rule.action.log_message.executable',
                                     placeholder: 'Type message here.',
                                     attrs: {
                                         'native-placeholder': '',

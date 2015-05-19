@@ -342,6 +342,7 @@ if (!Array.prototype.indexOf) {
             fields: {
                 help: {},
                 label: {},
+                translateChoices: {},
                 emptyHelp: {}
             },
             sellerPluginName: {},
@@ -381,6 +382,10 @@ if (!Array.prototype.indexOf) {
                 }
             }
         };
+
+    if (GLOBAL_CONFIG.debug) {
+        window._GLOBAL_CONFIG = GLOBAL_CONFIG;
+    }
  
     angular.module('config', ['ng'])
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG)

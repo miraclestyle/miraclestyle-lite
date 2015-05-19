@@ -170,7 +170,7 @@
         modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
 
         var pluginName = function (kind) {
-            var find = GLOBAL_CONFIG.sellerPluginName[kind];
+            var find = GLOBAL_CONFIG.fields.translateChoices.rules.kind[kind];
             return angular.isDefined(find) ? find : kind;
         };
 
@@ -179,12 +179,7 @@
                 //info.config.repeated = true;
                 //return this.SuperLocalStructuredProperty(info);
                 var config = info.config,
-                    kinds = $.map(config.kinds, function (kind_id) {
-                        return {
-                            key: kind_id,
-                            name: pluginName(kind_id)
-                        };
-                    }),
+                    kinds = config.kinds,
                     rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
                     lineSpec = {
                         listView: 'default-line-list-view'
@@ -393,6 +388,7 @@
                         kind: undefined,
                         selectKinds: {
                             type: 'SuperStringProperty',
+                            _maker_: 'rules',
                             choices: kinds,
                             required: true,
                             ui: {

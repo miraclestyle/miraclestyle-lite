@@ -2,6 +2,7 @@
     'use strict';
 
     angular.module('app').config(function (GLOBAL_CONFIG) {
+        var locals = {};
 
         $.extend(GLOBAL_CONFIG.modals.confirmations, {
             discardWithFieldsRequired: {
@@ -124,6 +125,42 @@
             }
         });
 
+        locals.conditionOperatorSpec = {
+            '<=': 'is less than or equals to',
+            '>=': 'is greater than or equals to',
+            '==': 'equals to',
+            '<': 'less than',
+            '>': 'greater than'
+        };
+        locals.addressTypeSpec = {
+            shipping: 'Shipping',
+            billing: 'Billing'
+        };
+        $.extend(GLOBAL_CONFIG.fields.translateChoices, {
+            '107': {
+                address_type: locals.addressTypeSpec
+            },
+            '109': {
+                address_type: locals.addressTypeSpec
+            },
+            '111': {
+                condition_operator: locals.conditionOperatorSpec
+            },
+            '124': {
+                condition_operator: locals.conditionOperatorSpec
+            },
+            rules: {
+                kind: {
+                    '109': 'Tax',
+                    '126': 'Discount',
+                    '107': 'Address',
+                    '117': 'Currency',
+                    '108': 'PayPal',
+                    '113': 'Carrier'
+                }
+            }
+        });
+
 
         $.extend(GLOBAL_CONFIG.fields.emptyHelp, {
             '19-update': {
@@ -193,15 +230,8 @@
             carts: 'Carts',
             orders: 'Orders',
             catalogs: 'Catalogs',
+            addLines: 'Add Line'
         });
 
-        $.extend(GLOBAL_CONFIG.sellerPluginName, {
-            '109': 'Tax',
-            '126': 'Discount',
-            '107': 'Address',
-            '117': 'Currency',
-            '108': 'PayPal',
-            '113': 'Carrier'
-        });
     });
 }());

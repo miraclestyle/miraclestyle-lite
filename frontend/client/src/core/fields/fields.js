@@ -701,6 +701,23 @@
                             }
                         }
 
+                        if (info.config.choices.length) {
+                            info.config.ui.specifics.translatedChoices = [];
+                            angular.forEach(info.config.choices, function (value) {
+                                // @todo this might cause problems when config.choices = some other list is applied trough the lifecycle
+                                // the choices will not be re-parsed to translatedChoices
+                                // this code will only run upon directive initilization
+                                var hasit = helpers.getProperty(GLOBAL_CONFIG.fields.translateChoices, [info.config._maker_, info.config.code_name, value]);
+                                if (angular.isUndefined(hasit)) {
+                                    hasit = value;
+                                }
+                                info.config.ui.specifics.translatedChoices.push({
+                                    key: value,
+                                    name: hasit
+                                });
+                            });
+                        }
+
                         return 'select';
                     },
                     SuperStringProperty: function (info) {
