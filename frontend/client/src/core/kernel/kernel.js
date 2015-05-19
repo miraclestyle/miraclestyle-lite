@@ -383,9 +383,13 @@
                 return undefined;
             },
             setItem: function (key, value) {
+                var yes;
                 inMemory.put(key, value);
                 value = prepare(key, value);
-                return localStorage.setItem(key, value);
+                try {
+                    yes = localStorage.setItem(key, value);
+                } catch (ignore) {} // in case the localStorage is full it throws error
+                return yes;
             },
             removeItem: function (key) {
                 inMemory.remove(key);

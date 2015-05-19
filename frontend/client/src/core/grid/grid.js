@@ -240,7 +240,7 @@
                 };
                 that.calculate = function (item) {
                     if (that.columns < 2 && $element.width() > that.config.maxWidth) {
-                        item.css('width', '100%');
+                        item.css('width', 'calc((100%) - ' + (that.config.margin * 2) + 'px)');
                         $element.css({
                             marginLeft: that.calc[2],
                             marginRight: that.calc[2]

@@ -69,7 +69,7 @@
                             <div class="list list-padding seam-bottom">
                               <div class="list-subheader subheader">Shipping Info</div>
                               <div form-input="addresses.fields.sameAsBilling"></div>
-                              <div ng-if="!addresses.sameAsBilling" class="order-expanding-address" ng-form="addresses.form.shipping">
+                              <div collapse="addresses.sameAsBilling" class="order-expanding-address" ng-form="addresses.form.shipping">
                                   <button md-ink-ripple-list
                                           ng-click="addresses.browse('shipping')" 
                                           type="button" 

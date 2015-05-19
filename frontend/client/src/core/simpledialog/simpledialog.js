@@ -242,11 +242,11 @@
                 discoverContainerClass(container, options);
                 var dialogEl = container.find(discoverDirective(options)),
                     parentElement = options.parent,
-                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget,
+                    promise,
+                    nextPromise,
                     defer = $q.defer();
                 parentElement.append(container);
-                var promise = defer.promise,
-                    nextPromise;
+                promise = defer.promise;
                 nextPromise = promise.then(function () {
                     var maybeDefer = $q.defer(),
                         maybePromise = maybeDefer.promise,
@@ -264,44 +264,6 @@
                 return nextPromise;
             }
 
-            function dialogPopOut(container, options) {
-                discoverContainerClass(container, options);
-                var dialogEl = container.find(discoverDirective(options)),
-                    parentElement = options.parent,
-                    type,
-                    clickElement = options.popInTarget && options.popInTarget.length && options.popInTarget;
-                if (options.onBeforeHide) {
-                    options.onBeforeHide(dialogEl, options);
-                }
-                var promise = dialogTransitionEnd(dialogEl);
-                promise.then(function () {
-                    if (options.onAfterHide) {
-                        options.onAfterHide(dialogEl, options);
-                    }
-                });
-                dialogEl.removeClass('transition-in').addClass('transition-out');
-                setTimeout(function () {
-                    dialogEl.addClass('opacity-out');
-                }, 50);
-                return promise;
-            }
-
-            function transformToClickElement(dialogEl, clickElement) {
-                if (clickElement) {
-                    var clickRect = clickElement[0].getBoundingClientRect();
-                    var dialogRect = dialogEl[0].getBoundingClientRect();
-
-                    var scaleX = Math.min(0.5, clickRect.width / dialogRect.width);
-                    var scaleY = Math.min(0.5, clickRect.height / dialogRect.height);
-
-                    dialogEl.css($mdConstant.CSS.TRANSFORM, 'translate3d(' +
-                        (-dialogRect.left + clickRect.left + clickRect.width / 2 - dialogRect.width / 2) + 'px,' +
-                        (-dialogRect.top + clickRect.top + clickRect.height / 2 - dialogRect.height / 2) + 'px,' +
-                        '0) scale(' + scaleX + ',' + scaleY + ')'
-                    );
-                }
-            }
-
             function dialogTransitionEnd(dialogEl) {
                 var deferred = $q.defer();
 
@@ -314,6 +276,36 @@
                 }
                 dialogEl.on($mdConstant.CSS.TRANSITIONEND, finished);
                 return deferred.promise;
+            }
+
+            function dialogPopOut(container, options) {
+                discoverContainerClass(container, options);
+                var dialogEl = container.find(discoverDirective(options)),
+                    promise,
+                    defer;
+                if (options.onBeforeHide) {
+                    options.onBeforeHide(dialogEl, options);
+                }
+                if (dialogEl.hasClass('fade')) {
+                    defer = $q.defer();
+                    dialogEl.oneAnimationEnd(function () {
+                        defer.resolve();
+                    });
+                    dialogEl.removeClass('in').addClass('out');
+                    promise = defer.promise;
+                } else {
+                    promise = dialogTransitionEnd(dialogEl);
+                    promise.then(function () {
+                        if (options.onAfterHide) {
+                            options.onAfterHide(dialogEl, options);
+                        }
+                    });
+                    dialogEl.removeClass('transition-in').addClass('transition-out');
+                    setTimeout(function () {
+                        dialogEl.addClass('opacity-out');
+                    }, 50);
+                }
+                return promise;
             }
 
         }

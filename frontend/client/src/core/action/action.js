@@ -70,17 +70,13 @@
                                 options.resize();
                                 $(window).on('resize', options.resize);
 
-                                dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
-                                        Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
-                                        Math.min(target.height() / dialogEl.height(), 1.0) + ')')
-                                    .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
-                                        if (ev.target === dialogEl[0]) {
-                                            nextDefer.resolve();
-                                        }
-                                    });
                                 $$rAF(function () {
-                                    dialogEl.addClass('transition-in').addClass('opacity-in');
-                                    dialogEl.css($mdConstant.CSS.TRANSFORM, '');
+                                    dialogEl.addClass('fade in');
+                                });
+
+                                dialogEl.oneAnimationEnd(function () {
+                                    element.addClass('opacity-in');
+                                    nextDefer.resolve();
                                 });
 
                                 return nextPromise;

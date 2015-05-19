@@ -113,7 +113,7 @@
 
                             if (scope.image && scope.image.serving_url) {
                                 img.on('error', error)
-                                    .attr('src', scope.image.serving_url + '=s' + scope.config.size);
+                                    .attr('src', scope.image.serving_url + (scope.config.size === true ? '' : '=s' + scope.config.size));
                             } else {
                                 error.call(img);
                             }
@@ -469,7 +469,6 @@
                 if (!angular.isNumber(amount) || isNaN(amount)) {
                     return '';
                 }
- 
                 /*
                 {
                   "name": "US Dollar",
@@ -568,7 +567,7 @@
                         raise ValueError("Currency formatting is not possible using "
                                          "the 'C' locale.")
 
-                    s = cls.format(lang, '%%.%if' % digits, abs(val), grouping,
+                    s = cls.format(lang, '%.%if' % digits, abs(val), grouping,
                             monetary=currency)
                     # '<' and '>' are markers if the sign must be inserted
                     # between symbol and value
@@ -1122,5 +1121,62 @@
                 }
             };
             return channelNotifications;
-        });
+        }).directive('collapse', ['$animate', function ($animate) {
+
+            return {
+                link: function (scope, element, attrs) {
+                    function expand() {
+                        element.removeClass('collapse').addClass('collapsing');
+                        $animate.addClass(element, 'in', {
+                            to: {
+                                height: element[0].scrollHeight + 'px'
+                            }
+                        }).then(expandDone);
+                    }
+
+                    function expandDone() {
+                        element.removeClass('collapsing');
+                        element.css({
+                            height: 'auto'
+                        });
+                    }
+
+                    function collapse() {
+                        element
+                        // IMPORTANT: The height must be set before adding "collapsing" class.
+                        // Otherwise, the browser attempts to animate from height 0 (in
+                        // collapsing class) to the given height here.
+                            .css({
+                                height: element[0].scrollHeight + 'px'
+                            })
+                            // initially all panel collapse have the collapse class, this removal
+                            // prevents the animation from jumping to collapsed state
+                            .removeClass('collapse')
+                            .addClass('collapsing');
+
+                        $animate.removeClass(element, 'in', {
+                            to: {
+                                height: '0'
+                            }
+                        }).then(collapseDone);
+                    }
+
+                    function collapseDone() {
+                        element.css({
+                            height: '0'
+                        }); // Required so that collapse works when animation is disabled
+                        element.removeClass('collapsing');
+                        element.addClass('collapse');
+                    }
+
+                    scope.$watch(attrs.collapse, function (shouldCollapse) {
+                        if (shouldCollapse) {
+                            collapse();
+                        } else {
+                            expand();
+                        }
+                    });
+                }
+            };
+        }]);;
 }());

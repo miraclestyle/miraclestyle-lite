@@ -344,6 +344,7 @@ if (!Array.prototype.indexOf) {
                 label: {},
                 emptyHelp: {}
             },
+            sellerPluginName: {},
             labels: {},
             modals: {
                 confirmations: {},

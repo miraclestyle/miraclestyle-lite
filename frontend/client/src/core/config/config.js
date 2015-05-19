@@ -194,5 +194,14 @@
             orders: 'Orders',
             catalogs: 'Catalogs',
         });
+
+        $.extend(GLOBAL_CONFIG.sellerPluginName, {
+            '109': 'Tax',
+            '126': 'Discount',
+            '107': 'Address',
+            '117': 'Currency',
+            '108': 'PayPal',
+            '113': 'Carrier'
+        });
     });
 }());

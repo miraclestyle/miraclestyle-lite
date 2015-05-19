@@ -332,6 +332,8 @@
                 restrict: 'A',
                 require: '^form',
                 templateUrl: 'core/fields/builder.html',
+                scope: true,
+                transclude: true,
                 controller: function ($scope, $element, $attrs) {
                     $scope.configurations = $scope.$eval($attrs.formBuilder);
                 }

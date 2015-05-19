@@ -1,0 +1,3 @@
+== Configuration ==
+
+All texts that do not appear in *.html templates are located in config.js

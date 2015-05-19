@@ -35,18 +35,6 @@
 
             }
         };
-    }).directive('pluginListView', function (modelsMeta) {
-        return {
-            scope: {
-                val: '=pluginListView'
-            },
-            templateUrl: 'seller/plugin_list_view.html',
-            controller: function ($scope) {
-                $scope.pluginName = function (kind) {
-                    return modelsMeta.getName(kind);
-                };
-            }
-        };
     }).controller('SellerManagementController', function ($scope, endpoint, currentAccount, models) {
 
         $scope.settings = function () {
@@ -181,16 +169,20 @@
     }).run(function (modelsConfig, modelsMeta,
         modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
 
+        var pluginName = function (kind) {
+            var find = GLOBAL_CONFIG.sellerPluginName[kind];
+            return angular.isDefined(find) ? find : kind;
+        };
+
         modelsConfig(function (models) {
             formInputTypes.SuperPluginStorageProperty = function (info) {
                 //info.config.repeated = true;
                 //return this.SuperLocalStructuredProperty(info);
                 var config = info.config,
                     kinds = $.map(config.kinds, function (kind_id) {
-                        var name = modelsMeta.getName(kind_id);
                         return {
                             key: kind_id,
-                            name: name
+                            name: pluginName(kind_id)
                         };
                     }),
                     rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
@@ -397,11 +389,7 @@
                                 }
                             }
                         },
-                        showType: function (kind) {
-                            return _.findWhere(kinds, {
-                                key: kind
-                            }).name;
-                        },
+                        showType: pluginName,
                         kind: undefined,
                         selectKinds: {
                             type: 'SuperStringProperty',
@@ -934,10 +922,7 @@
                         }
                     });
                     $.extend(fields._plugin_group.modelclass.plugins.ui, {
-                        label: false,
-                        specifics: {
-                            listView: 'plugin-list-view'
-                        }
+                        label: false
                     });
 
                     fields.logo.ui.specifics = {

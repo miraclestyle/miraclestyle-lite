@@ -18,12 +18,15 @@
         <div ng-hide="ent._state == 'deleted'" 
              ng-repeat="ent in config.ui.specifics.parentArgs" 
              current-item="ent"
-             class="no-move list-row list-row-two-lines list-row-has-secondary no-padding clearfix">
+             class="no-move list-row list-row-three-lines list-row-has-secondary no-padding clearfix">
             <div class="delete-overlay"></div>
-            <list-button class="list-row-two-lines" loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
+            <list-button class="list-row-three-lines" loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
                 <strong class="first ellipsis-text">{{ent.name}}</strong>
-                <span class="second ellipsis-text">
-                  <span ng-if="ent.active">Active</span><span ng-if="!ent.active">Inactive</span>, {{config.ui.specifics.showType(ent.kind)}}
+                <span class="second">
+                  {{config.ui.specifics.showType(ent.kind)}}
+                </span>
+                <span class="second">
+                  <span ng-if="ent.active">Active</span><span ng-if="!ent.active">Inactive</span>
                 </span>
             </list-button>
             <div class="list-secondary-tile">

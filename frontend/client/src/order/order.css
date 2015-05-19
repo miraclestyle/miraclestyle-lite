@@ -3,9 +3,7 @@
     transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
     transition-property: transform;
     transition-duration: 300ms;
-    position:absolute;
-  
-
+    position: absolute;
 }
 
 .order-stage.out {
@@ -59,10 +57,4 @@
     font-size: 0px;
     padding-top: 8px;
     padding-bottom: 8px;
-}
-
-.order-expanding-address {
-    transition-property: height;
-    transition-timing-function: cubic-bezier(0.8,0,0.4,1);
-    transition-duration: 300ms;
 }

@@ -78,51 +78,52 @@
 
         modelsConfig(function (models) {
             var setupToggleMenu = function ($scope, id) {
-                $scope.sidenavMenuID = id;
-                $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
-                $scope.toggling = false;
-                $scope.toggleMenu = function ($event) {
-                    if ($scope.toggling) {
-                        return;
-                    }
-                    var it = $mdSidenav($scope.sidenavMenuID),
-                        check = false,
-                        target;
-                    if ($event.target) {
-                        target = $($event.target);
-                        angular.forEach($scope.notRipplable, function (skip) {
-                            if (target.is(skip) || target.parent().is(skip)) {
-                                check = true;
-                            }
-                        });
-                        if (check) {
+                    $scope.sidenavMenuID = id;
+                    $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
+                    $scope.toggling = false;
+                    $scope.toggleMenu = function ($event) {
+                        if ($scope.toggling) {
                             return;
                         }
-                    }
-                    $scope.toggling = true;
-                    $timeout(function () {
-                        it[it.isOpen() ? 'close' : 'open']().then(function () {
-                            $scope.toggling = false;
+                        var it = $mdSidenav($scope.sidenavMenuID),
+                            check = false,
+                            target;
+                        if ($event.target) {
+                            target = $($event.target);
+                            angular.forEach($scope.notRipplable, function (skip) {
+                                if (target.is(skip) || target.parent().is(skip)) {
+                                    check = true;
+                                }
+                            });
+                            if (check) {
+                                return;
+                            }
+                        }
+                        $scope.toggling = true;
+                        $timeout(function () {
+                            it[it.isOpen() ? 'close' : 'open']().then(function () {
+                                $scope.toggling = false;
+                            });
                         });
+                    };
+                },
+                recomputeRealPath = function (field1, level) {
+                    if (!level) {
+                        level = 0;
+                    }
+                    var field2 = field1.modelclass;
+                    angular.forEach(field2, function (value) {
+                        if (value.ui.realPath) {
+                            var con = field1.ui.realPath.concat();
+                            con.push(value.code_name);
+                            value.ui.realPath = con;
+                            value.ui.initialRealPath = con;
+                            if (value.modelclass) {
+                                recomputeRealPath(value, level + 1);
+                            }
+                        }
                     });
                 };
-            }, recomputeRealPath = function (field1, level) {
-                if (!level) {
-                    level = 0;
-                }
-                var field2 = field1.modelclass;
-                angular.forEach(field2, function (value) {
-                    if (value.ui.realPath) {
-                        var con = field1.ui.realPath.concat();
-                        con.push(value.code_name);
-                        value.ui.realPath = con;
-                        value.ui.initialRealPath = con;
-                        if (value.modelclass) {
-                            recomputeRealPath(value, level + 1);
-                        }
-                    }
-                });
-            };
             $.extend(models['31'], {
                 formatPublicSearchResults: function (results) {
                     angular.forEach(results, function (result) {
@@ -330,9 +331,7 @@
                                         var order = response.data.entity;
                                         if (order.id) {
                                             angular.forEach(order._lines, function (line) {
-                                                if (line.product._reference.parent.id === $scope.product.parent.id
-                                                        && line.product._reference.id === $scope.product.id
-                                                        && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
+                                                if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
                                                     $scope.productQuantity = parseInt(line.product.quantity, 10);
                                                     if ($scope.productQuantity > 0) {
                                                         $scope.hasThisProduct = true;
@@ -352,7 +351,8 @@
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
-                                            'description', 'contents', 'availability'];
+                                            'description', 'contents', 'availability'
+                                        ];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
                                     } catch (ignore) {}
@@ -661,7 +661,10 @@
                                             });
                                     },
                                     sudo: function () {
-                                        modals.models.sudo($scope.entity, {templateUrl: 'catalog/administer.html', onConfirm: updateState});
+                                        modals.models.sudo($scope.entity, {
+                                            templateUrl: 'catalog/administer.html',
+                                            onConfirm: updateState
+                                        });
                                     }
                                 };
                             },
@@ -1150,8 +1153,10 @@
                                         label: GLOBAL_CONFIG.subheaders.catalogImages,
                                         include: 'core/misc/action.html',
                                         action: function () {
-                                            if (!config.getScope().args.id) {
-                                                snackbar.showK('saveCatalogFirst');
+                                            var scope = config.getScope();
+                                            helpers.form.wakeUp(scope.container.form);
+                                            if (!scope.container.form.$valid) {
+                                                snackbar.showK('provideProperValues');
                                                 return;
                                             }
                                             modals.fields.remote(config.getScope(), fields._images);
@@ -1160,12 +1165,9 @@
                                         label: GLOBAL_CONFIG.subheaders.catalogProducts,
                                         include: 'core/misc/action.html',
                                         action: function () {
-                                            if (!config.getScope().args.id) {
-                                                snackbar.showK('saveCatalogFirst');
-                                                return;
-                                            }
+                                            var scope = config.getScope();
 
-                                            if (!config.getScope().entity.cover) {
+                                            if (!scope.entity.cover) {
                                                 snackbar.showK('uploadImagesFirst');
                                                 return;
                                             }

@@ -906,3 +906,20 @@ button::-moz-focus-inner {
     text-transform: none;
     padding-bottom: 8px;
 }
+
+.collapse {
+    display: none;
+}
+
+.collapse.in {
+    display: block
+}
+
+.collapsing {
+    position: relative;
+    height: 0;
+    overflow: hidden;
+    transition-property: height;
+    transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
+    transition-duration: 300ms;
+}
