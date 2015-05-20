@@ -93,12 +93,10 @@
       <% } %>
 </div>
 
+
+
 <!-- help -->
-<div ng-if="helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs)" help-render="config.ui.emptyHelp"></div>
+<div ng-if="helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs) && (!config.ui.specifics.reader || config.ui.specifics.reader.loaded)" help-render="config.ui.emptyHelp"></div>
 <!-- end help -->
 
-<% if (config.ui.specifics.remote) { %>
-<div load-more-button="config.ui.specifics.reader"></div>
-<% } %>
-
-</div>
+<div ng-if="config.ui.specifics.remote" load-more-button="config.ui.specifics.reader"></div>

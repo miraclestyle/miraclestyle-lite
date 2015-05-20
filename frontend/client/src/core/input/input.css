@@ -116,7 +116,14 @@ md-input-container .md-char-counter {
     -webkit-font-smoothing: antialiased;
     position: absolute;
     font-size: 12px;
-    line-height: 24px;
+    line-height: 14px;
+    padding:4px 0px;
+    /*
+    position: static;
+    font-size: 12px;
+    line-height: 14px;
+    padding: 4px 0px;*/
+    /* making the messages non absolute causes weird animations */
 }
 
 md-input-container [ng-message].ng-enter,

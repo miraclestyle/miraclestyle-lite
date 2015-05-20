@@ -41,11 +41,14 @@
                 </div>
           </div>
       </div>
-      
-      <% if (config.ui.specifics.remote) { %>
-            <div load-more-button="config.ui.specifics.reader"></div>
-      <% } %>
-      
+
+      <!-- help -->
+      <div ng-if="helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs) && (!config.ui.specifics.reader || config.ui.specifics.reader.loaded)" help-render="config.ui.emptyHelp"></div>
+      <!-- end help -->
+
+      <div ng-if="config.ui.specifics.remote" load-more-button="config.ui.specifics.reader"></div>
+
+  
       <% } else { %>
         <md-input-container class="block padding-0">
             <div class="list-row no-padding clearfix list-row-has-secondary">

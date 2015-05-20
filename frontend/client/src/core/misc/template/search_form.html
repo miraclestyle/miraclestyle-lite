@@ -1,4 +1,5 @@
-<form name="container.main" ng-show="!search.hide" ng-submit="search.submitSearch()">
+<div class="list list-padding">
+    <form name="container.main" ng-show="!search.hide" ng-submit="search.submitSearch()">
 
     <div ng-show="search.kind != null">
         <div form-input="search.fields.indexID"></div>
@@ -32,8 +33,9 @@
     <div class="form-control button-set">
         <label class="form-label"></label>
         <div class="form-input">
-            <md-button type="submit">Search</button>
+            <md-button class="md-raised" type="submit">Search</button>
         </div>
     </div>
 
 </form>
+</div>

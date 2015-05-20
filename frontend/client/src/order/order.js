@@ -111,8 +111,8 @@
                     models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
 
                         if (!response.data.entity.id) {
-                            modals.alert('cartNotFound');
-                            return;
+                            /*modals.alert('cartNotFound');
+                            return;*/
                         }
 
                         $modal.open({

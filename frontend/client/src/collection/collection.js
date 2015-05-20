@@ -29,7 +29,8 @@
                         action: 'update',
                         fields: _.toArray(fields),
                         toolbar: {
-                            hideSave: true
+                            hideSave: true,
+                            titleEdit: 'buyer.edit18'
                         },
                         templateBodyUrl: 'collection/manage_body.html',
                         excludeFields: ['account', 'read_arguments'],

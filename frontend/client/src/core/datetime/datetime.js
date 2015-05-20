@@ -154,6 +154,24 @@
                 return true;
             }
         }])
+        .directive('renderModelAsHours', function () {
+            return {
+                require: 'ngModel',
+                link: function (scope, element, attrs, ngModel) {
+                    ngModel.$render = function () {
+                        var parse = parseInt(ngModel.$modelValue, 10);
+                        if (isNaN(parse)) {
+                            element.val(ngModel.$modelValue);
+                            return;
+                        }
+                        if (parse < 10) {
+                            parse = '0' + parse;
+                        }
+                        element.val(parse);
+                    };
+                }
+            };
+        })
         .directive('timeDatePicker', [
             '$filter', '$sce', '$rootScope', '$parse',
             function ($filter, $sce, $rootScope, $parse) {

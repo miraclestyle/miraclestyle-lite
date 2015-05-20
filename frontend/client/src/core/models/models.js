@@ -989,6 +989,7 @@
                                     access: config.access,
                                     more: canLoadMore(config.next),
                                     config: config,
+                                    loaded: false,
                                     state: function (config) {
                                         this.next = config.next;
                                         if (angular.isDefined(config.access)) {
@@ -1066,6 +1067,7 @@
                                             }
                                         })['finally'](function () {
                                             reader.loading = false;
+                                            reader.loaded = true;
                                         });
 
                                         return promise;

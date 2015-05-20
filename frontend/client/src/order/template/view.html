@@ -30,8 +30,8 @@
                         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
                         <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
-                          <div ng-include="'order/lines.html'"></div>
-                          <div ng-if="order.ui.rule.action.update.executable" class="list">
+                          <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
+                          <div ng-if="order.ui.rule.action.update.executable && !helpers.models.isEntityListEmpty(order._lines)" class="list">
 
                             <button md-ink-ripple loading class="md-button text-center order-next-stage" ng-click="stage.toCheckout()" type="button">
                               <div class="order-next-stage-inner">
@@ -43,6 +43,7 @@
                             </button>
 
                           </div>
+                          <div ng-if="helpers.models.isEntityListEmpty(order._lines)" help-render="GLOBAL_CONFIG.emptyHelp.cart"></div>
                         </div>
                         <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
                             <div class="list list-padding seam-bottom">

@@ -701,7 +701,7 @@
                             }
                         }
 
-                        if (info.config.choices.length) {
+                        if (info.config.choices.length && (info.config.ui.specifics && info.config.ui.specifics.translatedChoices !== false)) {
                             info.config.ui.specifics.translatedChoices = [];
                             angular.forEach(info.config.choices, function (value) {
                                 // @todo this might cause problems when config.choices = some other list is applied trough the lifecycle
@@ -1605,7 +1605,6 @@
                                                         config.ui.specifics.afterSave($scope);
                                                     }
                                                     $scope.formSetPristine();
-                                                    console.trace(dontShowMessage);
                                                     if (!dontShowMessage) {
                                                         snackbar.showK('changesSaved');
                                                     }

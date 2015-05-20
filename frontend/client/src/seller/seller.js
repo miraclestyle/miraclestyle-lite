@@ -247,6 +247,23 @@
                         }
                     },
                     defaultSpecifics = {
+                        aboutPlugins: function () {
+                            $modal.open({
+                                templateUrl: 'core/models/manage.html',
+                                controller: function ($scope) {
+                                    $scope.dialog = {
+                                        templateBodyUrl: 'seller/help/plugins.html',
+                                        toolbar: {
+                                            hideSave: true,
+                                            title: helpers.toolbar.title('seller.settings.aboutRules')
+                                        }
+                                    };
+                                    $scope.close = function () {
+                                        $scope.$close();
+                                    };
+                                }
+                            });
+                        },
                         sortableOptions: {
                             disabled: false,
                             start: function (e, ui) {
@@ -558,6 +575,7 @@
                                     $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                     $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
                                     $scope.validateForm = angular.bind($scope, helpers.form.validate);
+
 
                                     if ($scope.args && $scope.args.kind) {
                                         $scope.info.kind = $scope.args.kind;

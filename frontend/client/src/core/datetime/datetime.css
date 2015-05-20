@@ -1,156 +1,119 @@
-.time-date > .control > .full-title {
-    display: none;
-    background-color: #00796b;
-    color: #e1e1e1;
-}
-
-.time-date > .control > .slider > .date-control > .title {
-    font-weight: 500;
-    line-height: 40px;
-    text-align: left;
-    width: 100%;
-    margin-bottom: 10px;
-    line-height: 48px;
+.day-cell {
+    display: block;
     position: relative;
-}
-
-.time-date > .control > .slider > .date-control .day-cell {
-    float: left;
-    width: 35px;
-    height: 35px;
-    padding: 6px;
+    box-sizing: border-box;
+    margin: 0px;
+    border: none;
+    outline: none;
     cursor: pointer;
-    border-radius: 35px;
-    min-width: initial;
-    margin-right: 1px;
-    margin-left: 1px;
-    margin-top: 1px;
-    margin-bottom: 1px;
+    border-radius: 0px;
+    background: rgba(0, 0, 0, 0);
+    width: 36px;
+    height: 36px;
+    padding: 6px 10px 6px 10px;
+    border-radius: 50%;
+    float: left;
     font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    text-align: center;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.87);
+    min-width: initial;
+    transition-delay: 0s;
+    transition-duration: 0.2s;
+    transition-timing-function: linear;
+    transition-property: background, color, left, right, top, bottom;
 }
 
-.time-date > .control > .slider > .date-control > .days .day-cell {
-    color: #202020;
-}
-
-.time-date > .control > .slider > .date-control > .days .day-cell.today {
-    color: #009688;
-}
-
-.time-date > .control > .slider > .date-control > .days .day-cell.selected {
-    color: #fff;
-    background-color: #009688;
-}
-
-.time-date > .control > .slider > .time-control > .buttons {
-    text-align: right;
-    margin-top: 24px;
-    margin-right: 8px;
-}
-
-.time-date > .display, .time-date > .control {
+.date-control .title-above {
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 0px;
+    padding-bottom: 12px;
+    padding-left: 80px;
+    padding-right: 80px;
+    padding-top: 12px;
+    position: relative;
     text-align: center;
 }
 
-.time-date button, .time-date .button {
-    color: #009688;
+.title-above .pager {
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 4px;
+    padding-right: 12px;
+    padding-top: 0px;
+    position: absolute;
+    right: 0px;
+    top: 0px;
 }
 
-.time-date.full-mode > .control > .full-title {
-    display: block;
+.title-above .pager-prev {
+    right: auto;
+    left: 0px;
+    padding-left: 12px;
+    padding-right: 4px;
 }
 
-.time-date.full-mode > .control > .slider > .switch-control {
-    display: none;
+.title-above .pager button {
+    min-width: inherit;
+    margin: 0px;
 }
 
-.time-date.full-mode > .buttons {
-    background-color: #009688;
+.time-date {
+    width: 300px;
+    padding-top: 12px;
+    padding-bottom: 16px;
 }
 
-.time-date.vertical {
-    width: auto;
-    max-width: 274px;
-}
-
-.time-date.vertical.time-mode > .display > .content {
+.date-control-days {
+    padding-right: 24px;
+    padding-left: 24px;
     padding-top: 16px;
     padding-bottom: 16px;
 }
 
-.time-date.vertical.full-mode > .display {
-    display: none;
+.date-control .selected {
+    background: rgba(0, 0, 0, 0.54);
+    color: rgba(255, 255, 255, 1);
 }
 
-.time-date.vertical.full-mode > .control > .slider {
-    float: none;
-    width: 100%;
-    height: auto;
-    overflow: auto;
+.time-inputs .md-button {
+    padding: 8px;
+    margin: 0px;
+    min-width: initial;
 }
 
-.time-date.vertical.full-mode > .control > .slider > .time-control, .time-date.vertical.full-mode > .control > .slider > .date-control {
-    width: 100%;
+.time-inputs .choicer {
+    padding-left: 24px;
+    padding-right: 24px;
     float: left;
 }
 
-.time-date .material-icon {
-    display: inline-block;
-}
-
-.time-date .material-icon:first-child {}
-
-.time-inputs input {
-    font-size: 60px;
-    text-align: center;
+.time-inputs .t3 {
+    float: right;
 }
 
 .time-inputs md-input-container {
     margin: 0px;
-}
-
-.title button {
-    position: absolute;
-    top: 0px;
-    min-width: initial;
-    line-height: normal;
-    margin: 0px;
-    width: 48px;
-    height: 48px;
     padding: 0px;
-    overflow: hidden;
 }
 
-.title .t1 {
-    left: 0px;
+.time-inputs .separator {
+    float: left;
+    padding: 40px 8px;
 }
 
-.title .t2 {
-    right: 0px;
-}
-
-.title {
-    position: relative;
-}
-
-.title .contain {
+.time-inputs input {
+    border-bottom: none;
+    width: 88px;
+    padding: 4px 0px;
     text-align: center;
-    margin: auto;
-    padding-right: 48px;
-    padding-left: 48px;
-}
-
-.time-inputs button {
-    width: 100%;
-    line-height: normal;
-    min-width: inherit;
-}
-
-.time-inputs input[type=number]::-webkit-inner-spin-button, .time-inputs input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.date-control {
-    height: 340px;
+    color: rgba(0, 0, 0, 0.54);
 }

@@ -12,6 +12,18 @@
           </div>
   </button>
 
+  <button loading="!<%= config.ui.writableCompiled %>" 
+          md-ink-ripple-list ng-click="config.ui.specifics.aboutPlugins()" 
+          type="button" 
+          class="list-row list-row-one-line list-row-avatar list-row-is-clickable list-row-has-primary menu-item">
+          <div class="list-content-tile">
+            <div class="list-primary-tile">
+              <div class="avatar"><icon type="content.help"></icon></div>
+            </div>
+            <div class="first">About Rules</div>
+          </div>
+  </button>
+
   <div ui-sortable="config.ui.specifics.sortableOptions" 
        ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': !config.ui.specifics.parentArgs.length}"
        class="list">

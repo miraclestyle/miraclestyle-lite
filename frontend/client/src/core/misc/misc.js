@@ -77,9 +77,9 @@
                 },
                 templateUrl: 'core/misc/help_render.html',
                 link: function (scope, element, attrs) {
-                    if (!scope.help) {
-                        //scope.help = [attrs.helpRender];
-                    }
+                    scope.isTemplate = function () {
+                        return !angular.isArray(scope.help);
+                    };
                 }
             };
         })
@@ -703,6 +703,9 @@
                             ui: {
                                 args: 'search.indexID',
                                 label: GLOBAL_CONFIG.fields.label.search.indexID,
+                                specifics: {
+                                    translatedChoices: false
+                                },
                                 writable: true,
                                 attrs: {
                                     'ng-change': 'search.makeFilters()'

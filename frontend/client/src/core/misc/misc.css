@@ -850,6 +850,32 @@ button::-moz-focus-inner {
     padding: 0;
 }
 
+.narrow-arrow-up {
+    width: 0px;
+    height: 0px;
+    border-left: 36px solid transparent;
+    border-right: 36px solid transparent;
+    border-bottom: 36px solid rgba(0, 0, 0, 0.54);
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+}
+
+.narrow-arrow-down {
+    width: 0px;
+    height: 0px;
+    border-left: 36px solid transparent;
+    border-right: 36px solid transparent;
+    border-top: 36px solid rgba(0, 0, 0, 0.54);
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+}
+
 .wide-arrow-down {
     width: 0px;
     height: 0px;
