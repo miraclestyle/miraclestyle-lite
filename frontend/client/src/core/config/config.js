@@ -90,6 +90,26 @@
                 condition_type: 'Condition under which this price applies.',
                 price_type: 'Price formula that calculates the price.'
             },
+            '106': {
+                postal_codes: 'Range of postal codes this location affects. Specify one postal code per line.'
+            },
+            '108': {
+                reciever_email: 'Primary email address of your PayPal account.',
+                business: 'Email address on which you want to receive your PayPal payments. This value will be the same as "Receiver Email" in case that you have only one email address associated with your PayPal account.'
+            },
+            '109': {
+                carriers: 'Carriers, if any, to which this rule applies.',
+                product_categories: 'Product categories to which this rule applies.',
+                product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.',
+                address_type: 'Buyer address type this rule applies to.'
+            },
+            '124': {
+                product_categories: 'Product categories to which this rule applies.',
+                product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.'
+            },
+            '117': {
+                currency: 'Currency you accept, and your product prices are expressed in.'
+            },
             '111-update': {
                 condition_type: 'Condition under which this price applies.',
                 price_type: 'Price formula that calculates the price.'
@@ -100,6 +120,9 @@
             },
             '14': {
                 name: 'Recipient\'s full name, or business name.'
+            },
+            '107': {
+                address_type: 'Buyer address type this rule applies to.'
             },
             '31-update': {
                 discontinue_date: 'Date when this catalog will be automatically discontinued and become unavailable to the general public.'
@@ -114,6 +137,12 @@
             },
             plugins: {
                 kind: 'Rule'
+            },
+            '112': {
+                rules: 'Prices'
+            },
+            '124': {
+                discount_value: 'Discount (%)'
             },
             '31-update': {
                 discontinue_date: 'Expiration Date'
@@ -150,10 +179,21 @@
                 address_type: locals.addressTypeSpec
             },
             '109': {
-                address_type: locals.addressTypeSpec
+                address_type: locals.addressTypeSpec,
+                type: {
+                    percent: 'Proportional (%)',
+                    fixed: 'Fixed (Amount)'
+                }
             },
             '111': {
-                condition_operator: locals.conditionOperatorSpec
+                condition_operator: locals.conditionOperatorSpec,
+                price_operator: {
+                    weight: 'weight multiplied by',
+                    quantity: 'quantity multiplied by',
+                    'weight*volume': 'weight multiplied by volume multiplied by',
+                    volume: 'volume multiplied by',
+                    price: 'price multiplied by'
+                },
             },
             '124': {
                 condition_operator: locals.conditionOperatorSpec
@@ -252,6 +292,10 @@
             edit18: 'Following',
             viewAddresses: 'Addresses',
             editAddresses: 'Edit Address',
+            addLocations: 'Add Locations',
+            editLines: 'Edit Lines',
+            addPrice: 'Add Price',
+            editPrice: 'Edit Price'
         });
 
     });

@@ -95,7 +95,7 @@
     display: block;
 }
 
-.list-row-two-lines {
+.list-row-two-lines, .list-row-two-lines .list-row {
     padding-top: 14px;
     padding-bottom: 14px;
 }

@@ -128,7 +128,7 @@ md-input-container .md-char-counter {
 
 md-input-container [ng-message].ng-enter,
 md-input-container .md-char-counter.ng-enter {
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: transform opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transition-delay: 0.2s;
 }
 

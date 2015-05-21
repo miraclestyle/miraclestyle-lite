@@ -401,7 +401,6 @@
             };
 
             $modalStack.close = function (modalInstance, result, what) {
-                console.trace(this);
                 if (!what) {
                     what = 'resolve';
                 }

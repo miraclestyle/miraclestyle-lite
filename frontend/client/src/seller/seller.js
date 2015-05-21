@@ -182,7 +182,10 @@
                     kinds = config.kinds,
                     rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
                     lineSpec = {
-                        listView: 'default-line-list-view'
+                        listView: 'default-line-list-view',
+                        listConfig: {
+                            perLine: 2
+                        }
                     },
                     exclusionSpec = {
                         ui: {
@@ -205,6 +208,9 @@
                     locationSpec = {
                         listView: 'address-rule-location-list-view',
                         sortFields: ['country', 'region', 'postal_codes'],
+                        listConfig: {
+                            perLine: 3
+                        },
                         beforeSave: function ($scope, info) {
                             var promises = [],
                                 updatedAddress = $scope.args,
@@ -329,7 +335,14 @@
                                         rules: {
                                             ui: {
                                                 specifics: {
-                                                    listView: 'carrier-line-rule-list-view'
+                                                    toolbar: {
+                                                        titleEdit: 'editPrice',
+                                                        titleAdd: 'addPrice'
+                                                    },
+                                                    listView: 'carrier-line-rule-list-view',
+                                                    listConfig: {
+                                                        perLine: 2
+                                                    }
                                                 }
                                             },
                                             modelclass: {
@@ -337,7 +350,11 @@
                                                 condition_operator: groupBy('conditional'),
                                                 condition_value: groupBy('conditional'),
                                                 price_type: groupBy('price', GLOBAL_CONFIG.fields.label['124-update'].price_type, GLOBAL_CONFIG.fields.help['124-update'].price_type),
-                                                price_operator: groupBy('price'),
+                                                price_operator: helpers.extendDeep(groupBy('price'), {
+                                                    ui: {
+                                                        active: 'args.price_type !== \'fixed\''
+                                                    }
+                                                }),
                                                 price_value: groupBy('price')
                                             }
                                         },

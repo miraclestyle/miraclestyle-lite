@@ -1,7 +1,8 @@
-<strong class="first ellipsis-text">
-  {{val.condition_type}} {{val.condition_operator}} {{val.condition_value}}
-</strong>
+
+<span class="first ellipsis-text">
+  Price: <span ng-if="val.price_type !== 'fixed'">{{val.price_operator}} * </span>{{val.price_value}}
+</span>
 
 <span class="second ellipsis-text">
-  {{val.price_type}} <span ng-if="val.price_type !== 'fixed'">{{val.price_operator}}</span> {{val.price_value}}
+  Condition: {{val.condition_type}} {{val.condition_operator}} {{val.condition_value}}
 </span>

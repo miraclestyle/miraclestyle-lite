@@ -1,4 +1,4 @@
-<md-input-container ng-class="{'no-label': config.ui.label === false}">
+<md-input-container <% if (config.ui.active !== undefined) { %>ng-if="<%=config.ui.active %>"<% } %> ng-class="{'no-label': config.ui.label === false}">
     <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
     <textarea class="<%= config.ui.attrs['class'] %>"
             name="<%= config.ui.name %>" 

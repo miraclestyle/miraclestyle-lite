@@ -66,11 +66,11 @@
 
       <div ng-hide="ent._state == 'deleted'" 
            ng-repeat="ent in config.ui.specifics.parentArgs" 
-           ng-class="{'list-row-has-secondary': config.ui.specifics.listConfig.secondary}"
+           ng-class="{'list-row-has-secondary': config.ui.specifics.listConfig.secondary, 'list-row-one-line': config.ui.specifics.listConfig.perLine == 1, 'list-row-two-lines': config.ui.specifics.listConfig.perLine == 2, 'list-row-three-lines': config.ui.specifics.listConfig.perLine == 3}"
            current-item="ent"
            class="no-move list-row no-padding clearfix">
               <div class="delete-overlay"></div>
-              <button md-ink-ripple-list ng-class="{'list-row-one-line': config.ui.specifics.listConfig.perLine == 1, 'list-row-two-lines': config.ui.specifics.listConfig.perLine == 2, 'list-row-three-lines': config.ui.specifics.listConfig.perLine == 3, 'list-row-is-clickable': config.ui.specifics.listConfig.clickable}" type="button" loading ng-click="config.ui.specifics.manage(ent)" class="list-row menu-item list-content-tile block">
+              <button md-ink-ripple-list ng-class="{'list-row-is-clickable': config.ui.specifics.listConfig.clickable}" type="button" loading ng-click="config.ui.specifics.manage(ent)" class="list-row menu-item list-content-tile block">
              
                      <% if (config.ui.specifics.listView) { %>
                         <span <%=config.ui.specifics.listView %>="ent"

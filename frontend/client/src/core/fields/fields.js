@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (helpers, modals, $modal) {
+        .run(function (helpers, modals, $modal, GLOBAL_CONFIG) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -19,6 +19,19 @@
                         p2 = 999999;
                     }
                     return p1 - p2;
+                },
+                applyGlobalConfig: function (config) {
+                    if (angular.isUndefined(config.ui.help) && angular.isDefined(GLOBAL_CONFIG.fields.help[config._maker_])) {
+                        config.ui.help = GLOBAL_CONFIG.fields.help[config._maker_][config.code_name];
+                    }
+
+                    if (angular.isUndefined(config.ui.emptyHelp) && angular.isDefined(GLOBAL_CONFIG.fields.emptyHelp[config._maker_])) {
+                        config.ui.emptyHelp = GLOBAL_CONFIG.fields.emptyHelp[config._maker_][config.code_name];
+                    }
+
+                    if (angular.isUndefined(config.ui.label) && angular.isDefined(GLOBAL_CONFIG.fields.label[config._maker_])) {
+                        config.ui.label = GLOBAL_CONFIG.fields.label[config._maker_][config.code_name];
+                    }
                 },
                 utils: {
                     attrs: function (config) {
@@ -466,17 +479,7 @@
                             config.ui.realPath = [name];
                         }
 
-                        if (angular.isUndefined(config.ui.help) && angular.isDefined(GLOBAL_CONFIG.fields.help[config._maker_])) {
-                            config.ui.help = GLOBAL_CONFIG.fields.help[config._maker_][config.code_name];
-                        }
-
-                        if (angular.isUndefined(config.ui.emptyHelp) && angular.isDefined(GLOBAL_CONFIG.fields.emptyHelp[config._maker_])) {
-                            config.ui.emptyHelp = GLOBAL_CONFIG.fields.emptyHelp[config._maker_][config.code_name];
-                        }
-
-                        if (angular.isUndefined(config.ui.label) && angular.isDefined(GLOBAL_CONFIG.fields.label[config._maker_])) {
-                            config.ui.label = GLOBAL_CONFIG.fields.label[config._maker_][config.code_name];
-                        }
+                        helpers.fields.applyGlobalConfig(config);
 
                         if (types[config.type] !== undefined) {
                             // reference main locals to type builder
@@ -1410,6 +1413,7 @@
                                             config.ui.specifics.getScope = undefined;
                                         });
                                         angular.forEach(config.ui.specifics.formBuilder, function (field) {
+                                            helpers.fields.applyGlobalConfig(field);
                                             if (!field.ui.initialRealPath) {
                                                 field.ui.initialRealPath = angular.copy(field.ui.realPath);
                                             } else {
