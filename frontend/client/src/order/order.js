@@ -282,10 +282,15 @@
                                                 controller: function ($scope) {
                                                     $scope.addresses = response.data.entity.addresses;
                                                     $scope.select = function (ent) {
-                                                        angular.forEach(ent, function (value, key) {
-                                                            parentScope.addresses[type][key] = value;
-                                                        });
-                                                        $scope.$close();
+                                                        var doit = function () {
+                                                            angular.forEach(ent, function (value, key) {
+                                                                parentScope.addresses[type][key] = value;
+                                                            });
+                                                        };
+                                                        doit();
+                                                        $scope.$close().then(function () {
+                                                            $timeout(doit, 100); // fix for region
+                                                        }); // scope apply
                                                     };
                                                     $scope.manage = function () {
                                                         models['19'].manageModal(response.data.entity.parent.key, function () {

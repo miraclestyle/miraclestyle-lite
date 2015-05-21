@@ -817,7 +817,7 @@
                                             function (neww, old) {
                                                 if (neww !== old) {
                                                     var args = info.scope.$eval(info.config.ui.parentArgs);
-                                                    //args.region = null;
+                                                    args.region = null;
                                                     config.ui.specifics.initial(); // refresh results
                                                 }
                                             });
@@ -917,15 +917,23 @@
                             args,
                             opts = {},
                             override = config.ui.specifics.override || {},
+                            repackMemory = function () {
+                                config.ui.specifics._mapEntities = {};
+                                angular.forEach(config.ui.specifics.entities, function (val) {
+                                    config.ui.specifics._mapEntities[val.key] = 1;
+                                });
+                            },
                             actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
                             response = function (response) {
                                 config.ui.specifics.entities = response.data.entities;
+                                repackMemory();
                                 return config.ui.specifics.entities;
                             },
                             findArgs,
                             finder,
                             initialDefer = $q.defer(),
                             initialPromise = initialDefer.promise;
+
                         config.ui.specifics.view = function (result) {
                             var fn = defaults.view[config.kind];
                             if (!fn) {
@@ -954,6 +962,8 @@
                         if (angular.isUndefined(config.ui.specifics.entities)) {
                             config.ui.specifics.entities = [];
                         }
+
+                        repackMemory();
 
                         finder = defaults.finder[config.kind];
                         if (override.finder) {
@@ -987,9 +997,8 @@
                                                 return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
                                                     var entities = response.data.entities;
                                                     angular.forEach(entities, function (ent) {
-                                                        if (!_.findWhere(config.ui.specifics.entities, {
-                                                                key: ent.key
-                                                            })) { // this is pretty slow. however can be sped up with key-value monitoring
+                                                        if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
+                                                            config.ui.specifics._mapEntities[ent.key] = 1;
                                                             config.ui.specifics.entities.push(ent);
                                                         }
                                                     });
@@ -1010,16 +1019,14 @@
                                             }).then(function (response) {
                                                 var fetchedEntities = response.data.entities;
                                                 if (!selectedIsArray) {
-                                                    if (!_.findWhere(config.ui.specifics.entities, {
-                                                            key: id
-                                                        })) { // slow
+                                                    if (angular.isUndefined(config.ui.specifics._mapEntities[id])) {
+                                                        config.ui.specifics._mapEntities[id] = 1;
                                                         config.ui.specifics.entities.unshift(response.data.entities[0]);
                                                     }
                                                 } else {
                                                     angular.forEach(fetchedEntities, function (ent) {
-                                                        if (!_.findWhere(config.ui.specifics.entities, {
-                                                                key: ent.key
-                                                            })) { // slow
+                                                        if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
+                                                            config.ui.specifics._mapEntities[ent.key] = 1;
                                                             config.ui.specifics.entities.push(ent);
                                                         }
                                                     });
@@ -2037,5 +2044,38 @@
                     }
                 };
             }
-        ]);
+        ]).directive('fastNgChange', function ($parse, $mdUtil) {
+            return {
+                priority: 1,
+                link: function (scope, element, attrs) {
+                    var fn = $parse(attrs.fastNgChange),
+                        prev = element.val(),
+                        change = $mdUtil.debounce(function (ev) {
+                            var cval = element.val();
+                            if (prev !== cval) {
+                                prev = cval;
+                                fn(scope, {$event: ev});
+                            }
+                        }, 100, scope, true);
+                    element.on('change keydown', change);
+                    scope.$on('$destroy', function () {
+                        element.off('change keydown', change);
+                    });
+                }
+            };
+        }).directive('fastNgModel', function ($parse, $mdUtil) {
+            return {
+                priority: -1,
+                link: function (scope, element, attrs) {
+                    var model = $parse(attrs.fastNgModel),
+                        change = $mdUtil.debounce(function (ev) {
+                            model.assign(scope, element.val());
+                        }, 100, scope, true);
+                    element.on('keyup', change);
+                    scope.$on('$destroy', function () {
+                        element.off('keyup', change);
+                    });
+                }
+            };
+        });
 }());

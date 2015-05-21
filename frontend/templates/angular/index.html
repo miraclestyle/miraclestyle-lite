@@ -3,6 +3,11 @@
 <html>
 
 <head>
+    <script>
+        if (window.location.hash && window.location.hash.indexOf('#context-monitor-') !== -1) {
+            window.location.hash = '';
+        }
+    </script>
     <title ng-bind="pageTitle"></title>
     <base href="/" />
     <meta id="is-landscape" />

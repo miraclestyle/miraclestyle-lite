@@ -107,12 +107,12 @@
 
 .time-inputs .separator {
     float: left;
-    padding: 40px 8px;
+    padding: 40px 32px;
 }
 
 .time-inputs input {
     border-bottom: none;
-    width: 88px;
+    width: 64px;
     padding: 4px 0px;
     text-align: center;
     color: rgba(0, 0, 0, 0.54);

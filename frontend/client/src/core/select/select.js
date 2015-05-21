@@ -368,12 +368,12 @@
                                                         nextActive = dialogEl.find('.list-row-is-active:first');
                                                     }
                                                     if (nextActive.length) {
-                                                        indx = dialogEl.find('.simple-dialog-option').index(nextActive);
+                                                        indx = $parse(nextActive.attr('item'))(nextActive.scope());
                                                     } else {
-                                                        indx = 0;
+                                                        indx = select.items[0];
                                                     }
-                                                    if (indx !== -1) {
-                                                        select.select(select.items[indx]);
+                                                    if (indx) {
+                                                        select.select(indx);
                                                     }
                                                 }
                                                 if (!nextActive.length && doFocus) {
@@ -424,6 +424,29 @@
                         return value;
                     });
 
+                    select.isFilterMatch = function (item) {
+                        if (!search) {
+                            return true;
+                        }
+                        var toFilter,
+                            term = select.getFindTerm(),
+                            match,
+                            maybe = select.search.query;
+                        if (select.search.filterProp) {
+                            maybe = maybe[select.search.filterProp];
+                        }
+                        if (!maybe || maybe.length < 1) {
+                            return true;
+                        }
+                        if (select.search.filterProp) {
+                            toFilter = item[select.search.filterProp];
+                        } else {
+                            toFilter = item;
+                        }
+                        match = toFilter.toString().toLowerCase().indexOf(term) !== -1;
+                        return match;
+                    };
+
                     select.getFindTerm = function () {
                         return $parse(select.search.filterProp)(select.search.query);
                     };
@@ -454,7 +477,8 @@
                             select.search.model = 'select.search.query' + ('.' + select.search.filterProp);
                         }
                         if (!select.search.filter) {
-                            select.search.filter = '| filter:select.search.query' + ((items && angular.isString(items[0])) ? ('.' + select.search.filterProp) : '');
+                            // filters are expensive
+                            //select.search.filter = '| filter:select.search.query' + ((items && angular.isString(items[0])) ? ('.' + select.search.filterProp) : '');
                         }
                     }
                     select.setItems(items);
