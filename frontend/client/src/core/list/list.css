@@ -169,3 +169,8 @@
 .list-row-two-lines .avatar {
     padding: 12px 8px 12px 16px;
 }
+
+.list-row.list-row-has-primary.menu-item {
+  padding-left: 0px;
+  padding-right: 0px;
+}

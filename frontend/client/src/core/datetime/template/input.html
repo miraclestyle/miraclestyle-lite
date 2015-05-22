@@ -67,32 +67,52 @@
                 </div>
             </div>
  
-            <div class="time-control">
-                <div class="time-inputs">
+            <div class="time-control-wrapper">
+                <div class="time-inputs clearfix">
                     <div class="t1 choicer">
-                        <md-button ng-click="clock._incHours(1)" aria-label="Increment Hours" class="hours up">
-                            <div class="narrow-arrow-up"></div>
-                        </md-button>
+                        <div class="time-control">
+                            <md-button md-ink-ripple-action 
+                                       ng-click="clock._incHours(1)" 
+                                       aria-label="Increment Hours" 
+                                       class="button-square">
+                                <icon type="navigation.arrow-drop-up"></icon>
+                            </md-button>
+                        </div>
                         <md-input-container>
                             <input render-model-as-hours class="text display1 dial" type="text" ng-model="clock._hours">
                         </md-input-container>
-                        <md-button ng-click="clock._incHours(-1)" aria-label="Decrement Hours" class="hours down">
-                            <div class="narrow-arrow-down"></div>
-                        </md-button> 
+                        <div class="time-control">
+                            <md-button md-ink-ripple-action 
+                                       ng-click="clock._incHours(-1)"
+                                       aria-label="Decrement Hours" 
+                                       class="button-square">
+                                <icon type="navigation.arrow-drop-down"></icon>
+                            </md-button> 
+                        </div>
                     </div>
  
                     <div class="separator display1">:</div>
 
                     <div class="t3 choicer">
-                        <md-button ng-click="clock._incMinutes(1)" aria-label="Increment Minutes" class="minutes up">
-                            <div class="narrow-arrow-up"></div>
-                        </md-button>
+                        <div class="time-control">
+                            <md-button md-ink-ripple-action 
+                                       ng-click="clock._incMinutes(1)" 
+                                       aria-label="Increment Minutes"
+                                       class="button-square">
+                                <icon type="navigation.arrow-drop-up"></icon>
+                            </md-button>
+                        </div>
                         <md-input-container>
                             <input render-model-as-hours class="text display1 dial" type="text" ng-model="clock._minutes">
                         </md-input-container>
-                        <md-button ng-click="clock._incMinutes(-1)" aria-label="Decrement Minutes" class="minutes down">
-                            <div class="narrow-arrow-down"></div>
-                        </md-button> 
+                        <div class="time-control">
+                            <md-button md-ink-ripple-action 
+                                       ng-click="clock._incMinutes(-1)"
+                                       aria-label="Decrement Minutes" 
+                                       class="button-square">
+                                <icon type="navigation.arrow-drop-down"></icon>
+                            </md-button> 
+                        </div>
                     </div>
 
                 </div>

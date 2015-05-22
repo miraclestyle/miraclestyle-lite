@@ -5,7 +5,7 @@
         <div class="list list-padding seam-bottom">
             <div class="list-subheader subheader">{{layouts.groups[1].label}}</div>
             <div grid-scale="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}" class="grid-wrapper clearfix">
-                <div ng-repeat="seller in entity._sellers track by $index" grid-scale-item class="grid-item grid-generator">
+                <div ng-repeat="seller in entity._sellers track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
                     <button type="button" md-ink-ripple ripple-light ng-click="view(seller, $event)" class="button-transparent padding-0 pointable">
                         <img class="not-pointable" display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
                     </button>

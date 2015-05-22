@@ -39,33 +39,84 @@
                 text: {
                     primary: 'Logout'
                 },
+            },
+            cancelOrder: {
+                title: 'Reset shopping cart?',
+                message: 'This cart will be emptied and all of its settings will be lost after completing this action.',
+                text: {
+                    primary: 'Reset'
+                }
+            },
+            toCheckout: {
+                title: 'Review shopping cart?',
+                message: 'You won\'t be able to update this cart while reviewing it. However, you will be able to reset the cart, or place an order by making a payment.',
+                text: {
+                    primary: 'Review'
+                }
+            },
+            publishCatalog: {
+                title: 'Publish catalog?',
+                message: 'Published catalog is accessible to the general public until it expires or is discontinued. With exception of a product "Availability" field, published catalog cannot be edited. However, published catalog can be duplicated and duplicate will initially be in draft state ready for editing. You will be notified once this action is completed.',
+                text: {
+                    primary: 'Publish'
+                }
+            },
+            discontinueCatalog: {
+                title: 'Discontinue catalog?',
+                message: 'Discontinued catalog is not accessible to the general public, and will eventually be entirely removed from the Miraclestyle. However, products of discontinued catalog will remain accessible for the next 180 days to those who have purchased them. Discontinued catalog cannot be edited or duplicated. You will be notified once this action is completed.',
+                text: {
+                    primary: 'Discontinue'
+                }
+            },
+            duplicateCatalog: {
+                title: 'Schedule duplication?',
+                message: 'Duplication can take a while to complete! You will be notified once this action is completed.',
+                text: {
+                    primary: 'Schedule'
+                }
+            },
+            sellerProfileNotFound: {
+                title: 'No seller information provided',
+                message: 'You must configure your seller profile in order to do this.',
+                text: {
+                    primary: 'Configure'
+                }
             }
         });
+
+        locals.gotit = {
+            primary: 'Got it'
+        };
 
         $.extend(GLOBAL_CONFIG.modals.alerts, {
             forbidden: {
                 title: 'Action Denied',
-                message: 'Action you tried to perform is forbidden for this account.'
+                message: 'Action you tried to perform is forbidden for this account.',
+                text: locals.gotit
             },
             noBuyer: {
                 title: 'Buyer address required',
-                message: 'You did not provide any buyer information.'
+                message: 'You did not provide any buyer information.',
+                text: locals.gotit
             },
             howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
-                    'Remove the item by dragging it outside the left edge of the screen.'
-                ],
-                text: {
-                    primary: 'Got it'
-                }
+                    'Remove the item by dragging it outside the left edge of the screen.'],
+                text: locals.gotit
             },
             howToDeleteLine: {
                 title: 'How to use this action',
                 message: 'Remove the item by dragging it outside the left edge of the screen.',
-                text: {
-                    primary: 'Got it'
-                }
+                text: locals.gotit
+            },
+            howToDropPricetag: {
+                title: 'How to use this action',
+                messages: ['Add new product to the catalog by dragging the "Add" tag to a catalog image. While dragging, it is preferable to aim the tag dot for the image area that shows the product that the tag will link to. Add one tag per product per catalog.',
+                            'Reposition a tag by dragging it within images area.',
+                            'Click a tag to open the "Edit Product" form while editing the catalog.',
+                            'Click a tag to open the product view while viewing the catalog.'],
+                text: locals.gotit
             }
         });
 
@@ -266,7 +317,18 @@
         });
 
         $.extend(GLOBAL_CONFIG.snackbar.messages, {
-            changesSaved: 'Changes saved.'
+            changesSaved: 'Changes saved.',
+            cartUpdated: 'Cart updated.',
+            catalogPublished: 'Catalog published.',
+            catalogDiscontinued: 'Catalog discontinued.',
+            duplicationInProgressCatalog: 'Catalog scheduled for duplication.',
+            administered: 'Administered.',
+            identityDisconnected: 'Identity disconnected.',
+            identityConnected: 'Identity connected.',
+            createVariantsFirst: 'Create some variants first.',
+            saveProductFirst: 'Save product first.',
+            provideProperValues: 'Provide proper values in the form fields first!',
+            uploadImagesFirst: 'Use "Images" dialog to upload and arrange catalog images first.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

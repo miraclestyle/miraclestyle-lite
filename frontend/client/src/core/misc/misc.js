@@ -109,10 +109,15 @@
                                     $(this).attr('src', GLOBAL_CONFIG[defaultImage]);
 
                                 },
-                                img = element;
+                                img = element,
+                                done = function () {
+                                    img.css('visibility', 'visible');
+                                    scope.$emit('displayImageLoaded', img);
+                                };
 
                             if (scope.image && scope.image.serving_url) {
-                                img.on('error', error)
+                                img.on('load', done)
+                                    .on('error', error)
                                     .attr('src', scope.image.serving_url + (scope.config.size === true ? '' : '=s' + scope.config.size));
                             } else {
                                 error.call(img);

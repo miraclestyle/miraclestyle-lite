@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (modals, helpers, models, $modal, modelsMeta) {
+        .run(function (modals, helpers, models, $modal, modelsMeta, snackbar) {
             if (!modals.models) {
                 modals.models = {};
             }
@@ -51,6 +51,7 @@
                                         config.onConfirm(response.data.entity);
                                     }
                                     $scope.config.dismiss();
+                                    snackbar.showK('administered');
                                 });
                             } else {
                                 helpers.form.wakeUp($scope.container.form);

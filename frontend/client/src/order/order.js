@@ -159,8 +159,9 @@
                                         args: 'addresses.shipping.' + value.code_name,
                                         parentArgs: 'addresses.shipping',
                                         writable: true,
-                                        required: (value.required ? 'addresses.sameAsBilling' : false)
+                                        name: 'supplier_' + value.code_name
                                     });
+                                    value.required = (value.required ? '!addresses.sameAsBilling' : false);
                                     locals.shippingAddressFields.push(value);
                                 });
 
@@ -168,7 +169,8 @@
                                     $.extend(value.ui, {
                                         args: 'addresses.billing.' + value.code_name,
                                         parentArgs: 'addresses.billing',
-                                        writable: true
+                                        writable: true,
+                                        name: 'supplier_' + value.code_name
                                     });
                                     locals.billingAddressFields.push(value);
                                 });
@@ -222,7 +224,7 @@
                                                 billing_address: $scope.addresses.billing
                                             };
                                         if (!$scope.addresses.sameAsBilling) {
-                                            valid = $scope.addresses.form.shipping.$valid;
+                                            valid = valid && $scope.addresses.form.shipping.$valid;
                                             addressing.shipping_address = $scope.addresses.shipping;
                                         } else {
                                             addressing.shipping_address = $scope.addresses.billing;
@@ -234,7 +236,9 @@
                                             });
                                         } else {
                                             helpers.form.wakeUp($scope.addresses.form.billing);
-                                            helpers.form.wakeUp($scope.addresses.form.shipping);
+                                            if (!$scope.addresses.sameAsBilling) {
+                                                helpers.form.wakeUp($scope.addresses.form.shipping);
+                                            }
                                         }
                                     },
                                     toReviewOrder: function () {
@@ -626,11 +630,15 @@
                                     }
                                 };
 
-                                if ($scope.order.state === 'checkout' || $scope.order.state === 'completed') {
-                                    $scope.stage.out.extend([1, 2, 3]);
-                                    $scope.stage.current = 4;
-                                    $scope.stage.checkout = 1;
-                                }
+                                (function () {
+                                    if ($scope.order.state === 'checkout' || $scope.order.state === 'completed') {
+                                        $scope.stage.out.extend([1, 2, 3]);
+                                        $scope.stage.current = 4;
+                                        $scope.stage.checkout = 1;
+                                    }
+                                }());
+
+                                //$scope.$watch('order.state', );
 
                                 $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
                                 $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);

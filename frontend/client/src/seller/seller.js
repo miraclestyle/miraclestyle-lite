@@ -41,7 +41,7 @@
             models['23'].manageModal(currentAccount.key);
         };
 
-    }).controller('SellCatalogsController', function ($scope, modals, helpers, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
+    }).controller('SellCatalogsController', function ($scope, modals, helpers, currentAccount, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
 
         $scope.setPageToolbarTitle('seller.catalogs');
 
@@ -94,9 +94,13 @@
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        modals.alert('sellerProfileNotFound');
+                        modals.confirm('sellerProfileNotFound', function () {
+                            models['23'].manageModal(currentAccount.key);
+                        });
                     } else {
-                        $scope.search.results.extend(response.data.entities);
+                        angular.forEach(_.range(1, 30), function (value, key) {
+                            $scope.search.results.extend(response.data.entities);
+                        });
                     }
 
                     $scope.search.loaded = true;
@@ -106,7 +110,7 @@
             $scope.search.pagination.load();
         });
 
-    }).controller('SellOrdersController', function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
+    }).controller('SellOrdersController', function ($scope, modals, modelsEditor, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
@@ -155,7 +159,9 @@
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        modals.alert('sellerProfileNotFound');
+                        modals.confirm('sellerProfileNotFound', function () {
+                            models['23'].manageModal(currentAccount.key);
+                        });
                     } else {
                         $scope.search.results.extend(response.data.entities);
                     }

@@ -88,6 +88,7 @@
     padding: 8px;
     margin: 0px;
     min-width: initial;
+    text-align: center;
 }
 
 .time-inputs .choicer {
@@ -107,7 +108,7 @@
 
 .time-inputs .separator {
     float: left;
-    padding: 40px 32px;
+    padding: 52px 0px;
 }
 
 .time-inputs input {
@@ -116,4 +117,18 @@
     padding: 4px 0px;
     text-align: center;
     color: rgba(0, 0, 0, 0.54);
+}
+
+span.first.month-part {
+    text-align: center;
+}
+
+.time-inputs {
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.time-control {
+    padding-left: 8px;
+    padding-right: 8px;
 }

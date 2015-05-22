@@ -3,7 +3,7 @@
   <button loading="!<%= config.ui.writableCompiled %>" 
           md-ink-ripple-list ng-click="config.ui.specifics.create()" 
           type="button" 
-          class="list-row list-row-one-line list-row-avatar list-row-is-clickable list-row-has-primary menu-item">
+          class="list-row list-row-one-line list-row-avatar list-row-has-primary menu-item">
           <div class="list-content-tile">
             <div class="list-primary-tile">
               <div class="avatar"><icon type="content.add-circle"></icon></div>
@@ -13,9 +13,10 @@
   </button>
 
   <button loading="!<%= config.ui.writableCompiled %>" 
-          md-ink-ripple-list ng-click="config.ui.specifics.aboutPlugins()" 
+          md-ink-ripple-list 
+          ng-click="config.ui.specifics.aboutPlugins()" 
           type="button" 
-          class="list-row list-row-one-line list-row-avatar list-row-is-clickable list-row-has-primary menu-item">
+          class="list-row list-row-one-line list-row-avatar list-row-has-primary menu-item">
           <div class="list-content-tile">
             <div class="list-primary-tile">
               <div class="avatar"><icon type="content.help"></icon></div>
@@ -32,7 +33,7 @@
              current-item="ent"
              class="no-move list-row list-row-three-lines list-row-has-secondary no-padding clearfix">
             <div class="delete-overlay"></div>
-            <list-button class="list-row-three-lines" loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
+            <list-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
                 <strong class="first ellipsis-text">{{ent.name}}</strong>
                 <span class="second">
                   {{config.ui.specifics.showType(ent.kind)}}

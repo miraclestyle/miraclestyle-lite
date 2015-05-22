@@ -259,9 +259,9 @@
                         that.calculate(item);
                         if (doAll) {
                             if (that.config.square) {
-                                item.height(item.width());
+                                //item.height(item.width());
                             } else {
-                                item.height(helpers.newHeightByWidth(that.config.maxWidth, that.config.maxHeight, item.width()));
+                                //item.height(helpers.newHeightByWidth(that.config.maxWidth, that.config.maxHeight, item.width()));
                             }
                         }
                     });
@@ -282,10 +282,15 @@
         return {
             require: '^gridScale',
             link: function (scope, element, attrs, gridScaleCtrl) {
-                gridScaleCtrl.add(element);
-                setTimeout(function () {
+                var appear = function () {
                     element.addClass('visible');
-                }, 50);
+                }, config = scope.$eval(attrs.gridScaleItem) || {};
+                gridScaleCtrl.add(element);
+                if (config.image) {
+                    scope.$on('displayImageLoaded', appear);
+                } else {
+                    setTimeout(appear, 50);
+                }
                 scope.$on('$destroy', function () {
                     gridScaleCtrl.remove(element);
                 });
