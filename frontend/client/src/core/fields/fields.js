@@ -424,6 +424,9 @@
                                         return Object.keys(this.field().$error).length;
                                     },
                                     messages: function () {
+                                        if (!this.field()) {
+                                            return false;
+                                        }
                                         return ((this.field().$dirty && this.hasErrors()) ? this.field().$error : false) || config.ui;
                                     },
                                     shouldShowMessages: function () {

@@ -110,11 +110,6 @@
 
                     models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
 
-                        if (!response.data.entity.id) {
-                            /*modals.alert('cartNotFound');
-                            return;*/
-                        }
-
                         $modal.open({
                             templateUrl: 'order/view.html',
                             popFrom: config.popFrom,
@@ -381,6 +376,10 @@
                                         return $scope.message.toggle(true);
                                     },
                                     toggle: function (close) {
+                                        if (!$scope.order.id) {
+                                            snackbar.showK('messangerDisabledWhenEmpty');
+                                            return;
+                                        }
                                         if ($scope.messages.toggling) {
                                             return;
                                         }

@@ -344,7 +344,8 @@
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
-            uploadImagesFirst: 'Use "Images" dialog to upload and arrange catalog images first.'
+            uploadImagesFirst: 'Use "Images" dialog to upload and arrange catalog images first.',
+            messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -378,7 +379,8 @@
             editInstances: 'Edit Variant Configuration',
             addInstances: 'Add Variant Configuration',
             addContents: 'Add Content',
-            editContents: 'Edit Content'
+            editContents: 'Edit Content',
+            account: 'Account'
         });
 
     });

@@ -3,7 +3,7 @@
     <div md-ink-ripple>
         <input ng-readonly="true" class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
     </div>
-    <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
+    <div nng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
       <div ng-message="help"><%= config.ui.help %></div>
       <div ng-message="required">This field requires "date/time" value!</div>
     </div>
