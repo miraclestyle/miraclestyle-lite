@@ -200,6 +200,11 @@
                 weight_uom: 'Weight Unit Of Measurement',
                 volume_uom: 'Volume Unit Of Measurement',
             },
+            '27': {
+                uom: 'Unit Of Measurement',
+                weight_uom: 'Weight Unit Of Measurement',
+                volume_uom: 'Volume Unit Of Measurement',
+            },
             '112': {
                 rules: 'Prices'
             },
@@ -308,7 +313,7 @@
 
         $.extend(GLOBAL_CONFIG.subheaders, {
             loginMethods: 'Login Methods',
-            productInstances: 'Product Instances',
+            productInstances: 'Variant Configurations',
             catalogImages: 'Images',
             catalogProducts: 'Products',
             collectionSeller: 'Sellers',
@@ -368,7 +373,12 @@
             addLocations: 'Add Locations',
             editLines: 'Edit Lines',
             addPrice: 'Add Price',
-            editPrice: 'Edit Price'
+            editPrice: 'Edit Price',
+            viewInstances: 'Variant Configurations',
+            editInstances: 'Edit Variant Configuration',
+            addInstances: 'Add Variant Configuration',
+            addContents: 'Add Content',
+            editContents: 'Edit Content'
         });
 
     });

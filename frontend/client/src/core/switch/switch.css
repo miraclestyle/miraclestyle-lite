@@ -126,11 +126,11 @@ md-switch[disabled] .md-bar {
 }
 
 md-switch.md-checked .md-thumb {
-    background-color: rgb(176, 190, 197);
+    /*background-color: rgb(176, 190, 197);*/
 }
 
 md-switch.md-checked .md-bar {
-    background-color: rgba(176, 190, 197, 0.5);
+    background-color: rgba(0, 0, 0, 0.54);
 }
 
 md-switch.has-help .md-container {
