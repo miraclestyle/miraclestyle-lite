@@ -7,6 +7,7 @@ md-switch {
     align-items: center;
     margin: 15px;
     /*white-space: nowrap;*/
+    
     cursor: pointer;
     outline: none;
     -webkit-user-select: none;
@@ -31,7 +32,7 @@ md-switch .md-container {
     -ms-user-select: none;
     user-select: none;
     margin-right: 0px;
-    right:12px;
+    right: 12px;
     top: 12px;
 }
 
@@ -43,22 +44,22 @@ md-switch:not([disabled]) .md-dragging, md-switch:not([disabled]).md-dragging .m
 md-switch .md-label {
     border-color: transparent;
     border-width: 0px;
-    padding-right:72px;
+    padding-right: 72px;
 }
 
 md-switch .md-bar {
-  left: 1px;
-  width: 36px;
-  top: 4px;
-  height: 16px;
-  border-radius: 8px;
-  position: absolute;
+    left: 1px;
+    width: 36px;
+    top: 4px;
+    height: 16px;
+    border-radius: 8px;
+    position: absolute;
 }
 
 md-switch .md-thumb-container {
     top: 2px;
     left: 0;
-    width: 16px;
+    width: 20px;
     position: absolute;
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
@@ -71,7 +72,7 @@ md-switch.md-checked .md-thumb-container {
 }
 
 md-switch .md-thumb {
-    position: absolute;
+    position: relative;
     margin: 0;
     left: 0;
     top: 0;
@@ -79,7 +80,7 @@ md-switch .md-thumb {
     height: 20px;
     width: 20px;
     border-radius: 50%;
-    box-shadow:0px 1px 3px 1px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
 }
 
 md-switch .md-thumb .md-ripple-container {
@@ -94,21 +95,13 @@ md-switch .md-thumb .md-ripple-container {
 }
 
 md-switch:not(.md-dragging) .md-bar, md-switch:not(.md-dragging) .md-thumb-container, md-switch:not(.md-dragging) .md-thumb {
-    transition: all 0.5s cubic-bezier(0.35, 0, 0.25, 1);
+    transition: all 0.2s linear;
     transition-property: -webkit-transform, background-color;
     transition-property: transform, background-color;
 }
 
 md-switch:not(.md-dragging) .md-bar, md-switch:not(.md-dragging) .md-thumb {
     transition-delay: 0.05s;
-}
-
-md-switch.md-checked.md-primary .md-thumb {
-    background-color: rgb(158, 158, 158);
-}
-
-md-switch.md-checked.md-primary .md-bar {
-    background-color: rgba(158, 158, 158, 0.5);
 }
 
 md-switch:focus .md-label:not(:empty) {
@@ -132,19 +125,19 @@ md-switch[disabled] .md-bar {
     background-color: rgba(0, 0, 0, 0.12);
 }
 
-md-switch.md-checked.md-warn .md-thumb {
-    background-color: rgb(244, 67, 54);
-}
-
-md-switch.md-checked.md-warn .md-bar {
-    background-color: rgba(244, 67, 54, 0.5);
-}
-
-
 md-switch.md-checked .md-thumb {
     background-color: rgb(176, 190, 197);
 }
 
 md-switch.md-checked .md-bar {
     background-color: rgba(176, 190, 197, 0.5);
+}
+
+md-switch.has-help .md-container {
+    top: 24px;
+}
+
+md-switch.has-help {
+    padding-top: 14px;
+    padding-bottom: 14px;
 }

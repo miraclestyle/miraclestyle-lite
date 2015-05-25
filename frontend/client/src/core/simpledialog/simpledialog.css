@@ -6,9 +6,6 @@ md-backdrop.simple-dialog-backdrop {
     z-index: 79;
 }
 
-.simple-dialog-option {
-    opacity: 0;
-}
 
 simple-dialog {
     opacity: 0;

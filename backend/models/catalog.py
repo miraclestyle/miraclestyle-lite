@@ -117,8 +117,9 @@ class CatalogProductVariant(orm.BaseModel):
   _use_rule_engine = False
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
-  description = orm.SuperTextProperty('2')
+  # this must be switched later
   options = orm.SuperStringProperty('3', repeated=True, indexed=False)
+  description = orm.SuperTextProperty('2')
   allow_custom_value = orm.SuperBooleanProperty('4', required=True, indexed=False, default=False)
 
 

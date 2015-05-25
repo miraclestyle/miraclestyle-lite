@@ -2530,8 +2530,14 @@ mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
                         'height': element.outerWidth() + 'px',
                         'width': element.outerWidth() + 'px'
                     };
-                    ripple.css(worker.style);
                     cls += ' ripple-action';
+                } else if (element[0].hasAttribute('md-ink-ripple-switch')) {
+                    worker.style = {
+                        'top': '-14px',
+                        'left': '-14px',
+                        'height': '48px',
+                        'width': '48px'
+                    };
                 } else {
                     var parent_width = element.width();
                     var parent_height = element.height();
@@ -2549,8 +2555,10 @@ mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
                         'margin-top': margin,
                         'margin-left': margin
                     };
-                    ripple.css(worker.style);
                 }
+
+
+                ripple.css(worker.style);
 
                 $timeout(function () {
                     ripple.addClass(cls);
@@ -2585,37 +2593,6 @@ mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
     }
     InkRippleService.$inject = ["$window", "$timeout", "$parse"];
 
-    /**
-     * noink/nobar/nostretch directive: make any element that has one of
-     * these attributes be given a controller, so that other directives can
-     * `require:` these and see if there is a `no<xxx>` parent attribute.
-     *
-     * @usage
-     * <hljs lang="html">
-     * <parent md-no-ink>
-     *   <child detect-no>
-     *   </child>
-     * </parent>
-     * </hljs>
-     *
-     * <hljs lang="js">
-     * myApp.directive('detectNo', function() {
-     *   return {
-     *     require: ['^?mdNoInk', ^?mdNoBar'],
-     *     link: function(scope, element, attr, ctrls) {
-     *       var noinkCtrl = ctrls[0];
-     *       var nobarCtrl = ctrls[1];
-     *       if (noInkCtrl) {
-     *         alert("the md-no-ink flag has been specified on an ancestor!");
-     *       }
-     *       if (nobarCtrl) {
-     *         alert("the md-no-bar flag has been specified on an ancestor!");
-     *       }
-     *     }
-     *   };
-     * });
-     * </hljs>
-     */
     function attrNoDirective() {
         return function () {
             return {

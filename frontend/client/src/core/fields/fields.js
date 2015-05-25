@@ -154,7 +154,8 @@
                             controller: function ($scope) {
                                 var save = scope.save,
                                     complete = scope.complete,
-                                    getTitle;
+                                    getTitle,
+                                    initial = true;
                                 getTitle = function () {
                                     return 'view' + helpers.toolbar.makeTitle(field.code_name);
                                 };
@@ -184,6 +185,10 @@
                                     $scope.formSetDirty();
                                 });
                                 $scope.$watch('parentContainer.form.$dirty', function (neww, old) {
+                                    if (initial) {
+                                        initial = false;
+                                        return;
+                                    }
                                     if (neww) {
                                         $scope.formSetDirty();
                                     } else {

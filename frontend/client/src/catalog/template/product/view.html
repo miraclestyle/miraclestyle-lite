@@ -25,19 +25,19 @@
                         <div class="product-detail-content">
                             <div class="list list-padding">
                                 <div class="list">
-                                    <div ng-include="'catalog/quick_info.html'"></div>
+                                    <div class="padding-top-bottom-2" ng-include="'catalog/quick_info.html'"></div>
                                 </div>
 
-                                <div class="list-row list-row-three-line">
+                                <div class="list-row list-row-three-line list-row-multiline">
                                     <div class="list-content-tile">
                                         <h1 class="headline">{{product.name}}</h1>
                                         <span class="first">{{product._category.name}}</span>
                                         <span class="first">{{product.code}}</span>
                                     </div>
                                 </div>
-                                <div class="list-row list-row-one-line">
+                                <div class="list-row list-row-one-line list-row-multiline">
                                     <div class="list-content-tile">
-                                        <span class="first">{{product.description}}</span>
+                                        <span class="body1">{{product.description}}</span>
                                     </div>
                                 </div>
                                 <div class="list list-padding seam-top seam-bottom">
@@ -50,7 +50,7 @@
                                         </list-button>
                                     </div>
                                 </div>
-                                <div class="product-price list-row list-row-two-lines">
+                                <div class="product-price list-row list-row-two-lines list-row-multiline">
                                     <div class="list-content-tile">
                                         <span class="first">{{product.unit_price|formatCurrency:catalog._seller._currency}} ({{catalog._seller._currency.code}})</span>
                                         <span class="second">{{product.availability}}</span>
@@ -65,21 +65,21 @@
                                             Quantity ({{product._uom.name}})
                                         </label>
                                         <div class="product-quantity-control" layout="row">
-                                            <md-button flex ng-click="decreaseQuantity()" loading="!canAddToCart" class="md-raised product-quantity-button product-quantity-button-deincrease">
+                                            <md-button flex ng-click="decreaseQuantity()" loading="!canAddToCart" class="product-quantity-button product-quantity-button-deincrease">
                                                 <icon type="content.remove"></icon>
                                             </md-button>
                                             <div class="product-quantity-input-wrapper" flex>
                                                 <input class="text-input product-quantity-input" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity" />
                                             </div>
-                                            <md-button flex ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="md-raised product-quantity-button product-quantity-button-increase">
+                                            <md-button flex ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="product-quantity-button product-quantity-button-increase">
                                                 <icon type="content.add"></icon>
                                             </md-button>
                                         </div>
                                     </md-input-container>
                                 </div>
 
-                                <div class="product-actions padding-bottom-sides-16">
-                                    <md-button type="button" ng-click="addToCart()" loading="!canAddToCart || disableUpdateCart" class="md-raised">
+                                <div class="clearfix button-set list-row list-row-one-line list-content-tile">
+                                    <md-button type="button" ng-click="addToCart()" loading="!canAddToCart || disableUpdateCart">
                                         <span ng-show="hasThisProduct">Update Cart</span>
                                         <span ng-show="!hasThisProduct">Add To Cart</span>
                                     </md-button>

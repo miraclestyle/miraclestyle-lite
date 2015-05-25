@@ -331,7 +331,7 @@
                                             setTimeout(options.resize, 100);
                                         });
 
-                                        dialogEl.css($mdConstant.CSS.TRANSFORM, 'scale(' +
+                                        dialogEl/*.css($mdConstant.CSS.TRANSFORM, 'scale(' +
                                             Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
                                             Math.min(target.height() / dialogEl.height(), 1.0) + ')')
                                             .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
@@ -349,6 +349,20 @@
                                                         nextActive.focus();
                                                     }
                                                 }
+                                            })*/.oneAnimationEnd(function (ev) {
+                                                nextDefer.resolve();
+                                                nextActive = dialogEl.find('.list-row-is-active:first');
+                                                if (!nextActive.length) {
+                                                    nextActive = firstTabbable;
+                                                }
+                                                if (select.search) {
+                                                    setTimeout(function () {
+                                                        dialogEl.find('input[type="search"]').focus();
+                                                    }, 100);
+                                                } else {
+                                                    nextActive.focus();
+                                                }
+                                                dialogEl.addClass('opacity-in');
                                             }).on('keyup', function (ev) {
                                                 if (!nextActive) {
                                                     return;
@@ -383,11 +397,18 @@
                                                     nextActive.focus();
                                                 }
                                             });
+                                        /*
                                         $$rAF(function () {
                                             dialogEl.addClass('transition-in').addClass('opacity-in');
                                             dialogEl.css($mdConstant.CSS.TRANSFORM, '');
                                             dontOpen = false;
+                                        });*/
+
+                                        $$rAF(function () {
+                                            dialogEl.addClass('fade in');
+                                            dontOpen = false;
                                         });
+
 
                                     };
 

@@ -191,11 +191,12 @@
                             element.addClass('visible');
                             $(window).triggerHandler('modal.visible', [element]);
                             scope.modalOptions.opened = true;
+                            scope.$broadcast('opened');
                         });
 
                         $(window).triggerHandler('modal.open', [element]);
 
-                        $$rAF(cb); // frame for .addClass
+                        $$rAF(cb);
 
                     };
                     attrs.$observe('modalRender', function (value) {

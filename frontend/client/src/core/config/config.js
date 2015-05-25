@@ -177,6 +177,12 @@
             },
             '31-update': {
                 discontinue_date: 'Date when this catalog will be automatically discontinued and become unavailable to the general public.'
+            },
+            '26': {
+                name: 'Name of the variant input control that will be visible on the product view.',
+                options: 'Options that will be available for selection on the variant input control. Specify one option per line.',
+                description: 'Brief description visible beneath the variant input control.',
+                allow_custom_value: 'If enabled, options defined above will be ignored, and buyers will be able to supply custom value in variant input control.'
             }
         });
 
@@ -188,6 +194,11 @@
             },
             plugins: {
                 kind: 'Rule'
+            },
+            '28': {
+                uom: 'Unit Of Measurement',
+                weight_uom: 'Weight Unit Of Measurement',
+                volume_uom: 'Volume Unit Of Measurement',
             },
             '112': {
                 rules: 'Prices'
