@@ -98,7 +98,7 @@
                             models['23'].manageModal(currentAccount.key);
                         });
                     } else {
-                        angular.forEach(_.range(1, 30), function (value, key) {
+                        angular.forEach(_.range(1, 10), function (value, key) {
                             $scope.search.results.extend(response.data.entities);
                         });
                     }
@@ -887,14 +887,9 @@
 
                             $scope.viewContent = function (content) {
                                 $modal.open({
-                                    templateUrl: 'core/models/manage.html',
+                                    templateUrl: 'core/misc/content_view.html',
                                     controller: function ($scope) {
-                                        $scope.dialog = {
-                                            templateBodyUrl: 'core/misc/content_view_body.html',
-                                            toolbar: {
-                                                hideSave: true
-                                            }
-                                        };
+                                        $scope.plainText = true;
                                         $scope.content = content;
                                         $scope.close = function () {
                                             $scope.$close();

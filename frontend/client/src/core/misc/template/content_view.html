@@ -1,0 +1,17 @@
+<div fit-in-modal>
+    <div ng-form="container.form" class="modal-body">
+        <div class="top-close">
+                <button md-ink-ripple-action loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
+                    <icon type="navigation.close"></icon>
+                </button>
+        </div>
+        <div class="fixed-height relative overflow-y">
+            <div class="modal-body-inner padding-top-64">
+                <div class="modal-body-inner padding-16">
+                    <div ng-if="plainText" class="body1" ng-bind-html="content.body | escape | autobr"></div>
+                    <div ng-if="markDown" class="body1" btf-markdown="content.body"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -4,7 +4,11 @@
     angular.module('material.components.content', [
             'material.core'
         ])
-        .directive('mdContent', mdContentDirective);
+        .directive('mdContent', mdContentDirective).config(['markdownConverterProvider', function (markdownConverterProvider) {
+            markdownConverterProvider.config({
+                extensions: ['demo']
+            });
+        }]);
 
 
     function mdContentDirective() {
@@ -46,3 +50,27 @@
         });
     }
 })();
+
+
+(function () {
+    var demo = function (converter) {
+        return [
+            // Replace escaped @ symbols
+            {
+                type: 'output',
+                //regex: '<iframe(.+?)</iframe>',
+                filter: function (text) {
+                    console.log(text);
+                    return text;
+                }
+            }
+        ];
+    };
+
+    // Client-side export
+    if (typeof window !== 'undefined' && window.Showdown && window.Showdown.extensions) {
+        window.Showdown.extensions.demo = demo;
+    }
+    // Server-side export
+    if (typeof module !== 'undefined') module.exports = demo;
+}());

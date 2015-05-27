@@ -440,8 +440,20 @@
 
             };
 
+        }).filter('escape', function () {
+            return function (val) {
+                if (!val) {
+                    return val;
+                }
+                return _.escape(val);
+            };
         }).filter('autobr', function (helpers) {
-
+            return function (data) {
+                if (!data) {
+                    return data;
+                }
+                return data.replace(/\n\r?/g, '<br />');
+            };
             return function (str) {
                 return helpers.splitLines(str).join("<br />");
             };

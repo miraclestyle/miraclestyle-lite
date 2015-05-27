@@ -377,14 +377,9 @@
                                 $scope.variationApplied = false;
                                 $scope.viewContent = function (content) {
                                     $modal.open({
-                                        templateUrl: 'core/models/manage.html',
+                                        templateUrl: 'core/misc/content_view.html',
                                         controller: function ($scope) {
-                                            $scope.dialog = {
-                                                templateBodyUrl: 'core/misc/content_view_body.html',
-                                                toolbar: {
-                                                    hideSave: true
-                                                }
-                                            };
+                                            $scope.markDown = true;
                                             $scope.content = content;
                                             $scope.close = function () {
                                                 $scope.$close();

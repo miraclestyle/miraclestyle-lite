@@ -54,6 +54,7 @@ ANGULAR_VENDOR_JS = (
   'vendor/jquery-ui/ui/draggable.js',
   'vendor/jquery-ui/ui/droppable.js',
   'vendor/Steady.js/Steady.js',
+  'vendor/showdown/src/showdown.js',
   'vendor/jquery.scrollTo/jquery.scrollTo.js',
   'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
   'vendor/jquery-cookie/jquery.cookie.js',
@@ -72,7 +73,8 @@ ANGULAR_VENDOR_JS = (
   'vendor/momentjs/min/moment.min.js',
   'vendor/humanize-duration/humanize-duration.js',
   'vendor/angular-timer/dist/angular-timer.js',
-  'vendor/angular-google-chart/ng-google-chart.js'
+  'vendor/angular-google-chart/ng-google-chart.js',
+  'vendor/angular-markdown-directive/markdown.js'
 )
 ANGULAR_VENDOR_CSS = ('vendor/material-design-iconic-font/css/material-design-iconic-font.min.css',)
 ANGULAR_TEMPLATE_FILES = []
