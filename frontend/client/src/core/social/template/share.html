@@ -1,11 +1,12 @@
 <div fit-in-modal>
-    <div class="modal-body">
-        <div class="fixed-height relative overflow-y">
-            <div class="top-close">
-                <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
+    <div ng-form="container.form" class="modal-body">
+        <div class="top-close">
+                <button md-ink-ripple-action loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
                     <icon type="navigation.close"></icon>
                 </button>
-            </div>
+        </div>
+        <div class="fixed-height relative overflow-y">
+
             <div class="modal-body-inner">
                 <div class="list seam-bottom list-padding">
                     <div class="social-grid">
@@ -19,8 +20,9 @@
                         </button>
                     </div>
                 </div>
-                <div class="list list-padding">
+                <div ng-if="embed.enabled" class="list list-padding">
                     <div class="list-subheader subheader">Embed</div>
+                    <div form-builder="embed.fields"></div>
                 </div>
 
             </div>

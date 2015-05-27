@@ -345,7 +345,9 @@
                                 };
 
                                 $scope.displayShare = function () {
-                                    return social.share($scope.socialMeta);
+                                    return social.share($scope.socialMeta, {
+                                        src: helpers.url.abs('embed/catalog/' + $scope.catalog.key + '/product/' + $scope.product.key)
+                                    });
                                 };
 
                                 $scope.variantChooser = {};
@@ -516,9 +518,7 @@
                                 };
 
                                 $scope.$watch('product.id', function (neww, old) {
-                                    if (old !== neww) {
-                                        shareWatch();
-                                    }
+                                    shareWatch();
                                 });
 
                                 $scope.close = function () {
@@ -607,7 +607,9 @@
                                 };
 
                                 $scope.displayShare = function () {
-                                    return social.share($scope.socialMeta);
+                                    return social.share($scope.socialMeta, {
+                                        src: helpers.url.abs('embed/catalog/' + $scope.catalog.key)
+                                    });
                                 };
 
                                 $scope.loadMoreImages = function (callback) {

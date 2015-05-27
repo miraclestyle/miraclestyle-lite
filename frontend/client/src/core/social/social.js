@@ -2,7 +2,7 @@
     'use strict';
     angular.module('app').factory('social', function ($modal, GLOBAL_CONFIG) {
         var social = {
-            share: function (meta) {
+            share: function (meta, embed) {
                 $modal.open({
                     templateUrl: 'core/social/share.html',
                     controller: function ($scope) {
@@ -68,6 +68,65 @@
                             popup.focus();
                             return popup;
                         };
+
+                        $scope.container = {};
+
+                        $scope.embed = {
+                            enabled: embed,
+                            values: {
+                                width: '100%',
+                                height: '100%',
+                                code: ''
+                            },
+                            setCode: function () {
+                                var values = $scope.embed.values;
+                                values.code = '<iframe width="' + values.width + '" height="' + values.height + '" src="' + embed.src + '" frameborder="0" allowfullscreen></iframe>';
+                                return values.code;
+                            },
+                            fields: [{
+                                type: 'SuperStringProperty',
+                                code_name: 'width',
+                                required: true,
+                                ui: {
+                                    writable: true,
+                                    args: 'embed.values.width',
+                                    parentArgs: 'embed.values',
+                                    attrs: {
+                                        'ng-change': 'embed.setCode()'
+                                    }
+                                }
+
+                            }, {
+                                type: 'SuperStringProperty',
+                                code_name: 'height',
+                                required: true,
+                                ui: {
+                                    writable: true,
+                                    args: 'embed.values.height',
+                                    parentArgs: 'embed.values',
+                                    attrs: {
+                                        'ng-change': 'embed.setCode()'
+                                    }
+                                }
+
+                            }, {
+                                type: 'SuperTextProperty',
+                                code_name: 'code',
+                                ui: {
+                                    writable: true,
+                                    args: 'embed.values.code',
+                                    parentArgs: 'embed.values',
+                                    attrs: {
+                                        readonly: 'true',
+                                        onclick: 'this.select()'
+                                    }
+                                }
+
+                            }]
+                        };
+
+                        $scope.embed.setCode();
+                        $scope.close = $scope.$close;
                     }
                 });
             }
