@@ -1,0 +1,47 @@
+.social-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+    padding: 0px;
+    position: relative;
+    box-sizing: border-box;
+    margin: 0px;
+    padding-top:56px;
+    padding-bottom: 8px;
+}
+
+.social-grid-item {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    border-radius: 0px;
+    background: rgba(0, 0, 0, 0);
+    display: flex;
+    justify-content: flex-start;
+    align-content: flex-start;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    padding: 8px 24px;
+}
+
+.social-grid-item-line {
+    line-height: 0;
+    padding-top: 8px;
+}
+
+.social-grid-text {
+    line-height: 16px;
+    color: rgba(0, 0, 0, 0.54);
+    display: inline;
+}
+
+.social-icon {
+    padding: 4px;
+    width: 48px;
+    height: 48px;
+    display: block;
+}

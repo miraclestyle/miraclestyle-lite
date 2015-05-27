@@ -74,23 +74,29 @@
                 };
             }
         };
-    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar) {
+    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar, social) {
 
         modelsConfig(function (models) {
-            var setupToggleMenu = function ($scope, id) {
-                    $scope.sidenavMenuID = id;
-                    $scope.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
-                    $scope.toggling = false;
-                    $scope.toggleMenu = function ($event) {
-                        if ($scope.toggling) {
+            var setupToggleMenu = function (menu, id) {
+                    menu.sidenavMenuID = id;
+                    menu.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
+                    menu.toggling = false;
+                    menu.close = function () {
+                        return menu.toggle(undefined, 'close');
+                    };
+                    menu.open = function () {
+                        return menu.toggle(undefined, 'open');
+                    };
+                    menu.toggle = function ($event, dowhat) {
+                        if (menu.toggling) {
                             return;
                         }
-                        var it = $mdSidenav($scope.sidenavMenuID),
+                        var it = $mdSidenav(menu.sidenavMenuID),
                             check = false,
                             target;
-                        if ($event.target) {
+                        if ($event && $event.target) {
                             target = $($event.target);
-                            angular.forEach($scope.notRipplable, function (skip) {
+                            angular.forEach(menu.notRipplable, function (skip) {
                                 if (target.is(skip) || target.parent().is(skip)) {
                                     check = true;
                                 }
@@ -99,10 +105,10 @@
                                 return;
                             }
                         }
-                        $scope.toggling = true;
+                        menu.toggling = true;
                         $timeout(function () {
-                            it[it.isOpen() ? 'close' : 'open']().then(function () {
-                                $scope.toggling = false;
+                            it[dowhat || (it.isOpen() ? 'close' : 'open')]().then(function () {
+                                menu.toggling = false;
                             });
                         });
                     };
@@ -196,6 +202,7 @@
                                         name: v.name,
                                         options: v.options,
                                         option: (variantSignatureAsDicts ? variantSignatureAsDicts[i][v.name] : v.options[0]),
+                                        description: v.description
                                     });
 
                                     $scope.variantSelection.push({
@@ -285,9 +292,75 @@
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
                             controller: function ($scope, productInstanceResponse) {
-                                var loadProductInstance, sellerKey;
+                                var loadProductInstance, sellerKey, shareWatch;
                                 $.extend($scope, fakeScope);
-                                setupToggleMenu($scope, 'right_product_sidenav');
+                                $scope.variantMenu = {};
+                                $scope.productMenu = {};
+                                setupToggleMenu($scope.productMenu, 'right_product_sidenav' + _.uniqueId());
+                                setupToggleMenu($scope.variantMenu, 'right_variantMenu_sidenav' + _.uniqueId());
+
+                                shareWatch = function () {
+                                    if (!$scope.product) {
+                                        $scope.socialMeta = {};
+                                        return;
+                                    }
+                                    var productUrl = helpers.url.abs('catalog/' + $scope.catalog.key + '/product/' + $scope.product.key),
+                                        image = function (size) {
+                                            if ($scope.product.images && $scope.product.images.length) {
+                                                return $scope.product.images[0].serving_url + '=s' + (size || '600');
+                                            }
+                                            return undefined;
+                                        };
+                                    $scope.socialMeta = {
+                                        facebook: {
+                                            'p[url]': productUrl,
+                                            'p[images][0]': image(600),
+                                            'p[title]': $scope.product.name
+                                        },
+                                        twitter: {
+                                            url: productUrl,
+                                            text: 'Product - ' + $scope.product.name
+                                        },
+                                        pinterest: {
+                                            url: productUrl,
+                                            media: image(600),
+                                            description: 'Share on pinterest'
+                                        },
+                                        googleplus: {
+                                            url: productUrl
+                                        },
+                                        reddit: {
+                                            url: productUrl,
+                                            title: $scope.product.name
+                                        },
+                                        linkedin: {
+                                            url: productUrl,
+                                            title: $scope.product.name
+                                        },
+                                        tumblr: {
+                                            url: productUrl,
+                                            name: $scope.product.name
+                                        }
+                                    };
+                                };
+
+                                $scope.displayShare = function () {
+                                    return social.share($scope.socialMeta);
+                                };
+
+                                $scope.variantChooser = {};
+
+                                $scope.setupVariantChooser = function (variant) {
+                                    $scope.variantChooser = variant;
+                                    $scope.variantMenu.open();
+                                };
+
+                                $scope.completeVariantChooser = function (option) {
+                                    $scope.variantChooser.option = option;
+                                    $scope.variantMenu.close();
+                                    $scope.changeVariation();
+                                };
+
                                 $scope.resetVariation = function () {
                                     this.resetVariantProduct();
                                     $scope.variationApplied = false;
@@ -342,6 +415,10 @@
                                             $scope.canAddToCart = order.ui.rule.action.update_line.executable;
                                         } else {
                                             $scope.canAddToCart = true;
+                                        }
+
+                                        if (!$scope.productQuantity) {
+                                            $scope.productQuantity = 1;
                                         }
 
                                     });
@@ -428,6 +505,7 @@
 
                                         if ($scope.productQuantity < 1) {
                                             $scope.hasThisProduct = false;
+                                            $scope.productQuantity = 1;
                                         } else {
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
@@ -436,6 +514,12 @@
                                         snackbar.showK('cartUpdated');
                                     });
                                 };
+
+                                $scope.$watch('product.id', function (neww, old) {
+                                    if (old !== neww) {
+                                        shareWatch();
+                                    }
+                                });
 
                                 $scope.close = function () {
                                     $scope.$close();
@@ -469,7 +553,8 @@
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
                             controller: function ($scope) {
-                                setupToggleMenu($scope, 'right_catalog_sidenav');
+                                $scope.catalogMenu = {};
+                                setupToggleMenu($scope.catalogMenu, 'right_catalog_sidenav' + _.uniqueId());
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = '31';
                                 $scope.logoImageConfig = {};
@@ -489,22 +574,40 @@
                                         $scope.catalog._images.extend(items);
                                     }
                                 });
-                                $scope.social = {
-                                    fb: {
-                                        url: catalogUrl
+                                $scope.socialMeta = {
+                                    facebook: {
+                                        'p[url]': catalogUrl,
+                                        'p[images][0]': $scope.catalog._images[0].serving_url + '=s600',
+                                        'p[title]': $scope.catalog.name
                                     },
                                     twitter: {
                                         url: catalogUrl,
-                                        text: 'Check out this catalog!'
+                                        text: 'Catalog - ' + $scope.catalog.name
                                     },
                                     pinterest: {
                                         url: catalogUrl,
-                                        image: $scope.catalog._images[0].serving_url + '=s600',
-                                        text: 'Share on pinterest'
+                                        media: $scope.catalog._images[0].serving_url + '=s600',
+                                        description: 'Share on pinterest'
                                     },
-                                    gplus: {
+                                    googleplus: {
                                         url: catalogUrl
+                                    },
+                                    reddit: {
+                                        url: catalogUrl,
+                                        title: $scope.catalog.name
+                                    },
+                                    linkedin: {
+                                        url: catalogUrl,
+                                        title: $scope.catalog.name
+                                    },
+                                    tumblr: {
+                                        url: catalogUrl,
+                                        name: $scope.catalog.name
                                     }
+                                };
+
+                                $scope.displayShare = function () {
+                                    return social.share($scope.socialMeta);
                                 };
 
                                 $scope.loadMoreImages = function (callback) {

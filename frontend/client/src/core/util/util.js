@@ -2519,10 +2519,7 @@ mdMediaFactory.$inject = ["$mdConstant", "$rootScope", "$window"];
                     ripple.addClass('ripple-light');
                 }
                 element.append(ripple);
-                var squared = element[0].hasAttribute('md-ink-ripple-action');
-                if (element[0].hasAttribute('squared')) {
-                    squared = true;
-                }
+                var squared = element[0].hasAttribute('md-ink-ripple-action') || element[0].hasAttribute('ripple-action');
                 if (squared) {
                     worker.style = {
                         'top': '0px',

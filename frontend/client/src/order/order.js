@@ -339,6 +339,10 @@
                                     }
                                 };
 
+                                if ($scope.order._messages && $scope.order._messages.length) {
+                                    $scope.order._messages.reverse();
+                                }
+
                                 $scope.messages = {
                                     reader: models['34'].reader({
                                         key: $scope.order.key,
@@ -358,7 +362,7 @@
                                     },
                                     field: locals.logMessageAction.message,
                                     nav: function () {
-                                        return $mdSidenav('right_messages');
+                                        return $mdSidenav($scope.messages.sidebarID);
                                     },
                                     sent: false,
                                     send: function (action) {
@@ -369,6 +373,7 @@
                                             locals.reactOnStateChange(response);
                                         });
                                     },
+                                    sidebarID: 'messages' + _.uniqueId(),
                                     logMessage: function () {
                                         return this.send('log_message');
                                     },
@@ -376,7 +381,7 @@
                                         return $scope.message.toggle(true);
                                     },
                                     toggle: function (close) {
-                                        if (!$scope.order.id) {
+                                        if (!$scope.order._lines.length) {
                                             snackbar.showK('messangerDisabledWhenEmpty');
                                             return;
                                         }
@@ -461,6 +466,7 @@
                                                                 parentScope.order._messages.push(response.data.entity._messages[0]);
                                                                 locals.reactOnStateChange(response);
                                                                 $scope.config.dismiss();
+                                                                snackbar.showK('feedbackLeft');
                                                             });
                                                         } else {
                                                             helpers.form.wakeUp($scope.feedback.form);
@@ -510,6 +516,7 @@
                                                                 parentScope.order._messages.push(response.data.entity._messages[0]);
                                                                 locals.reactOnStateChange(response);
                                                                 $scope.config.dismiss();
+                                                                snackbar.showK('feedback' + ($scope.feedback.choice === 'report_feedback' ? 'Reported' : 'Reviewed'));
                                                             });
                                                         } else {
                                                             helpers.form.wakeUp($scope.feedback.form);

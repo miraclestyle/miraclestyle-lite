@@ -32,7 +32,7 @@
 .modal-dialog {
     position: relative;
     z-index: 1050;
-    width: auto;
+    width: 100%;
 }
 
 .modal-content {

@@ -3,13 +3,13 @@
     <form ng-submit="save()" name="container.form">
         <div class="modal-body">
         
-            <div class="catalog-closer">
+            <div class="top-close">
                 <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent catalog-close-button button-square" ng-click="close()">
                     <icon color="white" type="navigation.close"></icon>
                 </button>
             </div>
-            <div ng-click="toggleMenu($event)" class="fixed-height relative overflow-x unselectable">
-                <div ng-if="product.images.length" image-slider="product.images" md-ink-ripple-ignore="notRipplable" md-ink-ripple-fit ripple-light class="image-slider">
+            <div ng-click="productMenu.toggle($event)" class="fixed-height relative overflow-x unselectable">
+                <div ng-if="product.images.length" image-slider="product.images" md-ink-ripple-ignore="productMenu.notRipplable" md-ink-ripple-fit ripple-light class="image-slider">
                     <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
                         <img class="not-pointable" slider-image="image" />
                     </div>
@@ -19,9 +19,8 @@
                 </div>
             </div>
 
-            <md-sidenav md-swipe-right="closeMenu()" layout="column" class="right md-closed product-sidenav" md-component-id="right_product_sidenav">
+            <md-sidenav md-swipe-right="productMenu.close()" layout="column" class="right md-closed product-sidenav" md-component-id="productMenu.sidenavMenuID">
                 <md-content>
-                    <div>
                         <div class="product-detail-content">
                             <div class="list list-padding">
                                 <div class="list">
@@ -42,7 +41,7 @@
                                 </div>
                                 <div class="list list-padding seam-top seam-bottom">
                                     <div class="list-row list-row-one-line no-padding">
-                                        <list-button ng-click="share()" loading><span class="first">Share</span></list-button>
+                                        <list-button ng-click="displayShare()" loading><span class="first">Share</span></list-button>
                                     </div>
                                     <div ng-if="product.contents.length" ng-repeat="content in product.contents track by content.key" class="list-row list-row-one-line no-padding">
                                         <list-button ng-click="viewContent(content)">
@@ -56,24 +55,45 @@
                                         <span class="second">{{product.availability}}</span>
                                     </div>
                                 </div>
-                                <div class="product-variant-selection" ng-if="variantSelection.length">
+                                <div class="product-variant-selection" ng-if="variantSelection.length && false">
                                     <div form-builder="variantSelection"></div>
                                 </div>
+
+
+                                <div class="list list-padding">
+                                    <div ng-repeat="variant in variants" class="list-row list-row-three-lines list-row-has-secondary no-padding">
+                                        <button md-ink-ripple loading ng-click="setupVariantChooser(variant)" type="button" class="list-row menu-item list-content-tile list-row-is-clickable">
+                                            <span class="first ellipsis-text" ng-bind="variant.name"></span>
+                                            <span class="second ellipsis-text" ng-bind="variant.option"></span>
+                                            <span class="second ellipsis-text" ng-bind="variant.description"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div class="product-quantifier">
                                     <md-input-container>
                                         <label>
                                             Quantity ({{product._uom.name}})
                                         </label>
-                                        <div class="product-quantity-control" layout="row">
-                                            <md-button flex ng-click="decreaseQuantity()" loading="!canAddToCart" class="product-quantity-button product-quantity-button-deincrease">
-                                                <icon type="content.remove"></icon>
-                                            </md-button>
-                                            <div class="product-quantity-input-wrapper" flex>
-                                                <input class="text-input product-quantity-input" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity" />
+                                        <div class="product-quantity-controls clearfix">
+                                            <div class="product-quantity-control">
+                                                <md-button ripple-action ng-click="decreaseQuantity()" loading="!canAddToCart" class="product-quantity-button product-quantity-button-deincrease button-square">
+                                                    <icon type="content.remove"></icon>
+                                                </md-button>
                                             </div>
-                                            <md-button flex ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="product-quantity-button product-quantity-button-increase">
-                                                <icon type="content.add"></icon>
-                                            </md-button>
+                                            <div class="product-quantity-input-wrapper">
+                                                <input class="text-input product-quantity-input display1" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity" />
+                                             
+                                            </div>
+                                            <div class="product-quantity-control">
+                                                <md-button ripple-action ng-click="increaseQuantity()" loading="!canAddToCart" type="button" class="product-quantity-button product-quantity-button-increase button-square">
+                                                    <icon type="content.add"></icon>
+                                                </md-button>
+                                            </div>
+
+                                        </div>
+                                         <div ng-messages="container.form.productQuantity.$error">
+                                          <div ng-message="required">Quantity must be larger than 1!</div>
                                         </div>
                                     </md-input-container>
                                 </div>
@@ -86,6 +106,33 @@
                                 </div>
                             </div>
                         </div>
+                </md-content>
+            </md-sidenav>
+
+
+
+
+            <md-sidenav md-swipe-right="variantMenu.close()" layout="column" class="right md-closed variant-sidenav" md-component-id="variantMenu.sidenavMenuID">
+                <md-content>
+                    <div class="list seam-bottom list-padding">
+                         <div class="list-row list-row-multiline">
+                             <div class="list-content-tile">
+                                 <span class="first" ng-bind="variantChooser.name"></span>
+                                 <span class="second" ng-bind="variantChooser.description"></span>
+                             </div>
+                         </div>
+                    </div>
+
+                    <div class="list list-padding">
+                         <button 
+                            ng-repeat="opt in variantChooser.options"
+                            type="button" 
+                            md-ink-ripple 
+                            loading 
+                            class="list-row list-row-is-clickable menu-item first list-content-tile block" 
+                            ng-class="{'list-row-is-active': variantChooser.option === opt}" 
+                            ng-click="completeVariantChooser(opt)"
+                            ng-bind="opt"></button>
                     </div>
                 </md-content>
             </md-sidenav>

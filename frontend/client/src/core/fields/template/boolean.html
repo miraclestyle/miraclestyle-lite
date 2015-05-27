@@ -20,9 +20,10 @@
 
             </md-radio-group>
      <% } else if (config.ui.specifics.type === 'checkbox') { %>
-         <div class="list-row-has-primary">
+         <div ng-class="{'list-row-two-lines': config.ui.help.length}" class="list-row-has-primary">
              <md-checkbox md-ink-ripple class="list-content-tile list-row" ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
                <span class="first"><%= config.ui.compiled.label %></span>
+               <span class="second" ng-if="config.ui.help">{{config.ui.help}}</span>
              </md-checkbox>
          </div>
      <% } %>

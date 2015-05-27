@@ -1,157 +1,81 @@
 ﻿(function () {
     'use strict';
-    angular.module('app').directive('fbLike', ['$window', '$rootScope', 'GLOBAL_CONFIG',
-        function ($window, $rootScope, GLOBAL_CONFIG) {
-            return {
-                restrict: 'A',
-                scope: {
-                    fbLike: '=?'
-                },
-                link: function (scope, element, attrs) {
-                    var watchAdded = false,
-                        renderLikeButton = function () {
-                            if (!!attrs.fbLike && !scope.fbLike && !watchAdded) {
-                                // wait for data if it hasn't loaded yet
-                                watchAdded = true;
-                                var unbindWatch = scope.$watch('fbLike', function (newValue, oldValue) {
-                                    if (newValue) {
-                                        renderLikeButton();
-                                        // only need to run once
-                                        unbindWatch();
-                                    }
+    angular.module('app').factory('social', function ($modal, GLOBAL_CONFIG) {
+        var social = {
+            share: function (meta) {
+                $modal.open({
+                    templateUrl: 'core/social/share.html',
+                    controller: function ($scope) {
+                        $scope.socials = [{
+                            name: 'Facebook',
+                            key: 'facebook',
+                            command: 'https://www.facebook.com/sharer.php?s=100&p[url]={p[url]}&p[images][0]={p[images][0]}&p[title]={p[title]}&p[summary]={p[summary]}',
+                            require: ['href']
+                        }, {
+                            name: 'Twitter',
+                            key: 'twitter',
+                            command: 'https://twitter.com/intent/tweet?text={text}&url={url}',
+                            require: ['url', 'text']
+                        }, {
+                            name: 'Pinterest',
+                            key: 'pinterest',
+                            command: 'https://www.pinterest.com/pin/create/button/?url={url}&media={media}&description={description}',
+                            require: ['url', 'media', 'description']
+                        }, {
+                            name: 'Reddit',
+                            key: 'reddit',
+                            command: 'https://www.reddit.com/submit?url={url}&title={title}',
+                            require: ['url', 'title']
+                        }, {
+                            name: 'Linkedin',
+                            key: 'linkedin',
+                            command: 'https://www.linkedin.com/shareArticle?url={url}&title={title}',
+                            require: ['url', 'title']
+                        }, {
+                            name: 'Google+',
+                            icon: 'googleplus',
+                            key: 'googleplus',
+                            command: 'https://plus.google.com/share?url={url}',
+                            require: ['url']
+                        }, {
+                            name: 'Tumblr',
+                            key: 'tumblr',
+                            command: 'https://www.tumblr.com/share/link?url={url}&name={name}&description={description}',
+                            require: ['url', 'name', 'description']
+                        }];
 
-                                });
-                            } else {
-                                element.html('<div class="fb-like"' + (!!scope.fbLike ? ' data-href="' + scope.fbLike + '"' : '') + ' data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>');
-                                $window.FB.XFBML.parse(element.parent()[0]);
-                            }
+                        $scope.getIcon = function (soc) {
+                            return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
                         };
-                    if (!$window.FB) {
-                        // Load Facebook SDK if not already loaded
-                        $.getScript('//connect.facebook.net/en_US/sdk.js', function () {
-                            $window.FB.init({
-                                appId: GLOBAL_CONFIG.social.facebook.id,
-                                xfbml: true,
-                                version: 'v2.0'
+
+                        $scope.share = function (soc) {
+                            var w = $(window).width() / 1.3,
+                                h = $(window).height() / 1.3,
+                                left = (screen.width / 2) - (w / 2),
+                                top = (screen.height / 2) - (h / 2),
+                                link = soc.command,
+                                popup;
+                            angular.forEach(soc.require, function (key) {
+                                var hasit = meta[soc.key][key];
+                                if (angular.isUndefined(hasit)) {
+                                    link = link.replace('&' + key + '={' + key + '}', '');
+                                    link = link.replace('?' + key + '={' + key + '}', '');
+                                } else {
+                                    link = link.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
+                                }
                             });
-                            renderLikeButton();
-                        });
-                    } else {
-                        renderLikeButton();
+                            popup = window.open(link, 'Share to ' + soc.name, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                            popup.focus();
+                            return popup;
+                        };
                     }
-                }
-            };
+                });
+            }
+        };
+        if (GLOBAL_CONFIG.debug) {
+            window._social = social;
         }
-    ]).directive('gplus', ['$window', function ($window) {
-        return {
-            restrict: 'A',
-            link: function (scope, element, attrs) {
-                var renderPlusButton = function () {
-                    element.html('<div class="g-plusone" data-size="medium"></div>');
-                    element.find('.g-plusone').attr('data-href', attrs.gplus);
-                    $window.gapi.plusone.go(element.parent()[0]);
-                };
-                if (!$window.gapi) {
-                    // Load Google SDK if not already loaded
-                    $.getScript('//apis.google.com/js/platform.js', function () {
-                        renderPlusButton();
-                    });
-                } else {
-                    renderPlusButton();
-                }
-            }
-        };
-    }]).directive('tweet', ['$window', function ($window) {
-        return {
-            restrict: 'A',
-            scope: {
-                tweet: '=',
-                tweetUrl: '='
-            },
-            link: function (scope, element, attrs) {
-                var watchAdded = false,
-                    renderTweetButton = function () {
-                        if (!scope.tweet && !watchAdded) {
-                            // wait for data if it hasn't loaded yet
-                            watchAdded = true;
-                            var unbindWatch = scope.$watch('tweet', function (newValue, oldValue) {
-                                if (newValue) {
-                                    renderTweetButton();
-
-                                    // only need to run once
-                                    unbindWatch();
-                                }
-                            });
-                        } else {
-                            element.html('<a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>');
-                            element.find('a').first().attr({
-                                'data-url': scope.tweetUrl,
-                                'data-text': scope.tweet
-                            });
-                            $window.twttr.widgets.load(element.parent()[0]);
-                        }
-                    };
-                if (!$window.twttr) {
-                    // Load Twitter SDK if not already loaded
-                    $.getScript('//platform.twitter.com/widgets.js', function () {
-                        renderTweetButton();
-                    });
-                } else {
-                    renderTweetButton();
-                }
-            }
-        };
-    }]).directive('pinIt', ['$window', '$location', function ($window, $location) {
-        return {
-            restrict: 'A',
-            scope: {
-                pinIt: '=',
-                pinItUrl: '=',
-                pinItImage: '='
-            },
-            link: function (scope, element, attrs) {
-                var watchAdded = false,
-                    renderPinItButton = function () {
-                        if (!scope.pinIt && !watchAdded) {
-                            // wait for data if it hasn't loaded yet
-                            watchAdded = true;
-                            var unbindWatch = scope.$watch('pinIt', function (newValue, oldValue) {
-                                if (newValue) {
-                                    renderPinItButton();
-
-                                    // only need to run once
-                                    unbindWatch();
-                                }
-                            });
-                        } else {
-                            scope.pinItUrl = scope.pinItUrl || $location.absUrl();
-                            element.html('<a href="//www.pinterest.com/pin/create/button/?url=' + encodeURIComponent(scope.pinItUrl) + '&media=' + scope.pinItImage + '&description=' + encodeURIComponent(scope.pinIt) + '" data-pin-do="buttonPin" data-pin-config="beside"><img src="//assets.pinterest.com/images/pidgets/pinit_fg_en_rect_gray_20.png" /></a>');
-                            window.parsePins(element.parent()[0]);
-                        }
-                    };
-                if (!$window.parsePins) {
-                    // Load Pinterest SDK if not already loaded
-                    (function (d) {
-                        var f = d.getElementsByTagName('SCRIPT')[0],
-                            p = d.createElement('SCRIPT');
-                        p.type = 'text/javascript';
-                        p.async = true;
-                        p.src = '//assets.pinterest.com/js/pinit.js';
-                        p['data-pin-build'] = 'parsePins';
-                        p.onload = function () {
-                            if (!!$window.parsePins) {
-                                renderPinItButton();
-                            } else {
-                                setTimeout(p.onload, 100);
-                            }
-                        };
-                        f.parentNode.insertBefore(p, f);
-                    }($window.document));
-                } else {
-                    renderPinItButton();
-                }
-            }
-        };
-    }]);
+        return social;
+    });
 
 }());

@@ -19,6 +19,7 @@
            grid-stacked="config.ui.specifics.parentArgs" 
            ng-model="config.ui.specifics.parentArgs" 
            ng-class="{'grid-no-items': !config.ui.specifics.parentArgs.length}"
+           autoload-on-vertical-scroll-end="{loader: config.ui.specifics.reader}"
            class="clearfix grid-wrapper unselectable">
            
           <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
@@ -58,7 +59,7 @@
                         <img class="not-pointable" display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
                      </div>
                   </div>
-                  <div nng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
+                  <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
                     <div ng-message="help"><%= config.ui.help %></div>
                     <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
                  </div>

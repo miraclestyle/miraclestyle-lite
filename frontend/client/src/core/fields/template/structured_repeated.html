@@ -25,6 +25,7 @@
 <div <% if (config.ui.specifics.sortable === undefined || config.ui.specifics.sortable) { %>
            ui-sortable="config.ui.specifics.sortableOptions" 
            <% } %> 
+    autoload-on-vertical-scroll-end="{loader: config.ui.specifics.reader}"
     ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': config.ui.specifics.isEmptyList()}" class="<% if (config.ui.specifics.cards) { %>cards<% } else { %>list<% }%>">
 
 

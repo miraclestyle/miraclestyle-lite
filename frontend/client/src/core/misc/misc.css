@@ -151,6 +151,10 @@ body .mb15 {
     padding-top: 8px;
 }
 
+.padding-top-64 {
+    padding-top: 64px;
+}
+
 .padding-top-sides-16 {
     padding-right: 16px;
     padding-top: 16px;
@@ -957,4 +961,12 @@ button::-moz-focus-inner {
 
 [display-image] {
     visibility: hidden;
+}
+
+
+.top-close {
+    position: absolute;
+    z-index: 57;
+    left: 4px;
+    top: 4px;
 }

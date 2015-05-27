@@ -103,7 +103,7 @@
 
 
             var isErrorGetter = containerCtrl.isErrorGetter || function () {
-                return ngModelCtrl.$invalid && ngModelCtrl.$touched;
+                return ngModelCtrl.$invalid && (ngModelCtrl.$dirty || ngModelCtrl.$touched);
             };
             scope.$watch(isErrorGetter, containerCtrl.setInvalid);
 

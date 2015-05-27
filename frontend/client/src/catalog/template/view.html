@@ -4,14 +4,14 @@
   <div class="modal-body fixed-height relative">
   <div class="clearfix">
 
-      <div class="catalog-closer">
+      <div class="top-close">
            <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
              <icon color="white" type="navigation.close"></icon>
            </button>
       </div>
  
-      <div ng-click="toggleMenu($event)" class="image-slider-outer unselectable">
-         <div md-ink-ripple-fit ripple-light md-ink-ripple-ignore="notRipplable" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
+      <div ng-click="catalogMenu.toggle($event)" class="image-slider-outer unselectable">
+         <div md-ink-ripple-fit ripple-light md-ink-ripple-ignore="catalogMenu.notRipplable" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 
                <div ng-repeat="pricetag in image.pricetags track by $index"
@@ -28,7 +28,7 @@
          </div>
       </div>
 
-      <md-sidenav md-swipe-right="closeMenu()" layout="column" class="right md-closed catalog-sidenav" md-component-id="right_catalog_sidenav">
+      <md-sidenav md-swipe-right="catalogMenu.close()" layout="column" class="right md-closed catalog-sidenav" md-component-id="catalogMenu.sidenavMenuID">
         <md-content>
             <div class="list">
                 <div class="sidebar-seller-logo">

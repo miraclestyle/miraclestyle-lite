@@ -132,7 +132,8 @@
                 reported: 'Reported',
                 positive: 'Positive',
                 negative: 'Negative',
-                neutral: 'Neutral'
+                neutral: 'Neutral',
+                revision: 'Review'
             }
         });
 
@@ -345,7 +346,10 @@
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
             uploadImagesFirst: 'Use "Images" dialog to upload and arrange catalog images first.',
-            messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!'
+            messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!',
+            feedbackReviewed: 'Feedback reviewed.',
+            feedbackReported: 'Feedback reported.',
+            feedbackLeft: 'Feedback left.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

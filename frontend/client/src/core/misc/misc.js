@@ -229,59 +229,41 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    if (!attrs.autoloadOnVerticalScrollEnd) {
+                    var config, listen, loadMore, steady, steadyOpts;
+                    config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
+                    if (!attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
                         return;
                     }
-                    var config = scope.$eval(attrs.autoloadOnVerticalScrollEnd),
-                        listen = config.listen || window,
-                        loadMore = function (values, done) {
-                            var promise = config.loader.load();
-                            if (!promise) {
-                                done();
-                                return false;
+                    listen = (function () {
+                        var listener = config.listen;
+                        if (!listener) {
+                            listener = element.parents('md-content[md-scroll-y]:first');
+                            if (!listener.length) {
+                                listener = element.parents('.overflow-y:first');
                             }
-                            promise.then(function () {
-                                done();
-                            });
+                        } else {
+                            listener = $(config.listen || window);
+                        }
+                        return listener;
+                    }());
+                    loadMore = function (values, done) {
+                        var promise = config.loader.load();
+                        if (!promise) {
+                            done();
+                            return false;
+                        }
+                        promise.then(function () {
+                            done();
+                        });
+                    };
+                    steadyOpts = {
+                        conditions: {
+                            "max-bottom": config.bottom || 40
                         },
-                        steady,
-                        steadyOpts = {
-                            conditions: {
-                                "max-bottom": config.bottom || 40
-                            },
-                            scrollElement: $(listen).get(0),
-                            throttle: 100,
-                            handler: loadMore
-                        };
-                    steady = new Steady(steadyOpts);
-                    scope.$on('$destroy', function () {
-                        steady.stop();
-                        steady = undefined;
-                    });
-
-                }
-            };
-        }).directive('onVerticalScrollEndEvent', function () {
-            return {
-                restrict: 'A',
-                link: function (scope, element, attrs) {
-                    if (!attrs.onVerticalScrollEndEvent) {
-                        return;
-                    }
-                    var config = scope.$eval(attrs.onVerticalScrollEndEvent),
-                        scroll = config.listen === 'window' ? window : (config.listen ? config.listen : element),
-                        steady,
-                        triggerEvent = function (values, done) {
-                            scope.$broadcast('onVerticalScrollEnd', values, done);
-                        },
-                        steadyOpts = {
-                            conditions: {
-                                "max-bottom": config.bottom || 40
-                            },
-                            scrollElement: $(scroll).get(0),
-                            throttle: 100,
-                            handler: triggerEvent
-                        };
+                        scrollElement: listen.get(0),
+                        throttle: 100,
+                        handler: loadMore
+                    };
                     steady = new Steady(steadyOpts);
                     scope.$on('$destroy', function () {
                         steady.stop();

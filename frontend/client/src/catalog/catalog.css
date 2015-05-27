@@ -64,13 +64,6 @@ li.catalog-new-pricetag {
     position: relative;
 }
 
-.catalog-closer {
-    position: absolute;
-    z-index: 57;
-    left: 4px;
-    top: 4px;
-}
-
 .sidebar-seller-logo button {
     padding: 0px;
     display: block;
@@ -92,46 +85,53 @@ md-sidenav.product-sidenav {
     min-width: 400px;
 }
 
-input.product-quantity-input {
-    order: 4;
-    text-align: center;
-}
-
-.product-quantity-button-deincrease {
-    order: 3;
-    margin-right: 20px;
-    max-width: 64px;
-}
-
-.product-quantity-button-increase {
-    order: 5;
-    margin-left: 20px;
-    max-width: 64px;
-}
-
-.product-quantity-button {
-    min-height: 36px;
-}
-
-.product-quantity-button .material-icon {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.product-quantity-control {
-    order: 2;
-    margin-top: 10px;
-}
-
-.product-quantity-input-wrapper {
-    order: 4;
-}
-
-.product-quantity-input-wrapper input {
-    width: 100%;
-}
-
 .full-logo img {
     width: 100%;
     height: auto;
+}
+
+.product-quantifier md-input-container {
+    padding: 0px;
+}
+
+md-input-container .product-quantity-input {
+    border-bottom: none;
+    width: 64px;
+    padding: 4px 0px;
+    text-align: center;
+    display: block;
+}
+
+.product-quantifier input, .product-quantifier button {
+    color: rgba(0, 0, 0, 0.54);
+}
+
+.product-quantity-control {
+    float: left;
+    padding-right: 4px;
+    padding-left: 4px;
+}
+
+.product-quantity-input-wrapper {
+    float: left;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+button.product-quantity-button {
+    min-width: initial;
+    margin: 0px;
+}
+
+.product-quantity-controls {
+    order: 2;
+}
+
+.product-quantifier label {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+.product-quantifier [ng-messages] {
+    padding-left:16px;
+    padding-right: 16px;
 }

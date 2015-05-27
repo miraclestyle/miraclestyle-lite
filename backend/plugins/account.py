@@ -75,6 +75,7 @@ class AccountLoginWrite(orm.BaseModel):
     
     if hasattr(context, '_identity_id') and context._identity_id is not None:
       Account = context.models['11']
+      Buyer = context.models['19']
       AccountIdentity = context.models['10']
       entity = context._account
       if entity._is_guest:
@@ -86,6 +87,8 @@ class AccountLoginWrite(orm.BaseModel):
         # We separate record procedure from write in this case, since we are creating new entity which is record agent at the same time!
         entity._use_rule_engine = False
         entity.write({})
+        buyer = Buyer(parent=entity.key)
+        buyer.write({})
         entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
         entity.record()
       else:

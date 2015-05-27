@@ -68,8 +68,8 @@
 
 .time-date {
     width: 300px;
-    padding-top: 12px;
     min-height: 504px;
+    padding-top: 12px;
     padding-bottom: 16px;
 }
 
@@ -132,4 +132,7 @@ span.first.month-part {
 .time-control {
     padding-left: 8px;
     padding-right: 8px;
+}
+.datepicker-pop .modal-dialog {
+    width:auto;
 }

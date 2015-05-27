@@ -430,9 +430,10 @@
                                         return ((this.field().$dirty && this.hasErrors()) ? this.field().$error : false) || config.ui;
                                     },
                                     shouldShowMessages: function () {
-                                        if (!this.field() || config.ui.hideMessages) {
+                                        if (config.ui.hideMessages) {
                                             return false;
                                         }
+                                        return true;
                                         return this.field().$dirty || config.ui.help;
                                     }
                                 },
@@ -784,7 +785,7 @@
                     SuperBooleanProperty: function (info) {
                         info.config.required = false;
                         if (!info.config.ui.specifics || angular.isUndefined(info.config.ui.specifics.type)) {
-                            info.config.ui.specifics.type = 'switch';
+                            info.config.ui.specifics.type = 'checkbox';
                         }
                         return 'boolean';
                     },
@@ -1454,6 +1455,7 @@
                                                                     return messages;
                                                                 },
                                                                 shouldShowMessages: function () {
+                                                                    return true;
                                                                     var maybe = false;
                                                                     angular.forEach(gr.ui.group.fields, function (field) {
                                                                         if (field.ui.form.hasErrors()) {

@@ -169,7 +169,7 @@
     </form>
 </div>
 
-<md-sidenav md-swipe-right="messages.close()" layout="column" class="right md-closed" md-component-id="right_messages">
+<md-sidenav md-swipe-right="messages.close()" layout="column" class="right md-closed" md-component-id="messages.sidebarID">
     <md-content>
         <div class="list">
             <div class="sidebar-seller-logo">
@@ -178,7 +178,7 @@
                 </button>
             </div>
             <div always-scroll-to-bottom="['messages.open', 'messages.sent']" class="messages overflow-auto-y">
-                <div reverse="true" load-more-button="messages.reader"></div>
+                <div load-more-button="messages.reader"></div>
                 <div class="messages-list">
                     <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="isYou = message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;

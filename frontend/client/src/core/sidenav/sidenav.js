@@ -43,7 +43,8 @@
         return {
             restrict: 'E',
             scope: {
-                isOpen: '=?mdIsOpen'
+                isOpen: '=?mdIsOpen',
+                componentID: '=?mdComponentId'
             },
             controller: '$mdSidenavController',
             compile: function (element) {
@@ -247,7 +248,7 @@
      * @module material.components.sidenav
      *
      */
-    function SidenavController($scope, $element, $attrs, $mdComponentRegistry, $q) {
+    function SidenavController($scope, $element, $attrs, $mdComponentRegistry, $q, $parse) {
 
         var self = this;
 
@@ -271,10 +272,9 @@
         self.toggle = function () {
             return self.$toggleOpen(!$scope.isOpen);
         };
-
-        self.destroy = $mdComponentRegistry.register(self, $attrs.mdComponentId);
+        self.destroy = $mdComponentRegistry.register(self, $scope.componentID || $attrs.mdComponentId);
     }
-    SidenavController.$inject = ["$scope", "$element", "$attrs", "$mdComponentRegistry", "$q"];
+    SidenavController.$inject = ["$scope", "$element", "$attrs", "$mdComponentRegistry", "$q", "$parse"];
 
 
 

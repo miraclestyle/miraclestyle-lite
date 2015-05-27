@@ -129,8 +129,8 @@
     padding: 0px 4px;
 }
 
-.list-row-is-clickable-and-hoverable:hover, .list-row-is-active, .list-row-is-clickable-and-hoverable:focus {
-    background-color: #F5F5F5;
+body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body .list-row-is-clickable-and-hoverable:focus {
+    background: rgba(0, 0, 0, 0.08);
 }
 
 .list-row-transparent {
@@ -171,11 +171,11 @@
 }
 
 .list-row.list-row-has-primary.menu-item {
-  padding-left: 0px;
-  padding-right: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
 }
 
 .list-row-multiline {
-    padding-top:16px;
-    padding-bottom:16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
 }
