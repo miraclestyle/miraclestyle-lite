@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('BuyerManagementController', function ($scope, endpoint, currentAccount, models) {
+        .controller('BuyerManagementController', ng(function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
                 models['19'].manageModal(currentAccount.key);
@@ -11,7 +11,7 @@
                 models['18'].manageModal(currentAccount.key);
             };
 
-        }).controller('BuyOrdersController', function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
+        })).controller('BuyOrdersController', ng(function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
             var carts = $state.current.name === 'buy-carts';
 
@@ -68,19 +68,19 @@
                 $scope.scrollEnd.loader = $scope.search.pagination;
                 $scope.search.pagination.load();
             });
-        }).directive('buyerAddressListView', function () {
+        })).directive('buyerAddressListView', function () {
             return {
                 scope: {
                     val: '=buyerAddressListView'
                 },
                 templateUrl: 'buyer/address_list_view.html',
-                controller: function ($scope) {
+                controller: ng(function ($scope) {
                     $scope.notEmpty = function (val) {
                         return angular.isString(val) || angular.isNumber(val);
                     };
-                }
+                })
             };
-        }).run(function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
+        }).run(ng(function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
 
             modelsConfig(function (models) {
 
@@ -185,5 +185,5 @@
 
             });
 
-        });
+        }));
 }());

@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (modals, helpers, models, $modal, modelsMeta, snackbar) {
+        .run(ng(function (modals, helpers, models, $modal, modelsMeta, snackbar) {
             if (!modals.models) {
                 modals.models = {};
             }
@@ -12,7 +12,7 @@
                     inDirection: false,
                     outDirection: false,
                     templateUrl: null,
-                    controller: function ($scope) {
+                    controller: ng(function ($scope) {
                         var sudoFields = modelsMeta.getActionArguments(entity.kind, 'sudo');
                         $scope.args = {};
                         $scope.fields = sudoFields;
@@ -57,7 +57,7 @@
                                 helpers.form.wakeUp($scope.container.form);
                             }
                         };
-                    }
+                    })
                 };
                 $.extend(defaults, config);
                 $modal.open(defaults);
@@ -82,9 +82,9 @@
                     return empty;
                 }
             });
-        })
+        }))
         .value('modelsInfo', {})
-        .value('currentAccount', {}).factory('modelsMeta', function ($injector, GLOBAL_CONFIG) {
+        .value('currentAccount', {}).factory('modelsMeta', ng(function ($injector, GLOBAL_CONFIG) {
             var modelsMeta = {},
                 standardize = function (fields, maker) {
                     angular.forEach(fields, function (field, field_key) {
@@ -248,7 +248,7 @@
 
             return modelsMeta;
 
-        }).factory('ruleEngine', function (modelsMeta) {
+        })).factory('ruleEngine', ng(function (modelsMeta) {
 
             var ruleEngine = {
                 run: function (entity) {
@@ -296,7 +296,7 @@
             };
 
             return ruleEngine;
-        }).factory('modelsUtil', function (modelsMeta, ruleEngine, GLOBAL_CONFIG) {
+        })).factory('modelsUtil', ng(function (modelsMeta, ruleEngine, GLOBAL_CONFIG) {
             // Service used for normalizing entity data that gets retrieved from datastore
             var modelsUtil = {
                 normalizeMultiple: function (entities) {
@@ -418,7 +418,7 @@
                 window._modelsUtil = modelsUtil;
             }
             return modelsUtil;
-        }).factory('modelsEditor', function ($modal, endpoint, $q, helpers,
+        })).factory('modelsEditor', ng(function ($modal, endpoint, $q, helpers,
             modelsUtil, errorHandling, models, modelsMeta, $timeout, $filter, formInputTypes, recordBrowser, snackbar) {
 
             var modelsEditor = {
@@ -845,7 +845,7 @@
 
             return modelsEditor;
 
-        }).factory('modelsConfig', function () {
+        })).factory('modelsConfig', function () {
             // depency config loader
             var callbacks = [];
             return function (callback) {
@@ -854,7 +854,7 @@
                 }
                 callbacks.push(callback);
             };
-        }).factory('models', function (endpoint, modelsMeta, $injector, modelsConfig, helpers, $q, GLOBAL_CONFIG) {
+        }).factory('models', ng(function (endpoint, modelsMeta, $injector, modelsConfig, helpers, $q, GLOBAL_CONFIG) {
             // models depency should never be included directly or indirectly, because its depency on modelsMeta
             var models = {}, // all model instances
                 modelCreate = function (kind) {
@@ -1146,5 +1146,5 @@
 
             return models;
 
-        });
+        }));
 }());

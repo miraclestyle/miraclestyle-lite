@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (helpers) {
+    angular.module('app').run(ng(function (helpers) {
         helpers.grid = {
             realEventTarget: function (target) {
                 var theTarget = $(target),
@@ -97,7 +97,7 @@
             }
 
         };
-    }).directive('gridStacked', function (helpers, $timeout) {
+    })).directive('gridStacked', ng(function (helpers, $timeout) {
 
         return {
             link: function (scope, element, attrs) {
@@ -151,7 +151,7 @@
 
             }
         };
-    }).directive('gridGenerator', function (GLOBAL_CONFIG, helpers, $timeout) {
+    })).directive('gridGenerator', ng(function (GLOBAL_CONFIG, helpers, $timeout) {
         return {
             link: function (scope, element, attrs) {
 
@@ -211,9 +211,9 @@
 
             }
         };
-    }).directive('gridScale', function (helpers, $timeout, GLOBAL_CONFIG) {
+    })).directive('gridScale', ng(function (helpers, $timeout, GLOBAL_CONFIG) {
         return {
-            controller: function ($scope, $element) {
+            controller: ng(function ($scope, $element) {
                 var that = this,
                     tracker = 0;
                 that.items = [];
@@ -272,13 +272,13 @@
                 $scope.$on('$destroy', function () {
                     $(window).off('resize', that.resize);
                 });
-            },
+            }),
             link: function (scope, element, attrs, ctrl) {
                 $.extend(ctrl.config, GLOBAL_CONFIG.grid, scope.$eval(attrs.gridScale) || {});
                 ctrl.getColumns();
             }
         };
-    }).directive('gridScaleItem', function (helpers) {
+    })).directive('gridScaleItem', ng(function (helpers) {
         return {
             require: '^gridScale',
             link: function (scope, element, attrs, gridScaleCtrl) {
@@ -296,5 +296,5 @@
                 });
             }
         };
-    });
+    }));
 }());

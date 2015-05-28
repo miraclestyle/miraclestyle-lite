@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').config(function ($stateProvider, GLOBAL_CONFIG) {
+    angular.module('app').config(ng(function ($stateProvider, GLOBAL_CONFIG) {
 
         $stateProvider
             .state('home', {
@@ -67,7 +67,7 @@
                 controller: 'AdminListController'
             });
 
-    }).run(function (modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+    })).run(ng(function (modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
         $.extend(modelsInfo, window.MODELS_META);
         $.extend(currentAccount, window.CURRENT_ACCOUNT);
         modelsUtil.normalize(currentAccount);
@@ -76,5 +76,5 @@
             delete window.MODELS_META;
             delete window.CURRENT_ACCOUNT;
         }
-    });
+    }));
 }());

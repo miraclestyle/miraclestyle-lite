@@ -16,7 +16,7 @@
             window._snackbar = snackbar;
         }
         return snackbar;
-    }]).directive('qsnackbar', function (snackbar) {
+    }]).directive('qsnackbar', ng(function (snackbar) {
         return {
             link: function (scope, element) {
                 var kill = function () {
@@ -28,12 +28,12 @@
                 });
             }
         };
-    }).directive('snackbar', function (snackbar, $timeout, $animate, $q) {
+    })).directive('snackbar', ng(function (snackbar, $timeout, $animate, $q) {
         return {
             scope: true,
             require: 'snackbar',
             templateUrl: 'core/snackbar/view.html',
-            controller: function ($scope) {
+            controller: ng(function ($scope) {
                 var digest = function () {
                     if (!$scope.$$phase) {
                         $scope.$digest();
@@ -84,10 +84,10 @@
                         });
                     });
                 };
-            },
+            }),
             link: function (scope, element, snackbarCtrl) {
                 scope.element = element.find('.snackbar');
             }
         };
-    });
+    }));
 }());

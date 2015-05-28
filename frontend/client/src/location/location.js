@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, modelsMeta) {
+    angular.module('app').run(ng(function (modelsConfig, modelsMeta) {
         modelsConfig(function (models) {
             models['12'].config.cache = true;
             models['12'].getSubdivisions = function (countryKey, overrideConfig) {
@@ -12,5 +12,5 @@
 
         });
 
-    });
+    }));
 }());

@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('MainMenuController', function ($scope, $mdSidenav, $timeout) {
+        .controller('MainMenuController', ng(function ($scope, $mdSidenav, $timeout) {
             $scope.closeMenu = function () {
                 $timeout(function () {
                     $mdSidenav('left').close();
@@ -12,8 +12,8 @@
                     $mdSidenav('left').open();
                 });
             };
-        })
-        .run(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
+        }))
+        .run(ng(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
             $rootScope.currentAccount = currentAccount;
             $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $rootScope.JSON = JSON;
@@ -31,8 +31,8 @@
                     $rootScope.pageTitle = $rootScope.pageToolbarTitle;
                 }
             };
-        })
-        .controller('HomePageController', function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
+        }))
+        .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {search: {}},
                 defer = $q.defer(),
                 promise = defer.promise;
@@ -93,6 +93,6 @@
             });
 
 
-        });
+        }));
 
 }());

@@ -6,7 +6,7 @@
             transclude: true,
             replace: true
         };
-    }).directive('actionDropdown', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
+    }).directive('actionDropdown', ng(function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
         return {
             replace: true,
             transclude: true,
@@ -87,12 +87,12 @@
 
                             dialogEl.on('click', dropdown.close);
                         },
-                        controller: function ($scope) {
+                        controller: ng(function ($scope) {
                             $scope.parent = scope;
                             $scope.$on('$destroy', function () {
                                 dropdown.opened = false;
                             });
-                        }
+                        })
                     });
                 };
                 dropdown.close = function () {
@@ -101,7 +101,7 @@
                 scope.dropdown = dropdown;
             }
         };
-    }).directive('actionToolbar', function () {
+    })).directive('actionToolbar', function () {
         return {
             transclude: true,
             replace: true,

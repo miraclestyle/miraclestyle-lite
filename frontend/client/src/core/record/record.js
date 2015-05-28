@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .factory('recordBrowser', function (models, GLOBAL_CONFIG, $modal) {
+        .factory('recordBrowser', ng(function (models, GLOBAL_CONFIG, $modal) {
             return {
                 attach: function (config) {
                     return {
@@ -10,7 +10,7 @@
                         action: function () {
                             $modal.open({
                                 templateUrl: 'core/models/manage.html',
-                                controller: function ($scope) {
+                                controller: ng(function ($scope) {
                                     $scope.dialog = {
                                         templateBodyUrl: 'core/record/list.html',
                                         toolbar: {
@@ -50,7 +50,7 @@
                                         view: function (record) {
                                             $modal.open({
                                                 templateUrl: 'core/models/manage.html',
-                                                controller: function ($scope) {
+                                                controller: ng(function ($scope) {
                                                     $scope.record = record;
                                                     $scope.dialog = {};
                                                     $scope.dialog.templateBodyUrl = 'core/record/view_body.html';
@@ -61,18 +61,18 @@
                                                     $scope.close = function () {
                                                         $scope.$close();
                                                     };
-                                                }
+                                                })
                                             });
                                         }
                                     };
 
                                     $scope.history.reader.load();
-                                }
+                                })
                             });
 
                         }
                     };
                 }
             };
-        });
+        }));
 }());

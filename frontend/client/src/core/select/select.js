@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .directive('selectInput', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
+        .directive('selectInput', ng(function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
             return {
                 replace: true,
                 transclude: true,
@@ -416,7 +416,7 @@
 
                                 return nextPromise;
                             },
-                            controller: function ($scope) {
+                            controller: ng(function ($scope) {
                                 select.close = function () {
                                     if (select.multiple) {
                                         $scope.$close();
@@ -431,7 +431,7 @@
                                     //dontOpen = true;
                                     element.focus();
                                 });
-                            }
+                            })
                         });
                     };
                     select.view = view;
@@ -518,5 +518,5 @@
                     scope.select = select;
                 }
             };
-        });
+        }));
 }());

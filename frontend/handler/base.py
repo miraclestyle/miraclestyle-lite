@@ -158,7 +158,7 @@ class SeoOrAngular(AngularBlank):
     agent = self.request.headers.get('User-Agent')
     print agent
     if agent:
-      return re.search('(bot|crawl|slurp|spider)', agent) or self.request.get('_seo')
+      return re.search('(bot|crawl|slurp|spider|facebook|twitter|pinterest|linkedin)', agent) or self.request.get('_seo')
     return False
 
   def respond_angular(self, *args, **kwargs):

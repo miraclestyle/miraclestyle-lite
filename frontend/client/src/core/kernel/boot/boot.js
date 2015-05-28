@@ -395,11 +395,11 @@ if (!Array.prototype.indexOf) {
  
     angular.module('config', ['ng'])
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG)
-        .config(function ($httpProvider, $locationProvider) {
+        .config(ng(function ($httpProvider, $locationProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
             $locationProvider.html5Mode(true);
-        });
+        }));
     angular.module('app', GLOBAL_CONFIG.modules);
 }());
 
@@ -436,7 +436,9 @@ $(function () {
             if ((d1 && d1.errors) || (d2 && d2.errors)) {
                 failure();
             } else {
-                angular.bootstrap(document, ['app']);
+                angular.bootstrap(document, ['app'], {
+                      strictDi: true
+                    });
             }
         }, failure);
 

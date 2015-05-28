@@ -1,11 +1,11 @@
 ﻿(function () {
     'use strict';
-    angular.module('app').factory('social', function ($modal, GLOBAL_CONFIG) {
+    angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG) {
         var social = {
             share: function (meta, embed) {
                 $modal.open({
                     templateUrl: 'core/social/share.html',
-                    controller: function ($scope) {
+                    controller: ng(function ($scope) {
                         $scope.socials = [{
                             name: 'Facebook',
                             key: 'facebook',
@@ -127,7 +127,7 @@
 
                         $scope.embed.setCode();
                         $scope.close = $scope.$close;
-                    }
+                    })
                 });
             }
         };
@@ -135,6 +135,6 @@
             window._social = social;
         }
         return social;
-    });
+    }));
 
 }());

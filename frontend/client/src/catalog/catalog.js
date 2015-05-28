@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').directive('catalogNewPricetag', function ($parse) {
+    angular.module('app').directive('catalogNewPricetag', ng(function ($parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -26,7 +26,7 @@
                 });
             }
         };
-    }).directive('catalogPricetagPosition', function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
+    })).directive('catalogPricetagPosition', ng(function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
         return {
             link: function (scope, element, attr) {
 
@@ -58,7 +58,7 @@
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
             }
         };
-    }).directive('productInstanceCardView', function ($compile) {
+    })).directive('productInstanceCardView', ng(function ($compile) {
         return {
             scope: {
                 val: '=productInstanceCardView'
@@ -74,7 +74,7 @@
                 };
             }
         };
-    }).run(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar, social) {
+    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar, social) {
 
         modelsConfig(function (models) {
             var setupToggleMenu = function (menu, id) {
@@ -291,7 +291,7 @@
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
-                            controller: function ($scope, productInstanceResponse) {
+                            controller: ng(function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey, shareWatch;
                                 $.extend($scope, fakeScope);
                                 $scope.variantMenu = {};
@@ -378,13 +378,13 @@
                                 $scope.viewContent = function (content) {
                                     $modal.open({
                                         templateUrl: 'core/misc/content_view.html',
-                                        controller: function ($scope) {
+                                        controller: ng(function ($scope) {
                                             $scope.markDown = true;
                                             $scope.content = content;
                                             $scope.close = function () {
                                                 $scope.$close();
                                             };
-                                        }
+                                        })
                                     });
                                 };
                                 $scope.canAddToCart = true;
@@ -519,7 +519,7 @@
                                 $scope.close = function () {
                                     $scope.$close();
                                 };
-                            }
+                            })
                         });
                     });
                 },
@@ -547,7 +547,7 @@
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
-                            controller: function ($scope) {
+                            controller: ng(function ($scope) {
                                 $scope.catalogMenu = {};
                                 setupToggleMenu($scope.catalogMenu, 'right_catalog_sidenav' + _.uniqueId());
                                 $scope.catalog = entity;
@@ -647,7 +647,7 @@
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope.$close();
                                 });
-                            }
+                            })
                         });
                     });
                 },
@@ -776,7 +776,7 @@
                                     $modal.open({
                                         templateUrl: 'core/models/manage.html',
                                         windowClass: 'no-overflow',
-                                        controller: function ($scope, $timeout) {
+                                        controller: ng(function ($scope, $timeout) {
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
                                                 setupCurrentPricetag,
@@ -1241,7 +1241,7 @@
                                             $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                                 $scope.$close();
                                             });
-                                        }
+                                        })
                                     });
 
                                 },
@@ -1297,5 +1297,5 @@
             });
 
         });
-    });
+    }));
 }());

@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').directive('toggleExpand', function ($timeout) {
+    angular.module('app').directive('toggleExpand', ng(function ($timeout) {
         return {
             link: function (scope, element, attrs) {
                 var height,
@@ -23,7 +23,7 @@
                 scope.$watch(attrs.toggleExpand, decider);
             }
         };
-    }).directive('alwaysScrollToBottom', function ($timeout) {
+    })).directive('alwaysScrollToBottom', ng(function ($timeout) {
         return {
             link: function (scope, element, attrs) {
                 var cb = function () {
@@ -37,7 +37,7 @@
                 });
             }
         };
-    }).filter('displayTaxes', function () {
+    })).filter('displayTaxes', ng(function () {
         return function (value) {
             var formatted = '';
             if (value) {
@@ -47,7 +47,7 @@
             }
             return formatted;
         };
-    }).run(function (modelsMeta, modelsConfig, $modal, modals, snackbar, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
+    })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
         modelsConfig(function (models) {
             $.extend(models['34'], {
                 current: function (sellerKey) {
@@ -113,7 +113,7 @@
                         $modal.open({
                             templateUrl: 'order/view.html',
                             popFrom: config.popFrom,
-                            controller: function ($scope) {
+                            controller: ng(function ($scope) {
                                 var locals = {
                                     customPlaceholder: null,
                                     updateLiveEntity: function (response) {
@@ -278,7 +278,7 @@
                                                 inDirection: false,
                                                 outDirection: false,
                                                 templateUrl: 'order/browse_addresses.html',
-                                                controller: function ($scope) {
+                                                controller: ng(function ($scope) {
                                                     $scope.addresses = response.data.entity.addresses;
                                                     $scope.select = function (ent) {
                                                         var doit = function () {
@@ -298,7 +298,7 @@
                                                             });
                                                         });
                                                     };
-                                                }
+                                                })
                                             });
                                         });
                                     },
@@ -433,7 +433,7 @@
                                                 inDirection: false,
                                                 outDirection: false,
                                                 templateUrl: 'order/leave_feedback.html',
-                                                controller: function ($scope) {
+                                                controller: ng(function ($scope) {
                                                     $scope.config = {};
                                                     $scope.feedback = {
                                                         form: null,
@@ -472,7 +472,7 @@
                                                             helpers.form.wakeUp($scope.feedback.form);
                                                         }
                                                     };
-                                                }
+                                                })
                                             });
                                         } else {
                                             $modal.open({
@@ -480,7 +480,7 @@
                                                 inDirection: false,
                                                 outDirection: false,
                                                 templateUrl: 'order/seller_feedback.html',
-                                                controller: function ($scope) {
+                                                controller: ng(function ($scope) {
                                                     $scope.config = {};
                                                     $scope.feedback = {
                                                         form: null,
@@ -522,7 +522,7 @@
                                                             helpers.form.wakeUp($scope.feedback.form);
                                                         }
                                                     };
-                                                }
+                                                })
                                             });
                                         }
                                     }
@@ -650,7 +650,7 @@
                                 $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
                                 $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
 
-                            }
+                            })
                         });
 
 
@@ -662,5 +662,5 @@
         });
 
 
-    });
+    }));
 }());

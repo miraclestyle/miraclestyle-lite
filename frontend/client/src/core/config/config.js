@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    angular.module('app').config(function (GLOBAL_CONFIG) {
+    angular.module('app').config(ng(function (GLOBAL_CONFIG) {
         var locals = {};
 
         $.extend(GLOBAL_CONFIG.modals.confirmations, {
@@ -386,9 +386,8 @@
             editContents: 'Edit Content',
             account: 'Account',
             admin: 'Admin',
-            users: 'Users',
-            orders: 'Orders'
+            users: 'Users'
         });
 
-    });
+    }));
 }());

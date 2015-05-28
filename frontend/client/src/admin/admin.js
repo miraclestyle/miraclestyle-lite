@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('AdminListController', function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, helpers) {
+        .controller('AdminListController', ng(function ($scope, models, $stateParams, GLOBAL_CONFIG, searchBuilder, $state, helpers) {
 
             var kind = $stateParams.kind,
                 query = null,
@@ -57,5 +57,5 @@
             $scope.search.pagination.load();
 
 
-        });
+        }));
 }());

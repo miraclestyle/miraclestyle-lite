@@ -407,7 +407,7 @@
                     ]
                 };
             }
-        ]).directive('timeDatePickerDialog', function ($modal, dateFilter, dateParser, GLOBAL_CONFIG, $$rAF) {
+        ]).directive('timeDatePickerDialog', ng(function ($modal, dateFilter, dateParser, GLOBAL_CONFIG, $$rAF) {
             return {
                 require: ['ngModel', '^form'],
                 link: function (scope, element, attrs, ctrls) {
@@ -433,7 +433,7 @@
                                 outDirection: false,
                                 fullScreen: false,
                                 templateUrl: 'core/datetime/popup.html',
-                                controller: function ($scope) {
+                                controller: ng(function ($scope) {
                                     $scope.date = ngModel.$modelValue;
                                     var $close = $scope.$close;
                                     $scope.$close = function () {
@@ -448,7 +448,7 @@
                                     $scope.$on('$destroy', function () {
                                         open = false;
                                     });
-                                }
+                                })
                             });
                         });
                     });
@@ -477,5 +477,5 @@
                 }
 
             };
-        });
+        }));
 }());

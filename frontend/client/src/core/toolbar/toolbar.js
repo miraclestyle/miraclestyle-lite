@@ -5,7 +5,7 @@
             'material.core',
             'material.components.content'
         ])
-        .directive('mdToolbar', mdToolbarDirective).run(function (helpers, GLOBAL_CONFIG) {
+        .directive('mdToolbar', mdToolbarDirective).run(ng(function (helpers, GLOBAL_CONFIG) {
             if (angular.isUndefined(helpers.toolbar)) {
                 helpers.toolbar = {};
             }
@@ -49,7 +49,7 @@
                     return _.string.capitalize(_.string.camelize(word));
                 }
             });
-        });
+        }));
 
     function mdToolbarDirective($$rAF, $mdConstant, $mdUtil) {
 

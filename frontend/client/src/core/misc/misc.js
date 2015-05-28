@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (helpers, $mdConstant) {
+        .run(ng(function (helpers, $mdConstant) {
             $.extend(helpers, {
                 closestLargestNumber: function (arr, closestTo) {
 
@@ -69,7 +69,7 @@
                 return animationEnd.call(this, 'on', cb);
             };
 
-        })
+        }))
         .directive('helpRender', function () {
             return {
                 scope: {
@@ -83,7 +83,7 @@
                 }
             };
         })
-        .directive('displayImage', function (GLOBAL_CONFIG) {
+        .directive('displayImage', ng(function (GLOBAL_CONFIG) {
             return {
                 scope: {
                     image: '=displayImage',
@@ -131,7 +131,7 @@
 
                 }
             };
-        }).directive('loading', function ($parse) {
+        })).directive('loading', ng(function ($parse) {
             return {
                 link: function (scope, element, attrs) {
 
@@ -171,7 +171,7 @@
                     });
                 }
             };
-        }).directive('onNgRepeatEnd', function ($timeout) {
+        })).directive('onNgRepeatEnd', ng(function ($timeout) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attr) {
@@ -182,20 +182,20 @@
                     }
                 }
             };
-        }).directive('defaultFieldDisplay', function ($compile) {
+        })).directive('defaultFieldDisplay', ng(function ($compile) {
             return {
                 scope: {
                     val: '=defaultFieldDisplay'
                 },
                 templateUrl: 'buyer/address_display.html',
-                controller: function ($scope) {
+                controller: ng(function ($scope) {
                     $scope.notEmpty = function (val) {
                         return angular.isString(val) || angular.isNumber(val);
                     };
 
-                }
+                })
             };
-        }).directive('draggableClick', function ($parse, helpers) {
+        })).directive('draggableClick', ng(function ($parse, helpers) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
@@ -217,7 +217,7 @@
                     });
                 }
             };
-        }).directive('loadMoreButton', function () {
+        })).directive('loadMoreButton', ng(function () {
             return {
                 restrict: 'A',
                 templateUrl: 'core/misc/load_more_button.html',
@@ -225,7 +225,7 @@
                     config: '=loadMoreButton'
                 }
             };
-        }).directive('autoloadOnVerticalScrollEnd', function () {
+        })).directive('autoloadOnVerticalScrollEnd', function () {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
@@ -272,7 +272,7 @@
 
                 }
             };
-        }).directive('resizeChart', function (helpers) {
+        }).directive('resizeChart', ng(function (helpers) {
             return {
                 priority: 100,
                 link: function (scope, element, attrs) {
@@ -288,13 +288,13 @@
                     scope.$on('modalResize', resize);
                 }
             };
-        }).directive('listButton', function () {
+        })).directive('listButton', function () {
             return {
                 templateUrl: 'core/misc/list_button.html',
                 transclude: true,
                 replace: true
             };
-        }).directive('mdInkRippleList', function ($mdInkRipple) {
+        }).directive('mdInkRippleList', ng(function ($mdInkRipple) {
             return {
                 link: function (scope, element, attrs) {
                     $mdInkRipple.attach(scope, element, {
@@ -304,7 +304,7 @@
                     });
                 }
             };
-        }).directive('mdInkRippleAction', function ($mdInkRipple) {
+        })).directive('mdInkRippleAction', ng(function ($mdInkRipple) {
             return {
                 link: function (scope, element, attrs) {
                     $mdInkRipple.attachButtonBehavior(scope, element, {
@@ -312,7 +312,7 @@
                     });
                 }
             };
-        }).directive('mdInkRippleFit', function ($mdInkRipple) {
+        })).directive('mdInkRippleFit', ng(function ($mdInkRipple) {
             return {
                 link: function (scope, element, attrs) {
                     $mdInkRipple.attachButtonBehavior(scope, element, {
@@ -322,7 +322,7 @@
                     });
                 }
             };
-        }).directive('icon', function ($mdInkRipple) {
+        })).directive('icon', ng(function ($mdInkRipple) {
             return {
                 templateUrl: 'core/misc/icon.html',
                 replace: true,
@@ -335,20 +335,20 @@
                     scope.color = attrs.color || 'normal';
                 }
             };
-        }).directive('contentListView', function () {
+        })).directive('contentListView', function () {
             return {
                 scope: {
                     val: '=contentListView'
                 },
                 templateUrl: 'core/misc/content_list_view.html'
             };
-        }).directive('sidenavItem', function ($timeout, $mdSidenav) {
+        }).directive('sidenavItem', ng(function ($timeout, $mdSidenav) {
             return {
                 templateUrl: 'core/misc/sidenav_item.html',
                 transclude: true,
                 replace: true
             };
-        }).filter('labelize', function (GLOBAL_CONFIG, $log) {
+        })).filter('labelize', ng(function (GLOBAL_CONFIG, $log) {
             return function (key, group) {
                 if (angular.isUndefined(group)) {
                     group = 'default';
@@ -366,7 +366,7 @@
                 $log.warn('Path for label not found: ' + group + '.' + key);
                 return key;
             };
-        }).filter('propsFilter', function () {
+        })).filter('propsFilter', function () {
             return function (items, props) {
                 var out = [];
 
@@ -401,7 +401,7 @@
             return function (obj) {
                 return _.str.capitalize(obj);
             };
-        }).filter('output', function (modelsMeta, outputTypes, $cacheFactory) {
+        }).filter('output', ng(function (modelsMeta, outputTypes, $cacheFactory) {
 
             var types = outputTypes,
                 cacheFields = $cacheFactory('cacheFields'),
@@ -440,14 +440,14 @@
 
             };
 
-        }).filter('escape', function () {
+        })).filter('escape', function () {
             return function (val) {
                 if (!val) {
                     return val;
                 }
                 return _.escape(val);
             };
-        }).filter('autobr', function (helpers) {
+        }).filter('autobr', ng(function (helpers) {
             return function (data) {
                 if (!data) {
                     return data;
@@ -458,7 +458,7 @@
                 return helpers.splitLines(str).join("<br />");
             };
 
-        }).filter('formatCurrency', ['$injector', '$locale', function ($injector, $locale) {
+        })).filter('formatCurrency', ['$injector', '$locale', function ($injector, $locale) {
             var $filter = $injector.get('$filter'),
                 numberFilter = $filter('number'),
                 formats = $locale.NUMBER_FORMATS;
@@ -677,7 +677,7 @@
             return function (matchItem, query) {
                 return query && matchItem ? matchItem.replace(new RegExp(escapeRegexp(query), 'gi'), '<span class="ui-select-highlight">$&</span>') : matchItem;
             };
-        }).factory('outputTypes', function (dateFilter, GLOBAL_CONFIG, modelsMeta) {
+        }).factory('outputTypes', ng(function (dateFilter, GLOBAL_CONFIG, modelsMeta) {
             var outputTypes = {
                 SuperDateTimeProperty: function (input, field) {
                     var date = new Date(input);
@@ -685,7 +685,7 @@
                 }
             };
             return outputTypes;
-        }).factory('searchBuilder', function (modelsMeta, GLOBAL_CONFIG) {
+        })).factory('searchBuilder', ng(function (modelsMeta, GLOBAL_CONFIG) {
             var create = function () {
                 var make = {
                     kind: null,
@@ -1001,7 +1001,7 @@
             return {
                 create: create
             };
-        }).factory('channelApi', function (GLOBAL_CONFIG) {
+        })).factory('channelApi', ng(function (GLOBAL_CONFIG) {
             // low level channel api
             var channelApi = {
                 instances: {},
@@ -1091,7 +1091,7 @@
                 window._channelApi = channelApi;
             }
             return channelApi;
-        }).factory('channelNotifications', function (channelApi, modals) {
+        })).factory('channelNotifications', ng(function (channelApi, modals) {
             var channelNotifications = {
                 instances: {},
                 create: function (token) {
@@ -1123,7 +1123,7 @@
                 }
             };
             return channelNotifications;
-        }).directive('collapse', ['$animate', function ($animate) {
+        })).directive('collapse', ['$animate', function ($animate) {
 
             return {
                 link: function (scope, element, attrs) {

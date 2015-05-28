@@ -15,8 +15,8 @@ gulp.task('css', function () {
 
 gulp.task('javascript', function () {
     return gulp.src('raw/app.js')
-        //.pipe(angularInjector())
-        //.pipe(uglify())
+        .pipe(angularInjector())
+        .pipe(uglify())
         .pipe(gulp.dest('../client/dist'));
 });
 

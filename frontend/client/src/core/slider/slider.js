@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').directive('imageSlider', function ($timeout, $parse) {
+    angular.module('app').directive('imageSlider', ng(function ($timeout, $parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -89,7 +89,7 @@
                 });
             }
         };
-    }).directive('sliderImage', function ($timeout, helpers, GLOBAL_CONFIG) {
+    })).directive('sliderImage', ng(function ($timeout, helpers, GLOBAL_CONFIG) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -127,5 +127,5 @@
 
             }
         };
-    });
+    }));
 }());

@@ -596,7 +596,7 @@
                 });
             }
         };
-    }).factory('modals', function ($modal, $q, helpers, GLOBAL_CONFIG) {
+    }).factory('modals', ng(function ($modal, $q, helpers, GLOBAL_CONFIG) {
 
         var modals = {
             alert: function (key, callbackOrConfig, messageOrConfig) {
@@ -649,7 +649,7 @@
                     inDirection: false,
                     outDirection: false,
                     templateUrl: 'core/misc/confirm.html',
-                    controller: function ($scope) {
+                    controller: ng(function ($scope) {
                         var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
                         config.dismiss = function () {
                             var close = $scope.$close();
@@ -672,7 +672,7 @@
                         $scope.config = config;
                         $.extend($scope, config.scope);
                         config.scope = undefined;
-                    }
+                    })
                 };
                 $.extend(defaultModalConfig, modalConfig);
                 return $modal.open(defaultModalConfig);
@@ -682,6 +682,6 @@
             window._modals = modals;
         }
         return modals;
-    });
+    }));
 
 }());

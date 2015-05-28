@@ -232,9 +232,9 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
       except Exception as e:
         pass
     out('Write static dir %s' % paths['static'])
-  proc = subprocess.Popen(r'gulp', cwd=node)
-  while proc.wait():
-    exit()
+    proc = subprocess.Popen(r'gulp', cwd=node)
+    while proc.wait():
+      exit()
   return buff
 
 if __name__ == '__main__':

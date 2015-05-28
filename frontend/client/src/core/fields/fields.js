@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(function (helpers, modals, $modal, GLOBAL_CONFIG) {
+        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -151,7 +151,7 @@
                         $modal.open({
                             scope: scope,
                             templateUrl: 'core/models/manage.html',
-                            controller: function ($scope) {
+                            controller: ng(function ($scope) {
                                 var save = scope.save,
                                     complete = scope.complete,
                                     getTitle,
@@ -219,12 +219,12 @@
                                     }
                                     field._title_.remove(getTitle);
                                 });
-                            }
+                            })
                         });
                     }
                 }
             });
-        })
+        }))
         .directive('validFile', function () {
             return {
                 require: 'ngModel',
@@ -265,7 +265,7 @@
                 }
             };
         })
-        .directive('repeatedText', function (helpers) {
+        .directive('repeatedText', ng(function (helpers) {
             return {
                 require: 'ngModel',
                 link: function (scope, element, attrs, ctrl) {
@@ -303,8 +303,8 @@
                     ctrl.$formatters.push(formatter);
                 }
             };
-        })
-        .directive('generateUploadUrl', function (endpoint, $rootScope) {
+        }))
+        .directive('generateUploadUrl', ng(function (endpoint, $rootScope) {
             return {
                 restrict: 'A',
                 require: '^form',
@@ -345,19 +345,19 @@
                     scope.$on('ngUploadCompleteError', change);
                 }
             };
-        }).directive('formBuilder', function ($compile, underscoreTemplate, modelsMeta) {
+        })).directive('formBuilder', ng(function ($compile, underscoreTemplate, modelsMeta) {
             return {
                 restrict: 'A',
                 require: '^form',
                 templateUrl: 'core/fields/builder.html',
                 scope: true,
                 transclude: true,
-                controller: function ($scope, $element, $attrs) {
+                controller: ng(function ($scope, $element, $attrs) {
                     $scope.configurations = $scope.$eval($attrs.formBuilder);
-                }
+                })
             };
-        })
-        .directive('formInput', function ($compile, underscoreTemplate,
+        }))
+        .directive('formInput', ng(function ($compile, underscoreTemplate,
             formInputTypes, helpers, GLOBAL_CONFIG) {
 
             var types = formInputTypes,
@@ -540,7 +540,7 @@
                 }
 
             };
-        }).directive('compatibilityMaker', function (modelsUtil) {
+        })).directive('compatibilityMaker', ng(function (modelsUtil) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs, ctrl) {
@@ -554,7 +554,7 @@
 
                 }
             };
-        }).directive('submitIfFiles', function ($parse, helpers) {
+        })).directive('submitIfFiles', ng(function ($parse, helpers) {
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ctrl) {
@@ -615,7 +615,7 @@
 
                 }
             };
-        }).directive('submitIfValid', function ($parse) {
+        })).directive('submitIfValid', ng(function ($parse) {
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ctrl) {
@@ -635,7 +635,7 @@
 
                 }
             };
-        }).directive('showNumberOfSelectedFiles', function () {
+        })).directive('showNumberOfSelectedFiles', function () {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
@@ -697,7 +697,7 @@
                     });
                 }
             };
-        }).factory('formInputTypes', function (underscoreTemplate, $timeout, $parse,
+        }).factory('formInputTypes', ng(function (underscoreTemplate, $timeout, $parse,
             endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
             errorHandling, modals, GLOBAL_CONFIG, snackbar) {
 
@@ -1306,7 +1306,7 @@
                                     template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/fields/manage_structured.html')({
                                         config: config
                                     }),
-                                    controller: function ($scope, modelsUtil) {
+                                    controller: ng(function ($scope, modelsUtil) {
                                         var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
                                             formBuilder = {
                                                 '0': []
@@ -1769,7 +1769,7 @@
                                             config._title_.remove(getTitle);
                                         });
 
-                                    }
+                                    })
                                 });
                             };
 
@@ -1850,7 +1850,7 @@
 
             return formInputTypes;
 
-        }).constant('msdElasticConfig', {
+        })).constant('msdElasticConfig', {
             append: ''
         }).directive('msdElastic', [
             '$timeout', '$window', 'msdElasticConfig',
@@ -2058,7 +2058,7 @@
                     }
                 };
             }
-        ]).directive('fastNgChange', function ($parse, $mdUtil) {
+        ]).directive('fastNgChange', ng(function ($parse, $mdUtil) {
             return {
                 priority: 1,
                 link: function (scope, element, attrs) {
@@ -2077,7 +2077,7 @@
                     });
                 }
             };
-        }).directive('fastNgModel', function ($parse, $mdUtil) {
+        })).directive('fastNgModel', ng(function ($parse, $mdUtil) {
             return {
                 priority: -1,
                 link: function (scope, element, attrs) {
@@ -2091,5 +2091,5 @@
                     });
                 }
             };
-        });
+        }));
 }());

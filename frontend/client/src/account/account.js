@@ -15,14 +15,14 @@
             name: 'Pinterest',
             id: 4
         }])
-        .factory('mappedLoginProviders', function (LOGIN_PROVIDERS) {
+        .factory('mappedLoginProviders', ng(function (LOGIN_PROVIDERS) {
             var mappedLoginProviders = {};
             angular.forEach(LOGIN_PROVIDERS, function (value) {
                 mappedLoginProviders[value.id] = value;
             });
             return mappedLoginProviders;
-        })
-        .controller('AccountLoginStatusController', function ($scope, $location, $state, modals) {
+        }))
+        .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, modals) {
             var data = $location.search(),
                 errors;
             if (data.success) {
@@ -37,7 +37,7 @@
                     }
                 }
             }
-        }).controller('LoginLinksController', function ($scope, endpoint, currentAccount, models) {
+        })).controller('LoginLinksController', ng(function ($scope, endpoint, currentAccount, models) {
 
             $scope.authorization_urls = {};
             if (currentAccount._is_guest === undefined || currentAccount._is_guest) {
@@ -53,7 +53,7 @@
                 window.location.href = $scope.authorization_urls[type];
             };
 
-        }).controller('AccountManagementController', function ($scope, currentAccount, models, modelsUtil) {
+        })).controller('AccountManagementController', ng(function ($scope, currentAccount, models, modelsUtil) {
 
             $scope.settings = function () {
                 models['11'].manageModal(currentAccount);
@@ -61,7 +61,7 @@
             $scope.logout = function () {
                 models['11'].logout(currentAccount.key);
             };
-        }).filter('formatLoginProivider', function (mappedLoginProviders) {
+        })).filter('formatLoginProivider', ng(function (mappedLoginProviders) {
             return function (value) {
                 var splits = value.split('-'),
                     out = '';
@@ -70,7 +70,7 @@
                 }
                 return out;
             };
-        }).run(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
+        })).run(ng(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
                 return ident.identity.split('-')[1];
@@ -218,6 +218,6 @@
 
             });
 
-        });
+        }));
 
 }());

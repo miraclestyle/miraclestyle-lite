@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (helpers) {
+    angular.module('app').run(ng(function (helpers) {
         helpers.responsive = {
             isTouch: function () {
                 return Modernizr.touch;
@@ -21,5 +21,5 @@
                 return !this.isLandscape();
             }
         };
-    });
+    }));
 }());

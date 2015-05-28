@@ -1,65 +1,64 @@
 (function () {
     'use strict';
-    angular.module('app').factory('errorHandling',
-        function ($modal, modals) {
-            var translations = {
-                    action_denied: function (reason) {
-                        return 'You do not have permission to perform this action.';
-                    },
-                    not_found: function (fields) {
-                        return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
-                    },
-                    invalid_image_type: 'You have supplied incorrect type of image format.',
-                    invalid_model: 'You have requested access to resource that does not exist,',
-                    invalid_action: 'You have requested access to the action that does not exist.',
-                    required: function (fields) {
-                        return 'Some values are missing: ' + fields.join(', ') + '.';
-                    },
-                    traceback: function (trace) {
-                        var parse = $.parseHTML(trace);
-                        return $(parse).filter('pre').text();
-                    },
-                    transaction: function (reason) {
-                        if (reason === 'timeout') {
-                            return 'Transaction was not completed due timeout. Please try again.';
-                        }
-                        if (reason === 'failed') {
-                            return 'Transaction was not completed due failure. Please try again.';
-                        }
-                        return reason;
-                    }
+    angular.module('app').factory('errorHandling', ng(function ($modal, modals) {
+        var translations = {
+                action_denied: function (reason) {
+                    return 'You do not have permission to perform this action.';
                 },
-                errorHandling = {
-                    translate: function (k, v) {
-                        var possible = translations[k];
-                        if (angular.isString(possible)) {
-                            return possible;
-                        }
-                        if (angular.isFunction(possible)) {
-                            return possible(v);
-                        }
-                        return v;
-                    },
-                    modal: function (errors) {
-                        modals.alert(null, {
-                            title: 'Error while performing an action',
-                            templateUrl: 'core/misc/errors.html',
-                            text: {
-                                primary: 'Got it'
-                            },
-                            errors: (function () {
-                                var formatErrors = [];
-                                angular.forEach(errors, function (error, key) {
-                                    formatErrors.push([key, errorHandling.translate(key, error)]);
-                                });
-                                return formatErrors;
-                            }())
-                        });
+                not_found: function (fields) {
+                    return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
+                },
+                invalid_image_type: 'You have supplied incorrect type of image format.',
+                invalid_model: 'You have requested access to resource that does not exist,',
+                invalid_action: 'You have requested access to the action that does not exist.',
+                required: function (fields) {
+                    return 'Some values are missing: ' + fields.join(', ') + '.';
+                },
+                traceback: function (trace) {
+                    var parse = $.parseHTML(trace);
+                    return $(parse).filter('pre').text();
+                },
+                transaction: function (reason) {
+                    if (reason === 'timeout') {
+                        return 'Transaction was not completed due timeout. Please try again.';
                     }
-                };
+                    if (reason === 'failed') {
+                        return 'Transaction was not completed due failure. Please try again.';
+                    }
+                    return reason;
+                }
+            },
+            errorHandling = {
+                translate: function (k, v) {
+                    var possible = translations[k];
+                    if (angular.isString(possible)) {
+                        return possible;
+                    }
+                    if (angular.isFunction(possible)) {
+                        return possible(v);
+                    }
+                    return v;
+                },
+                modal: function (errors) {
+                    modals.alert(null, {
+                        title: 'Error while performing an action',
+                        templateUrl: 'core/misc/errors.html',
+                        text: {
+                            primary: 'Got it'
+                        },
+                        errors: (function () {
+                            var formatErrors = [];
+                            angular.forEach(errors, function (error, key) {
+                                formatErrors.push([key, errorHandling.translate(key, error)]);
+                            });
+                            return formatErrors;
+                        }())
+                    });
+                }
+            };
 
-            return errorHandling;
-        }).factory('helpers', function (GLOBAL_CONFIG) {
+        return errorHandling;
+    })).factory('helpers', ng(function (GLOBAL_CONFIG) {
 
         var helpers = {
             callable: function (fn) {
@@ -218,7 +217,7 @@
             window._helpers = helpers;
         }
         return helpers;
-    }).factory('endpoint', function ($http, generalLocalCache, GLOBAL_CONFIG,
+    })).factory('endpoint', ng(function ($http, generalLocalCache, GLOBAL_CONFIG,
         helpers, modelsUtil, $rootScope, $q, $cacheFactory, $injector) {
 
         var onlyInMemoryCache = $cacheFactory('endpointOnlyInMemory'),
@@ -354,7 +353,7 @@
 
         return endpoint;
 
-    }).factory('generalLocalCache', function (DSCacheFactory, $cacheFactory) {
+    })).factory('generalLocalCache', ng(function (DSCacheFactory, $cacheFactory) {
         // combination of LocalStorageCache and inMemory cache
         var inMemory = $cacheFactory('localStoragePolyfillInMemory'),
             // in memory cache for non-serizible jsons
@@ -412,11 +411,11 @@
 
         return generalLocalCache;
 
-    }).run(function ($http, generalLocalCache) {
+    })).run(ng(function ($http, generalLocalCache) {
 
         $http.defaults.cache = generalLocalCache;
 
-    }).config(['$httpProvider', function ($httpProvider) {
+    })).config(['$httpProvider', function ($httpProvider) {
 
         $httpProvider.interceptors.push(['$rootScope', '$q', '$injector',
             function ($rootScope, $q, $injector) {
@@ -485,16 +484,17 @@
                         return config || $q.when(config);
                     }
                 };
-            }]);
+            }
+        ]);
 
-    }]).factory('underscoreTemplate', function ($templateCache) {
+    }]).factory('underscoreTemplate', ng(function ($templateCache) {
 
         return {
             get: function (path) {
                 return _.template($templateCache.get(path));
             }
         };
-    }).factory('animationGenerator', function () {
+    })).factory('animationGenerator', function () {
         var animationGenerator = {
             classNamePrefix: 'tmp-',
             prefix: function (thing) {

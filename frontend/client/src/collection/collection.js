@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(function (modelsConfig, endpoint, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
+    angular.module('app').run(ng(function (modelsConfig, endpoint, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
         modelsConfig(function (models) {
             var read_arguments = {
                 _sellers: {
@@ -120,5 +120,5 @@
             });
 
         });
-    });
+    }));
 }());

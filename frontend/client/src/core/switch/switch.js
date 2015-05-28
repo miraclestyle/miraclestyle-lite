@@ -5,7 +5,7 @@
             'material.core',
             'material.components.checkbox'
         ])
-        .directive('mdInkRippleSwitch', function ($mdInkRipple) {
+        .directive('mdInkRippleSwitch', ng(function ($mdInkRipple) {
             return {
                 link: function (scope, element, attrs) {
                     $mdInkRipple.attachButtonBehavior(scope, element, {
@@ -13,7 +13,7 @@
                     });
                 }
             };
-        })
+        }))
         .directive('mdSwitch', MdSwitch);
 
     function MdSwitch(mdCheckboxDirective, $mdUtil, $document, $mdConstant, $parse, $$rAF, $mdGesture) {

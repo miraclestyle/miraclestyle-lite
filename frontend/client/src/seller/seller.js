@@ -9,13 +9,13 @@
                 val: '=addressRuleLocationListView'
             },
             templateUrl: 'seller/address_rule_location_list_view.html',
-            controller: function ($scope) {
+            controller: ng(function ($scope) {
                 $scope.notEmpty = notEmpty;
                 $scope.postalCodes = function (postalCodes) {
                     return postalCodes.join(', ');
                 };
 
-            }
+            })
         };
     }).directive('defaultLineListView', function () {
         return {
@@ -30,18 +30,18 @@
                 val: '=carrierLineRuleListView'
             },
             templateUrl: 'seller/carrier_line_rule_list_view.html',
-            controller: function ($scope) {
+            controller: ng(function ($scope) {
                 $scope.notEmpty = notEmpty;
 
-            }
+            })
         };
-    }).controller('SellerManagementController', function ($scope, endpoint, currentAccount, models) {
+    }).controller('SellerManagementController', ng(function ($scope, endpoint, currentAccount, models) {
 
         $scope.settings = function () {
             models['23'].manageModal(currentAccount.key);
         };
 
-    }).controller('SellCatalogsController', function ($scope, modals, helpers, currentAccount, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
+    })).controller('SellCatalogsController', ng(function ($scope, modals, helpers, currentAccount, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
 
         $scope.setPageToolbarTitle('seller.catalogs');
 
@@ -110,7 +110,7 @@
             $scope.search.pagination.load();
         });
 
-    }).controller('SellOrdersController', function ($scope, modals, modelsEditor, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
+    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
@@ -172,7 +172,7 @@
             $scope.scrollEnd.loader = $scope.search.pagination;
             $scope.search.pagination.load();
         });
-    }).run(function (modelsConfig, modelsMeta,
+    })).run(ng(function (modelsConfig, modelsMeta,
         modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
 
         var pluginName = function (kind) {
@@ -262,7 +262,7 @@
                         aboutPlugins: function () {
                             $modal.open({
                                 templateUrl: 'core/models/manage.html',
-                                controller: function ($scope) {
+                                controller: ng(function ($scope) {
                                     $scope.dialog = {
                                         templateBodyUrl: 'seller/help/plugins.html',
                                         toolbar: {
@@ -273,7 +273,7 @@
                                     $scope.close = function () {
                                         $scope.$close();
                                     };
-                                }
+                                })
                             });
                         },
                         sortableOptions: {
@@ -460,7 +460,7 @@
                                 template: underscoreTemplate.get(config.ui.specifics.templateUrl)({
                                     config: config
                                 }),
-                                controller: function ($scope, modelsUtil) {
+                                controller: ng(function ($scope, modelsUtil) {
                                     var getTitle,
                                         inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
@@ -686,7 +686,7 @@
                                         config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
                                     });
 
-                                }
+                                })
                             });
                         }
                     };
@@ -727,7 +727,7 @@
                     $modal.open({
                         templateUrl: 'seller/view.html',
                         popFrom: popFrom,
-                        controller: function ($scope, currentAccount) {
+                        controller: ng(function ($scope, currentAccount) {
                             var cartData;
                             $scope.seller = seller;
                             $scope.alreadyInCollection = false;
@@ -888,13 +888,13 @@
                             $scope.viewContent = function (content) {
                                 $modal.open({
                                     templateUrl: 'core/misc/content_view.html',
-                                    controller: function ($scope) {
+                                    controller: ng(function ($scope) {
                                         $scope.plainText = true;
                                         $scope.content = content;
                                         $scope.close = function () {
                                             $scope.$close();
                                         };
-                                    }
+                                    })
                                 });
                             };
 
@@ -927,7 +927,7 @@
                             $scope.close = function () {
                                 $scope.$close();
                             };
-                        },
+                        }),
                     });
                 },
                 current: function (args) {
@@ -1010,6 +1010,6 @@
 
         });
 
-    });
+    }));
 
 }());
