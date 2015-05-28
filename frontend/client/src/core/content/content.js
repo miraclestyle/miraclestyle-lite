@@ -54,17 +54,108 @@
 
 (function () {
     var demo = function (converter) {
-        return [
-            // Replace escaped @ symbols
-            {
-                type: 'output',
-                //regex: '<iframe(.+?)</iframe>',
-                filter: function (text) {
-                    console.log(text);
+        return [{
+            type: 'output',
+            filter: function (text) {
+                if (window._allow) {
                     return text;
                 }
+                try {
+                    $.parseHTML(text); // any invalid html will be shown as blank
+                }catch (e){
+                    return '';
+                }
+                var dom = $('<div />').html(text),
+                    whiteListIframe = function (a) {
+                        // regex for whitelisted providers... @todo
+                        return a;
+                    },
+                    whiteListA = {
+                        '_blank': true
+                    },
+                    intOrPercentage = function (a) {
+                        var percentage = a.indexOf('%') !== -1,
+                            px = a.indexOf('px') !== -1,
+                            suffix = '';
+                        if (percentage) {
+                            suffix = '%';
+                        }
+                        if (px) {
+                            suffix = 'px';
+                        }
+                        return parseInt(a, 10) + suffix;
+                    },
+                    allowedTags = {
+                        strong: true,
+                        b: true,
+                        hr: true,
+                        ol: true,
+                        blockquote: true,
+                        kbd: true,
+                        code: true,
+                        i: true,
+                        em: true,
+                        h1: true,
+                        h2: true,
+                        h3: true,
+                        h4: true,
+                        a: {
+                            href: function (a) {
+                                var regex = /^http/,
+                                    regex2 = '/^#/';
+                                if (a.match(regex) || a.match(regex2)) {
+                                    return a;
+                                }
+                                return '';
+                            },
+                            target: function (a) {
+                                if (whiteListA[a]) {
+                                    return a;
+                                }
+                                return '';
+                            },
+                        },
+                        h5: true,
+                        h6: true,
+                        ul: true,
+                        li: true,
+                        div: true,
+                        pre: true,
+                        p: true,
+                        br: true,
+                        iframe: {
+                            width: intOrPercentage,
+                            height: intOrPercentage,
+                            src: whiteListIframe,
+                            allowfullscreen: function () {
+                                return '';
+                            },
+                            frameborder: function (a) {
+                                return parseInt(a, 10);
+                            }
+                        }
+                    };
+                dom.find('*').each(function () {
+                    var item = $(this),
+                        name = item.get(0).nodeName.toLowerCase(),
+                        allowed = allowedTags[name];
+                    if (allowed) {
+                        $.each(this.attributes, function () {
+                            var propertySpec = angular.isObject(allowed) ? allowed[this.name] : false;
+                            if (!propertySpec) {
+                                item.removeAttr(this.name);
+                            } else {
+                                item.attr(this.name, propertySpec(item.attr(this.name)));
+                            }
+                        });
+                    } else {
+                        item.remove();
+                    }
+                });
+
+                return dom.html();
             }
-        ];
+        }];
     };
 
     // Client-side export
