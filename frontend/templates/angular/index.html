@@ -16,8 +16,15 @@
     <meta id="is-desktoplike" />
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="fragment" content="!" />
-    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'> {% for style in settings.ANGULAR_CSS_PATHS %}
-    <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'>
+    {% if settings.DEBUG %}
+        {% for style in settings.ANGULAR_CSS_PATHS %}
+        <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
+    {% else %}
+    {% for style in settings.ANGULAR_VENDOR_CSS %}
+     <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
+     <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style.css')}}" />
+    {% endif %}
 </head>
 <body ng-controller="MainMenuController" layout="row">
     <md-sidenav md-swipe-left="closeMenu()" layout="column" class="left md-closed" md-component-id="left">
@@ -93,14 +100,20 @@
     </div>
 
     <snackbar></snackbar>
+ 
 
     <script type="text/javascript" src="/_ah/channel/jsapi"></script>
-    {% for js in settings.ANGULAR_JAVASCRIPT_PATHS %}
-    <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>
-    {% endfor %}
-
     {% if settings.DEBUG %}
-    <script type="text/javascript" src="/build/dynamics.js"></script>
+        {% for js in settings.ANGULAR_JAVASCRIPT_PATHS %}
+        <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>
+        {% endfor %}
+        <script type="text/javascript" src="/build/dynamics.js"></script>
+    {% else %}
+        {% for js in settings.ANGULAR_VENDOR_JS %}
+        <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>
+        {% endfor %}
+        <script type="text/javascript" src="{{static_dir('dist/app.js')}}"></script>
+        <script type="text/javascript" src="{{static_dir('dist/templates.js')}}"></script>
     {% endif %}
 
 </body>

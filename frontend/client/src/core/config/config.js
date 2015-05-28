@@ -384,7 +384,10 @@
             addInstances: 'Add Variant Configuration',
             addContents: 'Add Content',
             editContents: 'Edit Content',
-            account: 'Account'
+            account: 'Account',
+            admin: 'Admin',
+            users: 'Users',
+            orders: 'Orders'
         });
 
     });

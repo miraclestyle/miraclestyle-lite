@@ -1,3 +1,8 @@
+if (!window.ng) {
+    window.ng = function (fn) {
+        return fn;
+    };
+}
 (function () {
 
     var base64EncodeChars =

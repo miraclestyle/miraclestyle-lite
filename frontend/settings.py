@@ -8,7 +8,10 @@ import os
 import json
 import codecs
 import shutil
+import subprocess
 from glob import glob
+
+DEFAULT_TITLE = 'miraclestyle'
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
@@ -38,7 +41,7 @@ ROUTES = []
 JINJA_GLOBALS = {}
 JINJA_FILTERS = {}
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
@@ -152,10 +155,6 @@ for component in ANGULAR_ACTIVE_COMPONENTS:
       elif f.endswith('.html') and dirname.endswith('template') or '/template/' in str(dirname):
         ANGULAR_TEMPLATE_FILES.append(abs_path)
 
-if not DEBUG:
-  ANGULAR_CSS_FILES = ['dist/style.css']
-  ANGULAR_JAVASCRIPT_FILES = ['dist/app.js', 'dist/templates.js']
-
 def get_component_dirs():
   for dirname, dirnames, filenames in os.walk(CLIENT_COMPONENTS_DIR):
       for d in dirnames:
@@ -184,6 +183,7 @@ def _empty_dir(d):
 
 def build(templates=True, statics=True, js_and_css=True, write=False, inform=True):
   dist = os.path.join(CLIENT_DIR, 'dist')
+  node = os.path.join(ROOT_DIR, 'node', 'raw')
   paths = {}
   buff = {}
 
@@ -193,9 +193,10 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
   def read(f, m='r'):
     return codecs.open(f, m, 'utf-8')
 
-  for p in ['app.js', 'style.css', 'static', 'templates.js']:
-      paths[p] = os.path.join(dist, p)
+  for p in ['app.js', 'style.css', 'templates.js']:
+      paths[p] = os.path.join(node, p)
       buff[p] = u''
+  paths['static'] = os.path.join(dist, 'static')
   if js_and_css:
     for t, b in [('JAVASCRIPT', 'app.js'), ('CSS', 'style.css')]:
         for files in globals().get('ANGULAR_%s_FILES' % t):
@@ -206,7 +207,7 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
           if w:
             out('Writing %s' % paths[b])
             with read(paths[b], 'w') as f:
-                f.write(w)  # @todo minify
+                f.write(w)
   if templates:
     cached_templates = []
     for tpl in ANGULAR_TEMPLATE_FILES:
@@ -214,7 +215,7 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
         d = tpl.replace('/template/', '/')[_client_components_dir_length:]
         out('Caching template %s' % d)
         cached_templates.append('    $templateCache.put(%s, %s);' % (json.dumps(d), json.dumps(f.read())))
-    buff['templates.js'] = """angular.module('app').run(function ($templateCache) {\n%s\n});""" % "\n".join(cached_templates)
+    buff['templates.js'] = """angular.module('app').run(ng(function ($templateCache) {\n%s\n}));""" % "\n".join(cached_templates)
   if write:
     with read(paths['templates.js'], 'w') as f:
       out('Writing cache %s' % paths['templates.js'])
@@ -230,6 +231,9 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
       except Exception as e:
         pass
     out('Write static dir %s' % paths['static'])
+  proc = subprocess.Popen(r'gulp', cwd=node)
+  while proc.wait():
+    exit()
   return buff
 
 if __name__ == '__main__':

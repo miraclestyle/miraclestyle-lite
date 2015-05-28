@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>{{title or 'MIRACLESTYLE'}}</title>
- 
-    <link rel="stylesheet" type="text/css" href="{{static_dir('fonts/sawasdee/stylesheet.css')}}"/>
-    <link rel="stylesheet" type="text/css" href="{{static_dir('css/seo/style.css')}}"/>
-  </head>
-  <body>
- 
-	{% block content %}
-	{% endblock %}
-
-  </body>
+<head>
+    <script>
+        if (window.location.hash && window.location.hash.indexOf('#context-monitor-') !== -1) {
+            window.location.hash = '';
+        }
+    </script>
+    <title>{{title or ''}}</title>
+    <base href="/" />
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'> {% for style in settings.SEO_CSS_PATHS %}
+    <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
+</head>
+<body>
+<div class="header">
+    
+</div>
+</body>
 </html>

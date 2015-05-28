@@ -2,8 +2,10 @@
 	"folders":
 	[
 		{
-			"follow_symlinks": true,
 			"path": "."
+		},
+		{
+			"path": "frontend/client/dist/style.compild.css"
 		}
 	]
 }
