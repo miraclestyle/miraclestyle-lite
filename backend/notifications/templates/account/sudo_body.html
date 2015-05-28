@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if admin %}
+    Note: <br />
+    {{input.note|safe|nl2br}}
+{% else %}
+    {% if entity.state == "suspended" %}
+    Your account {{entity._primary_email}} has been suspended.<br />
+    Message from admin:<br />
+    {{input.message|safe|nl2br}}
+    {% else %}
+    Your account {{entity._primary_email}} has been activated.<br />
+    Message from admin:<br />
+    {{input.message|safe|nl2br}}
+    {% endif %}
+{% endif %}
+
+
+{% endblock %}

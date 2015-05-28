@@ -1,0 +1,9 @@
+{% if admin %}
+    Account {{entity._primary_email}} has been {% if entity.state == "suspended" %}suspended{% else %}activated{% endif %} by {{account._primary_email}}
+{% else %}
+    {% if entity.state == "suspended" %}
+    Your account {{entity._primary_email}} has been suspended.
+    {% else %}
+    Your account {{entity._primary_email}} has been activated.
+    {% endif %}
+{% endif %}

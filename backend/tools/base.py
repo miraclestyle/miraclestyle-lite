@@ -6,6 +6,7 @@ Created on Jun 16, 2014
 '''
 import re
 import json
+import os
 
 from google.appengine.api import taskqueue
 from google.appengine.ext import blobstore
@@ -13,7 +14,7 @@ from google.appengine.api import mail
 from google.appengine.api import urlfetch
 from google.appengine.api import channel
 
-from jinja2 import Environment, evalcontextfilter, Markup, escape
+from jinja2 import Environment, evalcontextfilter, Markup, escape, FileSystemLoader
 
 import orm
 from util import *
@@ -59,8 +60,7 @@ def callback_exec(url, callbacks):
 def blob_create_upload_url(upload_url, gs_bucket_name):
   return blobstore.create_upload_url(upload_url, gs_bucket_name=gs_bucket_name)
 
-
-jinja_env = Environment()
+jinja_env = Environment(loader=FileSystemLoader([os.path.join(os.path.dirname(os.path.dirname(__file__)), 'notifications', 'templates')]))
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
