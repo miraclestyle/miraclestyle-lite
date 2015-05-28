@@ -11,6 +11,7 @@ import shutil
 import subprocess
 from glob import glob
 
+SEO_MODE = True
 DEFAULT_TITLE = 'miraclestyle'
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +20,7 @@ CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src')
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
-ACTIVE_HANDLERS = ('mapping', 'builder')
+ACTIVE_HANDLERS = ('misc', 'seller', 'catalog', 'home', 'builder')
 
 HOST_URL = None
 if DEVELOPMENT_SERVER:

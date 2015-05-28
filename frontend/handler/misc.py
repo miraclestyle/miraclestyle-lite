@@ -11,11 +11,9 @@ from handler import base
 
 # update this config to map paths
 # so far we just mapped paths, but we will need logic for some of them, like catalog/<key> and seller/<key>
-settings.ROUTES.extend(((r'/', base.AngularBlank),
-                       (r'/collections', base.AngularBlank),
+settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                        (r'/buy/orders', base.AngularBlank),
                        (r'/buy/carts', base.AngularBlank),
-                       (r'/seller/<key>', base.AngularBlank),
                        (r'/sell/catalogs', base.AngularBlank),
                        (r'/sell/orders', base.AngularBlank),
                        (r'/sell/carts', base.AngularBlank),

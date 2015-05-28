@@ -1,21 +1,47 @@
+{# This file is only used to act as a compiler of html for the client. It has 0 backend logic to it. It will perform linking static files and writing down all templates inside a file. This was done for easier maintenance. #}
 <!DOCTYPE html>
 <html>
+
 <head>
     <script>
         if (window.location.hash && window.location.hash.indexOf('#context-monitor-') !== -1) {
             window.location.hash = '';
         }
     </script>
-    <title>{{title or ''}}</title>
+    <title>{% block title %}{% endblock %}</title>
     <base href="/" />
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
-    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'> {% for style in settings.SEO_CSS_PATHS %}
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'>
+    {% for style in settings.ANGULAR_VENDOR_CSS %}
     <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
+    <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style.css')}}" />
+    <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style-seo.css')}}" />
 </head>
-<body>
-<div class="header">
-    
-</div>
+<body layout="row">
+    <div layout="column" layout-fill tabIndex="-1" role="main">
+        <md-toolbar>
+            <div class="md-toolbar-tools homepage-toolbar with-actions no-right-actions">
+                <div class="fill-height">
+                    <div class="md-toolbar-item md-tools">
+                        <a href="{{uri_for('sitemap')}}" class="block button-transparent homepage-menu button-square ripple-presence">
+                            <div class="md-icon md-icon-menu md-icon-color-normal"></div>
+                        </a>
+                    </div>
+                    <div class="md-toolbar-item md-breadcrumb">
+                        <span class="md-toolbar-title ng-binding">
+                            {% block crumbs %}
+                            {% endblock %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </md-toolbar>
+        <md-content ui-view md-scroll-y flex>
+            {% block content %}
+            {% endblock %}
+        </md-content>
+    </div>
+ 
 </body>
+
 </html>

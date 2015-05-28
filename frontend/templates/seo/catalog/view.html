@@ -1,0 +1,32 @@
+{% extends 'seo/index.html' %}
+
+{% set title = 'Catalogs / %s' % catalog.name %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block crumbs %}{{title}}{% endblock %}
+
+{% block content %}
+
+<div class="clearfix padding-16">
+      <div>
+         <div> 
+            {% for img in catalog._images %}
+                <div class="relative">
+                   <img class="not-pointable" src="{{img.serving_url}}=s550"> 
+                   {% for pricetag in img.pricetags %}
+                   <div class="catalog-pricetag" style="visibility: visible;top:{{50 + loop.index * 60}}px;">
+                        <div class="catalog-pricetag-wrapper">
+                            <div class="catalog-pricetag-dot"></div>
+                             <a href="{{uri_for('catalog.product.view', key=pricetag.key)}}" class="button-transparent catalog-pricetag-link">
+                                {{pricetag.value.price}} {{catalog._seller._currency.symbol}}
+                             </a>
+                         </div>
+                    </div>
+                    {% endfor %}
+                </div> 
+            {% endfor %} 
+         </div>
+      </div>
+</div>
+{% endblock %}

@@ -8,6 +8,8 @@ import json
 import os
 import webapp2
 import codecs
+import re
+import api
 from webapp2_extras import jinja2
 
 from google.appengine.api import urlfetch
@@ -146,3 +148,37 @@ class AngularBlank(Angular):
   
   def respond(self, *args, **kwargs):
     pass
+
+class SeoOrAngular(AngularBlank):
+
+  out = None
+
+  @property
+  def is_seo(self):
+    agent = self.request.headers.get('User-Agent')
+    print agent
+    if agent:
+      return re.search('(bot|crawl|slurp|spider)', agent) or self.request.get('_seo')
+    return False
+
+  def respond_angular(self, *args, **kwargs):
+    return super(SeoOrAngular, self).respond(*args, **kwargs)
+
+  def respond(self, *args, **kwargs):
+    if not self.is_seo:
+      return self.respond_angular(*args, **kwargs)
+    else:
+      return self.respond_seo(*args, **kwargs)
+
+  def respond_seo(self, *args, **kargs):
+    self.abort(404)
+
+  def api_endpoint(self, *args, **kwargs):
+    response = api.endpoint(*args, **kwargs)
+    if 'errors' in response:
+      self.abort(503)
+    return response
+
+  def after(self):
+    if not self.is_seo:
+      super(SeoOrAngular, self).after()
