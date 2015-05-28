@@ -9,14 +9,28 @@ import webapp2
 import importlib
 import settings
 import json
+import re
 
-from jinja2 import FileSystemLoader
+from jinja2 import Environment, evalcontextfilter, Markup, escape, FileSystemLoader
 
 
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
 TEMPLATE_LOADER = FileSystemLoader(TEMPLATE_DIRS)  
  
 settings.JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : settings.ROUTES, 'settings' : settings})
+settings.JINJA_FILTERS.update({'json': lambda x: json.dumps(x, indent=2)})
+
+_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+
+@evalcontextfilter
+def nl2br(eval_ctx, value):
+    result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n')
+                          for p in _paragraph_re.split(escape(value)))
+    if eval_ctx.autoescape:
+        result = Markup(result)
+    return result
+
+settings.JINJA_FILTERS['nl2br'] = nl2br
 
 for a in settings.ACTIVE_HANDLERS:
   importlib.import_module('handler.%s' % a)

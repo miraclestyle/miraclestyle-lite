@@ -156,9 +156,8 @@ class SeoOrAngular(AngularBlank):
   @property
   def is_seo(self):
     agent = self.request.headers.get('User-Agent')
-    print agent
     if agent:
-      return re.search('(bot|crawl|slurp|spider|facebook|twitter|pinterest|linkedin)', agent) or self.request.get('_seo')
+      return re.search('(bot|crawl|slurp|spider|facebook|twitter|pinterest|linkedin)', agent) or self.request.get('_seo') or (not self.request.get('_client') and settings.SEO_MODE)
     return False
 
   def respond_angular(self, *args, **kwargs):
@@ -176,7 +175,7 @@ class SeoOrAngular(AngularBlank):
   def api_endpoint(self, *args, **kwargs):
     response = api.endpoint(*args, **kwargs)
     if 'errors' in response:
-      self.abort(503)
+      self.abort(503, response['errors'])
     return response
 
   def after(self):

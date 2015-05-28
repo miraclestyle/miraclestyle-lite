@@ -18,7 +18,7 @@
                    <div class="catalog-pricetag" style="visibility: visible;top:{{loop.index * 60}}px;">
                         <div class="catalog-pricetag-wrapper">
                             <div class="catalog-pricetag-dot"></div>
-                             <a href="{{uri_for('catalog.product.view', key=pricetag.key)}}" class="button-transparent catalog-pricetag-link">
+                             <a href="{{uri_for('catalog.product.view', key=catalog.key, image_id=img.id, pricetag_id=pricetag.id)}}" class="button-transparent catalog-pricetag-link">
                                 {{pricetag.value.price}} {{catalog._seller._currency.symbol}}
                              </a>
                          </div>

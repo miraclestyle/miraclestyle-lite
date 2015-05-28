@@ -3078,33 +3078,72 @@ class SuperKeyProperty(_BaseProperty, KeyProperty):
   If key existence feature isn't required, SuperVirtualKeyProperty() can be used in exchange.
   
   '''
-  def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is util.Nonexistent:
-      return value
-    if not self._repeated and not self._required and (value is None or len(value) < 1):
-      # if key is not required, and value is either none or length is not larger than 1, its considered as none
-      return None
+  def value_format(self, value, skip_get=False):
     try:
-      if self._repeated:
-        out = [Key(urlsafe=v) for v in value]
-      else:
-        out = [Key(urlsafe=value)]
-    except ValueError:
-      raise FormatError('malformed_key')
-    for key in out:
-      if self._kind and key.kind() != self._kind:
-        raise FormatError('invalid_kind')
-    entities = get_multi(out)
-    for i, entity in enumerate(entities):
-      if entity is None:
-        raise FormatError('not_found')
-    if not self._repeated:
+      value = self._property_value_format(value)
+      if value is util.Nonexistent:
+        return value
+      if not self._repeated and not self._required and (value is None or len(value) < 1):
+        # if key is not required, and value is either none or length is not larger than 1, its considered as none
+        return None
       try:
-        out = out[0]
-      except IndexError as e:
-        out = None
-    return out
+        if self._repeated:
+          out = [Key(urlsafe=v) for v in value]
+        else:
+          out = [Key(urlsafe=value)]
+      except ValueError:
+        raise FormatError('malformed_key')
+      for key in out:
+        if self._kind and key.kind() != self._kind:
+          raise FormatError('invalid_kind')
+      if not skip_get:
+        entities = get_multi(out)
+        for i, entity in enumerate(entities):
+          if entity is None:
+            raise FormatError('not_found')
+      if not self._repeated:
+        try:
+          out = out[0]
+        except IndexError as e:
+          out = None
+      return out
+    except Exception as e:
+      if e.message == 'not_found':
+        raise FormatError('not_found') # if its not found, its not found
+      # Failed to build from urlsafe, proceed with KeyFromPath.
+      value = self._property_value_format(value)
+      if value is util.Nonexistent:
+        return value
+      out = []
+      if self._repeated:
+        for key_path in value:
+          kwds = {}
+          try:
+            kwds = key_path[1]
+          except IndexError:
+            pass
+          key = Key(*key_path[0], **kwds)
+          if self._kind and key.kind() != self._kind:
+            raise FormatError('invalid_kind')
+          out.append(key)
+        if not skip_get:
+          entities = get_multi(out)
+          for i, entity in enumerate(entities):
+            if entity is None:
+              raise FormatError('not_found')
+      else:
+        kwds = {}
+        try:
+          kwds = value[1]
+        except IndexError:
+          pass
+        out = Key(*value[0], **kwds)
+        if self._kind and out.kind() != self._kind:
+          raise FormatError('invalid_kind')
+        entity = out.get()
+        if entity is None:
+          raise FormatError('not_found')
+      return out
   
   def get_search_document_field(self, value):
     if self._repeated:
@@ -3135,68 +3174,7 @@ class SuperVirtualKeyProperty(SuperKeyProperty):
   
   '''
   def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is util.Nonexistent:
-      return value
-    if self._repeated:
-      if not isinstance(value, (tuple, list)):
-        value = [value]
-      out = [Key(urlsafe=v) for v in value]
-    else:
-      if not self._required and value is None:
-        return value
-      out = [Key(urlsafe=value)]
-    for key in out:
-      if self._kind and key.kind() != self._kind:
-        raise FormatError('invalid_kind')
-    if not self._repeated:
-      try:
-        out = out[0]
-      except IndexError as e:
-        out = None
-    return out
-
-
-class SuperKeyFromPathProperty(SuperKeyProperty):
-  
-  def value_format(self, value):
-    try:
-      # First it attempts to construct the key from urlsafe
-      return super(SuperKeyProperty, self).value_format(value)
-    except:
-      # Failed to build from urlsafe, proceed with KeyFromPath.
-      value = self._property_value_format(value)
-      if value is util.Nonexistent:
-        return value
-      out = []
-      if self._repeated:
-        for v in value:
-          for key_path in v:
-            kwds = {}
-            try:
-              kwds = key_path[1]
-            except IndexError:
-              pass
-            key = Key(*key_path[0], **kwds)
-            if self._kind and key.kind() != self._kind:
-              raise FormatError('invalid_kind')
-            out.append(key)
-          entities = get_multi(out)
-          for i, entity in enumerate(entities):
-            if entity is None:
-              raise FormatError('not_found')
-      else:
-        try:
-          kwds = value[1]
-        except IndexError:
-          pass
-        out = Key(*value[0], **kwds)
-        if self._kind and out.kind() != self._kind:
-          raise FormatError('invalid_kind')
-        entity = out.get()
-        if entity is None:
-          raise FormatError('not_found')
-      return out
+    return super(SuperVirtualKeyProperty, self).value_format(value, skip_get=True)
 
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):

@@ -1,1 +1,38 @@
-view.html
+{% extends 'seo/index.html' %}
+
+{% set title = 'Catalogs / %s / %s' % (catalog.name, product.name) %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block crumbs %}{{title}}{% endblock %}
+
+{% block content %}
+
+
+<div class="padding-16">
+<table>
+    <tr>
+    <td valign="top">
+      <div>
+         <div class="clearfix"> 
+            {% for img in product.images %}
+                <div class="relative">
+                   <img class="not-pointable" src="{{img.serving_url}}=s550"> 
+                </div> 
+            {% endfor %} 
+         </div>
+      </div>
+    </td>
+
+    <td valign="top">
+        <h1>{{product.name}}</h1>
+        <h3>{{product.code}}</h3>
+        <h3>{{product._category.name}}</h3>
+        <div class="body1">
+            {{product.description|nl2br}}
+        </div>
+    </td>
+    </tr>
+</table>
+</div>
+{% endblock %}
