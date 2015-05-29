@@ -11,10 +11,12 @@ import codecs
 import re
 import api
 from webapp2_extras import jinja2
-
 from google.appengine.api import urlfetch
 
-import settings, api
+from jinja2 import evalcontextfilter, Markup, escape
+
+import settings
+import api
 
 class JSONEncoder(json.JSONEncoder):
 
@@ -81,7 +83,6 @@ class RequestHandler(webapp2.RequestHandler):
     self.response.write('<h1>404 Not found</h1>')
       
   def dispatch(self):
-    print self.request
     self.template['base_url'] = self.request.host_url
     try:
       self.before()
@@ -183,3 +184,24 @@ class SeoOrAngular(AngularBlank):
   def after(self):
     if not self.is_seo:
       super(SeoOrAngular, self).after()
+
+
+settings.JINJA_GLOBALS.update({'uri_for' : webapp2.uri_for, 'ROUTES' : settings.ROUTES, 'settings' : settings})
+settings.JINJA_FILTERS.update({'json': lambda x: json.dumps(x, indent=2)})
+
+_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+
+@evalcontextfilter
+def nl2br(eval_ctx, value):
+    result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n')
+                          for p in _paragraph_re.split(escape(value)))
+    if eval_ctx.autoescape:
+        result = Markup(result)
+    return result
+
+@evalcontextfilter
+def keywords(eval_ctx, value):
+  return ','.join(unicode(value).lower().split(' '))
+
+settings.JINJA_FILTERS['nl2br'] = nl2br
+settings.JINJA_FILTERS['keywords'] = keywords
