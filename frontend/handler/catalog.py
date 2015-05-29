@@ -17,7 +17,12 @@ class CatalogView(base.SeoOrAngular):
         data = {'action_id': 'read', 'action_model': '31', 'key': kwargs.get('key'), 'read_arguments': {
             '_images': {'config': {'limit': -1}}, '_seller': {}}}
         data = self.api_endpoint(payload=data)
-        self.render('seo/catalog/view.html', {'catalog': data['entity']})
+        catalog = data['entity']
+        tpl = {'catalog': catalog, 
+               'image': '%s=360' % catalog['_images'][0]['serving_url'],
+               'path': self.uri_for('catalog.view', _full=True, key=catalog['key']) 
+               }
+        self.render('seo/catalog/view.html', tpl)
 
 
 class CatalogProductView(base.SeoOrAngular):
@@ -33,7 +38,25 @@ class CatalogProductView(base.SeoOrAngular):
         data = {'action_id': 'read', 'action_model': '31', 'key': catalog_key,
                 'read_arguments': {'_images': {'config': {'keys': [catalog_image_key]}, 'pricetags': {'_product': {'_category': {}}, 'config': {'keys': [catalog_image_pricetag_key]}}}, '_seller': {'_currency': {}}}}
         data = self.api_endpoint(payload=data)
-        tpl = {'catalog': data['entity'],  'product': data['entity']['_images'][0]['pricetags'][0]['_product']}
+        catalog = data['entity']
+        product = catalog['_images'][0]['pricetags'][0]['_product']
+        tpl = {'catalog': catalog,
+               'product': product, 
+               'title': '%s - %s' % (catalog['name'], product['name']),
+               'description': product['description'],
+               'code': product['code'],
+               'price': product['unit_price'],
+               'availability': product['availability'],
+               'category': product['_category']['name'],
+               'currency': catalog['_seller']['_currency'],
+               'path': self.uri_for('catalog.product.view', 
+                                    pricetag_id=kwargs.get('pricetag_id'),
+                                    _full=True,
+                                    image_id=kwargs.get('image_id'),
+                                    key=catalog['key']),
+               'image': False}
+        if len(product['images']):
+            tpl['image'] = '%s=s600' % product['images'][0]['serving_url']
         tpl.update(kwargs)
         self.render('seo/catalog/product/view.html', tpl)
 

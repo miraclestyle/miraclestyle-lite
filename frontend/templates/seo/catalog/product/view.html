@@ -1,18 +1,5 @@
 {% extends 'seo/index.html' %}
 
-{% set title = '%s - %s' % (catalog.name, product.name) %}
-{% set description = product.description %}
-{% set code = product.code %}
-{% set image = False %}
-{% if len(product.images) %}
-  {% set image = '%s=s600' % product.images[0].serving_url %}
-{% endif %}
-{% set price = product.unit_price %}
-{% set availability = product.availability %}
-{% set category = product._category.name %}
-{% set currency = catalog._seller._currency %}
-{% set path = uri_for('catalog.product.view', pricetag_id=pricetag_id, _full=True, image_id=image_id, key=catalog.key) %}
-
 {% block meta %}
 
 <title>{{title}}</title>

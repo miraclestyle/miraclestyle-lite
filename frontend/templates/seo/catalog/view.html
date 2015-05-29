@@ -1,9 +1,5 @@
 {% extends 'seo/index.html' %}
 
-{% set title = catalog.name %}
-{% set image = '%s=360' % catalog._images[0].serving_url %}
-{% set path = uri_for('catalog.view', _full=True, key=catalog.key) %}
-
 {% block meta %}
 
 
