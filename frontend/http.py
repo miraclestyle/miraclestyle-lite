@@ -30,7 +30,12 @@ def nl2br(eval_ctx, value):
         result = Markup(result)
     return result
 
+@evalcontextfilter
+def keywords(eval_ctx, value):
+  return ','.join(unicode(value).lower().split(' '))
+
 settings.JINJA_FILTERS['nl2br'] = nl2br
+settings.JINJA_FILTERS['keywords'] = keywords
 
 for a in settings.ACTIVE_HANDLERS:
   importlib.import_module('handler.%s' % a)

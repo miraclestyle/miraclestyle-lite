@@ -81,6 +81,8 @@ class RequestHandler(webapp2.RequestHandler):
     self.response.write('<h1>404 Not found</h1>')
       
   def dispatch(self):
+    print self.request
+    self.template['base_url'] = self.request.host_url
     try:
       self.before()
       super(RequestHandler, self).dispatch()

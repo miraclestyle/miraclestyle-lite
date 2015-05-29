@@ -12,9 +12,14 @@ import shutil
 import subprocess
 from glob import glob
 
+# META
+SITE_META_TITLE = 'Miraclestyle.com'
+SITE_META_DESCRIPTION = 'Description'
+SITE_META_KEYWORDS = 'miraclestyle,thing'
+SITE_META_TWITTER_USERNAME = 'miraclestyle'
+
+
 SEO_MODE = True
-DEFAULT_TITLE = 'miraclestyle'
-SITE_NAME = 'miraclestyle.com'
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')

@@ -1,9 +1,28 @@
 {% extends 'seo/index.html' %}
 
 {% block meta %}
-<title>Home</title>
-<meta name="keywords" content="[KEYWORDS]" />
-<meta name="description" content="[DESCRIPTION]" />
+<title>{{settings.SITE_META_TITLE}}</title>
+<meta name="keywords" content="{{settings.SITE_META_KEYWORDS}}" />
+<meta name="description" content="{{settings.SITE_META_DESCRIPTION}}" />
+
+{% set logo = '%s/client/dist/static/logo_240.png' % base_url %}
+
+<meta property="og:type"   content="website" /> 
+<meta property="og:url"    content="{{uri_for('home', _full=True)}}" /> 
+<meta property="og:title"  content="{{settings.SITE_META_TITLE}}" /> 
+<meta property="og:description"  content="{{settings.SITE_META_DESCRIPTION}}" /> 
+<meta property="og:image"  content="{{logo}}" /> 
+
+
+<meta name="twitter:card" content="summary" />
+
+<meta name="twitter:site" content="@{{settings.SITE_META_TWITTER_USERNAME}}" />
+<meta name="twitter:creator" content="@{{settings.SITE_META_TWITTER_USERNAME}}">
+<meta name="twitter:title" content="{{settings.SITE_META_TITLE}}" />
+<meta name="twitter:description" content="{{settings.SITE_META_DESCRIPTION}}" />
+<meta name="twitter:image" content="{{logo}}" />
+
+
 {% endblock %}
  
 {% block content %}

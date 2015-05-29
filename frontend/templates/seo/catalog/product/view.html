@@ -1,47 +1,68 @@
 {% extends 'seo/index.html' %}
 
-{% set title = 'Catalogs - %s - %s' % (catalog.name, product.name) %}
+{% set title = '%s - %s' % (catalog.name, product.name) %}
+{% set description = product.description %}
+{% set code = product.code %}
+{% set image = False %}
+{% if len(product.images) %}
+  {% set image = '%s=s600' % product.images[0].serving_url %}
+{% endif %}
+{% set price = product.unit_price %}
+{% set availability = product.availability %}
+{% set category = product._category.name %}
+{% set currency = catalog._seller._currency %}
+{% set path = uri_for('catalog.product.view', pricetag_id=pricetag_id, _full=True, image_id=image_id, key=catalog.key) %}
 
 {% block meta %}
 
 <title>{{title}}</title>
 
-<meta name="keywords" content="[KEYWORDS]" />
-<meta name="description" content="[DESCRIPTION]" />
+<meta name="keywords" content="{{product.name|keywords}}" />
+<meta name="description" content="{{description}}" />
+
+
+{# 
+
+  REQUIRED DATA:
+  title
+  description
+  category
+  product_code
+  image
+  price
+  availability ?
+
+#}
 
 {# twitter has card of type product, so we are good with that https://dev.twitter.com/cards/types/product #}
 <meta name="twitter:card" content="product">
-<meta name="twitter:site" content="@iHeartRadio">
-<meta name="twitter:creator" content="@iHeartRadio">
-<meta name="twitter:title" content="24/7 Beatles — Celebrating 50 years of Beatlemania">
-<meta name="twitter:image" content="http://radioedit.iheart.com/service/img/nop()/assets/images/05fbb21d-e5c6-4dfc-af2b-b1056e82a745.png">
-<meta name="twitter:label1" content="Genre">
-<meta name="twitter:data1" content="Classic Rock">
-<meta name="twitter:label2" content="Location">
-<meta name="twitter:data2" content="National">
+
+{#
+  <meta name="twitter:site" content="@iHeartRadio">
+  <meta name="twitter:creator" content="@iHeartRadio">
+#}
+
+<meta name="twitter:title" content="{{title}}">
+<meta name="twitter:image" content="{{image}}">
+<meta name="twitter:label1" content="Description">
+<meta name="twitter:data1" content="{{description}}">
+<meta name="twitter:label2" content="Category">
+<meta name="twitter:data2" content="{{category}}">
+<meta name="twitter:label3" content="Code">
+<meta name="twitter:data3" content="{{code}}">
+<meta name="twitter:label4" content="Price">
+<meta name="twitter:data4" content="{{price}} ({{currency.code}})">
 
 {# pinterest uses similar or exactly the same og spec for product https://developers.pinterest.com/rich_pins_product/ #}
 
 <meta property="og:type"                         content="product" /> 
-<meta property="og:url"                          content="Put your own URL to the object here" /> 
-<meta property="og:title"                        content="Sample Product" /> 
-<meta property="og:image"                        content="https://s-static.ak.fbcdn.net/images/devsite/attachment_blank.png" /> 
-<meta property="product:original_price:amount"   content="Sample Original Price: " /> 
-<meta property="product:original_price:currency" content="Sample Original Price: " /> 
-<meta property="product:pretax_price:amount"     content="Sample Pre-tax Price: " /> 
-<meta property="product:pretax_price:currency"   content="Sample Pre-tax Price: " /> 
-<meta property="product:price:amount"            content="Sample Price: " /> 
-<meta property="product:price:currency"          content="Sample Price: " /> 
-<meta property="product:shipping_cost:amount"    content="Sample Shipping Cost: " /> 
-<meta property="product:shipping_cost:currency"  content="Sample Shipping Cost: " /> 
-<meta property="product:weight:value"            content="Sample Weight: Value" /> 
-<meta property="product:weight:units"            content="Sample Weight: Units" /> 
-<meta property="product:shipping_weight:value"   content="Sample Shipping Weight: Value" /> 
-<meta property="product:shipping_weight:units"   content="Sample Shipping Weight: Units" /> 
-<meta property="product:sale_price:amount"       content="Sample Sale Price: " /> 
-<meta property="product:sale_price:currency"     content="Sample Sale Price: " /> 
-<meta property="product:sale_price_dates:start"  content="Sample Sale Price Dates: Start" /> 
-<meta property="product:sale_price_dates:end"    content="Sample Sale Price Dates: End" /> 
+<meta property="og:url"                          content="{{path}}" /> 
+<meta property="og:title"                        content="{{title}}" /> 
+<meta property="og:image"                        content="{{image}}" /> 
+<meta property="product:price:amount"   content="{{price}}" /> 
+<meta property="product:price:currency" content="{{currency.code}}" /> 
+<meta property="product:category"                content="{{category}}" />
+
 
 {% endblock %}
 
@@ -56,7 +77,7 @@
       <span itemprop="title">{{catalog.name}}</span>
     </a> ›
     <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
-      <a href="{{uri_for('catalog.product.view', pricetag_id=pricetag_id, image_id=image_id, key=catalog.key)}}" itemprop="url">
+      <a href="{{path}}" itemprop="url">
         <span itemprop="title">{{product.name}}</span>
       </a>
     </div>
@@ -69,9 +90,9 @@
 
 <section>
   <div itemscope itemtype="http://schema.org/Product">
-    <div class="product-detail"><span itemprop="brand">{{product._category.name}}</span></div>
+    <div class="product-detail"><span itemprop="category">{{category}}</span></div>
     <div class="product-detail">
-      <span itemprop="name">{{product.name}}</span>
+      <span itemprop="name">{{title}}</span>
     </div>
     <div class="product-images">
       {% for img in product.images %}
@@ -86,13 +107,13 @@
       </span>
     </div>
     
-    <div class="product-detail">Product #: <span itemprop="mpn">{{product.code}}</span></div>
+    <div class="product-detail">Product #: <span itemprop="mpn">{{code}}</span></div>
    
     <span itemprop="offers" class="product-detail" itemscope itemtype="http://schema.org/Offer">
         <div class="product-detail">
             Regular price:
-          <meta itemprop="priceCurrency" content="{{catalog._seller._currency.code}}" />
-          {{catalog._seller._currency.symbol}} <span itemprop="price">{{product.unit_price}}</span>
+          <meta itemprop="priceCurrency" content="{{currency}}" />
+          {{currency.symbol}} <span itemprop="price">{{price}}</span>
         </div>
      
         <div class="product-detail">
@@ -100,10 +121,10 @@
                           <span itemprop="name">{{catalog._seller.name}}</span>
                         </span>
         </div>
-        {#
-        Condition: <link itemprop="itemCondition" href="http://schema.org/UsedCondition"/>Previously owned,
-          in excellent condition
-        #}
+        
+        <div class="product-detail">
+          Condition: <link itemprop="itemCondition" href="http://schema.org/NewCondition"/>New
+        </div>
 
         <div class="product-detail">
           {% if product.availability == 'in stock' %}

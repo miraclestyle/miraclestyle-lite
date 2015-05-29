@@ -1,9 +1,15 @@
 {% extends 'seo/index.html' %}
 
+{% set title = catalog.name %}
+{% set image = '%s=360' % catalog._images[0].serving_url %}
+{% set path = uri_for('catalog.view', _full=True, key=catalog.key) %}
 
 {% block meta %}
 
-<title>Catalogs - {{catalog.name}}</title>
+
+
+<title>{{title}}</title>
+
 
 {#
 
@@ -34,17 +40,20 @@ Like Twitter, Pinterest requires an approval process to enable Rich Pin function
 
 #}
 
-<meta name="keywords" content="[KEYWORDS]" />
-<meta name="description" content="[DESCRIPTION]" />
+<meta name="keywords" content="{{catalog.name|keywords}}" />
 
 {# twitter has this one https://dev.twitter.com/cards/types/summary-large-image #}
 
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@nytimes">
-<meta name="twitter:creator" content="@SarahMaslinNir">
-<meta name="twitter:title" content="Parade of Fans for Houston’s Funeral">
-<meta name="twitter:description" content="NEWARK - The guest list and parade of limousines with celebrities emerging from them seemed more suited to a red carpet event in Hollywood or New York than than a gritty stretch of Sussex Avenue near the former site of the James M. Baxter Terrace public housing project here.">
-<meta name="twitter:image" content="http://graphics8.nytimes.com/images/2012/02/19/us/19whitney-span/19whitney-span-articleLarge.jpg">
+{#
+
+<meta name="twitter:site" content="@iHeartRadio">
+<meta name="twitter:creator" content="@iHeartRadio">
+
+#}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{{title}}" />
+<meta name="twitter:image" content="{{image}}">
 
 
 {# for facebook, we dont have anything else than article 
@@ -56,9 +65,9 @@ facebook, pinterest and google + uses these
 
  #}
 <meta property="og:type"   content="article" /> 
-<meta property="og:url"    content="Put your own URL to the object here" /> 
-<meta property="og:title"  content="Sample Article" /> 
-<meta property="og:image"  content="https://s-static.ak.fbcdn.net/images/devsite/attachment_blank.png" /> 
+<meta property="og:url"    content="{{path}}" /> 
+<meta property="og:title"  content="{{title}}" /> 
+<meta property="og:image"  content="{{image}}" /> 
 
 
 {% endblock %}
@@ -70,7 +79,7 @@ facebook, pinterest and google + uses these
     <span itemprop="title">Home</span>
   </a> ›
   <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
-    <a href="{{uri_for('catalog.view', key=catalog.key)}}" itemprop="url">
+    <a href="{{path}}" itemprop="url">
       <span itemprop="title">{{catalog.name}}</span>
     </a>
   </div>
