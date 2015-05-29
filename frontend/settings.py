@@ -6,6 +6,7 @@ Created on Oct 10, 2013
 '''
 import os
 import json
+import sys
 import codecs
 import shutil
 import subprocess
@@ -13,6 +14,7 @@ from glob import glob
 
 SEO_MODE = True
 DEFAULT_TITLE = 'miraclestyle'
+SITE_NAME = 'miraclestyle.com'
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
@@ -194,11 +196,13 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
   def read(f, m='r'):
     return codecs.open(f, m, 'utf-8')
 
-  for p in ['app.js', 'style.css', 'templates.js']:
+  for p in ['app.js', 'seo.css', 'style.css', 'templates.js']:
       paths[p] = os.path.join(node, p)
       buff[p] = u''
   paths['static'] = os.path.join(dist, 'static')
   if js_and_css:
+    with read(os.path.join(CLIENT_DIR, 'seo', 'seo.css')) as f:
+      buff['seo.css'] = f.read()
     for t, b in [('JAVASCRIPT', 'app.js'), ('CSS', 'style.css')]:
         for files in globals().get('ANGULAR_%s_FILES' % t):
             with read(files) as f:
@@ -232,7 +236,10 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
       except Exception as e:
         pass
     out('Write static dir %s' % paths['static'])
-    proc = subprocess.Popen(r'gulp', cwd=node)
+    cmd = ['gulp']
+    if len(sys.argv) > 1:
+      cmd.extend(sys.argv[:][1:])
+    proc = subprocess.Popen(cmd, cwd=node)
     while proc.wait():
       exit()
   return buff

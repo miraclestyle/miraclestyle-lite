@@ -1,38 +1,125 @@
 {% extends 'seo/index.html' %}
 
-{% set title = 'Catalogs / %s / %s' % (catalog.name, product.name) %}
+{% set title = 'Catalogs - %s - %s' % (catalog.name, product.name) %}
 
-{% block title %}{{title}}{% endblock %}
+{% block meta %}
 
-{% block crumbs %}{{title}}{% endblock %}
+<title>{{title}}</title>
+
+<meta name="keywords" content="[KEYWORDS]" />
+<meta name="description" content="[DESCRIPTION]" />
+
+{# twitter has card of type product, so we are good with that https://dev.twitter.com/cards/types/product #}
+<meta name="twitter:card" content="product">
+<meta name="twitter:site" content="@iHeartRadio">
+<meta name="twitter:creator" content="@iHeartRadio">
+<meta name="twitter:title" content="24/7 Beatles — Celebrating 50 years of Beatlemania">
+<meta name="twitter:image" content="http://radioedit.iheart.com/service/img/nop()/assets/images/05fbb21d-e5c6-4dfc-af2b-b1056e82a745.png">
+<meta name="twitter:label1" content="Genre">
+<meta name="twitter:data1" content="Classic Rock">
+<meta name="twitter:label2" content="Location">
+<meta name="twitter:data2" content="National">
+
+{# pinterest uses similar or exactly the same og spec for product https://developers.pinterest.com/rich_pins_product/ #}
+
+<meta property="og:type"                         content="product" /> 
+<meta property="og:url"                          content="Put your own URL to the object here" /> 
+<meta property="og:title"                        content="Sample Product" /> 
+<meta property="og:image"                        content="https://s-static.ak.fbcdn.net/images/devsite/attachment_blank.png" /> 
+<meta property="product:original_price:amount"   content="Sample Original Price: " /> 
+<meta property="product:original_price:currency" content="Sample Original Price: " /> 
+<meta property="product:pretax_price:amount"     content="Sample Pre-tax Price: " /> 
+<meta property="product:pretax_price:currency"   content="Sample Pre-tax Price: " /> 
+<meta property="product:price:amount"            content="Sample Price: " /> 
+<meta property="product:price:currency"          content="Sample Price: " /> 
+<meta property="product:shipping_cost:amount"    content="Sample Shipping Cost: " /> 
+<meta property="product:shipping_cost:currency"  content="Sample Shipping Cost: " /> 
+<meta property="product:weight:value"            content="Sample Weight: Value" /> 
+<meta property="product:weight:units"            content="Sample Weight: Units" /> 
+<meta property="product:shipping_weight:value"   content="Sample Shipping Weight: Value" /> 
+<meta property="product:shipping_weight:units"   content="Sample Shipping Weight: Units" /> 
+<meta property="product:sale_price:amount"       content="Sample Sale Price: " /> 
+<meta property="product:sale_price:currency"     content="Sample Sale Price: " /> 
+<meta property="product:sale_price_dates:start"  content="Sample Sale Price Dates: Start" /> 
+<meta property="product:sale_price_dates:end"    content="Sample Sale Price Dates: End" /> 
+
+{% endblock %}
+
+{% block crumbs %}
+
+<div class="breadcrumbs" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+  <a href="{{uri_for('home')}}" itemprop="url">
+    <span itemprop="title">Home</span>
+  </a> ›
+  <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+    <a href="{{uri_for('catalog.view', key=catalog.key)}}" itemprop="url">
+      <span itemprop="title">{{catalog.name}}</span>
+    </a> ›
+    <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+      <a href="{{uri_for('catalog.product.view', pricetag_id=pricetag_id, image_id=image_id, key=catalog.key)}}" itemprop="url">
+        <span itemprop="title">{{product.name}}</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
 
 {% block content %}
 
-
-<div class="padding-16">
-<table>
-    <tr>
-    <td valign="top">
-      <div>
-         <div class="clearfix"> 
-            {% for img in product.images %}
-                <div class="relative">
-                   <img class="not-pointable" src="{{img.serving_url}}=s550"> 
-                </div> 
-            {% endfor %} 
-         </div>
+<section>
+  <div itemscope itemtype="http://schema.org/Product">
+    <div class="product-detail"><span itemprop="brand">{{product._category.name}}</span></div>
+    <div class="product-detail">
+      <span itemprop="name">{{product.name}}</span>
+    </div>
+    <div class="product-images">
+      {% for img in product.images %}
+      <div class="product-image">
+          <img itemprop="image" src="{{img.serving_url}}=s550" alt="{{product.name}} Image {{loop.index}}" />
       </div>
-    </td>
-
-    <td valign="top">
-        <h1>{{product.name}}</h1>
-        <h3>{{product.code}}</h3>
-        <h3>{{product._category.name}}</h3>
-        <div class="body1">
-            {{product.description|nl2br}}
+      {% endfor %}
+    </div>
+    <div class="product-detail">
+      <span itemprop="description">
+        {{product.description}}
+      </span>
+    </div>
+    
+    <div class="product-detail">Product #: <span itemprop="mpn">{{product.code}}</span></div>
+   
+    <span itemprop="offers" class="product-detail" itemscope itemtype="http://schema.org/Offer">
+        <div class="product-detail">
+            Regular price:
+          <meta itemprop="priceCurrency" content="{{catalog._seller._currency.code}}" />
+          {{catalog._seller._currency.symbol}} <span itemprop="price">{{product.unit_price}}</span>
         </div>
-    </td>
-    </tr>
-</table>
-</div>
+     
+        <div class="product-detail">
+          Available from: <span itemprop="seller" itemscope itemtype="http://schema.org/Organization">
+                          <span itemprop="name">{{catalog._seller.name}}</span>
+                        </span>
+        </div>
+        {#
+        Condition: <link itemprop="itemCondition" href="http://schema.org/UsedCondition"/>Previously owned,
+          in excellent condition
+        #}
+
+        <div class="product-detail">
+          {% if product.availability == 'in stock' %}
+          <link itemprop="availability" href="http://schema.org/InStock"/>In stock!
+          {% endif %}
+
+          {% if product.availability == 'out of stock' %}
+          <link itemprop="availability" href="http://schema.org/OutOfStock"/>Out of stock.
+          {% endif %}
+
+          {% if product.availability == 'available for order' or product.availability == 'preorder' %}
+          <link itemprop="availability" href="http://schema.org/PreOrder"/>Preorder
+          {% endif %}
+        </div>
+      </span>
+  </div>
+</section>
+
 {% endblock %}

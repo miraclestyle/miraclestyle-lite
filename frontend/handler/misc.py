@@ -9,6 +9,22 @@ import urllib
 
 from handler import base
 
+class AboutPage(base.SeoOrAngular):
+  pass
+
+
+class PrivacyPage(base.SeoOrAngular):
+  pass
+
+
+class CopyrightPage(base.SeoOrAngular):
+  pass
+
+
+class SupportPage(base.SeoOrAngular):
+  pass
+
+
 # update this config to map paths
 # so far we just mapped paths, but we will need logic for some of them, like catalog/<key> and seller/<key>
 settings.ROUTES.extend(((r'/collections', base.AngularBlank),
@@ -17,6 +33,11 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                        (r'/sell/catalogs', base.AngularBlank),
                        (r'/sell/orders', base.AngularBlank),
                        (r'/sell/carts', base.AngularBlank),
+                       (r'/login/status', base.AngularBlank),
+                       (r'/about', AboutPage, 'about'),
+                       (r'/privacy', PrivacyPage, 'privacy'),
+                       (r'/copyright', CopyrightPage, 'copyright'),
+                       (r'/support', SupportPage, 'support'),
                        (r'/login/status', base.AngularBlank),
                        (r'/admin/list/<kind>/<filter>', base.AngularBlank)))
 

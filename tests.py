@@ -1,3 +1,7 @@
+import sys
+print sys.argv[:][1:]
+exit()
+
 import ast
 import os
 import codecs

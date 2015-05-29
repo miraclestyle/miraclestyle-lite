@@ -2,45 +2,49 @@
 <!DOCTYPE html>
 <html>
 
-<head>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# product: http://ogp.me/ns/product#">
     <script>
         if (window.location.hash && window.location.hash.indexOf('#context-monitor-') !== -1) {
             window.location.hash = '';
         }
     </script>
-    <title>{% block title %}{% endblock %}</title>
     <base href="/" />
-    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta property="fb:app_id" content="fb app id" />
+    <meta name="verify-v1" content="verification code" />
+    {% block meta %}
+    {% endblock %}
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'>
-    {% for style in settings.ANGULAR_VENDOR_CSS %}
-    <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
-    <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style.css')}}" />
-    <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style-seo.css')}}" />
+    <link rel="stylesheet" type="text/css" href="{{static_dir('dist/seo.css')}}" />
 </head>
-<body layout="row">
-    <div layout="column" layout-fill tabIndex="-1" role="main">
-        <md-toolbar>
-            <div class="md-toolbar-tools homepage-toolbar with-actions no-right-actions">
-                <div class="fill-height">
-                    <div class="md-toolbar-item md-tools">
-                        <a href="{{uri_for('home')}}" class="block button-transparent homepage-menu button-square ripple-presence">
-                            <div class="md-icon md-icon-menu md-icon-color-normal"></div>
-                        </a>
-                    </div>
-                    <div class="md-toolbar-item md-breadcrumb">
-                        <span class="md-toolbar-title ng-binding">
-                            {% block crumbs %}
-                            {% endblock %}
-                        </span>
-                    </div>
-                </div>
+<body>
+
+    <header>
+        <a title="Home" href="{{uri_for('home')}}">
+            <img alt="{{settings.SITE_NAME}}" src="/client/dist/static/logo_240.png" />
+        </a>
+    </header>
+    <nav>
+        <a href="{{uri_for('about')}}">About</a>
+        <a href="{{uri_for('privacy')}}">Privacy &amp; Terms</a>
+        <a href="{{uri_for('copyright')}}">Copyright &amp; Trademark</a>
+        <a href="{{uri_for('support')}}">Support</a>
+    </nav>
+    <main md-scroll-y>
+
+        {% block crumbs %}
+            <div itemscope class="breadcrumbs" itemtype="http://data-vocabulary.org/Breadcrumb">
+              <a href="{{uri_for('home')}}" itemprop="url">
+                <span itemprop="title">Home</span>
+              </a>
             </div>
-        </md-toolbar>
-        <md-content ui-view md-scroll-y flex>
-            {% block content %}
-            {% endblock %}
-        </md-content>
-    </div>
+        {% endblock %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+    <footer>
+        Miraclestyle.com &copy;
+    </footer> 
  
 </body>
 

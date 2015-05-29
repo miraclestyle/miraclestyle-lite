@@ -31,10 +31,12 @@ class CatalogProductView(base.SeoOrAngular):
         catalog_image_pricetag_key[0].extend(catalog_key[0])
         catalog_image_pricetag_key[0].extend(['29', kwargs.get('pricetag_id')])
         data = {'action_id': 'read', 'action_model': '31', 'key': catalog_key,
-                'read_arguments': {'_images': {'config': {'keys': [catalog_image_key]}, 'pricetags': {'_product': {'_category': {}}, 'config': {'keys': [catalog_image_pricetag_key]}}}, '_seller': {}}}
+                'read_arguments': {'_images': {'config': {'keys': [catalog_image_key]}, 'pricetags': {'_product': {'_category': {}}, 'config': {'keys': [catalog_image_pricetag_key]}}}, '_seller': {'_currency': {}}}}
         data = self.api_endpoint(payload=data)
-        self.render('seo/catalog/product/view.html', {'catalog': data[
-                    'entity'], 'product': data['entity']['_images'][0]['pricetags'][0]['_product']})
+        tpl = {'catalog': data[
+                    'entity'],  'product': data['entity']['_images'][0]['pricetags'][0]['_product']}
+        tpl.update(kwargs)
+        self.render('seo/catalog/product/view.html', tpl)
 
 
 class CatalogEmbed(base.SeoOrAngular):

@@ -13,6 +13,14 @@ gulp.task('css', function () {
         .pipe(gulp.dest('../client/dist'));
 });
 
+gulp.task('seo-css', function () {
+    return gulp.src('raw/seo.css')
+        .pipe(scss())
+        .pipe(autoprefixer())
+        .pipe(minifyCss())
+        .pipe(gulp.dest('../client/dist'));
+});
+
 gulp.task('javascript', function () {
     return gulp.src('raw/app.js')
         .pipe(angularInjector())
@@ -27,4 +35,4 @@ gulp.task('templates', function () {
 });
 
 // The default task (called when you run `gulp` from cli)
-gulp.task('default', ['css', 'javascript', 'templates']);
+gulp.task('default', ['css', 'seo-css', 'javascript', 'templates']);

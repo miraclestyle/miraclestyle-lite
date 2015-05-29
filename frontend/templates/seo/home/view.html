@@ -1,28 +1,23 @@
 {% extends 'seo/index.html' %}
 
-{% block title %}Home{% endblock %}
-
-{% block crumbs %}Home{% endblock %}
-
+{% block meta %}
+<title>Home</title>
+<meta name="keywords" content="[KEYWORDS]" />
+<meta name="description" content="[DESCRIPTION]" />
+{% endblock %}
+ 
 {% block content %}
  
 {% for catalog in catalogs %}
-
-<div class="list list-padding ng-scope">
-    <div class="grid-wrapper clearfix">
-        <div class="grid-item grid-generator ng-scope visible">
-            <a href="{{uri_for('catalog.view', key=catalog.key)}}" class="button-transparent button-block ripple-presence">
-                <img alt="{{catalog.name}}" class="not-pointable" src="{{catalog.cover}}=s240" style="visibility: visible;">
-            </a>
-            <a href="{{uri_for('seller.view', key=catalog.seller_account_key)}}" class="button-transparent button-block seller-logo-bellow ng-scope ripple-presence">
-                <img class="not-pointable" src="{{catalog.seller_logo}}=s240" style="visibility: visible;">
-            </a>
-        </div>
-    </div>
+<div class="grid-item">
+    <a href="{{uri_for('catalog.view', key=catalog.key)}}" class="button-transparent button-block ripple-presence">
+        <img alt="{{catalog.name}}" class="not-pointable" src="{{catalog.cover}}=s240" style="visibility: visible;">
+    </a>
+    <a href="{{uri_for('seller.view', key=catalog.seller_account_key)}}" class="button-transparent button-block seller-logo-bellow ng-scope ripple-presence">
+        <img class="not-pointable" src="{{catalog.seller_logo}}=s240" style="visibility: visible;">
+    </a>
+</div>
 {% endfor %}
-
-</div>
-</div>
 
 
 

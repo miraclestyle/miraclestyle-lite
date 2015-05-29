@@ -1,32 +1,108 @@
 {% extends 'seo/index.html' %}
 
-{% set title = 'Catalogs / %s' % catalog.name %}
 
-{% block title %}{{title}}{% endblock %}
+{% block meta %}
 
-{% block crumbs %}{{title}}{% endblock %}
+<title>Catalogs - {{catalog.name}}</title>
+
+{#
+
+None of the providers have type of "catalog" 
+
+Tools for testing and approval
+
+A. Twitter Validation Tool
+
+https://dev.twitter.com/docs/cards/validation/validator
+
+Before your cards show on Twitter, you must first have your domain approved. Fortunately, it's a super-easy process. After you implement your cards, simply enter your sample URL into the validation tool. After checking your markup, select the "Submit for Approval" button.
+B. Facebook Debugger
+
+https://developers.facebook.com/tools/debug
+
+You don't need prior approval for your meta information to show on Facebook, but the debugging tool they offer gives you a wealth of information about all your tags and can also analyze your Twitter tags.
+C. Google Structured Data Testing Tool
+
+http://www.google.com/webmasters/tools/richsnippets
+
+Webmasters traditionally use the structured data testing tool to test authorship markup and preview how snippets will appear in search results, but you can also use see what other types of meta data Google is able to extract from each page.
+D. Pinterest Rich Pins Validator
+
+http://developers.pinterest.com/rich_pins/validator/
+
+Like Twitter, Pinterest requires an approval process to enable Rich Pin functionality. Use the Rich Pin Validator tool to test your data markup and apply for approval at the same time.
+
+#}
+
+<meta name="keywords" content="[KEYWORDS]" />
+<meta name="description" content="[DESCRIPTION]" />
+
+{# twitter has this one https://dev.twitter.com/cards/types/summary-large-image #}
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@nytimes">
+<meta name="twitter:creator" content="@SarahMaslinNir">
+<meta name="twitter:title" content="Parade of Fans for Houston’s Funeral">
+<meta name="twitter:description" content="NEWARK - The guest list and parade of limousines with celebrities emerging from them seemed more suited to a red carpet event in Hollywood or New York than than a gritty stretch of Sussex Avenue near the former site of the James M. Baxter Terrace public housing project here.">
+<meta name="twitter:image" content="http://graphics8.nytimes.com/images/2012/02/19/us/19whitney-span/19whitney-span-articleLarge.jpg">
+
+
+{# for facebook, we dont have anything else than article 
+https://developers.facebook.com/docs/reference/opengraph
+
+article: https://developers.facebook.com/docs/reference/opengraph/article 
+
+facebook, pinterest and google + uses these
+
+ #}
+<meta property="og:type"   content="article" /> 
+<meta property="og:url"    content="Put your own URL to the object here" /> 
+<meta property="og:title"  content="Sample Article" /> 
+<meta property="og:image"  content="https://s-static.ak.fbcdn.net/images/devsite/attachment_blank.png" /> 
+
+
+{% endblock %}
+
+{% block crumbs %}
+
+<div class="breadcrumbs" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+  <a href="{{uri_for('home')}}" itemprop="url">
+    <span itemprop="title">Home</span>
+  </a> ›
+  <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+    <a href="{{uri_for('catalog.view', key=catalog.key)}}" itemprop="url">
+      <span itemprop="title">{{catalog.name}}</span>
+    </a>
+  </div>
+</div>
+
+{% endblock %}
 
 {% block content %}
 
-<div class="clearfix padding-16">
-      <div>
-         <div> 
-            {% for img in catalog._images %}
-                <div class="relative">
-                   <img class="not-pointable" src="{{img.serving_url}}=s550"> 
-                   {% for pricetag in img.pricetags %}
-                   <div class="catalog-pricetag" style="visibility: visible;top:{{loop.index * 60}}px;">
-                        <div class="catalog-pricetag-wrapper">
-                            <div class="catalog-pricetag-dot"></div>
-                             <a href="{{uri_for('catalog.product.view', key=catalog.key, image_id=img.id, pricetag_id=pricetag.id)}}" class="button-transparent catalog-pricetag-link">
-                                {{pricetag.value.price}} {{catalog._seller._currency.symbol}}
-                             </a>
-                         </div>
-                    </div>
-                    {% endfor %}
-                </div> 
-            {% endfor %} 
-         </div>
-      </div>
-</div>
+<section>
+  
+  <article>
+    <h1>{{catalog.name}}</h1>
+    <div class="expires">Expires: <time>{{catalog.discontinue_date}}</time></div>
+
+    {% for img in catalog._images %}
+        <div class="catalog-image relative">
+           <div><img class="not-pointable" src="{{img.serving_url}}=s550"> </div>
+           <ul>
+           {% for pricetag in img.pricetags %}
+                <li>
+                   <a href="{{uri_for('catalog.product.view', key=catalog.key, image_id=img.id, pricetag_id=pricetag.id)}}">
+                        {{pricetag.value.price}} {{catalog._seller._currency.symbol}}
+                   </a>
+                </li>
+            {% endfor %}
+
+            </ul>
+        </div> 
+    {% endfor %} 
+
+  </article>
+
+</section>
 {% endblock %}

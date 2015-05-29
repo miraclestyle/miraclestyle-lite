@@ -1267,7 +1267,7 @@
 
                         if (!config.repeated && config.ui.specifics.modal !== true) {
 
-                            config.ui.specifics.SingularCtrl = function ($scope) {
+                            config.ui.specifics.SingularCtrl = ng(function ($scope) {
                                 $scope.args = config.ui.specifics.parentArgs;
                                 info.scope.$watchCollection(config.ui.args, function (neww, old) {
                                     $.extend($scope.args, neww);
@@ -1286,7 +1286,7 @@
                                     config._title_.remove(getTitle);
                                     config.ui.specifics.getScope = undefined;
                                 });
-                            };
+                            });
 
                         } else {
 

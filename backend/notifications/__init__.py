@@ -16,7 +16,7 @@ def template(path):
     try:
         return codecs.open(os.path.join(os.path.dirname(__file__), 'templates', path), 'r', 'utf-8').read()
     except IOError as e:
-        return ''
+        return 'text'
 
 
 ACCOUNT_SUDO_SUBJECT = template('account/sudo_subject.html')
