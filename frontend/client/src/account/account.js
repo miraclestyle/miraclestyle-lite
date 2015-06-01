@@ -101,16 +101,20 @@
                             };
                         });
                     },
-                    adminManageModal: function (account) {
-                        return this.manageModal(account);
+                    adminManageModal: function (account, extraConfig) {
+                        return this.manageModal(account, extraConfig);
                     },
-                    manageModal: function (account) {
+                    manageModal: function (account, extraConfig) {
+                        extraConfig = helpers.alwaysObject(extraConfig);
                         var config = {
                                 kind: this.kind,
                                 templateBodyUrl: 'account/manage_body.html',
                                 toolbar: {
                                     titleEdit: 'account.settings',
                                     hideSave: true
+                                },
+                                modalConfig: {
+                                    popFrom: extraConfig.popFrom
                                 },
                                 init: function ($scope) {
                                     var entity = $scope.entity,

@@ -17,7 +17,7 @@
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
 
-            $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartBuyerList : GLOBAL_CONFIG.emptyHelp.orederBuyerList);
+            $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartBuyerList : GLOBAL_CONFIG.emptyHelp.orderBuyerList);
 
             $scope.search = {
                 results: [],
@@ -33,7 +33,7 @@
                 }).then(function (buyer) {
                     models['34'].manageModal(order, order._seller, buyer, {
                         cartMode: carts,
-                        popFrom: ($event ? helpers.grid.realEventTarget($event.target) : false)
+                        popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     });
                 });
             };
@@ -146,9 +146,7 @@
                                     }
 
                                     return false;
-
                                 }
-
                             }
                         });
                         config = {

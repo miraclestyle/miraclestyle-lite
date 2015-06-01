@@ -1,26 +1,29 @@
 .order-stage {
     width: 100%;
     transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
-    transition-property: transform;
+    transition-property: top;
     transition-duration: 300ms;
     position: absolute;
 }
 
 .order-stage.out {
-    transform: translateY(100%);
+    top: 100%;
     height: 0px;
     overflow: hidden;
 }
 
 .order-stage.out-up {
+    /*
     transform: translateY(-100%);
+    */
+    top: -100%;
     position: absolute;
     height: auto;
     overflow: auto;
 }
 
 .order-stage.in {
-    transform: translateY(0%);
+    top: 0px;
     overflow: auto;
     height: auto;
 }

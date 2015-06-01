@@ -3,8 +3,23 @@
     angular.module('app')
         .run(ng(function (helpers, $mdConstant) {
             $.extend(helpers, {
-                closestLargestNumber: function (arr, closestTo) {
+                clicks: {
+                    realEventTarget: function (target) {
+                        var theTarget = $(target),
+                            parentTarget = theTarget.parents('.grid-item:first'),
+                            cardParent = theTarget.parents('.card:first');
+                        if (!theTarget.hasClass('grid-item') && parentTarget.length) {
+                            target = parentTarget.get(0);
+                        }
 
+                        if (cardParent.length) {
+                            target = cardParent.get(0);
+                        }
+
+                        return target;
+                    }
+                },
+                closestLargestNumber: function (arr, closestTo) {
                     var closest = Math.max.apply(null, arr),
                         i = 0; //Get the highest number in arr in case it match nothing.
 
@@ -134,7 +149,6 @@
         })).directive('loading', ng(function ($parse) {
             return {
                 link: function (scope, element, attrs) {
-
 
                     if (angular.isDefined(attrs.loading)) {
                         scope.$watch(attrs.loading, function ngBooleanAttrWatchAction(value) {
@@ -1180,5 +1194,5 @@
                     });
                 }
             };
-        }]);;
+        }]);
 }());

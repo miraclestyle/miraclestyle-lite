@@ -651,8 +651,8 @@
                         });
                     });
                 },
-                adminManageModal: function (catalog) {
-                    return this.manageModal(catalog);
+                adminManageModal: function (account, extraConfig) {
+                    return this.manageModal(account, undefined, extraConfig);
                 },
                 manageModal: function (catalog, callback, modalConfig) { // modal dialog for managing the catalog
 

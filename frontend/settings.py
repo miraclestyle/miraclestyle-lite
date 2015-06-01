@@ -18,9 +18,6 @@ SITE_META_DESCRIPTION = 'Description'
 SITE_META_KEYWORDS = 'miraclestyle,thing'
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
 
-
-SEO_MODE = True
-
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
 CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src')
@@ -110,7 +107,6 @@ ANGULAR_ACTIVE_COMPONENTS = [
     'core/simpledialog',
     'core/list',
     'core/swipe',
-    'core/switch',
     'core/textField',
     'core/snackbar',
     'core/toolbar',

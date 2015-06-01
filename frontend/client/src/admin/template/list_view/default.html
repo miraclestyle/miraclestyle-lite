@@ -1,6 +1,6 @@
 <div class="list">
     <div ng-repeat="ent in search.results" class="list-row no-padding">
-        <list-button ng-click="manage(ent)">
+        <list-button ng-click="manage(ent, $event)">
             <strong class="first ellipsis-text">{{ent.name}}</strong>
             <span class="second">{{ent|output:'created'}}</span>
         </list-button>

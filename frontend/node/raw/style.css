@@ -41,8 +41,9 @@ md-backdrop.md-opaque {
     line-height: 24px;
     cursor: pointer;
     overflow: hidden;
-    transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), -webkit-transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition-duration: 0.25s;
+    transition-timing-function: linear;
+    transition-property: box-shadow, background;
 }
 
 .md-button, .md-button-text {
@@ -76,7 +77,7 @@ md-backdrop.md-opaque {
     box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
 }
 
-.md-button.md-raised:active {
+.md-button.md-raised:active, .md-button.md-raised:focus {
     box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
 }
 
@@ -108,8 +109,6 @@ md-backdrop.md-opaque {
     border-radius: 2px;
 }
 
-.md-button:not([disabled]):hover, .md-button:not([disabled]):focus {}
-
 .md-button.md-primary {
     color: rgb(158, 158, 158);
 }
@@ -130,8 +129,12 @@ md-backdrop.md-opaque {
 
 .md-button[disabled], .md-button.md-raised[disabled] {
     color: rgba(0, 0, 0, 0.26);
-    background-color: transparent;
     cursor: not-allowed;
+    background: rgba(255, 255, 255, 1);
+}
+
+.md-button.md-raised[disabled] {
+    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
 }
 .card {
     padding: 4px 8px;
@@ -511,8 +514,9 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
 .ripple-presence {
   overflow:hidden;
   position:relative;
+  /*
   transform: rotate(0.000001deg);
-  -webkit-transform: rotate(0.000001deg);
+  -webkit-transform: rotate(0.000001deg);*/
 }md-input-container {
     display: -webkit-flex;
     display: -ms-flexbox;
@@ -543,9 +547,7 @@ md-input-container textarea {
 }
 
 md-input-container label, md-input-container .md-placeholder {
-    -webkit-order: 1;
-    -ms-flex-order: 1;
-    order: 1;
+
     pointer-events: none;
     -webkit-font-smoothing: antialiased;
     padding-left: 0px;
@@ -587,9 +589,7 @@ md-input-container .md-input, md-input-container .as-md-input {
     -webkit-flex: 1;
     -ms-flex: 1;
     flex: 1;
-    -webkit-order: 2;
-    -ms-flex-order: 2;
-    order: 2;
+
     display: block;
     background: none;
     padding-top: 2px;
@@ -615,9 +615,7 @@ md-input-container .md-input:invalid, md-input-container .as-md-input:invalid {
 }
 
 md-input-container [ng-messages] {
-    -webkit-order: 3;
-    -ms-flex-order: 3;
-    order: 3;
+
     min-height: 22px;
     position: relative;
 }
@@ -742,8 +740,7 @@ textarea.full-width {
     cursor: text;
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
     width: 100%;
-}
-md-radio-button, .md-switch-thumb {
+}md-radio-button, .md-switch-thumb {
     display: block;
     /*white-space: nowrap;*/
     cursor: pointer;
@@ -1070,149 +1067,6 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 .list-row-multiline {
     padding-top: 16px;
     padding-bottom: 16px;
-}
-md-switch {
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
-    align-items: center;
-    margin: 15px;
-    /*white-space: nowrap;*/
-    
-    cursor: pointer;
-    outline: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    padding: 12px;
-    position: relative;
-    line-height: 24px;
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
-md-switch .md-container {
-    cursor: -webkit-grab;
-    cursor: grab;
-    width: 36px;
-    height: 24px;
-    position: absolute;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    margin-right: 0px;
-    right: 12px;
-    top: 12px;
-}
-
-md-switch:not([disabled]) .md-dragging, md-switch:not([disabled]).md-dragging .md-container {
-    cursor: -webkit-grabbing;
-    cursor: grabbing;
-}
-
-md-switch .md-label {
-    border-color: transparent;
-    border-width: 0px;
-    padding-right: 72px;
-}
-
-md-switch .md-bar {
-    left: 1px;
-    width: 36px;
-    top: 4px;
-    height: 16px;
-    border-radius: 8px;
-    position: absolute;
-}
-
-md-switch .md-thumb-container {
-    top: 2px;
-    left: 0;
-    width: 20px;
-    position: absolute;
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    z-index: 1;
-}
-
-md-switch.md-checked .md-thumb-container {
-    -webkit-transform: translate3d(100%, 0, 0);
-    transform: translate3d(100%, 0, 0);
-}
-
-md-switch .md-thumb {
-    position: relative;
-    margin: 0;
-    left: 0;
-    top: 0;
-    outline: none;
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
-}
-
-md-switch .md-thumb .md-ripple-container {
-    position: absolute;
-    display: block;
-    width: auto;
-    height: auto;
-    left: -20px;
-    top: -20px;
-    right: -20px;
-    bottom: -20px;
-}
-
-md-switch:not(.md-dragging) .md-bar, md-switch:not(.md-dragging) .md-thumb-container, md-switch:not(.md-dragging) .md-thumb {
-    transition: all 0.2s linear;
-    transition-property: -webkit-transform, background-color;
-    transition-property: transform, background-color;
-}
-
-md-switch:not(.md-dragging) .md-bar, md-switch:not(.md-dragging) .md-thumb {
-    transition-delay: 0.05s;
-}
-
-md-switch:focus .md-label:not(:empty) {
-    border-color: rgba(0, 0, 0, 0.87);
-    border-style: dotted;
-}
-
-md-switch .md-thumb {
-    background-color: rgb(250, 250, 250);
-}
-
-md-switch .md-bar {
-    background-color: rgb(158, 158, 158);
-}
-
-md-switch[disabled] .md-thumb {
-    background-color: rgb(189, 189, 189);
-}
-
-md-switch[disabled] .md-bar {
-    background-color: rgba(0, 0, 0, 0.12);
-}
-
-md-switch.md-checked .md-thumb {
-    /*background-color: rgb(176, 190, 197);*/
-}
-
-md-switch.md-checked .md-bar {
-    background-color: rgba(0, 0, 0, 0.54);
-}
-
-md-switch.has-help .md-container {
-    top: 24px;
-}
-
-md-switch.has-help {
-    padding-top: 14px;
-    padding-bottom: 14px;
 }
 md-input-group label, .md-input-group label {
     display: block;
@@ -1638,16 +1492,19 @@ span.first.month-part {
     padding-left: 8px;
     padding-right: 8px;
 }
+
 .datepicker-pop .modal-dialog {
-    width:auto;
+    width: auto;
 }
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
     border-color: rgba(255, 0, 0, 0.87);
 }
+
 .fake-button {
     position: relative;
     overflow: hidden;
 }
+
 .fake-button input.upload {
     position: absolute;
     top: 0;
@@ -1658,17 +1515,21 @@ span.first.month-part {
     cursor: pointer;
     opacity: 0;
     filter: alpha(opacity=0);
-    z-index:2;
+    z-index: 2;
 }
+
 md-item-content md-checkbox {
     margin: 0px;
 }
+
 .simple-dialog-option md-checkbox {
     margin: 0px;
 }
+
 md-input-container md-checkbox, md-input-container md-switch {
     margin: 0px;
 }
+
 a.sort-handle {
     cursor: move;
     padding: 12px;
@@ -1679,9 +1540,11 @@ a.sort-handle {
     margin: 0px;
     line-height: initial;
 }
+
 [ui-sortable] > *:not(.no-move) {
     cursor: move;
 }
+
 .delete-overlay {
     display: none;
     position: absolute;
@@ -1690,12 +1553,15 @@ a.sort-handle {
     background: rgba(255, 0, 0, 0.52);
     z-index: 1;
 }
+
 .about-to-delete .delete-overlay {
     display: block;
 }
+
 .uploaded-image img {
     display: block;
 }
+
 .ui-sortable-helper:not(.card) {
     box-shadow: 0px 2px 5px 2px rgba(0, 0, 0, 0.26);
 }
@@ -1705,10 +1571,11 @@ a.sort-handle {
 }
 
 [ng-message="help"] {
-    color:rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.26);
 }
+
 .field-grouping {
-    float:left;
+    float: left;
 }
 
 .field-grouping md-input-container {
@@ -1717,18 +1584,18 @@ a.sort-handle {
 }
 
 .fields-grouping [ng-messages] {
-  padding-left: 16px;
-  font-size: 12px;
-  padding-right: 16px;
-  line-height: 14px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  min-height: 22px;
-  position:relative;
+    padding-left: 16px;
+    font-size: 12px;
+    padding-right: 16px;
+    line-height: 14px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    min-height: 22px;
+    position: relative;
 }
 
 .fields-grouping [ng-message] {
-    position:absolute;
+    position: absolute;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -1741,15 +1608,13 @@ a.sort-handle {
     transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
 }
 
-.fields-grouping [ng-message].ng-enter,
-.fields-grouping [ng-message].ng-leave.ng-leave-active {
+.fields-grouping [ng-message].ng-enter, .fields-grouping [ng-message].ng-leave.ng-leave-active {
     opacity: 0;
     -webkit-transform: translate3d(0, -20%, 0);
     transform: translate3d(0, -20%, 0);
 }
 
-.fields-grouping [ng-message].ng-leave,
-.fields-grouping [ng-message].ng-enter.ng-enter-active {
+.fields-grouping [ng-message].ng-leave, .fields-grouping [ng-message].ng-enter.ng-enter-active {
     opacity: 1;
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
@@ -1758,13 +1623,15 @@ a.sort-handle {
 .fields-grouping .is-help-erroric {
     color: rgba(255, 0, 0, 0.87);
 }
+
 .fields-grouping-label {
-  font-size: 12px;
-  padding:8px 0px 0px;
-  color: rgba(0, 0, 0, 0.54);
-  padding-left: 16px;
-  padding-right: 16px;
-}.image-image {
+    font-size: 12px;
+    padding: 8px 0px 0px;
+    color: rgba(0, 0, 0, 0.54);
+    padding-left: 16px;
+    padding-right: 16px;
+}
+.image-image {
     display: block;
     position: relative;
     margin: 1px;
@@ -3337,34 +3204,34 @@ button.product-quantity-button {
     vertical-align: middle;
     display: block;
 }
-.bar-logo {
-    margin: 16px;
-}
 .bar-logo img {
     width: 100%;
 }.order-stage {
     width: 100%;
     transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
-    transition-property: transform;
+    transition-property: top;
     transition-duration: 300ms;
     position: absolute;
 }
 
 .order-stage.out {
-    transform: translateY(100%);
+    top: 100%;
     height: 0px;
     overflow: hidden;
 }
 
 .order-stage.out-up {
+    /*
     transform: translateY(-100%);
+    */
+    top: -100%;
     position: absolute;
     height: auto;
     overflow: auto;
 }
 
 .order-stage.in {
-    transform: translateY(0%);
+    top: 0px;
     overflow: auto;
     height: auto;
 }

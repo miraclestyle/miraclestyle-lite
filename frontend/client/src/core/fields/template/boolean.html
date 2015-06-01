@@ -1,10 +1,5 @@
 <md-input-container class="padding-0">
-     <% if (config.ui.specifics.type === 'switch') { %>
-         <md-switch md-ink-ripple ng-false-value="false" ng-class="{'has-help': config.ui.help.length}" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
-           <span class="first"><%= config.ui.compiled.label %></span>
-           <span class="second" ng-if="config.ui.help">{{config.ui.help}}</span>
-         </md-switch>
-     <% } else if (config.ui.specifics.type === 'radio') { %>
+     <% if (config.ui.specifics.type === 'radio') { %>
             <md-radio-group 
                 class="<%= config.ui.attrs['class'] %> list list-row-has-primary" 
                 <%= config.ui.compiled.attrs %> 

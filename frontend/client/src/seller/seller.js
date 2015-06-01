@@ -59,13 +59,13 @@
 
         $scope.preview = function (key, $event) {
             models['31'].previewModal(key, {
-                popFrom: helpers.grid.realEventTarget($event.target)
+                popFrom: helpers.clicks.realEventTarget($event.target)
             });
         };
 
         $scope.manage = function (entity, $event) {
             models['31'].manageModal(entity, newEntity, {
-                popFrom: helpers.grid.realEventTarget($event.target)
+                popFrom: helpers.clicks.realEventTarget($event.target)
             });
         };
 
@@ -99,8 +99,10 @@
                         });
                     } else {
                         angular.forEach(_.range(1, 10), function (value, key) {
-                            $scope.search.results.extend(response.data.entities);
+                            // $scope.search.results.extend(response.data.entities);
                         });
+
+                        $scope.search.results.extend(response.data.entities);
                     }
 
                     $scope.search.loaded = true;
@@ -110,7 +112,7 @@
             $scope.search.pagination.load();
         });
 
-    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
+    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
@@ -129,9 +131,10 @@
             loader: false
         };
 
-        $scope.view = function (order) {
+        $scope.view = function (order, $event) {
             models['34'].manageModal(order, order._seller, undefined, {
-                sellerMode: carts
+                sellerMode: carts,
+                popFrom: helpers.clicks.realEventTarget($event.target)
             });
         };
 
@@ -775,7 +778,7 @@
 
                             $scope.viewCatalog = function (result, $event) {
                                 models['31'].viewModal(result.key, {
-                                    popFrom: helpers.grid.realEventTarget($event.target)
+                                    popFrom: helpers.clicks.realEventTarget($event.target)
                                 });
                             };
 

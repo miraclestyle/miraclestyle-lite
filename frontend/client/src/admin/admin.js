@@ -22,8 +22,10 @@
 
             $scope.setPageToolbarTitle('admin.' + $scope.config.titles[kind]);
 
-            $scope.manage = function (entity) {
-                models[kind].adminManageModal(entity);
+            $scope.manage = function (entity, $event) {
+                models[kind].adminManageModal(entity, {
+                    popFrom: helpers.clicks.realEventTarget($event.target)
+                });
             };
             $scope.search = searchBuilder.create();
             $.extend($scope.search, {

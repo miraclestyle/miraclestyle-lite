@@ -326,7 +326,6 @@ if (!Array.prototype.indexOf) {
                       'material.components.radioButton',
                       'material.components.sidenav',
                       'material.components.swipe',
-                      'material.components.switch',
                       'material.components.textField',
                       'material.components.toolbar'], // this will be changed accordingly
             api: {
@@ -5335,133 +5334,6 @@ $(function () {
 (function () {
     'use strict';
 
-    angular.module('material.components.switch', [
-            'material.core',
-            'material.components.checkbox'
-        ])
-        .directive('mdInkRippleSwitch', ng(function ($mdInkRipple) {
-            return {
-                link: function (scope, element, attrs) {
-                    $mdInkRipple.attachButtonBehavior(scope, element, {
-                        dimBackground: false
-                    });
-                }
-            };
-        }))
-        .directive('mdSwitch', MdSwitch);
-
-    function MdSwitch(mdCheckboxDirective, $mdUtil, $document, $mdConstant, $parse, $$rAF, $mdGesture) {
-        var checkboxDirective = mdCheckboxDirective[0];
-
-        return {
-            restrict: 'E',
-            transclude: true,
-            template: '<div ng-transclude class="md-label"></div>' +
-                '<div class="md-container">' +
-                '<div class="md-bar"></div>' +
-                '<div class="md-thumb-container">' +
-                '<div class="md-thumb"></div>' +
-                '</div>' +
-                '</div>',
-            require: '?ngModel',
-            compile: compile
-        };
-
-        function compile(element, attr) {
-            var checkboxLink = checkboxDirective.compile(element, attr);
-            // no transition on initial load
-            element.addClass('md-dragging');
-
-            return function (scope, element, attr, ngModel) {
-                ngModel = ngModel || $mdUtil.fakeNgModel();
-                var disabledGetter = $parse(attr.ngDisabled);
-                var thumbContainer = angular.element(element[0].querySelector('.md-thumb-container'));
-                var switchContainer = angular.element(element[0].querySelector('.md-container'));
-
-                // no transition on initial load
-                $$rAF(function () {
-                    element.removeClass('md-dragging');
-                });
-
-                checkboxLink(scope, element, attr, ngModel);
-
-                if (angular.isDefined(attr.ngDisabled)) {
-                    scope.$watch(disabledGetter, function (isDisabled) {
-                        element.attr('tabindex', isDisabled ? -1 : 0);
-                    });
-                }
-
-                // These events are triggered by setup drag
-                $mdGesture.register(switchContainer, 'drag');
-                switchContainer
-                    .on('$md.dragstart', onDragStart)
-                    .on('$md.drag', onDrag)
-                    .on('$md.dragend', onDragEnd);
-
-                var drag;
-
-                function onDragStart(ev) {
-                    // Don't go if ng-disabled===true
-                    if (disabledGetter(scope)) return;
-                    ev.stopPropagation();
-
-                    element.addClass('md-dragging');
-                    drag = {
-                        width: thumbContainer.prop('offsetWidth')
-                    };
-                    element.removeClass('transition');
-                }
-
-                function onDrag(ev) {
-                    if (!drag) return;
-                    ev.stopPropagation();
-                    ev.srcEvent && ev.srcEvent.preventDefault();
-
-                    var percent = ev.pointer.distanceX / drag.width;
-
-                    //if checked, start from right. else, start from left
-                    var translate = ngModel.$viewValue ? 1 + percent : percent;
-                    // Make sure the switch stays inside its bounds, 0-1%
-                    translate = Math.max(0, Math.min(1, translate));
-
-                    thumbContainer.css($mdConstant.CSS.TRANSFORM, 'translate3d(' + (100 * translate) + '%,0,0)');
-                    drag.translate = translate;
-                }
-
-                function onDragEnd(ev) {
-                    if (!drag) return;
-                    ev.stopPropagation();
-
-                    element.removeClass('md-dragging');
-                    thumbContainer.css($mdConstant.CSS.TRANSFORM, '');
-
-                    // We changed if there is no distance (this is a click a click),
-                    // or if the drag distance is >50% of the total.
-                    var isChanged = ngModel.$viewValue ? drag.translate < 0.5 : drag.translate > 0.5;
-                    if (isChanged) {
-                        applyModelValue(!ngModel.$viewValue);
-                    }
-                    drag = null;
-                }
-
-                function applyModelValue(newValue) {
-                    scope.$apply(function () {
-                        ngModel.$setViewValue(newValue);
-                        ngModel.$render();
-                    });
-                }
-
-            };
-        }
-
-
-    }
-    MdSwitch.$inject = ["mdCheckboxDirective", "$mdUtil", "$document", "$mdConstant", "$parse", "$$rAF", "$mdGesture"];
-
-})();
-(function () {
-    'use strict';
-
     angular.module('material.components.textField', [
             'material.core'
         ])
@@ -10268,11 +10140,12 @@ $(function () {
                             };
 
                             // generic manage dialog that handles editing of remote and local structured properties
-                            config.ui.specifics.manage = function (arg, defaultArgs) {
+                            config.ui.specifics.manage = function (arg, defaultArgs, $event) {
 
                                 buildPaths(); // force path rebuild
 
                                 $modal.open({
+                                    popFrom: (config.ui.specifics.cards && $event ? helpers.clicks.realEventTarget($event.target) : undefined),
                                     template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/fields/manage_structured.html')({
                                         config: config
                                     }),
@@ -11067,14 +10940,6 @@ $(function () {
     'use strict';
     angular.module('app').run(ng(function (helpers) {
         helpers.grid = {
-            realEventTarget: function (target) {
-                var theTarget = $(target),
-                    parentTarget = theTarget.parents('.grid-item:first');
-                if (!theTarget.hasClass('grid-item') && parentTarget.length) {
-                    target = parentTarget.get(0);
-                }
-                return target;
-            },
             calculate: function (canvas_width, max_width, min_width, margin) {
                 /*
                 velicina covera je uvek izmedju 240x360px i 180x270px
@@ -11368,6 +11233,22 @@ $(function () {
     angular.module('app')
         .run(ng(function (helpers, $mdConstant) {
             $.extend(helpers, {
+                clicks: {
+                    realEventTarget: function (target) {
+                        var theTarget = $(target),
+                            parentTarget = theTarget.parents('.grid-item:first'),
+                            cardParent = theTarget.parents('.card:first');
+                        if (!theTarget.hasClass('grid-item') && parentTarget.length) {
+                            target = parentTarget.get(0);
+                        }
+
+                        if (cardParent.length) {
+                            target = cardParent.get(0);
+                        }
+
+                        return target;
+                    }
+                },
                 closestLargestNumber: function (arr, closestTo) {
 
                     var closest = Math.max.apply(null, arr),
@@ -11499,7 +11380,6 @@ $(function () {
         })).directive('loading', ng(function ($parse) {
             return {
                 link: function (scope, element, attrs) {
-
 
                     if (angular.isDefined(attrs.loading)) {
                         scope.$watch(attrs.loading, function ngBooleanAttrWatchAction(value) {
@@ -15640,16 +15520,20 @@ angular.module('app')
                             };
                         });
                     },
-                    adminManageModal: function (account) {
-                        return this.manageModal(account);
+                    adminManageModal: function (account, extraConfig) {
+                        return this.manageModal(account, extraConfig);
                     },
-                    manageModal: function (account) {
+                    manageModal: function (account, extraConfig) {
+                        extraConfig = helpers.alwaysObject(extraConfig);
                         var config = {
                                 kind: this.kind,
                                 templateBodyUrl: 'account/manage_body.html',
                                 toolbar: {
                                     titleEdit: 'account.settings',
                                     hideSave: true
+                                },
+                                modalConfig: {
+                                    popFrom: extraConfig.popFrom
                                 },
                                 init: function ($scope) {
                                     var entity = $scope.entity,
@@ -15779,7 +15663,7 @@ angular.module('app')
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
 
-            $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartBuyerList : GLOBAL_CONFIG.emptyHelp.orederBuyerList);
+            $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartBuyerList : GLOBAL_CONFIG.emptyHelp.orderBuyerList);
 
             $scope.search = {
                 results: [],
@@ -15795,7 +15679,7 @@ angular.module('app')
                 }).then(function (buyer) {
                     models['34'].manageModal(order, order._seller, buyer, {
                         cartMode: carts,
-                        popFrom: ($event ? helpers.grid.realEventTarget($event.target) : false)
+                        popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     });
                 });
             };
@@ -16601,8 +16485,8 @@ angular.module('app')
                         });
                     });
                 },
-                adminManageModal: function (catalog) {
-                    return this.manageModal(catalog);
+                adminManageModal: function (account, extraConfig) {
+                    return this.manageModal(account, undefined, extraConfig);
                 },
                 manageModal: function (catalog, callback, modalConfig) { // modal dialog for managing the catalog
 
@@ -17338,7 +17222,7 @@ angular.module('app')
                                     }
                                 }).then(function (response) {
                                     models['23'].viewModal(response.data.entity, {
-                                        popFrom: helpers.grid.realEventTarget($event.target),
+                                        popFrom: helpers.clicks.realEventTarget($event.target),
                                         removedOrAdded: function (updatedCollection) {
                                             thisScope.entity._sellers.iremove(function (seller) {
                                                 return $.inArray(seller.key, updatedCollection.sellers) === -1;
@@ -17415,7 +17299,7 @@ angular.module('app')
             $scope.sellerDetail = false;
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
-                    popFrom: helpers.grid.realEventTarget($event.target)
+                    popFrom: helpers.clicks.realEventTarget($event.target)
                 });
             };
 
@@ -17549,10 +17433,11 @@ angular.module('app')
                         });
                     });
                 },
-                adminManageModal: function (order) {
-                    return this.manageModal(order, order._seller, undefined, {
+                adminManageModal: function (order, extraConfig) {
+                    extraConfig = helpers.alwaysObject(extraConfig);
+                    return this.manageModal(order, order._seller, undefined, $.extend({
                         sellerMode: true
-                    });
+                    }, extraConfig));
                 },
                 manageModal: function (order, seller, buyer, config) {
                     config = helpers.alwaysObject(config);
@@ -18044,11 +17929,12 @@ angular.module('app')
                                 };
 
                                 $scope.cmd.line = {
-                                    view: function (line) {
+                                    view: function (line, $event) {
                                         var path = line.product._reference;
                                         models['31'].viewProductModal(path.parent.parent.parent.key,
                                             path.parent.parent.key, path.pricetag.key,
                                             line.product.variant_signature, {
+                                                popFrom: helpers.clicks.realEventTarget($event.target),
                                                 events: {
                                                     addToCart: locals.updateLiveEntity
                                                 }
@@ -18211,13 +18097,13 @@ angular.module('app')
 
         $scope.preview = function (key, $event) {
             models['31'].previewModal(key, {
-                popFrom: helpers.grid.realEventTarget($event.target)
+                popFrom: helpers.clicks.realEventTarget($event.target)
             });
         };
 
         $scope.manage = function (entity, $event) {
             models['31'].manageModal(entity, newEntity, {
-                popFrom: helpers.grid.realEventTarget($event.target)
+                popFrom: helpers.clicks.realEventTarget($event.target)
             });
         };
 
@@ -18251,8 +18137,10 @@ angular.module('app')
                         });
                     } else {
                         angular.forEach(_.range(1, 10), function (value, key) {
-                            $scope.search.results.extend(response.data.entities);
+                            // $scope.search.results.extend(response.data.entities);
                         });
+
+                        $scope.search.results.extend(response.data.entities);
                     }
 
                     $scope.search.loaded = true;
@@ -18262,7 +18150,7 @@ angular.module('app')
             $scope.search.pagination.load();
         });
 
-    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
+    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
@@ -18281,9 +18169,10 @@ angular.module('app')
             loader: false
         };
 
-        $scope.view = function (order) {
+        $scope.view = function (order, $event) {
             models['34'].manageModal(order, order._seller, undefined, {
-                sellerMode: carts
+                sellerMode: carts,
+                popFrom: helpers.clicks.realEventTarget($event.target)
             });
         };
 
@@ -18927,7 +18816,7 @@ angular.module('app')
 
                             $scope.viewCatalog = function (result, $event) {
                                 models['31'].viewModal(result.key, {
-                                    popFrom: helpers.grid.realEventTarget($event.target)
+                                    popFrom: helpers.clicks.realEventTarget($event.target)
                                 });
                             };
 
@@ -19189,8 +19078,10 @@ angular.module('app')
 
             $scope.setPageToolbarTitle('admin.' + $scope.config.titles[kind]);
 
-            $scope.manage = function (entity) {
-                models[kind].adminManageModal(entity);
+            $scope.manage = function (entity, $event) {
+                models[kind].adminManageModal(entity, {
+                    popFrom: helpers.clicks.realEventTarget($event.target)
+                });
             };
             $scope.search = searchBuilder.create();
             $.extend($scope.search, {

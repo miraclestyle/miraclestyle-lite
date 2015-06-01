@@ -63,10 +63,11 @@
                         });
                     });
                 },
-                adminManageModal: function (order) {
-                    return this.manageModal(order, order._seller, undefined, {
+                adminManageModal: function (order, extraConfig) {
+                    extraConfig = helpers.alwaysObject(extraConfig);
+                    return this.manageModal(order, order._seller, undefined, $.extend({
                         sellerMode: true
-                    });
+                    }, extraConfig));
                 },
                 manageModal: function (order, seller, buyer, config) {
                     config = helpers.alwaysObject(config);
@@ -558,11 +559,12 @@
                                 };
 
                                 $scope.cmd.line = {
-                                    view: function (line) {
+                                    view: function (line, $event) {
                                         var path = line.product._reference;
                                         models['31'].viewProductModal(path.parent.parent.parent.key,
                                             path.parent.parent.key, path.pricetag.key,
                                             line.product.variant_signature, {
+                                                popFrom: helpers.clicks.realEventTarget($event.target),
                                                 events: {
                                                     addToCart: locals.updateLiveEntity
                                                 }

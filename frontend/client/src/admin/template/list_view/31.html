@@ -1,6 +1,6 @@
 <div class="cards">
     <div class="card" ng-repeat="catalog in search.results">
-        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(catalog)">
+        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(catalog, $event)">
             <div class="padding-16">
                 <h1 class="headline">#{{catalog.id}}</h1>
                 <span class="first">{{catalog|output:'created'}}</span>

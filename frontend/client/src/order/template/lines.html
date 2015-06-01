@@ -75,7 +75,7 @@
 
 
     <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStart: 'lineDrag.onStart(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
-        <button loading ng-click="cmd.line.view(line)" type="button" md-ink-ripple class="menu-item card-inner">
+        <button loading ng-click="cmd.line.view(line, $event)" type="button" md-ink-ripple class="menu-item card-inner">
             <div class="delete-overlay"></div>
             <div class="card-primary-action">
                 <h1 class="headline">{{line.product.name}}</h1>

@@ -1,6 +1,6 @@
 <div class="cards">
     <div class="card" ng-repeat="user in search.results">
-        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(user)">
+        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(user, $event)">
             <div class="padding-16">
                 <h1 class="headline">#{{user.id}}</h1>
                 <span class="first">{{user|output:'created'}}</span>

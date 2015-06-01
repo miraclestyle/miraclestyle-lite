@@ -87,7 +87,8 @@ class AccountLoginWrite(orm.BaseModel):
         # We separate record procedure from write in this case, since we are creating new entity which is record agent at the same time!
         entity._use_rule_engine = False
         entity.write({})
-        buyer = Buyer(parent=entity.key)
+        buyer = Buyer(parent=entity.key, id='buyer') # create buyer profile right away
+        buyer._use_rule_engine = False
         buyer.write({})
         entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
         entity.record()

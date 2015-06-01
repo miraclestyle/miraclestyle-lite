@@ -326,7 +326,6 @@ if (!Array.prototype.indexOf) {
                       'material.components.radioButton',
                       'material.components.sidenav',
                       'material.components.swipe',
-                      'material.components.switch',
                       'material.components.textField',
                       'material.components.toolbar'], // this will be changed accordingly
             api: {

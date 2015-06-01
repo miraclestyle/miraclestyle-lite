@@ -6,23 +6,26 @@
            <span ng-include="config.ui.specifics.mainActionsLayout.before"></span>
            <button md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent">
                <span><icon type="action.file-upload"></icon></span>
-               <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
-                       multiple
-                       generate-upload-url="true"
-                       type="file" />
+               <input ng-show="<%= config.ui.writableCompiled %>"
+                      class="upload"
+                      name="<%= config.ui.name %>"
+                      multiple
+                      generate-upload-url="true"
+                      type="file" />
            </button>
            <span ng-include="config.ui.specifics.mainActionsLayout.after"></span>
         </div>
       </div>
  
-      <div ui-sortable="config.ui.specifics.sortableOptions" 
-           grid-stacked="config.ui.specifics.parentArgs" 
-           ng-model="config.ui.specifics.parentArgs" 
+      <div ui-sortable="config.ui.specifics.sortableOptions"
+           grid-stacked="config.ui.specifics.parentArgs"
+           ng-model="config.ui.specifics.parentArgs"
            ng-class="{'grid-no-items': !config.ui.specifics.parentArgs.length}"
            autoload-on-vertical-scroll-end="{loader: config.ui.specifics.reader}"
            class="clearfix grid-wrapper unselectable">
            
-          <div on-ng-repeat-end ng-repeat="image in config.ui.specifics.parentArgs"
+          <div on-ng-repeat-end 
+               ng-repeat="image in config.ui.specifics.parentArgs"
                ng-hide="image._state == 'deleted'"
                current-item="image"
                class="no-move image-image grid-item">
@@ -61,23 +64,23 @@
                   </div>
                   <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
                     <div ng-message="help"><%= config.ui.help %></div>
-                    <div ng-message="required">The field <%= config.ui.compiled.label %> is required.</div>
+                    <div ng-message="required">This field requires file selection!</div>
                  </div>
                </div>
 
               <div class="list-secondary-tile ng-scope">
                    <button md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent">
                        <span><icon type="action.file-upload"></icon></span>
-                       <input ng-show="<%= config.ui.writableCompiled %>" class="upload" name="<%= config.ui.name %>"
+                       <input ng-show="<%= config.ui.writableCompiled %>" 
+                              class="upload" 
+                              name="<%= config.ui.name %>"
                               generate-upload-url
                               ng-required="config.required || !<%= config.ui.args %>.serving_url"
                               valid-file
-                              show-number-of-selected-files=".selected-total"
                               ng-model="<%= config.ui.args %>._file"
                               type="file" />
                    </button>
               </div>
-
             </div>
         </md-input-container>
       <% }  %>

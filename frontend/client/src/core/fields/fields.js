@@ -1298,11 +1298,12 @@
                             };
 
                             // generic manage dialog that handles editing of remote and local structured properties
-                            config.ui.specifics.manage = function (arg, defaultArgs) {
+                            config.ui.specifics.manage = function (arg, defaultArgs, $event) {
 
                                 buildPaths(); // force path rebuild
 
                                 $modal.open({
+                                    popFrom: (config.ui.specifics.cards && $event ? helpers.clicks.realEventTarget($event.target) : undefined),
                                     template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/fields/manage_structured.html')({
                                         config: config
                                     }),

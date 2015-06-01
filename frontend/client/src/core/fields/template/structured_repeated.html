@@ -1,5 +1,4 @@
 <div class="structured-field structured-field-repeated">
-
 <% if (config.ui.specifics.cards) { %>
   <div class="clearfix button-set list-row-single-line list-content-tile">
     <div class="pull-right">
@@ -39,8 +38,9 @@
               <div class="delete-overlay"></div>
               <button 
                 loading 
-                ng-click="config.ui.specifics.manage(ent)" 
-                type="button" md-ink-ripple 
+                ng-click="config.ui.specifics.manage(ent, undefined, $event)" 
+                type="button" 
+                md-ink-ripple 
                 class="card-primary-action menu-item">
 
                   <% if (config.ui.specifics.cardView) { %>

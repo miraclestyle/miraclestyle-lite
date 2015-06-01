@@ -41,7 +41,7 @@
             $scope.sellerDetail = false;
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
-                    popFrom: helpers.grid.realEventTarget($event.target)
+                    popFrom: helpers.clicks.realEventTarget($event.target)
                 });
             };
 

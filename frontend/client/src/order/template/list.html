@@ -1,6 +1,6 @@
 <div class="cards" autoload-on-vertical-scroll-end="scrollEnd">
     <div class="card" ng-repeat="order in search.results">
-        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="view(order)">
+        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="view(order, $event)">
             <div class="padding-16">
                 <h1 class="headline">#{{order.id}}</h1>
                 <span class="first">{{order|output:'date'}}</span>
