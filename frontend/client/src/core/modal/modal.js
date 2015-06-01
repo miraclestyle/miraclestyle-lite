@@ -565,7 +565,7 @@
                             var modal = $(element).parents('.modal:first'),
                                 modalDialog = modal.find('.modal-dialog:first'),
                                 height = (modal.hasClass('modal-medium') ? (parseInt((modalDialog.css('max-height').indexOf('%') === -1 ? modalDialog.css('max-height') : 0), 10) || modalDialog.height()) : $(window).height());
-                            height = $(window).height();
+
                             modalDialog.find('.fixed-height, .min-height, .max-height').each(function () {
                                 var newHeight = height,
                                     footer = modalDialog.find('.md-actions'),

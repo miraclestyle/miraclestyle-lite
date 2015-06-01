@@ -436,7 +436,7 @@ $(function () {
                 failure();
             } else {
                 angular.bootstrap(document, ['app'], {
-                      strictDi: true
+                      strictDi: !window.DEBUG
                     });
             }
         }, failure);
