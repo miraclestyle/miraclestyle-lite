@@ -139,7 +139,6 @@
                                 element.addClass(where + ' slide drawer visible in');
                             };
                         } else if (isConfirmation) {
-
                             modal = element.find('.modal-dialog');
                             iwidth = modal.width();
                             iheight = modal.height();
@@ -162,7 +161,7 @@
                                 } else {
                                     maxWidth = '';
                                 }
-                                //modal.css('max-height', maxHeight);
+                                modal.css('max-height', maxHeight);
                                 modal.css('max-width', maxWidth);
                             };
                             scope.modalOptions.resize();
@@ -558,7 +557,7 @@
         return {
             link: function (scope, element, attrs) {
                 var time,
-                    fn = function () {
+                    fn = function (e) {
                         if (time) {
                             clearTimeout(time);
                         }

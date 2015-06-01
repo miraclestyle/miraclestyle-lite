@@ -1096,9 +1096,10 @@ $(function () {
             howToDropPricetag: {
                 title: 'How to use this action',
                 messages: ['Add new product to the catalog by dragging the "Add" tag to a catalog image. While dragging, it is preferable to aim the tag dot for the image area that shows the product that the tag will link to. Add one tag per product per catalog.',
-                            'Reposition a tag by dragging it within images area.',
-                            'Click a tag to open the "Edit Product" form while editing the catalog.',
-                            'Click a tag to open the product view while viewing the catalog.'],
+                    'Reposition a tag by dragging it within images area.',
+                    'Click a tag to open the "Edit Product" form while editing the catalog.',
+                    'Click a tag to open the product view while viewing the catalog.'
+                ],
                 text: locals.gotit
             }
         });
@@ -11250,7 +11251,6 @@ $(function () {
                     }
                 },
                 closestLargestNumber: function (arr, closestTo) {
-
                     var closest = Math.max.apply(null, arr),
                         i = 0; //Get the highest number in arr in case it match nothing.
 
@@ -12425,7 +12425,7 @@ $(function () {
                     });
                 }
             };
-        }]);;
+        }]);
 }());
 (function () {
     'use strict';
@@ -12568,7 +12568,6 @@ $(function () {
                                 element.addClass(where + ' slide drawer visible in');
                             };
                         } else if (isConfirmation) {
-
                             modal = element.find('.modal-dialog');
                             iwidth = modal.width();
                             iheight = modal.height();
@@ -12591,7 +12590,7 @@ $(function () {
                                 } else {
                                     maxWidth = '';
                                 }
-                                //modal.css('max-height', maxHeight);
+                                modal.css('max-height', maxHeight);
                                 modal.css('max-width', maxWidth);
                             };
                             scope.modalOptions.resize();
@@ -12987,7 +12986,7 @@ $(function () {
         return {
             link: function (scope, element, attrs) {
                 var time,
-                    fn = function () {
+                    fn = function (e) {
                         if (time) {
                             clearTimeout(time);
                         }
@@ -13940,7 +13939,6 @@ $(function () {
                                 $scope.$on('$destroy', function () {
                                     config.getScope = undefined;
                                 });
-
                             };
 
                             ctrl.$inject = ['$scope'];
@@ -15792,9 +15790,7 @@ angular.module('app')
                                     }
 
                                     return false;
-
                                 }
-
                             }
                         });
                         config = {

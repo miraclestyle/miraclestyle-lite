@@ -1,11 +1,6 @@
-<!-- Addresses list should be three line list (max line number).
-First line should be "Name" field.
-Second line should be "Street, City" fields.
-Third line should be "Region, Postal Code, Country" fields. -->
 <strong class="first ellipsis-text">{{val.name}}</strong>
 <span class="second ellipsis-text">
     {{val.street}}<span ng-if="notEmpty(val.city)">, </span>{{val.city}}
-    
 </span>
 <span class="second ellipsis-text">
     <span ng-if="notEmpty(val._region.name)">{{val._region.name}}<span ng-if="notEmpty(val.postal_code)">, {{val.postal_code}}</span><span ng-if="notEmpty(val._country.name)">, {{val._country.name}}</span>

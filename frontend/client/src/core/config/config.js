@@ -113,9 +113,10 @@
             howToDropPricetag: {
                 title: 'How to use this action',
                 messages: ['Add new product to the catalog by dragging the "Add" tag to a catalog image. While dragging, it is preferable to aim the tag dot for the image area that shows the product that the tag will link to. Add one tag per product per catalog.',
-                            'Reposition a tag by dragging it within images area.',
-                            'Click a tag to open the "Edit Product" form while editing the catalog.',
-                            'Click a tag to open the product view while viewing the catalog.'],
+                    'Reposition a tag by dragging it within images area.',
+                    'Click a tag to open the "Edit Product" form while editing the catalog.',
+                    'Click a tag to open the product view while viewing the catalog.'
+                ],
                 text: locals.gotit
             }
         });

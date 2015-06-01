@@ -824,7 +824,6 @@
                                 $scope.$on('$destroy', function () {
                                     config.getScope = undefined;
                                 });
-
                             };
 
                             ctrl.$inject = ['$scope'];

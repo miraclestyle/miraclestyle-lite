@@ -713,9 +713,10 @@ simple-dialog.transition-out {
   transition-duration: 250ms; }
 
 simple-dialog md-content {
+  /*
   -webkit-order: 1;
   -ms-flex-order: 1;
-  order: 1;
+  order: 1;*/
   overflow: auto;
   -webkit-overflow-scrolling: touch; }
 
@@ -723,9 +724,10 @@ simple-dialog .md-actions {
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
+  /*
   -webkit-order: 2;
   -ms-flex-order: 2;
-  order: 2;
+  order: 2;*/
   box-sizing: border-box;
   -webkit-align-items: center;
   -ms-flex-align: center;
@@ -2265,10 +2267,6 @@ button::-moz-focus-inner {
 .modal-body.scrollable {
   overflow-y: scroll; }
 
-.modal-small .modal-dialog {
-  width: 40%;
-  margin: auto; }
-
 .modal-small, .modal-medium, .modal-large {
   background: none;
   overflow: visible; }
@@ -2284,10 +2282,6 @@ button::-moz-focus-inner {
   overflow-y: auto;
   overflow-x: hidden; }
 
-.modal-small .modal-dialog {
-  width: 40%;
-  margin: auto; }
-
 .md-dialog {
   opacity: 0;
   overflow: hidden;
@@ -2300,9 +2294,9 @@ button::-moz-focus-inner {
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-order: 2;
+  /* -webkit-order: 2;
   -ms-flex-order: 2;
-  order: 2;
+  order: 2;*/
   box-sizing: border-box;
   -webkit-align-items: center;
   -ms-flex-align: center;

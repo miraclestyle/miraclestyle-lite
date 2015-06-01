@@ -48,10 +48,12 @@ simple-dialog.transition-out {
     transition-duration: 250ms;
 }
 
+
 simple-dialog md-content {
+    /*
     -webkit-order: 1;
     -ms-flex-order: 1;
-    order: 1;
+    order: 1;*/
     overflow: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -60,9 +62,10 @@ simple-dialog .md-actions {
     display: -webkit-flex;
     display: -ms-flexbox;
     display: flex;
+    /*
     -webkit-order: 2;
     -ms-flex-order: 2;
-    order: 2;
+    order: 2;*/
     box-sizing: border-box;
     -webkit-align-items: center;
     -ms-flex-align: center;
