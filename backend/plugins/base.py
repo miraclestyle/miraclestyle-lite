@@ -12,6 +12,8 @@ import mem
 from tools.base import *
 from util import *
 
+import performance
+
 
 class Context(orm.BaseModel):
   

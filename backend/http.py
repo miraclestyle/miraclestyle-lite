@@ -110,7 +110,7 @@ class RequestHandler(webapp2.RequestHandler):
     self._input = dicts
     return self._input
   
-  @performance.detail_profile(HTTP_PERFORMANCE_TEXT)
+  @performance.profile(HTTP_PERFORMANCE_TEXT)
   def json_output(self, s, **kwargs):
     ''' Wrapper for json output for self usage to avoid imports from backend http '''
     return json_output(s, **kwargs)

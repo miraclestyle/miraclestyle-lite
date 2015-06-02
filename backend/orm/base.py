@@ -973,7 +973,7 @@ class _BaseModel(object):
         self._rule_read(self._field_permissions, self, field_key, field)
   
   @classmethod
-  def _rule_write(cls, permissions, entity, field_key, field, field_value):  # @todo Not sure if this should be class method, but it seamed natural that way!?
+  def _rule_write(cls, permissions, entity, field_key, field, field_value):
     '''Old principle was: If the field is writable, ignore substructure permissions and override field fith new values.
     Otherwise go one level down and check again.
     
@@ -1070,7 +1070,7 @@ class _BaseModel(object):
   def rule_write(self):
     if self._use_rule_engine:
       if not hasattr(self, '_field_permissions'):
-        raise ValueError('Working without RulePrepare on %s' % self)
+        raise ValueError('Working without RulePrepare on %r' % self)
       if not hasattr(self, '_original'):
         raise ValueError('Working on entity (%r) without _original. entity.make_original() needs to be called.' % self)
       entity_fields = self.get_fields()
@@ -1085,14 +1085,33 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_reset_fields(cls, field_permissions, fields):
-    for field_key, field in fields.iteritems():
-      if field_key not in field_permissions:
-        field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
+    current_fields = fields
+    current_fields_iter = fields.iteritems()
+    current_field_permissions = field_permissions
+    next_args = []
+    next_arg = None
+    while True:
+      try:
+        field_key, field = current_fields_iter.next()
+      except StopIteration as e:
+        if len(next_args):
+          next_arg = next_args.pop()
+          current_fields = next_arg['current_fields']
+          current_fields_iter = next_arg['current_fields_iter']
+          current_field_permissions = next_arg['current_field_permissions']
+          continue
+        else:
+          break
+      if field_key not in current_field_permissions:
+          current_field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
       if hasattr(field, 'is_structured') and field.is_structured:
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
-          model_fields.pop(field._code_name)  # @todo Test this behavior!
-        cls._rule_reset_fields(field_permissions[field_key], model_fields)
+          model_fields.pop(field._code_name)
+        next_arg = {'current_fields': model_fields,
+                    'current_fields_iter': model_fields.iteritems(),
+                    'current_field_permissions': current_field_permissions[field_key]}
+        next_args.append(next_arg)
   
   @classmethod
   def _rule_reset(cls, entity):
@@ -1109,26 +1128,46 @@ class _BaseModel(object):
   
   @classmethod
   def _rule_decide(cls, permissions, strict, root=True, parent_permissions=None):
-    for key, value in permissions.iteritems():
+    current_permissions = permissions
+    current_permissions_iter = current_permissions.iteritems()
+    current_root = root
+    current_parent_permissions = parent_permissions
+    next_args = []
+    next_arg = None
+    while True:
+      try:
+        key, value = current_permissions_iter.next()
+      except StopIteration as e:
+        if len(next_args):
+          next_arg = next_args.pop()
+          current_permissions = next_arg['current_permissions']
+          current_parent_permissions = next_arg['current_parent_permissions']
+          current_permissions_iter = next_arg['current_permissions_iter']
+          current_root = next_arg['current_root']
+          continue
+        else:
+          break
       if isinstance(value, dict):
-        if parent_permissions:
-          root = False
-        cls._rule_decide(permissions[key], strict, root, permissions)
+        next_arg = {'current_root': False if current_parent_permissions else True,
+                    'current_parent_permissions': current_permissions,
+                    'current_permissions': value,
+                    'current_permissions_iter': value.iteritems()}
+        next_args.append(next_arg)
       else:
         if isinstance(value, list) and len(value):
           if (strict):
             if all(value):
-              permissions[key] = True
+              current_permissions[key] = True
             else:
-              permissions[key] = False
+              current_permissions[key] = False
           elif any(value):
-            permissions[key] = True
+            current_permissions[key] = True
           else:
-            permissions[key] = False
+            current_permissions[key] = False
         else:
-          permissions[key] = False
-          if not root and not len(value):
-            permissions[key] = parent_permissions[key]
+          current_permissions[key] = False
+          if not current_root and not len(value):
+            current_permissions[key] = current_parent_permissions[key]
   
   def rule_prepare(self, permissions, strict=False, **kwargs):
     '''This method generates permissions situation for the entity object,
