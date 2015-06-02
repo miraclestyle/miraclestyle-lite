@@ -160,9 +160,39 @@ Key._structure = property(_get_key_structure)
 
 
 #############################################
-########## Helper classes of orm   ##########
+############ Helpers for orm   ##############
 #############################################
 
+
+class TailRecurseException:
+  def __init__(self, args, kwargs):
+    self.args = args
+    self.kwargs = kwargs
+
+def tail_call_optimized(g):
+  """
+  This function decorates a function with tail call
+  optimization. It does this by throwing an exception
+  if it is it's own grandparent, and catching such
+  exceptions to fake the tail call optimization.
+  
+  This function fails if the decorated
+  function recurses in a non-tail context.
+  """
+  def func(*args, **kwargs):
+    f = sys._getframe()
+    if f.f_back and f.f_back.f_back \
+        and f.f_back.f_back.f_code == f.f_code:
+      raise TailRecurseException(args, kwargs)
+    else:
+      while 1:
+        try:
+          return g(*args, **kwargs)
+        except TailRecurseException, e:
+          args = e.args
+          kwargs = e.kwargs
+  func.__doc__ = g.__doc__
+  return func
 
 def get_multi_combined(*args, **kwargs):
   async = kwargs.pop('async', None)
@@ -1014,7 +1044,7 @@ class _BaseModel(object):
         # Here we begin the process of field drill.
         for child_field_key, child_field in field.get_model_fields().iteritems():
           if field._repeated:
-            # They are bound dict[key_urlsafe] = item
+            # They are bound dict[key_urlsafe]Â = item
             for i, child_entity_item in enumerate(child_entity):
               if child_entity_item._state != 'deleted': 
                 '''No need to process deleted entity, since user already has permission to delete it.
@@ -1286,6 +1316,7 @@ class _BaseModel(object):
           return field.can_be_copied
       # recursevely set original for all structured properties.
       # this is because we have huge depency on _original, so we need to have it on its children as well
+      @tail_call_optimized
       def scan(value, field_key, field, original):
         if hasattr(field, 'is_structured') and field.is_structured and hasattr(value, 'has_value') and value.has_value():
           scan(value.value, field_key, field, original.value)
@@ -1420,28 +1451,77 @@ class _BaseModel(object):
   def _set_next_read_arguments(self):
     # this function sets next_read_arguments for the entity that was read
     # purpose of inner function scan is to completely iterate all structured properties which have value and options
-    if self is self._root:
+    if self is self._root and self.get_kind() != '1':
+      if hasattr(self, '_read_arguments'): # if read_args are present, use them as base dict
+        value_options = copy.deepcopy(self._read_arguments)
+      else:
+        value_options = {}
+      initial_value_options = value_options
       def scan(value, field_key, field, value_options):
         if hasattr(value, 'has_value') and hasattr(value, 'value_options') and value.has_value():
           options = {'config': value.value_options}
           value_options[field_key] = options
           if value.has_value():
-            scan(value.value, field_key, field, options)
+            return (value.value, field_key, field, options)
+          else:
+            return False
         elif isinstance(value, list):
+          factory = []
           for val in value:
-            scan(val, field_key, field, value_options)
+            factory.append((val, field_key, field, value_options))
+          return factory
         elif value is not None and isinstance(value, Model):
+          factory = []
           for field_key, field in value.get_fields().iteritems():
-            val = getattr(value, field_key, None)
-            scan(val, field_key, field, value_options)
-      if hasattr(self, '_read_arguments'): # if read_args are present, use them as base dict
-        value_options = copy.deepcopy(self._read_arguments)
-      else:
-        value_options = {}
-      for field_key, field in self.get_fields().iteritems():
-        scan(self, field_key, field, value_options)
-      self._next_read_arguments = value_options
+            if hasattr(field, 'is_structured') and field.is_structured:
+              val = getattr(value, field_key, None)
+              factory.append((val, field_key, field, value_options))
+          return factory
+        return False
+      value = self
+      field_key = None
+      field = None
+      later = []
+      sets = None
+      force_maybe_false = False
+      while True:
+        if sets:
+          guess = scan(*sets)
+          sets = None
+          if guess is not False:
+            if isinstance(guess, list):
+              for g in guess:
+                later.append(g)
+            else:
+              later.append(guess)
+          force_maybe_false = True
+          continue
+        if not force_maybe_false:
+          maybe = scan(value, field_key, field, value_options)
+        else:
+          maybe = False
+        if maybe is False:
+          if len(later) == 0:
+            break
+          else:
+            try:
+              sets = later.pop()
+            except IndexError as e:
+              break
+          continue
+        if isinstance(maybe, list):
+          for m in maybe:
+            later.append(m)
+          force_maybe_false = True
+        else:
+          value = maybe[0]
+          field_key = maybe[1]
+          field = maybe[2]
+          value_options = maybe[3]
+          force_maybe_false = False
+      self._next_read_arguments = initial_value_options
       return self._next_read_arguments
+
 
   def populate_from(self, other):
     '''

@@ -59,6 +59,11 @@ class Set(orm.BaseModel):
           item._state = 'removed'
         else:
           items._state = 'removed'
+    # @todo remove this, this is for testing purposes      
+    if 'entities' in context.output:
+      for i in xrange(1, 7):
+        for ent in context.output['entities'][:]:
+          context.output['entities'].append(ent)
 
 class Read(orm.BaseModel):
   

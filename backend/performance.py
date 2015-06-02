@@ -6,6 +6,9 @@ Created on May 6, 2015
 '''
 import time
 import util
+import cStringIO
+import cProfile
+import pstats
 
 def compute(start):
     return round((time.time() - start) * 1000, 3)
@@ -31,6 +34,26 @@ def profile(message=None):
             else:
                 initial_message = message
             util.log.debug(message % (fn.__name__, compute(start)))
+            return result
+        return inner
+    return decorator
+
+def detail_profile(message=None):
+    def decorator(fn):
+        def inner(*args, **kwargs):
+            pr = cProfile.Profile()
+            pr.enable()
+            result = fn(*args, **kwargs)
+            pr.disable()
+            s = cStringIO.StringIO()
+            ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+            ps.print_stats()
+            initial_message = None
+            if message is None:
+                initial_message = '%s executed: %s'
+            else:
+                initial_message = message
+            util.log.debug(message % (fn.__name__, s.getvalue()))
             return result
         return inner
     return decorator

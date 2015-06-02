@@ -1,3 +1,3 @@
 from base import *
-from fields import *
+from properties import *
 from core import *
