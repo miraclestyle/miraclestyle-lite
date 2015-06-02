@@ -68,12 +68,6 @@ class Image(orm.BaseExpando):
     'proportion': orm.SuperFloatProperty('6')
     }
 
-  def __setattr__2(self, name, value, **kwds): # @todo remove this later
-    if name == '_state' and value == 'deleted':
-      import traceback
-      traceback.print_stack()
-    return super(Image, self).__setattr__(name, value, **kwds)
-
 
 #########################################################
 ########## Superior properties implementation! ##########

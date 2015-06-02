@@ -380,7 +380,7 @@ def debug():
 
     Renable system streams for it.
     """
-    pdb.Pdb(stdin=getattr(sys,'__stdin__'),stdout=getattr(sys,'__stderr__')).set_trace(sys._getframe().f_back)
+    pdb.Pdb(stdin=getattr(sys,'__stdin__'), stdout=getattr(sys,'__stderr__')).set_trace(sys._getframe().f_back)
 
 
 ########## Unit manipulation functions! ##########

@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').factory('snackbar', ['GLOBAL_CONFIG', function (GLOBAL_CONFIG) {
+    angular.module('app').factory('snackbar', ng(function (GLOBAL_CONFIG) {
         var snackbar = {
             show: $.noop,
             hide: $.noop,
@@ -16,9 +16,23 @@
             window._snackbar = snackbar;
         }
         return snackbar;
-    }]).directive('qsnackbar', ng(function (snackbar) {
+    })).directive('qsnackbar', ng(function (snackbar) {
         return {
             link: function (scope, element) {
+                var kill = function () {
+                    snackbar.hide();
+                };
+                element.on('click', kill);
+                scope.$on('$destroy', function () {
+                    element.off('click', kill);
+                });
+            }
+        };
+    })).directive('ngClick', ng(function (snackbar) {
+        return {
+            restrict: 'A',
+            priority: 100,
+            link: function (scope, element, attr) {
                 var kill = function () {
                     snackbar.hide();
                 };
@@ -35,10 +49,11 @@
             templateUrl: 'core/snackbar/view.html',
             controller: ng(function ($scope) {
                 var digest = function () {
-                    if (!$scope.$$phase) {
-                        $scope.$digest();
-                    }
-                }, timer;
+                        if (!$scope.$$phase) {
+                            $scope.$digest();
+                        }
+                    },
+                    timer;
                 $scope.message = '';
                 $scope.size = 1;
                 $scope.element = null;

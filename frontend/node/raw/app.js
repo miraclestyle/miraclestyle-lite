@@ -1370,7 +1370,8 @@ $(function () {
             editContents: 'Edit Content',
             account: 'Account',
             admin: 'Admin',
-            users: 'Users'
+            users: 'Users',
+            aboutRules: 'About Rules'
         });
 
     }));

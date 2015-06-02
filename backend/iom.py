@@ -214,7 +214,7 @@ class Engine:
               else:
                 execute_plugins(group.plugins)
       except orm.TerminateAction as e:
-        util.log.debug('Action terminated with code: %s' % e.message)
+        util.log.debug('Action terminated with: %s' % e.message)
       except Exception as e:
         raise
       finally:
@@ -253,8 +253,12 @@ class Engine:
       if isinstance(e, datastore_errors.TransactionFailedError):
         context.error('transaction', 'failed')
         throw = False
-      if throw and settings.DEBUG:
-        raise  # Here we raise all other unhandled exceptions!
+      if throw:
+        util.log.exception(e)
+        if settings.DEBUG:
+          raise  # Here we raise all other unhandled exceptions!
+        else:
+          context.error('internal_server_error', 'error')
     finally:
       util.log.debug('Process Blob Output')
       cls.process_blob_output()  # Delete all blobs that are marked to be deleted no matter what happens!
