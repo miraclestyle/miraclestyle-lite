@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from base import *
-from base import _BaseValue
+from .base import *
+from .base import _BaseValue
 
 __all__ = ['PROPERTY_VALUES', 'PropertyValue', 'StructuredPropertyValue', 'LocalStructuredPropertyValue',
           'RemoteStructuredPropertyValue', 'ReferencePropertyValue', '_BaseProperty', '_BaseStructuredProperty',

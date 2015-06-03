@@ -944,27 +944,41 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    if (not field_key in permissions) or (not permissions[field_key]['visible']):
-      entity.remove_output(field_key)
-    else:
-      if hasattr(field, 'is_structured') and field.is_structured:
-        child_entity = getattr(entity, field_key)
-        child_entity = child_entity.value
-        if field._repeated:
-          if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
-            for child_entity_item in child_entity:
-              child_fields = child_entity_item.get_fields()
-              child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.iteritems()]))
-              for child_field_key, child_field in child_fields.iteritems():
-                cls._rule_read(permissions[field_key], child_entity_item, child_field_key, child_field)
+    current_field = field
+    current_field_key = field_key
+    current_entity = entity
+    current_permissions = permissions
+    next_args = []
+    while True:
+      if current_field_key is None:
+        if not len(next_args):
+          break
         else:
-          child_entity = getattr(entity, field_key)
+          current_permissions, current_entity, current_field_key, current_field = next_args.pop()
+          continue
+      if (not current_field_key in current_permissions) or (not current_permissions[current_field_key]['visible']):
+        current_entity.remove_output(current_field_key)
+        current_field_key = None
+      else:
+        if hasattr(current_field, 'is_structured') and current_field.is_structured:
+          child_entity = getattr(current_entity, current_field_key)
           child_entity = child_entity.value
-          if child_entity is not None:  # @todo We'll see how this behaves for def write as well, because None is sometimes here when they are expando properties.
-            child_fields = child_entity.get_fields()
-            child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.iteritems()]))
-            for child_field_key, child_field in child_fields.iteritems():
-              cls._rule_read(permissions[field_key], child_entity, child_field_key, child_field)
+          if current_field._repeated:
+            if child_entity is not None:
+              for child_entity_item in child_entity:
+                child_fields = child_entity_item.get_fields()
+                child_fields.update(dict([(p._code_name, p) for _, p in child_entity_item._properties.iteritems()]))
+                for child_field_key, child_field in child_fields.iteritems():
+                  next_args.append((current_permissions[current_field_key], child_entity_item, child_field_key, child_field))
+          else:
+            child_entity = getattr(current_entity, current_field_key)
+            child_entity = child_entity.value
+            if child_entity is not None:
+              child_fields = child_entity.get_fields()
+              child_fields.update(dict([(p._code_name, p) for _, p in child_entity._properties.iteritems()]))
+              for child_field_key, child_field in child_fields.iteritems():
+                next_args.append((current_permissions[current_field_key], child_entity, child_field_key, child_field))
+        current_field_key = None
   
   def rule_read(self):
     if self._use_rule_engine and hasattr(self, '_field_permissions'):
@@ -1089,16 +1103,12 @@ class _BaseModel(object):
     current_fields_iter = fields.iteritems()
     current_field_permissions = field_permissions
     next_args = []
-    next_arg = None
     while True:
       try:
         field_key, field = current_fields_iter.next()
       except StopIteration as e:
         if len(next_args):
-          next_arg = next_args.pop()
-          current_fields = next_arg['current_fields']
-          current_fields_iter = next_arg['current_fields_iter']
-          current_field_permissions = next_arg['current_field_permissions']
+          current_fields, current_fields_iter, current_field_permissions = next_args.pop()
           continue
         else:
           break
@@ -1108,10 +1118,7 @@ class _BaseModel(object):
         model_fields = field.get_model_fields()
         if field._code_name in model_fields:
           model_fields.pop(field._code_name)
-        next_arg = {'current_fields': model_fields,
-                    'current_fields_iter': model_fields.iteritems(),
-                    'current_field_permissions': current_field_permissions[field_key]}
-        next_args.append(next_arg)
+        next_args.append((model_fields, model_fields.iteritems(), current_field_permissions[field_key]))
   
   @classmethod
   def _rule_reset(cls, entity):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from base import *
-from properties import *
+from .base import *
+from .properties import *
 
 
 __all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission']
