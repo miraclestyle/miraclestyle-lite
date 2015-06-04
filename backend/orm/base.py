@@ -1208,7 +1208,7 @@ class _BaseModel(object):
       if record_arguments and record_arguments.get('agent') and record_arguments.get('action'):
         log_entity = record_arguments.pop('log_entity', True)
         # @todo We have no control over argument permissions! (if entity._field_permissions['_records'][argument_key]['writable']:)
-        record = Model._kind_map['0'](parent=self.key, **record_arguments)
+        record = Model._kind_map['0'](parent=self.key, **record_arguments) # @todo no other way to reference Record in here
         if log_entity is True:
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?

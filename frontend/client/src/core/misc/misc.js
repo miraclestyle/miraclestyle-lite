@@ -116,18 +116,18 @@
 
                     var fn = function (nv, ov) {
                         if (nv !== ov) {
-                            var error = function () {
+                            var img = element,
+                                done = function () {
+                                    img.css('visibility', 'visible');
+                                    scope.$emit('displayImageLoaded', img);
+                                },
+                                error = function () {
                                     var defaultImage = scope.config.defaultImage;
                                     if (!defaultImage) {
                                         defaultImage = 'defaultImage';
                                     }
-                                    $(this).attr('src', GLOBAL_CONFIG[defaultImage]);
-
-                                },
-                                img = element,
-                                done = function () {
-                                    img.css('visibility', 'visible');
-                                    scope.$emit('displayImageLoaded', img);
+                                    img.attr('src', GLOBAL_CONFIG[defaultImage]);
+                                    done();
                                 };
 
                             if (scope.image && scope.image.serving_url) {
@@ -135,7 +135,8 @@
                                     .on('error', error)
                                     .attr('src', scope.image.serving_url + (scope.config.size === true ? '' : '=s' + scope.config.size));
                             } else {
-                                error.call(img);
+                                error();
+                                done();
                             }
                         }
                     };

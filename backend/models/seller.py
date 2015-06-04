@@ -5,7 +5,9 @@ Created on Jan 6, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import orm, settings
+import orm
+import settings
+import mem
 
 from models.base import *
 from plugins.base import *
@@ -110,7 +112,9 @@ class Seller(orm.BaseExpando):
     '_feedback': orm.SuperRemoteStructuredProperty(SellerFeedback),
     '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
     '_records': orm.SuperRecordProperty('23'),
-    '_currency': orm.SuperReferenceProperty('17', callback=lambda self: self._get_currency_callback(),
+    '_follower_count': orm.SuperComputedProperty(lambda self: self.get_followers_count()),
+    '_notified_followers_count': orm.SuperComputedProperty(lambda self: self.get_notified_followers_count()),
+    '_currency': orm.SuperReferenceProperty('17', callback=lambda self: self.get_currency_callback(),
                                                   format_callback=lambda self, value: value)
     }
   
@@ -237,8 +241,27 @@ class Seller(orm.BaseExpando):
         ]
       )
     ]
+
+  def get_notified_followers_count(self):
+    Collection = orm.Model._kind_map.get('18') # @todo import or this
+    key = 'get_notified_followers_count_%s' % self.key.urlsafe()
+    already = mem.get(key)
+    if already is None:
+      already = Collection.query(Collection.sellers == self.key, Collection.notify == True).count()
+      mem.set(key, already, settings.CACHE_TIME_NOTIFIED_FOLLOWERS_COUNT)
+    return already
+
+  def get_followers_count(self):
+    Collection = orm.Model._kind_map.get('18') # @todo import or this
+    key = 'get_followers_count_%s' % self.key.urlsafe()
+    already = mem.get(key)
+    if already is None:
+      already = Collection.query(Collection.sellers == self.key).count()
+      mem.set(key, already, settings.CACHE_TIME_FOLLOWERS_COUNT)
+    return already
+
  
-  def _get_currency_callback(self):
+  def get_currency_callback(self):
     currency = None
     if self.key:
       self._plugin_group.read()

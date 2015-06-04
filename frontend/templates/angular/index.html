@@ -4,7 +4,7 @@
 
 <head>
     <script>
-        window.DEBUG = {% if settings.DEBUG %}true{% endif %};
+        window.DEBUG = {% if settings.DEBUG %}true{% else %}false{% endif %};
         if (window.location.hash && window.location.hash.indexOf('#context-monitor-') !== -1) {
             window.location.hash = '';
         }

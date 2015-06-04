@@ -17,9 +17,4 @@ class HomeView(base.SeoOrAngular):
         tpl = {'catalogs': data['entities'], 'logo': '%s/client/dist/static/logo_240.png' % self.template['base_url']}
         self.render('seo/home/view.html', tpl)
 
-class Sitemap(base.SeoOrAngular):
-
-    def respond_seo(self, *args, **kwargs):
-        self.render('seo/home/sitemap.html')
-
-settings.ROUTES.extend(((r'/', HomeView, 'home'), (r'/sitemap', Sitemap, 'sitemap')))
+settings.ROUTES.extend(((r'/', HomeView, 'home'),))

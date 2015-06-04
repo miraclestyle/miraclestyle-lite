@@ -60,7 +60,7 @@ class JSONEncoder(json.JSONEncoder):
       pass
     return json.JSONEncoder.default(self, o)
 
-  def _iterencode(self, o, _one_shot=False): # @todo this causes huge overhead, we dont need this at this moment
+  def _iterencode(self, o, _one_shot=False): # @todo this causes overhead, we dont need this at this moment
     chunks = super(JSONEncoder, self).iterencode(o, _one_shot)
     for chunk in chunks:
       chunk = chunk.replace('&', '\\u0026')
@@ -311,45 +311,28 @@ class Reset(BaseTestHandler):
     kinds = [str(i) for i in xrange(200)]
     namespaces = metadata.get_namespaces()
     indexes = []
-    keys_to_delete = []
     if self.request.get('kinds'):
       kinds = self.request.get('kinds').split(',')
-    util.log.debug('DELETE KINDS %s' % kinds)
     ignore = []
     if self.request.get('ignore'):
       ignore = self.request.get('ignore')
-    @orm.tasklet
-    def wipe(kind):
-      util.log.debug('DELETE ENTITY KIND %s' % kind)
-      @orm.tasklet
-      def generator():
-        model = models.get(kind)
-        if model:
-          keys = yield model.query().fetch_async(keys_only=True)
-          keys_to_delete.extend(keys)
-          indexes.append(search.Index(name=kind))
-          for namespace in namespaces:
-            util.log.debug('DELETE NAMESPACE %s' % namespace)
-            keys = yield model.query(namespace=namespace).fetch_async(keys_only=True)
-            keys_to_delete.extend(keys)
-            indexes.append(search.Index(name=kind, namespace=namespace))
-      yield generator()
-    if self.request.get('delete'):
-      futures = []
-      for kind in kinds:
-        if kind not in ignore:
-          futures.append(wipe(kind))
-      orm.Future.wait_all(futures)
-    if self.request.get('and_ignored'):
-      futures = []
-      for kind in kinds:
+    util.log.debug('DELETE KINDS %s' % kinds)
+    for kind in kinds:
+      for namespace in namespaces:
         if kind in ignore:
-          futures.append(wipe(kind))
-      orm.Future.wait_all(futures)
-    if keys_to_delete:
-      datastore.Delete([key.to_old_key() for key in keys_to_delete])
-    indexes.append(search.Index(name='catalogs'))
+          continue
+        p = performance.Profile()
+        gets = datastore.Query(kind, namespace=namespace, keys_only=True).Run()
+        keys = list(gets)
+        total_keys = len(keys)
+        if total_keys:
+          util.log.debug('Delete kind %s. Found %s keys. Took %sms to get.' % (kind, total_keys, p.miliseconds))
+          p = performance.Profile()
+          datastore.Delete(keys)
+          util.log.debug('Deleted all records for kind %s. Took %sms.' % (kind, p.miliseconds))
+    indexes.extend((search.Index(name='catalogs'), search.Index(name='24')))
     # empty catalog index!
+    docs = 0
     for index in indexes:
       while True:
         document_ids = [document.doc_id for document in index.get_range(ids_only=True)]
@@ -357,10 +340,14 @@ class Reset(BaseTestHandler):
           break
         try:
           index.delete(document_ids)
+          docs += len(document_ids)
         except:
           pass
+    util.log.debug('Deleted %s indexes. With total of %s documents.' % (len(indexes), docs))
     # delete all blobs
-    blobstore.delete(blobstore.BlobInfo.all().fetch(None, keys_only=True))
+    keys = blobstore.BlobInfo.all().fetch(None, keys_only=True)
+    blobstore.delete(keys)
+    util.log.debug('Deleted %s blobs.' % len(keys))
     mem.flush_all()
 
 class LoginAs(BaseTestHandler):

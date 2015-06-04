@@ -46,43 +46,51 @@ ROUTES = []
 JINJA_GLOBALS = {}
 JINJA_FILTERS = {}
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
+def env(dev, production=None):
+  if not production:
+    production = dev
+  if DEBUG:
+    return dev
+  else:
+    return production
+
 # Angular only configurations for user interface
 ANGULAR_VENDOR_JS = (
-  'vendor/modernizr/modernizr.js',
-  'vendor/jquery/dist/jquery.js',
-  'vendor/jquery-ui/ui/core.js',
-  'vendor/jquery-ui/ui/widget.js',
-  'vendor/jquery-ui/ui/mouse.js',
-  'vendor/jquery-ui/ui/position.js',
-  'vendor/jquery-ui/ui/sortable.js',
-  'vendor/jquery-ui/ui/draggable.js',
-  'vendor/jquery-ui/ui/droppable.js',
-  'vendor/Steady.js/Steady.js',
-  'vendor/showdown/src/showdown.js',
-  'vendor/jquery.scrollTo/jquery.scrollTo.js',
-  'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
-  'vendor/jquery-cookie/jquery.cookie.js',
-  'vendor/underscore/underscore.js',
-  'vendor/underscore.string/lib/underscore.string.js',
-  'vendor/angular/angular.js',
-  'vendor/angular-ui-sortable/sortable.js',
-  'vendor/angular-ui-utils/ui-utils.js',
-  'vendor/angular-sanitize/angular-sanitize.js',
-  'vendor/angular-ui-router/release/angular-ui-router.js',
-  'vendor/angular-cookie/angular-cookie.js',
-  'vendor/angular-animate/angular-animate.js',
-  'vendor/angular-aria/angular-aria.js',
-  'vendor/angular-messages/angular-messages.js',
-  'vendor/angular-dragdrop/src/angular-dragdrop.js',
-  'vendor/momentjs/min/moment.min.js',
-  'vendor/humanize-duration/humanize-duration.js',
-  'vendor/angular-timer/dist/angular-timer.js',
-  'vendor/angular-google-chart/ng-google-chart.js',
-  'vendor/angular-markdown-directive/markdown.js'
+  env('vendor/modernizr/modernizr.js'),
+  env('vendor/jquery/dist/jquery.js', 'vendor/jquery/dist/jquery.min.js'),
+  env('vendor/jquery-ui/ui/core.js', 'vendor/jquery-ui/ui/minified/core.min.js'),
+  env('vendor/jquery-ui/ui/widget.js', 'vendor/jquery-ui/ui/minified/widget.min.js'),
+  env('vendor/jquery-ui/ui/mouse.js', 'vendor/jquery-ui/ui/minified/mouse.min.js'),
+  env('vendor/jquery-ui/ui/position.js', 'vendor/jquery-ui/ui/minified/position.min.js'),
+  env('vendor/jquery-ui/ui/sortable.js', 'vendor/jquery-ui/ui/minified/sortable.min.js'),
+  env('vendor/jquery-ui/ui/draggable.js', 'vendor/jquery-ui/ui/minified/draggable.min.js'),
+  env('vendor/jquery-ui/ui/droppable.js', 'vendor/jquery-ui/ui/minified/droppable.min.js'),
+  env('vendor/Steady.js/Steady.js'),
+  env('vendor/showdown/src/showdown.js', 'vendor/showdown/compressed/Showdown.min.js'),
+  env('vendor/jquery.scrollTo/jquery.scrollTo.js', 'vendor/jquery.scrollTo/jquery.scrollTo.min.js'),
+  env('vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js', 'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js'),
+  env('vendor/jquery-cookie/jquery.cookie.js'),
+  env('vendor/underscore/underscore.js', 'vendor/underscore/underscore-min.js'),
+  env('vendor/underscore.string/lib/underscore.string.js', 'vendor/underscore.string/dist/underscore.string.min.js'),
+  env('vendor/angular/angular.js', 'vendor/angular/angular.min.js'),
+  env('vendor/angular-ui-sortable/sortable.js', 'vendor/angular-ui-sortable/sortable.min.js'),
+  env('vendor/angular-ui-utils/ui-utils.js', 'vendor/angular-ui-utils/ui-utils.min.js'),
+  env('vendor/angular-sanitize/angular-sanitize.js', 'vendor/angular-sanitize/angular-sanitize.min.js'),
+  env('vendor/angular-ui-router/release/angular-ui-router.js', 'vendor/angular-ui-router/release/angular-ui-router.min.js'),
+  env('vendor/angular-cookie/angular-cookie.js', 'vendor/angular-cookie/angular-cookie.min.js'),
+  env('vendor/angular-animate/angular-animate.js', 'vendor/angular-animate/angular-animate.min.js'),
+  env('vendor/angular-aria/angular-aria.js', 'vendor/angular-aria/angular-aria.min.js'),
+  env('vendor/angular-messages/angular-messages.js', 'vendor/angular-messages/angular-messages.min.js'),
+  env('vendor/angular-dragdrop/src/angular-dragdrop.js', 'vendor/angular-dragdrop/src/angular-dragdrop.min.js'),
+  env('vendor/momentjs/moment.js', 'vendor/momentjs/min/moment.min.js'),
+  env('vendor/humanize-duration/humanize-duration.js'),
+  env('vendor/angular-timer/dist/angular-timer.js', 'vendor/angular-timer/dist/angular-timer.min.js'),
+  env('vendor/angular-google-chart/ng-google-chart.js'),
+  env('vendor/angular-markdown-directive/markdown.js')
 )
 ANGULAR_VENDOR_CSS = ('vendor/material-design-iconic-font/css/material-design-iconic-font.min.css',)
 ANGULAR_TEMPLATE_FILES = []

@@ -91,9 +91,13 @@ class CatalogProcessCoverSet(orm.BaseModel):
   def run(self, context):
     catalog_image = None
     catalog_images = context._catalog._images.value
-    if not catalog_images:
+    if context.action.key.id() != 'catalog_upload_images':
       CatalogImage = context.models['30']
       catalog_images = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).fetch(1)
+      # @todo query cannot be used here because if user reorders catalog image it wont be applied
+      # because that new order is not yet applied
+      # also read arguments can fuck up this pretty bad, meaning that whatever gets loaded into context._images.value gets used here
+      # so this plugin probably needs to be executed after Write plugin along with write plugin after that
     catalog_cover = context._catalog.cover.value
     if catalog_images:
       for catalog_image in catalog_images:

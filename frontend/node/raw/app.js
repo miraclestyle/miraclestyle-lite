@@ -1608,7 +1608,7 @@ $(function () {
                         h2: true,
                         h3: true,
                         h4: true,
-                        a: {
+                        /*a: {
                             href: function (a) {
                                 var regex = /^http/,
                                     regex2 = '/^#/';
@@ -1623,7 +1623,7 @@ $(function () {
                                 }
                                 return '';
                             },
-                        },
+                        },*/
                         h5: true,
                         h6: true,
                         ul: true,
@@ -5464,7 +5464,7 @@ $(function () {
 })();
 (function () {
     'use strict';
-    angular.module('app').factory('snackbar', ['GLOBAL_CONFIG', function (GLOBAL_CONFIG) {
+    angular.module('app').factory('snackbar', ng(function (GLOBAL_CONFIG) {
         var snackbar = {
             show: $.noop,
             hide: $.noop,
@@ -5480,9 +5480,23 @@ $(function () {
             window._snackbar = snackbar;
         }
         return snackbar;
-    }]).directive('qsnackbar', ng(function (snackbar) {
+    })).directive('qsnackbar', ng(function (snackbar) {
         return {
             link: function (scope, element) {
+                var kill = function () {
+                    snackbar.hide();
+                };
+                element.on('click', kill);
+                scope.$on('$destroy', function () {
+                    element.off('click', kill);
+                });
+            }
+        };
+    })).directive('ngClick', ng(function (snackbar) {
+        return {
+            restrict: 'A',
+            priority: 100,
+            link: function (scope, element, attr) {
                 var kill = function () {
                     snackbar.hide();
                 };
@@ -5499,10 +5513,11 @@ $(function () {
             templateUrl: 'core/snackbar/view.html',
             controller: ng(function ($scope) {
                 var digest = function () {
-                    if (!$scope.$$phase) {
-                        $scope.$digest();
-                    }
-                }, timer;
+                        if (!$scope.$$phase) {
+                            $scope.$digest();
+                        }
+                    },
+                    timer;
                 $scope.message = '';
                 $scope.size = 1;
                 $scope.element = null;
@@ -11348,18 +11363,18 @@ $(function () {
 
                     var fn = function (nv, ov) {
                         if (nv !== ov) {
-                            var error = function () {
+                            var img = element,
+                                done = function () {
+                                    img.css('visibility', 'visible');
+                                    scope.$emit('displayImageLoaded', img);
+                                },
+                                error = function () {
                                     var defaultImage = scope.config.defaultImage;
                                     if (!defaultImage) {
                                         defaultImage = 'defaultImage';
                                     }
-                                    $(this).attr('src', GLOBAL_CONFIG[defaultImage]);
-
-                                },
-                                img = element,
-                                done = function () {
-                                    img.css('visibility', 'visible');
-                                    scope.$emit('displayImageLoaded', img);
+                                    img.attr('src', GLOBAL_CONFIG[defaultImage]);
+                                    done();
                                 };
 
                             if (scope.image && scope.image.serving_url) {
@@ -11367,7 +11382,8 @@ $(function () {
                                     .on('error', error)
                                     .attr('src', scope.image.serving_url + (scope.config.size === true ? '' : '=s' + scope.config.size));
                             } else {
-                                error.call(img);
+                                error();
+                                done();
                             }
                         }
                     };
@@ -16302,6 +16318,10 @@ angular.module('app')
                                     }
                                     $scope.disableUpdateCart = false;
                                     $scope.productQuantity = parseInt($scope.productQuantity, 10) - 1;
+                                };
+
+                                $scope.changedQuantity = function () {
+                                    $scope.disableUpdateCart = false;
                                 };
 
                                 $scope.addToCart = function () {
