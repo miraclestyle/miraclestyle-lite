@@ -473,6 +473,10 @@
                                     $scope.productQuantity = parseInt($scope.productQuantity, 10) - 1;
                                 };
 
+                                $scope.changedQuantity = function () {
+                                    $scope.disableUpdateCart = false;
+                                };
+
                                 $scope.addToCart = function () {
                                     if (!$scope.hasThisProduct && $scope.productQuantity < 1) {
                                         $scope.container.form.$setDirty();

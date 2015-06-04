@@ -226,34 +226,58 @@ def merge_dicts(a, b):
       >>> merge_dicts(stuff, stuff2)
       >>> {'1': 'yes', 'other': 1}
     '''
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge_dicts(a[key], b[key])
-            elif a[key] == b[key]:
-                pass
+    current_a = a
+    current_b = b
+    next_args = []
+    while True:
+        if current_b is None:
+            try:
+                current_a, current_b = next_args.pop()
+                continue
+            except IndexError as e:
+                break
+        for key in current_b:
+            if key in current_a:
+                if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
+                    next_args.append((current_a[key], current_b[key]))
+                elif current_a[key] == current_b[key]:
+                    pass
+                else:
+                    # in this segment we encounter that a[key] is not equal to
+                    # b[key] which we do not want
+                    pass
             else:
-                # in this segment we encounter that a[key] is not equal to
-                # b[key] which we do not want
-                pass
-        else:
-            a[key] = b[key]
+                current_a[key] = current_b[key]
+        current_a = None
+        current_b = None
     return a
 
 
 def override_dict(a, b):
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                override_dict(a[key], b[key])
-            elif a[key] == b[key]:
-                pass
+    current_a = a
+    current_b = b
+    next_args = []
+    while True:
+        if current_b is None:
+            try:
+                current_a, current_b = next_args.pop()
+                continue
+            except IndexError as e:
+                break
+        for key in current_b:
+            if key in current_a:
+                if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
+                    next_args.append((current_a[key], current_b[key]))
+                elif current_a[key] == current_b[key]:
+                    pass
+                else:
+                    # in this segment we encounter that a[key] is not equal to
+                    # b[key] which we do not want, roll it back
+                    current_a[key] = current_b[key]
             else:
-                # in this segment we encounter that a[key] is not equal to
-                # b[key] which we do not want, roll it back
-                a[key] = b[key]
-        else:
-            a[key] = b[key]
+                current_a[key] = current_b[key]
+        current_a = None
+        current_b = None
     return a
 
 

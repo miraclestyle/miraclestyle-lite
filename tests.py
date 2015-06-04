@@ -1,4 +1,189 @@
-import functools
+import json
+
+def override_dict(a, b):
+    current_a = a
+    current_b = b
+    next_args = []
+    while True:
+        if current_b is None:
+            try:
+                current_a, current_b = next_args.pop()
+                continue
+            except IndexError as e:
+                break
+        for key in current_b:
+            if key in current_a:
+                if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
+                    next_args.append((current_a[key], current_b[key]))
+                elif current_a[key] == current_b[key]:
+                    pass
+                else:
+                    # in this segment we encounter that a[key] is not equal to
+                    # b[key] which we do not want, roll it back
+                    current_a[key] = current_b[key]
+            else:
+                current_a[key] = current_b[key]
+        current_b = None
+        current_a = None
+    return a
+
+def merge_dicts(a, b):
+    '''
+     Merges dict b into a maintaining values of a intact.
+      >>> stuff = {'1' : 'yes'}
+      >>> stuff2 = {'1' : 'no', 'other' : 1}
+      >>> merge_dicts(stuff, stuff2)
+      >>> {'1': 'yes', 'other': 1}
+    '''
+    current_a = a
+    current_b = b
+    next_args = []
+    while True:
+        if current_b is None:
+            try:
+                current_a, current_b = next_args.pop()
+                continue
+            except IndexError as e:
+                break
+        for key in current_b:
+            if key in current_a:
+                if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
+                    next_args.append((current_a[key], current_b[key]))
+                elif current_a[key] == current_b[key]:
+                    pass
+                else:
+                    # in this segment we encounter that a[key] is not equal to
+                    # b[key] which we do not want
+                    pass
+            else:
+                current_a[key] = current_b[key]
+        current_b = None
+        current_a = None
+    return a
+
+'''
+stuff = {'1' : 'yes', '3': {'bar' : 1, 'far': {'zar': 1}}}
+stuff2 = {'1' : 'no', '3': {'far': {'zar': 4}}, 'other' : 1}
+print merge_dicts(stuff, stuff2)
+print 'now override dict'
+
+stuff = {'1' : 'yes', '3': {'bar' : 1, 'far': {'zar': 1}}}
+stuff2 = {'1' : 'no', '3': {'far': {'zar': 4}}, 'other' : 1}
+print override_dict(stuff, stuff2)
+print 'ok', "\n" * 5
+'''
+
+def merge_dicts2(a, b):
+    '''
+     Merges dict b into a maintaining values of a intact.
+      >>> stuff = {'1' : 'yes'}
+      >>> stuff2 = {'1' : 'no', 'other' : 1}
+      >>> merge_dicts(stuff, stuff2)
+      >>> {'1': 'yes', 'other': 1}
+    '''
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge_dicts2(a[key], b[key])
+            elif a[key] == b[key]:
+                pass
+            else:
+                # in this segment we encounter that a[key] is not equal to
+                # b[key] which we do not want
+                pass
+        else:
+            a[key] = b[key]
+    return a
+
+
+def override_dict2(a, b):
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                override_dict2(a[key], b[key])
+            elif a[key] == b[key]:
+                pass
+            else:
+                # in this segment we encounter that a[key] is not equal to
+                # b[key] which we do not want, roll it back
+                a[key] = b[key]
+        else:
+            a[key] = b[key]
+    return a
+
+
+
+import time
+import cStringIO
+import cProfile
+import pstats
+
+def compute(start):
+    return round((time.time() - start) * 1000, 3)
+
+class Profile():
+
+    def __init__(self):
+        self.start = time.time()
+
+    @property
+    def miliseconds(self):
+        return compute(self.start)
+
+
+def profile(message=None):
+    def decorator(fn):
+        def inner(*args, **kwargs):
+            start = time.time()
+            result = fn(*args, **kwargs)
+            initial_message = None
+            if message is None:
+                initial_message = '%s executed in %s'
+            else:
+                initial_message = message
+            return result
+        return inner
+    return decorator
+
+
+def make_dict(dic, s=1, e=100):
+  hoard = []
+  for x in xrange(s, e):
+    h = {}
+    dic[x] = h
+    hoard.append(h)
+  return hoard
+
+
+def make_final_dict():
+  dic = {}
+  hoard = make_dict(dic)
+  for h in hoard:
+    ho = make_dict(h)
+    for b in ho:
+      make_dict(b)
+  return dic
+
+d1 = make_final_dict()
+d2 = make_final_dict()
+
+d3 = make_final_dict()
+d4 = make_final_dict()
+
+
+
+d = Profile()
+override_dict2(d3, d4)
+print 'override_dict2', d.miliseconds
+
+d = Profile()
+override_dict(d1, d2)
+print 'override_dict', d.miliseconds
+
+
+exit()
+
+'''import functools
 import sys
 import types
 def copy_func(f, name=None):
@@ -17,7 +202,7 @@ def fb2(i=0):
   return fb(i + 1)
 
 print fb()
-exit()
+exit()'''
 
 import ast
 import os

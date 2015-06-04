@@ -49,27 +49,37 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
         current_structure = current_structure[path]
 
     def parse_structure(structure):
-      for key, value in structure:
-        if not hasattr(value, 'iteritems'):
-          continue
-        current = value.get('path')
-        current_total = len(current)-1
-        parent = current[:-1]
-        new_cat = {}
-        new_cat['id'] = hashlib.md5(''.join(current)).hexdigest()
-        if parent:
-          new_cat['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
-        new_cat['name'] = ' / '.join(current)
-        new_cat['state'] = ['indexable']
-        if len(value) < 2:
-          new_cat['state'].append('visible') # leafs
-        new_cat = Category(**new_cat)
-        new_cat._use_rule_engine = False
-        new_cat._use_record_engine = False
-        write_data.append(new_cat)
-        if len(value) > 1:
-          # roots
-          parse_structure(value.iteritems())
+      current_structure = structure
+      next_args = []
+      while True:
+        if not current_structure:
+          try:
+            current_structure = next_args.pop()
+            continue
+          except IndexError as e:
+            break
+        for key, value in current_structure:
+          if not hasattr(value, 'iteritems'):
+            continue
+          current = value.get('path')
+          current_total = len(current)-1
+          parent = current[:-1]
+          new_cat = {}
+          new_cat['id'] = hashlib.md5(''.join(current)).hexdigest()
+          if parent:
+            new_cat['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
+          new_cat['name'] = ' / '.join(current)
+          new_cat['state'] = ['indexable']
+          if len(value) < 2:
+            new_cat['state'].append('visible') # leafs
+          new_cat = Category(**new_cat)
+          new_cat._use_rule_engine = False
+          new_cat._use_record_engine = False
+          write_data.append(new_cat)
+          if len(value) > 1:
+            # roots
+            next_args.append(value.iteritems())
+        current_structure = None
     parse_structure(structure.iteritems())
     log.debug('Writing %s categories' % len(write_data))
     for ent in write_data:

@@ -35,8 +35,6 @@ import util
 import settings
 import errors
 
-sys.setrecursionlimit(2147483647)
-
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
 # For details see: https://groups.google.com/d/msg/appengine-ndb-discuss/iSVBG29MAbY/a54rawIy5DUJ
 
@@ -951,11 +949,11 @@ class _BaseModel(object):
     next_args = []
     while True:
       if current_field_key is None:
-        if not len(next_args):
-          break
-        else:
+        try:
           current_permissions, current_entity, current_field_key, current_field = next_args.pop()
           continue
+        except IndexError as e:
+          break
       if (not current_field_key in current_permissions) or (not current_permissions[current_field_key]['visible']):
         current_entity.remove_output(current_field_key)
         current_field_key = None
@@ -992,95 +990,117 @@ class _BaseModel(object):
     Otherwise go one level down and check again.
     
     '''
-    if (field_value is None and not field.can_be_none) or (hasattr(field, '_updateable') and (not field._updateable and not field._deleteable)):
-      return
-    if (field_key in permissions):
-      # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
-      if not hasattr(field, 'is_structured') or not field.is_structured:
-        if not permissions[field_key]['writable']:
-          try:
-            setattr(entity, field_key, field_value)
-          except TypeError as e:
-            util.log.debug('--RuleWrite: setattr error: %s' % e)
-          except (ComputedPropertyError, TypeError) as e:
-            pass
-      else:
-        child_entity = getattr(entity, field_key) # child entity can also be none, same destiny awaits it as with field_value
-        child_entity = child_entity.value
-        if hasattr(field_value, 'has_value'):
-          field_value = field_value.value
-        field_value_mapping = {}  # Here we hold references of every key from original state.
-        if child_entity is None and not field._required:
-          # if supplied value from user was none, and this field was not required and if user does not have permission
-          # to override it into None, we must revert it completely
-          # this is because if we put None on properties that are not required
-          if not permissions[field_key]['writable']:
-            setattr(entity, field_key, field_value) # revert entire structure
-          return
-        if field._repeated:
-          # field_value can be none, and below we iterate it
-          # @note field_value can be None. In that case field_value_mapping will remain empty dict
-          if field_value is not None:
-            for field_value_item in field_value:
-              '''Most of the time, dict keys are int, string an immutable. But generally a key can be anything
-              http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
-              So using dict[entity.key] = entity.key maybe?
-              I'm not sure what's the overhead in using .urlsafe(), but this is something that we can look at.
-              Most of the information leads to conclusion that its recommended using immutable objects e.g. int, str
-              so anyways all the current code is fine, its just that we can take more simplification in consideration.
-              '''
-              if field_value_item.key:
-                field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
-        if not permissions[field_key]['writable']:
-          # if user has no permission on top level, and attempts to append new items that do not exist in
-          # original values, those values will be removed completely.
-          if field._repeated:
-            to_delete = []
-            for current_value in child_entity:
-              if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
-                to_delete.append(current_value)
-            for delete in to_delete:
-              child_entity.remove(delete)
-        if not permissions[field_key]['writable']:
-          # If we do not have permission and this is not a local structure,
-          # all items that got marked with ._state == 'delete' must have their items removed from the list
-          # because they won't even get chance to be deleted/updated and sent to datastore again.
-          # That is all good, but the problem with that is when the items get returned to the client, it will
-          # "seem" that they are deleted, because we removed them from the entity.
-          # So in that case we must preserve them in memory, and switch their _state into modified.
-          if field._repeated:
-            for current_value in child_entity:
-              if current_value._state == 'deleted':
-                current_value._state = 'modified'
-          else:
-            # If its not repeated, child_entities state will be set to modified
-            child_entity._state = 'modified'
-        # Here we begin the process of field drill.
-        for child_field_key, child_field in field.get_model_fields().iteritems():
-          if field._repeated:
-            # They are bound dict[key_urlsafe]Â = item
-            for i, child_entity_item in enumerate(child_entity):
-              if child_entity_item._state != 'deleted': 
-                '''No need to process deleted entity, since user already has permission to delete it.
-                This is mainly because of paradox:
-                  catalog._images = writable
-                    catalog._images.size = not writable
-                    .... and every other field is not writable
-                  So generally loop does not need to loop to substructure because user is deleteing entire branch.
+    current_permissions = permissions
+    current_entity = entity
+    current_field_key = field_key
+    current_field = field
+    current_field_value = field_value
+    next_args = []
+    i = 0
+    while True:
+      i += 1
+      if i > 100000:
+        util.log.debug(['Infinite loop detected at ', current_permissions, current_entity, current_field_key, current_field, current_field_value])
+        break
+      if current_field_key is None:
+        try:
+          args = next_args.pop()
+          current_permissions, current_entity, current_field_key, current_field, current_field_value = args
+          continue
+        except IndexError as e:
+          break
+      if (current_field_value is None and not current_field.can_be_none) or (hasattr(current_field, '_updateable') and (not current_field._updateable and not current_field._deleteable)):
+        current_field_key = None
+        continue
+      if (current_field_key in current_permissions):
+        # For simple (non-structured) fields, if writting is denied, try to roll back to their original value!
+        if not hasattr(current_field, 'is_structured') or not current_field.is_structured:
+          if not current_permissions[current_field_key]['writable']:
+            try:
+              setattr(current_entity, current_field_key, current_field_value)
+            except TypeError as e:
+              util.log.debug('--RuleWrite: setattr error: %s' % e)
+            except (ComputedPropertyError, TypeError) as e:
+              pass
+        else:
+          child_entity = getattr(current_entity, current_field_key) # child entity can also be none, same destiny awaits it as with field_value
+          child_entity = child_entity.value
+          if hasattr(current_field_value, 'has_value'):
+            current_field_value = current_field_value.value
+          field_value_mapping = {}  # Here we hold references of every key from original state.
+          if child_entity is None and not current_field._required:
+            # if supplied value from user was none, and this field was not required and if user does not have permission
+            # to override it into None, we must revert it completely
+            # this is because if we put None on properties that are not required
+            if not current_permissions[current_field_key]['writable']:
+              setattr(current_entity, current_field_key, current_field_value) # revert entire structure
+            current_field_key = None
+            continue
+          if current_field._repeated:
+            # field_value can be none, and below we iterate it
+            # @note field_value can be None. In that case field_value_mapping will remain empty dict
+            if current_field_value is not None:
+              for field_value_item in current_field_value:
+                '''Most of the time, dict keys are int, string an immutable. But generally a key can be anything
+                http://stackoverflow.com/questions/7560172/class-as-dictionary-key-in-python
+                So using dict[entity.key] = entity.key maybe?
+                I'm not sure what's the overhead in using .urlsafe(), but this is something that we can look at.
+                Most of the information leads to conclusion that its recommended using immutable objects e.g. int, str
+                so anyways all the current code is fine, its just that we can take more simplification in consideration.
                 '''
-                # If the item has the built key, it is obviously the item that needs update, so in that case fetch it from the
-                # field_value_mapping.
-                # If it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state.
-                if child_entity_item.key:
-                  child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe())  # Always get by key in order to match the editing sequence.
-                  child_field_value = getattr(child_field_value, child_field_key, None)
-                else:
-                  child_field_value = None
-                cls._rule_write(permissions[field_key], child_entity_item, child_field_key, child_field, child_field_value)
-          else:
-            if child_entity._state != 'deleted':
-              cls._rule_write(permissions[field_key], child_entity, child_field_key, child_field, getattr(field_value, child_field_key, None))
-  
+                if field_value_item.key:
+                  field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
+          if not current_permissions[current_field_key]['writable']:
+            # if user has no permission on top level, and attempts to append new items that do not exist in
+            # original values, those values will be removed completely.
+            if current_field._repeated:
+              to_delete = []
+              for current_value in child_entity:
+                if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
+                  to_delete.append(current_value)
+              for delete in to_delete:
+                child_entity.remove(delete)
+          if not current_permissions[current_field_key]['writable']:
+            # If we do not have permission and this is not a local structure,
+            # all items that got marked with ._state == 'delete' must have their items removed from the list
+            # because they won't even get chance to be deleted/updated and sent to datastore again.
+            # That is all good, but the problem with that is when the items get returned to the client, it will
+            # "seem" that they are deleted, because we removed them from the entity.
+            # So in that case we must preserve them in memory, and switch their _state into modified.
+            if current_field._repeated:
+              for current_value in child_entity:
+                if current_value._state == 'deleted':
+                  current_value._state = 'modified'
+            else:
+              # If its not repeated, child_entities state will be set to modified
+              child_entity._state = 'modified'
+          # Here we begin the process of field drill.
+          for child_field_key, child_field in current_field.get_model_fields().iteritems():
+            if current_field._repeated:
+              # They are bound dict[key_urlsafe] = item
+              for i, child_entity_item in enumerate(child_entity):
+                if child_entity_item._state != 'deleted': 
+                  '''No need to process deleted entity, since user already has permission to delete it.
+                  This is mainly because of paradox:
+                    catalog._images = writable
+                      catalog._images.size = not writable
+                      .... and every other field is not writable
+                    So generally loop does not need to loop to substructure because user is deleteing entire branch.
+                  '''
+                  # If the item has the built key, it is obviously the item that needs update, so in that case fetch it from the
+                  # field_value_mapping.
+                  # If it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state.
+                  if child_entity_item.key:
+                    child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe())  # Always get by key in order to match the editing sequence.
+                    child_field_value = getattr(child_field_value, child_field_key, None)
+                  else:
+                    child_field_value = None
+                  next_args.append((current_permissions[current_field_key], child_entity_item, child_field_key, child_field, child_field_value))
+            else:
+              if child_entity._state != 'deleted':
+                next_args.append((current_permissions[current_field_key], child_entity, child_field_key, child_field, getattr(current_field_value, child_field_key, None)))
+      current_field_key = None
+           
   def rule_write(self):
     if self._use_rule_engine:
       if not hasattr(self, '_field_permissions'):
@@ -1107,10 +1127,10 @@ class _BaseModel(object):
       try:
         field_key, field = current_fields_iter.next()
       except StopIteration as e:
-        if len(next_args):
+        try:
           current_fields, current_fields_iter, current_field_permissions = next_args.pop()
           continue
-        else:
+        except IndexError as e:
           break
       if field_key not in current_field_permissions:
           current_field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
@@ -1145,21 +1165,13 @@ class _BaseModel(object):
       try:
         key, value = current_permissions_iter.next()
       except StopIteration as e:
-        if len(next_args):
-          next_arg = next_args.pop()
-          current_permissions = next_arg['current_permissions']
-          current_parent_permissions = next_arg['current_parent_permissions']
-          current_permissions_iter = next_arg['current_permissions_iter']
-          current_root = next_arg['current_root']
+        try:
+          current_root, current_parent_permissions, current_permissions, current_permissions_iter = next_args.pop()
           continue
-        else:
+        except IndexError as e:
           break
       if isinstance(value, dict):
-        next_arg = {'current_root': False if current_parent_permissions else True,
-                    'current_parent_permissions': current_permissions,
-                    'current_permissions': value,
-                    'current_permissions_iter': value.iteritems()}
-        next_args.append(next_arg)
+        next_args.append((False if current_parent_permissions else True, current_permissions, value, value.iteritems()))
       else:
         if isinstance(value, list) and len(value):
           if (strict):
@@ -1191,12 +1203,12 @@ class _BaseModel(object):
     self.add_output('_field_permissions')
   
   def record(self):
-    if not (self.gete_kind() == '0') and self._use_record_engine and self.key and self.key_id:
+    if not (self.get_kind() == '0') and self._use_record_engine and self.key and self.key_id:
       record_arguments = getattr(self._root, '_record_arguments', None)
       if record_arguments and record_arguments.get('agent') and record_arguments.get('action'):
         log_entity = record_arguments.pop('log_entity', True)
         # @todo We have no control over argument permissions! (if entity._field_permissions['_records'][argument_key]['writable']:)
-        record = Record(parent=self.key, **record_arguments)
+        record = Model._kind_map['0'](parent=self.key, **record_arguments)
         if log_entity is True:
           record.log_entity(self)
         return record.put_async()  # @todo How do we implement put_multi in this situation!?
@@ -1547,23 +1559,17 @@ class _BaseModel(object):
         else:
           maybe = False
         if maybe is False:
-          if len(later) == 0:
+          try:
+            sets = later.pop()
+            continue
+          except IndexError as e:
             break
-          else:
-            try:
-              sets = later.pop()
-            except IndexError as e:
-              break
-          continue
         if isinstance(maybe, list):
           for m in maybe:
             later.append(m)
           force_maybe_false = True
         else:
-          value = maybe[0]
-          field_key = maybe[1]
-          field = maybe[2]
-          value_options = maybe[3]
+          value, field_key, field, value_options = maybe
           force_maybe_false = False
       self._next_read_arguments = initial_value_options
       return self._next_read_arguments

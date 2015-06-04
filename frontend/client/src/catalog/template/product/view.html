@@ -82,7 +82,7 @@
                                                 </md-button>
                                             </div>
                                             <div class="product-quantity-input-wrapper">
-                                                <input class="text-input product-quantity-input display1" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity" />
+                                                <input ng-change="changedQuantity()" class="text-input product-quantity-input display1" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity" />
                                              
                                             </div>
                                             <div class="product-quantity-control">

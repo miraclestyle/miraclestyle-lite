@@ -204,7 +204,7 @@ class RulePrepare(orm.BaseModel):
   _kind = 93
   
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}

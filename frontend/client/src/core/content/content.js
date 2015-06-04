@@ -99,7 +99,7 @@
                         h2: true,
                         h3: true,
                         h4: true,
-                        a: {
+                        /*a: {
                             href: function (a) {
                                 var regex = /^http/,
                                     regex2 = '/^#/';
@@ -114,7 +114,7 @@
                                 }
                                 return '';
                             },
-                        },
+                        },*/
                         h5: true,
                         h6: true,
                         ul: true,
