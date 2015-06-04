@@ -1,4 +1,5 @@
 import json
+import sys
 
 def override_dict(a, b):
     current_a = a
@@ -136,13 +137,34 @@ def make_final_dict():
       make_dict(b)
   return dic
 
+'''
 d1 = make_final_dict()
 d2 = make_final_dict()
 
 d3 = make_final_dict()
 d4 = make_final_dict()
+'''
 
+sys.setrecursionlimit(100000000)
 
+def make_deep_dict():
+  dic = {}
+  cdic = dic
+  i = 0
+  while True:
+    i += 1
+    ndic = {}
+    cdic[str(i)] = ndic
+    cdic = ndic
+    if i > 10000:
+      break
+  return dic
+
+d1 = make_deep_dict()
+d2 = make_deep_dict()
+
+d3 = make_deep_dict()
+d4 = make_deep_dict()
 
 d = Profile()
 override_dict2(d3, d4)
@@ -153,7 +175,7 @@ override_dict(d1, d2)
 print 'override_dict', d.miliseconds
 
 
-#exit()
+exit()
 
 '''import functools
 import sys
