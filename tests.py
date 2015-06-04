@@ -28,13 +28,6 @@ def override_dict(a, b):
     return a
 
 def merge_dicts(a, b):
-    '''
-     Merges dict b into a maintaining values of a intact.
-      >>> stuff = {'1' : 'yes'}
-      >>> stuff2 = {'1' : 'no', 'other' : 1}
-      >>> merge_dicts(stuff, stuff2)
-      >>> {'1': 'yes', 'other': 1}
-    '''
     current_a = a
     current_b = b
     next_args = []
@@ -61,26 +54,7 @@ def merge_dicts(a, b):
         current_a = None
     return a
 
-'''
-stuff = {'1' : 'yes', '3': {'bar' : 1, 'far': {'zar': 1}}}
-stuff2 = {'1' : 'no', '3': {'far': {'zar': 4}}, 'other' : 1}
-print merge_dicts(stuff, stuff2)
-print 'now override dict'
-
-stuff = {'1' : 'yes', '3': {'bar' : 1, 'far': {'zar': 1}}}
-stuff2 = {'1' : 'no', '3': {'far': {'zar': 4}}, 'other' : 1}
-print override_dict(stuff, stuff2)
-print 'ok', "\n" * 5
-'''
-
 def merge_dicts2(a, b):
-    '''
-     Merges dict b into a maintaining values of a intact.
-      >>> stuff = {'1' : 'yes'}
-      >>> stuff2 = {'1' : 'no', 'other' : 1}
-      >>> merge_dicts(stuff, stuff2)
-      >>> {'1': 'yes', 'other': 1}
-    '''
     for key in b:
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
@@ -110,8 +84,6 @@ def override_dict2(a, b):
         else:
             a[key] = b[key]
     return a
-
-
 
 import time
 import cStringIO
@@ -181,7 +153,7 @@ override_dict(d1, d2)
 print 'override_dict', d.miliseconds
 
 
-exit()
+#exit()
 
 '''import functools
 import sys

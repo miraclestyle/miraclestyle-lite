@@ -22,6 +22,7 @@ import errors
 
 # @todo __all__ is needed for everything that gets wildcard imported
 
+
 class UnitConversionError(errors.BaseKeyValueError):
 
     KEY = 'unit_convert_value'
@@ -376,6 +377,7 @@ def partition_list(complete_list, partition_length):
 def noop(*args, **kwargs):
     pass
 
+
 class LoggingWrapper(object):
 
     def __getattr__(self, name, default=None):
@@ -390,7 +392,8 @@ class LoggingWrapper(object):
                             return logger
                         else:
                             return noop
-                    return logger # always log exceptions that do not have `LOG` constant
+                    # always log exceptions that do not have `LOG` constant
+                    return logger
                 return decide
             return logger
         else:
@@ -398,13 +401,14 @@ class LoggingWrapper(object):
 
 log = LoggingWrapper()
 
-### DEBUG ###
+
 def debug():
     """ Enter pdb in App Engine
 
     Renable system streams for it.
     """
-    pdb.Pdb(stdin=getattr(sys,'__stdin__'), stdout=getattr(sys,'__stderr__')).set_trace(sys._getframe().f_back)
+    pdb.Pdb(stdin=getattr(sys, '__stdin__'), stdout=getattr(
+        sys, '__stderr__')).set_trace(sys._getframe().f_back)
 
 
 ########## Unit manipulation functions! ##########
