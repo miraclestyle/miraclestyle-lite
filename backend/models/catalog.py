@@ -667,7 +667,8 @@ class Catalog(orm.BaseExpando):
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             # notify when user publishes to gets mail
             Notify(cfg={'s': {'subject': notifications.CATALOG_PUBLISH_SUBJECT,
-                              'body': notifications.CATALOG_PUBLISH_BODY, 'sender': settings.NOTIFY_EMAIL},
+                              'body': notifications.CATALOG_PUBLISH_BODY,
+                              'sender': settings.NOTIFY_EMAIL},
                         'd': {'recipient': '_catalog.root_entity._primary_email'}})
             ]
           )

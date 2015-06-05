@@ -37,6 +37,9 @@ CATALOG_PRICETAG_PROCESS_DUPLICATE_BODY = template('catalog/pricetag_process_dup
 CATALOG_DISCONTINUE_SUBJECT = template('catalog/discontinue_subject.html')
 CATALOG_DISCONTINUE_BODY = template('catalog/discontinue_body.html')
 
+COLLECTION_NOTIFY_BODY = template('collection/notify_body.html')
+COLLECTION_NOTIFY_SUBJECT = template('collection/notify_subject.html')
+
 ORDER_COMPLETE_SUBJECT = template('order/complete_subject.html')
 ORDER_COMPLETE_BODY = template('order/complete_body.html')
 

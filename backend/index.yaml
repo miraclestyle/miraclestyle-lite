@@ -64,6 +64,20 @@ indexes:
   - name: '1'
     direction: desc
 
+# Catalog ancestor, state, published_date
+- kind: '31'
+  ancestor: yes
+  properties:
+  - name: '6'
+  - name: '4'
+
+# Catalog ancestor, state, updated
+- kind: '31'
+  ancestor: yes
+  properties:
+  - name: '6'
+  - name: '2'
+
 # Unit active and order by name ASC
 - kind: '17'
   properties:
