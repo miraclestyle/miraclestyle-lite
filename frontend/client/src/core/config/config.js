@@ -375,6 +375,7 @@
             addLines: 'Add Line',
             edit18: 'Following',
             viewAddresses: 'Addresses',
+            addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
             addLocations: 'Add Locations',
             editLines: 'Edit Lines',

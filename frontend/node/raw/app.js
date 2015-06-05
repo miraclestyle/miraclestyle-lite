@@ -1358,6 +1358,7 @@ $(function () {
             addLines: 'Add Line',
             edit18: 'Following',
             viewAddresses: 'Addresses',
+            addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
             addLocations: 'Add Locations',
             editLines: 'Edit Lines',
@@ -11332,6 +11333,23 @@ $(function () {
             };
 
         }))
+        .directive('fillEmptySpace', function () {
+            return {
+                link: function (scope, element, attrs) {
+                    var scroller = element.parents('.overflow-y:first');
+                    scope.$on('modalResize', function () {
+                        var height = element.height(),
+                            scrollHeight = scroller.height(),
+                            lastLi = element.find('.list:last'),
+                            lastLiHeight = lastLi.outerHeight();
+                        if (scrollHeight > height) {
+                            lastLi.css('min-height', lastLiHeight + (scrollHeight - height));
+                        }
+
+                    });
+                }
+            };
+        })
         .directive('helpRender', function () {
             return {
                 scope: {

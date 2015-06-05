@@ -112,8 +112,8 @@ class Seller(orm.BaseExpando):
     '_feedback': orm.SuperRemoteStructuredProperty(SellerFeedback),
     '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
     '_records': orm.SuperRecordProperty('23'),
-    '_follower_count': orm.SuperComputedProperty(lambda self: self.get_followers_count()),
-    '_notified_followers_count': orm.SuperComputedProperty(lambda self: self.get_notified_followers_count()),
+    '_follower_count': orm.SuperComputedProperty(lambda self: self.get_followers_count_callback()),
+    '_notified_followers_count': orm.SuperComputedProperty(lambda self: self.get_notified_followers_count_callback()),
     '_currency': orm.SuperReferenceProperty('17', callback=lambda self: self.get_currency_callback(),
                                                   format_callback=lambda self, value: value)
     }
@@ -124,10 +124,9 @@ class Seller(orm.BaseExpando):
       orm.ActionPermission('23', [orm.Action.build_key('23', 'create'),
                                   orm.Action.build_key('23', 'update'),
                                   orm.Action.build_key('23', 'prepare')], True,
-                           'action.key_id_str not in ["cron", "cron_generate_feedback_stats"] and not account._is_guest and entity._original.key_root == account.key'),
+                           'action.key_id_str not in ["cron_generate_feedback_stats"] and not account._is_guest and entity._original.key_root == account.key'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'read')], True,
                            'action.key_id_str not in ["cron", "cron_generate_feedback_stats"] and not account._is_guest and entity._original.root_entity._original.state == "active"'),
-      orm.ActionPermission('23', [orm.Action.build_key('23', 'cron')], True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.ActionPermission('23', [orm.Action.build_key('23', 'cron_generate_feedback_stats')], True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.FieldPermission('23', ['_feedback'], True, True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.FieldPermission('23', ['name', 'logo', '_content', '_plugin_group', '_records'], True, True,
@@ -196,30 +195,9 @@ class Seller(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      key=orm.Action.build_key('23', 'cron'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            SellerCron(cfg={})
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            CallbackExec()
-            ]
-          )
-        ]
-    ),
-    orm.Action(
       key=orm.Action.build_key('23', 'cron_generate_feedback_stats'),
       arguments={
-        'key': orm.SuperKeyProperty(kind='23', required=True),
+        'cursor': orm.SuperStringProperty(),
       },
       _plugin_groups=[
         orm.PluginGroup(
@@ -235,6 +213,7 @@ class Seller(orm.BaseExpando):
           transactional=True,
           plugins=[
             Write(),
+            CallbackExec(),
             Set(cfg={'d': {'output.entity': '_seller'}})
             ]
           )
@@ -242,8 +221,8 @@ class Seller(orm.BaseExpando):
       )
     ]
 
-  def get_notified_followers_count(self):
-    Collection = orm.Model._kind_map.get('18') # @todo import or this
+  def get_notified_followers_count_callback(self):
+    Collection = orm.Model._kind_map['18'] # @todo import or this
     key = 'get_notified_followers_count_%s' % self.key.urlsafe()
     already = mem.get(key)
     if already is None:
@@ -251,8 +230,8 @@ class Seller(orm.BaseExpando):
       mem.set(key, already, settings.CACHE_TIME_NOTIFIED_FOLLOWERS_COUNT)
     return already
 
-  def get_followers_count(self):
-    Collection = orm.Model._kind_map.get('18') # @todo import or this
+  def get_followers_count_callback(self):
+    Collection = orm.Model._kind_map['18'] # @todo import or this
     key = 'get_followers_count_%s' % self.key.urlsafe()
     already = mem.get(key)
     if already is None:

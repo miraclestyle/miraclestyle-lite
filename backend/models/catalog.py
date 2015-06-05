@@ -291,7 +291,7 @@ class Catalog(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, searchable=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True, searchable=True)
   name = orm.SuperStringProperty('3', required=True, searchable=True)
-  published = orm.SuperDateTimeProperty('4', required=False, searchable=True)  # @todo This field is currently not required however, it could be beneficial for search, sorting, ranking, etc.! It can be renamed to published. In the future it could be used for scheduling publishing (with name publish_date)!
+  published_date = orm.SuperDateTimeProperty('4', required=False, searchable=True)  # @todo This field is currently not required however, it could be beneficial for search, sorting, ranking, etc.! It can be renamed to published. In the future it could be used for scheduling publishing (with name publish_date)!
   discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)  # @todo On client side this field should be labeled Expiration Date, so not sure if it's smart to name the property expiration_date?
   state = orm.SuperStringProperty('6', required=True, default='draft',
                                   choices=('draft', 'published', 'discontinued'), searchable=True)
@@ -367,11 +367,11 @@ class Catalog(orm.BaseExpando):
                                   orm.Action.build_key('31', 'cron')], True, 'account._is_taskqueue'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'public_search')], True, 'True'),
       # field permissions
-      orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
+      orm.FieldPermission('31', ['created', 'updated', 'name', 'published_date', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images', '_records'], False, True,
                           'account._is_taskqueue or account._root_admin or (not account._is_guest \
                           and entity._original.key_root == account.key)'),
-      orm.FieldPermission('31', ['name', 'published', 'discontinue_date',
+      orm.FieldPermission('31', ['name', 'published_date', 'discontinue_date',
                                  'cover', '_images', '_records'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key \
                           and entity._original.state == "draft"'),
@@ -384,7 +384,7 @@ class Catalog(orm.BaseExpando):
                           or (action.key_id_str == "publish" and entity.state == "published") \
                           or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
                           or (action.key_id_str == "sudo" and entity.state != "draft")'),
-      orm.FieldPermission('31', ['name', 'published', 'discontinue_date',
+      orm.FieldPermission('31', ['name', 'published_date', 'discontinue_date',
                                  'state', 'cover', '_images'], False, True,
                           'entity._original.state == "published" or entity._original.state == "discontinued"'),
       orm.FieldPermission('31', ['_records.note'], True, True, 'account._root_admin'),
@@ -396,7 +396,7 @@ class Catalog(orm.BaseExpando):
                                  '_images.pricetags._product._instances.images.gs_object_name', '_images.pricetags._product._instances.images.serving_url', '_images.pricetags._product._instances.images.proportion'], False, None,
                           '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", \
                           "product_instance_upload_images", "catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
-      orm.FieldPermission('31', ['created', 'updated', 'name', 'published', 'discontinue_date',
+      orm.FieldPermission('31', ['created', 'updated', 'name', 'published_date', 'discontinue_date',
                                  'state', 'cover', 'cost', '_images'], True, True,
                           '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
       orm.FieldPermission('31', ['_seller'], False, True, 'True'),
@@ -654,7 +654,7 @@ class Catalog(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            Set(cfg={'s': {'_catalog.state': 'published', '_catalog.published': datetime.datetime.now()}}),
+            Set(cfg={'s': {'_catalog.state': 'published', '_catalog.published_date': datetime.datetime.now()}}),
             RulePrepare(),
             RuleExec()
             ]

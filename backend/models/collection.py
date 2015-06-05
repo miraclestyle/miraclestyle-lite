@@ -10,6 +10,7 @@ import orm, settings
 from models.base import *
 from plugins.base import *
 
+from plugins.collection import *
 
 __all__ = ['Collection']
 
@@ -27,7 +28,7 @@ class Collection(orm.BaseExpando):
     '_records': orm.SuperRecordProperty('18'),
     '_sellers': orm.SuperReferenceStructuredProperty('23', autoload=False, repeated=True,
                                                      callback=lambda self: orm.get_multi_async(self.sellers),
-                                                     format_callback=lambda self, entities: self._get_asynced_sellers(entities))
+                                                     format_callback=lambda self, entities: self.get_asynced_sellers(entities))
     }
   
   _global_role = GlobalRole(
@@ -35,6 +36,7 @@ class Collection(orm.BaseExpando):
       orm.ActionPermission('18', [orm.Action.build_key('18', 'update'),
                                   orm.Action.build_key('18', 'read')], True,
                            'not account._is_guest and entity._original.key_root == account.key'),
+      orm.ActionPermission('23', [orm.Action.build_key('18', 'cron_notify')], True, 'account._is_taskqueue or account._is_cron or account._root_admin'),
       orm.FieldPermission('18', ['_sellers'], None, True, 'not account._is_guest'),
       orm.FieldPermission('18', ['notify', 'sellers', '_records', '_sellers.name', '_sellers.logo'], True, True,
                           'not account._is_guest and entity._original.key_root == account.key'),
@@ -77,6 +79,32 @@ class Collection(orm.BaseExpando):
         ]
       ),
     orm.Action(
+      key=orm.Action.build_key('18', 'cron_notify'),
+      arguments={
+        'cursor': orm.SuperStringProperty(),
+      },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            CollectionCronNotify(cfg={})
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Notify(cfg={'d': {'recipient': '_recipient._primary_email',
+                              'discontinued_catalogs': '_all_discontinued_catalogs',
+                              'published_catalogs': '_all_published_catalogs'}}),
+            CallbackExec()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
       key=orm.Action.build_key('18', 'read'),
       arguments={
         'account': orm.SuperKeyProperty(kind='11', required=True),
@@ -96,7 +124,7 @@ class Collection(orm.BaseExpando):
       )
     ]
 
-  def _get_asynced_sellers(self, entities):
+  def get_asynced_sellers(self, entities):
     orm.get_async_results(entities)
     return entities
   

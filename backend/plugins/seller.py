@@ -16,7 +16,7 @@ import orm
 from tools.base import *
 from util import *
 
-__all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats', 'SellerCron']
+__all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats']
 
 
 class SellerCronGenerateFeedbackStats(orm.BaseModel):
@@ -26,11 +26,19 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    seller = context._seller
+    Seller = context.models['23']
     Order = context.models['34']
     SellerFeedback = context.models['37']
     SellerFeedbackStats = context.models['36']
     Account = context.models['11']
+    sellers = Seller.query().fetch_page(1, start_cursor=context.input.get('cursor'))
+    if len(sellers) and len(sellers[0]):
+      seller = sellers[0][0]
+    else:
+      # reached end
+      return
+    context._seller = seller
+    context.entity = seller
     today = datetime.datetime.now()
     start_of_this_month = datetime.datetime(today.year, today.month, today.day)
     year_start = start_of_this_month - datetime.timedelta(days=365)
@@ -98,6 +106,11 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
     for i, s in enumerate(set_feedbacks):
       s._sequence = i
     context._seller._feedback = SellerFeedback(feedbacks=set_feedbacks)
+    if sellers[2] and sellers[1]: # if result.more and result.cursor
+      data = {'action_id': 'cron_generate_feedback_stats',
+              'action_model': '23',
+              'cursor': sellers[1]}
+      context._callbacks.append(('callback', data))
 
 class SellerSetupDefaults(orm.BaseModel):
   
@@ -139,26 +152,3 @@ class SellerSetupDefaults(orm.BaseModel):
         plugin_group.plugins.append(default_carrier)
       if not default_paypal_payment_find:
         plugin_group.plugins.append(default_paypal_payment)
-
-
-class SellerCron(orm.BaseModel):
-
-  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-
-  def run(self, context):
-    Seller = context.models['23']
-    sellers = Seller.query().fetch_page(4, start_cursor=context.input.get('cursor'))
-    for seller in sellers[0]:
-      data = {'action_id': 'cron_generate_feedback_stats',
-              'action_model': '23',
-              'key': seller.key_urlsafe}
-      context._callbacks.append(('callback', data))
-    cursor = None
-    if sellers[2] and sellers[1]:
-      cursor = sellers[1]
-    if cursor is None:
-      return
-    data = {'action_id': 'cron',
-            'action_model': '23',
-            'cursor': cursor}
-    context._callbacks.append(('callback', data))
