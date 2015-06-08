@@ -20,7 +20,7 @@ class Unit(orm.BaseExpando):
   _use_cache = True
   _use_memcache = True
   
-  measurement = orm.SuperStringProperty('1', required=True)  # By definition, once a unit is created, measurement can not be modified! @todo We can implement choices=('Currency', 'Mass'...), or we can use query projections for data presentation from this property! Shall we incorporate measurement value into key_id?
+  measurement = orm.SuperStringProperty('1', required=True)
   name = orm.SuperStringProperty('2', required=True)
   symbol = orm.SuperStringProperty('3', required=True, indexed=False)
   rate = orm.SuperDecimalProperty('4', indexed=False)  # The coefficient for the formula: 1 (base unit) = coef (this unit) - digits=(12, 12).

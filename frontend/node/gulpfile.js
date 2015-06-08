@@ -36,14 +36,15 @@ gulp.task('templates', function () {
         .pipe(gulp.dest('../client/dist'));
 });
 
-var timer = null;
+var running = null;
 
 gulp.task('watch', function () {
     gulp.watch('../client/src/**').on('change', function (e) {
-        if (timer) {
-            clearTimeout(timer);
+        if (running) {
+            return false;
         }
-        timer = setTimeout(function () {
+        (function () {
+            running = true;
             var arg = '',
                 command,
                 build;
@@ -71,8 +72,10 @@ gulp.task('watch', function () {
                     console.log('Succesfull build');
                 }
                 console.timeEnd(build);
+
+                running = false;
             });
-        }, 2000);
+        }());
     });
 });
 

@@ -133,12 +133,12 @@ class StructuredPropertyValue(PropertyValue):
         self._property_value = property_value
       self._set_parent()
   
-  def _deep_read(self, read_arguments=None):  # @todo Just as entity.read(), this function fails it's purpose by calling both read_async() and read()!!!!!!!!
+  def _deep_read(self, read_arguments=None):
     '''This function will keep calling .read() on its sub-entity-like-properties until it no longer has structured properties.
     This solves the problem of loading data in hierarchy.
     '''
     if self.has_value():
-      entities = self.read_value # @todo this should be .value, but for locally structured .read_value
+      entities = self.read_value
       if not self._property._repeated:
         if not entities:
           entities = []
@@ -2183,7 +2183,7 @@ class SuperPropertyStorageProperty(SuperPickleProperty):
       for name in kwds.iterkeys():
         if name not in possible_kwargs:
           raise FormatError('unexpected_keyword_%s' % name)
-      kwds['name'] = kwds.get('name') # @todo prefix for name
+      kwds['name'] = kwds.get('name')
       if kwds['name'] in parsed:
         raise FormatError('duplicate_property_name_%s' % kwds['name'])
       parsed[kwds['name']] = 1

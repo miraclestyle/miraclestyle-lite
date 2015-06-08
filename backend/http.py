@@ -60,14 +60,6 @@ class JSONEncoder(json.JSONEncoder):
       pass
     return json.JSONEncoder.default(self, o)
 
-  def _iterencode(self, o, _one_shot=False): # @todo this causes overhead, we dont need this at this moment
-    chunks = super(JSONEncoder, self).iterencode(o, _one_shot)
-    for chunk in chunks:
-      chunk = chunk.replace('&', '\\u0026')
-      chunk = chunk.replace('<', '\\u003c')
-      chunk = chunk.replace('>', '\\u003e')
-      yield chunk
-
 
 class RequestHandler(webapp2.RequestHandler):
   '''General-purpose handler from which all other handlers must derrive from.
@@ -237,8 +229,8 @@ class AccountLogin(RequestHandler):
     if provider is None:
        provider = 'google'
     data = self.get_input()
-    data['login_method'] = provider
     data.update({'action_model' : '11',
+                 'login_method': provider,
                  'action_id' : 'login'})
     output = iom.Engine.run(data)
     if 'access_token' in output:
@@ -316,7 +308,7 @@ class Reset(BaseTestHandler):
     ignore = []
     if self.request.get('ignore'):
       ignore = self.request.get('ignore')
-    util.log.debug('DELETE KINDS %s' % kinds)
+    util.log.debug('Delete kinds %s' % kinds)
     for kind in kinds:
       for namespace in namespaces:
         if kind in ignore:
@@ -350,6 +342,31 @@ class Reset(BaseTestHandler):
     util.log.debug('Deleted %s blobs.' % len(keys))
     mem.flush_all()
 
+class BeginMemTest(BaseTestHandler):
+
+  def respond(self):
+    ctx = orm.get_context()
+    i = 0
+    while True:
+      i += 1
+      if i == 100:
+        break
+      ctx.urlfetch('http://128.65.105.64:9982/api/tests/MemTest')
+      ctx.urlfetch('http://128.65.105.64:9982/api/tests/AssertTest')
+
+class MemTest(BaseTestHandler):
+
+  def respond(self):
+    mem.temp_set('cuser', 1)
+
+
+class AssertTest(BaseTestHandler):
+
+  def respond(self):
+    if mem.temp_get('cuser') is not None:
+      util.log.debug('cuser failed, got %s' % mem.temp_get('cuser'))
+
+
 class LoginAs(BaseTestHandler):
 
   def respond(self):
@@ -365,11 +382,6 @@ class LoginAs(BaseTestHandler):
         Account.set_current_account(account, session)
         self.response.set_cookie(settings.COOKIE_AUTH_KEY, '%s|%s' % (account.key_urlsafe, session.session_id), httponly=True)
         self.redirect('/')
-
-class TestAsync(BaseTestHandler):
-
-  def respond(self):
-    pass
 
     
 for k,o in globals().items():

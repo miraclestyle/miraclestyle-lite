@@ -53,7 +53,7 @@ class Account(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   identities = orm.SuperStructuredProperty(AccountIdentity, '3', repeated=True)  # Soft limit 100 instances.
-  state = orm.SuperStringProperty('5', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))  # @todo Not sure what to do here? Shall we disable indexing here?
+  state = orm.SuperStringProperty('5', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))
   sessions = orm.SuperLocalStructuredProperty(AccountSession, '6', repeated=True)  # Soft limit 100 instances.
   
   _default_indexed = False

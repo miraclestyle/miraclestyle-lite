@@ -45,13 +45,7 @@ class Collection(orm.BaseExpando):
 
       ]
     )
-  
-  # @todo beside update, we need to add action that allows you to append to "sellers" key-list
-  # that must be a custom plugin probably because "Set" accomplish it
-  # however with .read and then update combo it is possible without custom action
-  # e.g. read => returns full object
-  # then client can append to sellers the wanted key
-  # and then send update.
+
   _actions = [
     orm.Action(
       key=orm.Action.build_key('18', 'update'),

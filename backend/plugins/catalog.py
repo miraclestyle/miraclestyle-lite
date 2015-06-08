@@ -94,10 +94,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
     if context.action.key.id() != 'catalog_upload_images':
       CatalogImage = context.models['30']
       catalog_images = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).fetch(1)
-      # @todo query cannot be used here because if user reorders catalog image it wont be applied
-      # because that new order is not yet applied
-      # also read arguments can fuck up this pretty bad, meaning that whatever gets loaded into context._images.value gets used here
-      # so this plugin probably needs to be executed after Write plugin along with write plugin after that
+      # use query only when user is not uploading new images
     catalog_cover = context._catalog.cover.value
     if catalog_images:
       for catalog_image in catalog_images:
@@ -117,30 +114,6 @@ class CatalogProcessCoverSet(orm.BaseModel):
         context._catalog.cover.process()
     elif catalog_cover:
       catalog_cover._state = 'deleted'
-    return
-
-    catalog_image = None
-    catalog_images = context._catalog._images.value # @todo this is a problem
-    if catalog_images and len(catalog_images) < 2 and context.action.key.id() != 'catalog_upload_images':
-      CatalogImage = context.models['30']
-      catalog_image = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).get()
-    elif catalog_images is not None:
-      for catalog_image in catalog_images:  # when read arguments are used, this is not correct information @todo fix me
-        if catalog_image._state != 'deleted':
-          break
-    catalog_cover = context._catalog.cover.value
-    if catalog_image:
-      if catalog_cover:
-        if catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
-          context._catalog.cover = copy.deepcopy(catalog_image)
-          context._catalog.cover.value.sequence = 0
-          context._catalog.cover.process()
-      else:
-        context._catalog.cover = copy.deepcopy(catalog_image)
-        context._catalog.cover.value.sequence = 0
-        context._catalog.cover.process()
-    elif catalog_cover:
-      context._catalog.cover._state = 'deleted'
 
 
 # @todo Wee need all published catalogs here, no matter how many of them!

@@ -104,19 +104,18 @@ class Record(BaseExpando):
       kind = self.key_parent.kind()
       modelclass = self._kind_map.get(kind)
       # We cannot use entity.get_fields here directly as it returns 'friendly_field_name: prop', and we need 'prop._name: prop'.
-      # @todo @problem this is not going to work with either Line or Entry.
       properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().iteritems()])
       # Adds properties from parent class to the log entity making it possible to deserialize them properly.
       prop = properties.get(next)
       if prop:
         # prop = copy.deepcopy(prop) no need to deepcopy prop for now, we'll see.
-        self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden!
+        self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be used!
         self._properties[next] = prop
         self.add_output(prop._code_name)  # Besides rule engine, this must be here as well.
     return super(Record, self)._get_property_for(p, indexed, depth)
   
   def log_entity(self, entity):
-    self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be overriden.
+    self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be used.
     for _, prop in entity._properties.iteritems():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
       if isinstance(value, LocalStructuredPropertyValue): # we can only log locally structured data

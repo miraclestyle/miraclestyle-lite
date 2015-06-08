@@ -492,7 +492,7 @@ class PayPalPayment(PaymentMethod):
       mismatches.append('mc_gross')
     if (order.tax_amount != format_value(ipn['tax'], order_currency)):
       mismatches.append('tax')
-    if (order.key.urlsafe() != ipn['invoice']): # @todo we do not use order.name here anymore, but we could after we decide on how to uniquely build it
+    if (order.key.urlsafe() != ipn['invoice']):
       mismatches.append('invoice')
     if (shipping_address.country != ipn['address_country']):
       mismatches.append('address_country')
@@ -862,7 +862,7 @@ class OrderProcessPayment(orm.BaseModel):
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
     payment_plugin = order._payment_method
     if not payment_plugin:
-      raise PluginError('no_payment_method_supplied') # @todo generally payment method should always be present
+      raise PluginError('no_payment_method_supplied')
     # payment_plugin => Instance of PaypalPayment for example.
     payment_plugin.complete(context)
 

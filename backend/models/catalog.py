@@ -242,8 +242,8 @@ class CatalogPricetag(orm.BaseModel):
   
   _use_rule_engine = False
   
-  image_width = orm.SuperIntegerProperty('1', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
-  image_height = orm.SuperIntegerProperty('2', required=True, indexed=False)  # @todo We will test pricetag positioning without these values!
+  image_width = orm.SuperIntegerProperty('1', required=True, indexed=False)
+  image_height = orm.SuperIntegerProperty('2', required=True, indexed=False)
   position_top = orm.SuperFloatProperty('3', required=True, indexed=False)
   position_left = orm.SuperFloatProperty('4', required=True, indexed=False)
   value = orm.SuperJsonProperty('5', required=True, indexed=False)
@@ -291,8 +291,8 @@ class Catalog(orm.BaseExpando):
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, searchable=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True, searchable=True)
   name = orm.SuperStringProperty('3', required=True, searchable=True)
-  published_date = orm.SuperDateTimeProperty('4', required=False, searchable=True)  # @todo This field is currently not required however, it could be beneficial for search, sorting, ranking, etc.! It can be renamed to published. In the future it could be used for scheduling publishing (with name publish_date)!
-  discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)  # @todo On client side this field should be labeled Expiration Date, so not sure if it's smart to name the property expiration_date?
+  published_date = orm.SuperDateTimeProperty('4', required=False, searchable=True)
+  discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)
   state = orm.SuperStringProperty('6', required=True, default='draft',
                                   choices=('draft', 'published', 'discontinued'), searchable=True)
   
@@ -634,7 +634,6 @@ class Catalog(orm.BaseExpando):
             Read(),
             RulePrepare(cfg={'d': {'input': 'input'}}),
             RuleExec(),
-            # @todo We will try to let the rule engine handle ('d': {'ancestor': 'account.key'}).
             Search(),
             RulePrepare(cfg={'path': '_entities'}),
             Set(cfg={'d': {'output.entities': '_entities',
@@ -746,7 +745,7 @@ class Catalog(orm.BaseExpando):
         orm.PluginGroup(
           transactional=True,
           plugins=[
-            Write(),  # 'index_state': 'input.index_state',  # @todo We embed this field on the fly, to indicate what administrator has chosen!
+            Write(),
             RulePrepare(),
             Set(cfg={'d': {'output.entity': '_catalog'}}),
             # use 1 notify plugin with dynamic email
@@ -769,7 +768,6 @@ class Catalog(orm.BaseExpando):
         ]
       ),
     orm.Action(
-      # marketing.SearchWrite() plugin deems this action to allways execute in taskqueue!
       key=orm.Action.build_key('31', 'index'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True)

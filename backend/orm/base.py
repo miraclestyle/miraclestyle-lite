@@ -937,7 +937,7 @@ class _BaseModel(object):
       return None
   
   @classmethod
-  def _rule_read(cls, permissions, entity, field_key, field):  # @todo Not sure if this should be class method, but it seamed natural that way!?
+  def _rule_read(cls, permissions, entity, field_key, field):
     '''If the field is invisible, ignore substructure permissions and remove field along with entire substructure.
     Otherwise go one level down and check again.
     
@@ -1228,7 +1228,7 @@ class _BaseModel(object):
       query = search_arguments['property'].build_datastore_query(search_arguments)
       return query.fetch_page(options.limit, options=options)
   
-  def read(self, read_arguments=None):  # @todo Find a way to minimize synchronous reads here!
+  def read(self, read_arguments=None):
     '''This method loads all sub-entities in async-mode, based on input details.
     It's behaviour is controlled by 'read_arguments' dictioary argument!
     'read_arguments' follows this pattern:
