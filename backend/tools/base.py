@@ -41,8 +41,8 @@ def rule_exec(entity, action):
 def callback_exec(url, callbacks):
   callbacks = normalize(callbacks)
   queues = {}
-  if orm.in_transaction():
-    callbacks = callbacks[:5]
+  if orm.in_transaction() and len(callbacks) > 5:
+    raise ValueError('When in transaction, only up to 5 callbacks are allowed. You provided %s.' % len(callbacks))
   if len(callbacks):
     for callback in callbacks:
       if callback and isinstance(callback, (list, tuple)) and len(callback) == 2:
@@ -84,26 +84,26 @@ def channel_create(token):
 
 
 # @todo We have to consider http://sendgrid.com/partner/google
-def mail_send(**kwargs):
-  message_sender = kwargs.get('sender', None)
+def mail_send(data):
+  message_sender = data.get('sender', None)
   if not message_sender:
-    raise ValueError('`sender` not found in kwargs')
+    raise ValueError('`sender` not found in data')
   message = mail.EmailMessage()
   message.sender = message_sender
-  message.bcc = kwargs['recipient']
-  message.subject = render_template(kwargs['subject'], kwargs).strip()
-  message.html = render_template(kwargs['body'], kwargs).strip()
+  message.bcc = data['recipient']
+  message.subject = render_template(data['subject'], data).strip()
+  message.html = render_template(data['body'], data).strip()
   message.body = message.html
   message.check_initialized()
   message.send()
 
 
-def http_send(**kwargs):
-  kwargs['subject'] = render_template(kwargs['subject'], kwargs).strip()
-  kwargs['body'] = render_template(kwargs['body'], kwargs).strip()
-  urlfetch.fetch(kwargs['recipient'], json.dumps(kwargs), method=urlfetch.POST)
+def http_send(data):
+  data['subject'] = render_template(data['subject'], data).strip()
+  data['body'] = render_template(data['body'], data).strip()
+  urlfetch.fetch(data['recipient'], json.dumps(data), method=urlfetch.POST)
 
 
-def channel_send(**kwargs):
-  message = {'action_id': kwargs['action'].key_id_str, 'body': render_template(kwargs['body'], kwargs).strip(), 'subject': render_template(kwargs['subject'], kwargs).strip()}
-  return channel.send_message(kwargs['recipient'], json.dumps(message))
+def channel_send(data):
+  message = {'action_id': data['action'].key_id_str, 'body': render_template(data['body'], data).strip(), 'subject': render_template(data['subject'], data).strip()}
+  return channel.send_message(data['recipient'], json.dumps(message))

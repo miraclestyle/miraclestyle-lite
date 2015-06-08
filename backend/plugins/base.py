@@ -358,8 +358,8 @@ class Notify(orm.BaseModel):
       values[key] = get_attr(context, value)
     if safe_eval(condition, values):
       if 'mail' in method:
-        mail_send(**values)
+        mail_send(values)
       if 'http' in method:
-        http_send(**values)
+        http_send(values)
       if 'channel' in method:
-        channel_send(**values)
+        channel_send(values)
