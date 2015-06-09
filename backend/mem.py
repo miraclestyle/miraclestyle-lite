@@ -126,3 +126,4 @@ delete_multi = memcache.delete_multi
 incr = memcache.incr
 decr = memcache.decr
 offset_multi = memcache.offset_multi
+flush_all = memcache.flush_all

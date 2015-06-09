@@ -161,37 +161,6 @@ Key._structure = property(_get_key_structure)
 ############ Helpers for orm   ##############
 #############################################
 
-
-class TailRecurseException:
-  def __init__(self, args, kwargs):
-    self.args = args
-    self.kwargs = kwargs
-
-def tail_call_optimized(g):
-  """
-  This function decorates a function with tail call
-  optimization. It does this by throwing an exception
-  if it is it's own grandparent, and catching such
-  exceptions to fake the tail call optimization.
-  
-  This function fails if the decorated
-  function recurses in a non-tail context.
-  """
-  def func(*args, **kwargs):
-    f = sys._getframe()
-    if f.f_back and f.f_back.f_back \
-        and f.f_back.f_back.f_code == f.f_code:
-      raise TailRecurseException(args, kwargs)
-    else:
-      while 1:
-        try:
-          return g(*args, **kwargs)
-        except TailRecurseException, e:
-          args = e.args
-          kwargs = e.kwargs
-  func.__doc__ = g.__doc__
-  return func
-
 def get_multi_combined(*args, **kwargs):
   async = kwargs.pop('async', None)
   combinations = []
@@ -210,18 +179,15 @@ def get_multi_combined(*args, **kwargs):
     start += combination
   return separations
 
-
 def get_multi_async_combined(*args, **kwargs):
   kwargs['async'] = True
   return get_multi_combined(*args, **kwargs)
-
 
 def get_multi_combined_clean(*args, **kwargs):
   separations = get_multi_combined(*args, **kwargs)
   for separation in separations:
     util.remove_value(separation)
   return separations
-
 
 def get_multi_clean(*args, **kwargs):
   '''This function will retrieve clean list of entities.
@@ -232,7 +198,6 @@ def get_multi_clean(*args, **kwargs):
   entities = get_multi(*args, **kwargs)
   util.remove_value(entities)
   return entities
-
 
 def get_async_results(*args, **kwargs):
   '''It will mutate futures list into results after its done retrieving data.
@@ -271,7 +236,6 @@ def get_async_results(*args, **kwargs):
   for entity in entities:
     futures.append(entity)  # and now we modify back the futures list
 
-
 def _perform_multi_transactions(entities, write=None, transaction_callack=None, sleep=None):
   '''
   *_multi_transactions functions are used to perform multiple transactions based on number of
@@ -293,16 +257,13 @@ def _perform_multi_transactions(entities, write=None, transaction_callack=None, 
     if sleep is not None:  # If sleep is specified, the for loop will block before issuing another transaction.
       time.sleep(sleep)
 
-
 def write_multi_transactions(entities, write_config=None, transaction_callack=None, sleep=None):
   if write_config is None:
     write_config = {}
   _perform_multi_transactions(entities, write_config, transaction_callack, sleep)
 
-
 def put_multi_transactions(entities, transaction_callack=None, sleep=None):
   _perform_multi_transactions(entities, transaction_callack, sleep)
-
 
 def write_multi(entities, record_arguments=None):
   if record_arguments is None:
@@ -1374,7 +1335,6 @@ class _BaseModel(object):
           return field.can_be_copied
       # recursevely set original for all structured properties.
       # this is because we have huge depency on _original, so we need to have it on its children as well
-      @tail_call_optimized
       def scan(value, field_key, field, original):
         if hasattr(field, 'is_structured') and field.is_structured and hasattr(value, 'has_value') and value.has_value():
           scan(value.value, field_key, field, original.value)

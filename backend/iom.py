@@ -189,7 +189,8 @@ class Engine:
           if 'non_property_error' not in input_error:
             input_error['non_property_error'] = []
           input_error['non_property_error'].append(key)  # Or perhaps, 'non_specific_error', or something simmilar.
-          util.log.exception(e)
+          util.log.debug(e)
+          raise
     if len(input_error):
       raise InputError(input_error)
   

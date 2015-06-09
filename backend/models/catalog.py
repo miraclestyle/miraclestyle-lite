@@ -143,7 +143,7 @@ class CatalogProductInstance(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('8', kind='17'),
     'volume': orm.SuperDecimalProperty('9'),
     'volume_uom': orm.SuperKeyProperty('11', kind='17'),
-    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True),
+    'images': orm.SuperImageLocalStructuredProperty(Image, '12', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True)
     }
   
@@ -201,7 +201,7 @@ class CatalogProduct(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('9', kind='17'),
     'volume': orm.SuperDecimalProperty('10'),
     'volume_uom': orm.SuperKeyProperty('11', kind='17'),
-    'images': SuperImageLocalStructuredProperty(Image, '12', repeated=True),
+    'images': orm.SuperImageLocalStructuredProperty(Image, '12', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True),
     'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '14', repeated=True)
     }
@@ -299,14 +299,14 @@ class Catalog(orm.BaseExpando):
   _default_indexed = False
   
   _expando_fields = {
-    'cover': SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover',
+    'cover': orm.SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover',
                                                                                   'transform': True, 'width': 240,
                                                                                   'height': 240, 'crop_to_fit': True}),
     'cost': orm.SuperDecimalProperty('8')
     }
   
   _virtual_fields = {
-    '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
+    '_images': orm.SuperImageRemoteStructuredProperty(CatalogImage, repeated=True,
       search={
         'default': {
           'filters': [],
@@ -474,7 +474,7 @@ class Catalog(orm.BaseExpando):
         'key': orm.SuperKeyProperty(kind='31', required=True),
         'name': orm.SuperStringProperty(required=True),
         'discontinue_date': orm.SuperDateTimeProperty(required=True),
-        '_images': SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
+        '_images': orm.SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -504,7 +504,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'catalog_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        '_images': SuperImageLocalStructuredProperty(CatalogImage, upload=True, repeated=True),
+        '_images': orm.SuperImageLocalStructuredProperty(CatalogImage, upload=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -532,7 +532,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'product_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        'images': SuperImageLocalStructuredProperty(Image, upload=True, repeated=True),
+        'images': orm.SuperImageLocalStructuredProperty(Image, upload=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -559,7 +559,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'product_instance_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        'images': SuperImageLocalStructuredProperty(Image, upload=True, repeated=True),
+        'images': orm.SuperImageLocalStructuredProperty(Image, upload=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
