@@ -53,7 +53,7 @@ class Record(BaseExpando):
   def _retrieve_action(self):
     entity = self
     action_parent = entity.action.parent()
-    modelclass = entity._kind_map.get(action_parent.kind())
+    modelclass = entity._lookup_model(action_parent.kind())
     action_id = entity.action.id()
     if modelclass and hasattr(modelclass, '_actions'):
       for action in modelclass._actions:
@@ -102,7 +102,7 @@ class Record(BaseExpando):
     if prop is None:
       # This loads up proper class to deal with the expandos.
       kind = self.key_parent.kind()
-      modelclass = self._kind_map.get(kind)
+      modelclass = self._lookup_model(kind)
       # We cannot use entity.get_fields here directly as it returns 'friendly_field_name: prop', and we need 'prop._name: prop'.
       properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().iteritems()])
       # Adds properties from parent class to the log entity making it possible to deserialize them properly.

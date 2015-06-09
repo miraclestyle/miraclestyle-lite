@@ -434,7 +434,6 @@
                                             return false;
                                         }
                                         return true;
-                                        return this.field().$dirty || config.ui.help;
                                     }
                                 },
                                 writable: [name],

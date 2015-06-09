@@ -476,6 +476,7 @@
                         select.search = {
                             query: {},
                             delay: 200,
+                            enabled: true,
                             doFind: function () {
                                 var term = select.getFindTerm();
                                 if (timeout) {

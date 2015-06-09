@@ -222,7 +222,7 @@ class Seller(orm.BaseExpando):
     ]
 
   def get_notified_followers_count_callback(self):
-    Collection = orm.Model._kind_map['18'] # @todo import or this
+    Collection = orm.Model._lookup_model('18') # @todo import or this
     key = 'get_notified_followers_count_%s' % self.key.urlsafe()
     already = mem.get(key)
     if already is None:
@@ -231,7 +231,7 @@ class Seller(orm.BaseExpando):
     return already
 
   def get_followers_count_callback(self):
-    Collection = orm.Model._kind_map['18'] # @todo import or this
+    Collection = orm.Model._lookup_model('18') # @todo import or this
     key = 'get_followers_count_%s' % self.key.urlsafe()
     already = mem.get(key)
     if already is None:

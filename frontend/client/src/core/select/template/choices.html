@@ -1,7 +1,7 @@
 <% if (!select.multiple) { %>
 <simple-dialog>
 <% } %>
-     <% if (select.search) { %>
+     <% if (select.search && select.search.enabled) { %>
      <div class="select-search" ng-form="select.search.form">
        <div class="select-search-input">
          <input tabindex="1" placeholder="Search..." type="search" name="search" fast-ng-change="select.search.doFind()" fast-ng-model="<%= select.search.model %>" />

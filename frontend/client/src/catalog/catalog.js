@@ -784,7 +784,34 @@
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
                                                 setupCurrentPricetag,
-                                                getTitle;
+                                                groupWeightAndVolume = function (fields) {
+                                                    var defaults = {
+                                                        specifics: {
+                                                            search: {
+                                                                enabled: false
+                                                            }
+                                                        }
+                                                    };
+                                                    fields.weight.ui = $.extend({
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight'
+                                                    }, defaults);
+                                                    fields.weight_uom.ui = $.extend({
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight'
+                                                    }, defaults);
+                                                    fields.volume.ui = $.extend({
+                                                        groupBy: 'volume',
+                                                        groupLabel: 'Volume'
+                                                    }, defaults);
+                                                    fields.volume_uom.ui = $.extend({
+                                                        groupBy: 'volume',
+                                                        groupLabel: 'Volume'
+                                                    }, defaults);
+                                                },
+                                                getTitle = function () {
+                                                    return 'viewProducts';
+                                                };
                                             accessImages.push(fields._images.code_name);
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
                                             $scope.config = parentScope.rootScope.config;
@@ -800,10 +827,6 @@
                                             $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
                                             $scope.args._images = [];
-
-                                            getTitle = function () {
-                                                return 'viewProducts';
-                                            };
 
                                             $scope.config._title_.push(getTitle);
                                             $scope.$on('$destroy', function () {
@@ -1134,6 +1157,9 @@
                                             $.extend($scope.fieldProduct.modelclass._instances.modelclass.images.ui, {
                                                 name: 'images'
                                             });
+
+                                            groupWeightAndVolume($scope.fieldProduct.modelclass);
+                                            groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);
 
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
                                                 label: GLOBAL_CONFIG.subheaders.productInstances,
