@@ -8,8 +8,6 @@ Created on May 13, 2014
 from xml.etree import ElementTree
 
 import orm
-from util import *
-
 
 class CountryUpdateWrite(orm.BaseModel):
   

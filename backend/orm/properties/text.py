@@ -13,7 +13,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     if value is None:
       return value
@@ -32,7 +32,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     if self._repeated:
       values = []

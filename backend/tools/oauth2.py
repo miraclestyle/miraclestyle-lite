@@ -12,13 +12,16 @@ import urllib
 from google.appengine.api import urlfetch
 
 
+__all__ = ['OAuth2ResourceError', 'OAuth2Client']
+
+
 '''Simple generic client OAUTH2 client class for retrieving access tokens.'''
 
 class OAuth2ResourceError(Exception):
   pass
 
 
-def build_url(base, additional_params=None):
+def _build_url(base, additional_params=None):
   '''Construct an URL from the base, containing all parameters in
   the query portion of the base plus any additional parameters.
   'base' parameter: Base URL.
@@ -42,7 +45,7 @@ def build_url(base, additional_params=None):
                               url.fragment))
 
 
-class Client(object):
+class OAuth2Client(object):
   
   def __init__(self, client_id, client_secret, redirect_uri, authorization_uri, token_uri, access_token=None, **kwds):
     '''Constructor for OAuth 2.0 Client.
@@ -79,7 +82,7 @@ class Client(object):
     if status is None:
       status = 200
     method = getattr(urlfetch, method.upper())
-    url = build_url(url, {'access_token': self.access_token})
+    url = _build_url(url, {'access_token': self.access_token})
     try:
       if data is not None:
         data = urllib.urlencode(data)
@@ -131,7 +134,7 @@ class Client(object):
     params.update({'client_id': self.client_id,
                    'scope': self.scope,
                    'redirect_uri': self.redirect_uri})
-    return build_url(self.authorization_uri, params)
+    return _build_url(self.authorization_uri, params)
   
   def get_token(self, code, **params):
     '''Get an access token from the provider token URI.

@@ -9,7 +9,6 @@ import orm
 import settings
 import notifications
 
-from models.base import *
 from plugins.base import *
 
 from plugins.collection import *
@@ -33,7 +32,7 @@ class Collection(orm.BaseExpando):
                                                      format_callback=lambda self, entities: self.get_asynced_sellers(entities))
     }
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('18', [orm.Action.build_key('18', 'update'),
                                   orm.Action.build_key('18', 'read')], True,

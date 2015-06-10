@@ -13,8 +13,6 @@ import collections
 from google.appengine.api import search
 
 import orm
-from tools.base import *
-from util import *
 
 __all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats']
 

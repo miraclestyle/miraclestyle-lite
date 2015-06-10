@@ -57,7 +57,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
                           'search_by_keys': False,
                           'filters': {},
                           'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
-    util.merge_dicts(self.search, default_search_cfg)
+    tools.merge_dicts(self.search, default_search_cfg)
     self.search = SuperSearchProperty(**self.search)
 
   def get_meta(self):
@@ -88,7 +88,7 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
 
   def value_format(self, value, path=None):
     # reference type properties can never be updated by the client
-    return util.Nonexistent
+    return tools.Nonexistent
 
 
 class SuperRecordProperty(SuperRemoteStructuredProperty):

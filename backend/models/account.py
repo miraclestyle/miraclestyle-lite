@@ -13,7 +13,6 @@ import mem
 import settings
 import notifications
 
-from models.base import *
 from plugins.base import *
 from plugins.account import *
 
@@ -65,7 +64,7 @@ class Account(orm.BaseExpando):
     '_records': orm.SuperRecordProperty('11')
     }
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('11', orm.Action.build_key('11', 'login'), True,
                            'entity._is_guest or entity._original.state == "active"'),

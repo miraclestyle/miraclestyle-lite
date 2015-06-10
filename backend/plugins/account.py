@@ -4,14 +4,8 @@ Created on Apr 15, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
-import hashlib
-
 import orm
-from tools import oauth2
-from tools.base import *
-from util import *
-
+import tools
 
 class OAuth2Error(Exception):
   
@@ -30,8 +24,8 @@ class AccountLoginInit(orm.BaseModel):
     context._account = context.model.current_account()
     context.account = context.model.current_account()
     kwargs = {'account': context.account, 'action': context.action}
-    rule_prepare(context._account, False, **kwargs)
-    rule_exec(context._account, context.action)
+    tools.rule_prepare(context._account, False, **kwargs)
+    tools.rule_exec(context._account, context.action)
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     code = context.input.get('code')
@@ -39,12 +33,12 @@ class AccountLoginInit(orm.BaseModel):
       if login['type'] == login_method:
         oauth2_cfg = login
         break
-    client = oauth2.Client(**oauth2_cfg)
+    client = tools.OAuth2Client(**oauth2_cfg)
     context.output['authorization_url'] = client.get_authorization_code_uri()
     urls = {}
     for cfg in login_methods:
       urls_oauth2_cfg = cfg
-      urls_client = oauth2.Client(**urls_oauth2_cfg)
+      urls_client = tools.OAuth2Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()
     context.output['authorization_urls'] = urls
     if error:
@@ -65,8 +59,8 @@ class AccountLoginInit(orm.BaseModel):
           context._account = account
           context.account = account
     kwargs = {'account': context.account, 'action': context.action}
-    rule_prepare(context._account, False, **kwargs)
-    rule_exec(context._account, context.action)
+    tools.rule_prepare(context._account, False, **kwargs)
+    tools.rule_exec(context._account, context.action)
 
 
 class AccountLoginWrite(orm.BaseModel):

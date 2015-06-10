@@ -10,7 +10,6 @@ import orm
 import settings
 import notifications
 
-from models.base import *
 from plugins.base import *
 
 from models.buyer import *
@@ -218,7 +217,7 @@ class Order(orm.BaseExpando):
     '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference.structure() if self.seller_reference else None),
   }
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...

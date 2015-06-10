@@ -7,9 +7,7 @@ Created on May 18, 2014
 
 import orm, settings
 
-from models.base import *
 from plugins.base import *
-
 from models.location import *
 
 __all__ = ['Buyer', 'BuyerAddress', 'BuyerLocation']
@@ -82,7 +80,7 @@ class Buyer(orm.BaseExpando):
     '_records': orm.SuperRecordProperty('19')
     }
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('19', [orm.Action.build_key('19', 'update'),
                                   orm.Action.build_key('19', 'read')], True,

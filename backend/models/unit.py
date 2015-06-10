@@ -5,9 +5,9 @@ Created on Jan 1, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import orm, settings
+import orm
+import settings
 
-from models.base import *
 from plugins.base import *
 from plugins.unit import *
 
@@ -47,7 +47,7 @@ class Unit(orm.BaseExpando):
     'negative_separate_by_space': orm.SuperBooleanProperty('21', default=True)
     }
 
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('17', [orm.Action.build_key('17', 'update_currency'),
                                   orm.Action.build_key('17', 'update_unit')], True,

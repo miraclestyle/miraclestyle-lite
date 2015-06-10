@@ -1,13 +1,45 @@
-def funct(arg):
-    '''
+import math
+import sys
 
-    
-    Nunc rhoncus aliquam quam, et facilisis dui ultricies ac. 
-    Vivamus et dignissim libero. Sed dignissim volutpat nisi,
-    vitae hendrerit risus gravida et. In varius tincidunt est eu finibus.
-    Maecenas vitae dui dictum eros facilisis dictum. Sed ornare tincidunt enim vel cursus. 
-    Duis finibus urna mi, porttitor viverra orci viverra sit amet. Curabitur cursus euismod ligula. 
-    In hac habitasse platea dictumst. Praesent suscipit orci ante, eu iaculis turpis viverra vel. 
-    Maecenas vel fringilla lorem, ut luctus diam. Vivamus auctor ligula at augue rutrum lacinia.
-    Suspendisse vitae nisi eros. Sed tellus dolor, sagittis eget lectus vitae, lacinia hendrerit enim. 
-    Donec eget rhoncus orci. Integer pretium, est at fringilla gravida, augue dui elementum justo, eget varius sapien ligula eu enim.'''
+
+def example1():
+  # This is a long comment. This should be wrapped to fit within 72 characters.
+  some_tuple = (1, 2, 3, 'a')
+  some_variable = {
+      'long': 'Long code lines should be wrapped within 79 characters.',
+      'other': [
+          math.pi,
+          100,
+          200,
+          300,
+          9876543210,
+          'This is a long string that goes on'],
+      'more': {
+          'inner': 'This whole logical line should be wrapped.',
+          some_tuple: [
+              1,
+              20,
+              300,
+              40000,
+              500000000,
+              60000000000000000]}}
+  return (some_tuple, some_variable)
+
+
+def example2(): return ('' in {'f': 2}) in {'has_key() is deprecated': True}
+
+
+class Example3(object):
+
+  def __init__(self, bar):
+    # Comments should have a space after the hash.
+    if bar:
+      bar += 1
+      bar = bar * bar
+      return bar
+    else:
+      some_string = """
+                       Indentation in multiline strings should not be touched.
+Only actual code should be reindented.
+"""
+      return (sys.path, some_string)

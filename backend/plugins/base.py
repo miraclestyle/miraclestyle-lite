@@ -5,14 +5,11 @@ Created on Jun 14, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 import copy
-
 import orm
 import mem
-
-from tools.base import *
-from util import *
-
+import tools
 import performance
+import time
 
 
 class Context(orm.BaseModel):
@@ -47,15 +44,15 @@ class Set(orm.BaseModel):
     remove_values = self.cfg.get('rm', [])
     remove_structured_values = self.cfg.get('rms', [])
     for key, value in static_values.iteritems():
-      set_attr(context, key, value)
+      tools.set_attr(context, key, value)
     for key, value in dynamic_values.iteritems():
-      set_value = get_attr(context, value, Nonexistent)
-      if set_value is not Nonexistent:
-        set_attr(context, key, set_value)
+      set_value = tools.get_attr(context, value, tools.Nonexistent)
+      if set_value is not tools.Nonexistent:
+        tools.set_attr(context, key, set_value)
     for key in remove_values:
-      del_attr(context, key)
+      tools.del_attr(context, key)
     for key in remove_structured_values:
-      items = get_attr(key)
+      items = tools.get_attr(key)
       if isinstance(items, list):
         for item in items:
           item._state = 'removed'
@@ -78,14 +75,14 @@ class Read(orm.BaseModel):
     namespace_path = self.cfg.get('namespace', 'namespace')
     read_arguments_path = self.cfg.get('read', 'input.read_arguments')
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    source = get_attr(context, source_path, None)
-    model = get_attr(context, model_path)
-    parent = get_attr(context, parent_path)
-    namespace = get_attr(context, namespace_path)
+    source = tools.get_attr(context, source_path, None)
+    model = tools.get_attr(context, model_path)
+    parent = tools.get_attr(context, parent_path)
+    namespace = tools.get_attr(context, namespace_path)
     if isinstance(read_arguments_path, dict):
       read_arguments = copy.deepcopy(read_arguments_path)
     else:
-      read_arguments = get_attr(context, read_arguments_path, {})
+      read_arguments = tools.get_attr(context, read_arguments_path, {})
     if parent is not None:
       namespace = None
     if source and isinstance(source, orm.Key):
@@ -104,7 +101,7 @@ class Read(orm.BaseModel):
     else:
       entity = model(parent=parent, namespace=namespace)
     entity.make_original()
-    set_attr(context, save_path, entity)
+    tools.set_attr(context, save_path, entity)
 
 
 class Write(orm.BaseModel):
@@ -119,12 +116,12 @@ class Write(orm.BaseModel):
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {})
-    entity = get_attr(context, entity_path)
+    entity = tools.get_attr(context, entity_path)
     if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.account.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.iteritems():
-        record_arguments[key] = get_attr(context, value)
+        record_arguments[key] = tools.get_attr(context, value)
       entity.write(record_arguments)
 
 
@@ -140,12 +137,12 @@ class Delete(orm.BaseModel):
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {})
-    entity = get_attr(context, entity_path)
+    entity = tools.get_attr(context, entity_path)
     if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.account.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
       for key, value in dynamic_record_arguments.iteritems():
-        record_arguments[key] = get_attr(context, value)
+        record_arguments[key] = tools.get_attr(context, value)
       entity.delete(record_arguments)
 
 
@@ -161,11 +158,11 @@ class Duplicate(orm.BaseModel):
     entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     child_entity_path = self.cfg.get('duplicate_path')
-    entity = get_attr(context, entity_path)
+    entity = tools.get_attr(context, entity_path)
     if child_entity_path:
       # state _images.value.0.pricetags.value.0
       splited = child_entity_path.split('.')
-      child_entity = get_attr(entity, child_entity_path)
+      child_entity = tools.get_attr(entity, child_entity_path)
       duplicated_child_entity = child_entity.duplicate()
       duplicate_entity = entity
       # gets _images.value.0.pricetags
@@ -176,11 +173,11 @@ class Duplicate(orm.BaseModel):
         duplicated_child_entity = [duplicated_child_entity]
       except ValueError:
         pass
-      set_attr(entity, middle_entity_path, duplicated_child_entity)
+      tools.set_attr(entity, middle_entity_path, duplicated_child_entity)
     else:
       if entity and isinstance(entity, orm.Model):
         duplicate_entity = entity.duplicate()
-    set_attr(context, save_path, duplicate_entity)
+    tools.set_attr(context, save_path, duplicate_entity)
 
 
 class UploadImages(orm.BaseModel):
@@ -194,9 +191,9 @@ class UploadImages(orm.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     images_path = self.cfg.get('images_path')
-    manager = get_attr(context, entity_path)
+    manager = tools.get_attr(context, entity_path)
     if manager is not None and hasattr(manager, 'add') and callable(manager.add):
-      manager.add(get_attr(context, images_path))
+      manager.add(tools.get_attr(context, images_path))
 
 
 class RulePrepare(orm.BaseModel):
@@ -215,9 +212,9 @@ class RulePrepare(orm.BaseModel):
     kwargs = {'account': context.account, 'action': context.action, 'input': context.input}
     kwargs.update(static_kwargs)
     for key, value in dynamic_kwargs.iteritems():
-      kwargs[key] = get_attr(context, value)
-    entities = get_attr(context, entity_path)
-    rule_prepare(entities, strict, **kwargs)
+      kwargs[key] = tools.get_attr(context, value)
+    entities = tools.get_attr(context, entity_path)
+    tools.rule_prepare(entities, strict, **kwargs)
 
 
 class RuleExec(orm.BaseModel):
@@ -231,9 +228,9 @@ class RuleExec(orm.BaseModel):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     action_path = self.cfg.get('action', 'action')
-    entity = get_attr(context, entity_path)
-    action = get_attr(context, action_path)
-    rule_exec(entity, action)
+    entity = tools.get_attr(context, entity_path)
+    action = tools.get_attr(context, action_path)
+    tools.rule_exec(entity, action)
 
 
 class Search(orm.BaseModel):
@@ -251,8 +248,8 @@ class Search(orm.BaseModel):
     overide_arguments = {}
     overide_arguments.update(static_arguments)
     for key, value in dynamic_arguments.iteritems():
-      overide_arguments[key] = get_attr(context, value)
-    override_dict(search_arguments, overide_arguments)
+      overide_arguments[key] = tools.get_attr(context, value)
+    tools.override_dict(search_arguments, overide_arguments)
     result = context.model.search(search_arguments)
     if search_arguments.get('keys'):
       context._entities = result
@@ -294,14 +291,14 @@ class CallbackExec(orm.BaseModel):
     for config in self.cfg:
       queue_name, static_data, dynamic_data = config
       for key, value in dynamic_data.iteritems():
-        static_data[key] = get_attr(context, value)
+        static_data[key] = tools.get_attr(context, value)
       context._callbacks.append((queue_name, static_data))
     for callback in context._callbacks:
       if callback[1].get('caller_account') is None:
         callback[1]['caller_account'] = context.account.key_urlsafe
       if callback[1].get('caller_action') is None:
         callback[1]['caller_action'] = context.action.key_urlsafe
-    callback_exec('/api/task/io_engine_run', context._callbacks)
+    tools.callback_exec('/api/task/io_engine_run', context._callbacks)
     context._callbacks = []
 
 
@@ -319,7 +316,7 @@ class BlobURL(orm.BaseModel):
     upload_url = context.input.get('upload_url')
     if upload_url and gs_bucket:
       gs_bucket_name = gs_bucket + sufix
-      context._blob_url = blob_create_upload_url(upload_url, gs_bucket_name)
+      context._blob_url = tools.blob_create_upload_url(upload_url, gs_bucket_name)
 
 
 class CreateChannel(orm.BaseModel):
@@ -334,7 +331,7 @@ class CreateChannel(orm.BaseModel):
     if existing and existing[1] > time.time():
       context._token = existing[0]
     else:
-      context._token = channel_create(token)
+      context._token = tools.channel_create(token)
       mem.set(token, [context._token, time.time() + 6000], 9600)
 
 
@@ -351,15 +348,15 @@ class Notify(orm.BaseModel):
     condition = self.cfg.get('condition', 'True')
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
-    entity = get_attr(context, '_' + context.model.__name__.lower())
+    entity = tools.get_attr(context, '_' + context.model.__name__.lower())
     values = {'account': context.account, 'input': context.input, 'action': context.action, 'entity': entity}
     values.update(static_values)
     for key, value in dynamic_values.iteritems():
-      values[key] = get_attr(context, value)
-    if safe_eval(condition, values):
+      values[key] = tools.get_attr(context, value)
+    if tools.safe_eval(condition, values):
       if 'mail' in method:
-        mail_send(values)
+        tools.mail_send(values)
       if 'http' in method:
-        http_send(values)
+        tools.http_send(values)
       if 'channel' in method:
-        channel_send(values)
+        tools.channel_send(values)

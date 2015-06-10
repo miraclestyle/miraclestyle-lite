@@ -3,7 +3,7 @@ from .base import *
 from .properties import *
 
 
-__all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission']
+__all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission', 'Role', 'GlobalRole', 'Image']
 
 
 class Record(BaseExpando):
@@ -205,7 +205,7 @@ class ActionPermission(Permission):
     kwargs['entity'] = entity
     if (self.model == entity.get_kind()):
       for action in self.actions:
-        if (entity.get_action(action) is not None) and (util.safe_eval(self.condition, kwargs)) and (self.executable != None):
+        if (entity.get_action(action) is not None) and (tools.safe_eval(self.condition, kwargs)) and (self.executable != None):
           entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
 
 
@@ -235,9 +235,45 @@ class FieldPermission(Permission):
     kwargs['entity'] = entity
     if (self.model == entity.get_kind()):
       for field in self.fields:
-        parsed_field = util.get_attr(entity, '_field_permissions.' + field)
-        if parsed_field and (util.safe_eval(self.condition, kwargs)):
+        parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
+        if parsed_field and (tools.safe_eval(self.condition, kwargs)):
           if (self.writable != None):
             parsed_field['writable'].append(self.writable)
           if (self.visible != None):
             parsed_field['visible'].append(self.visible)
+
+
+class Role(BaseExpando):
+  
+  _kind = 6
+  
+  # feature proposition (though it should create overhead due to the required drilldown process!)
+  # parent_record = SuperKeyProperty('1', kind='Role', indexed=False)
+  # complete_name = SuperTextProperty('2')
+  name = SuperStringProperty('1', required=True)
+  active = SuperBooleanProperty('2', required=True, default=True)
+  permissions = SuperPickleProperty('3', required=True, default=[], compressed=False) # List of Permissions instances. Validation is required against objects in this list, if it is going to be stored in datastore.
+  
+  _default_indexed = False
+
+
+class GlobalRole(Role):
+  
+  _kind = 7
+
+
+class Image(BaseExpando):
+  
+  _kind = 8
+  
+  image = SuperBlobKeyProperty('1', required=True, indexed=False)
+  content_type = SuperStringProperty('2', required=True, indexed=False)
+  size = SuperFloatProperty('3', required=True, indexed=False)
+  gs_object_name = SuperStringProperty('4', required=True, indexed=False)
+  serving_url = SuperStringProperty('5', required=True, indexed=False)
+  
+  _default_indexed = False
+  
+  _expando_fields = {
+    'proportion': SuperFloatProperty('6')
+    }

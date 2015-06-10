@@ -9,7 +9,6 @@ from decimal import Decimal
 from xml.etree import ElementTree
 
 import orm
-from util import *
 
 
 class UnitCurrencyUpdateWrite(orm.BaseModel):

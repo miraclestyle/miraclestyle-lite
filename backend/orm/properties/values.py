@@ -175,7 +175,7 @@ class StructuredPropertyValue(PropertyValue):
     if read_arguments is None:
       read_arguments = {}
     if self._property._read_arguments is not None and isinstance(self._property._read_arguments, dict):
-      util.merge_dicts(read_arguments, self._property._read_arguments)
+      tools.merge_dicts(read_arguments, self._property._read_arguments)
     config = read_arguments.get('config', {})
     if self._property._readable:
       if (not self.has_value()) or config.get('force_read'): # it will not attempt to start rpcs if there's already something set in _property_value
@@ -428,7 +428,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           for ent in entities:
             ent._sequence += last_sequence
     else:
-      util.log.warn('cannot use .add() on non repeated property')
+      tools.log.warn('cannot use .add() on non repeated property')
     # Always trigger setattr on the property itself
     setattr(self._entity, self.property_name, entities)
 
@@ -508,7 +508,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
             cursor = property_value[1]
             if cursor:
               cursor = cursor.urlsafe()
-            util.remove_value(property_value[0])
+            tools.remove_value(property_value[0])
             self._property_value = property_value[0]
             self._property_value_options['search']['options']['start_cursor'] = cursor
             self._property_value_options['more'] = property_value[2]

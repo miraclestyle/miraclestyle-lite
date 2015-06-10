@@ -8,16 +8,13 @@ import re
 import json
 import os
 
-from google.appengine.api import taskqueue
 from google.appengine.ext import blobstore
-from google.appengine.api import mail
-from google.appengine.api import urlfetch
-from google.appengine.api import channel
+from google.appengine.api import taskqueue, mail, urlfetch, channel
 
 from jinja2 import Environment, evalcontextfilter, Markup, escape, FileSystemLoader
 
 import orm
-from util import *
+from .util import normalize
 
 
 def rule_prepare(entities, strict, **kwargs):
@@ -64,13 +61,14 @@ jinja_env = Environment(loader=FileSystemLoader([os.path.join(os.path.dirname(os
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
+
 @evalcontextfilter
 def nl2br(eval_ctx, value):
-    result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n')
-                          for p in _paragraph_re.split(escape(value)))
-    if eval_ctx.autoescape:
-        result = Markup(result)
-    return result
+  result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n')
+                        for p in _paragraph_re.split(escape(value)))
+  if eval_ctx.autoescape:
+    result = Markup(result)
+  return result
 
 jinja_env.filters['nl2br'] = nl2br
 
@@ -78,6 +76,7 @@ jinja_env.filters['nl2br'] = nl2br
 def render_template(template_as_string, values={}):
   from_string_template = jinja_env.from_string(template_as_string)
   return from_string_template.render(values)
+
 
 def channel_create(token):
   return channel.create_channel(token)

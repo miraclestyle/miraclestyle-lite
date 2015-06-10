@@ -6,10 +6,10 @@ Created on Jan 9, 2014
 '''
 
 # @todo Perhaps split this file in two: country.py and address.py?
-import orm, settings
-from models.base import *
-from plugins.base import *
+import orm
+import settings
 
+from plugins.base import *
 from plugins.location import *
 
 
@@ -28,7 +28,7 @@ class Country(orm.BaseModel):
   name = orm.SuperStringProperty('2', required=True)
   active = orm.SuperBooleanProperty('3', required=True, default=True)
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('12', [orm.Action.build_key('12', 'update')], True,
                            'account._root_admin or account._is_taskqueue'),
@@ -104,7 +104,7 @@ class CountrySubdivision(orm.BaseModel):
   type = orm.SuperStringProperty('5', required=True, indexed=False)
   active = orm.SuperBooleanProperty('6', required=True, default=True)
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('13', [orm.Action.build_key('13', 'search')], True, 'not account._is_guest'),
       orm.FieldPermission('13', ['parent_record', 'code', 'name', 'complete_name', 'type', 'active'], False, True, 'True'),

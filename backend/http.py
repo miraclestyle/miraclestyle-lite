@@ -17,7 +17,7 @@ import orm
 import mem
 import iom
 import settings
-import util
+import tools
 
 HTTP_PERFORMANCE_TEXT = 'HTTP.%s in %sms'
 
@@ -171,9 +171,9 @@ class RequestHandler(webapp2.RequestHandler):
       super(RequestHandler, self).dispatch()
       self.after()
     finally:
-      util.log.debug('Release In-memory Cache')
+      tools.log.debug('Release In-memory Cache')
       mem.storage.__release_local__()
-      util.log.debug('Finished request in %s ms' % dispatch_time.miliseconds)
+      tools.log.debug('Finished request in %s ms' % dispatch_time.miliseconds)
       
 
 class Endpoint(RequestHandler):
@@ -217,10 +217,10 @@ class Install(RequestHandler):
 class IOEngineRun(RequestHandler):
   
   def respond(self):
-    util.log.debug('Begin IOEngineRun execute')
+    tools.log.debug('Begin IOEngineRun execute')
     input = self.get_input()
     iom.Engine.run(input)
-    util.log.debug('End IOEngineRun execute')
+    tools.log.debug('End IOEngineRun execute')
   
 
 class AccountLogin(RequestHandler):
@@ -308,7 +308,7 @@ class Reset(BaseTestHandler):
     ignore = []
     if self.request.get('ignore'):
       ignore = self.request.get('ignore')
-    util.log.debug('Delete kinds %s' % kinds)
+    tools.log.debug('Delete kinds %s' % kinds)
     for kind in kinds:
       for namespace in namespaces:
         if kind in ignore:
@@ -318,10 +318,10 @@ class Reset(BaseTestHandler):
         keys = list(gets)
         total_keys = len(keys)
         if total_keys:
-          util.log.debug('Delete kind %s. Found %s keys. Took %sms to get.' % (kind, total_keys, p.miliseconds))
+          tools.log.debug('Delete kind %s. Found %s keys. Took %sms to get.' % (kind, total_keys, p.miliseconds))
           p = performance.Profile()
           datastore.Delete(keys)
-          util.log.debug('Deleted all records for kind %s. Took %sms.' % (kind, p.miliseconds))
+          tools.log.debug('Deleted all records for kind %s. Took %sms.' % (kind, p.miliseconds))
     indexes.extend((search.Index(name='catalogs'), search.Index(name='24')))
     # empty catalog index!
     docs = 0
@@ -335,11 +335,11 @@ class Reset(BaseTestHandler):
           docs += len(document_ids)
         except:
           pass
-    util.log.debug('Deleted %s indexes. With total of %s documents.' % (len(indexes), docs))
+    tools.log.debug('Deleted %s indexes. With total of %s documents.' % (len(indexes), docs))
     # delete all blobs
     keys = blobstore.BlobInfo.all().fetch(None, keys_only=True)
     blobstore.delete(keys)
-    util.log.debug('Deleted %s blobs.' % len(keys))
+    tools.log.debug('Deleted %s blobs.' % len(keys))
     mem.flush_all()
 
 class BeginMemTest(BaseTestHandler):
@@ -364,7 +364,7 @@ class AssertTest(BaseTestHandler):
 
   def respond(self):
     if mem.temp_get('cuser') is not None:
-      util.log.debug('cuser failed, got %s' % mem.temp_get('cuser'))
+      tools.log.debug('cuser failed, got %s' % mem.temp_get('cuser'))
 
 
 class LoginAs(BaseTestHandler):

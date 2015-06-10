@@ -31,7 +31,7 @@ from google.appengine.api import search, datastore_errors
 
 import performance
 import mem
-import util
+import tools
 import settings
 import errors
 
@@ -57,10 +57,6 @@ class ActionDenied(errors.BaseKeyValueError):
 
 
 class TerminateAction(Exception):
-  pass
-
-
-class FormatError(Exception):
   pass
 
 
@@ -186,7 +182,7 @@ def get_multi_async_combined(*args, **kwargs):
 def get_multi_combined_clean(*args, **kwargs):
   separations = get_multi_combined(*args, **kwargs)
   for separation in separations:
-    util.remove_value(separation)
+    tools.remove_value(separation)
   return separations
 
 def get_multi_clean(*args, **kwargs):
@@ -196,7 +192,7 @@ def get_multi_clean(*args, **kwargs):
   
   '''
   entities = get_multi(*args, **kwargs)
-  util.remove_value(entities)
+  tools.remove_value(entities)
   return entities
 
 def get_async_results(*args, **kwargs):
@@ -231,7 +227,7 @@ def get_async_results(*args, **kwargs):
     else:
       entities.append(future)
   if kwargs.get('remove', True):
-    util.remove_value(entities)  # empty out the Nones
+    tools.remove_value(entities)  # empty out the Nones
   del futures[:]  # this empties the list
   for entity in entities:
     futures.append(entity)  # and now we modify back the futures list
@@ -252,7 +248,7 @@ def _perform_multi_transactions(entities, write=None, transaction_callack=None, 
         put_multi(group)
   else:
     run = transaction_callack
-  for group in util.partition_list(entities, 5):
+  for group in tools.partition_list(entities, 5):
     transaction(lambda: run(group, write), xg=True)
     if sleep is not None:  # If sleep is specified, the for loop will block before issuing another transaction.
       time.sleep(sleep)
@@ -961,7 +957,7 @@ class _BaseModel(object):
     while True:
       i += 1
       if i > 100000:
-        util.log.debug(['Infinite loop detected at ', current_permissions, current_entity, current_field_key, current_field, current_field_value])
+        tools.log.debug(['Infinite loop detected at ', current_permissions, current_entity, current_field_key, current_field, current_field_value])
         break
       if current_field_key is None:
         try:
@@ -980,7 +976,7 @@ class _BaseModel(object):
             try:
               setattr(current_entity, current_field_key, current_field_value)
             except TypeError as e:
-              util.log.debug('--RuleWrite: setattr error: %s' % e)
+              tools.log.debug('--RuleWrite: setattr error: %s' % e)
             except (ComputedPropertyError, TypeError) as e:
               pass
         else:
@@ -1262,7 +1258,7 @@ class _BaseModel(object):
     on its structured children as well.
     Structured children are any properties that subclass _BaseStructuredProperty.
     Take a look at this example:
-    class CatalogImage(Image):
+    class CatalogImage(orm.Image):
     _virtual_fields = {
     '_descriptions': ndb.SuperRemoteStructuredProperty(Descriptions, repeated=True),
     }
@@ -1374,10 +1370,10 @@ class _BaseModel(object):
         doc_fields.append(search.AtomField(name='ancestor', value=self.key_parent.urlsafe()))
       for field_key, field in self.get_fields().iteritems():
         if field._searchable:
-          doc_fields.append(field.get_search_document_field(util.get_attr(self, field_key, None)))
+          doc_fields.append(field.get_search_document_field(tools.get_attr(self, field_key, None)))
       if fields is not None:
         for field_key, field in fields.iteritems():
-          doc_fields.append(field.get_search_document_field(util.get_attr(self, field_key, None)))
+          doc_fields.append(field.get_search_document_field(tools.get_attr(self, field_key, None)))
       if (doc_id is not None) and len(doc_fields):
         return search.Document(doc_id=doc_id, fields=doc_fields)
   
@@ -1399,7 +1395,7 @@ class _BaseModel(object):
     if len(documents):
       documents_per_index = 200  # documents_per_index can be replaced with settings variable, or can be fixed to 200!
       index = search.Index(name=name, namespace=namespace)
-      for documents_partition in util.partition_list(documents, 200):
+      for documents_partition in tools.partition_list(documents, 200):
         if len(documents_partition):
           # @todo try/except block was removed in order to fail wraping transactions in case of index operation failure!
           if operation == 'index':
@@ -1444,17 +1440,17 @@ class _BaseModel(object):
     # @answer you mean live active with get multi or this function was to solve that?
     if document and isinstance(document, search.Document):
       entity = cls(key=Key(urlsafe=document.doc_id))
-      # util.set_attr(entity, 'language', document.language)
-      # util.set_attr(entity, 'rank', document.rank)
+      # tools.set_attr(entity, 'language', document.language)
+      # tools.set_attr(entity, 'rank', document.rank)
       fields = document.fields
       entitiy_fields = entity.get_fields()
       for field in fields:
-        entity_field = util.get_attr(entitiy_fields, field.name)
+        entity_field = tools.get_attr(entitiy_fields, field.name)
         if entity_field:
           value = entity_field.resolve_search_document_field(field.value)
-          if value is util.Nonexistent:
+          if value is tools.Nonexistent:
             continue
-          util.set_attr(entity, field.name, value)
+          tools.set_attr(entity, field.name, value)
       return entity
     else:
       raise ValueError('Expected instance of Document, got %s' % document)
@@ -1588,7 +1584,7 @@ class _BaseModel(object):
         value = getattr(self, name, None)
         dic[name] = value
     except Exception as e:
-      util.log.exception(e)
+      tools.log.exception(e)
     self._set_next_read_arguments()
     if hasattr(self, '_next_read_arguments'):
       dic['_next_read_arguments'] = self._next_read_arguments

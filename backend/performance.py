@@ -5,7 +5,7 @@ Created on May 6, 2015
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 import time
-import util
+import tools
 import cStringIO
 import cProfile
 import pstats
@@ -33,7 +33,7 @@ def profile(message=None):
                 initial_message = '%s executed in %s'
             else:
                 initial_message = message
-            util.log.debug(message % (fn.__name__, compute(start)))
+            tools.log.debug(message % (fn.__name__, compute(start)))
             return result
         return inner
     return decorator
@@ -53,7 +53,7 @@ def detail_profile(message=None):
                 initial_message = '%s executed: %s'
             else:
                 initial_message = message
-            util.log.debug(message % (fn.__name__, s.getvalue()))
+            tools.log.debug(message % (fn.__name__, s.getvalue()))
             return result
         return inner
     return decorator

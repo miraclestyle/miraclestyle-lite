@@ -4,13 +4,12 @@ Created on May 13, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
 import orm
-from util import *
+import tools
 
 
 class BuyerUpdateSet(orm.BaseModel):
-  
+
   def run(self, context):
     addresses = context._buyer.addresses.value
     if addresses:
@@ -22,11 +21,11 @@ class BuyerUpdateSet(orm.BaseModel):
         if address._state != 'deleted':
           if address.default_billing:
             default_billing = i
-          if hasattr(address, '_original') and get_attr(address, '_original.default_billing'):
+          if hasattr(address, '_original') and tools.get_attr(address, '_original.default_billing'):
             original_default_billing = i
           if address.default_shipping:
             default_shipping = i
-          if hasattr(address, '_original') and get_attr(address, '_original.default_shipping'):
+          if hasattr(address, '_original') and tools.get_attr(address, '_original.default_shipping'):
             original_default_shipping = i
         address.default_billing = False
         address.default_shipping = False

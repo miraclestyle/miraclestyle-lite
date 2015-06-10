@@ -20,7 +20,7 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     out = []
     if not self._repeated:

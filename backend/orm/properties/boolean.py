@@ -13,7 +13,7 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     if self._repeated:
       return [bool(long(v)) for v in value]

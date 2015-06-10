@@ -9,7 +9,6 @@ import orm
 import settings
 import mem
 
-from models.base import *
 from plugins.base import *
 
 from models.location import *
@@ -103,7 +102,7 @@ class Seller(orm.BaseExpando):
   _use_memcache = True
   
   name = orm.SuperStringProperty('1', required=True)
-  logo = orm.SuperImageLocalStructuredProperty(Image, '2', required=True)
+  logo = orm.SuperImageLocalStructuredProperty(orm.Image, '2', required=True)
   
   _default_indexed = False
   
@@ -118,7 +117,7 @@ class Seller(orm.BaseExpando):
                                                   format_callback=lambda self, value: value)
     }
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       # @todo We will se if read permission is required by the public audience!
       orm.ActionPermission('23', [orm.Action.build_key('23', 'create'),
@@ -164,7 +163,7 @@ class Seller(orm.BaseExpando):
       arguments={
         'account': orm.SuperKeyProperty(kind='11', required=True),
         'name': orm.SuperStringProperty(required=True),
-        'logo': orm.SuperImageLocalStructuredProperty(Image, upload=True, process_config={'measure': False, 'transform': True,
+        'logo': orm.SuperImageLocalStructuredProperty(orm.Image, upload=True, process_config={'measure': False, 'transform': True,
                                                                          'width': 240, 'height': 100,
                                                                          'crop_to_fit': True}),
         '_content': orm.SuperLocalStructuredProperty(SellerContent),

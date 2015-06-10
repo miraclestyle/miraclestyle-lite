@@ -6,6 +6,6 @@ from .date import *
 from .functional import *
 from .key import *
 from .local_structured import *
-from .number import *
 from .remote_structured import *
+from .number import *
 from .text import *

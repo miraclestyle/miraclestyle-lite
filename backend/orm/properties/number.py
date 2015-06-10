@@ -14,7 +14,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     if self._repeated:
       return [float(v) for v in value]
@@ -32,7 +32,7 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     if self._repeated:
       return [long(v) for v in value]
@@ -53,10 +53,10 @@ class SuperDecimalProperty(SuperStringProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     if (value is None or (isinstance(value, basestring) and not len(value))) and not self._required:
-      return util.Nonexistent
+      return tools.Nonexistent
     if self._repeated:
       i = 0
       try:

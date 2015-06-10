@@ -12,12 +12,11 @@ import orm
 import settings
 import mem
 import notifications
+import tools
 
-from models.base import *
 from models.unit import *
 from plugins.base import *
 from plugins.catalog import *
-from util import *
 
 
 __all__ = ['CatalogProductCategory', 'CatalogProductContent', 'CatalogProductVariant', 'CatalogProductInstance',
@@ -35,7 +34,7 @@ class CatalogProductCategory(orm.BaseModel):
   name = orm.SuperStringProperty('2', searchable=True, indexed=False, required=True)
   state = orm.SuperStringProperty('3', searchable=True, indexed=False, repeated=True)
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('24', [orm.Action.build_key('24', 'update')], True,
                            'account._root_admin or account._is_taskqueue'),
@@ -143,7 +142,7 @@ class CatalogProductInstance(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('8', kind='17'),
     'volume': orm.SuperDecimalProperty('9'),
     'volume_uom': orm.SuperKeyProperty('11', kind='17'),
-    'images': orm.SuperImageLocalStructuredProperty(Image, '12', repeated=True),
+    'images': orm.SuperImageLocalStructuredProperty(orm.Image, '12', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True)
     }
   
@@ -165,8 +164,8 @@ class CatalogProductInstance(orm.BaseExpando):
       self.key = self.build_key(self.key_id, parent=parent)
     if self.key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
-      sequence = mem.temp_get(key, Nonexistent)
-      if sequence is Nonexistent:
+      sequence = mem.temp_get(key, tools.Nonexistent)
+      if sequence is tools.Nonexistent:
         entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
         if not entity:
           sequence = 0
@@ -201,7 +200,7 @@ class CatalogProduct(orm.BaseExpando):
     'weight_uom': orm.SuperKeyProperty('9', kind='17'),
     'volume': orm.SuperDecimalProperty('10'),
     'volume_uom': orm.SuperKeyProperty('11', kind='17'),
-    'images': orm.SuperImageLocalStructuredProperty(Image, '12', repeated=True),
+    'images': orm.SuperImageLocalStructuredProperty(orm.Image, '12', repeated=True),
     'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True),
     'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '14', repeated=True)
     }
@@ -258,7 +257,7 @@ class CatalogPricetag(orm.BaseModel):
     self.key = catalog_pricetag_key
 
 
-class CatalogImage(Image):
+class CatalogImage(orm.Image):
   
   _kind = 30
   
@@ -273,8 +272,8 @@ class CatalogImage(Image):
     self.set_key(key_id, parent=parent)
     if key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
-      sequence = mem.temp_get(key, Nonexistent)
-      if sequence is Nonexistent:
+      sequence = mem.temp_get(key, tools.Nonexistent)
+      if sequence is tools.Nonexistent:
         entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
         if not entity:
           sequence = 0
@@ -327,7 +326,7 @@ class Catalog(orm.BaseExpando):
     '_records': orm.SuperRecordProperty('31')
   }
   
-  _global_role = GlobalRole(
+  _global_role = orm.GlobalRole(
     permissions=[
       orm.ActionPermission('31', [orm.Action.build_key('31', 'prepare')], True, 'not account._is_guest'),
       orm.ActionPermission('31', [orm.Action.build_key('31', 'create'),
@@ -532,7 +531,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'product_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        'images': orm.SuperImageLocalStructuredProperty(Image, upload=True, repeated=True),
+        'images': orm.SuperImageLocalStructuredProperty(orm.Image, upload=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[
@@ -559,7 +558,7 @@ class Catalog(orm.BaseExpando):
       key=orm.Action.build_key('31', 'product_instance_upload_images'),
       arguments={
         'key': orm.SuperKeyProperty(kind='31', required=True),
-        'images': orm.SuperImageLocalStructuredProperty(Image, upload=True, repeated=True),
+        'images': orm.SuperImageLocalStructuredProperty(orm.Image, upload=True, repeated=True),
         'read_arguments': orm.SuperJsonProperty()
         },
       _plugin_groups=[

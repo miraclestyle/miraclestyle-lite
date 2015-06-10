@@ -13,7 +13,7 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     return value
 
@@ -22,7 +22,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
   
   def value_format(self, value):
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     if isinstance(value, basestring):
       return json.loads(value)
@@ -251,7 +251,7 @@ class SuperSearchProperty(SuperJsonProperty):
   def value_format(self, values):
     values = super(SuperSearchProperty, self).value_format(values)
     override = self._cfg.get('search_arguments', {})
-    util.override_dict(values, override)
+    tools.override_dict(values, override)
     self._clean_format(values)
     self._kind_format(values)
     self._ancestor_format(values)
@@ -273,7 +273,7 @@ class SuperSearchProperty(SuperJsonProperty):
     if _filters is None:
       return filters
     for _filter in _filters:
-      field = util.get_attr(model, _filter['field'])
+      field = tools.get_attr(model, _filter['field'])
       op = _filter['operator']
       value = _filter['value']
       # here we could use
@@ -440,7 +440,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     if path is None:
       path = self._code_name
     value = self._property_value_format(value)
-    if value is util.Nonexistent:
+    if value is tools.Nonexistent:
       return value
     out = []
     if not isinstance(value, list):
@@ -477,7 +477,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
                 errors[e.message] = []
               errors[e.message].append(new_path)
             continue
-          if val is util.Nonexistent:
+          if val is tools.Nonexistent:
             del values[value_key]
           else:
             values[value_key] = val

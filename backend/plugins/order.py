@@ -12,11 +12,12 @@ import copy
 
 import orm
 import errors
-from tools.base import *
-from util import *
+import tools
 
 from models.location import *
 from models.unit import *
+
+from google.appengine.api import urlfetch
 
 
 class PluginError(errors.BaseKeyValueError):
@@ -53,7 +54,7 @@ class OrderInit(orm.BaseModel):
     else:
       defaults = {'_lines' : {'config': {'search': {'options': {'limit': 0}}}}}
       if 'read_arguments' in context.input:
-        override_dict(defaults, context.input.get('read_arguments'))
+        tools.override_dict(defaults, context.input.get('read_arguments'))
       order.read(defaults)
     context._order = order
 
@@ -107,7 +108,7 @@ class UpdateOrderLine(orm.BaseModel):
         if product and real_product_key == product_key \
         and product.variant_signature == variant_signature:
           line._state = 'modified'
-          product.quantity = format_value(quantity, product.uom.value)
+          product.quantity = tools.format_value(quantity, product.uom.value)
           line_exists = True
           break
     if not line_exists:
@@ -133,7 +134,7 @@ class UpdateOrderLine(orm.BaseModel):
       copy_product.variant_signature = variant_signature
       copy_product.category = copy.deepcopy(product._category.value)
       copy_product.code = product.code
-      copy_product.unit_price = format_value(product.unit_price, order.currency.value)
+      copy_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
       copy_product.uom = copy.deepcopy(product.uom.get())
       if product_instance is not None:
         if hasattr(product_instance, 'unit_price') and product_instance.unit_price is not None:
@@ -158,9 +159,9 @@ class UpdateOrderLine(orm.BaseModel):
           if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
             copy_product.volume = product_instance.volume
             copy_product.volume_uom = copy.deepcopy(product_instance.volume_uom.get())
-      copy_product.quantity = format_value(quantity, copy_product.uom.value)
+      copy_product.quantity = tools.format_value(quantity, copy_product.uom.value)
       new_line.product = copy_product
-      new_line.discount = format_value('0', Unit(digits=2))
+      new_line.discount = tools.format_value('0', Unit(digits=2))
       lines = order._lines.value
       if lines is None:
         lines = []
@@ -181,19 +182,19 @@ class ProductSpecs(orm.BaseModel):
     weight_uom = Unit.build_key('kilogram').get()
     volume_uom = Unit.build_key('cubic_meter').get()
     unit_uom = Unit.build_key('unit').get()
-    total_weight = format_value('0', weight_uom)
-    total_volume = format_value('0', volume_uom)
-    total_quantity = format_value('0', unit_uom)
+    total_weight = tools.format_value('0', weight_uom)
+    total_volume = tools.format_value('0', volume_uom)
+    total_quantity = tools.format_value('0', unit_uom)
     if order._lines.value:
       for line in order._lines.value:
         if line._state == 'deleted':
           continue
         product = line.product.value
         if product.weight is not None:
-          total_weight = total_weight + (convert_value(product.weight, product.weight_uom.value, weight_uom) * product.quantity)
+          total_weight = total_weight + (tools.convert_value(product.weight, product.weight_uom.value, weight_uom) * product.quantity)
         if product.volume is not None:
-          total_volume = total_volume + (convert_value(product.volume, product.volume_uom.value, volume_uom) * product.quantity)
-        total_quantity = total_quantity + convert_value(product.quantity, product.uom.value, unit_uom)
+          total_volume = total_volume + (tools.convert_value(product.volume, product.volume_uom.value, volume_uom) * product.quantity)
+        total_quantity = total_quantity + tools.convert_value(product.quantity, product.uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume
     order._total_quantity = total_quantity
@@ -215,25 +216,25 @@ class OrderLineFormat(orm.BaseModel):
       if product:
         if order.seller_reference._root != product.reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
-        line.discount = format_value(line.discount, Unit(digits=2))
-        product.quantity = format_value(product.quantity, product.uom.value)
-        line.subtotal = format_value((product.unit_price * product.quantity), order.currency.value)
+        line.discount = tools.format_value(line.discount, Unit(digits=2))
+        product.quantity = tools.format_value(product.quantity, product.uom.value)
+        line.subtotal = tools.format_value((product.unit_price * product.quantity), order.currency.value)
         if line.discount is not None:
-          discount = line.discount * format_value('0.01', Unit(digits=2))  # or "/ format_value('100', Unit(digits=2))"
-          line.discount_subtotal = format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
+          discount = line.discount * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
+          line.discount_subtotal = tools.format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
         else:
-          line.discount_subtotal = format_value('0', Unit(digits=2))
-        tax_subtotal = format_value('0', order.currency.value)
+          line.discount_subtotal = tools.format_value('0', Unit(digits=2))
+        tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
             if tax.type == 'percent':
-              tax_amount = format_value(tax.amount, Unit(digits=2)) * format_value('0.01', Unit(digits=2))  # or "/ format_value('100', Unit(digits=2))"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
+              tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.discount_subtotal * tax_amount)
             elif tax.type == 'fixed':
-              tax_amount = format_value(tax.amount, order.currency.value)
+              tax_amount = tools.format_value(tax.amount, order.currency.value)
               tax_subtotal = tax_subtotal + tax_amount
         line.tax_subtotal = tax_subtotal
-        line.total = format_value(line.discount_subtotal + line.tax_subtotal, order.currency.value)
+        line.total = tools.format_value(line.discount_subtotal + line.tax_subtotal, order.currency.value)
 
 
 # This is system plugin, which means end user can not use it!
@@ -247,18 +248,18 @@ class OrderCarrierFormat(orm.BaseModel):
     order = context._order
     carrier = order.carrier.value
     if carrier:
-      carrier.subtotal = format_value(carrier.unit_price, order.currency.value)
-      tax_subtotal = format_value('0', order.currency.value)
+      carrier.subtotal = tools.format_value(carrier.unit_price, order.currency.value)
+      tax_subtotal = tools.format_value('0', order.currency.value)
       if carrier.taxes.value:
         for tax in carrier.taxes.value:
           if tax.type == 'percent':
-            tax_amount = format_value(tax.amount, Unit(digits=2)) * format_value('0.01', Unit(digits=2))
+            tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))
             tax_subtotal = tax_subtotal + (carrier.subtotal * tax_amount)
           elif tax.type == 'fixed':
-            tax_amount = format_value(tax.amount, order.currency.value)
+            tax_amount = tools.format_value(tax.amount, order.currency.value)
             tax_subtotal = tax_subtotal + tax_amount
       carrier.tax_subtotal = tax_subtotal
-      carrier.total = format_value(carrier.subtotal + carrier.tax_subtotal, order.currency.value)
+      carrier.total = tools.format_value(carrier.subtotal + carrier.tax_subtotal, order.currency.value)
 
 
 # This is system plugin, which means end user can not use it!
@@ -270,9 +271,9 @@ class OrderFormat(orm.BaseModel):
   
   def run(self, context):
     order = context._order
-    untaxed_amount = format_value('0', order.currency.value)
-    tax_amount = format_value('0', order.currency.value)
-    total_amount = format_value('0', order.currency.value)
+    untaxed_amount = tools.format_value('0', order.currency.value)
+    tax_amount = tools.format_value('0', order.currency.value)
+    total_amount = tools.format_value('0', order.currency.value)
     i = 0
     for line in order._lines.value:
       if line._state == 'deleted':
@@ -289,9 +290,9 @@ class OrderFormat(orm.BaseModel):
       untaxed_amount = untaxed_amount + carrier.subtotal
       tax_amount = tax_amount + carrier.tax_subtotal
       total_amount = total_amount + (carrier.subtotal + carrier.tax_subtotal)
-    order.untaxed_amount = format_value(untaxed_amount, order.currency.value)
-    order.tax_amount = format_value(tax_amount, order.currency.value)
-    order.total_amount = format_value(total_amount, order.currency.value)
+    order.untaxed_amount = tools.format_value(untaxed_amount, order.currency.value)
+    order.tax_amount = tools.format_value(tax_amount, order.currency.value)
+    order.total_amount = tools.format_value(total_amount, order.currency.value)
 
 
 # Not a plugin!
@@ -488,9 +489,9 @@ class PayPalPayment(PaymentMethod):
         mismatches.append('business_email')
     if (order_currency.code != ipn['mc_currency']):
       mismatches.append('mc_currency')
-    if (order.total_amount != format_value(ipn['mc_gross'], order_currency)):
+    if (order.total_amount != tools.format_value(ipn['mc_gross'], order_currency)):
       mismatches.append('mc_gross')
-    if (order.tax_amount != format_value(ipn['tax'], order_currency)):
+    if (order.tax_amount != tools.format_value(ipn['tax'], order_currency)):
       mismatches.append('tax')
     if (order.key.urlsafe() != ipn['invoice']):
       mismatches.append('invoice')
@@ -515,15 +516,15 @@ class PayPalPayment(PaymentMethod):
         
     for line in order._lines.value:
       product = line.product.value
-      log.info('Order sequence %s' % line.sequence)
+      tools.log.info('Order sequence %s' % line.sequence)
       # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
       if (str(line.sequence) != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
         mismatches.append('item_number%s' % str(line.sequence))
       if (product.name != ipn['item_name%s' % str(line.sequence)]):
         mismatches.append('item_name%s' % str(line.sequence))
-      if (product.quantity != format_value(ipn['quantity%s' % str(line.sequence)], product.uom.value)):
+      if (product.quantity != tools.format_value(ipn['quantity%s' % str(line.sequence)], product.uom.value)):
         mismatches.append('quantity%s' % str(line.sequence))
-      if (line.subtotal != format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
+      if (line.subtotal != tools.format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
         mismatches.append('mc_gross_%s' % str(line.sequence))
     # Ukoliko je doslo do fail-ova u poredjenjima
     # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
@@ -551,9 +552,9 @@ class PayPalPayment(PaymentMethod):
               order.payment_status = ipn_payment_status
     else:
       # log that there were missmatches, where we should log that?
-      log.error('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
-    log.info('Set Order state %s' % order.state)
-    log.info('Set Order payment_status %s' % order.payment_status)
+      tools.log.error('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
+    tools.log.info('Set Order state %s' % order.state)
+    tools.log.info('Set Order payment_status %s' % order.payment_status)
 
 
 class Tax(orm.BaseModel):
@@ -780,7 +781,7 @@ class Carrier(orm.BaseModel):
               'price': order.total_amount,
               'quantity': order._total_quantity,
             }
-            if safe_eval(condition, condition_data):
+            if tools.safe_eval(condition, condition_data):
               price_calculation = rule.make_price_calculator()
               price_data = {
                 'weight': product.weight * product.quantity,
@@ -788,7 +789,7 @@ class Carrier(orm.BaseModel):
                 'quantity': product.quantity,
                 'price_value': rule.price_value,
               }
-              price = safe_eval(price_calculation, price_data)
+              price = tools.safe_eval(price_calculation, price_data)
               rule_line_prices.append(price)
         else:
           rule_line_prices.append(Decimal('0'))
@@ -844,7 +845,7 @@ class Carrier(orm.BaseModel):
             'price': order.total_amount,
             'quantity': order._total_quantity,
           }
-          if safe_eval(condition, condition_data):
+          if tools.safe_eval(condition, condition_data):
             allowed = True
             break
       else:
@@ -883,7 +884,7 @@ class SetMessage(orm.BaseModel):
     # this could be extended to allow params
     data = dict(agent=context.account.key, _agent=context.account, body=context.input['message'], action=context.action.key)
     for key, value in self.cfg.get('additional', {}).iteritems():
-      data[key] = get_attr(context, value)
+      data[key] = tools.get_attr(context, value)
     context._order._messages = [OrderMessage(**data)]
 
 class DiscountLine(orm.BaseModel):
@@ -940,8 +941,8 @@ class Discount(orm.BaseModel):
               'price': product.unit_price,
               'condition_value': discount_line.condition_value
             }
-            if safe_eval(price_calculation, price_data):
-              line.discount = format_value(discount_line.discount_value, Unit(digits=2))
+            if tools.safe_eval(price_calculation, price_data):
+              line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break
 
 class OrderLineRemovals(orm.BaseModel):
