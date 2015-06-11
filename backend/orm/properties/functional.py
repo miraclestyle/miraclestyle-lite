@@ -9,5 +9,6 @@ from .base import _BaseProperty
 
 __all__ = ['SuperComputedProperty']
 
+
 class SuperComputedProperty(_BaseProperty, ComputedProperty):
   pass

@@ -9,8 +9,9 @@ from .base import _BaseProperty
 
 __all__ = ['SuperBooleanProperty']
 
+
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
@@ -19,7 +20,7 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
       return [bool(long(v)) for v in value]
     else:
       return bool(long(value))
-  
+
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
@@ -27,7 +28,7 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
     else:
       value = str(value)
       return search.AtomField(name=self.search_document_field_name, value=value)
-  
+
   def resolve_search_document_field(self, value):
     if self._repeated:
       out = []

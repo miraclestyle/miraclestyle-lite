@@ -9,19 +9,21 @@ from .values import *
 
 __all__ = ['SuperKeyProperty', 'SuperVirtualKeyProperty', 'SuperBlobKeyProperty', 'SuperReferenceProperty']
 
+
 class SuperKeyProperty(BaseKeyProperty):
-    pass
+  pass
 
 
 class SuperVirtualKeyProperty(BaseVirtualKeyProperty):
-    pass
+  pass
 
 
 class SuperBlobKeyProperty(BaseBlobKeyProperty):
-    pass
+  pass
 
 
 class SuperReferenceProperty(SuperKeyProperty):
+
   '''This property can be used to read stuff in async mode upon reading entity from protobuff.
   However, this can be also used for storing keys, behaving like SuperKeyProperty.
   Setter value should always be a key, however it can be an entire entity instance from which it will use its .key
@@ -43,17 +45,17 @@ class SuperReferenceProperty(SuperKeyProperty):
   _async = True
 
   can_be_copied = False
-  
+
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
     self._format_callback = kwargs.pop('format_callback', None)
     self._target_field = kwargs.pop('target_field', None)
     self._autoload = kwargs.pop('autoload', True)
     self._store_key = kwargs.pop('store_key', False)
-    if self._callback != None and not callable(self._callback):
+    if self._callback is not None and not callable(self._callback):
       raise ValueError('callback must be a callable, got %s' % self._callback)
     super(SuperReferenceProperty, self).__init__(*args, **kwargs)
-  
+
   def _set_value(self, entity, value):
     # __set__
     value_instance = self._get_value(entity, internal=True)
@@ -62,14 +64,14 @@ class SuperReferenceProperty(SuperKeyProperty):
       value = value.key
     if self._store_key:
       super(SuperReferenceProperty, self)._set_value(entity, value)
-  
+
   def _delete_value(self, entity):
     # __delete__
     value_instance = self._get_value(entity, internal=True)
     value_instance.delete()
     if self._store_key:
       return super(SuperReferenceProperty, self)._delete_value(entity)
-  
+
   def _get_value(self, entity, internal=None):
     # __get__
     value_name = '%s_value' % self._name
@@ -81,7 +83,7 @@ class SuperReferenceProperty(SuperKeyProperty):
     if internal:
       return value_instance
     return value_instance.read()
-  
+
   def get_output(self):
     dic = super(SuperReferenceProperty, self).get_meta()
     other = ['_target_field', '_store_key']

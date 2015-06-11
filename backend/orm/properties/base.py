@@ -19,6 +19,7 @@ from google.appengine.datastore.datastore_query import Cursor
 import tools
 import settings
 
+
 class FormatError(Exception):
   pass
 
@@ -652,7 +653,7 @@ class _BaseBlobProperty(object):
 class _BaseImageProperty(_BaseBlobProperty):
 
   '''Base helper class for image-like properties.
-  This class should work in conjunction with Property, because it does not implement anything of 
+  This class should work in conjunction with Property, because it does not implement anything of
   Example:
   class NewImageProperty(_BaseImageProperty, Property):
   ...

@@ -12,21 +12,22 @@ __all__ = ['SuperLocalStructuredProperty', 'SuperStructuredProperty',
            'SuperMultiLocalStructuredProperty', 'SuperImageLocalStructuredProperty',
            'SuperImageStructuredProperty']
 
+
 class SuperLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
 
   _value_class = LocalStructuredPropertyValue
-  _autoload = True # always automatically load structured props since they dont take any io
-  
+  _autoload = True  # always automatically load structured props since they dont take any io
+
   def __init__(self, *args, **kwargs):
     super(SuperLocalStructuredProperty, self).__init__(*args, **kwargs)
-    self._keep_keys = True # all keys must be stored by default
+    self._keep_keys = True  # all keys must be stored by default
 
 
 class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
-  
+
   _value_class = LocalStructuredPropertyValue
-  _autoload = True # always automatically load structured props since they dont take any io
-  
+  _autoload = True  # always automatically load structured props since they dont take any io
+
   def _serialize(self, entity, pb, prefix='', parent_repeated=False, projection=None):
     '''Internal helper to serialize this property to a protocol buffer.
     Subclasses may override this method.
@@ -58,7 +59,7 @@ class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
     return super(SuperStructuredProperty, self)._serialize(
         entity, pb, prefix=prefix, parent_repeated=parent_repeated,
         projection=projection)
-  
+
   def _deserialize(self, entity, p, depth=1):
     stored_key = 'stored_key'
     super(SuperStructuredProperty, self)._deserialize(entity, p, depth)
@@ -79,10 +80,10 @@ class SuperStructuredProperty(_BaseStructuredProperty, StructuredProperty):
 
 
 class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructuredProperty):
-  
+
   _kinds = None
   _value_class = LocalStructuredPropertyValue
-  
+
   def __init__(self, *args, **kwargs):
     '''So basically:
     argument: SuperMultiLocalStructuredProperty(('3' or ModelItself, '21' or ModelItself))
@@ -93,22 +94,22 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     => Image
     => OtherTypeOfEntity
     => OtherTypeOfEntityA
- 
+
     In order to support different instances in the repeated list we would also need to store KIND and implement
     additional logic that will load proper model based on protobuff.
     '''
     args = list(args)
     if isinstance(args[0], (tuple, list)):
       self._kinds = args[0]
-      set_model1 = Model._kind_map.get(args[0][0]) # by default just pass the first one
+      set_model1 = Model._kind_map.get(args[0][0])  # by default just pass the first one
       if set_model1 is not None:
         args[0] = set_model1
     if isinstance(args[0], basestring):
-      set_model1 = Model._kind_map.get(args[0]) # by default just pass the first one
-      if set_model1 is not None: # do not set it if it wasnt scanned yet
+      set_model1 = Model._kind_map.get(args[0])  # by default just pass the first one
+      if set_model1 is not None:  # do not set it if it wasnt scanned yet
         args[0] = set_model1
     super(SuperMultiLocalStructuredProperty, self).__init__(*args, **kwargs)
-  
+
   def get_modelclass(self, kind=None, **kwds):
     if self._kinds and kind:
       if kind:
@@ -124,12 +125,12 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
         model = Model._kind_map.get(kind)
         return model
     return super(SuperMultiLocalStructuredProperty, self).get_modelclass()
-  
+
   def get_meta(self):
     out = super(SuperMultiLocalStructuredProperty, self).get_meta()
     out['kinds'] = self._kinds
     return out
-  
+
   def property_keywords_format(self, kwds, skip_kwds):
     super(SuperMultiLocalStructuredProperty, self).property_keywords_format(kwds, skip_kwds)
     if 'kinds' not in skip_kwds:
@@ -137,10 +138,10 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
 
 
 class SuperImageLocalStructuredProperty(_BaseImageProperty, SuperLocalStructuredProperty):
-  
+
   _value_class = LocalStructuredImagePropertyValue
 
 
 class SuperImageStructuredProperty(_BaseImageProperty, SuperStructuredProperty):
-  
+
   _value_class = LocalStructuredImagePropertyValue

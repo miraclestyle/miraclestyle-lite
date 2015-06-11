@@ -12,7 +12,9 @@ from .values import *
 __all__ = ['SuperRecordProperty', 'SuperRemoteStructuredProperty', 'SuperReferenceStructuredProperty',
            'SuperImageRemoteStructuredProperty']
 
+
 class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
+
   '''This property is not meant to be used as property storage. It should be always defined as virtual property.
   E.g. the property that never gets saved to the datastore.
   '''
@@ -24,7 +26,7 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
   _autoload = False
   _value_class = RemoteStructuredPropertyValue
   search = None
-  
+
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     if isinstance(modelclass, basestring):
       set_modelclass = Model._kind_map.get(modelclass)
@@ -33,30 +35,30 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
     kwds['generic'] = True
     self.search = kwds.pop('search', None)
     if self.search is None:
-      self.search = {'cfg':{
-              'filters': {},
-              'indexes': [{'ancestor': True, 'filters': [], 'orders': []}],
-            }}
+      self.search = {'cfg': {
+          'filters': {},
+          'indexes': [{'ancestor': True, 'filters': [], 'orders': []}],
+      }}
     super(SuperRemoteStructuredProperty, self).__init__(name, **kwds)
     self._modelclass = modelclass
-  
+
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
-  
+
   def _set_value(self, entity, value):
     # __set__
     value_instance = self._get_value(entity)
     value_instance.set(value)
-  
+
   def _prepare_for_put(self, entity):
     self._get_value(entity)  # For its side effects.
 
   def initialize(self):
     super(SuperRemoteStructuredProperty, self).initialize()
     default_search_cfg = {'cfg': {'search_arguments': {'kind': self._modelclass.get_kind()},
-                          'search_by_keys': False,
-                          'filters': {},
-                          'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
+                                  'search_by_keys': False,
+                                  'filters': {},
+                                  'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
     tools.merge_dicts(self.search, default_search_cfg)
     self.search = SuperSearchProperty(**self.search)
 
@@ -70,15 +72,16 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
 
 
 class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
+
   '''Reference structured is the same as remote, except it uses different default value class and its default flags for
   updating, deleting are always false.
-  
+
   '''
   _value_class = ReferenceStructuredPropertyValue
   _updateable = False
   _deleteable = False
   _addable = False
-  
+
   def __init__(self, *args, **kwargs):
     self._callback = kwargs.pop('callback', None)
     self._target_field = kwargs.pop('target_field', None)
@@ -92,6 +95,7 @@ class SuperReferenceStructuredProperty(SuperRemoteStructuredProperty):
 
 
 class SuperRecordProperty(SuperRemoteStructuredProperty):
+
   '''Usage: '_records': SuperRecordProperty(Domain or '6')
   '''
 
@@ -108,23 +112,23 @@ class SuperRecordProperty(SuperRemoteStructuredProperty):
     if 'cfg' not in search:
       search['cfg'] = {
           'indexes': [{
-            'ancestor': True,
-            'filters': [],
-            'orders': [('logged', ['desc'])]
+              'ancestor': True,
+              'filters': [],
+              'orders': [('logged', ['desc'])]
           }],
-        }
+      }
     kwargs['search'] = search
     super(SuperRecordProperty, self).__init__(*args, **kwargs)
     # Implicitly state that entities cannot be updated or deleted.
     self._updateable = False
     self._deleteable = False
     self._duplicable = False
-  
+
   def get_model_fields(self, **kwargs):
     parent = super(SuperRecordProperty, self).get_model_fields(**kwargs)
     parent.update(self._modelclass2.get_fields())
     return parent
-  
+
   def initialize(self):
     super(SuperRecordProperty, self).initialize()
     if isinstance(self._modelclass2, basestring):
@@ -136,5 +140,5 @@ class SuperRecordProperty(SuperRemoteStructuredProperty):
 
 
 class SuperImageRemoteStructuredProperty(_BaseImageProperty, SuperRemoteStructuredProperty):
-  
+
   _value_class = RemoteStructuredImagePropertyValue

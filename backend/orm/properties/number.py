@@ -11,8 +11,9 @@ from .text import SuperStringProperty
 
 __all__ = ['SuperDecimalProperty', 'SuperFloatProperty', 'SuperIntegerProperty']
 
+
 class SuperFloatProperty(_BaseProperty, FloatProperty):
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
@@ -21,7 +22,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
       return [float(v) for v in value]
     else:
       return float(value)
-  
+
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
@@ -30,7 +31,7 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
 
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
@@ -41,7 +42,7 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
       if not self._required and value is None:
         return value
       return long(value)
-  
+
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
@@ -50,8 +51,9 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
 
 
 class SuperDecimalProperty(SuperStringProperty):
+
   '''Decimal property that accepts only decimal.Decimal.'''
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
@@ -75,7 +77,7 @@ class SuperDecimalProperty(SuperStringProperty):
     if value is None:
       raise FormatError('invalid_number')
     return value
-  
+
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
@@ -84,13 +86,13 @@ class SuperDecimalProperty(SuperStringProperty):
       value = str(value)
       # Specifying this as a number field will either convert it to INT or FLOAT.
       return search.NumberField(name=self.search_document_field_name, value=value)
-  
+
   def _validate(self, value):
     if not isinstance(value, decimal.Decimal):
       raise ValueError('expected_decimal')
-  
+
   def _to_base_type(self, value):
     return str(value)
-  
+
   def _from_base_type(self, value):
     return decimal.Decimal(value)

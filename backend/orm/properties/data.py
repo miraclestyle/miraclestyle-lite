@@ -11,8 +11,9 @@ from .base import _BaseProperty
 
 __all__ = ['SuperPickleProperty', 'SuperJsonProperty', 'SuperSearchProperty', 'SuperPluginStorageProperty']
 
+
 class SuperPickleProperty(_BaseProperty, PickleProperty):
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
@@ -21,7 +22,7 @@ class SuperPickleProperty(_BaseProperty, PickleProperty):
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
@@ -30,7 +31,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
       return json.loads(value)
     else:
       return value
-  
+
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: json.dumps(v), value))
@@ -40,7 +41,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
 
 
 class SuperSearchProperty(SuperJsonProperty):
-  
+
   def __init__(self, *args, **kwargs):
     '''Filters work like this:
     First you configure SuperSearchProperty with search_arguments, filters and indexes parameters.
@@ -55,7 +56,7 @@ class SuperSearchProperty(SuperJsonProperty):
                   {'ancestor': False, 'filters': [('field1', [op1]), ('field2', [op1])], 'orders': [('field1', ['asc', 'desc'])]}]
     }
     search = SuperSearchProperty(cfg=cfg)
-    
+
     Search values that are provided with input will be validated trough SuperSearchProperty().value_format() function.
     Example of search values that are provided in input after processing:
     context.input['search'] = {'kind': '37',
@@ -68,20 +69,20 @@ class SuperSearchProperty(SuperJsonProperty):
                                'filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}],
                                'orders': [{'field': 'name', 'operator': 'asc'}],
                                'keys': [key1, key2, key3]}
-    
+
     '''
     self._cfg = kwargs.pop('cfg', {})
     super(SuperSearchProperty, self).__init__(*args, **kwargs)
-  
+
   def get_meta(self):
     '''This function returns dictionary of meta data (not stored or dynamically generated data) of the model.
     The returned dictionary can be transalted into other understandable code to clients (e.g. JSON).
-    
+
     '''
     dic = super(SuperSearchProperty, self).get_meta()
     dic['cfg'] = self._cfg
     return dic
-  
+
   def _clean_format(self, values):
     allowed_arguments = ['kind', 'ancestor', 'projection',
                          'group_by', 'options', 'default_options',
@@ -89,13 +90,13 @@ class SuperSearchProperty(SuperJsonProperty):
     for value_key, value in values.items():
       if value_key not in allowed_arguments:
         del values[value_key]
-  
+
   def _kind_format(self, values):
     kind = values.get('kind')
     model = Model._kind_map.get(kind)
     if not model:
       raise FormatError('invalid_model_kind')
-  
+
   def _ancestor_format(self, values):
     ancestor = values.get('ancestor')
     if ancestor is not None:
@@ -105,7 +106,7 @@ class SuperSearchProperty(SuperJsonProperty):
         values['ancestor'] = BaseVirtualKeyProperty(kind=ancestor_kind, required=True).value_format(ancestor)
       else:
         del values['ancestor']
-  
+
   def _keys_format(self, values):
     keys = values.get('keys')
     ancestor = values.get('ancestor')
@@ -114,7 +115,7 @@ class SuperSearchProperty(SuperJsonProperty):
         values['keys'] = BaseKeyProperty(kind=values['kind'], repeated=True).value_format(keys)
       else:
         del values['keys']
-  
+
   def _projection_group_by_format(self, values):
     def list_format(list_values):
       if not isinstance(list_values, (tuple, list)):
@@ -125,18 +126,18 @@ class SuperSearchProperty(SuperJsonProperty):
           remove_list_values.append(value)
       for value in remove_list_values:
         list_values.remove(value)
-    
+
     projection = values.get('projection')
     if projection is not None:
       list_format(projection)
     group_by = values.get('group_by')
     if group_by is not None:
       list_format(group_by)
-  
+
   def _filters_orders_format(self, values):
     ''''filters': [{'field': 'name', 'operator': '==', 'value': 'Test'}]
        'orders': [{'field': 'name', 'operator': 'asc'}]
-    
+
     '''
     def _validate(cfg_values, input_values, method):
       # cfg_filters = [('name', ['==', '!=']), ('age', ['>=', '<=']), ('sex', ['=='])]
@@ -151,7 +152,7 @@ class SuperSearchProperty(SuperJsonProperty):
           raise FormatError('expected_%s_field_%s_at_%s' % (method, cfg_value[0], i))
         if input_value['operator'] not in cfg_value[1]:
           raise FormatError('expected_%s_operator_%s_at_%s' % (method, cfg_value[1], i))
-    
+
     if self._cfg.get('search_by_keys') and 'keys' in values:
       return values
     defaults = self._default
@@ -192,7 +193,7 @@ class SuperSearchProperty(SuperJsonProperty):
       if isinstance(e, Exception):
         e = e.message
       raise FormatError(e)
-  
+
   def _datastore_query_options_format(self, values):
     def options_format(options_values):
       for value_key, value in options_values.items():
@@ -217,7 +218,7 @@ class SuperSearchProperty(SuperJsonProperty):
             del options_values[value_key]
         else:
           del options_values[value_key]
-    
+
     default_options = values.get('default_options')
     if default_options is not None:
       options_format(default_options)
@@ -225,7 +226,7 @@ class SuperSearchProperty(SuperJsonProperty):
     if 'limit' not in options.keys():
       raise FormatError('limit_value_missing')
     options_format(options)
-  
+
   def _search_query_orders_format(self, values):
     orders = values.get('orders')
     cfg_orders = self._cfg.get('orders', {})
@@ -233,7 +234,7 @@ class SuperSearchProperty(SuperJsonProperty):
       for _order in orders:
         cfg_order = cfg_orders.get(_order['field'], {})
         _order['default_value'] = cfg_order.get('default_value', {})
-  
+
   def _search_query_options_format(self, values):
     options = values.get('options', {})
     if 'limit' not in options.keys():
@@ -249,7 +250,7 @@ class SuperSearchProperty(SuperJsonProperty):
           del options[value_key]
       else:
         del options[value_key]
-  
+
   def value_format(self, values):
     values = super(SuperSearchProperty, self).value_format(values)
     override = self._cfg.get('search_arguments', {})
@@ -267,7 +268,7 @@ class SuperSearchProperty(SuperJsonProperty):
       self._datastore_query_options_format(values)
     values['property'] = self
     return values
-  
+
   def build_datastore_query_filters(self, value):
     _filters = value.get('filters')
     filters = []
@@ -281,7 +282,7 @@ class SuperSearchProperty(SuperJsonProperty):
       # here we could use
       # field._comparison(op, value)
       # https://code.google.com/p/appengine-ndb-experiment/source/browse/ndb/model.py?r=6b3f88b663a82831e9ecee8adbad014ff774c365#831
-      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+      if op == '==':  # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
         filters.append(field == value)
       elif op == '!=':
         filters.append(field != value)
@@ -305,7 +306,7 @@ class SuperSearchProperty(SuperJsonProperty):
         except ValueError as e:  # Value not in the letter scope, šččđčžćč for example.
           filters.append(field == value)
     return filters
-  
+
   def build_datastore_query_orders(self, value):
     _orders = value.get('orders')
     orders = []
@@ -320,15 +321,15 @@ class SuperSearchProperty(SuperJsonProperty):
       else:
         orders.append(-field)
     return orders
-  
+
   def build_datastore_query_options(self, value):
     options = value.get('options', {})
     return QueryOptions(**options)
-  
+
   def build_datastore_query_default_options(self, value):
     default_options = value.get('default_options', {})
     return QueryOptions(**default_options)
-  
+
   def build_datastore_query(self, value):
     filters = self.build_datastore_query_filters(value)
     orders = self.build_datastore_query_orders(value)
@@ -336,7 +337,7 @@ class SuperSearchProperty(SuperJsonProperty):
     return Query(kind=value.get('kind'), ancestor=value.get('ancestor'),
                  namespace=value.get('namespace'), projection=value.get('projection'),
                  group_by=value.get('group_by'), default_options=default_options).filter(*filters).order(*orders)
-  
+
   def build_search_query_string(self, value):
     query_string = value.get('query_string', '')
     if query_string:
@@ -356,7 +357,7 @@ class SuperSearchProperty(SuperJsonProperty):
       if field == 'query_string':
         filters.append(value)
         break
-      if op == '==': # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
+      if op == '==':  # here we need more ifs for >=, <=, <, >, !=, IN ... OR ... ? this also needs improvements
         filters.append('(' + field + '=' + value + ')')
       elif op == '!=':
         filters.append('(NOT ' + field + '=' + value + ')')
@@ -371,7 +372,7 @@ class SuperSearchProperty(SuperJsonProperty):
       elif op == 'IN':
         filters.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
     return ' AND '.join(filters)
-  
+
   def build_search_query_sort_options(self, value):
     _orders = value.get('orders')
     options = value.get('options', {})
@@ -384,14 +385,14 @@ class SuperSearchProperty(SuperJsonProperty):
       orders.append(search.SortExpression(expression=field, direction=direction.get(op),
                                           default_value=default_value.get(op)))
     return search.SortOptions(expressions=orders, limit=options.get('limit'))
-  
+
   def build_search_query_options(self, value):
     sort_options = self.build_search_query_sort_options(value)
     options = value.get('options', {})
     return search.QueryOptions(limit=options.get('limit'),
                                returned_fields=value.get('projection'),
                                sort_options=sort_options, cursor=options.get('cursor'))
-  
+
   def build_search_query(self, value):
     query_string = self.build_search_query_string(value)
     query_options = self.build_search_query_options(value)
@@ -399,9 +400,9 @@ class SuperSearchProperty(SuperJsonProperty):
 
 
 class SuperPluginStorageProperty(SuperPickleProperty):
-  
+
   _kinds = None
-  
+
   def __init__(self, *args, **kwargs):
     args = list(args)
     if isinstance(args[0], (tuple, list)):
@@ -410,7 +411,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       self._kinds = (args[0],)
     args = args[1:]
     super(SuperPluginStorageProperty, self).__init__(*args, **kwargs)
-    
+
   def _get_value(self, entity):
     values = super(SuperPluginStorageProperty, self)._get_value(entity)
     if values:
@@ -420,7 +421,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
         sequence -= 1
         val._sequence = sequence
     return values
-  
+
   def _set_value(self, entity, value):
     # __set__
     # plugin storage needs just to generate key if its non existant, it cannot behave like local struct and remote struct
@@ -437,7 +438,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
           structured = getattr(val, field_key)
           structured.pre_update()
     return super(SuperPluginStorageProperty, self)._set_value(entity, value)
-  
+
   def value_format(self, value, path=None):
     if path is None:
       path = self._code_name
@@ -450,7 +451,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     for v in value:
       out.append(self._structured_property_format(v, path))
     return out
-  
+
   def _structured_property_field_format(self, fields, values, path):
     _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
@@ -492,7 +493,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     values['_state'] = _state  # Always keep track of _state for rule engine!
     if _sequence is not None:
       values['_sequence'] = _sequence
-  
+
   def _structured_property_format(self, entity_as_dict, path):
     provided_kind_id = entity_as_dict.get('kind')
     fields = self.get_model_fields(kind=provided_kind_id)
@@ -503,7 +504,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
       raise FormatError(e.message)
     modelclass = self.get_modelclass(kind=provided_kind_id)
     return modelclass(**entity_as_dict)
-  
+
   def get_modelclass(self, kind):
     if self._kinds and kind:
       if kind:
@@ -518,15 +519,15 @@ class SuperPluginStorageProperty(SuperPickleProperty):
           raise ValueError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
         model = Model._kind_map.get(kind)
         return model
-  
+
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
-  
+
   def get_meta(self):
     out = super(SuperPluginStorageProperty, self).get_meta()
     out['kinds'] = self._kinds
     return out
-  
+
   def property_keywords_format(self, kwds, skip_kwds):
     super(SuperPluginStorageProperty, self).property_keywords_format(kwds, skip_kwds)
     if 'kinds' not in skip_kwds:
