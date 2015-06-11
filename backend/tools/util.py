@@ -11,6 +11,7 @@ import string
 import random
 import dis
 import pdb
+import traceback
 
 from decimal import Decimal, ROUND_HALF_EVEN
 
@@ -22,7 +23,7 @@ import errors
 __all__ = ['UnitConversionError', 'UnitRoundingError', 'UnitFormatError', 'SafeEvalError', 'Nonexistent',
            'remove_value', 'prepare_attr', 'set_attr', 'del_attr', 'get_attr', 'get_meta', 'normalize',
            'sort_by_list', 'merge_dicts', 'override_dict', 'make_complete_name', 'safe_eval', 'random_chars',
-           'partition_list', 'noop', 'debug', 'convert_value', 'log', 'round_value', 'format_value']
+           'partition_list', 'noop', 'debug', 'convert_value', 'log', 'round_value', 'format_value', 'trace']
 
 
 class UnitConversionError(errors.BaseKeyValueError):
@@ -448,3 +449,6 @@ def format_value(value, uom, rounding=ROUND_HALF_EVEN):
     raise UnitFormatError('no_digits_in_uom, got %s' % uom)
   places = Decimal(10) ** -uom.digits
   return value.quantize(places, rounding=rounding)
+
+def trace():
+  traceback.print_stack()

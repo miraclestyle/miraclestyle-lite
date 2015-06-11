@@ -389,7 +389,10 @@
             account: 'Account',
             admin: 'Admin',
             users: 'Users',
-            aboutRules: 'About Rules'
+            aboutRules: 'About Rules',
+            addDocuments: 'Add Content',
+            editDocuments: 'Edit Content',
+            editContent: false
         });
 
     }));

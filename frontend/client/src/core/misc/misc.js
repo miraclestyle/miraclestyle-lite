@@ -152,8 +152,10 @@
                                     .on('error', error)
                                     .attr('src', scope.image.serving_url + (scope.config.size === true ? '' : '=s' + scope.config.size));
                             } else {
-                                error();
-                                done();
+                                setTimeout(function () {
+                                    error();
+                                    done();
+                                }, 50);
                             }
                         }
                     };

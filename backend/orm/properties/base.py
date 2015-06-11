@@ -17,7 +17,7 @@ from google.appengine.api import images, urlfetch
 from google.appengine.datastore.datastore_query import Cursor
 
 import tools
-
+import settings
 
 class FormatError(Exception):
   pass

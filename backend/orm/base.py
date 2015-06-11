@@ -4,25 +4,12 @@ Created on Jul 9, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
-import math
-import decimal
-import datetime
-import json
 import copy
 import collections
-import string
 import time
 import re
-import sys
 import uuid
-import inspect
 
-import cProfile
-import cStringIO
-import pstats
-
-from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
 from google.appengine.ext.ndb.model import _BaseValue
@@ -30,7 +17,6 @@ from google.appengine.ext import blobstore
 from google.appengine.api import search, datastore_errors
 
 import tools
-import settings
 import errors
 
 # We always put double underscore for our private functions in order to avoid collision between our code and ndb library.
@@ -518,6 +504,8 @@ class _BaseModel(object):
       return super(_BaseModel, self).__repr__()
     original = 'No, '
     if hasattr(self, '_original') and self._original is not None:
+      if hasattr(self._original, '_original'):
+        raise ValueError('Original cannot have original')
       original = '%s, ' % self._original
     out = super(_BaseModel, self).__repr__()
     out = out.replace('%s(' % self.__class__.__name__, '%s(_original=%s_state=%s, ' % (self.__class__.__name__, original, self._state))
@@ -1330,6 +1318,8 @@ class _BaseModel(object):
       # recursevely set original for all structured properties.
       # this is because we have huge depency on _original, so we need to have it on its children as well
       for field_key, field in self.get_fields().iteritems():
+        if not can_copy(field):
+          continue
         current_value = getattr(self, field_key, None)
         current_field = field
         current_field_key = field_key
@@ -1355,6 +1345,8 @@ class _BaseModel(object):
                 find = None
               next_args.append((val, current_field_key, current_field, find))
           elif current_value is not None and isinstance(current_value, Model):
+            if hasattr(current_original, '_original') and current_original._original:
+              raise ValueError('While loop: original cannot have original')
             current_value._original = current_original
             for field_key, field in current_value.get_fields().iteritems():
               if can_copy(field):
