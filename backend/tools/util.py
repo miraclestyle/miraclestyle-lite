@@ -19,6 +19,11 @@ import errors
 
 # @todo __all__ is needed for everything that gets wildcard imported
 
+__all__ = ['UnitConversionError', 'UnitRoundingError', 'UnitFormatError', 'SafeEvalError', 'Nonexistent',
+           'remove_value', 'prepare_attr', 'set_attr', 'del_attr', 'get_attr', 'get_meta', 'normalize',
+           'sort_by_list', 'merge_dicts', 'override_dict', 'make_complete_name', 'safe_eval', 'random_chars',
+           'partition_list', 'noop', 'debug', 'convert_value', 'log', 'round_value', 'format_value']
+
 
 class UnitConversionError(errors.BaseKeyValueError):
 

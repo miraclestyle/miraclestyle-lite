@@ -1331,28 +1331,37 @@ class _BaseModel(object):
           return field.can_be_copied
       # recursevely set original for all structured properties.
       # this is because we have huge depency on _original, so we need to have it on its children as well
-      def scan(value, field_key, field, original):
-        if hasattr(field, 'is_structured') and field.is_structured and hasattr(value, 'has_value') and value.has_value():
-          scan(value.value, field_key, field, original.value)
-        elif isinstance(value, list):
-          for i, val in enumerate(value):
-            if not isinstance(val, Model):
-              break
-            find = filter(lambda x: x.key == val.key, original)
-            try:
-              find = find[0]
-            except IndexError:
-              find = None
-            scan(val, field_key, field, find)
-        elif value is not None and isinstance(value, Model):
-          value._original = original
-          for field_key, field in value.get_fields().iteritems():
-            if can_copy(field):
-              scan(getattr(value, field_key, None), field_key, field, getattr(value._original, field_key, None))
-
       for field_key, field in self.get_fields().iteritems():
-        if can_copy(field):
-          scan(getattr(self, field_key, None), field_key, field, getattr(self._original, field_key, None))
+        current_value = getattr(self, field_key, None)
+        current_field = field
+        current_field_key = field_key
+        current_original = getattr(self._original, field_key, None)
+        next_args = []
+        while True:
+          if current_field_key is None:
+            try:
+              current_value, current_field_key, current_field, current_original = next_args.pop()
+              continue
+            except IndexError as e:
+              break
+          if hasattr(current_field, 'is_structured') and current_field.is_structured and hasattr(current_field, 'has_value') and current_value.has_value():
+            next_args.append((current_value.value, current_field_key, current_field, current_original.value))
+          elif isinstance(current_value, list):
+            for val in current_value:
+              if not isinstance(val, Model):
+                break
+              find = filter(lambda x: x.key == val.key, current_original)
+              try:
+                find = find[0]
+              except IndexError:
+                find = None
+              next_args.append((val, current_field_key, current_field, find))
+          elif current_value is not None and isinstance(current_value, Model):
+            current_value._original = current_original
+            for field_key, field in current_value.get_fields().iteritems():
+              if can_copy(field):
+                next_args.append((getattr(current_value, field_key, None), field_key, field, getattr(current_value._original, field_key, None)))
+          current_field_key = None
   
   def get_search_document(self, fields=None):
     '''Returns search document representation of the entity, based on property configurations.
