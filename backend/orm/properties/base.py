@@ -16,6 +16,8 @@ from google.appengine.ext import blobstore
 from google.appengine.api import images, urlfetch
 from google.appengine.datastore.datastore_query import Cursor
 
+import tools
+
 
 class FormatError(Exception):
   pass
@@ -588,10 +590,10 @@ class _BaseBlobProperty(object):
   @classmethod
   def get_blobs(cls):
     # This function acts as a getter from in-memory storage.
-    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
+    blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is None:
-      mem.temp_set(settings.BLOBKEYMANAGER_KEY, {'delete': []})
-    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY)
+      tools.mem_temp_set(settings.BLOBKEYMANAGER_KEY, {'delete': []})
+    blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY)
     return blobs
 
   @classmethod

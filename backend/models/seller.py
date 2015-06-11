@@ -7,7 +7,7 @@ Created on Jan 6, 2014
 
 import orm
 import settings
-import mem
+import tools
 
 from plugins.base import *
 
@@ -223,19 +223,19 @@ class Seller(orm.BaseExpando):
   def get_notified_followers_count_callback(self):
     Collection = orm.Model._lookup_model('18') # @todo import or this
     key = 'get_notified_followers_count_%s' % self.key.urlsafe()
-    already = mem.get(key)
+    already = tools.mem_get(key)
     if already is None:
       already = Collection.query(Collection.sellers == self.key, Collection.notify == True).count()
-      mem.set(key, already, settings.CACHE_TIME_NOTIFIED_FOLLOWERS_COUNT)
+      tools.mem_set(key, already, settings.CACHE_TIME_NOTIFIED_FOLLOWERS_COUNT)
     return already
 
   def get_followers_count_callback(self):
     Collection = orm.Model._lookup_model('18') # @todo import or this
     key = 'get_followers_count_%s' % self.key.urlsafe()
-    already = mem.get(key)
+    already = tools.mem_get(key)
     if already is None:
       already = Collection.query(Collection.sellers == self.key).count()
-      mem.set(key, already, settings.CACHE_TIME_FOLLOWERS_COUNT)
+      tools.mem_set(key, already, settings.CACHE_TIME_FOLLOWERS_COUNT)
     return already
 
  

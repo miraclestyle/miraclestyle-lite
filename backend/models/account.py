@@ -9,7 +9,7 @@ import hashlib
 import os
 
 import orm
-import mem
+import tools
 import settings
 import notifications
 
@@ -321,17 +321,17 @@ class Account(orm.BaseExpando):
   
   @property
   def _is_taskqueue(self):
-    return mem.temp_get('current_request_is_taskqueue')
+    return tools.mem_temp_get('current_request_is_taskqueue')
   
   @property
   def _is_cron(self):
-    return mem.temp_get('current_request_is_cron')
+    return tools.mem_temp_get('current_request_is_cron')
   
   def set_taskqueue(self, is_it):
-    return mem.temp_set('current_request_is_taskqueue', is_it)
+    return tools.mem_temp_set('current_request_is_taskqueue', is_it)
   
   def set_cron(self, is_it):
-    return mem.temp_set('current_request_is_cron', is_it)
+    return tools.mem_temp_set('current_request_is_cron', is_it)
   
   def primary_email(self):
     self.identities.read() # implicitly call read on identities
@@ -354,12 +354,12 @@ class Account(orm.BaseExpando):
   
   @classmethod
   def set_current_account(cls, account, session=None):
-    mem.temp_set('current_account', account)
-    mem.temp_set('current_account_session', session)
+    tools.mem_temp_set('current_account', account)
+    tools.mem_temp_set('current_account_session', session)
   
   @classmethod
   def current_account(cls):
-    current_account = mem.temp_get('current_account')
+    current_account = tools.mem_temp_get('current_account')
     if not current_account:
       current_account = cls()
       cls.set_current_account(current_account)
@@ -379,7 +379,7 @@ class Account(orm.BaseExpando):
   
   @classmethod
   def current_account_session(cls):
-    return mem.temp_get('current_account_session')
+    return tools.mem_temp_get('current_account_session')
 
   @staticmethod
   def hash_session_id(session_id):

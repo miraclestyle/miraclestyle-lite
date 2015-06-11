@@ -16,11 +16,9 @@ import time
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
 
-import performance
 import orm
 import tools
 import settings
-import mem
 import errors
 
 
@@ -78,11 +76,11 @@ class Engine:
       blobs = {'delete': uploaded_blobs}
       # By default, we set that all uploaded blobs must be deleted in 'finally' phase.
       # However, we use blob specialized properties to control intermediate outcome of action.
-      mem.temp_set(settings.BLOBKEYMANAGER_KEY, blobs)
+      tools.mem_temp_set(settings.BLOBKEYMANAGER_KEY, blobs)
   
   @classmethod
   def process_blob_state(cls, state):
-    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
+    blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
       # Process blobs to be saved.
       save_state_blobs = blobs.get('collect_%s' % state, None)
@@ -102,7 +100,7 @@ class Engine:
   
   @classmethod
   def process_blob_output(cls):
-    blobs = mem.temp_get(settings.BLOBKEYMANAGER_KEY, None)
+    blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
       save_blobs = blobs.get('collect', None)
       delete_blobs = blobs.get('delete', None)
@@ -195,12 +193,12 @@ class Engine:
   
   @classmethod
   def execute_action(cls, context, input):
-    action_time = performance.Profile()
+    action_time = tools.Profile()
     tools.log.debug('Action: %s.%s' % (context.model.__name__, context.action.key_id_str))
     def execute_plugins(plugins):
       for plugin in plugins:
         tools.log.debug('Plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
-        plugin_time = performance.Profile()
+        plugin_time = tools.Profile()
         plugin.run(context)
         tools.log.debug('Executed in %sms' % plugin_time.miliseconds)
     if hasattr(context.model, 'get_plugin_groups') and callable(context.model.get_plugin_groups):

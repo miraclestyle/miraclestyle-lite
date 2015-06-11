@@ -12,9 +12,7 @@ import inspect
 import copy
 import urllib
 
-import performance
 import orm
-import mem
 import iom
 import settings
 import tools
@@ -73,7 +71,7 @@ class RequestHandler(webapp2.RequestHandler):
     self.current_csrf = None
     self._input = None
   
-  @performance.profile(HTTP_PERFORMANCE_TEXT)
+  @tools.profile(HTTP_PERFORMANCE_TEXT)
   def get_input(self):
     if self._input is not None:
       return self._input
@@ -102,7 +100,7 @@ class RequestHandler(webapp2.RequestHandler):
     self._input = dicts
     return self._input
   
-  @performance.profile(HTTP_PERFORMANCE_TEXT)
+  @tools.profile(HTTP_PERFORMANCE_TEXT)
   def json_output(self, s, **kwargs):
     ''' Wrapper for json output for self usage to avoid imports from backend http '''
     return json_output(s, **kwargs)
@@ -136,7 +134,7 @@ class RequestHandler(webapp2.RequestHandler):
     self.abort(404)
     self.response.write('<h1>404 Not found</h1>')
   
-  @performance.profile(HTTP_PERFORMANCE_TEXT)
+  @tools.profile(HTTP_PERFORMANCE_TEXT)
   def load_current_account(self):
     ''' Loads current user from the local thread and sets it as self.current_account for easier handler access to it.
     Along with that, also sets if the request came from taskqueue or cron, based on app engine headers.
@@ -162,7 +160,7 @@ class RequestHandler(webapp2.RequestHandler):
   
   @orm.toplevel
   def dispatch(self):
-    dispatch_time = performance.Profile()
+    dispatch_time = tools.Profile()
     self.load_current_account()
     self.load_csrf()
     self.validate_csrf()
@@ -172,7 +170,7 @@ class RequestHandler(webapp2.RequestHandler):
       self.after()
     finally:
       tools.log.debug('Release In-memory Cache')
-      mem.storage.__release_local__()
+      tools.mem_storage.__release_local__()
       tools.log.debug('Finished request in %s ms' % dispatch_time.miliseconds)
       
 
@@ -313,13 +311,13 @@ class Reset(BaseTestHandler):
       for namespace in namespaces:
         if kind in ignore:
           continue
-        p = performance.Profile()
+        p = tools.Profile()
         gets = datastore.Query(kind, namespace=namespace, keys_only=True).Run()
         keys = list(gets)
         total_keys = len(keys)
         if total_keys:
           tools.log.debug('Delete kind %s. Found %s keys. Took %sms to get.' % (kind, total_keys, p.miliseconds))
-          p = performance.Profile()
+          p = tools.Profile()
           datastore.Delete(keys)
           tools.log.debug('Deleted all records for kind %s. Took %sms.' % (kind, p.miliseconds))
     indexes.extend((search.Index(name='catalogs'), search.Index(name='24')))
@@ -340,7 +338,7 @@ class Reset(BaseTestHandler):
     keys = blobstore.BlobInfo.all().fetch(None, keys_only=True)
     blobstore.delete(keys)
     tools.log.debug('Deleted %s blobs.' % len(keys))
-    mem.flush_all()
+    tools.mem_flush_all()
 
 class BeginMemTest(BaseTestHandler):
 
@@ -357,14 +355,14 @@ class BeginMemTest(BaseTestHandler):
 class MemTest(BaseTestHandler):
 
   def respond(self):
-    mem.temp_set('cuser', 1)
+    tools.mem_temp_set('cuser', 1)
 
 
 class AssertTest(BaseTestHandler):
 
   def respond(self):
-    if mem.temp_get('cuser') is not None:
-      tools.log.debug('cuser failed, got %s' % mem.temp_get('cuser'))
+    if tools.mem_temp_get('cuser') is not None:
+      tools.log.debug('cuser failed, got %s' % tools.mem_temp_get('cuser'))
 
 
 class LoginAs(BaseTestHandler):

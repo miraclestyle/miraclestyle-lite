@@ -29,8 +29,6 @@ from google.appengine.ext.ndb.model import _BaseValue
 from google.appengine.ext import blobstore
 from google.appengine.api import search, datastore_errors
 
-import performance
-import mem
 import tools
 import settings
 import errors
@@ -1388,16 +1386,16 @@ class _BaseModel(object):
   
   def write_search_document(self):
     if self._use_search_engine:
-      documents = mem.temp_get(self.key._search_index, [])
+      documents = tools.mem_temp_get(self.key._search_index, [])
       documents.append(self.get_search_document())
-      mem.temp_set(self.key._search_index, documents)
+      tools.mem_temp_set(self.key._search_index, documents)
   
   @classmethod
   def delete_search_document(cls, key):
     if cls._use_search_engine:
-      documents = mem.temp_get(key._search_unindex, [])
+      documents = tools.mem_temp_get(key._search_unindex, [])
       documents.append(key.urlsafe())
-      mem.temp_set(key._search_unindex, documents)
+      tools.mem_temp_set(key._search_unindex, documents)
   
   @classmethod
   def update_search_index(cls, operation, documents, name, namespace=None):
@@ -1413,18 +1411,18 @@ class _BaseModel(object):
             index.delete(documents_partition)
   
   def index_search_documents(self):
-    documents = mem.temp_get(self.key._search_index, [])
+    documents = tools.mem_temp_get(self.key._search_index, [])
     self.update_search_index('index', documents, self._root.key_kind, self._root.key_namespace)
-    mem.temp_delete(self.key._search_index)
+    tools.mem_temp_delete(self.key._search_index)
     if self._write_custom_indexes:
       for index_name, index_documents in self._write_custom_indexes.iteritems():
         self.update_search_index('index', index_documents, index_name)
       self._write_custom_indexes = {}
   
   def unindex_search_documents(self):
-    documents = mem.temp_get(self.key._search_unindex, [])
+    documents = tools.mem_temp_get(self.key._search_unindex, [])
     self.update_search_index('unindex', documents, self._root.key_kind, self._root.key_namespace)
-    mem.temp_delete(self.key._search_unindex)
+    tools.mem_temp_delete(self.key._search_unindex)
     if self._delete_custom_indexes:
       for index_name, index_documents in self._delete_custom_indexes.iteritems():
         self.update_search_index('unindex', index_documents, index_name)

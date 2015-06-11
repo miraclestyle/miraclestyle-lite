@@ -10,6 +10,8 @@ import cStringIO
 import cProfile
 import pstats
 
+__all__ = ['Profile', 'profile', 'detail_profile']
+
 def compute(start):
     return round((time.time() - start) * 1000, 3)
 

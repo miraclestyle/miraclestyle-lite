@@ -6,9 +6,7 @@ Created on Jun 14, 2014
 '''
 import copy
 import orm
-import mem
 import tools
-import performance
 import time
 
 
@@ -327,12 +325,12 @@ class CreateChannel(orm.BaseModel):
 
   def run(self, context):
     token = 'channel_%s' % context.account.key_urlsafe
-    existing = mem.get(token)
+    existing = tools.mem_get(token)
     if existing and existing[1] > time.time():
       context._token = existing[0]
     else:
       context._token = tools.channel_create(token)
-      mem.set(token, [context._token, time.time() + 6000], 9600)
+      tools.mem_set(token, [context._token, time.time() + 6000], 9600)
 
 
 class Notify(orm.BaseModel):

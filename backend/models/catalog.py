@@ -10,7 +10,6 @@ import json
 
 import orm
 import settings
-import mem
 import notifications
 import tools
 
@@ -164,16 +163,16 @@ class CatalogProductInstance(orm.BaseExpando):
       self.key = self.build_key(self.key_id, parent=parent)
     if self.key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
-      sequence = mem.temp_get(key, tools.Nonexistent)
+      sequence = tools.mem_temp_get(key, tools.Nonexistent)
       if sequence is tools.Nonexistent:
         entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
         if not entity:
           sequence = 0
         else:
           sequence = entity.sequence
-        mem.temp_set(key, sequence)
+        tools.mem_temp_set(key, sequence)
       else:
-        mem.temp_set(key, sequence + 1)
+        tools.mem_temp_set(key, sequence + 1)
       if self._sequence is None:
         self._sequence = 0
       self.sequence = self._sequence + sequence + 1
@@ -272,14 +271,14 @@ class CatalogImage(orm.Image):
     self.set_key(key_id, parent=parent)
     if key_id is None and self.sequence is None:
       key = 'prepare_%s' % self.key.urlsafe()
-      sequence = mem.temp_get(key, tools.Nonexistent)
+      sequence = tools.mem_temp_get(key, tools.Nonexistent)
       if sequence is tools.Nonexistent:
         entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
         if not entity:
           sequence = 0
         else:
           sequence = entity.sequence
-        mem.temp_set(key, sequence)
+        tools.mem_temp_set(key, sequence)
       self.sequence = self._sequence + sequence + 1
 
 
