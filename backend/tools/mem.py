@@ -16,7 +16,10 @@ Wrapper for google memcache library, combined with in-memory cache (per-request 
 
 '''
 
-__all__ = ['mem_get', 'mem_set', 'mem_delete_multi', 'mem_set_multi', 'mem_temp_get', 'mem_temp_set', 'mem_storage', 'mem_temp_delete', 'mem_replace_multi', 'mem_tempcached', 'mem_add_multi', 'mem_forget_dead_hosts', 'mem_memcached', 'mem_set_servers', 'mem_debuglog', 'mem_tmp_exists', 'mem_decr', 'mem_offset_multi', 'mem_disconnect_all', 'mem_replace', 'mem_incr', 'mem_flush_all', 'mem_delete', 'mem_add', 'mem_get_multi']
+__all__ = ['mem_get', 'mem_set', 'mem_delete_multi', 'mem_set_multi', 'mem_temp_get', 'mem_temp_set', 'mem_storage', 
+           'mem_temp_delete', 'mem_replace_multi', 'mem_tempcached', 'mem_add_multi', 'mem_forget_dead_hosts', 'mem_memcached',
+           'mem_set_servers', 'mem_debuglog', 'mem_tmp_exists', 'mem_decr', 'mem_offset_multi', 'mem_disconnect_all', 
+           'mem_replace', 'mem_incr', 'mem_flush_all', 'mem_delete', 'mem_add', 'mem_get_multi']
 
 
 def mem_get(k, d=None, callback=None, **kwargs):
