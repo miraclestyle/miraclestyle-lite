@@ -3,7 +3,6 @@
                        'one-right-action': spec.hideSave || !spec.templateActionsUrl}">
     <div class="md-toolbar-tools with-actions">
         <div class="fill-height">
-        
             <div ng-if="!spec.hideLeft" class="md-toolbar-item md-tools actions-left">
                 <span ng-include="spec.templateLeft"></span>
                 <button md-ink-ripple-action 
@@ -34,6 +33,7 @@
                 <span ng-include="spec.templateRight"></span>
 
                 <action-dropdown
+                  fixed-position="toolbar"
                   parent=".modal-content:first" 
                   template="spec.templateActionsUrl"
                   class="action"

@@ -4,8 +4,10 @@ Created on Jul 9, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+from google.appengine.ext.ndb.model import _BaseValue
+
 from .base import *
-from .base import _BaseStructuredProperty, _BaseImageProperty, _BaseValue
+from .base import _BaseStructuredProperty, _BaseImageProperty
 from .values import *
 
 __all__ = ['SuperLocalStructuredProperty', 'SuperStructuredProperty',

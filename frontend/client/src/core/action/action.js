@@ -59,10 +59,18 @@
                                     if (newLeft > maxLeft) {
                                         newLeft = maxLeft;
                                     }
-                                    dialogEl.css({
-                                        top: newTop,
-                                        left: newLeft
-                                    });
+                                    if (!attrs.fixedPosition) {
+                                        dialogEl.css({
+                                            top: newTop,
+                                            left: newLeft
+                                        });
+                                    } else if (attrs.fixedPosition === 'toolbar') {
+                                        dialogEl.css({
+                                            top: '8px',
+                                            left: 'auto',
+                                            right: '8px'
+                                        });
+                                    }
                                     if (dialogEl.height() > height) {
                                         dialogEl.height(height);
                                     }

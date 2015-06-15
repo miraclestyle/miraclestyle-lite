@@ -4,7 +4,6 @@ Created on Oct 14, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
 import json
 import urlparse
 import urllib

@@ -4,14 +4,10 @@ Created on Dec 17, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
 import cgi
-import inspect
-import json
 import cProfile
 import pstats
 import cStringIO
-import time
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
@@ -23,7 +19,7 @@ import errors
 
 
 class InputError(Exception):
-  
+
   def __init__(self, input_error):
     self.message = input_error
 
@@ -39,14 +35,14 @@ class InvalidModel(errors.BaseKeyValueError):
 
 
 class Context():
-  
+
   def __init__(self):
     self.input = {}
     self.output = {}
     self.model = None
     self.models = None
     self.action = None
-  
+
   def error(self, key, value):
     if 'errors' not in self.output:
       self.output['errors'] = {}
@@ -54,13 +50,13 @@ class Context():
       self.output['errors'][key] = []
     self.output['errors'][key].append(value)
     return self
-  
+
   def __repr__(self):
     return 'Context of action %s' % self.action.key_id_str
 
 
 class Engine:
-  
+
   @classmethod
   def process_blob_input(cls, input):
     uploaded_blobs = []
@@ -77,7 +73,7 @@ class Engine:
       # By default, we set that all uploaded blobs must be deleted in 'finally' phase.
       # However, we use blob specialized properties to control intermediate outcome of action.
       tools.mem_temp_set(settings.BLOBKEYMANAGER_KEY, blobs)
-  
+
   @classmethod
   def process_blob_state(cls, state):
     blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY, None)
@@ -97,7 +93,7 @@ class Engine:
         for blob in delete_state_blobs:
           if blob not in delete_blobs:
             delete_blobs.append(blob)
-  
+
   @classmethod
   def process_blob_output(cls):
     blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY, None)
@@ -112,7 +108,7 @@ class Engine:
         if delete_blobs:
           tools.log.debug('DELETED %s BLOBS.' % len(delete_blobs))
           blobstore.delete(delete_blobs)
-  
+
   @classmethod
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
@@ -127,15 +123,15 @@ class Engine:
           model.initialize()
           kinds.append(model_kind)
     tools.log.debug('Completed Initializing %s classes.' % len(kinds))
-  
+
   @classmethod
   def get_schema(cls):
     return orm.Model._kind_map
-  
+
   @classmethod
   def get_models(cls, context):
     context.models = orm.Model._kind_map
-  
+
   @classmethod
   def get_model(cls, context, input):
     model_key = input.get('action_model')
@@ -143,7 +139,7 @@ class Engine:
     context.model = model
     if not context.model:
       raise InvalidModel(model_key)
-  
+
   @classmethod
   def get_action(cls, context, input):
     action_id = input.get('action_id')
@@ -152,7 +148,7 @@ class Engine:
       context.action = context.model.get_action(action_id)
     if not context.action:
       raise InvalidAction(context.action)
-  
+
   @classmethod
   def process_action_input(cls, context, input):
     input_error = {}
@@ -190,11 +186,12 @@ class Engine:
           raise
     if len(input_error):
       raise InputError(input_error)
-  
+
   @classmethod
   def execute_action(cls, context, input):
     action_time = tools.Profile()
     tools.log.debug('Action: %s.%s' % (context.model.__name__, context.action.key_id_str))
+
     def execute_plugins(plugins):
       for plugin in plugins:
         tools.log.debug('Plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
@@ -217,7 +214,7 @@ class Engine:
         raise
       finally:
         tools.log.debug('Completed action in %sms' % action_time.miliseconds)
-  
+
   @classmethod
   def run(cls, input):
     if settings.PROFILING:

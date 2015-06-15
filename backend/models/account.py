@@ -79,7 +79,7 @@ class Account(orm.BaseExpando):
                            'not account._is_guest'),
       orm.FieldPermission('11', ['created', 'updated', 'state', '_records'], False, True,
                           'not account._is_guest and account.key == entity._original.key'),
-      orm.FieldPermission('11', ['identities', 'emails', 'sessions', '_primary_email', '_records'], True, True,
+      orm.FieldPermission('11', ['identities', 'sessions', '_primary_email', '_records'], True, True,
                           'not account._is_guest and account.key == entity._original.key'),
       # Account is unit of administration, hence root admins need control over it!
       # Root admins can always: read account; search for accounts (exclusively);
@@ -87,7 +87,7 @@ class Account(orm.BaseExpando):
       orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
                                   orm.Action.build_key('11', 'search'),
                                   orm.Action.build_key('11', 'sudo')], True, 'account._root_admin'),
-      orm.FieldPermission('11', ['created', 'updated', 'identities', 'emails', 'state', 'sessions',
+      orm.FieldPermission('11', ['created', 'updated', 'identities', 'state', 'sessions',
                                  'ip_address', '_primary_email', '_records'], None, True, 'account._root_admin'),
       orm.FieldPermission('11', ['state'], True, None, 'action.key_id_str == "sudo" and account._root_admin')
       ]
@@ -414,7 +414,7 @@ class Account(orm.BaseExpando):
     account = self
     session_ids = [session.session_id for session in account.sessions.value]
     while True:
-      session_id = hashlib.md5(random_chars(30)).hexdigest()
+      session_id = hashlib.md5(tools.random_chars(30)).hexdigest()
       if session_id not in session_ids:
         break
     session = AccountSession(session_id=session_id, ip_address=self.ip_address)

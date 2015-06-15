@@ -936,7 +936,9 @@
                             },
                             actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
                             response = function (response) {
+                                var gg = config.ui.specifics.entities;
                                 config.ui.specifics.entities = response.data.entities;
+                                console.log(gg, config.code_name, gg === config.ui.specifics.entities);
                                 repackMemory();
                                 return config.ui.specifics.entities;
                             },

@@ -4,18 +4,14 @@ Created on Jul 9, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-from ..base import *
-from ..base import _BaseValue
-
 import cgi
-import cloudstorage
 import copy
-from urlparse import urlparse
 
+import cloudstorage
 from google.appengine.ext import blobstore
 from google.appengine.api import images, urlfetch
-from google.appengine.datastore.datastore_query import Cursor
 
+from ..base import *
 import tools
 import settings
 

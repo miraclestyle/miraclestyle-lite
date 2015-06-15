@@ -10,7 +10,6 @@ import os
 
 from google.appengine.ext import blobstore
 from google.appengine.api import taskqueue, mail, urlfetch, channel
-
 from jinja2 import Environment, evalcontextfilter, Markup, escape, FileSystemLoader
 
 import orm

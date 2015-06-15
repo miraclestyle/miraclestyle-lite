@@ -4,11 +4,11 @@ Created on Jul 9, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-import settings
 import datetime
 
 from .base import *
 from .base import _BaseProperty
+import settings
 
 __all__ = ['SuperDateTimeProperty']
 

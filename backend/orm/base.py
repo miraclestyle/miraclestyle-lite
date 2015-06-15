@@ -12,8 +12,6 @@ import uuid
 
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
-from google.appengine.ext.ndb.model import _BaseValue
-from google.appengine.ext import blobstore
 from google.appengine.api import search, datastore_errors
 
 import tools
