@@ -4,13 +4,10 @@ Created on Jan 6, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
 import orm
 import settings
 import tools
-
 from plugins.base import *
-
 from models.location import *
 from plugins.seller import *
 

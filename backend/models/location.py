@@ -4,11 +4,8 @@ Created on Jan 9, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
-# @todo Perhaps split this file in two: country.py and address.py?
 import orm
 import settings
-
 from plugins.base import *
 from plugins.location import *
 

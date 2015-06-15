@@ -4,14 +4,12 @@ Created on May 6, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
 import datetime
 
 import orm
 import settings
 import notifications
 import tools
-
 from models.unit import *
 from plugins.base import *
 from plugins.catalog import *

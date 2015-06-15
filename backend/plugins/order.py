@@ -4,11 +4,10 @@ Created on Aug 25, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
 import datetime
-import collections
-import re
 import copy
+
+from google.appengine.api import urlfetch
 
 import orm
 import errors
@@ -16,8 +15,6 @@ import tools
 
 from models.location import *
 from models.unit import *
-
-from google.appengine.api import urlfetch
 
 
 class PluginError(errors.BaseKeyValueError):

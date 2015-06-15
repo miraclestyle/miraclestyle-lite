@@ -6,11 +6,11 @@ Created on Aug 30, 2014
 '''
 import datetime
 import hashlib
+import json
+
 import orm
 import settings
 import notifications
-import json
-
 from plugins.base import *
 from models.buyer import *
 from models.location import *

@@ -4,13 +4,8 @@ Created on Sep 16, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
-import hashlib
 import datetime
-import copy
 import collections
-
-from google.appengine.api import search
 
 import orm
 
