@@ -12,7 +12,6 @@ from google.appengine.api import urlfetch
 import orm
 import errors
 import tools
-
 from models.location import *
 from models.unit import *
 
