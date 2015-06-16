@@ -442,15 +442,6 @@
                                 attrs: {}
                             }
                         };
-                        Object.defineProperty(config.ui, 'specifics', {
-                            get: function () {
-                                return this._specifics;
-                            },
-                            set: function (a) {
-                                console.trace(config.code_name);
-                                this._specifics = a;
-                            }
-                        });
                         helpers.mergeDeep(supplied_config, config);
                         config = supplied_config;
 

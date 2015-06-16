@@ -785,29 +785,32 @@
                                                 imagesReader,
                                                 setupCurrentPricetag,
                                                 groupWeightAndVolume = function (fields) {
-                                                    var defaults = {
+                                                    fields.weight.ui = {
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight'
+                                                    };
+                                                    fields.volume.ui = {
+                                                        groupBy: 'volume',
+                                                        groupLabel: 'Volume'
+                                                    };
+                                                    fields.weight_uom.ui = {
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight',
                                                         specifics: {
                                                             search: {
                                                                 enabled: false
                                                             }
                                                         }
                                                     };
-                                                    fields.weight.ui = $.extend({
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
-                                                    }, defaults);
-                                                    fields.weight_uom.ui = $.extend({
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
-                                                    }, defaults);
-                                                    fields.volume.ui = $.extend({
+                                                    fields.volume_uom.ui = {
                                                         groupBy: 'volume',
-                                                        groupLabel: 'Volume'
-                                                    }, defaults);
-                                                    fields.volume_uom.ui = $.extend({
-                                                        groupBy: 'volume',
-                                                        groupLabel: 'Volume'
-                                                    }, defaults);
+                                                        groupLabel: 'Volume',
+                                                        specifics: {
+                                                            search: {
+                                                                enabled: false
+                                                            }
+                                                        }
+                                                    };
                                                 },
                                                 getTitle = function () {
                                                     return 'viewProducts';
