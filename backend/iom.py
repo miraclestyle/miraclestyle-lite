@@ -135,7 +135,7 @@ class Engine:
   @classmethod
   def get_model(cls, context, input):
     model_key = input.get('action_model')
-    model = orm.Model._kind_map.get(model_key)
+    model = context.models.get(model_key)
     context.model = model
     if not context.model:
       raise InvalidModel(model_key)

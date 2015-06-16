@@ -442,6 +442,15 @@
                                 attrs: {}
                             }
                         };
+                        Object.defineProperty(config.ui, 'specifics', {
+                            get: function () {
+                                return this._specifics;
+                            },
+                            set: function (a) {
+                                console.trace(config.code_name);
+                                this._specifics = a;
+                            }
+                        });
                         helpers.mergeDeep(supplied_config, config);
                         config = supplied_config;
 
@@ -593,7 +602,9 @@
                                     return false;
                                 }
                             }
-                            promise = submit(scope, {dontShowMessage: execute});
+                            promise = submit(scope, {
+                                dontShowMessage: execute
+                            });
                             if (promise && angular.isObject(promise) && promise.then) {
                                 promise.then(function () {
                                     if (execute) {
@@ -936,9 +947,9 @@
                             },
                             actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
                             response = function (response) {
-                                var gg = config.ui.specifics.entities;
+                                //console.log('load', config.code_name, (config.ui.specifics.entities && config.ui.specifics.entities.length ? config.ui.specifics.entities : null));
                                 config.ui.specifics.entities = response.data.entities;
-                                console.log(gg, config.code_name, gg === config.ui.specifics.entities);
+                                //console.log('got load', config.code_name, (response.data.entities && response.data.entities.length ? response.data.entities : null));
                                 repackMemory();
                                 return config.ui.specifics.entities;
                             },
@@ -1054,6 +1065,11 @@
                                 });
                             }
                         }
+                        info.scope.$on('$destroy', function () {
+                            config.ui.specifics.entities = [];
+                            config.ui.specifics._mapEntities = {};
+                        });
+                        console.log(config.code_name, config.ui.specifics);
                         return 'select_async';
                     },
                     SuperLocalStructuredProperty: function (info) {
@@ -1458,13 +1474,6 @@
                                                                 },
                                                                 shouldShowMessages: function () {
                                                                     return true;
-                                                                    var maybe = false;
-                                                                    angular.forEach(gr.ui.group.fields, function (field) {
-                                                                        if (field.ui.form.hasErrors()) {
-                                                                            maybe = true;
-                                                                        }
-                                                                    });
-                                                                    return maybe || gr.ui.group.help;
                                                                 }
                                                             }
                                                         }
@@ -2070,7 +2079,9 @@
                             var cval = element.val();
                             if (prev !== cval) {
                                 prev = cval;
-                                fn(scope, {$event: ev});
+                                fn(scope, {
+                                    $event: ev
+                                });
                             }
                         }, 100, scope, true);
                     element.on('change keydown', change);

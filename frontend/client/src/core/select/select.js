@@ -41,16 +41,14 @@
                         if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
                             select.open();
                         }
-                    });
-                    element.on('click', function (ev) {
+                    }).on('click', function (ev) {
                         if (!dontOpen) {
                             select.open();
                         }
                         dontOpen = false;
 
                         ev.preventDefault();
-                    });
-                    element.on('blur', function (ev) {
+                    }).on('blur', function (ev) {
                         containerCtrl.setFocused(false);
                     });
                     scope.$on('$destroy', function () {
@@ -80,7 +78,9 @@
                                         found = select.items[i];
                                     }
                                 } else {
-                                    found = _.findWhere(select.items, {key: val});
+                                    found = _.findWhere(select.items, {
+                                        key: val
+                                    });
                                 }
                                 return found;
                             };
@@ -183,8 +183,7 @@
                     select.collectActive = function () {
                         angular.forEach(select.items, function (item) {
                             var hash = select.getHash(item);
-                            if (angular.isUndefined(select.multipleSelection[hash])
-                                    && $.inArray(hash, ngModel.$modelValue) !== -1) {
+                            if (angular.isUndefined(select.multipleSelection[hash]) && $.inArray(hash, ngModel.$modelValue) !== -1) {
                                 select.multipleSelection[hash] = true;
                             }
                         });
@@ -228,7 +227,9 @@
                             attachTo = element.parents('body:first');
                         }
 
-                        choices = underscoreTemplate.get('core/select/choices.html')({select: select});
+                        choices = underscoreTemplate.get('core/select/choices.html')({
+                            select: select
+                        });
                         root = choices;
                         if (select.multiple) {
                             root = underscoreTemplate.get('core/select/multiple.html')().replace('{{content}}', choices);
@@ -288,9 +289,7 @@
                                             maxTop = parentOffset.top + paddingTop + toolbarHeight;
                                             innerHeight = parentHeight - (paddingBottom + paddingTop + toolbarHeight);
                                             dialogEl.width(target.width());
-                                            if ((dialogEl.height() > parentHeight)
-                                                    || (scrollElement.prop('scrollHeight') > parentHeight)
-                                                    || (dialogEl.height() > innerHeight)) {
+                                            if ((dialogEl.height() > parentHeight) || (scrollElement.prop('scrollHeight') > parentHeight) || (dialogEl.height() > innerHeight)) {
                                                 dialogEl.css({
                                                     top: maxTop,
                                                     left: elementOffset.left
@@ -322,8 +321,7 @@
                                             }
 
                                             if (wrapAroundOffset) {
-                                                dialogEl.css($mdConstant.CSS.TRANSFORMORIGIN,
-                                                    (wrapAroundOffset.left + target.width() / 2) + 'px ' + (wrapAroundOffset.top + active.height() / 2 - scrollElement.scrollTop()) + 'px 0px');
+                                                dialogEl.css($mdConstant.CSS.TRANSFORMORIGIN, (wrapAroundOffset.left + target.width() / 2) + 'px ' + (wrapAroundOffset.top + active.height() / 2 - scrollElement.scrollTop()) + 'px 0px');
                                             }
                                         };
                                         options.resize();
@@ -331,78 +329,54 @@
                                             setTimeout(options.resize, 100);
                                         });
 
-                                        dialogEl/*.css($mdConstant.CSS.TRANSFORM, 'scale(' +
-                                            Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
-                                            Math.min(target.height() / dialogEl.height(), 1.0) + ')')
-                                            .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
-                                                if (ev.target === dialogEl[0]) {
-                                                    nextDefer.resolve();
-                                                    nextActive = dialogEl.find('.list-row-is-active:first');
-                                                    if (!nextActive.length) {
-                                                        nextActive = firstTabbable;
-                                                    }
-                                                    if (select.search) {
-                                                        setTimeout(function () {
-                                                            dialogEl.find('input[type="search"]').focus();
-                                                        }, 100);
-                                                    } else {
-                                                        nextActive.focus();
-                                                    }
-                                                }
-                                            })*/.oneAnimationEnd(function (ev) {
-                                                nextDefer.resolve();
-                                                nextActive = dialogEl.find('.list-row-is-active:first');
+                                        dialogEl.oneAnimationEnd(function (ev) {
+                                            nextDefer.resolve();
+                                            nextActive = dialogEl.find('.list-row-is-active:first');
+                                            if (!nextActive.length) {
+                                                nextActive = firstTabbable;
+                                            }
+                                            if (select.search) {
+                                                setTimeout(function () {
+                                                    dialogEl.find('input[type="search"]').focus();
+                                                }, 100);
+                                            } else {
+                                                nextActive.focus();
+                                            }
+                                            dialogEl.addClass('opacity-in');
+                                        }).on('keyup', function (ev) {
+                                            if (!nextActive) {
+                                                return;
+                                            }
+                                            var original = nextActive,
+                                                doFocus = false,
+                                                indx = -1;
+                                            if (ev.keyCode === $mdConstant.KEY_CODE.DOWN_ARROW) {
+                                                nextActive = nextActive.next();
+                                                doFocus = true;
+                                            } else if (ev.keyCode === $mdConstant.KEY_CODE.UP_ARROW) {
+                                                nextActive = nextActive.prev();
+                                                doFocus = true;
+                                            } else if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
+                                                nextActive = dialogEl.find('.simple-dialog-option:focus');
                                                 if (!nextActive.length) {
-                                                    nextActive = firstTabbable;
+                                                    nextActive = dialogEl.find('.list-row-is-active:first');
                                                 }
-                                                if (select.search) {
-                                                    setTimeout(function () {
-                                                        dialogEl.find('input[type="search"]').focus();
-                                                    }, 100);
+                                                if (nextActive.length) {
+                                                    indx = $parse(nextActive.attr('item'))(nextActive.scope());
                                                 } else {
-                                                    nextActive.focus();
+                                                    indx = select.items[0];
                                                 }
-                                                dialogEl.addClass('opacity-in');
-                                            }).on('keyup', function (ev) {
-                                                if (!nextActive) {
-                                                    return;
+                                                if (indx) {
+                                                    select.select(indx);
                                                 }
-                                                var original = nextActive,
-                                                    doFocus = false,
-                                                    indx = -1;
-                                                if (ev.keyCode === $mdConstant.KEY_CODE.DOWN_ARROW) {
-                                                    nextActive = nextActive.next();
-                                                    doFocus = true;
-                                                } else if (ev.keyCode === $mdConstant.KEY_CODE.UP_ARROW) {
-                                                    nextActive = nextActive.prev();
-                                                    doFocus = true;
-                                                } else if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
-                                                    nextActive = dialogEl.find('.simple-dialog-option:focus');
-                                                    if (!nextActive.length) {
-                                                        nextActive = dialogEl.find('.list-row-is-active:first');
-                                                    }
-                                                    if (nextActive.length) {
-                                                        indx = $parse(nextActive.attr('item'))(nextActive.scope());
-                                                    } else {
-                                                        indx = select.items[0];
-                                                    }
-                                                    if (indx) {
-                                                        select.select(indx);
-                                                    }
-                                                }
-                                                if (!nextActive.length && doFocus) {
-                                                    nextActive = original;
-                                                }
-                                                if (doFocus) {
-                                                    nextActive.focus();
-                                                }
-                                            });
-                                        /*
-                                        $$rAF(function () {
-                                            dialogEl.addClass('transition-in').addClass('opacity-in');
-                                            dialogEl.css($mdConstant.CSS.TRANSFORM, '');
-                                            dontOpen = false;
-                                        });*/
+                                            }
+                                            if (!nextActive.length && doFocus) {
+                                                nextActive = original;
+                                            }
+                                            if (doFocus) {
+                                                nextActive.focus();
+                                            }
+                                        });
 
                                         $$rAF(function () {
                                             dialogEl.addClass('fade in');
