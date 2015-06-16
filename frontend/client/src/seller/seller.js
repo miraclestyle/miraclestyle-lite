@@ -190,20 +190,24 @@
                 var config = info.config,
                     kinds = config.kinds,
                     rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
-                    lineSpec = {
-                        listView: 'default-line-list-view',
-                        listConfig: {
-                            perLine: 2
-                        }
-                    },
-                    exclusionSpec = {
-                        ui: {
-                            specifics: {
-                                type: 'radio',
-                                trueLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.trueLabel,
-                                falseLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.falseLabel
+                    lineSpec = function () {
+                        return {
+                            listView: 'default-line-list-view',
+                            listConfig: {
+                                perLine: 2
                             }
-                        }
+                        };
+                    },
+                    exclusionSpec = function () {
+                        return {
+                            ui: {
+                                specifics: {
+                                    type: 'radio',
+                                    trueLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.trueLabel,
+                                    falseLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.falseLabel
+                                }
+                            }
+                        };
                     },
                     groupBy = function (what, label, help) {
                         return {
@@ -214,52 +218,54 @@
                             }
                         };
                     },
-                    locationSpec = {
-                        listView: 'address-rule-location-list-view',
-                        sortFields: ['country', 'region', 'postal_codes'],
-                        listConfig: {
-                            perLine: 3
-                        },
-                        beforeSave: function ($scope, info) {
-                            var promises = [],
-                                updatedAddress = $scope.args,
-                                promise;
+                    locationSpec = function () {
+                        return {
+                            listView: 'address-rule-location-list-view',
+                            sortFields: ['country', 'region', 'postal_codes'],
+                            listConfig: {
+                                perLine: 3
+                            },
+                            beforeSave: function ($scope, info) {
+                                var promises = [],
+                                    updatedAddress = $scope.args,
+                                    promise;
 
-                            if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                promise = models['13'].get(updatedAddress.region);
-                                promise.then(function (response) {
-                                    if (response.data.entities.length) {
-                                        updatedAddress._region = response.data.entities[0];
-                                    }
-                                });
-                                promises.push(promise);
-                            }
+                                if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
+                                    promise = models['13'].get(updatedAddress.region);
+                                    promise.then(function (response) {
+                                        if (response.data.entities.length) {
+                                            updatedAddress._region = response.data.entities[0];
+                                        }
+                                    });
+                                    promises.push(promise);
+                                }
 
-                            if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
-                                promise = models['12'].actions.search(undefined, {
-                                    cache: true
-                                });
-                                promise.then(function (response) {
-                                    if (response.data.entities.length) {
-                                        var country = _.findWhere(response.data.entities, {
-                                            key: updatedAddress.country
-                                        });
-                                        if (angular.isDefined(country)) {
-                                            updatedAddress._country = country;
+                                if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
+                                    promise = models['12'].actions.search(undefined, {
+                                        cache: true
+                                    });
+                                    promise.then(function (response) {
+                                        if (response.data.entities.length) {
+                                            var country = _.findWhere(response.data.entities, {
+                                                key: updatedAddress.country
+                                            });
+                                            if (angular.isDefined(country)) {
+                                                updatedAddress._country = country;
+                                            }
+
                                         }
 
-                                    }
+                                    });
+                                    promises.push(promise);
+                                }
 
-                                });
-                                promises.push(promise);
+                                if (promises.length) {
+                                    return $q.all(promises);
+                                }
+                                return false;
+
                             }
-
-                            if (promises.length) {
-                                return $q.all(promises);
-                            }
-                            return false;
-
-                        }
+                        };
                     },
                     defaultSpecifics = {
                         aboutPlugins: function () {
@@ -338,7 +344,7 @@
                             '113': {
                                 lines: {
                                     ui: {
-                                        specifics: lineSpec
+                                        specifics: lineSpec()
                                     },
                                     modelclass: {
                                         rules: {
@@ -367,27 +373,27 @@
                                                 price_value: groupBy('price')
                                             }
                                         },
-                                        exclusion: exclusionSpec,
+                                        exclusion: exclusionSpec(),
                                         locations: {
                                             ui: {
-                                                specifics: locationSpec
+                                                specifics: locationSpec()
                                             }
                                         }
                                     }
                                 }
                             },
                             '107': {
-                                exclusion: exclusionSpec,
+                                exclusion: exclusionSpec(),
                                 locations: {
                                     ui: {
-                                        specifics: locationSpec
+                                        specifics: locationSpec()
                                     }
                                 }
                             },
                             '126': {
                                 lines: {
                                     ui: {
-                                        specifics: lineSpec
+                                        specifics: lineSpec()
                                     },
                                     modelclass: {
                                         condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
@@ -422,7 +428,7 @@
                                 exclusion: exclusionSpec,
                                 locations: {
                                     ui: {
-                                        specifics: locationSpec
+                                        specifics: locationSpec()
                                     }
                                 }
                             }

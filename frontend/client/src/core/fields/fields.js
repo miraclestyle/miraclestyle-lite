@@ -804,7 +804,7 @@
                                         '24': true,
                                         '12': true,
                                         '13': true,
-                                        //'17': true
+                                        '17': true
                                     },
                                     type: {
                                         '12': 'local',
@@ -938,9 +938,7 @@
                             },
                             actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
                             response = function (response) {
-                                //console.log('load', config.code_name, (config.ui.specifics.entities && config.ui.specifics.entities.length ? config.ui.specifics.entities : null));
                                 config.ui.specifics.entities = response.data.entities;
-                                //console.log('got load', config.code_name, (response.data.entities && response.data.entities.length ? response.data.entities : null));
                                 repackMemory();
                                 return config.ui.specifics.entities;
                             },
@@ -1060,7 +1058,6 @@
                             config.ui.specifics.entities = [];
                             config.ui.specifics._mapEntities = {};
                         });
-                        console.log(config.code_name, config.ui.specifics);
                         return 'select_async';
                     },
                     SuperLocalStructuredProperty: function (info) {
