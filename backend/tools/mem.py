@@ -10,110 +10,69 @@ from google.appengine.api import memcache
 # Local memory for the app instance. storage must be released upon request completion.
 mem_storage = local.Local()
 
-'''
-Wrapper for google memcache library, combined with in-memory cache (per-request and expiration after request execution)
+'''Wrapper for google memcache library, combined with in-memory cache (per-request and expiration after request execution)'''
 
-'''
-
-__all__ = ['mem_get', 'mem_set', 'mem_delete_multi', 'mem_set_multi', 'mem_temp_get', 'mem_temp_set', 'mem_storage', 
-           'mem_temp_delete', 'mem_replace_multi', 'mem_tempcached', 'mem_add_multi', 'mem_forget_dead_hosts', 'mem_memcached',
-           'mem_set_servers', 'mem_debuglog', 'mem_tmp_exists', 'mem_decr', 'mem_offset_multi', 'mem_disconnect_all', 
+__all__ = ['mem_get', 'mem_set', 'mem_delete_multi', 'mem_set_multi', 'mem_temp_get', 'mem_temp_set', 'mem_storage',
+           'mem_temp_delete', 'mem_replace_multi', 'mem_add_multi', 'mem_forget_dead_hosts', 'mem_set_servers',
+           'mem_debuglog', 'mem_temp_exists', 'mem_decr', 'mem_offset_multi', 'mem_disconnect_all',
            'mem_replace', 'mem_incr', 'mem_flush_all', 'mem_delete', 'mem_add', 'mem_get_multi']
 
 
-def mem_get(k, d=None, callback=None, **kwargs):
+def mem_get(key, default=None, callback=None, **kwargs):
   '''
-  k = identifier for cache,
-  d = what not to expect,
+  key = identifier for cache,
+  default = what not to expect,
   callback = expensive callable to execute and set its value into the memory, otherwise it will return 'd'.
 
   '''
   force = kwargs.pop('force', None)
-  setkwargs = kwargs.pop('set', {})
+  set_kwargs = kwargs.pop('set', {})
   # If specified force=True, it will avoid in-memory check.
   if not force:
-    tmp = mem_temp_get(k, d)
+    tmp = mem_temp_get(key, default)
   else:
-    tmp = d
-  if tmp != d:
+    tmp = default
+  if tmp != default:
     return tmp
   else:
-    tmp = memcache.get(k, **kwargs)
+    tmp = memcache.get(key, **kwargs)
     if tmp is None:
       if callback:
-        v = callback()
-        mem_set(k, v, **setkwargs)
-        return v
-      return d
-    mem_temp_set(k, tmp)
+        value = callback()
+        mem_set(key, value, **set_kwargs)
+        return value
+      return default
+    mem_temp_set(key, tmp)
     return tmp
 
 
-def mem_set(k, v, expire=0, **kwargs):
-  mem_temp_set(k, v)
-  memcache.set(k, v, expire, **kwargs)
+def mem_set(key, value, expire=0, **kwargs):
+  mem_temp_set(key, value)
+  memcache.set(key, value, expire, **kwargs)
 
 
-def mem_delete(k):
-  mem_temp_delete(k)
-  memcache.delete(k)
+def mem_delete(key):
+  mem_temp_delete(key)
+  memcache.delete(key)
 
 
-def mem_temp_get(k, d=None):
-  return getattr(mem_storage, k, d)
+def mem_temp_get(key, default=None):
+  return getattr(mem_storage, key, default)
 
 
-def mem_tmp_exists(k):
-  return hasattr(mem_storage, k)
+def mem_temp_exists(key):
+  return hasattr(mem_storage, key)
 
 
-def mem_temp_set(k, v):
-  setattr(mem_storage, k, v)
+def mem_temp_set(key, value):
+  setattr(mem_storage, key, value)
 
 
-def mem_temp_delete(k):
+def mem_temp_delete(key):
   try:
-    del mem_storage[k]
+    del mem_storage[key]
   except:
     pass
-
-
-def mem_memcached(func, k=None, d=None):
-  '''Decorator
-  Usage:
-  @memcached(k='heavy_processing_key')
-  def heavy_processing():
-  ...
-
-  '''
-  if k is None:
-    k = func.__name__
-
-  def dec(*args, **kwargs):
-    v = mem_get(k, d)
-    if v == d:
-      v = func()
-      mem_set(k, v)
-      return v
-
-  return dec
-
-
-def mem_tempcached(func, k=None, d=None):
-  '''Does temporary caching of the provided function.
-  Temporary caching is the one that is done inside threads using webapp2_extras.local
-
-  '''
-  if k is None:
-    k = func.__name__
-
-  def dec(*args, **kwargs):
-    v = mem_temp_get(k, d)
-    if v == d:
-      v = func()
-      mem_temp_set(k, v)
-      return v
-  return dec
 
 
 # Comply with memcache from google app engine. These methods will be possibly overriden in favor of above methods.

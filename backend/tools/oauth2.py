@@ -16,6 +16,7 @@ __all__ = ['OAuth2ResourceError', 'OAuth2Client']
 
 '''Simple generic client OAUTH2 client class for retrieving access tokens.'''
 
+
 class OAuth2ResourceError(Exception):
   pass
 
@@ -28,7 +29,7 @@ def _build_url(base, additional_params=None):
   'additional_params' parameter: Additional query parameters to include.
   'additional_params' type: Dictionary.
   return type: String.
-  
+
   '''
   url = urlparse.urlparse(base)
   query_params = {}
@@ -45,7 +46,7 @@ def _build_url(base, additional_params=None):
 
 
 class OAuth2Client(object):
-  
+
   def __init__(self, client_id, client_secret, redirect_uri, authorization_uri, token_uri, access_token=None, **kwds):
     '''Constructor for OAuth 2.0 Client.
     'client_id' parameter: Client ID.
@@ -58,7 +59,7 @@ class OAuth2Client(object):
     'authorization_uri' type: String
     'token_uri' parameter: Provider token URI.
     'token_uri' type: String.
-    
+
     '''
     self.client_id = client_id
     self.client_secret = client_secret
@@ -67,12 +68,12 @@ class OAuth2Client(object):
     self.token_uri = token_uri
     self.access_token = access_token
     self.scope = kwds.get('scope')
-  
+
   def resource_request(self, method=None, url=None, data=None, status=None):
     '''Uses google urlfetch library for performing http requests to external resources.
     This method will return None if the response status code is not equal 'status'.
     Default value for 'status' is 200.
-    
+
     '''
     if method is None:
       method = 'GET'
@@ -92,15 +93,15 @@ class OAuth2Client(object):
         raise OAuth2ResourceError(getattr(response, 'content', None))
     except (TypeError, OAuth2ResourceError):
       return None
-  
+
   @property
   def default_response_type(self):
     return 'code'
-  
+
   @property
   def default_grant_type(self):
     return 'authorization_code'
-  
+
   def http_post(self, url, data=None):
     '''POST to URL and get result as a response object.
     'url' parameter: URL to POST.
@@ -108,7 +109,7 @@ class OAuth2Client(object):
     'data' paramter: Data to send in the form body.
     'data' type: String.
     return type: requests.Response.
-    
+
     '''
     if not url.startswith('https://'):
       raise ValueError('Protocol must be HTTPS, invalid URL: %s' % url)
@@ -120,13 +121,13 @@ class OAuth2Client(object):
       except ValueError as e:
         return dict(urlparse.parse_qsl(response.content))
     return None
-  
+
   def get_authorization_code_uri(self, **params):
     '''Construct a full URL that can be used to obtain an authorization
     code from the provider authorization_uri. Use this URI in a client
     frame to cause the provider to generate an authorization code.
     return type: String.
-    
+
     '''
     if 'response_type' not in params:
       params['response_type'] = self.default_response_type
@@ -134,14 +135,14 @@ class OAuth2Client(object):
                    'scope': self.scope,
                    'redirect_uri': self.redirect_uri})
     return _build_url(self.authorization_uri, params)
-  
+
   def get_token(self, code, **params):
     '''Get an access token from the provider token URI.
     'code' parameter: Authorization code.
     'code' type: String.
     return: Dictionary containing access token, refresh token, etc.
     return type: Dictionary.
-    
+
     '''
     params['code'] = code
     if 'grant_type' not in params:

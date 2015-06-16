@@ -28,27 +28,26 @@ class JSONEncoder(json.JSONEncoder):
   Also its `default` function will properly format data that is usually not serialized by json standard.
   '''
 
-  def default(self, o):
-    if isinstance(o, datetime.datetime):
-      return o.strftime(settings.DATETIME_FORMAT)
-    if isinstance(o, orm.Key):
-      return o.urlsafe()
-    if hasattr(o, 'get_output'):
+  def default(self, obj):
+    if isinstance(obj, datetime.datetime):
+      return obj.strftime(settings.DATETIME_FORMAT)
+    if isinstance(obj, orm.Key):
+      return obj.urlsafe()
+    if hasattr(obj, 'get_output'):
       try:
-        return o.get_output()
+        return obj.get_output()
       except TypeError as e:
         pass
-    if hasattr(o, 'get_meta'):
+    if hasattr(obj, 'get_meta'):
       try:
-        return o.get_meta()
+        return obj.get_meta()
       except TypeError as e:
         pass
     try:
-      out = str(o)
-      return out
+      return str(obj)
     except TypeError as e:
       pass
-    return json.JSONEncoder.default(self, o)
+    return json.JSONEncoder.default(self, obj)
 
 
 class RequestHandler(webapp2.RequestHandler):
@@ -94,11 +93,11 @@ class RequestHandler(webapp2.RequestHandler):
     return self._input
 
   @tools.profile(HTTP_PERFORMANCE_TEXT)
-  def json_output(self, s, **kwargs):
+  def json_output(self, obj, **kwargs):
     '''Wrapper for json output for self usage to avoid imports from backend http.'''
     defaults = {'check_circular': False, 'cls': JSONEncoder}
     defaults.update(kwargs)
-    return json.dumps(s, **defaults)
+    return json.dumps(obj, **defaults)
 
   def send_json(self, data):
     '''Sends `data` to be serialized in json format, and sets content type application/json utf8.'''

@@ -13,50 +13,47 @@ from .util import log
 
 __all__ = ['Profile', 'profile', 'detail_profile']
 
+
 def compute(start):
-    return round((time.time() - start) * 1000, 3)
+  return round((time.time() - start) * 1000, 3)
+
 
 class Profile():
 
-    def __init__(self):
-        self.start = time.time()
+  def __init__(self):
+    self.start = time.time()
 
-    @property
-    def miliseconds(self):
-        return compute(self.start)
+  @property
+  def miliseconds(self):
+    return compute(self.start)
 
 
 def profile(message=None):
-    def decorator(fn):
-        def inner(*args, **kwargs):
-            start = time.time()
-            result = fn(*args, **kwargs)
-            initial_message = None
-            if message is None:
-                initial_message = '%s executed in %s'
-            else:
-                initial_message = message
-            log.debug(message % (fn.__name__, compute(start)))
-            return result
-        return inner
-    return decorator
+  def decorator(func):
+    def inner(*args, **kwargs):
+      start = time.time()
+      result = func(*args, **kwargs)
+      if message is None:
+        message = '%s executed in %s'
+      log.debug(message % (func.__name__, compute(start)))
+      return result
+    return inner
+  return decorator
+
 
 def detail_profile(message=None):
-    def decorator(fn):
-        def inner(*args, **kwargs):
-            pr = cProfile.Profile()
-            pr.enable()
-            result = fn(*args, **kwargs)
-            pr.disable()
-            s = cStringIO.StringIO()
-            ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
-            ps.print_stats()
-            initial_message = None
-            if message is None:
-                initial_message = '%s executed: %s'
-            else:
-                initial_message = message
-            log.debug(message % (fn.__name__, s.getvalue()))
-            return result
-        return inner
-    return decorator
+  def decorator(func):
+    def inner(*args, **kwargs):
+      profiler = cProfile.Profile()
+      profiler.enable()
+      result = func(*args, **kwargs)
+      profiler.disable()
+      string_io = cStringIO.StringIO()
+      stats = pstats.Stats(profiler, stream=string_io).sort_stats('cumulative')
+      stats.print_stats()
+      if message is None:
+        message = '%s executed: %s'
+      log.debug(message % (func.__name__, string_io.getvalue()))
+      return result
+    return inner
+  return decorator

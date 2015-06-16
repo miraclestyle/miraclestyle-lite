@@ -4,38 +4,15 @@ Created on Oct 10, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
-import sys
-import logging
 import string
 import random
 import dis
-import pdb
-import traceback
-from decimal import Decimal, ROUND_HALF_EVEN
 
-import settings
 import errors
 
-__all__ = ['UnitConversionError', 'UnitRoundingError', 'UnitFormatError', 'SafeEvalError', 'Nonexistent',
-           'remove_value', 'prepare_attr', 'set_attr', 'del_attr', 'get_attr', 'get_meta', 'normalize',
-           'sort_by_list', 'merge_dicts', 'override_dict', 'make_complete_name', 'safe_eval', 'random_chars',
-           'partition_list', 'noop', 'debug', 'convert_value', 'log', 'round_value', 'format_value', 'trace']
-
-
-class UnitConversionError(errors.BaseKeyValueError):
-
-  KEY = 'unit_convert_value'
-
-
-class UnitRoundingError(errors.BaseKeyValueError):
-
-  KEY = 'unit_round_value'
-
-
-class UnitFormatError(errors.BaseKeyValueError):
-
-  KEY = 'unit_format_value'
+__all__ = ['SafeEvalError', 'Nonexistent', 'remove_value', 'prepare_attr', 'set_attr', 'del_attr',
+           'get_attr', 'get_meta', 'normalize', 'merge_dicts', 'override_dict', 'safe_eval', 'random_chars',
+           'partition_list', 'noop', 'debug', 'log', 'trace']
 
 
 class SafeEvalError(errors.BaseKeyValueError):
@@ -61,8 +38,7 @@ class Meaning(object):
     return '<Meaning() => %s>' % self.__doc__
 
 
-Nonexistent = Meaning(
-    'Represents something that does not exist when built-in None cannot be used.')
+Nonexistent = Meaning('Represents something that does not exist when built-in None cannot be used.')
 # e.g. If not Nonexistent expression is always true.
 Nonexistent.__nonzero__ = lambda self: False
 
@@ -205,20 +181,6 @@ def normalize(source):
     return [source]
 
 
-def sort_by_list(unsorted_list, sorting_list, field):
-  total = len(unsorted_list) + 1
-  to_delete = []
-
-  def sorting_function(item):
-    try:
-      ii = sorting_list.index(get_attr(item, field)) + 1
-    except ValueError as e:
-      to_delete.append(item)
-      ii = total
-    return ii
-  return (sorted(unsorted_list, key=sorting_function), to_delete)
-
-
 def merge_dicts(a, b):
   '''
    Merges dict b into a maintaining values of a intact.
@@ -229,18 +191,18 @@ def merge_dicts(a, b):
   '''
   current_a = a
   current_b = b
-  next_args = []
+  next_dicts = []
   while True:
     if current_b is None:
       try:
-        current_a, current_b = next_args.pop()
+        current_a, current_b = next_dicts.pop()
         continue
       except IndexError as e:
         break
     for key in current_b:
       if key in current_a:
         if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
-          next_args.append((current_a[key], current_b[key]))
+          next_dicts.append((current_a[key], current_b[key]))
         elif current_a[key] == current_b[key]:
           pass
         else:
@@ -257,18 +219,18 @@ def merge_dicts(a, b):
 def override_dict(a, b):
   current_a = a
   current_b = b
-  next_args = []
+  next_dicts = []
   while True:
     if current_b is None:
       try:
-        current_a, current_b = next_args.pop()
+        current_a, current_b = next_dicts.pop()
         continue
       except IndexError as e:
         break
     for key in current_b:
       if key in current_a:
         if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
-          next_args.append((current_a[key], current_b[key]))
+          next_dicts.append((current_a[key], current_b[key]))
         elif current_a[key] == current_b[key]:
           pass
         else:
@@ -280,34 +242,6 @@ def override_dict(a, b):
     current_a = None
     current_b = None
   return a
-
-
-def make_complete_name(entity, name_property, parent_property=None, separator=None):
-  '''Returns a string build by joining individual string values,
-  extracted from the same property traced in a chain of interrelated entities.
-
-  '''
-  if separator is None:
-    separator = unicode(' / ')
-  path = entity
-  names = []
-  while True:
-    parent = None
-    if parent_property is None:
-      parent_key = path.key.parent()
-      parent = parent_key.get()
-    else:
-      parent_key = getattr(path, parent_property)
-      if parent_key:
-        parent = parent_key.get()
-    if not parent:
-      names.append(getattr(path, name_property))
-      break
-    else:
-      names.append(getattr(path, name_property))
-      path = parent
-  names.reverse()
-  return separator.join(names)
 
 
 _CODES = ['POP_TOP', 'ROT_TWO', 'ROT_THREE', 'ROT_FOUR', 'DUP_TOP', 'BUILD_LIST',
@@ -354,8 +288,7 @@ def safe_eval(source, data=None):
                                         'globals': locals, 'locals': locals, 'bool': bool,
                                         'dict': dict, 'round': round, 'Decimal': Decimal}}, data)
   except Exception as e:
-    raise SafeEvalError(
-        'Failed to process code: "%s" ---- error was: %s' % (source, e))
+    raise SafeEvalError('Failed to process code: "%s" ---- error was: %s' % (source, e))
 
 
 def random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits):
@@ -372,81 +305,3 @@ def partition_list(complete_list, partition_length):
   '''
   for i in xrange(0, len(complete_list), partition_length):
     yield complete_list[i:i + partition_length]
-
-
-def noop(*args, **kwargs):
-  pass
-
-
-class LoggingWrapper(object):
-
-  def __getattr__(self, name, default=None):
-    if name and name.startswith('_'):
-      return super(LoggingWrapper, self).__getattr__(self, name, default)
-    if settings.DO_LOGS:
-      logger = getattr(logging, name)
-      if name == 'exception':
-        def decide(exc):
-          if hasattr(exc, 'LOG'):
-            if exc.LOG:
-              return logger
-            else:
-              return noop
-          # always log exceptions that do not have `LOG` constant
-          return logger
-        return decide
-      return logger
-    else:
-      return noop
-
-log = LoggingWrapper()
-
-
-def debug():
-  """ Enter pdb in App Engine
-
-  Renable system streams for it.
-  """
-  pdb.Pdb(stdin=getattr(sys, '__stdin__'), stdout=getattr(
-      sys, '__stderr__')).set_trace(sys._getframe().f_back)
-
-
-########## Unit manipulation functions! ##########
-
-
-def convert_value(value, value_uom, conversion_uom):
-  if not isinstance(value, Decimal):
-    value = Decimal(value)
-  if not hasattr(value_uom, 'measurement'):
-    raise UnitConversionError('no_measurement_in_value_uom')
-  if not hasattr(conversion_uom, 'measurement'):
-    raise UnitConversionError('no_measurement_in_conversion_uom')
-  if not hasattr(value_uom, 'rate') or not isinstance(value_uom.rate, Decimal):
-    raise UnitConversionError('no_rate_in_value_uom')
-  if not hasattr(conversion_uom, 'rate') or not isinstance(conversion_uom.rate, Decimal):
-    raise UnitConversionError('no_rate_in_conversion_uom')
-  if (value_uom.measurement == conversion_uom.measurement):
-    return (value / value_uom.rate) * conversion_uom.rate
-  else:
-    raise UnitConversionError('incompatible_units')
-
-
-def round_value(value, uom, rounding=ROUND_HALF_EVEN):
-  if not isinstance(value, Decimal):
-    value = Decimal(value)
-  if not hasattr(uom, 'rounding') or not isinstance(uom.rounding, Decimal):
-    raise UnitRoundingError('no_rounding_in_uom')
-  return (value / uom.rounding).quantize(Decimal('1.'), rounding=rounding) * uom.rounding
-
-
-def format_value(value, uom, rounding=ROUND_HALF_EVEN):
-  if not isinstance(value, Decimal):
-    value = Decimal(value)
-  if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
-    raise UnitFormatError('no_digits_in_uom, got %s' % uom)
-  places = Decimal(10) ** -uom.digits
-  return value.quantize(places, rounding=rounding)
-
-
-def trace():
-  traceback.print_stack()

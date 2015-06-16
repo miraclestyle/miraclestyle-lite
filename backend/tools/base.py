@@ -75,9 +75,9 @@ def nl2br(eval_ctx, value):
 jinja_env.filters['nl2br'] = nl2br
 
 
-def render_template(template_as_string, values={}):
-  from_string_template = jinja_env.from_string(template_as_string)
-  return from_string_template.render(values)
+def render_template(string_template, values={}):
+  template = jinja_env.from_string(string_template)
+  return template.render(values)
 
 
 def channel_create(token):
@@ -106,5 +106,5 @@ def http_send(data):
 
 
 def channel_send(data):
-  message = {'action_id': data['action'].key_id_str, 'body': render_template(data['body'], data).strip(), 'subject': render_template(data['subject'], data).strip()}
+  message = {'action_id': data['action'].key_id_str, 'body': render_template(data['body'], data).strip()}
   return channel.send_message(data['recipient'], json.dumps(message))
