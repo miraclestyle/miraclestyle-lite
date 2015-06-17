@@ -9,9 +9,10 @@ import urllib
 
 from handler import base
 
+
 class SellerView(base.SeoOrAngular):
 
-    def respond_seo(self, *args, **kwargs):
-        self.render_response('seller/view.html')
+  def respond_seo(self, *args, **kwargs):
+    self.render_response('seller/view.html')
 
 settings.ROUTES.extend(((r'/seller/<key>', SellerView, 'seller.view'),))

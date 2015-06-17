@@ -9,7 +9,7 @@ import cStringIO
 import cProfile
 import pstats
 
-from .util import log
+from .debug import log
 
 __all__ = ['Profile', 'profile', 'detail_profile']
 
@@ -33,8 +33,6 @@ def profile(message=None):
     def inner(*args, **kwargs):
       start = time.time()
       result = func(*args, **kwargs)
-      if message is None:
-        message = '%s executed in %s'
       log.debug(message % (func.__name__, compute(start)))
       return result
     return inner
@@ -51,8 +49,6 @@ def detail_profile(message=None):
       string_io = cStringIO.StringIO()
       stats = pstats.Stats(profiler, stream=string_io).sort_stats('cumulative')
       stats.print_stats()
-      if message is None:
-        message = '%s executed: %s'
       log.debug(message % (func.__name__, string_io.getvalue()))
       return result
     return inner

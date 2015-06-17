@@ -10,7 +10,6 @@ import sys
 import codecs
 import shutil
 import subprocess
-from glob import glob
 
 # META
 SITE_META_TITLE = 'Miraclestyle.com'
@@ -50,6 +49,7 @@ DEBUG = True
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
+
 def env(dev, production=None):
   if not production:
     production = dev
@@ -60,37 +60,37 @@ def env(dev, production=None):
 
 # Angular only configurations for user interface
 ANGULAR_VENDOR_JS = (
-  env('vendor/modernizr/modernizr.js'),
-  env('vendor/jquery/dist/jquery.js', 'vendor/jquery/dist/jquery.min.js'),
-  env('vendor/jquery-ui/ui/core.js', 'vendor/jquery-ui/ui/minified/core.min.js'),
-  env('vendor/jquery-ui/ui/widget.js', 'vendor/jquery-ui/ui/minified/widget.min.js'),
-  env('vendor/jquery-ui/ui/mouse.js', 'vendor/jquery-ui/ui/minified/mouse.min.js'),
-  env('vendor/jquery-ui/ui/position.js', 'vendor/jquery-ui/ui/minified/position.min.js'),
-  env('vendor/jquery-ui/ui/sortable.js', 'vendor/jquery-ui/ui/minified/sortable.min.js'),
-  env('vendor/jquery-ui/ui/draggable.js', 'vendor/jquery-ui/ui/minified/draggable.min.js'),
-  env('vendor/jquery-ui/ui/droppable.js', 'vendor/jquery-ui/ui/minified/droppable.min.js'),
-  env('vendor/Steady.js/Steady.js'),
-  env('vendor/showdown/src/showdown.js', 'vendor/showdown/compressed/Showdown.min.js'),
-  env('vendor/jquery.scrollTo/jquery.scrollTo.js', 'vendor/jquery.scrollTo/jquery.scrollTo.min.js'),
-  env('vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js', 'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js'),
-  env('vendor/jquery-cookie/jquery.cookie.js'),
-  env('vendor/underscore/underscore.js', 'vendor/underscore/underscore-min.js'),
-  env('vendor/underscore.string/lib/underscore.string.js', 'vendor/underscore.string/dist/underscore.string.min.js'),
-  env('vendor/angular/angular.js', 'vendor/angular/angular.min.js'),
-  env('vendor/angular-ui-sortable/sortable.js', 'vendor/angular-ui-sortable/sortable.min.js'),
-  env('vendor/angular-ui-utils/ui-utils.js', 'vendor/angular-ui-utils/ui-utils.min.js'),
-  env('vendor/angular-sanitize/angular-sanitize.js', 'vendor/angular-sanitize/angular-sanitize.min.js'),
-  env('vendor/angular-ui-router/release/angular-ui-router.js', 'vendor/angular-ui-router/release/angular-ui-router.min.js'),
-  env('vendor/angular-cookie/angular-cookie.js', 'vendor/angular-cookie/angular-cookie.min.js'),
-  env('vendor/angular-animate/angular-animate.js', 'vendor/angular-animate/angular-animate.min.js'),
-  env('vendor/angular-aria/angular-aria.js', 'vendor/angular-aria/angular-aria.min.js'),
-  env('vendor/angular-messages/angular-messages.js', 'vendor/angular-messages/angular-messages.min.js'),
-  env('vendor/angular-dragdrop/src/angular-dragdrop.js', 'vendor/angular-dragdrop/src/angular-dragdrop.min.js'),
-  env('vendor/momentjs/moment.js', 'vendor/momentjs/min/moment.min.js'),
-  env('vendor/humanize-duration/humanize-duration.js'),
-  env('vendor/angular-timer/dist/angular-timer.js', 'vendor/angular-timer/dist/angular-timer.min.js'),
-  env('vendor/angular-google-chart/ng-google-chart.js'),
-  env('vendor/angular-markdown-directive/markdown.js')
+    env('vendor/modernizr/modernizr.js'),
+    env('vendor/jquery/dist/jquery.js', 'vendor/jquery/dist/jquery.min.js'),
+    env('vendor/jquery-ui/ui/core.js', 'vendor/jquery-ui/ui/minified/core.min.js'),
+    env('vendor/jquery-ui/ui/widget.js', 'vendor/jquery-ui/ui/minified/widget.min.js'),
+    env('vendor/jquery-ui/ui/mouse.js', 'vendor/jquery-ui/ui/minified/mouse.min.js'),
+    env('vendor/jquery-ui/ui/position.js', 'vendor/jquery-ui/ui/minified/position.min.js'),
+    env('vendor/jquery-ui/ui/sortable.js', 'vendor/jquery-ui/ui/minified/sortable.min.js'),
+    env('vendor/jquery-ui/ui/draggable.js', 'vendor/jquery-ui/ui/minified/draggable.min.js'),
+    env('vendor/jquery-ui/ui/droppable.js', 'vendor/jquery-ui/ui/minified/droppable.min.js'),
+    env('vendor/Steady.js/Steady.js'),
+    env('vendor/showdown/src/showdown.js', 'vendor/showdown/compressed/Showdown.min.js'),
+    env('vendor/jquery.scrollTo/jquery.scrollTo.js', 'vendor/jquery.scrollTo/jquery.scrollTo.min.js'),
+    env('vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js', 'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js'),
+    env('vendor/jquery-cookie/jquery.cookie.js'),
+    env('vendor/underscore/underscore.js', 'vendor/underscore/underscore-min.js'),
+    env('vendor/underscore.string/lib/underscore.string.js', 'vendor/underscore.string/dist/underscore.string.min.js'),
+    env('vendor/angular/angular.js', 'vendor/angular/angular.min.js'),
+    env('vendor/angular-ui-sortable/sortable.js', 'vendor/angular-ui-sortable/sortable.min.js'),
+    env('vendor/angular-ui-utils/ui-utils.js', 'vendor/angular-ui-utils/ui-utils.min.js'),
+    env('vendor/angular-sanitize/angular-sanitize.js', 'vendor/angular-sanitize/angular-sanitize.min.js'),
+    env('vendor/angular-ui-router/release/angular-ui-router.js', 'vendor/angular-ui-router/release/angular-ui-router.min.js'),
+    env('vendor/angular-cookie/angular-cookie.js', 'vendor/angular-cookie/angular-cookie.min.js'),
+    env('vendor/angular-animate/angular-animate.js', 'vendor/angular-animate/angular-animate.min.js'),
+    env('vendor/angular-aria/angular-aria.js', 'vendor/angular-aria/angular-aria.min.js'),
+    env('vendor/angular-messages/angular-messages.js', 'vendor/angular-messages/angular-messages.min.js'),
+    env('vendor/angular-dragdrop/src/angular-dragdrop.js', 'vendor/angular-dragdrop/src/angular-dragdrop.min.js'),
+    env('vendor/momentjs/moment.js', 'vendor/momentjs/min/moment.min.js'),
+    env('vendor/humanize-duration/humanize-duration.js'),
+    env('vendor/angular-timer/dist/angular-timer.js', 'vendor/angular-timer/dist/angular-timer.min.js'),
+    env('vendor/angular-google-chart/ng-google-chart.js'),
+    env('vendor/angular-markdown-directive/markdown.js')
 )
 ANGULAR_VENDOR_CSS = ('vendor/material-design-iconic-font/css/material-design-iconic-font.min.css',)
 ANGULAR_TEMPLATE_FILES = []
@@ -118,27 +118,27 @@ ANGULAR_ACTIVE_COMPONENTS = [
     'core/textField',
     'core/snackbar',
     'core/toolbar',
-    'core/action', 
-    'core/cache', 
-    'core/datetime', 
-    'core/fields', 
+    'core/action',
+    'core/cache',
+    'core/datetime',
+    'core/fields',
     'core/grid',
-    'core/misc', 
-    'core/modal', 
-    'core/models', 
-    'core/record', 
-    'core/select', 
-    'core/slider', 
-    'core/social', 
+    'core/misc',
+    'core/modal',
+    'core/models',
+    'core/record',
+    'core/select',
+    'core/slider',
+    'core/social',
     'core/upload',
     'core/responsive',
     'account',
-    'buyer', 
-    'catalog', 
+    'buyer',
+    'catalog',
     'collection',
-    'home', 
-    'location', 
-    'order', 
+    'home',
+    'location',
+    'order',
     'seller',
     'admin',
     'core/kernel/init'
@@ -161,30 +161,33 @@ for component in ANGULAR_ACTIVE_COMPONENTS:
         ANGULAR_JAVASCRIPT_PATHS.append(path)
         ANGULAR_JAVASCRIPT_FILES.append(abs_path)
       elif f.endswith('.css') and not dirname.endswith('static') and iscomponent \
-           and not f.endswith('-default-theme.css'):
+              and not f.endswith('-default-theme.css'):
         ANGULAR_CSS_PATHS.append(path)
         ANGULAR_CSS_FILES.append(abs_path)
       elif f.endswith('.html') and dirname.endswith('template') or '/template/' in str(dirname):
         ANGULAR_TEMPLATE_FILES.append(abs_path)
 
+
 def get_component_dirs():
   for dirname, dirnames, filenames in os.walk(CLIENT_COMPONENTS_DIR):
-      for d in dirnames:
-        if d != 'template':
-          ANGULAR_ACTIVE_COMPONENTS.append(os.path.join(dirname, d)[_client_components_dir_length:])
+    for d in dirnames:
+      if d != 'template':
+        ANGULAR_ACTIVE_COMPONENTS.append(os.path.join(dirname, d)[_client_components_dir_length:])
   return json.dumps(ANGULAR_ACTIVE_COMPONENTS, indent=4)
 
+
 def _copytree(src, dst, symlinks=False, ignore=None):
-    if not os.path.exists(dst):
-        os.makedirs(dst)
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            _copytree(s, d, symlinks, ignore)
-        else:
-            if not os.path.exists(d) or os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
-                shutil.copy2(s, d)
+  if not os.path.exists(dst):
+    os.makedirs(dst)
+  for item in os.listdir(src):
+    s = os.path.join(src, item)
+    d = os.path.join(dst, item)
+    if os.path.isdir(s):
+      _copytree(s, d, symlinks, ignore)
+    else:
+      if not os.path.exists(d) or os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
+        shutil.copy2(s, d)
+
 
 def _empty_dir(d):
   for root, dirs, files in os.walk(d):
@@ -192,6 +195,7 @@ def _empty_dir(d):
       os.unlink(os.path.join(root, f))
     for d in dirs:
       shutil.rmtree(os.path.join(root, d))
+
 
 def build(templates=True, statics=True, js_and_css=True, write=False, inform=True):
   dist = os.path.join(CLIENT_DIR, 'dist')
@@ -202,26 +206,27 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
   def out(t):
     if inform:
       print t
+
   def read(f, m='r'):
     return codecs.open(f, m, 'utf-8')
 
   for p in ['app.js', 'seo.css', 'style.css', 'templates.js']:
-      paths[p] = os.path.join(node, p)
-      buff[p] = u''
+    paths[p] = os.path.join(node, p)
+    buff[p] = u''
   paths['static'] = os.path.join(dist, 'static')
   if js_and_css:
     with read(os.path.join(CLIENT_DIR, 'seo', 'seo.css')) as f:
       buff['seo.css'] = f.read()
     for t, b in [('JAVASCRIPT', 'app.js'), ('CSS', 'style.css')]:
-        for files in globals().get('ANGULAR_%s_FILES' % t):
-            with read(files) as f:
-                buff[b] += f.read()
+      for files in globals().get('ANGULAR_%s_FILES' % t):
+        with read(files) as f:
+          buff[b] += f.read()
     if write:
       for b, w in buff.iteritems():
-          if w:
-            out('Writing %s' % paths[b])
-            with read(paths[b], 'w') as f:
-                f.write(w)
+        if w:
+          out('Writing %s' % paths[b])
+          with read(paths[b], 'w') as f:
+            f.write(w)
   if templates:
     cached_templates = []
     for tpl in ANGULAR_TEMPLATE_FILES:

@@ -11,6 +11,8 @@ import traceback
 
 import settings
 
+__all__ = ['noop', 'debug', 'log', 'trace']
+
 
 def noop(*args, **kwargs):
   pass

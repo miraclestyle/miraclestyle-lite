@@ -7,12 +7,13 @@ Created on Oct 10, 2013
 import string
 import random
 import dis
+from decimal import Decimal
 
 import errors
 
 __all__ = ['SafeEvalError', 'Nonexistent', 'remove_value', 'prepare_attr', 'set_attr', 'del_attr',
            'get_attr', 'get_meta', 'normalize', 'merge_dicts', 'override_dict', 'safe_eval', 'random_chars',
-           'partition_list', 'noop', 'debug', 'log', 'trace']
+           'partition_list']
 
 
 class SafeEvalError(errors.BaseKeyValueError):

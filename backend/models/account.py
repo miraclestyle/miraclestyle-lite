@@ -345,7 +345,7 @@ class Account(orm.BaseExpando):
     session = self.current_account_session()
     if not session:
       return hashlib.md5(os.environ['REMOTE_ADDR'] + settings.CSRF_SALT).hexdigest()
-    return hashlib.md5(session.session_id).hexdigest()
+    return hashlib.md5('%s-%s' % (session.session_id, settings.CSRF_SALT)).hexdigest()
   
   @property
   def _is_guest(self):

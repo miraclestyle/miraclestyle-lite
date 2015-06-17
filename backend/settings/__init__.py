@@ -6,7 +6,7 @@ Created on Jul 8, 2013
 '''
 import os
 
-''' Settings file for backend module '''
+'''Settings file for backend module'''
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,30 +15,18 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input an
 # Server side config
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True
-DO_LOGS = True # logging on application level
-PROFILING = False # profiling of every function call using cProfile. Debug must be on
-PROFILING_SORT = ('cumulative', ) # 'time'
+DO_LOGS = True  # logging on application level
+PROFILING = False  # profiling of every function call using cProfile. Debug must be on
+PROFILING_SORT = ('cumulative', )  # 'time'
 
 # Notify
 NOTIFY_EMAIL = 'notify-noreply@miraclestyle.com'  # Password: xZa9hv8nbWyzk67boq4Q0
 
-# Task queue settings.
-OUTLET_TEMPLATES_PER_TASK = 10
-RECIPIENTS_PER_TASK = 50
-
-# Cron settings.
-DOMAINS_PER_CRON = 10
-SETUP_ELAPSED_TIME = 15
-
 # User settings.
 ROOT_ADMINS = ('elvinkosova@gmail.com', 'vertazzar@gmail.com', 'edis.sehalic@gmail.com')
 
-# Record settings.
-RECORDS_PAGE = 10
 SEARCH_PAGE = 10
 
-# Catalog settings.
-CATALOG_PAGE = 10
 CATALOG_UNPUBLISHED_LIFE = 1  # @todo This will be something like 7 days
 CATALOG_DISCONTINUED_LIFE = 1  # @todo This will be something like 120-180 days
 CATALOG_INDEX = 'catalogs'
@@ -78,36 +66,36 @@ if DEVELOPMENT_SERVER:
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
-   'client_id'    : '659759206787-v5nj4qd1k6trkv6kttkc9rt92ojkcvtu.apps.googleusercontent.com',
-   'client_secret': 'NiPPgts3FGMcICryDRn05X3x',
-   'scope'        : " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
-   'authorization_uri'     : 'https://accounts.google.com/o/oauth2/auth',
-   'token_uri'    : 'https://accounts.google.com/o/oauth2/token',
-   'redirect_uri' : '%s/api/account/login/1' % OAUTH2_REDIRECT_URI,
-   'type' : '1',
-   'accountinfo' : 'https://www.googleapis.com/oauth2/v1/userinfo',
+    'client_id': '659759206787-v5nj4qd1k6trkv6kttkc9rt92ojkcvtu.apps.googleusercontent.com',
+    'client_secret': 'NiPPgts3FGMcICryDRn05X3x',
+    'scope': " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
+    'authorization_uri': 'https://accounts.google.com/o/oauth2/auth',
+    'token_uri': 'https://accounts.google.com/o/oauth2/token',
+    'redirect_uri': '%s/api/account/login/1' % OAUTH2_REDIRECT_URI,
+    'type': '1',
+    'accountinfo': 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
 
 FACEBOOK_OAUTH2 = {
-   'client_id'    : '125702284258635',
-   'client_secret': 'f5bcbcfa1bec6166bedb703d69911d43',
-   'scope'        : ",".join(['email']),
-   'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
-   'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
-   'type' : '2',
-   'accountinfo' : 'https://graph.facebook.com/me',
+    'client_id': '125702284258635',
+    'client_secret': 'f5bcbcfa1bec6166bedb703d69911d43',
+    'scope': ",".join(['email']),
+    'authorization_uri': 'https://www.facebook.com/dialog/oauth',
+    'token_uri': 'https://graph.facebook.com/oauth/access_token',
+    'redirect_uri': '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
+    'type': '2',
+    'accountinfo': 'https://graph.facebook.com/me',
 }
 
 TWITTER_OAUTH2 = {
-   'client_id'    : 'fu60ucDMP0J27e3QlYbFTQ',
-   'client_secret': 'bd9cE1GzBrkpgxqKDD3QGCvm8LHpxcTCeVliXOmoQ20',
-   'scope'        : ",".join(['email']),
-   'authorization_uri'     : 'https://www.facebook.com/dialog/oauth',
-   'token_uri'    : 'https://graph.facebook.com/oauth/access_token',
-   'redirect_uri' : '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
-   'type' : '2',
-   'accountinfo' : 'https://graph.facebook.com/me',
+    'client_id': 'fu60ucDMP0J27e3QlYbFTQ',
+    'client_secret': 'bd9cE1GzBrkpgxqKDD3QGCvm8LHpxcTCeVliXOmoQ20',
+    'scope': ",".join(['email']),
+    'authorization_uri': 'https://www.facebook.com/dialog/oauth',
+    'token_uri': 'https://graph.facebook.com/oauth/access_token',
+    'redirect_uri': '%s/api/account/login/3' % OAUTH2_REDIRECT_URI,
+    'type': '2',
+    'accountinfo': 'https://graph.facebook.com/me',
 }
 
 LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2]

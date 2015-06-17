@@ -1,256 +1,385 @@
-import json
-import sys
+class Account(orm.BaseExpando):
+  
+  _kind = 11
+  
+  _use_memcache = True
+  
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
+  identities = orm.SuperStructuredProperty(AccountIdentity, '3', repeated=True)  # Soft limit 100 instances.
+  state = orm.SuperStringProperty('5', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))
+  sessions = orm.SuperLocalStructuredProperty(AccountSession, '6', repeated=True)  # Soft limit 100 instances.
+  
+  _default_indexed = False
+  
+  _virtual_fields = {
+    'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
+    '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
+    '_csrf': orm.SuperComputedProperty(lambda self: self.get_csrf()),
+    '_records': orm.SuperRecordProperty('11')
+    }
 
-def override_dict(a, b):
-    current_a = a
-    current_b = b
-    next_args = []
+  def add_action_permission(cls, name, condition=None, outcome=None):
+    kind = cls.get_kind()
+    if outcome is None:
+      outcome = True
+    if condition is None:
+      condition = 'True'
+    cls._global_role.permissions.append(orm.ActionPermission(kind, orm.Action.build_key(kind, name), outcome, condition))
+  
+  _global_role = orm.GlobalRole(
+    permissions=[
+      orm.ActionPermission('11', orm.Action.build_key('11', 'login'), True,
+                           'entity._is_guest or entity._original.state == "active"'),
+      orm.ActionPermission('11', orm.Action.build_key('11', 'current_account'), True,
+                           'True'),
+      orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
+                                  orm.Action.build_key('11', 'update'),
+                                  orm.Action.build_key('11', 'logout')], True,
+                           'not account._is_guest and account.key == entity._original.key'),
+      orm.ActionPermission('11', [orm.Action.build_key('11', 'blob_upload_url'),
+                                  orm.Action.build_key('11', 'create_channel')], True, # it just needs true when the user is not guest
+                           'not account._is_guest'),
+      orm.FieldPermission('11', ['created', 'updated', 'state', '_records'], False, True,
+                          'not account._is_guest and account.key == entity._original.key'),
+      orm.FieldPermission('11', ['identities', 'sessions', '_primary_email', '_records'], True, True,
+                          'not account._is_guest and account.key == entity._original.key'),
+      # Account is unit of administration, hence root admins need control over it!
+      # Root admins can always: read account; search for accounts (exclusively);
+      # read accounts history (exclusively); perform sudo operations (exclusively).
+      orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
+                                  orm.Action.build_key('11', 'search'),
+                                  orm.Action.build_key('11', 'sudo')], True, 'account._root_admin'),
+      orm.FieldPermission('11', ['created', 'updated', 'identities', 'state', 'sessions',
+                                 'ip_address', '_primary_email', '_records'], None, True, 'account._root_admin'),
+      orm.FieldPermission('11', ['state'], True, None, 'action.key_id_str == "sudo" and account._root_admin')
+      ]
+    )
+  
+  _actions = [
+    orm.Action(
+      key=orm.Action.build_key('11', 'login'),
+      arguments={
+        'login_method': orm.SuperStringProperty(required=True, choices=[f['type'] for f in settings.LOGIN_METHODS]),
+        'code': orm.SuperStringProperty(),
+        'error': orm.SuperStringProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            AccountLoginInit(cfg={'methods': settings.LOGIN_METHODS})
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            AccountLoginWrite()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'current_account'),
+      arguments={
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(cfg={'source': 'account.key'}),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_account'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'read'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='11', required=True),
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Set(cfg={'d': {'output.entity': '_account'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'update'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='11', required=True),
+        'primary_identity': orm.SuperStringProperty(),
+        'disassociate': orm.SuperStringProperty(repeated=True),
+        'read_arguments': orm.SuperJsonProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            AccountUpdateSet(),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            Set(cfg={'d': {'output.entity': '_account'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'search'),
+      arguments={
+        'search': orm.SuperSearchProperty(
+          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
+          cfg={
+            'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
+            'filters': {'emails': orm.SuperStringProperty(),
+                        'key': orm.SuperVirtualKeyProperty(kind='11', searchable=False),
+                        'state': orm.SuperStringProperty(choices=('active', 'suspended', 'su_suspended'))},
+            'indexes': [{'orders': [('created', ['asc', 'desc'])]},
+                        {'orders': [('updated', ['asc', 'desc'])]},
+                        {'filters': [('key', ['==', '!='])]},
+                        {'filters': [('emails', ['==', '!='])]},
+                        {'filters': [('state', ['==', '!='])],
+                         'orders': [('created', ['asc', 'desc'])]}]
+            }
+          )
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            Search(),
+            RulePrepare(cfg={'path': '_entities'}),
+            Set(cfg={'d': {'output.entities': '_entities',
+                           'output.cursor': '_cursor',
+                           'output.more': '_more'}})
+            ]
+          )
+        ]
+      ),
+    # @todo call catalog.account_discontinue if the account is suspended
+    orm.Action(
+      key=orm.Action.build_key('11', 'sudo'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='11', required=True),
+        'state': orm.SuperStringProperty(required=True, choices=('active', 'suspended')),
+        'message': orm.SuperTextProperty(required=True),
+        'note': orm.SuperTextProperty()
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'rm': ['_account.sessions'], 'd': {'_account.state': 'input.state'}}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(),
+            Set(cfg={'d': {'output.entity': '_account'}}),
+            Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
+                              'body': notifications.ACCOUNT_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
+                        'd': {'recipient': '_account._primary_email'}}),
+            Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
+                              'body': notifications.ACCOUNT_SUDO_BODY,
+                              'admin': True,
+                              'recipient': settings.ROOT_ADMINS, 'sender': settings.NOTIFY_EMAIL}}),
+            # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'logout'),
+      arguments={
+        'key': orm.SuperKeyProperty(kind='11', required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            Set(cfg={'rm': ['_account.sessions']}),
+            RulePrepare(),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            Write(cfg={'dra': {'ip_address': '_account.ip_address'}}),
+            AccountLogoutOutput()
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'blob_upload_url'),
+      arguments={
+        'upload_url': orm.SuperStringProperty(required=True)
+        },
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            BlobURL(cfg={'bucket': settings.BUCKET_PATH}),
+            Set(cfg={'d': {'output.upload_url': '_blob_url'}})
+            ]
+          )
+        ]
+      ),
+    orm.Action(
+      key=orm.Action.build_key('11', 'create_channel'),
+      arguments={},
+      _plugin_groups=[
+        orm.PluginGroup(
+          plugins=[
+            Context(),
+            Read(),
+            RulePrepare(),
+            RuleExec(),
+            CreateChannel(),
+            Set(cfg={'d': {'output.token': '_token'}})
+            ]
+          )
+        ]
+      )
+    ]
+  
+  def get_output(self):
+    dic = super(Account, self).get_output()
+    dic.update({'_is_guest': self._is_guest,
+                '_root_admin': self._root_admin})
+    return dic
+  
+  @property
+  def _root_admin(self):
+    return self._primary_email in settings.ROOT_ADMINS
+  
+  @property
+  def _is_taskqueue(self):
+    return tools.mem_temp_get('current_request_is_taskqueue')
+  
+  @property
+  def _is_cron(self):
+    return tools.mem_temp_get('current_request_is_cron')
+  
+  def set_taskqueue(self, is_it):
+    return tools.mem_temp_set('current_request_is_taskqueue', is_it)
+  
+  def set_cron(self, is_it):
+    return tools.mem_temp_set('current_request_is_cron', is_it)
+  
+  def primary_email(self):
+    self.identities.read() # implicitly call read on identities
+    if not self.identities.value:
+      return None
+    for identity in self.identities.value:
+      if identity.primary == True:
+        return identity.email
+    return identity.email
+
+  def get_csrf(self):
+    session = self.current_account_session()
+    if not session:
+      return hashlib.md5(os.environ['REMOTE_ADDR'] + settings.CSRF_SALT).hexdigest()
+    return hashlib.md5('%s-%s' % (session.session_id, settings.CSRF_SALT)).hexdigest()
+  
+  @property
+  def _is_guest(self):
+    return self.key is None
+  
+  @classmethod
+  def set_current_account(cls, account, session=None):
+    tools.mem_temp_set('current_account', account)
+    tools.mem_temp_set('current_account_session', session)
+  
+  @classmethod
+  def current_account(cls):
+    current_account = tools.mem_temp_get('current_account')
+    if not current_account:
+      current_account = cls()
+      cls.set_current_account(current_account)
+    return current_account
+  
+  @classmethod
+  def get_system_account(cls):
+    account_key = cls.build_key('system')
+    account = account_key.get()
+    if not account:
+      identities = [AccountIdentity(email='System', identity='1-0', primary=True)]
+      account = cls(key=account_key, state='active', emails=['System'], identities=identities)
+      account._use_rule_engine = False
+      account.put()
+      account._use_rule_engine = True
+    return account
+  
+  @classmethod
+  def current_account_session(cls):
+    return tools.mem_temp_get('current_account_session')
+
+  @staticmethod
+  def hash_session_id(session_id):
+    return hashlib.md5('%s%s' % (session_id, settings.AUTH_SALT1)).hexdigest()
+  
+  def session_by_id(self, session_id):
+    for session in self.sessions.value:
+      if session.session_id == session_id:
+        return session
+    return None
+  
+  @classmethod
+  def set_current_account_from_access_token(cls, access_token):
+    try:
+      account_key, session_id = access_token.split('|')
+    except:
+      return False # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
+    if not session_id:
+      return False # Fail silently if the session id is not found in the split sequence.
+    account_key = orm.Key(urlsafe=account_key)
+    if account_key.kind() != cls.get_kind() or account_key.id() == 'system':
+      return False # Fail silently if the kind is not valid
+    account = account_key.get()
+    if account:
+      account.read()
+      session = account.session_by_id(session_id)
+      if session:
+        cls.set_current_account(account, session)
+        return account
+
+  def new_session(self):
+    account = self
+    session_ids = [session.session_id for session in account.sessions.value]
     while True:
-        if current_b is None:
-            try:
-                current_a, current_b = next_args.pop()
-                continue
-            except IndexError as e:
-                break
-        for key in current_b:
-            if key in current_a:
-                if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
-                    next_args.append((current_a[key], current_b[key]))
-                elif current_a[key] == current_b[key]:
-                    pass
-                else:
-                    # in this segment we encounter that a[key] is not equal to
-                    # b[key] which we do not want, roll it back
-                    current_a[key] = current_b[key]
-            else:
-                current_a[key] = current_b[key]
-        current_b = None
-        current_a = None
-    return a
-
-def merge_dicts(a, b):
-    current_a = a
-    current_b = b
-    next_args = []
-    while True:
-        if current_b is None:
-            try:
-                current_a, current_b = next_args.pop()
-                continue
-            except IndexError as e:
-                break
-        for key in current_b:
-            if key in current_a:
-                if isinstance(current_a[key], dict) and isinstance(current_b[key], dict):
-                    next_args.append((current_a[key], current_b[key]))
-                elif current_a[key] == current_b[key]:
-                    pass
-                else:
-                    # in this segment we encounter that a[key] is not equal to
-                    # b[key] which we do not want
-                    pass
-            else:
-                current_a[key] = current_b[key]
-        current_b = None
-        current_a = None
-    return a
-
-def merge_dicts2(a, b):
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge_dicts2(a[key], b[key])
-            elif a[key] == b[key]:
-                pass
-            else:
-                # in this segment we encounter that a[key] is not equal to
-                # b[key] which we do not want
-                pass
-        else:
-            a[key] = b[key]
-    return a
-
-
-def override_dict2(a, b):
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                override_dict2(a[key], b[key])
-            elif a[key] == b[key]:
-                pass
-            else:
-                # in this segment we encounter that a[key] is not equal to
-                # b[key] which we do not want, roll it back
-                a[key] = b[key]
-        else:
-            a[key] = b[key]
-    return a
-
-import time
-import cStringIO
-import cProfile
-import pstats
-
-def compute(start):
-    return round((time.time() - start) * 1000, 3)
-
-class Profile():
-
-    def __init__(self):
-        self.start = time.time()
-
-    @property
-    def miliseconds(self):
-        return compute(self.start)
-
-
-def profile(message=None):
-    def decorator(fn):
-        def inner(*args, **kwargs):
-            start = time.time()
-            result = fn(*args, **kwargs)
-            initial_message = None
-            if message is None:
-                initial_message = '%s executed in %s'
-            else:
-                initial_message = message
-            return result
-        return inner
-    return decorator
-
-
-def make_dict(dic, s=1, e=100):
-  hoard = []
-  for x in xrange(s, e):
-    h = {}
-    dic[x] = h
-    hoard.append(h)
-  return hoard
-
-
-def make_final_dict():
-  dic = {}
-  hoard = make_dict(dic)
-  for h in hoard:
-    ho = make_dict(h)
-    for b in ho:
-      make_dict(b)
-  return dic
-
-'''
-d1 = make_final_dict()
-d2 = make_final_dict()
-
-d3 = make_final_dict()
-d4 = make_final_dict()
-'''
-
-sys.setrecursionlimit(100000000)
-
-def make_deep_dict():
-  dic = {}
-  cdic = dic
-  i = 0
-  while True:
-    i += 1
-    ndic = {}
-    cdic[str(i)] = ndic
-    cdic = ndic
-    if i > 10000:
-      break
-  return dic
-
-d1 = make_deep_dict()
-d2 = make_deep_dict()
-
-d3 = make_deep_dict()
-d4 = make_deep_dict()
-
-d = Profile()
-override_dict2(d3, d4)
-print 'override_dict2', d.miliseconds
-
-d = Profile()
-override_dict(d1, d2)
-print 'override_dict', d.miliseconds
-
-
-exit()
-
-'''import functools
-import sys
-import types
-def copy_func(f, name=None):
-    return types.FunctionType(f.func_code, f.func_globals, name or f.func_name,
-        f.func_defaults, f.func_closure)
-
-sys.setrecursionlimit(1000)
-def fb(i=0):
-  if i == 2000:
-    return i
-  return fb2(i + 1)
-
-def fb2(i=0):
-  if i == 2000:
-    return i
-  return fb(i + 1)
-
-print fb()
-exit()'''
-
-import ast
-import os
-import codecs
-
-class FindRecursiveFunctions(ast.NodeVisitor):
-    def __init__(self):
-        self._current_func = None
-        self.recursive_funcs = set()
-
-    def generic_visit(self, node):
-        if node.__class__ is ast.FunctionDef:
-            self._current_func = node.name
-        try:
-            if node.__class__ is ast.Call and node.func.id == self._current_func:
-                lineno = None
-                if hasattr(node, 'lineno'):
-                    lineno = node.lineno
-                    # (self._current_func, lineno)
-                self.recursive_funcs.add(self._current_func)
-        except AttributeError as e:
-            pass
-        super(FindRecursiveFunctions, self).generic_visit(node)
-
-files_with_recursion = {}
-ignore = ['project-documentation.py', 'documentation/code/misc.py', 'temp.py', 'tests.py']
-for dirname, dirnames, filenames in os.walk('.'):
-    for f in filenames:
-      if f.startswith('.') or not f.endswith('.py'):
-        continue
-      cont = False
-      for ig in ignore:
-        if f.endswith(ig):
-            cont = True
-            break
-      if cont:
-        continue
-      abs_path = os.path.join(dirname, f)
-      rf = codecs.open(abs_path, 'r', 'utf-8')
-      code = rf.read()
-      try:
-          firstline = code.splitlines()[0]
-          code = code[len(firstline):]
-      except IndexError as e:
-        pass
-      print abs_path
-      tree = ast.parse(code)
-      finder = FindRecursiveFunctions()
-      finder.visit(tree)
-      if finder.recursive_funcs:
-        files_with_recursion[abs_path] = finder.recursive_funcs
-
-print 'Source code has:'
-for f, items in files_with_recursion.iteritems():
-    print 'File %s has %s recursive functions:' % (f, len(items))
-    for item in items:
-        print ' %s' % (item)
+      session_id = hashlib.md5(tools.random_chars(30)).hexdigest()
+      if session_id not in session_ids:
+        break
+    session = AccountSession(session_id=session_id, ip_address=self.ip_address)
+    account.sessions = [session]
+    return session
