@@ -804,7 +804,7 @@
                                         '24': true,
                                         '12': true,
                                         '13': true,
-                                        '17': true
+                                        //'17': true
                                     },
                                     type: {
                                         '12': 'local',

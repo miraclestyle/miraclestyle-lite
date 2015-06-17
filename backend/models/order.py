@@ -62,10 +62,10 @@ class OrderProduct(orm.BaseExpando):
     }
 
   def get_reference_information(self):
-    dic = self.reference.structure()
+    dic = self.reference._structure
     flat = list(self.reference.parent().pairs())
     flat.pop(3)
-    dic['pricetag'] = orm.Key(pairs=flat).structure()
+    dic['pricetag'] = orm.Key(pairs=flat)._structure
     return dic
   
   @classmethod
@@ -214,7 +214,7 @@ class Order(orm.BaseExpando):
     '_records': orm.SuperRecordProperty('34'),
     '_payment_method': orm.SuperReferenceProperty(callback=lambda self: self._get_payment_method(),
                                                   format_callback=lambda self, value: value),
-    '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference.structure() if self.seller_reference else None),
+    '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference._structure if self.seller_reference else None),
   }
   
   _global_role = orm.GlobalRole(

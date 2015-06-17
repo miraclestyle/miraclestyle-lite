@@ -103,8 +103,8 @@ def _get_key_structure(self):
   dic['namespace'] = self.namespace()
   dic['parent'] = {}
   if self.parent():
-    parent = self.parent()
     parent_dic = dic['parent']
+    parent = self.parent()
     while True:
       if not parent:
         break
@@ -112,8 +112,8 @@ def _get_key_structure(self):
       parent_dic['key'] = parent.urlsafe()
       parent_dic['id'] = parent.id()
       parent_dic['namespace'] = parent.namespace()
-      parent = parent.parent()
       parent_dic['parent'] = {}
+      parent = parent.parent()
       parent_dic = parent_dic['parent']
   return dic
 
@@ -128,11 +128,10 @@ Key._urlsafe = property(_get_urlsafe)
 Key._root = property(_get_root)
 Key._search_index = property(_get_search_index)
 Key._search_unindex = property(_get_search_unindex)
+Key._structure = property(_get_key_structure)
 Key.entity = property(_get_entity)
 Key.namespace_entity = property(_get_namespace_entity)
 Key.parent_entity = property(_get_parent_entity)
-Key.structure = _get_key_structure
-Key._structure = property(_get_key_structure)
 
 
 #############################################
@@ -146,8 +145,8 @@ def get_multi_combined(*args, **kwargs):
   for arg in args:
     combinations.append(len(arg))
     keys.extend(arg)
-  if not async:
-    entities = get_multi(keys, **kwargs)
+  if async:
+    entities = get_multi_async(keys, **kwargs)
   else:
     entities = get_multi(keys, **kwargs)
   separations = []
@@ -196,8 +195,8 @@ def get_async_results(*args, **kwargs):
   
   '''
   if len(args) > 1:
-    for set_of_futures in args:
-      get_async_results(set_of_futures, **kwargs)
+    for arg in args:
+      get_async_results(arg, **kwargs)
   elif not isinstance(args[0], list):
     raise ValueError('Futures must be a list, got %s' % args[0])
   futures = args[0]
@@ -224,13 +223,13 @@ def _perform_multi_transactions(entities, write=None, transaction_callack=None, 
   if transaction_callack is None:
     def run(group, write):
       if write is not None:
-        for ent in group:
-          ent.write(write)
+        for entity in group:
+          entity.write(write)
       else:
         put_multi(group)
   else:
     run = transaction_callack
-  for group in tools.partition_list(entities, 5):
+  for group in tools.partition_list(entities, 25):
     transaction(lambda: run(group, write), xg=True)
     if sleep is not None:  # If sleep is specified, the for loop will block before issuing another transaction.
       time.sleep(sleep)
@@ -1574,7 +1573,7 @@ class _BaseModel(object):
     dic['_state'] = self._state
     dic['_sequence'] = self._sequence
     if self.key:
-      dic.update(self.key.structure())
+      dic.update(self.key._structure)
     names = self._output
     try:
       for name in names:

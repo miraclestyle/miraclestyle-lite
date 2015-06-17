@@ -89,7 +89,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
   def run(self, context):
     catalog_image = None
     catalog_images = context._catalog._images.value
-    if context.action.key.id() != 'catalog_upload_images':
+    if len(catalog_images) < 2:
       CatalogImage = context.models['30']
       catalog_images = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).fetch(1)
       # use query only when user is not uploading new images

@@ -211,6 +211,29 @@ class ActionPermission(Permission):
           entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
 
 
+class ExecuteActionPermission(Permission):
+
+  _kind = 129
+  
+  actions = SuperStringProperty('1', repeated=True, indexed=False)
+  callback = SuperPickleProperty('2', required=True, indexed=False)
+
+  def __init__(self, *args, **kwargs):
+    super(ExecuteActionPermission, self).__init__(**kwargs)
+    if len(args):
+      actions, callback = args
+      if not isinstance(actions, (tuple, list)):
+        actions = [actions]
+      self.actions = actions
+      self.callback = callback
+
+  def run(self, entity, **kwargs):
+    kwargs['entity'] = entity
+    for action in self.actions:
+      if entity.get_action(action) is not None and self.callback(**kwargs):
+        entity._action_permissions[action]['executable'].append(True)
+
+
 class FieldPermission(Permission):
 
   _kind = 5
