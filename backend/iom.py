@@ -79,7 +79,7 @@ class Engine:
     blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
       # Process blobs to be saved.
-      save_state_blobs = blobs.get('collect_%s' % state, None)
+      save_state_blobs = blobs.get('save_%s' % state, None)
       delete_blobs = blobs.get('delete', None)
       if delete_blobs is None:
         delete_blobs = blobs['delete'] = []
@@ -98,7 +98,7 @@ class Engine:
   def process_blob_output(cls):
     blobs = tools.mem_temp_get(settings.BLOBKEYMANAGER_KEY, None)
     if blobs is not None:
-      save_blobs = blobs.get('collect', None)
+      save_blobs = blobs.get('save', None)
       delete_blobs = blobs.get('delete', None)
       if delete_blobs:
         if save_blobs:

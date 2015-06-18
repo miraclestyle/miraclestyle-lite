@@ -19,14 +19,14 @@ __all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url
            'channel_create', 'mail_send', 'http_send', 'channel_send']
 
 
-def rule_prepare(entities, strict, **kwargs):
+def rule_prepare(entities, **kwargs):
   entities = normalize(entities)
   for entity in entities:
     if entity and isinstance(entity, orm.Model):
       permissions = []
       if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '7':
         permissions.extend(entity._global_role.permissions)
-      entity.rule_prepare(permissions, strict, **kwargs)
+      entity.rule_prepare(permissions, **kwargs)
 
 
 def rule_exec(entity, action):

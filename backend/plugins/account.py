@@ -24,7 +24,7 @@ class AccountLoginInit(orm.BaseModel):
     context._account = context.model.current_account()
     context.account = context.model.current_account()
     kwargs = {'account': context.account, 'action': context.action}
-    tools.rule_prepare(context._account, False, **kwargs)
+    tools.rule_prepare(context._account, **kwargs)
     tools.rule_exec(context._account, context.action)
     login_method = context.input.get('login_method')
     error = context.input.get('error')
@@ -59,7 +59,7 @@ class AccountLoginInit(orm.BaseModel):
           context._account = account
           context.account = account
     kwargs = {'account': context.account, 'action': context.action}
-    tools.rule_prepare(context._account, False, **kwargs)
+    tools.rule_prepare(context._account, **kwargs)
     tools.rule_exec(context._account, context.action)
 
 

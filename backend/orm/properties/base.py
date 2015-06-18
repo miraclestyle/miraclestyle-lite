@@ -34,8 +34,7 @@ class _BaseProperty(object):
     self._max_size = kwargs.pop('max_size', self._max_size)
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
     self._searchable = kwargs.pop('searchable', self._searchable)
-    self._search_document_field_name = kwargs.pop(
-        'search_document_field_name', self._search_document_field_name)
+    self._search_document_field_name = kwargs.pop('search_document_field_name', self._search_document_field_name)
     super(_BaseProperty, self).__init__(*args, **kwargs)
 
   @property
@@ -66,33 +65,6 @@ class _BaseProperty(object):
       dic['compressed'] = self._compressed
     return dic
 
-  def property_keywords_format(self, kwds, skip_kwds):
-    limits = {'name': 20, 'code_name': 20,
-              'verbose_name': 50, 'search_document_field_name': 20}
-    for k, v in kwds.items():
-      if k in skip_kwds:
-        v = getattr(self, k, None)
-      else:
-        if k in ('name', 'verbose_name', 'search_document_field_name'):
-          v = unicode(v)
-          if len(v) > limits[k]:
-            raise FormatError('property_%s_too_long' % k)
-        elif k in ('indexed', 'required', 'repeated', 'searchable'):
-          v = bool(v)
-        elif k == 'choices':
-          if v is not None:
-            if not isinstance(v, list):
-              raise FormatError('expected_list_for_choices')
-        elif k == 'default':
-          if v is not None:
-            # default value must be acceptable by property value format
-            # standards
-            v = self.value_format(v)
-        elif k == 'max_size':
-          if v is not None:
-            v = int(v)
-      kwds[k] = v
-
   def _property_value_validate(self, value):
     if self._max_size:
       if len(value) > self._max_size:
@@ -105,11 +77,11 @@ class _BaseProperty(object):
 
   def _property_value_filter(self, value):
     if self._value_filters:
-      if isinstance(self._value_filters, (list, tuple)):
-        for value_filter in self._value_filters:
-          value = value_filter(self, value)
-      else:
-        value = self._value_filters(self, value)
+      value_filters = self._value_filters
+      if not isinstance(value_filters, (list, tuple)):
+        value_filters = [value_filters]
+      for value_filter in value_filters:
+        value = value_filter(self, value)
     return value
 
   def _property_value_format(self, value):
@@ -139,8 +111,7 @@ class _BaseProperty(object):
     return self._code_name if self._code_name is not None else self._name
 
   def get_search_document_field(self, value):
-    raise NotImplemented(
-        'Search representation of property %s not available.' % self)
+    raise NotImplemented('Search representation of property %s not available.' % self)
 
   def resolve_search_document_field(self, value):
     if self._repeated:
@@ -204,12 +175,7 @@ class _BaseStructuredProperty(_BaseProperty):
     '''
     if isinstance(self._modelclass, basestring):
       # model must be scanned when it reaches this call
-      find = Model._kind_map.get(self._modelclass)
-      if find is None:
-        raise ValueError(
-            'Could not locate model with kind %s' % self._modelclass)
-      else:
-        self._modelclass = find
+      self._modelclass = Model._lookup_model(self._modelclass)
     return self._modelclass
 
   def get_meta(self):
@@ -220,29 +186,12 @@ class _BaseStructuredProperty(_BaseProperty):
     dic['modelclass'] = self.get_modelclass().get_fields()
     dic['modelclass_kind'] = self.get_modelclass().get_kind()
     dic['value_class'] = self._value_class.__name__
-    other = ['_autoload', '_readable', '_updateable',
-             '_deleteable', '_read_arguments']
-    for o in other:
-      dic[o[1:]] = getattr(self, o)
+    dic['autoload'] = self._autoload
+    dic['readable'] = self._readable
+    dic['updateable'] = self._updateable
+    dic['deleteable'] = self._deleteable
+    dic['read_arguments'] = self._read_arguments
     return dic
-
-  def property_keywords_format(self, kwds, skip_kwds):
-    super(_BaseStructuredProperty, self).property_keywords_format(
-        kwds, skip_kwds)
-    if 'modelclass' not in skip_kwds:
-      model = Model._kind_map.get(kwds['modelclass_kind'])
-      if model is None:
-        raise FormatError('invalid_kind')
-      kwds['modelclass'] = model
-    '''
-    What to do with this?
-    if 'managerclass' not in skip_kwds:
-      possible_managers = dict((manager.__name__, manager) for manager in PROPERTY_MANAGERS)
-      if kwds['managerclass'] not in possible_managers:
-        raise FormatError('invalid_manager_supplied')
-      else:
-        kwds['managerclass'] = possible_managers.get(kwds['managerclass'])
-    '''
 
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
@@ -250,7 +199,7 @@ class _BaseStructuredProperty(_BaseProperty):
   def value_format(self, value, path=None):
     if path is None:
       path = self._code_name
-    source_value = value
+    current_value = value
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
       return value
@@ -259,11 +208,11 @@ class _BaseStructuredProperty(_BaseProperty):
       if not isinstance(value, dict) and not self._required:
         return tools.Nonexistent
       value = [value]
-    elif source_value is None:
+    elif current_value is None:
       return tools.Nonexistent
     for v in value:
-      ent = self._structured_property_format(v, path)
-      out.append(ent)
+      entity = self._structured_property_format(v, path)
+      out.append(entity)
     if not self._repeated:
       try:
         out = out[0]
@@ -275,68 +224,68 @@ class _BaseStructuredProperty(_BaseProperty):
     # __set__
     if override:
       return super(_BaseStructuredProperty, self)._set_value(entity, value)
-    value_instance = self._get_value(entity)
+    property_value = self._get_value(entity)
     if self._repeated:
-      if value_instance.has_value():
-        if value_instance.value:
-          current_values = value_instance.value
+      if property_value.has_value():
+        if property_value.value:
+          current_value = property_value.value
         else:
-          current_values = []
+          current_value = []
         if value:
-          for val in value:
+          for v in value:
             generate = True
-            if val.key:
-              for i, current_value in enumerate(current_values):
-                if current_value.key == val.key:
-                  current_value.populate_from(val)
+            if v.key:
+              for current_v in current_value:
+                if current_v.key == v.key:
+                  current_v.populate_from(v)
                   generate = False
                   break
             if generate:
-              if not val.key:
-                val.generate_unique_key()
-                if val._state is None:
-                  val._state = 'created'
-              current_values.append(val)
-          current_values.sort(key=lambda x: x._sequence, reverse=True)
+              if not v.key:
+                v.generate_unique_key()
+                if v._state is None:
+                  v._state = 'created'
+              current_value.append(v)
+          current_value.sort(key=lambda x: x._sequence, reverse=True)
       else:
-        current_values = value
-        if current_values is None:
-          current_values = []
+        current_value = value
+        if current_value is None:
+          current_value = []
         else:
-          for val in current_values:
-            if not val.key:
-              val.generate_unique_key()
-              if val._state is None:
-                val._state = 'created'
-    elif not self._repeated:
+          for current_v in current_value:
+            if not current_v.key:
+              current_v.generate_unique_key()
+              if current_v._state is None:
+                current_v._state = 'created'
+    else:
       if value is not None:
-        current_values = value_instance.value
-        if current_values is not None:
-          current_values.populate_from(value)
+        current_value = property_value.value
+        if current_value is not None:
+          current_value.populate_from(value)
         else:
-          current_values = value
-          if not current_values.key:
-            current_values.generate_unique_key()
+          current_value = value
+          if not current_value.key:
+            current_value.generate_unique_key()
       else:
-        current_values = value
-    value_instance.set(current_values)
-    return super(_BaseStructuredProperty, self)._set_value(entity, current_values)
+        current_value = value
+    property_value.set(current_value)
+    return super(_BaseStructuredProperty, self)._set_value(entity, current_value)
 
   def _delete_value(self, entity):
     # __delete__
-    value_instance = self._get_value(entity)
-    value_instance.delete()
+    property_value = self._get_value(entity)
+    property_value.delete()
 
   def _get_value(self, entity):
     # __get__
     super(_BaseStructuredProperty, self)._get_value(entity)
     value_name = '%s_value' % self._name
     if value_name in entity._values:
-      value_instance = entity._values[value_name]
+      property_value = entity._values[value_name]
     else:
-      value_instance = self._value_class(property_instance=self, entity=entity)
-      entity._values[value_name] = value_instance
-    return value_instance
+      property_value = self._value_class(property_instance=self, entity=entity)
+      entity._values[value_name] = property_value
+    return property_value
 
   def _structured_property_field_format(self, fields, values, path):
     _state = allowed_state(values.get('_state'))
@@ -344,16 +293,16 @@ class _BaseStructuredProperty(_BaseProperty):
     key = values.get('key')
     kind = values.get('kind')
     errors = {}
-    for value_key, value in values.items():
-      field = fields.get(value_key)
+    for current_value_key, current_value in values.items():
+      field = fields.get(current_value_key)
       if field:
         if hasattr(field, 'value_format'):
           new_path = '%s.%s' % (path, field._code_name)
           try:
             if hasattr(field, '_structured_property_field_format'):
-              val = field.value_format(value, new_path)
+              value = field.value_format(current_value, new_path)
             else:
-              val = field.value_format(value)
+              value = field.value_format(current_value)
           except FormatError as e:
             if isinstance(e.message, dict):
               for k, v in e.message.iteritems():
@@ -368,34 +317,33 @@ class _BaseStructuredProperty(_BaseProperty):
                 errors[e.message] = []
               errors[e.message].append(new_path)
             continue
-          if val is tools.Nonexistent:
-            del values[value_key]
+          if value is tools.Nonexistent:
+            del values[current_value_key]
           else:
-            values[value_key] = val
+            values[current_value_key] = value
         else:
-          del values[value_key]
+          del values[current_value_key]
       else:
-        del values[value_key]
+        del values[current_value_key]
     if len(errors):
       raise FormatError(errors)
     if key:
-      values['key'] = BaseVirtualKeyProperty(
-          kind=kind, required=True).value_format(key)
+      values['key'] = BaseVirtualKeyProperty(kind=kind, required=True).value_format(key)
     values['_state'] = _state  # Always keep track of _state for rule engine!
     if _sequence is not None:
       values['_sequence'] = _sequence
 
-  def _structured_property_format(self, entity_as_dict, path):
-    provided_kind_id = entity_as_dict.get('kind')
-    fields = self.get_model_fields(kind=provided_kind_id)
+  def _structured_property_format(self, values, path):
+    kind = values.get('kind')
+    fields = self.get_model_fields(kind=kind)
     # Never allow class_ or any read-only property to be set for that matter.
-    entity_as_dict.pop('class_', None)
+    values.pop('class_', None)
     try:
-      self._structured_property_field_format(fields, entity_as_dict, path)
+      self._structured_property_field_format(fields, values, path)
     except FormatError as e:
       raise FormatError(e.message)
-    modelclass = self.get_modelclass(kind=provided_kind_id)
-    return modelclass(**entity_as_dict)
+    modelclass = self.get_modelclass(kind=kind)
+    return modelclass(**values)
 
   @property
   def is_structured(self):
@@ -406,9 +354,9 @@ class _BaseStructuredProperty(_BaseProperty):
     self.get_modelclass()
 
   def _prepare_for_put(self, entity):
-    value_instance = self._get_value(entity)  # For its side effects.
-    if value_instance.value is None and self._repeated:
-      value_instance.set([])
+    property_value = self._get_value(entity)  # For its side effects.
+    if property_value.value is None and self._repeated:
+      property_value.set([])
     super(_BaseStructuredProperty, self)._prepare_for_put(entity)
 
 
@@ -447,7 +395,7 @@ class BaseKeyProperty(_BaseProperty, KeyProperty):
           raise FormatError('invalid_kind')
       if not skip_get:
         entities = get_multi(out)
-        for i, entity in enumerate(entities):
+        for entity in entities:
           if entity is None:
             raise FormatError('not_found')
       if not self._repeated:
@@ -465,19 +413,19 @@ class BaseKeyProperty(_BaseProperty, KeyProperty):
         return value
       out = []
       if self._repeated:
-        for key_path in value:
+        for v in value:
           kwds = {}
           try:
-            kwds = key_path[1]
+            kwds = v[1]
           except IndexError:
             pass
-          key = Key(*key_path[0], **kwds)
+          key = Key(*v[0], **kwds)
           if self._kind and key.kind() != self._kind:
             raise FormatError('invalid_kind')
           out.append(key)
         if not skip_get:
           entities = get_multi(out)
-          for i, entity in enumerate(entities):
+          for entity in entities:
             if entity is None:
               raise FormatError('not_found')
       else:
@@ -594,16 +542,8 @@ class _BaseBlobProperty(object):
     return blobs
 
   @classmethod
-  def normalize_blobs(cls, blobs):
-    # Helper to transform single item into a list for iteration.
-    if isinstance(blobs, (list, tuple)):
-      return blobs
-    else:
-      return [blobs]
-
-  @classmethod
   def _update_blobs(cls, update_blobs, state=None, delete=True):
-    update_blobs = cls.normalize_blobs(update_blobs)
+    update_blobs = tools.normalize(update_blobs)
     blobs = cls.get_blobs()
     for blob in update_blobs:
       if state not in blobs:
@@ -633,17 +573,17 @@ class _BaseBlobProperty(object):
   @classmethod
   def save_blobs(cls, blobs, delete=True):
     # Save blobes no matter what happens.
-    cls._update_blobs(blobs, 'collect', delete)
+    cls._update_blobs(blobs, 'save', delete)
 
   @classmethod
   def save_blobs_on_error(cls, blobs, delete=True):
     # Marks blobs to be preserved upon application error.
-    cls._update_blobs(blobs, 'collect_error', delete)
+    cls._update_blobs(blobs, 'save_error', delete)
 
   @classmethod
   def save_blobs_on_success(cls, blobs, delete=True):
     # Marks blobs to be preserved upon success.
-    cls._update_blobs(blobs, 'collect_success', delete)
+    cls._update_blobs(blobs, 'save_success', delete)
 
 
 class _BaseImageProperty(_BaseBlobProperty):
@@ -796,8 +736,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         blob_info = blobstore.parse_blob_info(v)
         # We only accept jpg/png. This list can be and should be customizable
         # on the property option itself?
-        meta_required = ('image/jpeg', 'image/jpg', 'image/png')
-        if file_info.content_type not in meta_required:
+        if file_info.content_type not in ('image/jpeg', 'image/jpg', 'image/png'):
           # First line of validation based on meta data from client.
           raise FormatError('invalid_image_type')
         new_image = self.get_modelclass()(**{'size': file_info.size,

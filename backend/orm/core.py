@@ -8,8 +8,7 @@ __all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 
 
 class Record(BaseExpando):
 
-  '''
-  The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
+  '''The class Record overrides some methods because it needs to accomplish proper deserialization of the logged entity.
   It uses Model._clone_properties() in Record.log_entity() and Record._get_property_for(). That is because
   if we do not call that method, the class(cls) scope - Record._properties will be altered which will cause variable leak,
   meaning that simultaneously based on user actions, new properties will be appended to Record._properties, and that will
@@ -20,8 +19,8 @@ class Record(BaseExpando):
   be available in "self" - not "cls".
   In the beginning i forgot to look into the Model._fix_up_properties, which explicitly sets cls._properties to {} which then
   allowed mutations to class(cls) scope.
-
   '''
+
   _kind = 0
 
   _use_record_engine = False
@@ -65,7 +64,7 @@ class Record(BaseExpando):
     return not (self.__class__._properties is self._properties)
 
   def _retrieve_cloned_name(self, name):
-    for _, prop in self._properties.iteritems():
+    for prop_key, prop in self._properties.iteritems():
       if name == prop._code_name:
         return prop._name
 
@@ -105,7 +104,7 @@ class Record(BaseExpando):
       kind = self.key_parent.kind()
       modelclass = self._lookup_model(kind)
       # We cannot use entity.get_fields here directly as it returns 'friendly_field_name: prop', and we need 'prop._name: prop'.
-      properties = dict([(pr._name, pr) for _, pr in modelclass.get_fields().iteritems()])
+      properties = dict([(field._name, prop) for field_key, field in modelclass.get_fields().iteritems()])
       # Adds properties from parent class to the log entity making it possible to deserialize them properly.
       prop = properties.get(next)
       if prop:
@@ -117,7 +116,7 @@ class Record(BaseExpando):
 
   def log_entity(self, entity):
     self._clone_properties()  # Clone properties, because if we don't, the Record._properties will be used.
-    for _, prop in entity._properties.iteritems():  # We do not call get_fields here because all fields that have been written are in _properties.
+    for prop_key, prop in entity._properties.iteritems():  # We do not call get_fields here because all fields that have been written are in _properties.
       value = prop._get_value(entity)
       if isinstance(value, LocalStructuredPropertyValue):  # we can only log locally structured data
         value = value.value
@@ -150,7 +149,7 @@ class Action(BaseExpando):
 
   @classmethod
   def build_key(cls, kind, action_id):
-    return Key(kind, 'action', cls._get_kind(), action_id)
+    return Key(kind, 'action', cls.get_kind(), action_id)
 
 
 class PluginGroup(BaseExpando):
@@ -214,23 +213,23 @@ class ActionPermission(Permission):
 class ExecuteActionPermission(Permission):
 
   _kind = 129
-  
+
   actions = SuperStringProperty('1', repeated=True, indexed=False)
-  callback = SuperPickleProperty('2', required=True, indexed=False)
+  condition = SuperPickleProperty('2', required=True, indexed=False)
 
   def __init__(self, *args, **kwargs):
     super(ExecuteActionPermission, self).__init__(**kwargs)
     if len(args):
-      actions, callback = args
+      actions, condition = args
       if not isinstance(actions, (tuple, list)):
         actions = [actions]
       self.actions = actions
-      self.callback = callback
+      self.condition = condition
 
   def run(self, entity, **kwargs):
     kwargs['entity'] = entity
     for action in self.actions:
-      if entity.get_action(action) is not None and self.callback(**kwargs):
+      if entity.get_action(action) is not None and self.condition(**kwargs):
         entity._action_permissions[action]['executable'].append(True)
 
 
@@ -262,10 +261,58 @@ class FieldPermission(Permission):
       for field in self.fields:
         parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
         if parsed_field and (tools.safe_eval(self.condition, kwargs)):
-          if (self.writable != None):
+          if (self.writable is not None):
             parsed_field['writable'].append(self.writable)
-          if (self.visible != None):
+          if (self.visible is not None):
             parsed_field['visible'].append(self.visible)
+
+
+class WriteFieldPermission(Permission):
+
+  _kind = 130
+
+  fields = SuperStringProperty('1', repeated=True, indexed=False)
+  condition = SuperPickleProperty('2', required=True, indexed=False)
+
+  def __init__(self, *args, **kwargs):
+    super(WriteFieldPermission, self).__init__(**kwargs)
+    if len(args):
+      fields, condition = args
+      if not isinstance(fields, (tuple, list)):
+        fields = [fields]
+      self.fields = fields
+      self.condition = condition
+
+  def run(self, entity, **kwargs):
+    kwargs['entity'] = entity
+    for field in self.fields:
+      parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
+      if parsed_field and self.condition(**kwargs):
+        parsed_field['writable'].append(True)
+
+
+class ReadFieldPermission(Permission):
+
+  _kind = 131
+
+  fields = SuperStringProperty('1', repeated=True, indexed=False)
+  condition = SuperPickleProperty('2', required=True, indexed=False)
+
+  def __init__(self, *args, **kwargs):
+    super(ReadFieldPermission, self).__init__(**kwargs)
+    if len(args):
+      fields, condition = args
+      if not isinstance(fields, (tuple, list)):
+        fields = [fields]
+      self.fields = fields
+      self.condition = condition
+
+  def run(self, entity, **kwargs):
+    kwargs['entity'] = entity
+    for field in self.fields:
+      parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
+      if parsed_field and self.condition(**kwargs):
+        parsed_field['visible'].append(True)
 
 
 class Role(BaseExpando):

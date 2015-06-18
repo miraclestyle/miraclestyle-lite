@@ -204,7 +204,6 @@ class RulePrepare(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    strict = self.cfg.get('strict', False)
     static_kwargs = self.cfg.get('s', {})
     dynamic_kwargs = self.cfg.get('d', {})
     kwargs = {'account': context.account, 'action': context.action, 'input': context.input}
@@ -212,7 +211,7 @@ class RulePrepare(orm.BaseModel):
     for key, value in dynamic_kwargs.iteritems():
       kwargs[key] = tools.get_attr(context, value)
     entities = tools.get_attr(context, entity_path)
-    tools.rule_prepare(entities, strict, **kwargs)
+    tools.rule_prepare(entities, **kwargs)
 
 
 class RuleExec(orm.BaseModel):

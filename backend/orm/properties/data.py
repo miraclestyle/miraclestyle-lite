@@ -456,6 +456,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
     key = values.get('key')
+    errors = {}
     for value_key, value in values.items():
       field = fields.get(value_key)
       if field:
@@ -467,6 +468,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
             else:
               val = field.value_format(value)
           except FormatError as e:
+            print e.message
             if isinstance(e.message, dict):
               for k, v in e.message.iteritems():
                 if k not in errors:
