@@ -22,7 +22,7 @@ class PropertyValue(object):
     self._property = property_instance
     self._entity = entity
     self._kwds = kwds
-    self._property_value_options = {}
+    self.value_options = {}
 
   def __repr__(self):
     return '%s(entity=instance of %s, property=%s, property_value=%s, kwds=%s)' % (self.__class__.__name__,
@@ -37,13 +37,6 @@ class PropertyValue(object):
     if not name:
       name = self._property._name
     return name
-
-  @property
-  def value_options(self):
-    ''''_property_value_options' is used for storing and returning information that
-    is related to property value(s). For exmaple: 'more' or 'cursor' parameter in querying.
-    '''
-    return self._property_value_options
 
   def has_value(self):
     return hasattr(self, '_property_value')
@@ -87,50 +80,48 @@ class StructuredPropertyValue(PropertyValue):
       for entity in entities:
         if entity._parent is None:
           entity._parent = self._entity
-        else:
-          continue
     return entities if repeated else entities[0]  # return first if this was not a list
 
-  def set(self, property_value):
-    '''We always verify that the property_value is instance
+  def set(self, value):
+    '''We always verify that the value is instance
     of the model that is specified in the property configuration.
 
-    Set will always iterate the property_value to individually set values on existing set of values, or
+    Set will always iterate the value to individually set values on existing set of values, or
     append new value if its new. This is to solve problem with seting stuctured value
     '''
-    if property_value is not None:
-      property_value_copy = property_value
+    if value is not None:
+      value_copy = value
       if not self._property._repeated:
-        property_value_copy = [property_value_copy]
-      for property_value_item in property_value_copy:
-        if not isinstance(property_value_item, self._property.get_modelclass()):
-          raise ValueError('Expected %s, got %s' % (self._property.get_modelclass().get_kind(), property_value_item.get_kind()))
+        value_copy = [value_copy]
+      for v in value_copy:
+        if not isinstance(v, self._property.get_modelclass()):
+          raise ValueError('Expected %s, got %s' % (self._property.get_modelclass().get_kind(), v.get_kind()))
       if not self._property._repeated:
         if self.has_value() and self._property_value is not None:
-          self._property_value.populate_from(property_value)
+          self._property_value.populate_from(value)
         else:
-          if property_value._state is None:
-            property_value._state = 'created'
-          self._property_value = property_value
+          if value._state is None:
+            value._state = 'created'
+          self._property_value = value
       else:
         if self.has_value() and self._property_value is not None:
-          existing = dict((entity.key.urlsafe(), entity) for entity in self._property_value if entity.key)
-          new_property_value = []
-          for entity in property_value:
+          current_value = dict((entity.key, entity) for entity in self._property_value if entity.key)
+          new_value = []
+          for v in value:
             # this is to support proper setting of data for existing instances
-            exists = entity.key
-            if exists is not None:
-              exists = existing.get(entity.key.urlsafe())
+            current_v = v.key
+            if current_v is not None:
+              current_v = current_value.get(v.key)
             else:
-              entity._state = 'created'
-            if exists is not None:
-              exists.populate_from(entity)
-              new_property_value.append(exists)
+              v._state = 'created'
+            if current_v is not None:
+              current_v.populate_from(v)
+              new_value.append(current_v)
             else:
-              new_property_value.append(entity)
-          del property_value[:]
-          property_value.extend(new_property_value)
-        self._property_value = property_value
+              new_value.append(v)
+          del value[:]
+          value.extend(new_value)
+        self._property_value = value
       self._set_parent()
 
   def _deep_read(self, read_arguments=None):
@@ -223,15 +214,15 @@ class ReferencePropertyValue(PropertyValue):
     if self._property._callback:
       self._property_value = self._property._callback(self._entity)
     elif target_field:
-      field = getattr(self._entity, target_field)
-      if field is None:  # If value is none the key was not set, therefore value must be null.
+      value = getattr(self._entity, target_field)
+      if value is None:  # If value is none the key was not set, therefore value must be null.
         self._property_value = None
         return self.value
-      if not isinstance(field, Key):
-        raise ValueError('Targeted field value must be instance of Key. Got %s' % field)
-      if self._property._kind is not None and field.kind() != self._property._kind:
-        raise ValueError('Kind must be %s, got %s' % (self._property._kind, field.kind()))
-      self._property_value = field.get_async()
+      if not isinstance(value, Key):
+        raise ValueError('Targeted field value must be instance of Key. Got %s' % value)
+      if self._property._kind is not None and value.kind() != self._property._kind:
+        raise ValueError('Kind must be %s, got %s' % (self._property._kind, value.kind()))
+      self._property_value = value.get_async()
 
   def read_async(self):
     if not self.has_value():
@@ -293,39 +284,37 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
         structured.post_update()
     if self.has_value() and self._property._repeated:
       if self._property._repeated:
-        values = self.value
         if self._property_value_by_read_arguments is not None:
           for i, value in enumerate(self._property_value_by_read_arguments):
-            matches = filter(lambda x: x.key == value.key, values)
+            matches = filter(lambda x: x.key == value.key, self.value)
             if matches:
               self._property_value_by_read_arguments[i] = matches[0]
-          self._property_value_by_read_arguments.extend([v for v in values if v._state == 'created'])
+          self._property_value_by_read_arguments.extend([v for v in self.value if v._state == 'created'])
           self._property_value_by_read_arguments.sort(key=lambda x: x._sequence, reverse=True)
 
   def _read(self, read_arguments):
-    property_value = self._property._get_user_value(self._entity)
-    property_value_as_list = property_value
     if read_arguments is None:
       read_arguments = {}
     config = read_arguments.get('config', {})
-    if property_value_as_list is not None:
+    value = self._property._get_user_value(self._entity)
+    value_copy = value
+    if value_copy is not None:
       if not self._property._repeated:
-        property_value_as_list = [property_value_as_list]
-      total = len(property_value_as_list) - 1
+        value_copy = [value_copy]
+      total = len(value_copy) - 1
       if self._property._repeated:
-        supplied_keys = config.get('keys', [])
-        supplied_keys = BaseVirtualKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(supplied_keys)
+        keys = BaseVirtualKeyProperty(kind=self._property.get_modelclass().get_kind(), repeated=True).value_format(config.get('keys', []))
         if self._property_value_by_read_arguments is not None:
           self._property_value_by_read_arguments = []
-      self._property_value_options.update(config)
-      for i, value in enumerate(property_value_as_list):
-        value._sequence = total - i
-        if self._property._repeated and supplied_keys is not None:
-          if value.key in supplied_keys:
+      self.value_options.update(config)
+      for i, v in enumerate(value_copy):
+        v._sequence = total - i
+        if self._property._repeated and keys is not None:
+          if v.key in keys:
             if self._property_value_by_read_arguments is None:
               self._property_value_by_read_arguments = []
-            self._property_value_by_read_arguments.append(value)
-      self._property_value = property_value
+            self._property_value_by_read_arguments.append(v)
+      self._property_value = value
     else:
       if self._property._repeated:
         self._property_value = []
@@ -335,22 +324,21 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
       fields = self._property.get_modelclass().get_fields()
       delete_states = ['removed', 'deleted']
 
-      def collect_structured(value):
+      def collect_structured(entity):
         for field_key, field in fields.iteritems():
           if hasattr(field, 'is_structured') and field.is_structured:
-            property_value = getattr(value, field_key)
-            self._structured_values.append(property_value)
+            self._structured_values.append(getattr(entity, field_key))
 
       def delete_structured(entity):
-        for structured in self._structured_values:
-          repeated = structured._property._repeated
-          structured = structured.read()  # read and mark for delete
-          if structured is not None:
+        for value in self._structured_values:
+          repeated = value._property._repeated
+          value = value.read()  # read and mark for delete
+          if value is not None:
             if not repeated:
-              structured = [structured]
-            for structure in structured:
-              if entity.key == structure.key.parent():
-                structure._state = 'deleted'
+              value = [value]
+            for v in value:
+              if entity.key == v.key.parent():
+                v._state = 'deleted'
 
       if self._property._repeated:
         delete_entities = []
@@ -370,9 +358,9 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
           self._property_value.remove(delete_entity)
 
         if not self._property._updateable:  # if the property is not updatable we must revert all data to original
-          for i, ent in enumerate(self._property_value):
-            if hasattr(ent, '_original'):
-              self._property_value[i] = copy.deepcopy(ent._original)
+          for i, entity in enumerate(self._property_value):
+            if hasattr(entity, '_original'):
+              self._property_value[i] = copy.deepcopy(entity._original)
       else:
         if hasattr(self._property_value, 'prepare'):
           self._property_value.prepare(parent=self._entity.key)
@@ -387,28 +375,26 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     if self._property._deleteable:
       self.read()
       if self.has_value():
-        property_value = self._property_value
+        value = self._property_value
         if not self._property._repeated:
-          property_value = [self._property_value]
+          value = [self._property_value]
         fields = self._property.get_modelclass().get_fields()
-        for value in property_value:
+        for v in value:
           for field_key, field in fields.iteritems():
             if hasattr(field, 'is_structured') and field.is_structured:
-              val = getattr(value, field_key)
-              val.delete()
-          value._state = 'deleted'
+              getattr(v, field_key).delete()
+          v._state = 'deleted'
 
   def duplicate(self):
     if not self._property._duplicable:
       return
     self.read()
-    values = self.value
     if self._property._repeated:
       entities = []
-      for entity in values:
+      for entity in self.value:
         entities.append(entity.duplicate())
     else:
-      entities = values.duplicate()
+      entities = self.value.duplicate()
     self._property_value = entities
     self._set_parent()
     self._property._set_value(self._entity, entities, True)  # this is because using other method would cause duplicate results via duplicate process.
@@ -420,14 +406,14 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     if self._property._repeated:
       if self.has_value() and self._property_value:
         try:
-          last = self._property_value[0]._sequence
-          if last is None:
-            last = 0
+          i = self._property_value[0]._sequence
+          if i is None:
+            i = 0
         except IndexError:
-          last = 0
-        last_sequence = last + 1
+          i = 0
+        sequence = i + 1
         for entity in entities:
-          entity._sequence += last_sequence
+          entity._sequence += sequence
     else:
       tools.log.warn('cannot use .add() on non repeated property')
     # Always trigger setattr on the property itself
@@ -462,7 +448,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
         if supplied_key.parent() != self._entity.key:
           raise ValueError('invalid_parent_for_key_%s' % supplied_key.urlsafe())
       entities = get_multi_async(supplied_keys)
-      self._property_value_options.update(config)
+      self.value_options.update(config)
     else:
       if 'search' not in config:
         config['search'] = search
@@ -485,7 +471,7 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
       if 'property' in search:
         del search['property']
       search['options']['limit'] = limit
-      self._property_value_options['search'] = search
+      self.value_options['search'] = search
     self._property_value = entities
 
   def _read(self, read_arguments):
@@ -510,8 +496,8 @@ class RemoteStructuredPropertyValue(StructuredPropertyValue):
               cursor = cursor.urlsafe()
             tools.remove_value(property_value[0])
             self._property_value = property_value[0]
-            self._property_value_options['search']['options']['start_cursor'] = cursor
-            self._property_value_options['more'] = property_value[2]
+            self.value_options['search']['options']['start_cursor'] = cursor
+            self.value_options['more'] = property_value[2]
           else:
             self._property_value = property_value
       else:  # this is for key.get_async()
@@ -650,15 +636,15 @@ class ReferenceStructuredPropertyValue(StructuredPropertyValue):
     if callback:
       self._property_value = callback(self._entity)
     elif target_field:
-      field = getattr(self._entity, target_field)
-      if field is None:  # If value is none the key was not set, therefore value must be null.
+      value = getattr(self._entity, target_field)
+      if value is None:  # If value is none the key was not set, therefore value must be null.
         self._property_value = None
         return
-      if not isinstance(field, Key):
-        raise ValueError('Targeted field value must be instance of Key. Got %s' % field)
-      if self._property.get_modelclass().get_kind() != field.kind():
-        raise ValueError('Kind must be %s, got %s' % (self._property.get_modelclass().get_kind(), field.kind()))
-      self._property_value = field.get_async()
+      if not isinstance(value, Key):
+        raise ValueError('Targeted field value must be instance of Key. Got %s' % value)
+      if self._property.get_modelclass().get_kind() != value.kind():
+        raise ValueError('Kind must be %s, got %s' % (self._property.get_modelclass().get_kind(), value.kind()))
+      self._property_value = value.get_async()
 
   def _read_sync(self, read_arguments):
     if self.has_future():
@@ -678,12 +664,11 @@ class _ImagePropertyValue(object):
 
   def _update_blobs(self):
     if self.has_value():
-      if self._property._repeated:
-        entities = self._property_value
-      else:
+      entities = self._property_value
+      if not self._property._repeated:
         entities = [self._property_value]
       for entity in entities:
-        if (entity._state == 'deleted'):
+        if entity._state == 'deleted':
           self._property.delete_blobs_on_success(entity.image)
         else:
           self._property.save_blobs_on_success(entity.image, False)

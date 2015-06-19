@@ -808,14 +808,14 @@ class _BaseModel(object):
                 so anyways all the current code is fine, its just that we can take more simplification in consideration.
                 '''
                 if field_value_item.key:
-                  field_value_mapping[field_value_item.key.urlsafe()] = field_value_item
+                  field_value_mapping[field_value_item.key] = field_value_item
           if not current_permissions[current_field_key]['writable']:
             # if user has no permission on top level, and attempts to append new items that do not exist in
             # original values, those values will be removed completely.
             if current_field._repeated:
               delete_values = []
               for current_value in child_entity:
-                if not current_value.key or current_value.key.urlsafe() not in field_value_mapping:
+                if not current_value.key or current_value.key not in field_value_mapping:
                   delete_values.append(current_value)
               for value in delete_values:
                 child_entity.remove(value)
@@ -850,7 +850,7 @@ class _BaseModel(object):
                   # field_value_mapping.
                   # If it does not exist, the key is bogus, key does not exist, therefore this would not exist in the original state.
                   if child_entity_item.key:
-                    child_field_value = field_value_mapping.get(child_entity_item.key.urlsafe())  # Always get by key in order to match the editing sequence.
+                    child_field_value = field_value_mapping.get(child_entity_item.key)  # Always get by key in order to match the editing sequence.
                     child_field_value = getattr(child_field_value, child_field_key, None)
                   else:
                     child_field_value = None
