@@ -55,7 +55,7 @@ class PropertyValue(object):
   @property
   def read_value(self):
     # read value is used mainly for def get_output() because it will output whatever the client instructed it to read
-    # by default the read_value will return self.value, which in most of the cases is the case
+    # by default the read_value will return self.value
     return self.value
 
   def get_output(self):
@@ -82,16 +82,14 @@ class StructuredPropertyValue(PropertyValue):
     else:
       as_list = isinstance(entities, list)
     if entities is not None:
-      if as_list:
-        for entity in entities:
-          if entity._parent is None:
-            entity._parent = self._entity
-          else:
-            continue
-      else:
-        if entities._parent is None:
-          entities._parent = self._entity
-    return entities
+      if not as_list:
+        entities = [entities]
+      for entity in entities:
+        if entity._parent is None:
+          entity._parent = self._entity
+        else:
+          continue
+    return entities if as_list else entities[0] # return first if this was not a list
 
   def set(self, property_value):
     '''We always verify that the property_value is instance
@@ -116,20 +114,20 @@ class StructuredPropertyValue(PropertyValue):
           self._property_value = property_value
       else:
         if self.has_value() and self._property_value is not None:
-          existing = dict((ent.key.urlsafe(), ent) for ent in self._property_value if ent.key)
+          existing = dict((entity.key.urlsafe(), entity) for entity in self._property_value if entity.key)
           new_list = []
-          for ent in property_value:
+          for entity in property_value:
             # this is to support proper setting of data for existing instances
-            exists = ent.key
+            exists = entity.key
             if exists is not None:
-              exists = existing.get(ent.key.urlsafe())
+              exists = existing.get(entity.key.urlsafe())
             else:
-              ent._state = 'created'
+              entity._state = 'created'
             if exists is not None:
-              exists.populate_from(ent)
+              exists.populate_from(entity)
               new_list.append(exists)
             else:
-              new_list.append(ent)
+              new_list.append(entity)
           del property_value[:]
           property_value.extend(new_list)
         self._property_value = property_value
@@ -297,12 +295,11 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
       if self._property._repeated:
         values = self.value
         if self._property_value_by_read_arguments is not None:
-          for i, val in enumerate(self._property_value_by_read_arguments):
-            matches = filter(lambda x: x.key == val.key, values)
+          for i, value in enumerate(self._property_value_by_read_arguments):
+            matches = filter(lambda x: x.key == value.key, values)
             if matches:
               self._property_value_by_read_arguments[i] = matches[0]
-          new_entities = [v for v in values if v._state == 'created']
-          self._property_value_by_read_arguments.extend(new_entities)
+          self._property_value_by_read_arguments.extend([v for v in values if v._state == 'created'])
           self._property_value_by_read_arguments.sort(key=lambda x: x._sequence, reverse=True)
 
   def _read(self, read_arguments):
@@ -421,17 +418,16 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
     '''Primarly used to extend values repeated property
     '''
     if self._property._repeated:
-      if self.has_value():
-        if self._property_value:
-          try:
-            last = self._property_value[0]._sequence
-            if last is None:
-              last = 0
-          except IndexError:
+      if self.has_value() and self._property_value:
+        try:
+          last = self._property_value[0]._sequence
+          if last is None:
             last = 0
-          last_sequence = last + 1
-          for ent in entities:
-            ent._sequence += last_sequence
+        except IndexError:
+          last = 0
+        last_sequence = last + 1
+        for entity in entities:
+          entity._sequence += last_sequence
     else:
       tools.log.warn('cannot use .add() on non repeated property')
     # Always trigger setattr on the property itself
@@ -747,8 +743,7 @@ class _ImagePropertyValue(object):
     Resizing, cropping, and generation of serving url in the end.
     '''
     if self.has_value():
-      processed_value = self._property.process(self.value)
-      setattr(self._entity, self.property_name, processed_value)
+      setattr(self._entity, self.property_name, self._property.process(self.value))
 
 
 class LocalStructuredImagePropertyValue(_ImagePropertyValue, LocalStructuredPropertyValue):
@@ -777,14 +772,14 @@ class RemoteStructuredImagePropertyValue(_ImagePropertyValue, RemoteStructuredPr
     cursor = Cursor()
     limit = 200
     while True:
-      _entities, cursor, more = self._property.get_modelclass().query(ancestor=self._entity.key).fetch_page(limit, start_cursor=cursor, use_cache=False, use_memcache=False)
-      if len(_entities):
-        self._set_parent(_entities)
-        for entity in _entities:
+      entities, cursor, more = self._property.get_modelclass().query(ancestor=self._entity.key).fetch_page(limit, start_cursor=cursor, use_cache=False, use_memcache=False)
+      if len(entities):
+        self._set_parent(entities)
+        for entity in entities:
           self._property.delete_blobs_on_success(entity.image)
           if hasattr(entity, '_original') and entity.image != entity._original.image:
             self._property.delete_blobs_on_success(entity._original.image)
-        delete_multi([entity.key for entity in _entities])
+        delete_multi([entity.key for entity in entities])
         if not cursor or not more:
           break
       else:
