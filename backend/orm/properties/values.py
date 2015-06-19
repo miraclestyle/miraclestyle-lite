@@ -75,21 +75,21 @@ class StructuredPropertyValue(PropertyValue):
          ....
     So based on that, you can always reach for the top by simply finding which ._parent is None.
     '''
-    as_list = False
+    repeated = False
     if entities is None:
       entities = self.value
-      as_list = self._property._repeated
+      repeated = self._property._repeated
     else:
-      as_list = isinstance(entities, list)
+      repeated = isinstance(entities, list)
     if entities is not None:
-      if not as_list:
+      if not repeated:
         entities = [entities]
       for entity in entities:
         if entity._parent is None:
           entity._parent = self._entity
         else:
           continue
-    return entities if as_list else entities[0] # return first if this was not a list
+    return entities if repeated else entities[0]  # return first if this was not a list
 
   def set(self, property_value):
     '''We always verify that the property_value is instance
@@ -115,7 +115,7 @@ class StructuredPropertyValue(PropertyValue):
       else:
         if self.has_value() and self._property_value is not None:
           existing = dict((entity.key.urlsafe(), entity) for entity in self._property_value if entity.key)
-          new_list = []
+          new_property_value = []
           for entity in property_value:
             # this is to support proper setting of data for existing instances
             exists = entity.key
@@ -125,11 +125,11 @@ class StructuredPropertyValue(PropertyValue):
               entity._state = 'created'
             if exists is not None:
               exists.populate_from(entity)
-              new_list.append(exists)
+              new_property_value.append(exists)
             else:
-              new_list.append(entity)
+              new_property_value.append(entity)
           del property_value[:]
-          property_value.extend(new_list)
+          property_value.extend(new_property_value)
         self._property_value = property_value
       self._set_parent()
 
