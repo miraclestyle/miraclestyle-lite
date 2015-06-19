@@ -33,11 +33,7 @@ class SuperJsonProperty(_BaseProperty, JsonProperty):
       return value
 
   def get_search_document_field(self, value):
-    if self._repeated:
-      value = ' '.join(map(lambda v: json.dumps(v), value))
-    else:
-      value = json.dumps(value)
-    return search.TextField(name=self.search_document_field_name, value=value)
+    return search.TextField(name=self.search_document_field_name, value=json.dumps(value))
 
 
 class SuperSearchProperty(SuperJsonProperty):
@@ -113,6 +109,10 @@ class SuperSearchProperty(SuperJsonProperty):
     if keys is not None:
       if self._cfg.get('search_by_keys'):
         values['keys'] = BaseKeyProperty(kind=values['kind'], repeated=True).value_format(keys)
+        if ancestor:
+          for key in values['keys']:
+            if key.parent() != ancestor:
+              raise FormatError('invalid_key')
       else:
         del values['keys']
 
@@ -214,7 +214,7 @@ class SuperSearchProperty(SuperJsonProperty):
           except:
             del options_values[value_key]
         elif value_key == 'read_policy':
-          if not isinstance(value, EVENTUAL_CONSISTENCY):  # @todo Not sure if this is ok!? -- @reply i need to check this
+          if value != EVENTUAL_CONSISTENCY:
             del options_values[value_key]
         else:
           del options_values[value_key]
@@ -226,14 +226,6 @@ class SuperSearchProperty(SuperJsonProperty):
     if 'limit' not in options.keys():
       raise FormatError('limit_value_missing')
     options_format(options)
-
-  def _search_query_orders_format(self, values):
-    orders = values.get('orders')
-    cfg_orders = self._cfg.get('orders', {})
-    if orders is not None:
-      for _order in orders:
-        cfg_order = cfg_orders.get(_order['field'], {})
-        _order['default_value'] = cfg_order.get('default_value', {})
 
   def _search_query_options_format(self, values):
     options = values.get('options', {})
@@ -250,6 +242,14 @@ class SuperSearchProperty(SuperJsonProperty):
           del options[value_key]
       else:
         del options[value_key]
+
+  def _search_query_orders_format(self, values):
+    orders = values.get('orders')
+    cfg_orders = self._cfg.get('orders', {})
+    if orders is not None:
+      for _order in orders:
+        cfg_order = cfg_orders.get(_order['field'], {})
+        _order['default_value'] = cfg_order.get('default_value', {})
 
   def value_format(self, values):
     values = super(SuperSearchProperty, self).value_format(values)
@@ -292,6 +292,8 @@ class SuperSearchProperty(SuperJsonProperty):
         filters.append(field < value)
       elif op == '>=':
         filters.append(field >= value)
+      elif op == '<=':
+        filters.append(field <= value)
       elif op == 'IN':
         filters.append(field.IN(value))
       elif op == 'ALL_IN':
@@ -314,7 +316,7 @@ class SuperSearchProperty(SuperJsonProperty):
     if _orders is None:
       return orders
     for _order in _orders:
-      field = getattr(model, _order['field'])
+      field = tools.get_attr(model, _order['field'])
       op = _order['operator']
       if op == 'asc':
         orders.append(field)
@@ -416,10 +418,10 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     values = super(SuperPluginStorageProperty, self)._get_value(entity)
     if values:
       sequence = len(values)
-      for val in values:
-        val.read()
+      for v in values:
+        v.read()
         sequence -= 1
-        val._sequence = sequence
+        v._sequence = sequence
     return values
 
   def _set_value(self, entity, value):
@@ -427,16 +429,15 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     # plugin storage needs just to generate key if its non existant, it cannot behave like local struct and remote struct
     # because generally its not in its nature to behave like that
     # its just pickling of data with validation.
-    for val in value[:]:
-      if val._state == 'deleted':
-        value.remove(val)
+    for v in value[:]:
+      if v._state == 'deleted':
+        value.remove(v)
         continue
-      if not val.key:
-        val.generate_unique_key()
-      for field_key, field in val.get_fields().iteritems():
+      if not v.key:
+        v.generate_unique_key()
+      for field_key, field in v.get_fields().iteritems():
         if hasattr(field, 'is_structured') and field.is_structured:
-          structured = getattr(val, field_key)
-          structured.pre_update()
+          getattr(v, field_key).pre_update()
     return super(SuperPluginStorageProperty, self)._set_value(entity, value)
 
   def value_format(self, value, path=None):
@@ -456,19 +457,19 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     _state = allowed_state(values.get('_state'))
     _sequence = values.get('_sequence')
     key = values.get('key')
+    kind = values.get('kind')
     errors = {}
-    for value_key, value in values.items():
-      field = fields.get(value_key)
+    for current_value_key, current_value in values.items():
+      field = fields.get(current_value_key)
       if field:
         if hasattr(field, 'value_format'):
           new_path = '%s.%s' % (path, field._code_name)
           try:
             if hasattr(field, '_structured_property_field_format'):
-              val = field.value_format(value, new_path)
+              value = field.value_format(current_value, new_path)
             else:
-              val = field.value_format(value)
+              value = field.value_format(current_value)
           except FormatError as e:
-            print e.message
             if isinstance(e.message, dict):
               for k, v in e.message.iteritems():
                 if k not in errors:
@@ -482,41 +483,42 @@ class SuperPluginStorageProperty(SuperPickleProperty):
                 errors[e.message] = []
               errors[e.message].append(new_path)
             continue
-          if val is tools.Nonexistent:
-            del values[value_key]
+          if value is tools.Nonexistent:
+            del values[current_value_key]
           else:
-            values[value_key] = val
+            values[current_value_key] = value
         else:
-          del values[value_key]
+          del values[current_value_key]
       else:
-        del values[value_key]
+        del values[current_value_key]
+    if len(errors):
+      raise FormatError(errors)
     if key:
-      values['key'] = Key(urlsafe=key)
+      values['key'] = BaseVirtualKeyProperty(kind=kind, required=True).value_format(key)
     values['_state'] = _state  # Always keep track of _state for rule engine!
     if _sequence is not None:
       values['_sequence'] = _sequence
 
-  def _structured_property_format(self, entity_as_dict, path):
-    provided_kind_id = entity_as_dict.get('kind')
-    fields = self.get_model_fields(kind=provided_kind_id)
-    entity_as_dict.pop('class_', None)  # Never allow class_ or any read-only property to be set for that matter.
+  def _structured_property_format(self, values, path):
+    kind = values.get('kind')
+    fields = self.get_model_fields(kind=kind)
+    # Never allow class_ or any read-only property to be set for that matter.
+    values.pop('class_', None)
     try:
-      self._structured_property_field_format(fields, entity_as_dict, path)
+      self._structured_property_field_format(fields, values, path)
     except FormatError as e:
       raise FormatError(e.message)
-    modelclass = self.get_modelclass(kind=provided_kind_id)
-    return modelclass(**entity_as_dict)
+    modelclass = self.get_modelclass(kind=kind)
+    return modelclass(**values)
 
   def get_modelclass(self, kind):
     if self._kinds and kind:
       if kind:
         _kinds = []
-        for other in self._kinds:
-          if isinstance(other, Model):
-            _the_kind = other.get_kind()
-          else:
-            _the_kind = other
-          _kinds.append(_the_kind)
+        for _kind in self._kinds:
+          if isinstance(_kind, Model):
+            _kind = _kind.get_kind()
+          _kinds.append(_kind)
         if kind not in _kinds:
           raise ValueError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
         model = Model._kind_map.get(kind)
@@ -526,11 +528,6 @@ class SuperPluginStorageProperty(SuperPickleProperty):
     return self.get_modelclass(**kwargs).get_fields()
 
   def get_meta(self):
-    out = super(SuperPluginStorageProperty, self).get_meta()
-    out['kinds'] = self._kinds
-    return out
-
-  def property_keywords_format(self, kwds, skip_kwds):
-    super(SuperPluginStorageProperty, self).property_keywords_format(kwds, skip_kwds)
-    if 'kinds' not in skip_kwds:
-      kwds['kinds'] = map(lambda x: unicode(x), kwds['kinds'])
+    dic = super(SuperPluginStorageProperty, self).get_meta()
+    dic['kinds'] = self._kinds
+    return dic

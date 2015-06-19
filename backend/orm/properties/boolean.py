@@ -37,5 +37,6 @@ class SuperBooleanProperty(_BaseProperty, BooleanProperty):
           out.append(True)
         else:
           out.append(False)
+      return out
     else:
       return value == 'True'
