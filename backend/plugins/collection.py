@@ -21,10 +21,10 @@ class CollectionCronNotify(orm.BaseModel):
       self.cfg = {}
     Collection = context.models['18']
     Catalog = context.models['31']
-    _collections = Collection.query(Collection.notify == True).fetch_page(1, cursor=context.input.get('cursor'))
+    result = Collection.query(Collection.notify == True).fetch_page(1, cursor=context.input.get('cursor'))
     collection = None
-    if len(_collections) and len(_collections[0]):
-      collection = _collections[0][0]
+    if len(result) and len(result[0]):
+      collection = result[0][0]
     else:
       return # nothing found
     context.entity = collection
@@ -57,8 +57,8 @@ class CollectionCronNotify(orm.BaseModel):
       context._all_published_catalogs = all_published_catalogs
       context._all_discontinued_catalogs = all_discontinued_catalogs
 
-    if _collections[2] and _collections[1]: # if result.more and result.cursor
+    if result[2] and result[1]: # if result.more and result.cursor
       data = {'action_id': 'cron_notify',
               'action_model': '18',
-              'cursor': _collections[1]}
+              'cursor': result[1]}
       context._callbacks.append(('callback', data))
