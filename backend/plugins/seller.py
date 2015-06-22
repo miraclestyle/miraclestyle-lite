@@ -13,9 +13,9 @@ __all__ = ['SellerSetupDefaults', 'SellerCronGenerateFeedbackStats']
 
 
 class SellerCronGenerateFeedbackStats(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -24,22 +24,28 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
     SellerFeedback = context.models['37']
     SellerFeedbackStats = context.models['36']
     Account = context.models['11']
-    sellers = Seller.query().fetch_page(1, start_cursor=context.input.get('cursor'))
-    if len(sellers) and len(sellers[0]):
-      seller = sellers[0][0]
+    result = Seller.query().fetch_page(1, start_cursor=context.input.get('cursor'))
+    if len(result) and len(result[0]):
+      seller = result[0][0]
     else:
       # reached end
       return
     context._seller = seller
     context.entity = seller
-    today = datetime.datetime.now()
-    start_of_this_month = datetime.datetime(today.year, today.month, today.day)
-    year_start = start_of_this_month - datetime.timedelta(days=365)
-    year_end = start_of_this_month
+    now = datetime.datetime.now()
+    today = datetime.datetime(now.year, now.month, now.day)
+    year_start = today - datetime.timedelta(days=365)
+    year_end = today
     feedback_states = ['positive', 'neutral', 'negative']
-    run = True
+    more = True
     feedbacks = collections.OrderedDict()
-    while run:
+    current_month = today
+    for i in xrange(0, 12):
+      current_month = datetime.datetime(current_month.year, current_month.month, 1)
+      feedbacks[current_month] = {'positive': 0, 'neutral': 0, 'negative': 0}
+      previus_month = current_month - datetime.timedelta(days=1)
+      current_month = datetime.datetime(previus_month.year, previus_month.month, 1)
+    while more:
       futures = []
       for feedback_state in feedback_states:
         futures.append(Order.query(Order.seller_reference == seller.key,
@@ -47,47 +53,33 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
                                    Order.date < year_end,
                                    Order.feedback == feedback_state,
                                    Order.feedback_adjustment.IN([None, 'sudo']))
-                             .order(Order.date, Order.key)
-                             .fetch_page_async(100, projection=[Order.date], use_memcache=False, use_cache=False))
-      should_keep_running = False
-      dataset = {'accounts': {}}
+                       .order(Order.date, Order.key)
+                       .fetch_page_async(100, projection=[Order.date], use_memcache=False, use_cache=False))
+      more = False
+      account_stats = {}
       for i, future in enumerate(futures):
-        state = feedback_states[i]
+        feedback_state = feedback_states[i]
         result = future.get_result()
         if result[1] and result[2]:
-          should_keep_running = True
+          more = True
         for order in result[0]:
-          key = order.key._root
-          gets = dataset['accounts'].get(key)
+          account_key = order.key._root
           month = datetime.datetime(order.date.year, order.date.month, 1)
-          if not gets:
-            gets = {'orders': {}}
-            dataset['accounts'][key] = gets
-          if not month in gets['orders']:
-            gets['orders'][month] = {}
-            for state in feedback_states:
-              gets['orders'][month][state] = 0
-          gets['orders'][month][state] += 1
-      accounts = orm.get_multi(dataset['accounts'].keys(), use_memcache=False, use_cache=True)
+          feedbacks[month][feedback_state] += 1
+          if account_key not in account_stats:
+            account_stats[account_key] = {}
+          if month not in account_stats[account_key]:
+            account_stats[account_key][month] = {'positive': 0, 'neutral': 0, 'negative': 0}
+          account_stats[account_key][month][feedback_state] += 1
+      accounts = orm.get_multi(account_keys, use_memcache=False, use_cache=True)
       for account in accounts:
-        if account.state == 'active':
-          data = dataset['accounts'].get(account.key)
-          for month, order in data['orders'].iteritems():
-            if month not in feedbacks:
-              feedbacks[month] = {}
+        if account.state != 'active':
+          stats = account_stats.get(account.key)
+          for month, feedback_stats in feedbacks.iteritems():
+            if month in stats:
               for feedback_state in feedback_states:
-                feedbacks[month][feedback_state] = 0
-            for state, count in order.iteritems():
-              feedbacks[month][state] += count
-      run = should_keep_running
+                feedback_stats[feedback_state] -= stats[month][feedback_state]
 
-    gets = start_of_this_month
-    for i in xrange(0, 12):
-      gets = datetime.datetime(gets.year, gets.month, 1)
-      if gets not in feedbacks:
-        feedbacks[gets] = {'positive': 0, 'neutral': 0, 'negative': 0}
-      lastMonth = gets - datetime.timedelta(days=1)
-      gets = datetime.datetime(lastMonth.year, lastMonth.month, 1)
     set_feedbacks = []
     for date, counts in feedbacks.iteritems():
       set_feedbacks.append(SellerFeedbackStats(date=date,
@@ -99,14 +91,15 @@ class SellerCronGenerateFeedbackStats(orm.BaseModel):
     for i, s in enumerate(set_feedbacks):
       s._sequence = i
     context._seller._feedback = SellerFeedback(feedbacks=set_feedbacks)
-    if sellers[2] and sellers[1]: # if result.more and result.cursor
+    if result[2] and result[1]:  # if result.more and result.cursor
       data = {'action_id': 'cron_generate_feedback_stats',
               'action_model': '23',
-              'cursor': sellers[1]}
+              'cursor': result[1]}
       context._callbacks.append(('callback', data))
 
+
 class SellerSetupDefaults(orm.BaseModel):
-  
+
   def run(self, context):
     SellerPluginContainer = context.models['22']
     AddressRule = context.models['107']
@@ -124,7 +117,7 @@ class SellerSetupDefaults(orm.BaseModel):
     default_carrier = Carrier(name='World Wide Shipping', active=True, lines=[CarrierLine(name='Free Shipping', active=True)])
     default_currency = OrderCurrency(name='Default Currency', currency=Unit.build_key('usd'))
     default_paypal_payment = PayPalPayment(name='Paypal Payment Method', reciever_email='your paypal e-mail', business='your paypal merchant id or e-mail')
-    if not plugin_group or not plugin_group.plugins: # now user wont be in able to delete the config completely, he will always have these defaults
+    if not plugin_group or not plugin_group.plugins:  # now user wont be in able to delete the config completely, he will always have these defaults
       plugins = [default_address_rule_shipping,
                  default_address_rule_billing,
                  default_currency,

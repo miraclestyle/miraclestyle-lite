@@ -11,9 +11,9 @@ import orm
 
 
 class UnitCurrencyUpdateWrite(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -25,28 +25,28 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
       uoms = []
-      
+
       def __text(item, key, op=None):
-        if op == None:
+        if op is None:
           op = str
         gets = item.get(key)
-        if gets != None:
+        if gets is not None:
           if gets.text == 'None' or gets.text is None:
             return None
           return op(gets.text)
         return gets
-      
+
       def __eval(item, key):
         gets = item.get(key)
         if gets == 'None':
           gets = None
-        if gets != None:
+        if gets is not None:
           evaled = gets.attrib.get('eval')
           if evaled == 'None' or evaled is None:
             return None
           return eval(evaled)
         return gets
-      
+
       for child in root[1]:
         if child.attrib.get('model') == 'currency.currency':
           new_uom = {'id': child.attrib.get('id')}
@@ -56,37 +56,37 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
           rounding = new_uom_data.get('rounding')
           digits = new_uom_data.get('digits')
           grouping = new_uom_data.get('mon_grouping')
-          if rounding != None:
+          if rounding is not None:
             rounding = Decimal(eval(rounding.attrib.get('eval')))
-          if digits != None:
+          if digits is not None:
             digits = long(eval(digits.attrib.get('eval')))
-          if grouping != None:
+          if grouping is not None:
             grouping = eval(grouping.text)
           else:
             grouping = []
           if digits is None:
             digits = 3
           new_uom.update({
-            'measurement': 'Currency',
-            'name': new_uom_data['name'].text,
-            'code': new_uom_data['code'].text,
-            'numeric_code': new_uom_data['numeric_code'].text,
-            'symbol': new_uom_data['symbol'].text,
-            'rounding': rounding,
-            'digits': digits,
-            'grouping': grouping,
-            'decimal_separator': __text(new_uom_data, 'mon_decimal_point'),
-            'thousands_separator': __text(new_uom_data, 'mon_thousands_sep'),
-            'positive_sign_position': __eval(new_uom_data, 'p_sign_posn'),
-            'negative_sign_position': __eval(new_uom_data, 'n_sign_posn'),
-            'positive_sign': __text(new_uom_data, 'positive_sign'),
-            'negative_sign': __text(new_uom_data, 'negative_sign'),
-            'positive_currency_symbol_precedes': __eval(new_uom_data, 'p_cs_precedes'),
-            'negative_currency_symbol_precedes': __eval(new_uom_data, 'n_cs_precedes'),
-            'positive_separate_by_space': __eval(new_uom_data, 'p_sep_by_space'),
-            'negative_separate_by_space': __eval(new_uom_data, 'n_sep_by_space'),
-            'active': True
-            })
+              'measurement': 'Currency',
+              'name': new_uom_data['name'].text,
+              'code': new_uom_data['code'].text,
+              'numeric_code': new_uom_data['numeric_code'].text,
+              'symbol': new_uom_data['symbol'].text,
+              'rounding': rounding,
+              'digits': digits,
+              'grouping': grouping,
+              'decimal_separator': __text(new_uom_data, 'mon_decimal_point'),
+              'thousands_separator': __text(new_uom_data, 'mon_thousands_sep'),
+              'positive_sign_position': __eval(new_uom_data, 'p_sign_posn'),
+              'negative_sign_position': __eval(new_uom_data, 'n_sign_posn'),
+              'positive_sign': __text(new_uom_data, 'positive_sign'),
+              'negative_sign': __text(new_uom_data, 'negative_sign'),
+              'positive_currency_symbol_precedes': __eval(new_uom_data, 'p_cs_precedes'),
+              'negative_currency_symbol_precedes': __eval(new_uom_data, 'n_cs_precedes'),
+              'positive_separate_by_space': __eval(new_uom_data, 'p_sep_by_space'),
+              'negative_separate_by_space': __eval(new_uom_data, 'n_sep_by_space'),
+              'active': True
+          })
           uoms.append(new_uom)
       to_put = [Unit(**d) for d in uoms]
       for entity in to_put:
@@ -95,9 +95,9 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
 
 
 class UnitUpdateWrite(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -123,9 +123,9 @@ class UnitUpdateWrite(orm.BaseModel):
             new_uom_data[child2.attrib.get('name')] = child2
           rounding = new_uom_data.get('rounding')
           digits = new_uom_data.get('digits')
-          if rounding != None:
+          if rounding is not None:
             rounding = Decimal(eval(rounding.attrib.get('eval')))
-          if digits != None:
+          if digits is not None:
             digits = long(eval(digits.attrib.get('eval')))
           if digits is None:
             digits = 3
@@ -145,6 +145,6 @@ class UnitUpdateWrite(orm.BaseModel):
 
 
 class UnitRemoveCurrencies(orm.BaseModel):
-  
+
   def run(self, context):
     context._entities = filter(lambda x: x.measurement != 'Currency', context._entities)
