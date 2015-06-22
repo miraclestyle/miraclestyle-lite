@@ -10,30 +10,31 @@ import time
 import orm
 import tools
 
+
 class Context(orm.BaseModel):
-  
+
   _kind = 86
-  
+
   def run(self, context):
-    # @todo Following lines are temporary, until we decide where and how to distribute them!
     context.account = context.models['11'].current_account()
     caller_account_key = context.input.get('caller_account')
     if context.account._is_taskqueue:
       if caller_account_key:
         caller_account = caller_account_key.get()
         if caller_account:
+          caller_account.read()
           context.account = caller_account
       else:
         context.account = context.models['11'].get_system_account()
-    context._callbacks = []  # @todo For now this stays here!
+    context._callbacks = []
 
 
 class Set(orm.BaseModel):
-  
+
   _kind = 87
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -54,16 +55,16 @@ class Set(orm.BaseModel):
       if isinstance(items, list):
         for item in items:
           item._state = 'removed'
-        else:
-          items._state = 'removed'
+      else:
+        items._state = 'removed'
 
-          
+
 class Read(orm.BaseModel):
-  
+
   _kind = 88
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -103,11 +104,11 @@ class Read(orm.BaseModel):
 
 
 class Write(orm.BaseModel):
-  
+
   _kind = 89
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -124,11 +125,11 @@ class Write(orm.BaseModel):
 
 
 class Delete(orm.BaseModel):
-  
+
   _kind = 90
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -145,33 +146,33 @@ class Delete(orm.BaseModel):
 
 
 class Duplicate(orm.BaseModel):
-  
+
   _kind = 91
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
     save_path = self.cfg.get('path', '_' + context.model.__name__.lower())
-    child_entity_path = self.cfg.get('duplicate_path')
+    duplicate_path = self.cfg.get('duplicate_path')
     entity = tools.get_attr(context, entity_path)
-    if child_entity_path:
-      # state _images.value.0.pricetags.value.0
-      splited = child_entity_path.split('.')
-      child_entity = tools.get_attr(entity, child_entity_path)
+    if duplicate_path:
+      # state entity._images.value.0.pricetags.value.0
+      split_duplicate_path = duplicate_path.split('.')
+      child_entity = tools.get_attr(entity, duplicate_path)
       duplicated_child_entity = child_entity.duplicate()
       duplicate_entity = entity
       # gets _images.value.0.pricetags
-      middle_entity_path = ".".join(splited[:-2])
+      child_entity_path = ".".join(split_duplicate_path[:-2])
       # sets entity._images.value.0.pricetags => [duplicated_child_entity]
       try:
-        int(splited[-1]) # this is a case of repeated property, put the duplicated child into list
+        int(split_duplicate_path[-1])  # this is a case of repeated property, put the duplicated child into list
         duplicated_child_entity = [duplicated_child_entity]
       except ValueError:
         pass
-      tools.set_attr(entity, middle_entity_path, duplicated_child_entity)
+      tools.set_attr(entity, child_entity_path, duplicated_child_entity)
     else:
       if entity and isinstance(entity, orm.Model):
         duplicate_entity = entity.duplicate()
@@ -179,25 +180,25 @@ class Duplicate(orm.BaseModel):
 
 
 class UploadImages(orm.BaseModel):
-  
+
   _kind = 92
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     images_path = self.cfg.get('images_path')
-    manager = tools.get_attr(context, entity_path)
-    if manager is not None and hasattr(manager, 'add') and callable(manager.add):
-      manager.add(tools.get_attr(context, images_path))
+    property_value = tools.get_attr(context, entity_path)
+    if property_value is not None and hasattr(property_value, 'add') and callable(property_value.add):
+      property_value.add(tools.get_attr(context, images_path))
 
 
 class RulePrepare(orm.BaseModel):
-  
+
   _kind = 93
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -210,16 +211,16 @@ class RulePrepare(orm.BaseModel):
     kwargs.update(static_kwargs)
     for key, value in dynamic_kwargs.iteritems():
       kwargs[key] = tools.get_attr(context, value)
-    entities = tools.get_attr(context, entity_path)
-    tools.rule_prepare(entities, **kwargs)
+    entity = tools.get_attr(context, entity_path)
+    tools.rule_prepare(entity, **kwargs)
 
 
 class RuleExec(orm.BaseModel):
-  
+
   _kind = 94
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -231,11 +232,11 @@ class RuleExec(orm.BaseModel):
 
 
 class Search(orm.BaseModel):
-  
+
   _kind = 95
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -276,11 +277,11 @@ class Search(orm.BaseModel):
 
 
 class CallbackExec(orm.BaseModel):
-  
+
   _kind = 97
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
-  
+
   def run(self, context):
     if not isinstance(self.cfg, list):
       self.cfg = []
@@ -300,11 +301,11 @@ class CallbackExec(orm.BaseModel):
 
 
 class BlobURL(orm.BaseModel):
-  
+
   _kind = 98
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -323,29 +324,37 @@ class CreateChannel(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
-    token = 'channel_%s' % context.account.key_urlsafe
-    existing = tools.mem_get(token)
-    if existing and existing[1] > time.time():
-      context._token = existing[0]
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    dynamic_token_reference = self.cfg.get('dynamic_token_reference', 'account.key_urlsafe')
+    static_token_reference = self.cfg.get('static_token_refere', None)
+    if static_token_reference is None:
+      token_reference = 'channel_%s' % tools.get_attr(dynamic_token_reference)
     else:
-      context._token = tools.channel_create(token)
-      tools.mem_set(token, [context._token, time.time() + 6000], 9600)
+      token_reference = 'channel_%s' % static_token_reference
+    token = tools.mem_get(token_reference)
+    if token and token[1] > time.time():
+      context._token = token[0]
+    else:
+      context._token = tools.channel_create(token_reference)
+      tools.mem_set(token_reference, [context._token, time.time() + 6000], 9600)
 
 
 class Notify(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
+    entity_path = self.cfg.get('path', '_' + context.model.__name__.lower())
     method = self.cfg.get('method', ['mail'])
     if not isinstance(method, (list, tuple)):
       method = [method]
     condition = self.cfg.get('condition', 'True')
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
-    entity = tools.get_attr(context, '_' + context.model.__name__.lower())
+    entity = tools.get_attr(context, entity_path)
     values = {'account': context.account, 'input': context.input, 'action': context.action, 'entity': entity}
     values.update(static_values)
     for key, value in dynamic_values.iteritems():

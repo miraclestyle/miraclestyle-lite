@@ -7,16 +7,17 @@ Created on Apr 15, 2014
 import orm
 import tools
 
+
 class OAuth2Error(Exception):
-  
+
   def __init__(self, error):
     self.message = {'oauth2_error': error}
 
 
 class AccountLoginInit(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -52,7 +53,7 @@ class AccountLoginInit(orm.BaseModel):
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)
-        context._email = info['email'].lower() # we lowercase the email because datastore data searches are case sensetive
+        context._email = info['email'].lower()  # we lowercase the email because datastore data searches are case sensetive
         account = context.model.query(context.model.identities.identity == context._identity_id).get()
         if account:
           account.read()
@@ -64,9 +65,9 @@ class AccountLoginInit(orm.BaseModel):
 
 
 class AccountLoginWrite(orm.BaseModel):
-  
+
   def run(self, context):
-    
+
     if hasattr(context, '_identity_id') and context._identity_id is not None:
       Account = context.models['11']
       Buyer = context.models['19']
@@ -81,28 +82,22 @@ class AccountLoginWrite(orm.BaseModel):
         # We separate record procedure from write in this case, since we are creating new entity which is record agent at the same time!
         entity._use_rule_engine = False
         entity.write({})
-        buyer = Buyer(parent=entity.key, id='buyer') # create buyer profile right away
+        buyer = Buyer(parent=entity.key, id='buyer')  # create buyer profile right away
         buyer._use_rule_engine = False
         buyer.write({})
         entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
         entity.record()
       else:
-        used_identity = False
+        current_identity = None
         for identity in entity.identities.value:
+          identity.primary = False
           if identity.identity == context._identity_id:
             if identity.email != context._email:
               identity.email = context._email
             identity.primary = True
-            used_identity = True
-            break
-        if not used_identity:
-          identity = AccountIdentity(identity=context._identity_id, email=context._email, primary=True)
-          entity.identities = [identity]
-        for ident in entity.identities.value:
-          if ident == identity:
-            continue
-          else:
-            ident.primary = False
+            current_identity = identity
+        if not current_identity:
+          entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=True)]
         session = entity.new_session()
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       context.model.set_current_account(entity, session)
@@ -115,14 +110,14 @@ class AccountLoginWrite(orm.BaseModel):
 
 
 class AccountLogoutOutput(orm.BaseModel):
-  
+
   def run(self, context):
     context._account.set_current_account(None, None)
     context.output['entity'] = context._account.current_account()
 
 
 class AccountUpdateSet(orm.BaseModel):
-  
+
   def run(self, context):
     primary_canceled = False
     disassociate = context.input.get('disassociate')
