@@ -57,9 +57,3 @@ class SuperDateTimeProperty(_BaseProperty, DateTimeProperty):
     dic['auto_now'] = self._auto_now
     dic['auto_now_add'] = self._auto_now_add
     return dic
-
-  def property_keywords_format(self, kwds, skip_kwds):
-    super(SuperDateTimeProperty, self).property_keywords_format(kwds, skip_kwds)
-    for kwd in ('auto_now', 'auto_now_add'):
-      if kwd not in skip_kwds:
-        kwds[kwd] = bool(kwds[kwd])

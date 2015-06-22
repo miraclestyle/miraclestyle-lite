@@ -29,9 +29,9 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
 
   def __init__(self, modelclass, name=None, compressed=False, keep_keys=True, **kwds):
     if isinstance(modelclass, basestring):
-      set_modelclass = Model._kind_map.get(modelclass)
-      if set_modelclass is not None:
-        modelclass = set_modelclass
+      model = Model._kind_map.get(modelclass)
+      if model is not None:
+        modelclass = model
     kwds['generic'] = True
     self.search = kwds.pop('search', None)
     if self.search is None:
@@ -47,19 +47,19 @@ class SuperRemoteStructuredProperty(_BaseStructuredProperty, Property):
 
   def _set_value(self, entity, value):
     # __set__
-    value_instance = self._get_value(entity)
-    value_instance.set(value)
+    property_value = self._get_value(entity)
+    property_value.set(value)
 
   def _prepare_for_put(self, entity):
     self._get_value(entity)  # For its side effects.
 
   def initialize(self):
     super(SuperRemoteStructuredProperty, self).initialize()
-    default_search_cfg = {'cfg': {'search_arguments': {'kind': self._modelclass.get_kind()},
-                                  'search_by_keys': False,
-                                  'filters': {},
-                                  'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
-    tools.merge_dicts(self.search, default_search_cfg)
+    default_cfg = {'cfg': {'search_arguments': {'kind': self._modelclass.get_kind()},
+                           'search_by_keys': False,
+                           'filters': {},
+                           'indexes': [{'ancestor': True, 'filters': [], 'orders': []}]}}
+    tools.merge_dicts(self.search, default_cfg)
     self.search = SuperSearchProperty(**self.search)
 
   def get_meta(self):
@@ -125,18 +125,18 @@ class SuperRecordProperty(SuperRemoteStructuredProperty):
     self._duplicable = False
 
   def get_model_fields(self, **kwargs):
-    parent = super(SuperRecordProperty, self).get_model_fields(**kwargs)
-    parent.update(self._modelclass2.get_fields())
-    return parent
+    fields = super(SuperRecordProperty, self).get_model_fields(**kwargs)
+    fields.update(self._modelclass2.get_fields())
+    return fields
 
   def initialize(self):
     super(SuperRecordProperty, self).initialize()
     if isinstance(self._modelclass2, basestring):
-      set_modelclass2 = Model._kind_map.get(self._modelclass2)
-      if set_modelclass2 is None:
+      model = Model._kind_map.get(self._modelclass2)
+      if model is None:
         raise ValueError('Could not locate model with kind %s' % self._modelclass2)
       else:
-        self._modelclass2 = set_modelclass2
+        self._modelclass2 = model
 
 
 class SuperImageRemoteStructuredProperty(_BaseImageProperty, SuperRemoteStructuredProperty):

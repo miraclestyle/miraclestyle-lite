@@ -9,8 +9,9 @@ from .base import _BaseProperty
 
 __all__ = ['SuperTextProperty', 'SuperStringProperty']
 
+
 class SuperTextProperty(_BaseProperty, TextProperty):
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
@@ -21,7 +22,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
       return [unicode(v) for v in value]
     else:
       return unicode(value)
-  
+
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(value)
@@ -29,23 +30,23 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 
 
 class SuperStringProperty(_BaseProperty, StringProperty):
-  
+
   def value_format(self, value):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
       return value
     if self._repeated:
-      values = []
+      out = []
       for v in value:
         if v is not None:
-          v = unicode(v)
-          values.append(v)
-      return values
+          out.append(unicode(v))
     else:
       if value is not None:
-        value = unicode(value)
-      return value
-  
+        out = unicode(value)
+      else:
+        out = None
+    return out
+
   def get_search_document_field(self, value):
     if self._repeated:
       value = unicode(' ').join(value)

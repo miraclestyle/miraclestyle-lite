@@ -66,11 +66,11 @@ class _BaseProperty(object):
     return dic
 
   def _property_value_validate(self, value):
-    if self._max_size:
-      if len(value) > self._max_size:
-        raise FormatError('max_size_exceeded')
     if value is None and self._required:
       raise FormatError('required')
+    if self._max_size and value is not None:
+      if len(value) > self._max_size:
+        raise FormatError('max_size_exceeded')
     if hasattr(self, '_choices') and self._choices:
       if value not in self._choices:
         raise FormatError('not_in_specified_choices')
@@ -103,6 +103,12 @@ class _BaseProperty(object):
     else:
       self._property_value_validate(value)
       return self._property_value_filter(value)
+
+  def value_format(self, value, **kwargs):
+    value = self._property_value_format(value)
+    if value is tools.Nonexistent:
+      return value
+    return self._convert_value(value, **kwrags)
 
   @property
   def search_document_field_name(self):
@@ -197,12 +203,12 @@ class _BaseStructuredProperty(_BaseProperty):
     return self.get_modelclass(**kwargs).get_fields()
 
   def value_format(self, value, path=None):
-    if path is None:
-      path = self._code_name
-    current_value = value
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
       return value
+    if path is None:
+      path = self._code_name
+    current_value = value
     out = []
     if not self._repeated:
       if not isinstance(value, dict) and not self._required:
@@ -710,11 +716,11 @@ class _BaseImageProperty(_BaseBlobProperty):
     return values
 
   def value_format(self, value, path=None):
-    if path is None:
-      path = self._code_name
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
       return value
+    if path is None:
+      path = self._code_name
     if not self._repeated:
       value = [value]
     out = []

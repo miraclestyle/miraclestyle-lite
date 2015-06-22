@@ -103,40 +103,33 @@ class SuperMultiLocalStructuredProperty(_BaseStructuredProperty, LocalStructured
     args = list(args)
     if isinstance(args[0], (tuple, list)):
       self._kinds = args[0]
-      set_model1 = Model._kind_map.get(args[0][0])  # by default just pass the first one
-      if set_model1 is not None:
-        args[0] = set_model1
+      model = Model._kind_map.get(args[0][0])  # by default just pass the first one
+      if model is not None:
+        args[0] = model
     if isinstance(args[0], basestring):
-      set_model1 = Model._kind_map.get(args[0])  # by default just pass the first one
-      if set_model1 is not None:  # do not set it if it wasnt scanned yet
-        args[0] = set_model1
+      model = Model._kind_map.get(args[0])  # by default just pass the first one
+      if model is not None:  # do not set it if it wasnt scanned yet
+        args[0] = model
     super(SuperMultiLocalStructuredProperty, self).__init__(*args, **kwargs)
 
-  def get_modelclass(self, kind=None, **kwds):
+  def get_modelclass(self, kind):
     if self._kinds and kind:
       if kind:
         _kinds = []
-        for other in self._kinds:
-          if isinstance(other, Model):
-            _the_kind = other.get_kind()
-          else:
-            _the_kind = other
-          _kinds.append(_the_kind)
+        for _kind in self._kinds:
+          if isinstance(_kind, Model):
+            _kind = _kind.get_kind()
+          _kinds.append(_kind)
         if kind not in _kinds:
-          raise ValueError('Expected Kind to be one of %s, got %s' % (_kinds, kind))
+          raise ValueError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
         model = Model._kind_map.get(kind)
         return model
     return super(SuperMultiLocalStructuredProperty, self).get_modelclass()
 
   def get_meta(self):
-    out = super(SuperMultiLocalStructuredProperty, self).get_meta()
-    out['kinds'] = self._kinds
-    return out
-
-  def property_keywords_format(self, kwds, skip_kwds):
-    super(SuperMultiLocalStructuredProperty, self).property_keywords_format(kwds, skip_kwds)
-    if 'kinds' not in skip_kwds:
-      kwds['kinds'] = map(lambda x: unicode(x), kwds['kinds'])
+    dic = super(SuperMultiLocalStructuredProperty, self).get_meta()
+    dic['kinds'] = self._kinds
+    return dic
 
 
 class SuperImageLocalStructuredProperty(_BaseImageProperty, SuperLocalStructuredProperty):

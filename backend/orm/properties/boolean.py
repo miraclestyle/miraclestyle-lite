@@ -12,10 +12,7 @@ __all__ = ['SuperBooleanProperty']
 
 class SuperBooleanProperty(_BaseProperty, BooleanProperty):
 
-  def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
+  def _convert_value(self, value):
     if self._repeated:
       return [bool(long(v)) for v in value]
     else:

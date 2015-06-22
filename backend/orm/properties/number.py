@@ -22,13 +22,16 @@ class SuperFloatProperty(_BaseProperty, FloatProperty):
     if self._repeated:
       return [float(v) for v in value]
     else:
+      if not self._required and value is None:
+        return value
       return float(value)
 
   def get_search_document_field(self, value):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.search_document_field_name, value=value)
-    return search.NumberField(name=self.search_document_field_name, value=value)
+    else:
+      return search.NumberField(name=self.search_document_field_name, value=value)
 
 
 class SuperIntegerProperty(_BaseProperty, IntegerProperty):
@@ -48,7 +51,8 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
     if self._repeated:
       value = ' '.join(map(lambda v: str(v), value))
       return search.TextField(name=self.search_document_field_name, value=value)
-    return search.NumberField(name=self.search_document_field_name, value=value)
+    else:
+      return search.NumberField(name=self.search_document_field_name, value=value)
 
 
 class SuperDecimalProperty(SuperStringProperty):
@@ -67,17 +71,16 @@ class SuperDecimalProperty(SuperStringProperty):
         out = []
         for i, v in enumerate(value):
           out.append(decimal.Decimal(v))
-        value = out
       except:
         raise FormatError('invalid_number_on_sequence_%s' % i)
     else:
       try:
-        value = decimal.Decimal(value)
+        out = decimal.Decimal(value)
       except:
         raise FormatError('invalid_number')
-    if value is None:
+    if out is None:
       raise FormatError('invalid_number')
-    return value
+    return out
 
   def get_search_document_field(self, value):
     if self._repeated:
