@@ -13,20 +13,12 @@ __all__ = ['SuperPickleProperty', 'SuperJsonProperty', 'SuperSearchProperty', 'S
 
 
 class SuperPickleProperty(_BaseProperty, PickleProperty):
-
-  def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
-    return value
+  pass
 
 
 class SuperJsonProperty(_BaseProperty, JsonProperty):
 
-  def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
+  def _convert_value(self, value):
     if isinstance(value, basestring):
       return json.loads(value)
     else:
@@ -440,12 +432,9 @@ class SuperPluginStorageProperty(SuperPickleProperty):
           getattr(v, field_key).pre_update()
     return super(SuperPluginStorageProperty, self)._set_value(entity, value)
 
-  def value_format(self, value, path=None):
+  def _convert_value(self, value, path=None):
     if path is None:
       path = self._code_name
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
     out = []
     if not isinstance(value, list):
       raise FormatError('expected_list')

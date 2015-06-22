@@ -104,9 +104,14 @@ class _BaseProperty(object):
       self._property_value_validate(value)
       return self._property_value_filter(value)
 
+  def _convert_value(self, value, **kwrags):
+    return value
+
   def value_format(self, value, **kwargs):
     value = self._property_value_format(value)
     if value is tools.Nonexistent:
+      return value
+    if value is None:
       return value
     return self._convert_value(value, **kwrags)
 
@@ -202,10 +207,7 @@ class _BaseStructuredProperty(_BaseProperty):
   def get_model_fields(self, **kwargs):
     return self.get_modelclass(**kwargs).get_fields()
 
-  def value_format(self, value, path=None):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
+  def _convert_value(self, value, path=None):
     if path is None:
       path = self._code_name
     current_value = value
@@ -484,10 +486,7 @@ class BaseVirtualKeyProperty(BaseKeyProperty):
 
 class BaseBlobKeyProperty(_BaseProperty, BlobKeyProperty):
 
-  def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
+  def _convert_value(self, value):
     out = []
     if not self._repeated:
       value = [value]
@@ -715,10 +714,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       values = values[0]
     return values
 
-  def value_format(self, value, path=None):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
+  def _convert_value(self, value, path=None):
     if path is None:
       path = self._code_name
     if not self._repeated:

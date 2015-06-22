@@ -12,16 +12,18 @@ __all__ = ['SuperTextProperty', 'SuperStringProperty']
 
 class SuperTextProperty(_BaseProperty, TextProperty):
 
-  def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
-    if value is None:
-      return value
+  def _convert_value(self, value):
     if self._repeated:
-      return [unicode(v) for v in value]
+      out = []
+      for v in value:
+        if v is not None:
+          out.append(unicode(v))
     else:
-      return unicode(value)
+      if value is not None:
+        out = unicode(value)
+      else:
+        out = None
+    return out
 
   def get_search_document_field(self, value):
     if self._repeated:
@@ -31,10 +33,7 @@ class SuperTextProperty(_BaseProperty, TextProperty):
 
 class SuperStringProperty(_BaseProperty, StringProperty):
 
-  def value_format(self, value):
-    value = self._property_value_format(value)
-    if value is tools.Nonexistent:
-      return value
+  def _convert_value(self, value):
     if self._repeated:
       out = []
       for v in value:
