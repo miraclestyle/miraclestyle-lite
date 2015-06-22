@@ -80,7 +80,7 @@ class StructuredPropertyValue(PropertyValue):
       for entity in entities:
         if entity._parent is None:
           entity._parent = self._entity
-    return entities if repeated else entities[0]  # return first if this was not a list
+      return entities if repeated else entities[0]  # return first if this was not a list
 
   def set(self, value):
     '''We always verify that the value is instance

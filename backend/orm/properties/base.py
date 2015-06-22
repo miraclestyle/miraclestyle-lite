@@ -104,7 +104,7 @@ class _BaseProperty(object):
       self._property_value_validate(value)
       return self._property_value_filter(value)
 
-  def _convert_value(self, value, **kwrags):
+  def _convert_value(self, value, **kwargs):
     return value
 
   def value_format(self, value, **kwargs):
@@ -113,7 +113,7 @@ class _BaseProperty(object):
       return value
     if value is None:
       return value
-    return self._convert_value(value, **kwrags)
+    return self._convert_value(value, **kwargs)
 
   @property
   def search_document_field_name(self):
@@ -308,7 +308,7 @@ class _BaseStructuredProperty(_BaseProperty):
           new_path = '%s.%s' % (path, field._code_name)
           try:
             if hasattr(field, '_structured_property_field_format'):
-              value = field.value_format(current_value, new_path)
+              value = field.value_format(current_value, path=new_path)
             else:
               value = field.value_format(current_value)
           except FormatError as e:

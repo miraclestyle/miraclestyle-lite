@@ -455,7 +455,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
           new_path = '%s.%s' % (path, field._code_name)
           try:
             if hasattr(field, '_structured_property_field_format'):
-              value = field.value_format(current_value, new_path)
+              value = field.value_format(current_value, path=new_path)
             else:
               value = field.value_format(current_value)
           except FormatError as e:
