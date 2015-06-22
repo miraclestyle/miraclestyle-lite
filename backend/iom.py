@@ -113,7 +113,7 @@ class Engine:
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
     from models import account, buyer, catalog, collection, location, order, seller, unit
-    from plugins import account, base, buyer, catalog, location, order, seller, unit
+    from plugins import account, base, catalog, location, order, seller, unit
     tools.log.debug('Initialize models...')
     kinds = []
     tools.log.debug('Kind map %s has classes.' % len(orm.Model._kind_map))
