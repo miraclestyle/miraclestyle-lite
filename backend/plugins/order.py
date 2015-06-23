@@ -54,7 +54,7 @@ class OrderInit(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class PluginExec(orm.BaseModel):
+class OrderPluginExec(orm.BaseModel):
   
   _kind = 114
   
@@ -78,7 +78,7 @@ class PluginExec(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class UpdateOrderLine(orm.BaseModel):
+class OrderUpdateLine(orm.BaseModel):
   
   _kind = 101
   
@@ -118,9 +118,6 @@ class UpdateOrderLine(orm.BaseModel):
           q = q.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
         product_instance = q.get()
       new_line = Line()
-      new_line.sequence = 1
-      if order._lines.value:
-        new_line.sequence = order._lines.value[-1].sequence + 1
       order_product = OrderProduct()
       order_product.name = product.name
       modified_product_key = CatalogProduct.get_complete_key_path(image_key, product_key)
@@ -163,7 +160,7 @@ class UpdateOrderLine(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class ProductSpecs(orm.BaseModel):
+class OrderProductSpecs(orm.BaseModel):
   
   _kind = 115
   
@@ -288,8 +285,62 @@ class OrderFormat(orm.BaseModel):
     order.total_amount = tools.format_value(total_amount, order.currency.value)
 
 
+# This is system plugin, which means end user can not use it!
+class OrderLineRemovals(orm.BaseModel):
+  
+  _kind = 127
+  
+  _use_rule_engine = False
+  
+  def run(self, context):
+    order = context._order
+    lines = order._lines.value
+    if lines:
+      for line in lines:
+        product = line.product.value
+        if product.quantity <= Decimal('0'):
+          line._state = 'deleted'
+
+
+# This is system plugin, which means end user can not use it!
+class OrderSetMessage(orm.BaseModel):
+  
+  _kind = 119
+
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+  
+  def run(self, context):
+    OrderMessage = context.models['35']
+    # this could be extended to allow params
+    data = dict(agent=context.account.key, _agent=context.account, body=context.input['message'], action=context.action.key)
+    for key, value in self.cfg.get('additional', {}).iteritems():
+      data[key] = tools.get_attr(context, value)
+    context._order._messages = [OrderMessage(**data)]
+
+
+# This is system plugin, which means end user can not use it!
+class OrderProcessPayment(orm.BaseModel):
+  
+  _kind = 118
+  
+  def run(self, context):
+    order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context) # will throw an error if the payment method does not exist
+    context._order = order
+    order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
+    payment_plugin = order._payment_method
+    if not payment_plugin:
+      raise PluginError('no_payment_method_supplied')
+    # payment_plugin => Instance of PaypalPayment for example.
+    payment_plugin.complete(context)
+
+  def find_order_paypal(self, context):
+    ipn = context.input['request']['params']
+    order_key = orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
+    return order_key.get()
+
+
 # Not a plugin!
-class AddressRuleLocation(orm.BaseModel):
+class OrderAddressLocation(orm.BaseModel):
   
   _kind = 106
   
@@ -305,7 +356,7 @@ class AddressRuleLocation(orm.BaseModel):
   }
 
 
-class AddressRule(orm.BaseModel):
+class OrderAddress(orm.BaseModel):
   
   _kind = 107
   
@@ -315,7 +366,7 @@ class AddressRule(orm.BaseModel):
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   address_type = orm.SuperStringProperty('3', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
   exclusion = orm.SuperBooleanProperty('4', required=True, default=False, indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '5', repeated=True, indexed=False)
+  locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '5', repeated=True, indexed=False)
   
   def run(self, context):
     if not self.active:
@@ -351,15 +402,15 @@ class AddressRule(orm.BaseModel):
     else:
       # Shipping everywhere except at the following locations.
       allowed = True
-    for loc in self.locations.value:
-        checker = []
-        if loc.country:
-          checker.append(loc.country == address.country)
-        if loc.region:
-          checker.append(loc.region == address.region)
-        if loc.postal_codes:
-          checker.append(address.postal_code in loc.postal_codes)
-        if all(checker):
+    for location in self.locations.value:
+        validate = []
+        if location.country:
+          validate.append(location.country == address.country)
+        if location.region:
+          validate.append(location.region == address.region)
+        if location.postal_codes:
+          validate.append(address.postal_code in location.postal_codes)
+        if all(validate):
           allowed = self.exclusion
           break
     return allowed
@@ -371,10 +422,6 @@ class OrderCurrency(orm.BaseModel):
   
   _use_rule_engine = False
   
-  # This plugin will be subscribed to many actions, among which is add_to_cart as well.
-  # PayPal Shipping: Prompt for an address, but do not require one,
-  # PayPal Shipping: Do not prompt for an address
-  # PayPal Shipping: Prompt for an address, and require one
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   currency = orm.SuperKeyProperty('3', kind=Unit, required=True, indexed=False)
@@ -387,7 +434,7 @@ class OrderCurrency(orm.BaseModel):
     order.currency = copy.deepcopy(self.currency.get())
 
 
-class PaymentMethod(orm.BaseModel):
+class OrderPaymentMethod(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
@@ -409,7 +456,7 @@ class PaymentMethod(orm.BaseModel):
 
 
 # This plugin is incomplete!
-class PayPalPayment(PaymentMethod):
+class OrderPayPalPayment(OrderPaymentMethod):
   
   _kind = 108
   
@@ -468,12 +515,12 @@ class PayPalPayment(PaymentMethod):
         # ipn will be called again until it reaches 200 status response code
         # ipn will retry for x amount of times till it gives up
         # so we might as well use `return` statement to exit silently
-    body = 'Paypal Payment action %s' % ipn_payment_status # @todo modify accordingly
+    body = 'Paypal Payment action %s' % ipn_payment_status
     new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], action=context.action.key, ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
-    new_order_message._clone_properties() # this is a hack, because we put all properties indexed = True
+    new_order_message._clone_properties()
     new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
     new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
-    order._messages = [new_order_message] # add this to queue
+    order._messages = [new_order_message]
     
     if (self.reciever_email != ipn['receiver_email']):
       mismatches.append('receiver_email')
@@ -499,19 +546,15 @@ class PayPalPayment(PaymentMethod):
     if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']: # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
       mismatches.append('address_state')
     if (shipping_address.street != ipn['address_street']): 
-      # PayPal spaja vrednosti koje su prosledjene u cart upload procesu (address1 i address2), 
-      # tako da u povratu putem IPN-a, polje address_street izgleda ovako address1\r\naddress2. 
-      # Primer: u'address_street': [u'1 Edi St\r\nApartment 7'], gde je vrednost Street Address 
-      # od kupca bilo "Edi St", a vrednost Street Address (Optional) "Apartment 7".
       mismatches.append('address_street')
     if (shipping_address.postal_code != ipn['address_zip']):
       mismatches.append('address_zip')
         
     for line in order._lines.value:
       product = line.product.value
-      tools.log.info('Order sequence %s' % line.sequence)
+      tools.log.debug('Order sequence %s' % line.sequence)
       # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
-      if (str(line.sequence) != ipn['item_number%s' % str(line.sequence)]): # ovo nije u order funkcijama implementirano tako da ne znamo da li cemo to imati..
+      if (str(line.sequence) != ipn['item_number%s' % str(line.sequence)]):
         mismatches.append('item_number%s' % str(line.sequence))
       if (product.name != ipn['item_name%s' % str(line.sequence)]):
         mismatches.append('item_name%s' % str(line.sequence))
@@ -519,30 +562,27 @@ class PayPalPayment(PaymentMethod):
         mismatches.append('quantity%s' % str(line.sequence))
       if (line.subtotal != tools.format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
         mismatches.append('mc_gross_%s' % str(line.sequence))
-    # Ukoliko je doslo do fail-ova u poredjenjima
-    # radi se dispatch na notification engine sa detaljima sta se dogodilo, radi se logging i algoritam se prekida.
     if not mismatches:
       if order.payment_status == ipn_payment_status:
-        # @todo also log?
         return None # nothing to do since the payment status is exactly the same
       else:
         update_paypal_payment_status = False
-        if order.payment_status == 'Pending' or order.payment_status == None: # send update command ONLY if the payment_status is pending or it wasnt set (e.g. new order)
+        if order.payment_status == 'Pending' or order.payment_status == None:
           if ipn_payment_status == 'Completed' or ipn_payment_status == 'Denied':
             update_paypal_payment_status = True
         elif order.payment_status == 'Completed':
           if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
             update_paypal_payment_status = True
         if update_paypal_payment_status:
-            # ovo se verovatno treba jos doterati..
-            if order.state == 'checkout' and ipn_payment_status == 'Completed':
-              order.state = 'completed'
-              order.payment_status = ipn_payment_status
-            elif order.state == 'checkout' and ipn_payment_status == 'Denied': # ovo cemo jos da razmotrimo
-              order.state = 'canceled'
-              order.payment_status = ipn_payment_status
-            elif order.state == 'completed':
-              order.payment_status = ipn_payment_status
+          # ovo se verovatno treba jos doterati..
+          if order.state == 'checkout' and ipn_payment_status == 'Completed':
+            order.state = 'completed'
+            order.payment_status = ipn_payment_status
+          elif order.state == 'checkout' and ipn_payment_status == 'Denied':
+            order.state = 'canceled'
+            order.payment_status = ipn_payment_status
+          elif order.state == 'completed':
+            order.payment_status = ipn_payment_status
     else:
       # log that there were missmatches, where we should log that?
       tools.log.error('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
@@ -550,7 +590,7 @@ class PayPalPayment(PaymentMethod):
     tools.log.info('Set Order payment_status %s' % order.payment_status)
 
 
-class Tax(orm.BaseModel):
+class OrderTax(orm.BaseModel):
   
   _kind = 109
   
@@ -565,7 +605,7 @@ class Tax(orm.BaseModel):
   product_codes = orm.SuperStringProperty('7', repeated=True, indexed=False)
   address_type = orm.SuperStringProperty('8', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
   exclusion = orm.SuperBooleanProperty('9', required=True, default=False, indexed=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '10', repeated=True)
+  locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '10', repeated=True)
   
   def run(self, context):
     if not self.active:
@@ -674,7 +714,7 @@ class Tax(orm.BaseModel):
 
 
 # Not a plugin!
-class CarrierLineRule(orm.BaseModel):
+class OrderCarrierLinePrice(orm.BaseModel): # @todo OrderCarrierLinePrice
   
   _kind = 111
   
@@ -701,7 +741,7 @@ class CarrierLineRule(orm.BaseModel):
 
 
 # Not a plugin!
-class CarrierLine(orm.BaseModel):
+class OrderCarrierLine(orm.BaseModel):
   
   _kind = 112
   
@@ -710,11 +750,11 @@ class CarrierLine(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
-  locations = orm.SuperLocalStructuredProperty(AddressRuleLocation, '4', repeated=True)
-  rules = orm.SuperLocalStructuredProperty(CarrierLineRule, '5', repeated=True)
+  locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '4', repeated=True)
+  rules = orm.SuperLocalStructuredProperty(OrderCarrierLinePrice, '5', repeated=True)
 
 
-class Carrier(orm.BaseModel):
+class OrderCarrier(orm.BaseModel):
   
   _kind = 113
   
@@ -722,7 +762,7 @@ class Carrier(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  lines = orm.SuperLocalStructuredProperty(CarrierLine, '3', repeated=True)
+  lines = orm.SuperLocalStructuredProperty(OrderCarrierLine, '3', repeated=True)
   
   def run(self, context):
     if not self.active:
@@ -846,41 +886,7 @@ class Carrier(orm.BaseModel):
     return allowed
 
 
-class OrderProcessPayment(orm.BaseModel):
-  
-  _kind = 118
-  
-  def run(self, context):
-    order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context) # will throw an error if the payment method does not exist
-    context._order = order
-    order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
-    payment_plugin = order._payment_method
-    if not payment_plugin:
-      raise PluginError('no_payment_method_supplied')
-    # payment_plugin => Instance of PaypalPayment for example.
-    payment_plugin.complete(context)
-
-  def find_order_paypal(self, context):
-    ipn = context.input['request']['params']
-    order_key = orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
-    return order_key.get()
-
-
-class SetMessage(orm.BaseModel):
-  
-  _kind = 119
-
-  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
-  def run(self, context):
-    OrderMessage = context.models['35']
-    # this could be extended to allow params
-    data = dict(agent=context.account.key, _agent=context.account, body=context.input['message'], action=context.action.key)
-    for key, value in self.cfg.get('additional', {}).iteritems():
-      data[key] = tools.get_attr(context, value)
-    context._order._messages = [OrderMessage(**data)]
-
-class DiscountLine(orm.BaseModel):
+class OrderDiscountLine(orm.BaseModel):
 
   _kind = 124
 
@@ -900,7 +906,7 @@ class DiscountLine(orm.BaseModel):
     return condition
 
 
-class Discount(orm.BaseModel):
+class OrderDiscount(orm.BaseModel):
 
   _kind = 126
 
@@ -908,7 +914,7 @@ class Discount(orm.BaseModel):
 
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  lines = orm.SuperLocalStructuredProperty(DiscountLine, '3', repeated=True)
+  lines = orm.SuperLocalStructuredProperty(OrderDiscountLine, '3', repeated=True)
 
   def run(self, context):
     if not self.active:
@@ -937,18 +943,3 @@ class Discount(orm.BaseModel):
             if tools.safe_eval(price_calculation, price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break
-
-class OrderLineRemovals(orm.BaseModel):
-  
-  _kind = 127
-  
-  _use_rule_engine = False
-  
-  def run(self, context):
-    order = context._order
-    lines = order._lines.value
-    if lines:
-      for line in lines:
-        product = line.product.value
-        if product.quantity <= Decimal('0'):
-          line._state = 'deleted'

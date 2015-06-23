@@ -327,9 +327,9 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             OrderInit(),
-            PluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
-            ProductSpecs(),
-            UpdateOrderLine(),
+            OrderPluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
+            OrderProductSpecs(),
+            OrderUpdateLine(),
             OrderLineRemovals(),
             OrderLineFormat(),
             OrderCarrierFormat(),
@@ -359,8 +359,8 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             OrderInit(),
-            PluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
-            ProductSpecs(),
+            OrderPluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
+            OrderProductSpecs(),
             RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_order'}})
@@ -407,8 +407,8 @@ class Order(orm.BaseExpando):
                            '_order.state': 'input.state',
                            '_order._lines': 'input._lines'}}),
             OrderLineRemovals(),
-            ProductSpecs(),
-            PluginExec(),
+            OrderProductSpecs(),
+            OrderPluginExec(),
             OrderLineFormat(),
             OrderCarrierFormat(),
             OrderFormat(),
@@ -535,7 +535,7 @@ class Order(orm.BaseExpando):
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': None},
                      'd': {'_order.feedback': 'input.feedback'}}),
-            SetMessage(),
+            OrderSetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -568,7 +568,7 @@ class Order(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': 'revision'}}),
-            SetMessage(),
+            OrderSetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -600,7 +600,7 @@ class Order(orm.BaseExpando):
             Context(),
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': 'reported'}}),
-            SetMessage(),
+            OrderSetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -634,7 +634,7 @@ class Order(orm.BaseExpando):
             Read(),
             Set(cfg={'s': {'_order.feedback_adjustment': 'sudo'},
                      'd': {'_order.feedback': 'input.feedback'}}),
-            SetMessage(),
+            OrderSetMessage(),
             RulePrepare(),
             RuleExec()
             ]
@@ -665,7 +665,7 @@ class Order(orm.BaseExpando):
           plugins=[
             Context(),
             Read(),
-            SetMessage(),
+            OrderSetMessage(),
             RulePrepare(),
             RuleExec()
             ]
