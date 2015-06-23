@@ -29,7 +29,7 @@ class OrderTax(orm.BaseModel):
   _use_rule_engine = False
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
-  type = orm.SuperStringProperty('2', required=True, default='percent', choices=('percent', 'fixed'), indexed=False)
+  type = orm.SuperStringProperty('2', required=True, default='proportional', choices=('proportional', 'fixed'), indexed=False)
   amount = orm.SuperDecimalProperty('3', required=True, indexed=False)
 
 

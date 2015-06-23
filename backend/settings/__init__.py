@@ -37,7 +37,8 @@ FEEDBACK_ALLOWED_DAYS = 7
 
 HOST_URL = None
 if DEVELOPMENT_SERVER:
-  HOST_URL = 'http://128.65.105.64:9982'
+  pass
+  #HOST_URL = 'http://128.65.105.64:9982'
 
 if HOST_URL is None:
   def __discover_host_url():

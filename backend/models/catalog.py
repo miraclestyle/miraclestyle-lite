@@ -711,8 +711,13 @@ class Catalog(orm.BaseExpando):
             Context(),
             Read(),
             RulePrepare(),
-            RuleExec(),
-            CatalogDiscontinue(cfg={'page': 100}),
+            RuleExec()
+            ]
+          ),
+        orm.PluginGroup(
+          transactional=True,
+          plugins=[
+            CatalogDiscontinue(),
             CallbackExec()
             ]
           )

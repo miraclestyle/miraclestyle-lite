@@ -40,13 +40,11 @@ class OrderInit(orm.BaseModel):
                         Order.state.IN(['cart', 'checkout']),
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this
     if order is None:
-      order = Order(parent=context.input.get('buyer'), name='Default Order Name') # we need a name for this
+      order = Order(parent=context.input.get('buyer'))
       order.state = 'cart'
       order.date = datetime.datetime.now()
       order.seller_reference = seller_key
       order.make_original()
-      seller = seller_key.get()
-      seller.read() # read locals
     else:
       defaults = {'_lines' : {'config': {'search': {'options': {'limit': 0}}}}}
       if 'read_arguments' in context.input:
@@ -91,11 +89,11 @@ class UpdateOrderLine(orm.BaseModel):
     CatalogProduct = context.models['28']
     order = context._order
     product_key = context.input.get('product')
+    variant_signature = context.input.get('variant_signature')
     image_key = context.input.get('image')
     quantity = context.input.get('quantity')
     if order.state != 'cart':
       raise PluginError('order_not_in_cart_state')
-    variant_signature = context.input.get('variant_signature')
     line_exists = False
     if order._lines.value:
       for line in order._lines.value:
@@ -114,49 +112,48 @@ class UpdateOrderLine(orm.BaseModel):
       product_instance = None
       product.read({'_category': {}})  # more fields probably need to be specified
       if variant_signature:
-        product_instance_query = ProductInstance.query()
+        q = ProductInstance.query()
         for variant in variant_signature:
           item = variant.iteritems().next()
-          product_instance_query = product_instance_query.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
-        product_instance = product_instance_query.get()
+          q = q.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
+        product_instance = q.get()
       new_line = Line()
       new_line.sequence = 1
       if order._lines.value:
         new_line.sequence = order._lines.value[-1].sequence + 1
-      copy_product = OrderProduct()
-      copy_product.name = product.name
+      order_product = OrderProduct()
+      order_product.name = product.name
       modified_product_key = CatalogProduct.get_complete_key_path(image_key, product_key)
-      copy_product.reference = modified_product_key
-      copy_product.variant_signature = variant_signature
-      copy_product.category = copy.deepcopy(product._category.value)
-      copy_product.code = product.code
-      copy_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
-      copy_product.uom = copy.deepcopy(product.uom.get())
+      order_product.reference = modified_product_key
+      order_product.variant_signature = variant_signature
+      order_product.category = copy.deepcopy(product._category.value)
+      order_product.code = product.code
+      order_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
+      order_product.uom = copy.deepcopy(product.uom.get())
       if product_instance is not None:
         if hasattr(product_instance, 'unit_price') and product_instance.unit_price is not None:
-          copy_product.unit_price = product_instance.unit_price
+          order_product.unit_price = product_instance.unit_price
         if hasattr(product_instance, 'code') and product_instance.code is not None:
-          copy_product.code = product_instance.code
-      copy_product.weight = None
-      copy_product.weight_uom = None
-      copy_product.volume = None
-      copy_product.volume_uom = None
+          order_product.code = product_instance.code
+      order_product.weight = None
+      order_product.weight_uom = None
+      order_product.volume = None
+      order_product.volume_uom = None
       if product.weight is not None and product.weight_uom is not None:
-        copy_product.weight = product.weight
-        copy_product.weight_uom = copy.deepcopy(product.weight_uom.get())
+        order_product.weight = product.weight
+        order_product.weight_uom = copy.deepcopy(product.weight_uom.get())
       if product.volume is not None and product.volume_uom is not None:
-        copy_product.volume = product.volume
-        copy_product.volume_uom = copy.deepcopy(product.volume_uom.get())
-      if copy_product.variant_signature:
-        if product_instance is not None:
-          if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom  is not None:
-            copy_product.weight = product_instance.weight
-            copy_product.weight_uom = copy.deepcopy(product_instance.weight_uom.get())
-          if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
-            copy_product.volume = product_instance.volume
-            copy_product.volume_uom = copy.deepcopy(product_instance.volume_uom.get())
-      copy_product.quantity = tools.format_value(quantity, copy_product.uom.value)
-      new_line.product = copy_product
+        order_product.volume = product.volume
+        order_product.volume_uom = copy.deepcopy(product.volume_uom.get())
+      if product_instance is not None:
+        if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom  is not None:
+          order_product.weight = product_instance.weight
+          order_product.weight_uom = copy.deepcopy(product_instance.weight_uom.get())
+        if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
+          order_product.volume = product_instance.volume
+          order_product.volume_uom = copy.deepcopy(product_instance.volume_uom.get())
+      order_product.quantity = tools.format_value(quantity, order_product.uom.value)
+      new_line.product = order_product
       new_line.discount = tools.format_value('0', Unit(digits=2))
       lines = order._lines.value
       if lines is None:
@@ -176,7 +173,7 @@ class ProductSpecs(orm.BaseModel):
     ProductInstance = context.models['27']
     order = context._order
     weight_uom = Unit.build_key('kilogram').get()
-    volume_uom = Unit.build_key('cubic_meter').get()
+    volume_uom = Unit.build_key('liter').get()
     unit_uom = Unit.build_key('unit').get()
     total_weight = tools.format_value('0', weight_uom)
     total_volume = tools.format_value('0', volume_uom)
@@ -212,9 +209,9 @@ class OrderLineFormat(orm.BaseModel):
       if product:
         if order.seller_reference._root != product.reference._root:
           raise PluginError('product_does_not_bellong_to_seller')
-        line.discount = tools.format_value(line.discount, Unit(digits=2))
         product.quantity = tools.format_value(product.quantity, product.uom.value)
         line.subtotal = tools.format_value((product.unit_price * product.quantity), order.currency.value)
+        line.discount = tools.format_value(line.discount, Unit(digits=2))
         if line.discount is not None:
           discount = line.discount * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
           line.discount_subtotal = tools.format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
@@ -223,7 +220,7 @@ class OrderLineFormat(orm.BaseModel):
         tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
-            if tax.type == 'percent':
+            if tax.type == 'proportional':
               tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.discount_subtotal * tax_amount)
             elif tax.type == 'fixed':
@@ -248,7 +245,7 @@ class OrderCarrierFormat(orm.BaseModel):
       tax_subtotal = tools.format_value('0', order.currency.value)
       if carrier.taxes.value:
         for tax in carrier.taxes.value:
-          if tax.type == 'percent':
+          if tax.type == 'proportional':
             tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))
             tax_subtotal = tax_subtotal + (carrier.subtotal * tax_amount)
           elif tax.type == 'fixed':
@@ -561,7 +558,7 @@ class Tax(orm.BaseModel):
   
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  type = orm.SuperStringProperty('3', required=True, default='percent', choices=('percent', 'fixed'), indexed=False)
+  type = orm.SuperStringProperty('3', required=True, default='proportional', choices=('proportional', 'fixed'), indexed=False)
   amount = orm.SuperDecimalProperty('4', required=True, indexed=False)
   carriers = orm.SuperVirtualKeyProperty('5', kind='113', repeated=True, indexed=False)
   product_categories = orm.SuperKeyProperty('6', kind='24', repeated=True, indexed=False)

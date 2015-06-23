@@ -16,9 +16,9 @@ import tools
 
 
 class CatalogProductCategoryUpdateWrite(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     # This code builds leaf categories for selection with complete names, 3.8k of them.
     if not isinstance(self.cfg, dict):
@@ -28,18 +28,17 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
     if not update_file_path:
       raise orm.TerminateAction()
     Category = context.models['24']
-    data = []
+    categories = []
     with file(update_file_path) as f:
       for line in f:
         if not line.startswith('#'):
-          data.append(line.replace('\n', ''))
-    write_data = []
-    sep = ' > '
+          categories.append(line.replace('\n', ''))
+    put_entities = []
     structure = collections.OrderedDict()
-    for i, item in enumerate(data):
-      if i == 100: # all instances now only import 100 items
+    for i, item in enumerate(categories):
+      if i == 100:  # all instances now only import 100 items
         break
-      full_path = item.split(sep)
+      full_path = item.split(' > ')
       current_structure = structure
       for path in full_path:
         if path not in current_structure:
@@ -60,32 +59,33 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
           if not hasattr(value, 'iteritems'):
             continue
           current = value.get('path')
-          current_total = len(current)-1
+          current_total = len(current) - 1
           parent = current[:-1]
-          new_cat = {}
-          new_cat['id'] = hashlib.md5(''.join(current)).hexdigest()
+          category = {}
+          category['id'] = hashlib.md5(''.join(current)).hexdigest()
           if parent:
-            new_cat['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
-          new_cat['name'] = ' / '.join(current)
-          new_cat['state'] = ['indexable']
+            category['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
+          category['name'] = ' / '.join(current)
+          category['state'] = ['indexable']
           if len(value) < 2:
-            new_cat['state'].append('visible') # leafs
-          new_cat = Category(**new_cat)
-          new_cat._use_rule_engine = False
-          new_cat._use_record_engine = False
-          write_data.append(new_cat)
+            category['state'].append('visible')  # leafs
+          category = Category(**category)
+          category._use_rule_engine = False
+          category._use_record_engine = False
+          put_entities.append(category)
           if len(value) > 1:
             # roots
             next_args.append(value.iteritems())
         current_structure = None
+
     parse_structure(structure.iteritems())
-    tools.log.debug('Writing %s categories' % len(write_data))
-    for ent in write_data:
-      ent.write()
+    tools.log.debug('Writing %s categories' % len(put_entities))
+    for entity in put_entities:
+      entity.write()
 
 
 class CatalogProcessCoverSet(orm.BaseModel):
-  
+
   def run(self, context):
     catalog_image = None
     catalog_images = context._catalog._images.value
@@ -101,12 +101,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
         else:
           break
     if catalog_image:
-      if catalog_cover:
-        if catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
-          context._catalog.cover = copy.deepcopy(catalog_image)
-          context._catalog.cover.value.sequence = 0
-          context._catalog.cover.process()
-      else:
+      if not catalog_cover or catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
         context._catalog.cover = copy.deepcopy(catalog_image)
         context._catalog.cover.value.sequence = 0
         context._catalog.cover.process()
@@ -114,32 +109,35 @@ class CatalogProcessCoverSet(orm.BaseModel):
       catalog_cover._state = 'deleted'
 
 
-# @todo Wee need all published catalogs here, no matter how many of them!
 class CatalogDiscontinue(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    limit = self.cfg.get('page', 10)
     Catalog = context.models['31']
     account_key = context.input.get('account')
     account = account_key.get()
     if account is not None:
-      catalogs = Catalog.query(Catalog.state == 'published', ancestor=account.key).fetch(limit=limit)
+      catalogs = Catalog.query(Catalog.state == 'published', ancestor=account.key).fetch(limit=4)
     for catalog in catalogs:
       data = {'action_id': 'discontinue',
               'action_model': '31',
               'message': 'Expired',
               'key': catalog.key.urlsafe()}
       context._callbacks.append(('callback', data))
+    if catalogs:
+      data = {'action_id': 'account_discontinue',
+              'action_model': '31',
+              'key': account_key.urlsafe()}
+      context._callbacks.append(('callback', data))
 
 
 class CatalogCronDiscontinue(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -156,9 +154,9 @@ class CatalogCronDiscontinue(orm.BaseModel):
 
 
 class CatalogCronDelete(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -181,15 +179,15 @@ class CatalogCronDelete(orm.BaseModel):
 
 
 class CatalogSearchDocumentWrite(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     documents = []
     index_name = self.cfg.get('index', None)
-    context._catalog.parent_entity.read() # read seller in-memory
+    context._catalog.parent_entity.read()  # read seller in-memory
     catalog_fields = {'parent_entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
                       'parent_entity.key._root': orm.SuperKeyProperty(kind='23', search_document_field_name='seller_account_key'),
                       'parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
@@ -205,10 +203,10 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
     products = []
     for image in context._catalog._images.value:
       products.extend([pricetag._product.value for pricetag in image.pricetags.value])
-    context._catalog._images = [] # dismember images from put queue to avoid too many rpcs
+    context._catalog._images = []  # dismember images from put queue to avoid too many rpcs
     write_index = True
     if not len(products):
-      write_index = False # catalogs with no products are not allowed to be indexed
+      write_index = False  # catalogs with no products are not allowed to be indexed
     for product in products:
       if 'indexable' not in product._category.value.state:
         write_index = False
@@ -223,9 +221,9 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
 
 
 class CatalogSearchDocumentDelete(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -241,10 +239,11 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     context._catalog._delete_custom_indexes = {}
     context._catalog._delete_custom_indexes[index_name] = entities
 
+
 class CatalogSearch(orm.BaseModel):
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -271,8 +270,9 @@ class CatalogSearch(orm.BaseModel):
     context._cursor = cursor
     context._more = more
 
+
 class CatalogProcessPricetags(orm.BaseModel):
- 
+
   def run(self, context):
     pricetags = {}
     catalog_images = context._catalog._images.value
@@ -280,15 +280,16 @@ class CatalogProcessPricetags(orm.BaseModel):
       for catalog_image in catalog_images:
         if catalog_image.pricetags.value:
           for pricetag in catalog_image.pricetags.value:
-            pricetag_key = pricetag.key.urlsafe()
+            pricetag_key = pricetag.key
             if pricetag_key not in pricetags:
               pricetags[pricetag_key] = []
             pricetags[pricetag_key].append(pricetag)
-      for pricetag_key, pricetag_set in pricetags.iteritems():
-        if len(pricetag_set) > 1:
-          for pricetag in pricetag_set:
+      for pricetag_key, _pricetags in pricetags.iteritems():
+        if len(_pricetags) > 1:
+          for pricetag in _pricetags:
             if pricetag._state == 'deleted':
               pricetag._state = 'removed'
+
 
 class CatalogPricetagSetDuplicatedPosition(orm.BaseModel):
 

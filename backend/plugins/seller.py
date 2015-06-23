@@ -6,6 +6,7 @@ Created on Sep 16, 2014
 '''
 import datetime
 import collections
+import decimal
 
 import orm
 
@@ -108,21 +109,32 @@ class SellerSetupDefaults(orm.BaseModel):
     OrderCurrency = context.models['117']
     Carrier = context.models['113']
     CarrierLine = context.models['112']
+    Discount = context.models['126']
+    DiscountLine = context.models['124']
+    Tax = context.models['109']
     seller = context._seller
     plugin_group = seller._plugin_group
     plugin_group.read()
     plugin_group = plugin_group.value
-    default_address_rule_shipping = AddressRule(name='Default Address Shipping Rule', exclusion=False, address_type='shipping')
-    default_address_rule_billing = AddressRule(name='Default Address Shipping Rule', exclusion=False, address_type='billing')
-    default_carrier = Carrier(name='World Wide Shipping', active=True, lines=[CarrierLine(name='Free Shipping', active=True)])
-    default_currency = OrderCurrency(name='Default Currency', currency=Unit.build_key('usd'))
-    default_paypal_payment = PayPalPayment(name='Paypal Payment Method', reciever_email='your paypal e-mail', business='your paypal merchant id or e-mail')
+    default_address_shipping = AddressRule(name='Shipping Worldwide', exclusion=False, address_type='shipping')
+    default_address_billing = AddressRule(name='Billing Worldwide', exclusion=False, address_type='billing')
+    default_carrier = Carrier(name='Free International Shipping', active=True, lines=[CarrierLine(name='Shipping Everywhere', active=True)])
+    default_currency = OrderCurrency(name='Currency (USD)', currency=Unit.build_key('usd'))
+    default_paypal_payment = PayPalPayment(name='Paypal Payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
+    default_discount = Discount(name='Discount On Quantity',
+                                lines=[DiscountLine(name='Discount On Quantity Over 5',
+                                                    condition_type='quantity',
+                                                    condition_operator='>',
+                                                    condition_value=decimal.Decimal('5'), active=True)], active=False)
+    default_tax = Tax(name='Sales Tax', address_type='shipping', type='proportional', amount=decimal.Decimal('6'), active=False)
     if not plugin_group or not plugin_group.plugins:  # now user wont be in able to delete the config completely, he will always have these defaults
-      plugins = [default_address_rule_shipping,
-                 default_address_rule_billing,
+      plugins = [default_address_shipping,
+                 default_address_billing,
+                 default_carrier,
                  default_currency,
+                 default_discount,
                  default_paypal_payment,
-                 default_carrier]
+                 default_tax]
       if not plugin_group:
         plugin_group = SellerPluginContainer(plugins=plugins)
         seller._plugin_group = plugin_group
