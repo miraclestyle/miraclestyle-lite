@@ -103,32 +103,32 @@ class SellerSetupDefaults(orm.BaseModel):
 
   def run(self, context):
     SellerPluginContainer = context.models['22']
-    OrderAddress = context.models['107']
-    OrderPayPalPayment = context.models['108']
+    OrderAddressPlugin = context.models['107']
+    OrderPayPalPaymentPlugin = context.models['108']
     Unit = context.models['17']
-    OrderCurrency = context.models['117']
-    OrderCarrier = context.models['113']
+    OrderCurrencyPlugin = context.models['117']
+    OrderCarrierPlugin = context.models['113']
     OrderCarrierLine = context.models['112']
-    OrderDiscount = context.models['126']
+    OrderDiscountPlugin = context.models['126']
     OrderDiscountLine = context.models['124']
-    OrderTax = context.models['109']
+    OrderTaxPlugin = context.models['109']
     seller = context._seller
     plugin_group = seller._plugin_group
     plugin_group.read()
     plugin_group = plugin_group.value
-    default_address_shipping = OrderAddress(name='Shipping Worldwide', exclusion=False, address_type='shipping')
-    default_address_billing = OrderAddress(name='Billing Worldwide', exclusion=False, address_type='billing')
-    default_carrier = OrderCarrier(name='Free International Shipping', active=True, lines=[OrderCarrierLine(name='Shipping Everywhere', active=True)])
-    default_currency = OrderCurrency(name='Currency (USD)', currency=Unit.build_key('usd'))
-    default_paypal_payment = OrderPayPalPayment(name='Paypal Payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
-    default_discount = OrderDiscount(name='Discount On Quantity (10%)',
+    default_address_shipping = OrderAddressPlugin(name='Shipping Worldwide', exclusion=False, address_type='shipping')
+    default_address_billing = OrderAddressPlugin(name='Billing Worldwide', exclusion=False, address_type='billing')
+    default_carrier = OrderCarrierPlugin(name='Free International Shipping', active=True, lines=[OrderCarrierLine(name='Shipping Everywhere', active=True)])
+    default_currency = OrderCurrencyPlugin(name='Currency (USD)', currency=Unit.build_key('usd'))
+    default_paypal_payment = OrderPayPalPaymentPlugin(name='Paypal Payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
+    default_discount = OrderDiscountPlugin(name='Discount On Quantity (10%)',
                                 lines=[OrderDiscountLine(name='Discount On Quantity Over 5',
                                                     condition_type='quantity',
                                                     condition_operator='>',
                                                     condition_value=decimal.Decimal('5'),
                                                     discount_value=decimal.Decimal('10'),
                                                     active=True)], active=False)
-    default_tax = OrderTax(name='Sales Tax', address_type='shipping', type='proportional', amount=decimal.Decimal('6'), active=False)
+    default_tax = OrderTaxPlugin(name='Sales Tax', address_type='shipping', type='proportional', amount=decimal.Decimal('6'), active=False)
     if not plugin_group or not plugin_group.plugins:  # now user wont be in able to delete the config completely, he will always have these defaults
       plugins = [default_address_shipping,
                  default_address_billing,

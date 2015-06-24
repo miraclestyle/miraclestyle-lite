@@ -92,7 +92,7 @@ class Collection(orm.BaseExpando):
                               'body': notifications.COLLECTION_NOTIFY_BODY,
                               'sender': settings.NOTIFY_EMAIL},
                         'd': {'recipient': '_recipient._primary_email',
-                              'condition': '_recipient.state == "active"',
+                              'condition': '_recipient.state == "active"', # move outside of 'd' to 'condition'
                               'discontinued_catalogs': '_discontinued_catalogs',
                               'published_catalogs': '_published_catalogs'}}),
             CallbackExec()

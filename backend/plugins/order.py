@@ -17,17 +17,17 @@ from models.unit import *
 
 
 class PluginError(errors.BaseKeyValueError):
-  
+
   KEY = 'plugin_error'
 
 
 # This is system plugin, which means end user can not use it!
 class OrderInit(orm.BaseModel):
-  
+
   _kind = 99
-  
+
   _use_rule_engine = False
-  
+
   def run(self, context):
     Order = context.models['34']
     seller_key = context.input.get('seller')
@@ -35,7 +35,7 @@ class OrderInit(orm.BaseModel):
       product = context.input.get('product')
       if not product:
         raise PluginError('seller_missing')
-      seller_key = product.parent().parent().parent() # go 3 levels up, account->seller->catalog->pricetag->product
+      seller_key = product.parent().parent().parent()  # go 3 levels up, account->seller->catalog->pricetag->product
     order = Order.query(Order.seller_reference == seller_key,
                         Order.state.IN(['cart', 'checkout']),
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this
@@ -46,7 +46,7 @@ class OrderInit(orm.BaseModel):
       order.seller_reference = seller_key
       order.make_original()
     else:
-      defaults = {'_lines' : {'config': {'search': {'options': {'limit': 0}}}}}
+      defaults = {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}
       if 'read_arguments' in context.input:
         tools.override_dict(defaults, context.input.get('read_arguments'))
       order.read(defaults)
@@ -55,20 +55,20 @@ class OrderInit(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderPluginExec(orm.BaseModel):
-  
+
   _kind = 114
-  
+
   _use_rule_engine = False
-  
+
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    plugin_kinds = self.cfg.get('kinds') # this is the flexibility we need, just to specify which plugin kinds to execute
+    plugin_kinds = self.cfg.get('kinds')  # this is the flexibility we need, just to specify which plugin kinds to execute
     order = context._order
     seller = order.seller_reference.get()
-    seller.read({'_plugin_group': {'plugins': {}}}) # read plugin container
+    seller.read({'_plugin_group': {'plugins': {}}})  # read plugin container
     plugin_container = seller._plugin_group.value
     if plugin_container:
       for plugin in seller._plugin_group.value.plugins:
@@ -79,11 +79,11 @@ class OrderPluginExec(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderUpdateLine(orm.BaseModel):
-  
+
   _kind = 101
-  
+
   _use_rule_engine = False
-  
+
   def run(self, context):
     OrderProduct = context.models['125']
     CatalogProduct = context.models['28']
@@ -95,16 +95,15 @@ class OrderUpdateLine(orm.BaseModel):
     if order.state != 'cart':
       raise PluginError('order_not_in_cart_state')
     line_exists = False
-    if order._lines.value:
-      for line in order._lines.value:
-        product = line.product.value
-        real_product_key = OrderProduct.get_partial_reference_key_path(product.reference)
-        if product and real_product_key == product_key \
-        and product.variant_signature == variant_signature:
-          line._state = 'modified'
-          product.quantity = tools.format_value(quantity, product.uom.value)
-          line_exists = True
-          break
+    for line in order._lines.value:
+      product = line.product.value
+      real_product_key = OrderProduct.get_partial_reference_key_path(product.reference)
+      if product and real_product_key == product_key \
+              and product.variant_signature == variant_signature:
+        line._state = 'modified'
+        product.quantity = tools.format_value(quantity, product.uom.value)
+        line_exists = True
+        break
     if not line_exists:
       ProductInstance = context.models['27']
       Line = context.models['33']
@@ -143,7 +142,7 @@ class OrderUpdateLine(orm.BaseModel):
         order_product.volume = product.volume
         order_product.volume_uom = copy.deepcopy(product.volume_uom.get())
       if product_instance is not None:
-        if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom  is not None:
+        if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom is not None:
           order_product.weight = product_instance.weight
           order_product.weight_uom = copy.deepcopy(product_instance.weight_uom.get())
         if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
@@ -160,12 +159,12 @@ class OrderUpdateLine(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class OrderProductSpecs(orm.BaseModel):
-  
+class OrderProductSpecsFormat(orm.BaseModel):
+
   _kind = 115
-  
+
   _use_rule_engine = False
-  
+
   def run(self, context):
     ProductInstance = context.models['27']
     order = context._order
@@ -175,16 +174,15 @@ class OrderProductSpecs(orm.BaseModel):
     total_weight = tools.format_value('0', weight_uom)
     total_volume = tools.format_value('0', volume_uom)
     total_quantity = tools.format_value('0', unit_uom)
-    if order._lines.value:
-      for line in order._lines.value:
-        if line._state == 'deleted':
-          continue
-        product = line.product.value
-        if product.weight is not None:
-          total_weight = total_weight + (tools.convert_value(product.weight, product.weight_uom.value, weight_uom) * product.quantity)
-        if product.volume is not None:
-          total_volume = total_volume + (tools.convert_value(product.volume, product.volume_uom.value, volume_uom) * product.quantity)
-        total_quantity = total_quantity + tools.convert_value(product.quantity, product.uom.value, unit_uom)
+    for line in order._lines.value:
+      if line._state == 'deleted':
+        continue
+      product = line.product.value
+      if product.weight is not None:
+        total_weight = total_weight + (tools.convert_value(product.weight, product.weight_uom.value, weight_uom) * product.quantity)
+      if product.volume is not None:
+        total_volume = total_volume + (tools.convert_value(product.volume, product.volume_uom.value, volume_uom) * product.quantity)
+      total_quantity = total_quantity + tools.convert_value(product.quantity, product.uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume
     order._total_quantity = total_quantity
@@ -192,11 +190,11 @@ class OrderProductSpecs(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderLineFormat(orm.BaseModel):
-  
+
   _kind = 104
-  
+
   _use_rule_engine = False
-  
+
   def run(self, context):
     order = context._order
     for line in order._lines.value:
@@ -229,11 +227,11 @@ class OrderLineFormat(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderCarrierFormat(orm.BaseModel):
-  
+
   _kind = 122
-  
+
   _use_rule_engine = False
-  
+
   def run(self, context):
     order = context._order
     carrier = order.carrier.value
@@ -254,11 +252,11 @@ class OrderCarrierFormat(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderFormat(orm.BaseModel):
-  
+
   _kind = 105
-  
+
   _use_rule_engine = False
-  
+
   def run(self, context):
     order = context._order
     untaxed_amount = tools.format_value('0', order.currency.value)
@@ -274,7 +272,7 @@ class OrderFormat(orm.BaseModel):
       if product:
         untaxed_amount = untaxed_amount + line.discount_subtotal
         tax_amount = tax_amount + line.tax_subtotal
-        total_amount = total_amount + (line.discount_subtotal + line.tax_subtotal) # we cannot use += for decimal its not supported
+        total_amount = total_amount + (line.discount_subtotal + line.tax_subtotal)  # we cannot use += for decimal its not supported
     carrier = order.carrier.value
     if carrier:
       untaxed_amount = untaxed_amount + carrier.subtotal
@@ -286,12 +284,12 @@ class OrderFormat(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
-class OrderLineRemovals(orm.BaseModel):
-  
+class OrderLineRemove(orm.BaseModel):
+
   _kind = 127
-  
+
   _use_rule_engine = False
-  
+
   def run(self, context):
     order = context._order
     lines = order._lines.value
@@ -304,11 +302,11 @@ class OrderLineRemovals(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderSetMessage(orm.BaseModel):
-  
+
   _kind = 119
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-  
+
   def run(self, context):
     OrderMessage = context.models['35']
     # this could be extended to allow params
@@ -320,11 +318,11 @@ class OrderSetMessage(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderProcessPayment(orm.BaseModel):
-  
+
   _kind = 118
-  
+
   def run(self, context):
-    order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context) # will throw an error if the payment method does not exist
+    order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context)  # will throw an error if the payment method does not exist
     context._order = order
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
     payment_plugin = order._payment_method
@@ -341,56 +339,57 @@ class OrderProcessPayment(orm.BaseModel):
 
 # Not a plugin!
 class OrderAddressLocation(orm.BaseModel):
-  
+
   _kind = 106
-  
+
   _use_rule_engine = False
-  
+
   country = orm.SuperKeyProperty('1', kind='12', required=True, indexed=False)
   region = orm.SuperKeyProperty('2', kind='13', indexed=False)
   postal_codes = orm.SuperStringProperty('3', indexed=False, repeated=True)
-  
+
   _virtual_fields = {
-    '_country': orm.SuperReferenceProperty(target_field='country'),
-    '_region': orm.SuperReferenceProperty(target_field='region')
+      '_country': orm.SuperReferenceProperty(target_field='country'),
+      '_region': orm.SuperReferenceProperty(target_field='region')
   }
 
 
-class OrderAddress(orm.BaseModel):
-  
+class OrderAddressPlugin(orm.BaseModel):
+
   _kind = 107
-  
+
   _use_rule_engine = False
-  
+
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   address_type = orm.SuperStringProperty('3', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
   exclusion = orm.SuperBooleanProperty('4', required=True, default=False, indexed=False)
   locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '5', repeated=True, indexed=False)
-  
+
   def run(self, context):
     if not self.active:
-      return # inactive plugin
-    self.read() # read locals
+      return  # inactive plugin
+    self.read()  # read locals
     address_key = '%s_address' % self.address_type
     address = context.input.get(address_key)
     if address:
+      address = address.get_location()
       if not self.validate_address(address):
         raise PluginError('invalid_address')
-      setattr(context._order, address_key, address.get_location())
-  
+      setattr(context._order, address_key, address)
+
   def validate_address(self, address):
     '''
     @todo few problems with postal_code_from and postal_code_to
     Postal code cant always be a number unless its like that in countries.
-    
-    postal_code_from and postal_code_to must be converted into int, because strings cant be compared 
+
+    postal_code_from and postal_code_to must be converted into int, because strings cant be compared
     to achive logical result other than native string's comparing logic:
-    
+
     native strings compare method:
     __cmp__(self, other)
       return len(self) > len(other)
-      
+
       One way to deal with this is to use postal_codes repeated string property on backend, and
       provide a user with UI tool where he can build a list of postal codes using
       postal_code_from and postal_code_to integers, or manually specify each individual postal code.
@@ -403,51 +402,51 @@ class OrderAddress(orm.BaseModel):
       # Shipping everywhere except at the following locations.
       allowed = True
     for location in self.locations.value:
-        validate = []
-        if location.country:
-          validate.append(location.country == address.country)
-        if location.region:
-          validate.append(location.region == address.region)
-        if location.postal_codes:
-          validate.append(address.postal_code in location.postal_codes)
-        if all(validate):
-          allowed = self.exclusion
-          break
+      validate = []
+      if location.country:
+        validate.append(address.country_code == location._country.code)
+      if location.region:
+        validate.append(address.region_code == location._region.code)
+      if location.postal_codes:
+        validate.append(address.postal_code in location.postal_codes)
+      if all(validate):
+        allowed = self.exclusion
+        break
     return allowed
 
 
-class OrderCurrency(orm.BaseModel):
-  
+class OrderCurrencyPlugin(orm.BaseModel):
+
   _kind = 117
-  
+
   _use_rule_engine = False
-  
+
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   currency = orm.SuperKeyProperty('3', kind=Unit, required=True, indexed=False)
-  
+
   def run(self, context):
     if not self.active:
-      return # inactive currency
+      return  # inactive currency
     order = context._order
     # In context of add_to_cart action runner does the following:
     order.currency = copy.deepcopy(self.currency.get())
 
 
-class OrderPaymentMethod(orm.BaseModel):
-  
+class OrderPaymentMethodPlugin(orm.BaseModel):
+
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
-  
+
   def _get_name(self):
     return self.__class__.__name__
-  
+
   def _get_system_name(self):
     return self.__class__.__name__.lower()
-  
+
   def run(self, context):
     if not self.active:
-      return # inactive payment
+      return  # inactive payment
     if 'payment_methods' not in context.output:
       context.output['payment_methods'] = []
     context.output['payment_methods'].append({'key': self.key,
@@ -456,32 +455,32 @@ class OrderPaymentMethod(orm.BaseModel):
 
 
 # This plugin is incomplete!
-class OrderPayPalPayment(OrderPaymentMethod):
-  
+class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
+
   _kind = 108
-  
+
   _use_rule_engine = False
-  
+
   # This plugin will be subscribed to many actions, among which is add_to_cart as well.
   # PayPal Shipping: Prompt for an address, but do not require one,
   # PayPal Shipping: Do not prompt for an address
   # PayPal Shipping: Prompt for an address, and require one
   reciever_email = orm.SuperStringProperty('3', required=True, indexed=False)
   business = orm.SuperStringProperty('4', required=True, indexed=False)
-  
+
   def _get_name(self):
     return 'Paypal'
-  
+
   def _get_system_name(self):
     return 'paypal'
-  
+
   def run(self, context):
     if not self.active:
       return
     super(PayPalPayment, self).run(context)
     # currently we only support paypal, so its enforced by default
     context._order.payment_method = self.key
-  
+
   def complete(self, context):
     if not self.active:
       return
@@ -494,23 +493,23 @@ class OrderPayPalPayment(OrderPaymentMethod):
                             method=urlfetch.POST,
                             headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
     if result.content != 'VERIFIED':
-      raise PluginError('invalid_ipn_message') # log somehow
+      raise PluginError('invalid_ipn_message')  # log somehow
 
     # begin ipn message validation
     mismatches = []
     shipping_address = order.shipping_address.value
     order_currency = order.currency.value
-    
+
     # ipn alias
     ipn_payment_status = ipn['payment_status']
-    
+
     # only verified ipn messages are to be saved
     OrderMessage = context.models['35']
     Account = context.models['11']
     order_messages = OrderMessage.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
     for order_message in order_messages:
       if order_message.payment_status == ipn_payment_status:
-        raise orm.TerminateAction('duplicate_entry') # ipns that come in with same payment_status are to be rejected
+        raise orm.TerminateAction('duplicate_entry')  # ipns that come in with same payment_status are to be rejected
         # by the way, we cannot raise exceptions cause that will cause status code other than 200 and cause that the same
         # ipn will be called again until it reaches 200 status response code
         # ipn will retry for x amount of times till it gives up
@@ -521,7 +520,7 @@ class OrderPayPalPayment(OrderPaymentMethod):
     new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
     new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
     order._messages = [new_order_message]
-    
+
     if (self.reciever_email != ipn['receiver_email']):
       mismatches.append('receiver_email')
     if 'business' in ipn:
@@ -543,13 +542,13 @@ class OrderPayPalPayment(OrderPaymentMethod):
       mismatches.append('address_city')
     if (shipping_address.name != ipn['address_name']):
       mismatches.append('address_name')
-    if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']: # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
+    if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']:  # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
       mismatches.append('address_state')
-    if (shipping_address.street != ipn['address_street']): 
+    if (shipping_address.street != ipn['address_street']):
       mismatches.append('address_street')
     if (shipping_address.postal_code != ipn['address_zip']):
       mismatches.append('address_zip')
-        
+
     for line in order._lines.value:
       product = line.product.value
       tools.log.debug('Order sequence %s' % line.sequence)
@@ -564,10 +563,10 @@ class OrderPayPalPayment(OrderPaymentMethod):
         mismatches.append('mc_gross_%s' % str(line.sequence))
     if not mismatches:
       if order.payment_status == ipn_payment_status:
-        return None # nothing to do since the payment status is exactly the same
+        return None  # nothing to do since the payment status is exactly the same
       else:
         update_paypal_payment_status = False
-        if order.payment_status == 'Pending' or order.payment_status == None:
+        if order.payment_status == 'Pending' or order.payment_status is None:
           if ipn_payment_status == 'Completed' or ipn_payment_status == 'Denied':
             update_paypal_payment_status = True
         elif order.payment_status == 'Completed':
@@ -590,12 +589,12 @@ class OrderPayPalPayment(OrderPaymentMethod):
     tools.log.info('Set Order payment_status %s' % order.payment_status)
 
 
-class OrderTax(orm.BaseModel):
-  
+class OrderTaxPlugin(orm.BaseModel):
+
   _kind = 109
-  
+
   _use_rule_engine = False
-  
+
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   type = orm.SuperStringProperty('3', required=True, default='proportional', choices=('proportional', 'fixed'), indexed=False)
@@ -606,74 +605,57 @@ class OrderTax(orm.BaseModel):
   address_type = orm.SuperStringProperty('8', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
   exclusion = orm.SuperBooleanProperty('9', required=True, default=False, indexed=False)
   locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '10', repeated=True)
-  
+
   def run(self, context):
     if not self.active:
-      return # tax is inactive
-    self.read() # read locals
+      return  # tax is inactive
+    self.read()  # read locals
     OrderTax = context.models['32']
     order = context._order
     allowed = self.validate_tax(order)
+
+    def reset_taxes(taxes):
+      if not taxes:
+        taxes = []
+      for tax in taxes:
+        if tax.key_id_str == self.key_id_str:
+          tax._state = 'deleted'
+      return taxes
+
+    def add_taxes(taxes):
+      tax_exists = False
+      for tax in taxes:
+        if tax.key_id_str == self.key_id_str:
+          tax._state = None
+          tax.name = self.name
+          tax.type = self.type
+          tax.amount = self.amount
+          tax_exists = True
+          break
+      if not tax_exists:
+        taxes.append(OrderTax(id=self.key_id_str, name=self.name, type=self.type, amount=self.amount))
+
     for line in order._lines.value:
       if line._state == 'deleted':
         continue
       product = line.product.value
-      taxes = line.taxes.value
-      if not taxes:
-        taxes = []
-      for tax in taxes:
-        if tax.key_id_str == self.key_id_str:
-          tax._state = 'deleted'
+      taxes = reset_taxes(line.taxes.value)
       if (self.product_categories and self.product_categories.count(product.category.value.key)) \
-      or (self.product_codes and self.product_codes.count(product.code)) \
-      or (not self.carriers and not self.product_categories and not self.product_codes):
+              or (self.product_codes and self.product_codes.count(product.code)) \
+              or (not self.carriers and not self.product_categories and not self.product_codes):
         if allowed:
-          tax_exists = False
-          for tax in taxes:
-            if tax.key_id_str == self.key_id_str:
-              tax._state = None
-              tax.name = self.name
-              tax.type = self.type
-              tax.amount = self.amount
-              tax_exists = True
-              break
-          if not tax_exists:
-            taxes.append(OrderTax(id=self.key_id_str, name=self.name, type=self.type, amount=self.amount))
+          add_taxes(taxes)
           line.taxes = taxes
     if self.carriers and order.carrier.value:
-      taxes = order.carrier.value.taxes.value
-      if not taxes:
-        taxes = []
-      for tax in taxes:
-        if tax.key_id_str == self.key_id_str:
-          tax._state = 'deleted'
+      taxes = reset_taxes(order.carrier.value.taxes.value)
       if self.carriers.count(order.carrier.value.reference) and allowed:
-        tax_exists = False
-        for tax in taxes:
-          if tax.key_id_str == self.key_id_str:
-            tax._state = None
-            tax.name = self.name
-            tax.type = self.type
-            tax.amount = self.amount
-            tax_exists = True
-            break
-        if not tax_exists:
-          taxes.append(OrderTax(id=self.key_id_str, name=self.name, type=self.type, amount=self.amount))
+        add_taxes(taxes)
         order.carrier.value.taxes = taxes
 
   def validate_tax(self, order):
-    address = None
     address_key = '%s_address' % self.address_type
-    order_address = getattr(order, address_key)
-    order_address = order_address.value
-    if order_address is None:
-      return False
-    buyer_addresses = order.key_parent.get()
-    buyer_addresses.read()
-    for buyer_address in buyer_addresses.addresses.value:
-      if buyer_address.key == order_address.reference:
-        address = buyer_address
-        break
+    address = getattr(order, address_key)
+    address = address.value
     if address is None:
       return False
     if self.exclusion:
@@ -683,22 +665,22 @@ class OrderTax(orm.BaseModel):
       # Apply everywhere except at the following locations.
       allowed = True
     if self.locations.value:
-      for loc in self.locations.value:
-        checker = []
-        if loc.country:
-          checker.append(loc.country == address.country)
-        if loc.region:
-          checker.append(loc.region == address.region)
-        if loc.postal_codes:
-          checker.append(address.postal_code in loc.postal_codes)
-        if all(checker):
+      for location in self.locations.value:
+        validate = []
+        if location.country:
+          validate.append(address.country_code == location._country.code)
+        if location.region:
+          validate.append(address.region_code == location._region.code)
+        if location.postal_codes:
+          validate.append(address.postal_code in location.postal_codes)
+        if all(validate):
           allowed = self.exclusion
           break
     if allowed:
       # If tax is configured for carriers then check if the order references carrier on which the tax applies.
       if self.carriers:
         allowed = False
-        if order.carrier.value and order.carrier.value.reference and order.carrier.value.reference.urlsafe() in [carrier_key.urlsafe() for carrier_key in self.carriers]:
+        if order.carrier.value and order.carrier.value.reference and order.carrier.value.reference in self.carriers:
           allowed = True
       # If tax is configured for product categories, then check if the order contains a line which has product category to which the tax applies.
       elif self.product_categories:
@@ -714,136 +696,137 @@ class OrderTax(orm.BaseModel):
 
 
 # Not a plugin!
-class OrderCarrierLinePrice(orm.BaseModel): # @todo OrderCarrierLinePrice
-  
+class OrderCarrierLinePrice(orm.BaseModel):
+
   _kind = 111
-  
+
   _use_rule_engine = False
-  
+
   condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
-  condition_operator = orm.SuperStringProperty('2', required=True, default='==', choices=('==', '>', '<', '>=', '<='), indexed=False)
+  condition_operator = orm.SuperStringProperty('2', required=True, default='==', choices=('==', '!=', '>', '<', '>=', '<='), indexed=False)
   condition_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
   price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=('fixed', 'variable'), indexed=False)
   price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
   price_value = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  
-  def make_condition(self):
-    condition = '%s %s condition_value' % (self.condition_type, self.condition_operator)
-    return condition
-  
-  def make_price_calculator(self):
-    price_calculator = ''
+
+  def evaluate_condition(self, data):
+    value = None
+    op = self.condition_operator
+    if self.condition_type == 'weight*volume':
+      value = data['weight'] * data['volume']
+    else:
+      value = data[self.condition_type]
+    if op == '==':
+      return value == self.condition_value
+    elif op == '!=':
+      return value != self.condition_value
+    elif op == '>':
+      return value > self.condition_value
+    elif op == '<':
+      return value < self.condition_value
+    elif op == '>=':
+      return value >= self.condition_value
+    elif op == '<=':
+      return value <= self.condition_value
+
+  def calculate_price(self, data):
     if self.price_type == 'fixed':
-      price_calculator = 'price_value'
+      return self.price_value
     if self.price_type == 'variable':
-      price_calculator = '%s * price_value' % self.price_operator
-    return price_calculator
+      value = None
+      if self.price_operator == 'weight*volume':
+        value = data['weight'] * data['volume']
+      else:
+        value = data[self.price_operator]
+      return value * self.price_value
 
 
 # Not a plugin!
 class OrderCarrierLine(orm.BaseModel):
-  
+
   _kind = 112
-  
+
   _use_rule_engine = False
-  
+
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   exclusion = orm.SuperBooleanProperty('3', required=True, default=False)
   locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '4', repeated=True)
-  rules = orm.SuperLocalStructuredProperty(OrderCarrierLinePrice, '5', repeated=True)
+  prices = orm.SuperLocalStructuredProperty(OrderCarrierLinePrice, '5', repeated=True)
 
 
-class OrderCarrier(orm.BaseModel):
-  
+class OrderCarrierPlugin(orm.BaseModel):
+
   _kind = 113
-  
+
   _use_rule_engine = False
-  
+
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   lines = orm.SuperLocalStructuredProperty(OrderCarrierLine, '3', repeated=True)
-  
+
   def run(self, context):
     if not self.active:
-      return # this is not active carrier
-    self.read() # read locals
+      return  # this is not active carrier
+    self.read()  # read locals
     ProductInstance = context.models['27']
     OrderCarrier = context.models['123']
     carrier = context.input.get('carrier')
     order = context._order
+    order_carrier = order.carrier.value
     valid_lines = []
     for carrier_line in self.lines.value:
       if not carrier_line.active:
-        continue # inactive carrier line
+        continue  # inactive carrier line
       if self.validate_line(carrier_line, order):
         valid_lines.append(carrier_line)
-    current_carrier = order.carrier.value
     if len(valid_lines):
-      carrier_price = self.calculate_lines(valid_lines, order)
+      carrier_price = self.calculate_price(valid_lines, order)
+      if not order_carrier or (carrier and carrier == self.key):
+        order.carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
       if 'carriers' not in context.output:
         context.output['carriers'] = []
-      if carrier and carrier == self.key:
-        order.carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
-      elif not current_carrier:
-        set_carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
-        order.carrier = set_carrier
       context.output['carriers'].append({'name': self.name,
                                          'price': carrier_price,
                                          'key': self.key})
-  
-  def calculate_lines(self, valid_lines, order):
+
+  def calculate_price(self, valid_lines, order):
     if not order._lines.value:
-      return Decimal('0') # if no lines are present return 0
+      return Decimal('0')  # if no lines are present return 0
     total = Decimal('0')
     for line in order._lines.value:
       if line._state == 'deleted':
         continue
       product = line.product.value
-      carrier_lines_prices = []
+      prices = []
       for carrier_line in valid_lines:
-        rule_line_prices = []
-        rules = carrier_line.rules.value
-        if rules:
-          for rule in carrier_line.rules.value:
-            condition = rule.make_condition()
+        line_prices = []
+        carrier_line_prices = carrier_line.prices.value
+        if carrier_line_prices:
+          for price in carrier_line_prices:
             condition_data = {
-              'condition_value': rule.condition_value,
-              'weight': order._total_weight,
-              'volume': order._total_volume,
-              'price': order.total_amount,
-              'quantity': order._total_quantity,
+                'weight': order._total_weight,
+                'volume': order._total_volume,
+                'price': order.total_amount,
+                'quantity': order._total_quantity,
             }
-            if tools.safe_eval(condition, condition_data):
-              price_calculation = rule.make_price_calculator()
+            if price.evaluate_condition(condition_data):
               price_data = {
-                'weight': product.weight * product.quantity,
-                'volume': product.volume * product.quantity,
-                'quantity': product.quantity,
-                'price_value': rule.price_value,
+                  'weight': product.weight * product.quantity,
+                  'volume': product.volume * product.quantity,
+                  'quantity': product.quantity
               }
-              price = tools.safe_eval(price_calculation, price_data)
-              rule_line_prices.append(price)
+              price = price.calculate_price(price_data)
+              line_prices.append(price)
         else:
-          rule_line_prices.append(Decimal('0'))
-        carrier_lines_prices.append(min(rule_line_prices))
-      total = total + min(carrier_lines_prices)  # Return the lowest price possible of all lines!
+          line_prices.append(Decimal('0'))
+        prices.append(min(line_prices))
+      total = total + min(prices)  # Return the lowest price possible of all lines!
     return total
-    
-  
+
   def validate_line(self, carrier_line, order):
-    address = None
-    order_address = getattr(order, 'shipping_address')
-    order_address = order_address.value
-    if order_address is None:
-      return False
-    buyer_addresses = order.parent_entity
-    if buyer_addresses:
-      buyer_addresses.read()
-      for buyer_address in buyer_addresses.addresses.value:
-        if buyer_address.key == order_address.reference:
-          address = buyer_address
-          break
+    address = getattr(order, 'shipping_address')
+    address = order_address.value
     if address is None:
       return False
     if carrier_line.exclusion:
@@ -853,36 +836,34 @@ class OrderCarrier(orm.BaseModel):
       # Apply everywhere except at the following locations.
       allowed = True
     if carrier_line.locations.value:
-      for loc in carrier_line.locations.value:
-        checker = []
-        if loc.country:
-          checker.append(loc.country == address.country)
-        if loc.region:
-          checker.append(loc.region == address.region)
-        if loc.postal_codes:
-          checker.append(address.postal_code in loc.postal_codes)
-        if all(checker):
+      for location in carrier_line.locations.value:
+        validate = []
+        if location.country:
+          validate.append(address.country_code == location._country.code)
+        if location.region:
+          validate.append(address.region_code == location._region.code)
+        if location.postal_codes:
+          validate.append(address.postal_code in location.postal_codes)
+        if all(validate):
           allowed = carrier_line.exclusion
           break
     else:
-      allowed = True # if no locations were defined for the specific rule, then its always considered truthly
+      allowed = True  # if no locations were defined for the specific rule, then its always considered truthly
     if allowed:
       allowed = False
-      if carrier_line.rules.value:
-        for rule in carrier_line.rules.value:
-          condition = rule.make_condition()
+      if carrier_line.prices.value:
+        for price in carrier_line.prices.value:
           condition_data = {
-            'condition_value': rule.condition_value,
-            'weight': order._total_weight,
-            'volume': order._total_volume,
-            'price': order.total_amount,
-            'quantity': order._total_quantity,
+              'weight': order._total_weight,
+              'volume': order._total_volume,
+              'price': order.total_amount,
+              'quantity': order._total_quantity,
           }
-          if tools.safe_eval(condition, condition_data):
+          if price.evaluate_condition(condition_data):
             allowed = True
             break
       else:
-        allowed = True # if no rules were provided, its considered truthly
+        allowed = True  # if no rules were provided, its considered truthly
     return allowed
 
 
@@ -897,16 +878,27 @@ class OrderDiscountLine(orm.BaseModel):
   product_categories = orm.SuperKeyProperty('3', kind='24', repeated=True, indexed=False)
   product_codes = orm.SuperStringProperty('4', repeated=True, indexed=False)
   condition_type = orm.SuperStringProperty('5', required=True, default='quantity', choices=('price', 'quantity'), indexed=False)
-  condition_operator = orm.SuperStringProperty('6', required=True, default='==', choices=('==', '>', '<', '>=', '<='), indexed=False)
+  condition_operator = orm.SuperStringProperty('6', required=True, default='==', choices=('==', '!=', '>', '<', '>=', '<='), indexed=False)
   condition_value = orm.SuperDecimalProperty('7', required=True, indexed=False)
   discount_value = orm.SuperDecimalProperty('8', required=True, indexed=False)
 
-  def make_condition(self):
-    condition = '%s %s condition_value' % (self.condition_type, self.condition_operator)
-    return condition
+  def evaluate_condition(self, data):
+    value = data[self.condition_type]
+    if op == '==':
+      return value == self.condition_value
+    elif op == '!=':
+      return value != self.condition_value
+    elif op == '>':
+      return value > self.condition_value
+    elif op == '<':
+      return value < self.condition_value
+    elif op == '>=':
+      return value >= self.condition_value
+    elif op == '<=':
+      return value <= self.condition_value
 
 
-class OrderDiscount(orm.BaseModel):
+class OrderDiscountPlugin(orm.BaseModel):
 
   _kind = 126
 
@@ -918,28 +910,24 @@ class OrderDiscount(orm.BaseModel):
 
   def run(self, context):
     if not self.active:
-      return # is inactive
+      return  # is inactive
     order = context._order
-    if order._lines.value and self.lines.value:
+    if self.lines.value:
       for line in order._lines.value:
         if line._state == 'deleted':
           continue
         product = line.product.value
         for discount_line in self.lines.value:
-          satisfy = False
-          if product.category.value.key in discount_line.product_categories:
-            satisfy = True
-          if not satisfy and product.code in discount_line.product_codes:
-            satisfy = True
-          if not satisfy and (not discount_line.product_codes and not discount_line.product_categories): # if no products or product codes are set, try passing the cond
-            satisfy = True
-          if satisfy:
-            price_calculation = discount_line.make_condition()
+          validate = not discount_line.product_codes and not discount_line.product_categories
+          if not validate:
+            validate = product.category.value.key in discount_line.product_categories
+          if not validate:
+            validate = product.code in discount_line.product_codes
+          if validate:
             price_data = {
-              'quantity': product.quantity,
-              'price': product.unit_price,
-              'condition_value': discount_line.condition_value
+                'quantity': product.quantity,
+                'price': product.unit_price
             }
-            if tools.safe_eval(price_calculation, price_data):
+            if discount_line.evaluate_condition(price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break

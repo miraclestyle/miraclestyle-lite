@@ -328,9 +328,9 @@ class Order(orm.BaseExpando):
             Context(),
             OrderInit(),
             OrderPluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
-            OrderProductSpecs(),
+            OrderProductSpecsFormat(),
             OrderUpdateLine(),
-            OrderLineRemovals(),
+            OrderLineRemove(),
             OrderLineFormat(),
             OrderCarrierFormat(),
             OrderFormat(),
@@ -360,7 +360,7 @@ class Order(orm.BaseExpando):
             Context(),
             OrderInit(),
             OrderPluginExec(cfg={'kinds': ['117']}), # order currency must be available for everyone
-            OrderProductSpecs(),
+            OrderProductSpecsFormat(),
             RulePrepare(),
             RuleExec(),
             Set(cfg={'d': {'output.entity': '_order'}})
@@ -406,8 +406,8 @@ class Order(orm.BaseExpando):
             Set(cfg={'d': {'_order.payment_method': 'input.payment_method',
                            '_order.state': 'input.state',
                            '_order._lines': 'input._lines'}}),
-            OrderLineRemovals(),
-            OrderProductSpecs(),
+            OrderLineRemove(),
+            OrderProductSpecsFormat(),
             OrderPluginExec(),
             OrderLineFormat(),
             OrderCarrierFormat(),
