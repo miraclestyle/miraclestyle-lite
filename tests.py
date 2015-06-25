@@ -1,6 +1,15 @@
-z = lambda entity, **kwargs: entity['bar']
+class foo:
 
+    def bar(zar, **kwargs):
+        return zar
 
-ent = {'bar': 1}
+    def go(**kwargs):
+        return kwargs
 
-print z(ent, lool=1)
+    _permissions = [
+        go,
+        bar
+    ]
+
+for perm in foo._permissions:
+    print perm(bar=1, zar=2, far=3)

@@ -63,27 +63,21 @@ class Account(orm.BaseExpando):
       '_records': orm.SuperRecordProperty('11')
   }
 
-  @staticmethod
   def condition_guest_and_active(entity, **kwargs):
     return entity._is_guest or entity._original.state == "active"
 
-  @staticmethod
   def condition_true(entity, **kwargs):
     return True
 
-  @staticmethod
   def condition_not_guest_and_owner(account, entity, **kwargs):
     return not account._is_guest and account.key == entity._original.key
 
-  @staticmethod
   def condition_not_guest(account, **kwargs):
     return not account._is_guest
 
-  @staticmethod
   def condition_root(account, **kwargs):
     return account._root_admin
 
-  @staticmethod
   def condition_sudo_action_and_root(account, action, **kwargs):
     return action.key_id_str == "sudo" and account._root_admin
 
