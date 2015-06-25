@@ -20,22 +20,22 @@ __all__ = ['AccountSession', 'AccountIdentity', 'Account']
 
 
 class AccountSession(orm.BaseModel):
-  
+
   _kind = 9
-  
+
   _use_rule_engine = False
-  
+
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, indexed=False)
   session_id = orm.SuperStringProperty('2', required=True, indexed=False)
   ip_address = orm.SuperStringProperty('3', required=True, indexed=False)
 
 
 class AccountIdentity(orm.BaseModel):
-  
+
   _kind = 10
-  
+
   _use_rule_engine = False
-  
+
   identity = orm.SuperStringProperty('1', required=True)  # This property stores provider name joined with ID.
   email = orm.SuperStringProperty('2', required=True)
   primary = orm.SuperBooleanProperty('3', required=True, default=True)
@@ -43,319 +43,312 @@ class AccountIdentity(orm.BaseModel):
 
 # @todo We need to trigger account_discontinue on catalogs during account suspension!
 class Account(orm.BaseExpando):
-  
+
   _kind = 11
-  
+
   _use_memcache = True
-  
+
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  identities = orm.SuperStructuredProperty(AccountIdentity, '3', repeated=True)  # Soft limit 100 instances.
-  state = orm.SuperStringProperty('5', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))
-  sessions = orm.SuperLocalStructuredProperty(AccountSession, '6', repeated=True)  # Soft limit 100 instances.
-  
+  state = orm.SuperStringProperty('3', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))
+  identities = orm.SuperStructuredProperty(AccountIdentity, '4', repeated=True)  # Soft limit 100 instances.
+  sessions = orm.SuperLocalStructuredProperty(AccountSession, '5', repeated=True)  # Soft limit 100 instances.
+
   _default_indexed = False
-  
+
   _virtual_fields = {
-    'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
-    '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
-    '_csrf': orm.SuperComputedProperty(lambda self: self.get_csrf()),
-    '_records': orm.SuperRecordProperty('11')
-    }
-  
-  _global_role = orm.GlobalRole(
-    permissions=[
-      orm.ActionPermission('11', orm.Action.build_key('11', 'login'), True,
-                           'entity._is_guest or entity._original.state == "active"'),
-      orm.ActionPermission('11', orm.Action.build_key('11', 'current_account'), True,
-                           'True'),
-      orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
-                                  orm.Action.build_key('11', 'update'),
-                                  orm.Action.build_key('11', 'logout')], True,
-                           'not account._is_guest and account.key == entity._original.key'),
-      orm.ActionPermission('11', [orm.Action.build_key('11', 'blob_upload_url'),
-                                  orm.Action.build_key('11', 'create_channel')], True, # it just needs true when the user is not guest
-                           'not account._is_guest'),
-      orm.FieldPermission('11', ['created', 'updated', 'state', '_records'], False, True,
-                          'not account._is_guest and account.key == entity._original.key'),
-      orm.FieldPermission('11', ['identities', 'sessions', '_primary_email', '_records'], True, True,
-                          'not account._is_guest and account.key == entity._original.key'),
-      # Account is unit of administration, hence root admins need control over it!
-      # Root admins can always: read account; search for accounts (exclusively);
-      # read accounts history (exclusively); perform sudo operations (exclusively).
-      orm.ActionPermission('11', [orm.Action.build_key('11', 'read'),
-                                  orm.Action.build_key('11', 'search'),
-                                  orm.Action.build_key('11', 'sudo')], True, 'account._root_admin'),
-      orm.FieldPermission('11', ['created', 'updated', 'identities', 'state', 'sessions',
-                                 'ip_address', '_primary_email', '_records'], None, True, 'account._root_admin'),
-      orm.FieldPermission('11', ['state'], True, None, 'action.key_id_str == "sudo" and account._root_admin')
-      ]
-    )
-  
+      'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
+      '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
+      '_csrf': orm.SuperComputedProperty(lambda self: self.get_csrf()),
+      '_records': orm.SuperRecordProperty('11')
+  }
+
+  @staticmethod
+  def condition_guest_and_active(entity, **kwargs):
+    return entity._is_guest or entity._original.state == "active"
+
+  @staticmethod
+  def condition_true(entity, **kwargs):
+    return True
+
+  @staticmethod
+  def condition_not_guest_and_owner(account, entity, **kwargs):
+    return not account._is_guest and account.key == entity._original.key
+
+  @staticmethod
+  def condition_not_guest(account, **kwargs):
+    return not account._is_guest
+
+  @staticmethod
+  def condition_root(account, **kwargs):
+    return account._root_admin
+
+  @staticmethod
+  def condition_sudo_action_and_root(account, action, **kwargs):
+    return action.key_id_str == "sudo" and account._root_admin
+
+  _permissions = [
+      orm.ExecuteActionPermission('login', condition_guest_and_active),
+      orm.ExecuteActionPermission('current_account', condition_true),
+      orm.ExecuteActionPermission(('read', 'update', 'logout'), condition_not_guest_and_owner),
+      orm.ExecuteActionPermission(('blob_upload_url', 'create_channel'), condition_not_guest),
+      orm.ExecuteActionPermission(('read', 'search', 'sudo'), condition_root),
+      orm.ReadFieldPermission(('created', 'updated', 'state', '_records'), condition_not_guest_and_owner),
+      orm.ReadFieldPermission(('identities', 'sessions', '_primary_email', '_records'), condition_not_guest_and_owner),
+      orm.ReadFieldPermission(('created', 'updated', 'identities', 'state', 'sessions',
+                               'ip_address', '_primary_email', '_records'), condition_root),
+      orm.WriteFieldPermission(('identities', 'sessions', '_primary_email', '_records'), condition_not_guest_and_owner),
+      orm.WriteFieldPermission('state', condition_sudo_action_and_root)
+  ]
+
   _actions = [
-    orm.Action(
-      key=orm.Action.build_key('11', 'login'),
-      arguments={
-        'login_method': orm.SuperStringProperty(required=True, choices=[f['type'] for f in settings.LOGIN_METHODS]),
-        'code': orm.SuperStringProperty(),
-        'error': orm.SuperStringProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            AccountLoginInit(cfg={'methods': settings.LOGIN_METHODS})
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            AccountLoginWrite()
-            ]
-          )
-        ]
+      orm.Action(
+          id='login',
+          arguments={
+              'login_method': orm.SuperStringProperty(required=True, choices=[login_method['type'] for login_method in settings.LOGIN_METHODS]),
+              'code': orm.SuperStringProperty(),
+              'error': orm.SuperStringProperty()
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      AccountLoginInit(cfg={'methods': settings.LOGIN_METHODS})
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      AccountLoginWrite()
+                  ]
+              )
+          ]
       ),
-    orm.Action(
-      key=orm.Action.build_key('11', 'current_account'),
-      arguments={
-        'read_arguments': orm.SuperJsonProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(cfg={'source': 'account.key'}),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': '_account'}})
-            ]
-          )
-        ]
+      orm.Action(
+          id='current_account',
+          arguments={
+              'read_arguments': orm.SuperJsonProperty()
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(cfg={'source': 'account.key'}),
+                      RulePrepare(),
+                      RuleExec(),
+                      Set(cfg={'d': {'output.entity': '_account'}})
+                  ]
+              )
+          ]
       ),
-    orm.Action(
-      key=orm.Action.build_key('11', 'read'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='11', required=True),
-        'read_arguments': orm.SuperJsonProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Set(cfg={'d': {'output.entity': '_account'}})
-            ]
-          )
-        ]
+      orm.Action(
+          id='read',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='11', required=True),
+              'read_arguments': orm.SuperJsonProperty()
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      Set(cfg={'d': {'output.entity': '_account'}})
+                  ]
+              )
+          ]
       ),
-    orm.Action(
-      key=orm.Action.build_key('11', 'update'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='11', required=True),
-        'primary_identity': orm.SuperStringProperty(),
-        'disassociate': orm.SuperStringProperty(repeated=True),
-        'read_arguments': orm.SuperJsonProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            AccountUpdateSet(),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            Set(cfg={'d': {'output.entity': '_account'}})
-            ]
-          )
-        ]
+      orm.Action(
+          id='update',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='11', required=True),
+              'primary_identity': orm.SuperStringProperty(),
+              'disassociate': orm.SuperStringProperty(repeated=True),
+              'read_arguments': orm.SuperJsonProperty()
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      AccountUpdateSet(),
+                      RulePrepare(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Write(),
+                      Set(cfg={'d': {'output.entity': '_account'}})
+                  ]
+              )
+          ]
       ),
-    orm.Action(
-      key=orm.Action.build_key('11', 'search'),
-      arguments={
-        'search': orm.SuperSearchProperty(
-          default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
-          cfg={
-            'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
-            'filters': {'emails': orm.SuperStringProperty(),
-                        'key': orm.SuperVirtualKeyProperty(kind='11', searchable=False),
-                        'state': orm.SuperStringProperty(choices=('active', 'suspended', 'su_suspended'))},
-            'indexes': [{'orders': [('created', ['asc', 'desc'])]},
-                        {'orders': [('updated', ['asc', 'desc'])]},
-                        {'filters': [('key', ['==', '!='])]},
-                        {'filters': [('emails', ['==', '!='])]},
-                        {'filters': [('state', ['==', '!='])],
-                         'orders': [('created', ['asc', 'desc'])]}]
-            }
-          )
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            Search(),
-            RulePrepare(cfg={'path': '_entities'}),
-            Set(cfg={'d': {'output.entities': '_entities',
-                           'output.cursor': '_cursor',
-                           'output.more': '_more'}})
-            ]
-          )
-        ]
+      orm.Action(
+          id='search',
+          arguments={
+              'search': orm.SuperSearchProperty(
+                  default={'filters': [], 'orders': [{'field': 'created', 'operator': 'desc'}]},
+                  cfg={
+                      'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
+                      'filters': {'key': orm.SuperVirtualKeyProperty(kind='11', searchable=False),
+                                  'state': orm.SuperStringProperty(choices=('active', 'suspended', 'su_suspended')),
+                                  'identities.email': orm.SuperStringProperty(searchable=False)},
+                      'indexes': [{'orders': [('created', ['asc', 'desc'])]},
+                                  {'orders': [('updated', ['asc', 'desc'])]},
+                                  {'filters': [('key', ['==', '!='])]},
+                                  {'filters': [('identities.email', ['==', '!='])]},
+                                  {'filters': [('state', ['==', '!='])], 'orders': [('created', ['asc', 'desc'])]}]
+                  }
+              )
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      Search(),
+                      RulePrepare(cfg={'path': '_entities'}),
+                      Set(cfg={'d': {'output.entities': '_entities',
+                                     'output.cursor': '_cursor',
+                                     'output.more': '_more'}})
+                  ]
+              )
+          ]
       ),
-    # @todo call catalog.account_discontinue if the account is suspended
-    orm.Action(
-      key=orm.Action.build_key('11', 'sudo'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='11', required=True),
-        'state': orm.SuperStringProperty(required=True, choices=('active', 'suspended')),
-        'message': orm.SuperTextProperty(required=True),
-        'note': orm.SuperTextProperty()
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            Set(cfg={'rm': ['_account.sessions'], 'd': {'_account.state': 'input.state'}}),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(),
-            Set(cfg={'d': {'output.entity': '_account'}}),
-            Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
-                              'body': notifications.ACCOUNT_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
-                        'd': {'recipient': '_account._primary_email'}}),
-            Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
-                              'body': notifications.ACCOUNT_SUDO_BODY,
-                              'admin': True,
-                              'recipient': settings.ROOT_ADMINS, 'sender': settings.NOTIFY_EMAIL}}),
-            # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
-            ]
-          )
-        ]
+      # @todo call catalog.account_discontinue if the account is suspended
+      orm.Action(
+          id='sudo',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='11', required=True),
+              'state': orm.SuperStringProperty(required=True, choices=('active', 'suspended')),
+              'message': orm.SuperTextProperty(required=True),
+              'note': orm.SuperTextProperty()
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      Set(cfg={'rm': ['_account.sessions'], 'd': {'_account.state': 'input.state'}}),
+                      RulePrepare(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Write(),
+                      Set(cfg={'d': {'output.entity': '_account'}}),
+                      Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
+                                        'body': notifications.ACCOUNT_SUDO_BODY,
+                                        'sender': settings.NOTIFY_EMAIL},
+                                  'd': {'recipient': '_account._primary_email'}})
+                      # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
+                  ]
+              )
+          ]
       ),
-    orm.Action(
-      key=orm.Action.build_key('11', 'logout'),
-      arguments={
-        'key': orm.SuperKeyProperty(kind='11', required=True)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            Set(cfg={'rm': ['_account.sessions']}),
-            RulePrepare(),
-            RuleExec()
-            ]
-          ),
-        orm.PluginGroup(
-          transactional=True,
-          plugins=[
-            Write(cfg={'dra': {'ip_address': '_account.ip_address'}}),
-            AccountLogoutOutput()
-            ]
-          )
-        ]
+      orm.Action(
+          id='logout',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='11', required=True)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      Set(cfg={'rm': ['_account.sessions']}),
+                      RulePrepare(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Write(cfg={'dra': {'ip_address': '_account.ip_address'}}),
+                      AccountLogoutOutput()
+                  ]
+              )
+          ]
       ),
-    orm.Action(
-      key=orm.Action.build_key('11', 'blob_upload_url'),
-      arguments={
-        'upload_url': orm.SuperStringProperty(required=True)
-        },
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            BlobURL(cfg={'bucket': settings.BUCKET_PATH}),
-            Set(cfg={'d': {'output.upload_url': '_blob_url'}})
-            ]
-          )
-        ]
+      orm.Action(
+          id='blob_upload_url',
+          arguments={
+              'upload_url': orm.SuperStringProperty(required=True)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      BlobURL(cfg={'bucket': settings.BUCKET_PATH}),
+                      Set(cfg={'d': {'output.upload_url': '_blob_url'}})
+                  ]
+              )
+          ]
       ),
-    orm.Action(
-      key=orm.Action.build_key('11', 'create_channel'),
-      arguments={},
-      _plugin_groups=[
-        orm.PluginGroup(
-          plugins=[
-            Context(),
-            Read(),
-            RulePrepare(),
-            RuleExec(),
-            CreateChannel(),
-            Set(cfg={'d': {'output.token': '_token'}})
-            ]
-          )
-        ]
+      orm.Action(
+          id='create_channel',
+          arguments={},
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      CreateChannel(),
+                      Set(cfg={'d': {'output.token': '_token'}})
+                  ]
+              )
+          ]
       )
-    ]
-  
+  ]
+
   def get_output(self):
     dic = super(Account, self).get_output()
     dic.update({'_is_guest': self._is_guest,
                 '_root_admin': self._root_admin})
     return dic
-  
+
   @property
   def _root_admin(self):
     return self._primary_email in settings.ROOT_ADMINS
-  
+
   @property
   def _is_taskqueue(self):
     return tools.mem_temp_get('current_request_is_taskqueue')
-  
+
   @property
   def _is_cron(self):
     return tools.mem_temp_get('current_request_is_cron')
-  
-  def set_taskqueue(self, is_it):
-    return tools.mem_temp_set('current_request_is_taskqueue', is_it)
-  
-  def set_cron(self, is_it):
-    return tools.mem_temp_set('current_request_is_cron', is_it)
-  
+
+  @property
+  def _is_guest(self):
+    return self.key is None
+
   def primary_email(self):
-    self.identities.read() # implicitly call read on identities
+    self.identities.read()
     if not self.identities.value:
       return None
     for identity in self.identities.value:
-      if identity.primary == True:
+      if identity.primary:
         return identity.email
-    return identity.email
 
   def get_csrf(self):
     session = self.current_account_session()
     if not session:
       return hashlib.md5(os.environ['REMOTE_ADDR'] + settings.CSRF_SALT).hexdigest()
     return hashlib.md5('%s-%s' % (session.session_id, settings.CSRF_SALT)).hexdigest()
-  
-  @property
-  def _is_guest(self):
-    return self.key is None
-  
-  @classmethod
-  def set_current_account(cls, account, session=None):
-    tools.mem_temp_set('current_account', account)
-    tools.mem_temp_set('current_account_session', session)
-  
+
   @classmethod
   def current_account(cls):
     current_account = tools.mem_temp_get('current_account')
@@ -363,19 +356,19 @@ class Account(orm.BaseExpando):
       current_account = cls()
       cls.set_current_account(current_account)
     return current_account
-  
+
   @classmethod
-  def get_system_account(cls):
+  def system_account(cls):
     account_key = cls.build_key('system')
     account = account_key.get()
     if not account:
       identities = [AccountIdentity(email='System', identity='1-0', primary=True)]
-      account = cls(key=account_key, state='active', emails=['System'], identities=identities)
+      account = cls(key=account_key, state='active', identities=identities)
       account._use_rule_engine = False
       account.put()
       account._use_rule_engine = True
     return account
-  
+
   @classmethod
   def current_account_session(cls):
     return tools.mem_temp_get('current_account_session')
@@ -383,31 +376,12 @@ class Account(orm.BaseExpando):
   @staticmethod
   def hash_session_id(session_id):
     return hashlib.md5('%s%s' % (session_id, settings.AUTH_SALT1)).hexdigest()
-  
+
   def session_by_id(self, session_id):
     for session in self.sessions.value:
       if session.session_id == session_id:
         return session
     return None
-  
-  @classmethod
-  def set_current_account_from_access_token(cls, access_token):
-    try:
-      account_key, session_id = access_token.split('|')
-    except:
-      return False # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
-    if not session_id:
-      return False # Fail silently if the session id is not found in the split sequence.
-    account_key = orm.Key(urlsafe=account_key)
-    if account_key.kind() != cls.get_kind() or account_key.id() == 'system':
-      return False # Fail silently if the kind is not valid
-    account = account_key.get()
-    if account:
-      account.read()
-      session = account.session_by_id(session_id)
-      if session:
-        cls.set_current_account(account, session)
-        return account
 
   def new_session(self):
     account = self
@@ -419,3 +393,33 @@ class Account(orm.BaseExpando):
     session = AccountSession(session_id=session_id, ip_address=self.ip_address)
     account.sessions = [session]
     return session
+
+  def set_taskqueue(self, flag):
+    return tools.mem_temp_set('current_request_is_taskqueue', flag)
+
+  def set_cron(self, flag):
+    return tools.mem_temp_set('current_request_is_cron', flag)
+
+  @classmethod
+  def set_current_account(cls, account, session=None):
+    tools.mem_temp_set('current_account', account)
+    tools.mem_temp_set('current_account_session', session)
+
+  @classmethod
+  def set_current_account_from_access_token(cls, access_token):
+    try:
+      account_key, session_id = access_token.split('|')
+    except:
+      return False  # Fail silently if the authorization code is not set properly, or it is corrupted somehow.
+    if not session_id:
+      return False  # Fail silently if the session id is not found in the split sequence.
+    account_key = orm.Key(urlsafe=account_key)
+    if account_key.kind() != cls.get_kind() or account_key.id() == 'system':
+      return False  # Fail silently if the kind is not valid
+    account = account_key.get()
+    if account:
+      account.read()
+      session = account.session_by_id(session_id)
+      if session:
+        cls.set_current_account(account, session)
+        return account

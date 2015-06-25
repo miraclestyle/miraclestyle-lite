@@ -25,7 +25,7 @@ class Context(orm.BaseModel):
           caller_account.read()
           context.account = caller_account
       else:
-        context.account = context.models['11'].get_system_account()
+        context.account = context.models['11'].system_account()
     context._callbacks = []
 
 

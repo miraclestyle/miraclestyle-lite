@@ -88,17 +88,6 @@ FACEBOOK_OAUTH2 = {
     'accountinfo': 'https://graph.facebook.com/me',
 }
 
-TWITTER_OAUTH2 = {
-    'client_id': 'fu60ucDMP0J27e3QlYbFTQ',
-    'client_secret': 'bd9cE1GzBrkpgxqKDD3QGCvm8LHpxcTCeVliXOmoQ20',
-    'scope': ",".join(['email']),
-    'authorization_uri': 'https://www.facebook.com/dialog/oauth',
-    'token_uri': 'https://graph.facebook.com/oauth/access_token',
-    'redirect_uri': '%s/api/account/login/3' % OAUTH2_REDIRECT_URI,
-    'type': '2',
-    'accountinfo': 'https://graph.facebook.com/me',
-}
-
 LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2]
 
 # Payment Methods

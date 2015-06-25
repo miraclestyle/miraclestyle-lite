@@ -23,15 +23,12 @@ def rule_prepare(entities, **kwargs):
   entities = normalize(entities)
   for entity in entities:
     if entity and isinstance(entity, orm.Model):
-      permissions = []
-      if hasattr(entity, '_global_role') and entity._global_role.get_kind() == '7':
-        permissions.extend(entity._global_role.permissions)
-      entity.rule_prepare(permissions, **kwargs)
+      entity.rule_prepare(getattr(entity, '_permissions', []), **kwargs)
 
 
 def rule_exec(entity, action):
   if entity and hasattr(entity, '_action_permissions'):
-    if not entity._action_permissions[action.key_urlsafe]['executable']:
+    if not entity._action_permissions[action.key_id_str]['executable']:
       raise orm.ActionDenied(action)
   else:
     raise orm.ActionDenied(action)

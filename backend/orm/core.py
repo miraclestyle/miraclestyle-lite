@@ -147,10 +147,6 @@ class Action(BaseExpando):
     self._plugin_groups = kwargs.pop('_plugin_groups', None)
     super(Action, self).__init__(*args, **kwargs)
 
-  @classmethod
-  def build_key(cls, kind, action_id):
-    return Key(kind, 'action', cls.get_kind(), action_id)
-
 
 class PluginGroup(BaseExpando):
 
@@ -222,7 +218,7 @@ class ExecuteActionPermission(Permission):
     if len(args):
       actions, condition = args
       if not isinstance(actions, (tuple, list)):
-        actions = [actions]
+        actions = (actions,)
       self.actions = actions
       self.condition = condition
 
@@ -303,7 +299,7 @@ class ReadFieldPermission(Permission):
     if len(args):
       fields, condition = args
       if not isinstance(fields, (tuple, list)):
-        fields = [fields]
+        fields = (fields,)
       self.fields = fields
       self.condition = condition
 

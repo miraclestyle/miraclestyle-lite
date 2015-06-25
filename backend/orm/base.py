@@ -393,7 +393,7 @@ class _BaseModel(object):
       try:
         action_key = Key(urlsafe=action)
       except:
-        action_key = Key(cls.get_kind(), 'action', '1', action)
+        action_key = Key(cls.get_kind(), action)
     class_actions = cls.get_actions()
     for class_action in class_actions:
       if action_key == class_action.key:
@@ -872,7 +872,7 @@ class _BaseModel(object):
   @classmethod
   def _rule_reset_actions(cls, action_permissions, actions):
     for action in actions:
-      action_permissions[action.key.urlsafe()] = {'executable': []}
+      action_permissions[action.key_id_str] = {'executable': []}
 
   @classmethod
   def _rule_reset_fields(cls, field_permissions, fields):
@@ -930,7 +930,7 @@ class _BaseModel(object):
         next_args.append((False if current_parent_permissions else True, current_permissions, value, value.iteritems()))
       else:
         if isinstance(value, list) and len(value):
-          if any(value):  # @todo switch to all() after new perm system
+          if all(value):
             current_permissions[key] = True
           else:
             current_permissions[key] = False
