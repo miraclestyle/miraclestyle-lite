@@ -87,12 +87,11 @@ class Account(orm.BaseExpando):
       orm.ExecuteActionPermission(('read', 'update', 'logout'), condition_not_guest_and_owner),
       orm.ExecuteActionPermission(('blob_upload_url', 'create_channel'), condition_not_guest),
       orm.ExecuteActionPermission(('read', 'search', 'sudo'), condition_root),
-      orm.ReadFieldPermission(('created', 'updated', 'state', '_records'), condition_not_guest_and_owner),
-      orm.ReadFieldPermission(('identities', 'sessions', '_primary_email', '_records'), condition_not_guest_and_owner),
-      orm.ReadFieldPermission(('created', 'updated', 'identities', 'state', 'sessions',
-                               'ip_address', '_primary_email', '_records'), condition_root),
+      orm.ReadFieldPermission(('created', 'updated', 'state', 'identities', 'sessions', '_primary_email'), condition_not_guest_and_owner),
+      orm.ReadFieldPermission(('created', 'updated', 'state', 'identities', 'sessions', '_primary_email',
+                               'ip_address', '_records'), condition_root),
       orm.WriteFieldPermission(('identities', 'sessions', '_primary_email', '_records'), condition_not_guest_and_owner),
-      orm.WriteFieldPermission('state', condition_sudo_action_and_root)
+      orm.WriteFieldPermission(('state', '_records'), condition_sudo_action_and_root)
   ]
 
   _actions = [

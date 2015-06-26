@@ -351,7 +351,7 @@ class Notify(orm.BaseModel):
     method = self.cfg.get('method', ['mail'])
     if not isinstance(method, (list, tuple)):
       method = [method]
-    condition = self.cfg.get('condition', 'True')
+    condition = self.cfg.get('condition', None)
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
     entity = tools.get_attr(context, entity_path)
@@ -359,7 +359,7 @@ class Notify(orm.BaseModel):
     values.update(static_values)
     for key, value in dynamic_values.iteritems():
       values[key] = tools.get_attr(context, value)
-    if tools.safe_eval(condition, values):
+    if condition is None or condition(**values):
       if 'mail' in method:
         tools.mail_send(values)
       if 'http' in method:
