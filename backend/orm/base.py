@@ -720,7 +720,8 @@ class _BaseModel(object):
           continue
         except IndexError as e:
           break
-      if (not current_field_key in current_permissions) or (not current_permissions[current_field_key]['visible']):
+      is_structured = hasattr(current_field, 'is_structured') and current_field.is_structured
+      if (not current_field_key in current_permissions) or (not current_permissions[current_field_key]['visible']) and not is_structured:
         current_entity.remove_output(current_field_key)
         current_field_key = None
       else:
