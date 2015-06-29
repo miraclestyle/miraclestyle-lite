@@ -4,6 +4,7 @@ Created on Oct 8, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 from webapp2_extras import local
 from google.appengine.api import memcache
 

@@ -7,12 +7,12 @@ Created on Jan 15, 2015
 
 class BaseKeyValueError(Exception):
 
-    LOG = False # log this exception if possible
+  LOG = False  # log this exception if possible
 
-    def __init__(self, message):
-        self.message = {}
-        if hasattr(self, 'KEY'):
-            key = self.KEY
-        else:
-            key = self.__class__.__name__.lower()
-        self.message[key] = message
+  def __init__(self, message):
+    self.message = {}
+    if hasattr(self, 'KEY'):
+      key = self.KEY
+    else:
+      key = self.__class__.__name__.lower()
+    self.message[key] = message

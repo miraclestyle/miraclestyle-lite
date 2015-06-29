@@ -4,6 +4,7 @@ Created on Jan 6, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import orm
 import settings
 import tools
@@ -114,7 +115,7 @@ class Seller(orm.BaseExpando):
   def condition_not_guest_and_owner(action, account, entity, **kwargs):
     return action.key_id_str not in ("cron_generate_feedback_stats",) and not account._is_guest and entity._original.key_root == account.key
 
-  def condition_not_guest_and_owner_active():
+  def condition_not_guest_and_owner_active(action, account, entity, **kwargs):
     return action.key_id_str not in ("cron_generate_feedback_stats",) and not account._is_guest and entity._original.root_entity._original.state == "active"
 
   def condition_taskqueue_or_cron_or_root(account, **kwargs):
@@ -217,16 +218,16 @@ class Seller(orm.BaseExpando):
   ]
 
   def get_notified_followers_count_callback(self):
-    Collection = orm.Model._lookup_model('18')  # @todo import or this
+    Collection = orm.Model._lookup_model('18')
     key = 'get_notified_followers_count_%s' % self.key.urlsafe()
     count = tools.mem_get(key)
     if count is None:
-      count = Collection.query(Collection.sellers == self.key, Collection.notify).count()
+      count = Collection.query(Collection.sellers == self.key, Collection.notify == True).count()
       tools.mem_set(key, count, settings.CACHE_TIME_NOTIFIED_FOLLOWERS_COUNT)
     return count
 
   def get_followers_count_callback(self):
-    Collection = orm.Model._lookup_model('18')  # @todo import or this
+    Collection = orm.Model._lookup_model('18')
     key = 'get_followers_count_%s' % self.key.urlsafe()
     count = tools.mem_get(key)
     if count is None:

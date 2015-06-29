@@ -4,6 +4,7 @@ Created on Aug 25, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import datetime
 import copy
 
@@ -216,7 +217,7 @@ class OrderLineFormat(orm.BaseModel):
         if line.taxes.value:
           for tax in line.taxes.value:
             if tax.type == 'proportional':
-              tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"  @todo Using fixed formating here, since it's the percentage value, such as 17.00%.
+              tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"  @note Using fixed formating here, since it's the percentage value, such as 17.00%.
               tax_subtotal = tax_subtotal + (line.discount_subtotal * tax_amount)
             elif tax.type == 'fixed':
               tax_amount = tools.format_value(tax.amount, order.currency.value)
@@ -380,7 +381,7 @@ class OrderAddressPlugin(orm.BaseModel):
 
   def validate_address(self, address):
     '''
-    @todo few problems with postal_code_from and postal_code_to
+    @note few problems with postal_code_from and postal_code_to
     Postal code cant always be a number unless its like that in countries.
 
     postal_code_from and postal_code_to must be converted into int, because strings cant be compared

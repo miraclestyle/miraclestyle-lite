@@ -9,14 +9,16 @@ Jinja2 flavored notification templates
 variables available for every template ['account', 'sender', 'entity', 'input', 'action', 'subject', 'body']
 + dynamic and static data
 '''
+
 import codecs
 import os
 
+
 def template(path):
-    try:
-        return codecs.open(os.path.join(os.path.dirname(__file__), 'templates', path), 'r', 'utf-8').read()
-    except IOError as e:
-        return 'text'
+  try:
+    return codecs.open(os.path.join(os.path.dirname(__file__), 'templates', path), 'r', 'utf-8').read()
+  except IOError as e:
+    return 'text'
 
 
 ACCOUNT_SUDO_SUBJECT = template('account/sudo_subject.html')

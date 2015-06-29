@@ -4,6 +4,7 @@ Created on Sep 16, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import datetime
 import collections
 
@@ -22,7 +23,7 @@ class CollectionCronNotify(orm.BaseModel):
     age = self.cfg.get('age', 7)
     Collection = context.models['18']
     Catalog = context.models['31']
-    result = Collection.query(Collection.notify).fetch_page(1, start_cursor=context.input.get('cursor'))
+    result = Collection.query(Collection.notify == True).fetch_page(1, start_cursor=context.input.get('cursor'))
     collection = None
     if len(result) and len(result[0]):
       collection = result[0][0]

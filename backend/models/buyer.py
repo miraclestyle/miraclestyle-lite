@@ -4,6 +4,7 @@ Created on May 18, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import orm
 import settings
 from plugins.base import *

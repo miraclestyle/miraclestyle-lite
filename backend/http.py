@@ -4,6 +4,7 @@ Created on Sep 22, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import webapp2
 import json
 import datetime

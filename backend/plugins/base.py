@@ -4,6 +4,7 @@ Created on Jun 14, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import copy
 import time
 
@@ -88,7 +89,7 @@ class Read(orm.BaseModel):
       entity = source.get()
       entity.read(read_arguments)
     elif hasattr(model, 'prepare_key'):
-      model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)  # @todo Perhaps, all context system wide variables should be passed to prepare_key (input, output, action, model, models, domain, namespace...)
+      model_key = model.prepare_key(context.input, parent=parent, namespace=namespace)  # @note Perhaps, all context system wide variables should be passed to prepare_key (input, output, action, model, models, domain, namespace...)
       if model_key.id() is not None:
         entity = model_key.get()
         if entity is None:

@@ -4,6 +4,7 @@ Created on May 13, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 from xml.etree import ElementTree
 
 import orm

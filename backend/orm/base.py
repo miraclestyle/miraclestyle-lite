@@ -4,6 +4,7 @@ Created on Jul 9, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import copy
 import collections
 import time
@@ -299,7 +300,7 @@ class _BaseModel(object):
   _state = None  # This field is used by rule engine!
   _sequence = None  # Internally used for repeated properties
   _use_record_engine = True  # All models are by default recorded!
-  _use_rule_engine = True  # All models by default respect rule engine! @todo This control property doen't respect Action control!!
+  _use_rule_engine = True  # All models by default respect rule engine! @note This control property doen't respect Action control!!
   _use_search_engine = False  # Models can utilize google search services along with datastore search services.
   _parent = None
   _write_custom_indexes = None
@@ -393,7 +394,7 @@ class _BaseModel(object):
       try:
         action_key = Key(urlsafe=action)
       except:
-        action_key = Key(cls.get_kind(), action)
+        action_key = Key('1', action)
     class_actions = cls.get_actions()
     for class_action in class_actions:
       if action_key == class_action.key:
@@ -483,7 +484,7 @@ class _BaseModel(object):
     entity.write_search_document()
     if self._root is self:  # make_original will only be called on root entity, because make_original logic will handle substructures
       entity.make_original()  # in post put hook we override the instance of original with the self, because the entity is now saved and passed the rule engine
-    # @todo problem with documents is that they are not transactional, and upon failure of transaction
+    # @note problem with documents is that they are not transactional, and upon failure of transaction
     # they might end up being stored anyway.
 
   @classmethod
@@ -959,11 +960,11 @@ class _BaseModel(object):
       record_arguments = getattr(self._root, '_record_arguments', None)
       if record_arguments and record_arguments.get('agent') and record_arguments.get('action'):
         log_entity = record_arguments.pop('log_entity', True)
-        # @todo We have no control over argument permissions! (if entity._field_permissions['_records'][argument_key]['writable']:)
-        record = Model._lookup_model('0')(parent=self.key, **record_arguments)  # @todo no other way to reference Record in here
+        # @note We have no control over argument permissions! (if entity._field_permissions['_records'][argument_key]['writable']:)
+        record = Model._lookup_model('0')(parent=self.key, **record_arguments)  # @note no other way to reference Record in here
         if log_entity is True:
           record.log_entity(self)
-        return record.put_async()  # @todo How do we implement put_multi in this situation!?
+        return record.put_async()
         # We should also test put_async behaviour in transacitons however, they will probably work fine since,
         # general handler failure will result in transaction rollback!
 
@@ -1205,7 +1206,7 @@ class _BaseModel(object):
       index = search.Index(name=name, namespace=namespace)
       for documents_partition in tools.partition_list(documents, 200):
         if len(documents_partition):
-          # @todo try/except block was removed in order to fail wraping transactions in case of index operation failure!
+          # @note try/except block was removed in order to fail wraping transactions in case of index operation failure!
           if operation == 'index':
             index.put(documents_partition)
           elif operation == 'unindex':
@@ -1244,8 +1245,6 @@ class _BaseModel(object):
 
   @classmethod
   def search_document_to_entity(cls, document):
-    # @todo We need function to fetch entities from documents as well! get_multi([document.doc_id for document in documents])
-    # @answer you mean live active with get multi or this function was to solve that?
     if document and isinstance(document, search.Document):
       entity = cls(key=Key(urlsafe=document.doc_id))
       # tools.set_attr(entity, 'language', document.language)
@@ -1461,7 +1460,7 @@ class BaseExpando(_BaseModel, Expando):
       if prop:
         if value is None:
           self._clone_properties()
-          # @todo setattr invokes del keyword here which deletes the entity
+          # @note setattr invokes del keyword here which deletes the entity
           # that is fine in some cases, but here it isnt since it will delete any entity bypassing the _state = 'deleted'
           # meaning that if user sends _images = [] for the catalog product, this setattr will delete those
           # images without user specifying _state = 'deleted' on them

@@ -4,6 +4,7 @@ Created on Aug 30, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import datetime
 import hashlib
 import json
@@ -136,7 +137,7 @@ class OrderMessage(orm.BaseExpando):
   _default_indexed = True
 
   _virtual_fields = {
-      '_agent': orm.SuperReferenceStructuredProperty('11', callback=lambda self.agent.get_async(),
+      '_agent': orm.SuperReferenceStructuredProperty('11', callback=lambda self: self.agent.get_async(),
                                                      format_callback=lambda self, value: value),
       '_action': orm.SuperComputedProperty(lambda self: self.action.id() if self.action else '')
   }
@@ -321,100 +322,102 @@ class Order(orm.BaseExpando):
                                     '_lines.product.volume_uom'), condition_update_and_view_order)
   ]
 
-  _global_role = orm.GlobalRole(
-      permissions=[
-          #  action.key_id_str not in ["search"] and...
-          # Included payment_status in field permissions, will have to further analyse exclusion...
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'update_line')], True,
-                               'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
-                               'not account._is_guest and entity._original.key_root == account.key'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'read')], True,
-                               'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
-                           or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
-                               'not account._is_guest and (entity._original.key_root == account.key \
-                           and entity._original.state == "cart")'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
-                               'action.key_id_str == "search" and (account._root_admin \
-                            or ((not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference" \
-                                and input["search"]["filters"][0]["value"]._root == account.key) \
-                                or (not account._is_guest and "ancestor" in input["search"] and input["search"]["ancestor"]._root == account.key)))'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'log_message')], True,
-                               '(account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
-                           or (entity._original.seller_reference \
-                           and entity._original.seller_reference._root == account.key))))'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel')], True,
-                               'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "checkout"'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'complete')], True,
-                               'entity._original.state == "checkout"'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'leave_feedback')], True,
-                               'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "completed" and entity._is_feedback_allowed \
-                           and (entity._original.feedback is None or (entity._original.feedback is not None \
-                           and entity._original.feedback_adjustment == "revision"))'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'review_feedback')], True,
-                               'not account._is_guest and entity._original.seller_reference and \
-                           entity._original.seller_reference._root == account.key \
-                           and entity._original.state == "completed" and entity._is_feedback_allowed \
-                           and entity._original.feedback == "negative" and entity._original.feedback_adjustment is None'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'report_feedback')], True,
-                               'not account._is_guest and entity._original.seller_reference \
-                           and entity._original.seller_reference._root == account.key \
-                           and entity._original.state == "completed" \
-                           and entity._is_feedback_allowed and entity._original.feedback == "negative" \
-                           and entity._original.feedback_adjustment not in ["reported", "sudo"]'),
-          orm.ActionPermission('34', [orm.Action.build_key('34', 'sudo_feedback')], True,
-                               'account._root_admin and entity._original.state == "completed" \
-                           and entity._original.feedback_adjustment in ["reported"]\
-                           and entity._is_feedback_allowed'),
-          # @todo Implement field permissions!
-          orm.FieldPermission('34', ['created', 'updated', 'state', 'date', 'seller_reference',
-                                     'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
-                                     'tax_amount', 'total_amount', 'feedback', 'carrier', '_seller_reference',
-                                     'feedback_adjustment', 'payment_status', 'payment_method',
-                                     '_lines', '_messages', '_payment_method', '_records', '_seller'], False, True,
-                              'account._is_taskqueue or account._root_admin or (not account._is_guest \
-                          and (entity._original.key_root == account.key or (entity._original.seller_reference \
-                          and entity._original.seller_reference._root == account.key)))'),
-          orm.FieldPermission('34', ['date', 'seller_reference', 'billing_address', 'shipping_address',
-                                     'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
-                                     'payment_method', '_lines', '_messages', 'carrier', '_records'], True, True,
-                              'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart" and action.key_id_str == "update_line"'),
-          orm.FieldPermission('34', ['payment_method'], True, True,
-                              'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart" and action.key_id_str == "update"'),
-          orm.FieldPermission('34', ['state'], True, True,
-                              '(action.key_id_str == "update_line" and entity.state == "cart") \
-                          or (action.key_id_str == "update" and entity.state == "checkout") \
-                          or (action.key_id_str == "cancel" and entity.state == "canceled") \
-                          or (action.key_id_str == "complete" and entity.state == "completed")'),
-          orm.FieldPermission('34', ['payment_status', 'state', '_messages'], True, True,
-                              'action.key_id_str == "complete"'),  # writable when in complete action mode, cant be in taskqueue because request comes from paypal IPN
-          orm.FieldPermission('34', ['_messages'], True, True,
-                              'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
-                           or (entity._original.seller_reference \
-                           and entity._original.seller_reference._root == account.key)))'),
-          orm.FieldPermission('34', ['shipping_address', 'billing_address', '_lines', 'carrier',
-                                     'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
-                              'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart" and action.key_id_str in ["view_order", "update"]'),
-          orm.FieldPermission('34', ['_lines.sequence', '_lines.product', '_lines.discount', '_lines.taxes'], False, None,
-                              'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart" and action.key_id_str == "update"'),
-          orm.FieldPermission('34', ['_lines.product.quantity'], True, None,
-                              'not account._is_guest and entity._original.key_root == account.key \
-                           and entity._original.state == "cart" and action.key_id_str == "update"'),
-          orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
-                              '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
-                          or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
-          orm.FieldPermission('34', ['_messages._agent.sessions', '_messages._agent.emails', '_messages._agent._primary_email',
-                                     '_messages._agent.identities', '_messages._agent._records', '_messages._agent._csrf'], False, False, 'True'),
-      ]
-  )
+  def old(self):
+    '''
+       _global_role = orm.GlobalRole(
+          permissions=[
+              #  action.key_id_str not in ["search"] and...
+              # Included payment_status in field permissions, will have to further analyse exclusion...
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'update_line')], True,
+                                   'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "cart"'),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'view_order')], True,
+                                   'not account._is_guest and entity._original.key_root == account.key'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'read')], True,
+                                   'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
+                               or (entity._original.seller_reference and entity._original.seller_reference._root == account.key)))'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'update')], True,
+                                   'not account._is_guest and (entity._original.key_root == account.key \
+                               and entity._original.state == "cart")'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'search')], True,
+                                   'action.key_id_str == "search" and (account._root_admin \
+                                or ((not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference" \
+                                    and input["search"]["filters"][0]["value"]._root == account.key) \
+                                    or (not account._is_guest and "ancestor" in input["search"] and input["search"]["ancestor"]._root == account.key)))'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'log_message')], True,
+                                   '(account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
+                               or (entity._original.seller_reference \
+                               and entity._original.seller_reference._root == account.key))))'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'cancel')], True,
+                                   'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "checkout"'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'complete')], True,
+                                   'entity._original.state == "checkout"'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'leave_feedback')], True,
+                                   'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "completed" and entity._is_feedback_allowed \
+                               and (entity._original.feedback is None or (entity._original.feedback is not None \
+                               and entity._original.feedback_adjustment == "revision"))'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'review_feedback')], True,
+                                   'not account._is_guest and entity._original.seller_reference and \
+                               entity._original.seller_reference._root == account.key \
+                               and entity._original.state == "completed" and entity._is_feedback_allowed \
+                               and entity._original.feedback == "negative" and entity._original.feedback_adjustment is None'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'report_feedback')], True,
+                                   'not account._is_guest and entity._original.seller_reference \
+                               and entity._original.seller_reference._root == account.key \
+                               and entity._original.state == "completed" \
+                               and entity._is_feedback_allowed and entity._original.feedback == "negative" \
+                               and entity._original.feedback_adjustment not in ["reported", "sudo"]'),
+              orm.ActionPermission('34', [orm.Action.build_key('34', 'sudo_feedback')], True,
+                                   'account._root_admin and entity._original.state == "completed" \
+                               and entity._original.feedback_adjustment in ["reported"]\
+                               and entity._is_feedback_allowed'),
+              orm.FieldPermission('34', ['created', 'updated', 'state', 'date', 'seller_reference',
+                                         'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
+                                         'tax_amount', 'total_amount', 'feedback', 'carrier', '_seller_reference',
+                                         'feedback_adjustment', 'payment_status', 'payment_method',
+                                         '_lines', '_messages', '_payment_method', '_records', '_seller'], False, True,
+                                  'account._is_taskqueue or account._root_admin or (not account._is_guest \
+                              and (entity._original.key_root == account.key or (entity._original.seller_reference \
+                              and entity._original.seller_reference._root == account.key)))'),
+              orm.FieldPermission('34', ['date', 'seller_reference', 'billing_address', 'shipping_address',
+                                         'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
+                                         'payment_method', '_lines', '_messages', 'carrier', '_records'], True, True,
+                                  'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "cart" and action.key_id_str == "update_line"'),
+              orm.FieldPermission('34', ['payment_method'], True, True,
+                                  'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "cart" and action.key_id_str == "update"'),
+              orm.FieldPermission('34', ['state'], True, True,
+                                  '(action.key_id_str == "update_line" and entity.state == "cart") \
+                              or (action.key_id_str == "update" and entity.state == "checkout") \
+                              or (action.key_id_str == "cancel" and entity.state == "canceled") \
+                              or (action.key_id_str == "complete" and entity.state == "completed")'),
+              orm.FieldPermission('34', ['payment_status', 'state', '_messages'], True, True,
+                                  'action.key_id_str == "complete"'),  # writable when in complete action mode, cant be in taskqueue because request comes from paypal IPN
+              orm.FieldPermission('34', ['_messages'], True, True,
+                                  'account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key) \
+                               or (entity._original.seller_reference \
+                               and entity._original.seller_reference._root == account.key)))'),
+              orm.FieldPermission('34', ['shipping_address', 'billing_address', '_lines', 'carrier',
+                                         'untaxed_amount', 'tax_amount', 'total_amount'], True, True,
+                                  'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "cart" and action.key_id_str in ["view_order", "update"]'),
+              orm.FieldPermission('34', ['_lines.sequence', '_lines.product', '_lines.discount', '_lines.taxes'], False, None,
+                                  'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "cart" and action.key_id_str == "update"'),
+              orm.FieldPermission('34', ['_lines.product.quantity'], True, None,
+                                  'not account._is_guest and entity._original.key_root == account.key \
+                               and entity._original.state == "cart" and action.key_id_str == "update"'),
+              orm.FieldPermission('34', ['feedback', 'feedback_adjustment'], True, True,
+                                  '(action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
+                              or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")'),
+              orm.FieldPermission('34', ['_messages._agent.sessions', '_messages._agent.emails', '_messages._agent._primary_email',
+                                         '_messages._agent.identities', '_messages._agent._records', '_messages._agent._csrf'], False, False, 'True'),
+          ]
+      )
+    '''
 
   _actions = [
       orm.Action(
@@ -456,7 +459,7 @@ class Order(orm.BaseExpando):
           arguments={
               'buyer': orm.SuperKeyProperty(kind='19', required=True),
               'seller': orm.SuperKeyProperty(kind='23', required=True),
-              'read_arguments': orm.SuperJsonProperty()  # @todo This action has to be evaluated!
+              'read_arguments': orm.SuperJsonProperty()
           },
           _plugin_groups=[
               orm.PluginGroup(
@@ -650,7 +653,6 @@ class Order(orm.BaseExpando):
                       Write(),
                       RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_order'}}),
-                      # notify seller that buyer left feedback
                       # @todo cron to send buyer a message when he is ready to leave feedback because there is wait time
                       Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
                                         'subject': notifications.ORDER_COMPLETE_SUBJECT,
@@ -664,7 +666,7 @@ class Order(orm.BaseExpando):
           id='review_feedback',
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True),
-              'message': orm.SuperTextProperty(required=True)  # @todo max length?
+              'message': orm.SuperTextProperty(required=True, max_size=settings.MAX_MESSAGE_SIZE)
           },
           _plugin_groups=[
               orm.PluginGroup(
@@ -696,7 +698,7 @@ class Order(orm.BaseExpando):
           id='report_feedback',
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True),
-              'message': orm.SuperTextProperty(required=True)  # @todo max length?
+              'message': orm.SuperTextProperty(required=True, max_size=settings.MAX_MESSAGE_SIZE)
           },
           _plugin_groups=[
               orm.PluginGroup(
@@ -725,7 +727,7 @@ class Order(orm.BaseExpando):
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True),
               'feedback': orm.SuperStringProperty(required=True, choices=('positive', 'neutral', 'negative')),
-              'message': orm.SuperTextProperty(required=True)  # @todo max length?
+              'message': orm.SuperTextProperty(required=True, max_size=settings.MAX_MESSAGE_SIZE)
           },
           _plugin_groups=[
               orm.PluginGroup(
@@ -758,7 +760,7 @@ class Order(orm.BaseExpando):
           id='log_message',
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True),
-              'message': orm.SuperTextProperty(required=True)  # @todo max length?
+              'message': orm.SuperTextProperty(required=True, max_size=settings.MAX_MESSAGE_SIZE)
           },
           _plugin_groups=[
               orm.PluginGroup(

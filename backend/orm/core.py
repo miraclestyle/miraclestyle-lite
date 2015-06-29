@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
+'''
+Created on Jan 15, 2015
+
+@authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
+'''
+
 from .base import *
 from .properties import *
 
 
-__all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission', 'Role', 'GlobalRole', 'Image']
+__all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission',
+           'ExecuteActionPermission', 'ReadFieldPermission', 'WriteFieldPermission', 'DenyWriteFieldPermission',
+           'Role', 'GlobalRole', 'Image']
 
 
 class Record(BaseExpando):
@@ -155,7 +163,7 @@ class PluginGroup(BaseExpando):
   name = SuperStringProperty('1', required=True)
   subscriptions = SuperKeyProperty('2', kind='1', repeated=True)
   active = SuperBooleanProperty('3', required=True, default=True)
-  sequence = SuperIntegerProperty('4', required=True)  # @todo Not sure if we are gonna need this?
+  sequence = SuperIntegerProperty('4', required=True)
   transactional = SuperBooleanProperty('5', required=True, default=False, indexed=False)
   plugins = SuperPickleProperty('6', required=True, default=[], compressed=False)
 
@@ -295,7 +303,7 @@ class DenyWriteFieldPermission(Permission):
   condition = SuperPickleProperty('2', required=True, indexed=False)
 
   def __init__(self, *args, **kwargs):
-    super(WriteFieldPermission, self).__init__(**kwargs)
+    super(DenyWriteFieldPermission, self).__init__(**kwargs)
     if len(args):
       fields, condition = args
       if not isinstance(fields, (tuple, list)):

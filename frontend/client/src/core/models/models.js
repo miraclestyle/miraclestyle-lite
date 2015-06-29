@@ -264,7 +264,7 @@
                             field: fieldPermissions
                         },
                         actionTranslate = function (actionName) {
-                            return actionPermissions[ruleActions[actionName].key];
+                            return actionPermissions[ruleActions[actionName].id];
                         },
                         executable = function (actionName) {
                             var gets = actionTranslate(actionName);

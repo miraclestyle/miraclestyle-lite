@@ -4,6 +4,7 @@ Created on Jun 16, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import re
 import json
 import os
@@ -81,7 +82,7 @@ def channel_create(token):
   return channel.create_channel(token)
 
 
-# @todo We have to consider http://sendgrid.com/partner/google
+# @note We have to consider http://sendgrid.com/partner/google
 def mail_send(data):
   message_sender = data.get('sender', None)
   if not message_sender:

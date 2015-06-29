@@ -4,6 +4,7 @@ Created on Jul 9, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.ext.ndb.model import _BaseValue
 

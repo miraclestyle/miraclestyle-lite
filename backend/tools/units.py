@@ -4,6 +4,7 @@ Created on Oct 10, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 from decimal import Decimal, ROUND_HALF_EVEN
 
 import errors

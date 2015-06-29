@@ -4,6 +4,7 @@ Created on Jul 9, 2013
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+
 import json
 
 from .base import *
@@ -137,8 +138,8 @@ class SuperSearchProperty(SuperJsonProperty):
       # cfg_orders = [('name', ['asc'])]
       # input_orders = [{'field': 'name', 'operator': 'asc'}]
       if len(cfg_values) != len(input_values):
-        raise FormatError('%s_values_mismatch' % method)  # @todo Write this error correctly!
-      for i, input_value in enumerate(input_values):  # @todo If input_values length is 0, and above validation passes, than there should not be any errors!?
+        raise FormatError('%s_values_mismatch' % method)
+      for i, input_value in enumerate(input_values):  # @note If input_values length is 0, and above validation passes, than there should not be any errors!?
         cfg_value = cfg_values[i]
         if input_value['field'] != cfg_value[0]:
           raise FormatError('expected_%s_field_%s_at_%s' % (method, cfg_value[0], i))
@@ -168,7 +169,7 @@ class SuperSearchProperty(SuperJsonProperty):
         cfg_index_filters = cfg_index.get('filters', [])
         cfg_index_orders = cfg_index.get('orders', [])
         if ancestor is not None:
-          if not cfg_index_ancestor:  # @todo Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
+          if not cfg_index_ancestor:  # @notice Not sure if we have to enforce ancestor if index_cfg.get('ancestor') is True!?
             raise FormatError('ancestor_not_allowed')
         _validate(cfg_index_filters, filters, 'filter')
         _validate(cfg_index_orders, orders, 'order')

@@ -41,7 +41,6 @@ class AccountIdentity(orm.BaseModel):
   primary = orm.SuperBooleanProperty('3', required=True, default=True)
 
 
-# @todo We need to trigger account_discontinue on catalogs during account suspension!
 class Account(orm.BaseExpando):
 
   _kind = 11
@@ -213,7 +212,6 @@ class Account(orm.BaseExpando):
               )
           ]
       ),
-      # @todo call catalog.account_discontinue if the account is suspended
       orm.Action(
           id='sudo',
           arguments={
@@ -244,7 +242,7 @@ class Account(orm.BaseExpando):
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
                                          {'account': 'entity.key_urlsafe'},
-                                          lambda: entity.state == 'suspended')])
+                                         lambda: entity.state == 'suspended')])
                       # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
                   ]
               )
