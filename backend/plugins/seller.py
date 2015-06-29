@@ -7,7 +7,7 @@ Created on Sep 16, 2014
 
 import datetime
 import collections
-import decimal
+from decimal import Decimal
 
 import orm
 
@@ -126,10 +126,10 @@ class SellerSetupDefaults(orm.BaseModel):
                                            lines=[OrderDiscountLine(name='Discount On Quantity Over 5',
                                                                     condition_type='quantity',
                                                                     condition_operator='>',
-                                                                    condition_value=decimal.Decimal('5'),
-                                                                    discount_value=decimal.Decimal('10'),
+                                                                    condition_value=Decimal('5'),
+                                                                    discount_value=Decimal('10'),
                                                                     active=True)], active=False)
-    default_tax = OrderTaxPlugin(name='Sales Tax', address_type='shipping', type='proportional', amount=decimal.Decimal('6'), active=False)
+    default_tax = OrderTaxPlugin(name='Sales Tax', address_type='shipping', type='proportional', amount=Decimal('6'), active=False)
     if not plugin_group or not plugin_group.plugins:  # now user wont be in able to delete the config completely, he will always have these defaults
       plugins = [default_address_shipping,
                  default_address_billing,

@@ -220,7 +220,7 @@ class Order(orm.BaseExpando):
     return account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key)
                                                               or (entity._original.seller_reference._root == account.key)))
 
-  def condition_search(account, entity, input, **kwargs):
+  def condition_search(account, action, entity, input, **kwargs):
     return action.key_id_str == "search" and (account._root_admin
                                               or ((not account._is_guest and input["search"]["filters"][0]["field"] == "seller_reference"
                                                    and input["search"]["filters"][0]["value"]._root == account.key)
@@ -233,7 +233,7 @@ class Order(orm.BaseExpando):
   def condition_checkout(entity, **kwargs):
     return entity._original.state == "checkout"
 
-  def condition_complete(action):
+  def condition_complete(action, **kwargs):
     return action.key_id_str == "complete"
 
   def condition_leave_feedback(account, entity, **kwargs):

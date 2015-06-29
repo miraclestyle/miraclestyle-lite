@@ -7,6 +7,7 @@ Created on Aug 25, 2014
 
 import datetime
 import copy
+from decimal import Decimal
 
 from google.appengine.api import urlfetch
 
@@ -46,6 +47,7 @@ class OrderInit(orm.BaseModel):
       order.date = datetime.datetime.now()
       order.seller_reference = seller_key
       order.make_original()
+      order._lines = []
     else:
       defaults = {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}
       if 'read_arguments' in context.input:
@@ -478,7 +480,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
   def run(self, context):
     if not self.active:
       return
-    super(PayPalPayment, self).run(context)
+    super(OrderPayPalPaymentPlugin, self).run(context)
     # currently we only support paypal, so its enforced by default
     context._order.payment_method = self.key
 
@@ -827,7 +829,7 @@ class OrderCarrierPlugin(orm.BaseModel):
 
   def validate_line(self, carrier_line, order):
     address = getattr(order, 'shipping_address')
-    address = order_address.value
+    address = address.value
     if address is None:
       return False
     if carrier_line.exclusion:

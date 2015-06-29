@@ -521,13 +521,16 @@ class _BaseModel(object):
       except AttributeError as e:
         props = self.get_fields()
         prop = props.get(name)
-      if not isinstance(prop, Property):
-        if not isinstance(self, Expando):
-          raise TypeError('Cannot set non-property %s' % name)
+      try:
+        if not isinstance(prop, Property):
+          if not isinstance(self, Expando):
+            raise TypeError('Cannot set non-property %s' % name)
+          else:
+            setattr(self, name, value)
         else:
           setattr(self, name, value)
-      else:
-        setattr(self, name, value)
+      except ComputedPropertyError as e:
+        pass
 
   def __getattr__(self, name):
     virtual_fields = self.get_virtual_fields()

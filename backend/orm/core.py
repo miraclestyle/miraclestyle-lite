@@ -59,14 +59,24 @@ class Record(BaseExpando):
     return self.agent.get_async()
 
   def _retrieve_action(self):
-    entity = self
-    action_parent = entity.action.parent()
-    modelclass = entity._lookup_model(action_parent.kind())
-    action_id = entity.action.id()
-    if modelclass and hasattr(modelclass, '_actions'):
-      for action in modelclass._actions:
-        if entity.action == action.key:
-          return '%s.%s' % (modelclass.__name__, action_id)
+    try:
+      entity = self
+      parent = entity.key
+      while True:
+        parent = parent.parent()
+        if parent is None:
+          break
+        modelclass = entity._lookup_model(parent.kind())
+        if modelclass and hasattr(modelclass, '_actions'):
+          break
+      action_id = entity.action.id()
+      if modelclass and hasattr(modelclass, '_actions'):
+        for action in modelclass._actions:
+          if entity.action == action.key:
+            return '%s.%s' % (modelclass.__name__, action_id)
+      return action_id
+    except Exception, e:
+     return e.message
 
   def _if_properties_are_cloned(self):
     return not (self.__class__._properties is self._properties)

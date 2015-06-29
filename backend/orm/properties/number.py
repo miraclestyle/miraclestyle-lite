@@ -5,7 +5,7 @@ Created on Jul 9, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-import decimal
+from decimal import Decimal
 
 from .base import *
 from .base import _BaseProperty
@@ -48,7 +48,7 @@ class SuperIntegerProperty(_BaseProperty, IntegerProperty):
 
 class SuperDecimalProperty(SuperStringProperty):
 
-  '''Decimal property that accepts only decimal.Decimal.'''
+  '''Decimal property that accepts only Decimal.'''
 
   def _convert_value(self, value):
     if self._repeated:
@@ -56,12 +56,12 @@ class SuperDecimalProperty(SuperStringProperty):
       try:
         out = []
         for i, v in enumerate(value):
-          out.append(decimal.Decimal(v))
+          out.append(Decimal(v))
       except:
         raise FormatError('invalid_number_on_sequence_%s' % i)
     else:
       try:
-        out = decimal.Decimal(value)
+        out = Decimal(value)
       except:
         raise FormatError('invalid_number')
     if out is None:
@@ -78,11 +78,11 @@ class SuperDecimalProperty(SuperStringProperty):
       return search.NumberField(name=self.search_document_field_name, value=value)
 
   def _validate(self, value):
-    if not isinstance(value, decimal.Decimal):
+    if not isinstance(value, Decimal):
       raise ValueError('expected_decimal')
 
   def _to_base_type(self, value):
     return str(value)
 
   def _from_base_type(self, value):
-    return decimal.Decimal(value)
+    return Decimal(value)
