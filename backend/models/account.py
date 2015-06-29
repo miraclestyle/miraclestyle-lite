@@ -240,7 +240,11 @@ class Account(orm.BaseExpando):
                       Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
                                         'body': notifications.ACCOUNT_SUDO_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
-                                  'd': {'recipient': '_account._primary_email'}})
+                                  'd': {'recipient': '_account._primary_email'}}),
+                      CallbackExec(cfg=[('callback',
+                                         {'action_id': 'account_discontinue', 'action_model': '31'},
+                                         {'account': 'entity.key_urlsafe'},
+                                          lambda: entity.state == 'suspended')])
                       # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
                   ]
               )

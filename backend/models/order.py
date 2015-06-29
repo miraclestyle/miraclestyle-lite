@@ -311,10 +311,14 @@ class Order(orm.BaseExpando):
       orm.WriteFieldPermission('state', condition_state),
       orm.WriteFieldPermission(('payment_status', 'state', '_messages'), condition_complete),
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
-      orm.WriteFieldPermission(('shipping_address', 'billing_address', '_lines.subtotal', '_lines.discount_subtotal',
-                                '_lines.tax_subtotal', '_lines.total', '_lines.product.quantity', 'carrier',
-                                'untaxed_amount', 'tax_amount', 'total_amount'), condition_update_and_view_order),  # @todo problem is line removal
-      orm.WriteFieldPermission(('feedback', 'feedback_adjustment'), condition_feedback)
+      orm.WriteFieldPermission(('shipping_address', 'billing_address', '_lines', 'carrier',
+                                'untaxed_amount', 'tax_amount', 'total_amount'), condition_update_and_view_order),
+      orm.WriteFieldPermission(('feedback', 'feedback_adjustment'), condition_feedback),
+      orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
+                                    '_lines.product.category', '_lines.product.name', '_lines.product.uom',
+                                    '_lines.product.code', '_lines.product.unit_price', '_lines.product.variant_signature',
+                                    '_lines.product.weight', '_lines.product.weight_uom', '_lines.product.volume',
+                                    '_lines.product.volume_uom'), condition_update_and_view_order)
   ]
 
   _global_role = orm.GlobalRole(

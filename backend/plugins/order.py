@@ -914,6 +914,7 @@ class OrderDiscountPlugin(orm.BaseModel):
     order = context._order
     if self.lines.value:
       for line in order._lines.value:
+        line.discount = tools.format_value('0', Unit(digits=2))
         if line._state == 'deleted':
           continue
         product = line.product.value

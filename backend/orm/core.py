@@ -287,6 +287,30 @@ class WriteFieldPermission(Permission):
         parsed_field['writable'].append(True)
 
 
+class DenyWriteFieldPermission(Permission):
+
+  _kind = 132
+
+  fields = SuperStringProperty('1', repeated=True, indexed=False)
+  condition = SuperPickleProperty('2', required=True, indexed=False)
+
+  def __init__(self, *args, **kwargs):
+    super(WriteFieldPermission, self).__init__(**kwargs)
+    if len(args):
+      fields, condition = args
+      if not isinstance(fields, (tuple, list)):
+        fields = [fields]
+      self.fields = fields
+      self.condition = condition
+
+  def run(self, entity, **kwargs):
+    kwargs['entity'] = entity
+    for field in self.fields:
+      parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
+      if parsed_field and self.condition(**kwargs):
+        parsed_field['writable'].append(False)
+
+
 class ReadFieldPermission(Permission):
 
   _kind = 131

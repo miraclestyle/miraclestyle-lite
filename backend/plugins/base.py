@@ -287,10 +287,13 @@ class CallbackExec(orm.BaseModel):
       self.cfg = []
     queues = {}
     for config in self.cfg:
-      queue_name, static_data, dynamic_data = config
-      for key, value in dynamic_data.iteritems():
-        static_data[key] = tools.get_attr(context, value)
-      context._callbacks.append((queue_name, static_data))
+      queue_name, static_values, dynamic_values, condition = config
+      values = {}
+      values.update(static_values)
+      for key, value in dynamic_values.iteritems():
+        values[key] = tools.get_attr(context, value)
+      if condition is None or condition(**values):
+        context._callbacks.append((queue_name, values))
     for callback in context._callbacks:
       if callback[1].get('caller_account') is None:
         callback[1]['caller_account'] = context.account.key_urlsafe

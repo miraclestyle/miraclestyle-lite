@@ -818,7 +818,8 @@ class Catalog(orm.BaseExpando):
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'unindex', 'action_model': '31'},
-                                         {'key': '_catalog.key_urlsafe'})])
+                                         {'key': '_catalog.key_urlsafe'},
+                                         None)])
                   ]
               )
           ]
@@ -877,7 +878,8 @@ class Catalog(orm.BaseExpando):
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
                       CallbackExec(cfg=[('callback',
                                          {'action_model': '31'},
-                                         {'action_id': 'input.index_state', 'key': '_catalog.key_urlsafe'})])  # @todo What happens if input.index_state is not supplied (e.g. None)?
+                                         {'action_id': 'input.index_state', 'key': '_catalog.key_urlsafe'},
+                                         None)])  # @todo What happens if input.index_state is not supplied (e.g. None)?
                       # @answer if the index_state is none, then the callback will attempt at calling
                       # action.id = None
                       # action.model = '31'
@@ -969,7 +971,8 @@ class Catalog(orm.BaseExpando):
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'catalog_process_duplicate', 'action_model': '31'},
                                          {'key': '_catalog.key_urlsafe',
-                                          'channel': 'input.channel'})])
+                                          'channel': 'input.channel'},
+                                          None)])
                   ]
               )
           ]
@@ -1022,7 +1025,8 @@ class Catalog(orm.BaseExpando):
                                          {'action_id': 'catalog_pricetag_process_duplicate', 'action_model': '31'},
                                          {'key': '_catalog.key_urlsafe',
                                           'channel': 'input.channel',
-                                          'read_arguments': 'input.read_arguments'})])
+                                          'read_arguments': 'input.read_arguments'},
+                                          None)])
                   ]
               )
           ]
