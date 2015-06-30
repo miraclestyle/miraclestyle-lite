@@ -31,6 +31,7 @@
 
             $rootScope.$on('$stateChangeStart', function () {
                 $rootScope.site.toolbar.hideRight = true;
+                $rootScope.site.toolbar.actionRight = undefined;
             });
 
             helpers.sideNav.setup($rootScope.site.toolbar.menu, 'left');

@@ -52,7 +52,7 @@ class Set(orm.BaseModel):
     for key in remove_values:
       tools.del_attr(context, key)
     for key in remove_structured_values:
-      items = tools.get_attr(key)
+      items = tools.get_attr(context, key)
       if isinstance(items, list):
         for item in items:
           item._state = 'removed'
@@ -333,7 +333,7 @@ class CreateChannel(orm.BaseModel):
     dynamic_token_reference = self.cfg.get('dynamic_token_reference', 'account.key_urlsafe')
     static_token_reference = self.cfg.get('static_token_refere', None)
     if static_token_reference is None:
-      token_reference = 'channel_%s' % tools.get_attr(dynamic_token_reference)
+      token_reference = 'channel_%s' % tools.get_attr(context, dynamic_token_reference)
     else:
       token_reference = 'channel_%s' % static_token_reference
     token = tools.mem_get(token_reference)

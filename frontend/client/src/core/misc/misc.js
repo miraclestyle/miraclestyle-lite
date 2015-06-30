@@ -1123,7 +1123,7 @@
                 window._channelApi = channelApi;
             }
             return channelApi;
-        })).factory('channelNotifications', ng(function (channelApi, modals) {
+        })).factory('channelNotifications', ng(function (channelApi, snackbar) {
             var channelNotifications = {
                 instances: {},
                 create: function (token) {
@@ -1140,10 +1140,7 @@
                                 if (angular.isObject(message) && message.data) {
                                     try {
                                         var response = angular.fromJson(message.data);
-                                        modals.alert('channelNotifications', {
-                                            title: 'Notification from server',
-                                            messages: [response.body]
-                                        });
+                                        snackbar.show(response.body);
                                     } catch (ignore) {}
                                 }
                             }
