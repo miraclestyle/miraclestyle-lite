@@ -3,13 +3,20 @@
     <form ng-submit="save()" name="container.form">
         <div class="modal-body">
         
-            <div class="top-close">
+           <div class="top-close">
                 <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent catalog-close-button button-square" ng-click="close()">
                     <icon color="white" type="close"></icon>
                 </button>
-            </div>
-            <div ng-click="productMenu.toggle($event)" class="fixed-height relative overflow-x unselectable">
-                <div ng-if="product.images.length" image-slider="product.images" md-ink-ripple-ignore="productMenu.notRipplable" md-ink-ripple-fit ripple-light class="image-slider">
+           </div>
+
+           <div class="top-close top-close-right">
+               <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="productMenu.toggle()">
+                 <icon color="white" type="more_vert"></icon>
+               </button>
+          </div>
+
+            <div class="fixed-height relative overflow-x unselectable">
+                <div ng-if="product.images.length" image-slider="product.images" class="image-slider">
                     <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
                         <img class="not-pointable" slider-image="image" />
                     </div>
@@ -19,7 +26,7 @@
                 </div>
             </div>
 
-            <md-sidenav md-swipe-right="productMenu.close()" layout="column" class="right md-closed product-sidenav" md-component-id="productMenu.sidenavMenuID">
+            <md-sidenav md-swipe-right="productMenu.close()" layout="column" class="right md-closed wide-sidenav" md-component-id="productMenu.sidenavMenuID">
                 <md-content>
                         <div class="product-detail-content">
                             <div class="list list-padding">
@@ -109,9 +116,7 @@
                 </md-content>
             </md-sidenav>
 
-
-
-
+ 
             <md-sidenav md-swipe-right="variantMenu.close()" layout="column" class="right md-closed variant-sidenav" md-component-id="variantMenu.sidenavMenuID">
                 <md-content>
                     <div class="list seam-bottom list-padding">

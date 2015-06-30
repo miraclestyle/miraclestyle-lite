@@ -77,42 +77,7 @@
     })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar, social) {
 
         modelsConfig(function (models) {
-            var setupToggleMenu = function (menu, id) {
-                    menu.sidenavMenuID = id;
-                    menu.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
-                    menu.toggling = false;
-                    menu.close = function () {
-                        return menu.toggle(undefined, 'close');
-                    };
-                    menu.open = function () {
-                        return menu.toggle(undefined, 'open');
-                    };
-                    menu.toggle = function ($event, dowhat) {
-                        if (menu.toggling) {
-                            return;
-                        }
-                        var it = $mdSidenav(menu.sidenavMenuID),
-                            check = false,
-                            target;
-                        if ($event && $event.target) {
-                            target = $($event.target);
-                            angular.forEach(menu.notRipplable, function (skip) {
-                                if (target.is(skip) || target.parent().is(skip)) {
-                                    check = true;
-                                }
-                            });
-                            if (check) {
-                                return;
-                            }
-                        }
-                        menu.toggling = true;
-                        $timeout(function () {
-                            it[dowhat || (it.isOpen() ? 'close' : 'open')]().then(function () {
-                                menu.toggling = false;
-                            });
-                        });
-                    };
-                },
+            var doNotRipple = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'],
                 recomputeRealPath = function (field1, level) {
                     if (!level) {
                         level = 0;
@@ -296,8 +261,8 @@
                                 $.extend($scope, fakeScope);
                                 $scope.variantMenu = {};
                                 $scope.productMenu = {};
-                                setupToggleMenu($scope.productMenu, 'right_product_sidenav' + _.uniqueId());
-                                setupToggleMenu($scope.variantMenu, 'right_variantMenu_sidenav' + _.uniqueId());
+                                helpers.sideNav.setup($scope.productMenu, 'right_product_sidenav', doNotRipple);
+                                helpers.sideNav.setup($scope.variantMenu, 'right_variantMenu_sidenav', doNotRipple);
 
                                 shareWatch = function () {
                                     if (!$scope.product) {
@@ -553,7 +518,7 @@
                             popFrom: config.popFrom,
                             controller: ng(function ($scope) {
                                 $scope.catalogMenu = {};
-                                setupToggleMenu($scope.catalogMenu, 'right_catalog_sidenav' + _.uniqueId());
+                                helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = '31';
                                 $scope.logoImageConfig = {};
@@ -644,9 +609,11 @@
                                     });
                                 };
 
-                                $scope.sellerDetails = function () {
-                                    models['23'].viewModal($scope.catalog._seller);
+                                $scope.openSellerDetails = function () {
+                                    $scope.sellerDetails.menu.open();
                                 };
+
+                                $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope.$close();

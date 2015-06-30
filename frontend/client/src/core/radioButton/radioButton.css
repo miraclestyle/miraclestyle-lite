@@ -19,14 +19,14 @@ md-radio-button .md-icon {
     color:rgba(117, 117, 117, 1);
 }
 
-md-radio-button .md-icon-radio-button-on {
+md-radio-button .md-icon-radio_button_checked {
     opacity:0;
 }
 
-md-radio-button .md-icon-radio-button-off {
+md-radio-button .md-icon-radio_button_unchecked {
     opacity:1;
 }
 
-.md-checked .md-icon-radio-button-on {
+.md-checked .md-icon-radio_button_checked {
     opacity:1;
 }

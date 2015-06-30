@@ -27,3 +27,8 @@ md-sidenav.right {
 md-sidenav md-content {
     min-height: 100%;
 }
+
+md-sidenav.wide-sidenav {
+    width: 560px;
+    min-width: 560px;
+}

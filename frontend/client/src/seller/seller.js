@@ -729,215 +729,173 @@
             };
 
             $.extend(models['23'], {
-                viewModal: function (seller, config) {
+                makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
-                    var removedOrAdded = config.removedOrAdded,
-                        popFrom = config.popFrom;
-                    $modal.open({
-                        templateUrl: 'seller/view.html',
-                        popFrom: popFrom,
-                        controller: ng(function ($scope, currentAccount) {
-                            var cartData;
-                            $scope.seller = seller;
-                            $scope.alreadyInCollection = false;
-                            $scope.loadedCollection = models['18'].current().then(function (response) {
-                                var collection = response.data.entity;
-                                if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
-                                    $scope.alreadyInCollection = true;
-                                }
-                                return collection;
+                    var removedOrAdded = config.removedOrAdded;
+                    return (function ($scope) {
+                        var chartData;
+                        $scope.seller = seller;
+                        $scope.menu = {};
+                        $scope.alreadyInCollection = false;
+                        $scope.loadedCollection = models['18'].current().then(function (response) {
+                            var collection = response.data.entity;
+                            if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
+                                $scope.alreadyInCollection = true;
+                            }
+                            return collection;
+                        });
+
+                        helpers.sideNav.setup($scope.menu, 'right_seller_details');
+
+                        chartData = [];
+
+                        if ($scope.seller._feedback) {
+
+                            angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
+                                feedback.positive_count = _.random(0, 100);
+                                feedback.negative_count = _.random(0, 100);
+                                feedback.neutral_count = _.random(0, 100);
+                                chartData.push({
+                                    c: [{
+                                        v: dateFilter(feedback.date, 'MMM')
+                                    }, {
+                                        v: feedback.positive_count
+                                    }, {
+                                        v: feedback.negative_count
+                                    }, {
+                                        v: feedback.neutral_count
+                                    }]
+                                });
+
                             });
 
-                            cartData = [];
-
-                            $scope.catalogs = [];
-
-                            $scope.search = {
-                                results: [],
-                                pagination: models['31'].paginate({
-                                    kind: '31',
-                                    args: {
-                                        search: {
-                                            filters: [{
-                                                field: 'ancestor',
-                                                operator: 'IN',
-                                                value: $scope.seller.key
-                                            }]
-                                        }
-                                    },
-                                    config: {
-                                        normalizeEntity: false
-                                    },
-                                    action: 'public_search',
-                                    complete: function (response) {
-                                        var results = response.data.entities;
-                                        models['31'].formatPublicSearchResults(results);
-                                        $scope.search.results.extend(results);
-                                    }
-                                })
-                            };
-                            $scope.scrollEnd = {
-                                loader: false
-                            };
-                            $scope.scrollEnd.loader = $scope.search.pagination;
-                            $scope.search.pagination.load();
-
-                            $scope.viewCatalog = function (result, $event) {
-                                models['31'].viewModal(result.key, {
-                                    popFrom: helpers.clicks.realEventTarget($event.target)
-                                });
-                            };
-
-                            if ($scope.seller._feedback) {
-
-                                angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
-                                    feedback.positive_count = _.random(0, 100);
-                                    feedback.negative_count = _.random(0, 100);
-                                    feedback.neutral_count = _.random(0, 100);
-                                    cartData.push({
-                                        c: [{
-                                            v: dateFilter(feedback.date, 'MMM')
-                                        }, {
-                                            v: feedback.positive_count
-                                        }, {
-                                            v: feedback.negative_count
-                                        }, {
-                                            v: feedback.neutral_count
-                                        }]
-                                    });
-
-                                });
-
-                                $scope.chartConfig = {
-                                    type: "ColumnChart",
-                                    data: {
-                                        cols: [{
-                                            id: "months",
-                                            label: "Months",
-                                            type: "string"
-                                        }, {
-                                            id: "positive",
-                                            label: "Positive",
-                                            type: "number"
-                                        }, {
-                                            id: "negative",
-                                            label: "Negative",
-                                            type: "number"
-                                        }, {
-                                            id: "neutral",
-                                            label: "Neutral",
-                                            type: "number"
-                                        }],
-                                        rows: cartData
-                                    },
-                                    options: {
-                                        colors: ['green', 'red', 'gray'],
-                                        series: {
-                                            0: {
-                                                axis: 'positive'
-                                            },
-                                            1: {
-                                                axis: 'negative'
-                                            },
-                                            3: {
-                                                axis: 'neutral'
-                                            }
+                            $scope.chartConfig = {
+                                type: "ColumnChart",
+                                data: {
+                                    cols: [{
+                                        id: "months",
+                                        label: "Months",
+                                        type: "string"
+                                    }, {
+                                        id: "positive",
+                                        label: "Positive",
+                                        type: "number"
+                                    }, {
+                                        id: "negative",
+                                        label: "Negative",
+                                        type: "number"
+                                    }, {
+                                        id: "neutral",
+                                        label: "Neutral",
+                                        type: "number"
+                                    }],
+                                    rows: chartData
+                                },
+                                options: {
+                                    colors: ['green', 'red', 'gray'],
+                                    series: {
+                                        0: {
+                                            axis: 'positive'
                                         },
-                                        axes: {
-                                            y: {
-                                                positive: {
-                                                    label: 'Positive'
-                                                },
-                                                negative: {
-                                                    label: 'Negative',
-                                                    side: 'right'
-                                                },
-                                                neutral: {
-                                                    label: 'Neutral',
-                                                    side: 'right'
-                                                }
+                                        1: {
+                                            axis: 'negative'
+                                        },
+                                        3: {
+                                            axis: 'neutral'
+                                        }
+                                    },
+                                    axes: {
+                                        y: {
+                                            positive: {
+                                                label: 'Positive'
+                                            },
+                                            negative: {
+                                                label: 'Negative',
+                                                side: 'right'
+                                            },
+                                            neutral: {
+                                                label: 'Neutral',
+                                                side: 'right'
                                             }
                                         }
                                     }
-                                };
+                                }
+                            };
 
 
-                                $scope.feedbackStats = (function () {
-                                    var positive_count = 0,
-                                        neutral_count = 0,
-                                        negative_count = 0,
-                                        positive_average,
-                                        negative_average,
-                                        neutral_average,
-                                        score,
-                                        values = [];
+                            $scope.feedbackStats = (function () {
+                                var positive_count = 0,
+                                    neutral_count = 0,
+                                    negative_count = 0,
+                                    positive_average,
+                                    negative_average,
+                                    neutral_average,
+                                    score,
+                                    values = [];
 
-                                    positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
-                                    negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
-                                    neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
+                                positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
+                                negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
+                                neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
 
-                                    if ((positive_count - negative_count) > 0) {
-                                        score = positive_count - negative_count;
-                                    } else {
-                                        score = 0;
+                                if ((positive_count - negative_count) > 0) {
+                                    score = positive_count - negative_count;
+                                } else {
+                                    score = 0;
+                                }
+                                values[0] = positive_count;
+                                values[1] = neutral_count;
+                                values[2] = negative_count;
+                                values[3] = positive_average;
+                                values[4] = negative_average;
+                                values[5] = neutral_average;
+                                values[6] = score;
+                                return values;
+                            }());
+
+                        }
+
+
+                        $scope.viewContent = function (content) {
+                            $modal.open({
+                                templateUrl: 'core/misc/content_view.html',
+                                controller: ng(function ($scope) {
+                                    $scope.plainText = true;
+                                    $scope.content = content;
+                                    $scope.close = function () {
+                                        $scope.$close();
+                                    };
+                                })
+                            });
+                        };
+
+                        $scope.toggleCollection = function () {
+                            $scope.loadedCollection.then(function (collection) {
+                                var loadedCollection = collection,
+                                    removed = false;
+                                if ($scope.alreadyInCollection) {
+                                    removed = true;
+                                    loadedCollection.sellers.remove($scope.seller.key);
+                                } else {
+                                    loadedCollection.sellers.unshift($scope.seller.key);
+                                }
+                                models['18'].actions.update({
+                                    account: currentAccount.key,
+                                    sellers: loadedCollection.sellers,
+                                    notify: loadedCollection.notify
+                                }).then(function (newResponse) {
+                                    var updatedCollection = newResponse.data.entity;
+                                    $scope.alreadyInCollection = !removed;
+                                    // update cache
+                                    $.extend(loadedCollection, updatedCollection);
+                                    if (angular.isFunction(removedOrAdded)) {
+                                        removedOrAdded(updatedCollection, $scope.alreadyInCollection);
                                     }
-                                    values[0] = positive_count;
-                                    values[1] = neutral_count;
-                                    values[2] = negative_count;
-                                    values[3] = positive_average;
-                                    values[4] = negative_average;
-                                    values[5] = neutral_average;
-                                    values[6] = score;
-                                    return values;
-                                }());
-
-                            }
-
-
-                            $scope.viewContent = function (content) {
-                                $modal.open({
-                                    templateUrl: 'core/misc/content_view.html',
-                                    controller: ng(function ($scope) {
-                                        $scope.plainText = true;
-                                        $scope.content = content;
-                                        $scope.close = function () {
-                                            $scope.$close();
-                                        };
-                                    })
                                 });
-                            };
+                            });
+                        };
 
-                            $scope.toggleCollection = function () {
-                                $scope.loadedCollection.then(function (collection) {
-                                    var loadedCollection = collection,
-                                        removed = false;
-                                    if ($scope.alreadyInCollection) {
-                                        removed = true;
-                                        loadedCollection.sellers.remove($scope.seller.key);
-                                    } else {
-                                        loadedCollection.sellers.unshift($scope.seller.key);
-                                    }
-                                    models['18'].actions.update({
-                                        account: currentAccount.key,
-                                        sellers: loadedCollection.sellers,
-                                        notify: loadedCollection.notify
-                                    }).then(function (newResponse) {
-                                        var updatedCollection = newResponse.data.entity;
-                                        $scope.alreadyInCollection = !removed;
-                                        // update cache
-                                        $.extend(loadedCollection, updatedCollection);
-                                        if (angular.isFunction(removedOrAdded)) {
-                                            removedOrAdded(updatedCollection, $scope.alreadyInCollection);
-                                        }
-                                    });
-                                });
-                            };
-
-                            $scope.close = function () {
-                                $scope.$close();
-                            };
-                        }),
-                    });
+                        return $scope;
+                    }({}));
                 },
                 current: function (args) {
                     if (!args) {

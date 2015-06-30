@@ -993,3 +993,8 @@ button::-moz-focus-inner {
     left: 4px;
     top: 4px;
 }
+
+.top-close-right {
+    left:auto;
+    right: 4px;
+}

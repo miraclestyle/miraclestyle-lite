@@ -151,8 +151,8 @@
             require: '^mdRadioGroup',
             transclude: true,
             template: '<div class="md-container list-primary-tile">' +
-                '<div class="avatar-small"><div><icon class="button-square" type="radio_button_on"></icon>' +
-                '<icon class="button-square" type="radio_button_off"></icon></div>' +
+                '<div class="avatar-small"><div><icon class="button-square" type="radio_button_checked"></icon>' +
+                '<icon class="button-square" type="radio_button_unchecked"></icon></div>' +
                 '</div></div>' +
                 '<div ng-transclude class="md-label"></div>',
             link: link

@@ -6,7 +6,52 @@
         ])
         .factory('$mdSidenav', SidenavService)
         .directive('mdSidenav', SidenavDirective)
-        .controller('$mdSidenavController', SidenavController);
+        .controller('$mdSidenavController', SidenavController)
+        .run(ng(function (helpers, $mdSidenav, $timeout) {
+            if (!helpers.sideNav) {
+                helpers.sideNav = {};
+            }
+            helpers.sideNav.setup = function (menu, id, notRipplable) {
+                if (!notRipplable) {
+                    notRipplable = [];
+                }
+                id = id + _.uniqueId();
+                menu.sidenavMenuID = id;
+                menu.notRipplable = notRipplable;
+                menu.toggling = false;
+                menu.close = function () {
+                    return menu.toggle(undefined, 'close');
+                };
+                menu.open = function () {
+                    return menu.toggle(undefined, 'open');
+                };
+                menu.toggle = function ($event, dowhat) {
+                    if (menu.toggling) {
+                        return;
+                    }
+                    var it = $mdSidenav(menu.sidenavMenuID),
+                        check = false,
+                        target;
+                    if ($event && $event.target) {
+                        target = $($event.target);
+                        angular.forEach(menu.notRipplable, function (skip) {
+                            if (target.is(skip) || target.parent().is(skip)) {
+                                check = true;
+                            }
+                        });
+                        if (check) {
+                            return;
+                        }
+                    }
+                    menu.toggling = true;
+                    $timeout(function () {
+                        it[dowhat || (it.isOpen() ? 'close' : 'open')]().then(function () {
+                            menu.toggling = false;
+                        });
+                    });
+                };
+            };
+        }));
 
     function SidenavService($mdComponentRegistry, $q) {
         return function (handle) {
@@ -276,6 +321,4 @@
     }
     SidenavController.$inject = ["$scope", "$element", "$attrs", "$mdComponentRegistry", "$q", "$parse"];
 
-
-
-})();
+}());

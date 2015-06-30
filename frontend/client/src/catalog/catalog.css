@@ -74,17 +74,6 @@ li.catalog-new-pricetag {
     height: 100px;
     display: block;
 }
-
-md-sidenav.catalog-sidenav {
-    width: 240px;
-    min-width: 240px;
-}
-
-md-sidenav.product-sidenav {
-    width: 400px;
-    min-width: 400px;
-}
-
 .full-logo img {
     width: 100%;
     height: auto;
