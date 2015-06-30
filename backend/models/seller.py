@@ -126,7 +126,7 @@ class Seller(orm.BaseExpando):
       orm.ExecuteActionPermission('read', condition_not_guest_and_owner_active),
       orm.ExecuteActionPermission('cron_generate_feedback_stats', condition_taskqueue_or_cron_or_root),
       orm.ReadFieldPermission(('_plugin_group'), condition_not_guest_and_owner),
-      orm.ReadFieldPermission(('name', 'logo', '_content', '_currency', '_feedback'), condition_not_guest_and_owner_active),
+      orm.ReadFieldPermission(('name', 'logo', '_content', '_currency', '_feedback', '_follower_count', '_notified_followers_count'), condition_not_guest_and_owner_active),
       orm.WriteFieldPermission('_feedback', condition_taskqueue_or_cron_or_root),
       orm.WriteFieldPermission(('name', 'logo', '_content', '_plugin_group', '_records'), condition_not_guest_and_owner)
   ]

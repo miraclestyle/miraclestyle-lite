@@ -1,27 +1,18 @@
+<md-content ui-view md-scroll-y flex>
 <div class="list list-padding">
-    <div ng-if="sellerDetail !== false" class="clearfix list-row">
-        <div class="pull-left">
-            <button md-ink-ripple loading ng-click="viewSeller()" class="button-transparent button-block">
-                <img class="not-pointable" display-image="sellerDetail.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
-            </button>
-
-        </div>
-        <div class="pull-right">
-            <h1>{{sellerDetail.name}}</h1>
-        </div>
-    </div>
-
-    <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = (sellerDetail !== false ? 240 : 340)"
+    <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = (sellerDetails ? 240 : 340)"
        grid-scale="{maxHeight: maxHeight}"
        class="grid-wrapper clearfix">
         <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
             <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
                 <img class="not-pointable" display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:240}" />
             </button>
-            <button md-ink-ripple ripple-light ng-if="!sellerDetail" loading ui-sref="seller-info({key: result.seller_account_key})" class="button-transparent button-block seller-logo-bellow">
+            <button md-ink-ripple ripple-light ng-if="!sellerMode" loading ui-sref="seller-info({key: result.seller_account_key})" class="button-transparent button-block seller-logo-bellow">
                 <img class="not-pointable" display-image="result._seller_logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
             </button>
         </div>
     </div>
     <div load-more-button="search.pagination"></div>
 </div>
+</md-content>
+<div ng-if="sellerDetails" ng-include="'seller/view.html'"></div>

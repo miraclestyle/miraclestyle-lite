@@ -392,7 +392,8 @@
             aboutRules: 'About Rules',
             addDocuments: 'Add Content',
             editDocuments: 'Edit Content',
-            editContent: false
+            editContent: false,
+            sellerProfile: 'Seller Profile'
         });
 
     }));

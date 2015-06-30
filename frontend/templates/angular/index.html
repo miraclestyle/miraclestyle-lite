@@ -9,7 +9,7 @@
             window.location.hash = '';
         }
     </script>
-    <title ng-bind="pageTitle"></title>
+    <title ng-bind="site.title"></title>
     <base href="/" />
     <meta id="is-landscape" />
     <meta id="is-mobile" />
@@ -37,8 +37,8 @@
      <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style.css')}}" />
     {% endif %}
 </head>
-<body ng-controller="MainMenuController" layout="row">
-    <md-sidenav md-swipe-left="closeMenu()" layout="column" class="left md-closed" md-component-id="left">
+<body ng-controller="RootController" layout="row">
+    <md-sidenav md-swipe-left="site.toolbar.menu.close()" layout="column" class="left md-closed" md-component-id="site.toolbar.menu.id">
         <md-content>
             <div class="bar-logo">
                 <img src="/client/dist/static/logo_240.png" />
@@ -91,23 +91,36 @@
             </div>
         </md-content>
     </md-sidenav>
-
     <div layout="column" layout-fill tabIndex="-1" role="main">
-        <md-toolbar>
-            <div class="md-toolbar-tools homepage-toolbar with-actions no-right-actions">
+        <md-toolbar ng-class="{'no-right-actions': site.toolbar.hideRight,
+                               'no-left-actions': site.toolbar.hideLeft}">
+            <div class="md-toolbar-tools with-actions">
                 <div class="fill-height">
-                    <div class="md-toolbar-item md-tools">
-                        <button md-ink-ripple-action ng-click="openMenu()" type="button" class="button-transparent homepage-menu button-square">
-                            <icon type="menu"></icon>
+                    <div ng-if="!site.toolbar.hideLeft" class="md-toolbar-item md-tools actions-left ng-scope">
+                        <button md-ink-ripple-action
+                                ng-click="site.toolbar.menu.open()" 
+                                type="button"
+                                class="button-transparent homepage-menu button-square">
+                                <icon type="menu"></icon>
                         </button>
                     </div>
+
                     <div class="md-toolbar-item md-breadcrumb">
-                        <span ng-bind="pageToolbarTitle" class="md-toolbar-title"></span>
+                        <span ng-bind="site.toolbar.title" class="md-toolbar-title"></span>
+                    </div>
+
+                    <div ng-if="!site.toolbar.hideRight" class="md-toolbar-item md-tools actions-right ng-scope">
+                        <button ng-click="site.toolbar.actionRight()"
+                                md-ink-ripple-action type="button"
+                                class="action button-transparent button-action ripple-presence" 
+                                loading>
+                            <icon type="more_vert">more_vert</icon>
+                        </button>
                     </div>
                 </div>
             </div>
         </md-toolbar>
-        <md-content ui-view md-scroll-y flex></md-content>
+        <div ui-view></div>
     </div>
 
     <snackbar></snackbar>

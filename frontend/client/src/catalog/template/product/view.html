@@ -1,16 +1,23 @@
 <div fit-in-modal>
-
     <form ng-submit="save()" name="container.form">
         <div class="modal-body">
-        
            <div class="top-close">
-                <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent catalog-close-button button-square" ng-click="close()">
+                <button md-ink-ripple-action
+                        ripple-light
+                        loading type="button"
+                        class="button-transparent catalog-close-button button-square"
+                        ng-click="close()">
                     <icon color="white" type="close"></icon>
                 </button>
            </div>
 
            <div class="top-close top-close-right">
-               <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="productMenu.toggle()">
+               <button md-ink-ripple-action
+                       ripple-light
+                       loading
+                       type="button"
+                       class="button-transparent button-square catalog-close-button"
+                       ng-click="productMenu.toggle()">
                  <icon color="white" type="more_vert"></icon>
                </button>
           </div>
@@ -26,7 +33,7 @@
                 </div>
             </div>
 
-            <md-sidenav md-swipe-right="productMenu.close()" layout="column" class="right md-closed wide-sidenav" md-component-id="productMenu.sidenavMenuID">
+            <md-sidenav md-swipe-right="productMenu.close()" layout="column" class="right md-closed wide-sidenav" md-component-id="productMenu.id">
                 <md-content>
                         <div class="product-detail-content">
                             <div class="list list-padding">
@@ -117,7 +124,10 @@
             </md-sidenav>
 
  
-            <md-sidenav md-swipe-right="variantMenu.close()" layout="column" class="right md-closed variant-sidenav" md-component-id="variantMenu.sidenavMenuID">
+            <md-sidenav md-swipe-right="variantMenu.close()" 
+                        layout="column" 
+                        class="right md-closed variant-sidenav" 
+                        md-component-id="variantMenu.id">
                 <md-content>
                     <div class="list seam-bottom list-padding">
                          <div class="list-row list-row-multiline">
@@ -127,7 +137,6 @@
                              </div>
                          </div>
                     </div>
-
                     <div class="list list-padding">
                          <button 
                             ng-repeat="opt in variantChooser.options"
@@ -141,7 +150,6 @@
                     </div>
                 </md-content>
             </md-sidenav>
-
         </div>
 
 </div>

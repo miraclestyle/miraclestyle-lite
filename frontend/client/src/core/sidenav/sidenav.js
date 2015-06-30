@@ -16,7 +16,7 @@
                     notRipplable = [];
                 }
                 id = id + _.uniqueId();
-                menu.sidenavMenuID = id;
+                menu.id = id;
                 menu.notRipplable = notRipplable;
                 menu.toggling = false;
                 menu.close = function () {
@@ -29,7 +29,7 @@
                     if (menu.toggling) {
                         return;
                     }
-                    var it = $mdSidenav(menu.sidenavMenuID),
+                    var it = $mdSidenav(menu.id),
                         check = false,
                         target;
                     if ($event && $event.target) {

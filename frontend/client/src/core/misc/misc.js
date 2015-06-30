@@ -135,7 +135,7 @@
                         if (nv !== ov) {
                             var img = element,
                                 done = function () {
-                                    img.css('visibility', 'visible');
+                                    img.css('visibility', 'inherit');
                                     scope.$emit('displayImageLoaded', img);
                                 },
                                 error = function () {

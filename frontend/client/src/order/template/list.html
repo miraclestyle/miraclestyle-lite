@@ -1,62 +1,64 @@
-<div class="cards" autoload-on-vertical-scroll-end="scrollEnd">
-    <div class="card" ng-repeat="order in search.results">
-        <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="view(order, $event)">
-            <div class="padding-16">
-                <h1 class="headline">#{{order.id}}</h1>
-                <span class="first">{{order|output:'date'}}</span>
-                <span class="first">{{order.total_amount|formatCurrency:order.currency}}</span>
-                <table class="card-table">
-                    <tbody>
-                        <tr>
-                            <td class="first info">Seller</td>
-                            <td class="first">{{order._seller.name}}</td>
-                        </tr>
-                        <tr>
-                            <td class="first info">Buyer</td>
-                            <td class="first">{{order.parent.parent.id}}</td>
-                        </tr>
-                        
-                        <tr>
-                            <td class="first info">State</td>
-                            <td class="first">{{order.state|labelize:"order"}}</td>
-                        </tr>
-                        <!--
-                        <tr>
-                            <td class="first info">Feedback</td>
-                            <td class="first">
-                                <span ng-show="!order.feedback">N/A</span>
-                                <span ng-show="order.feedback">{{order.feedback|labelize:"order"}}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="first info">Feedback Adjustment</td>
-                            <td class="first">
-                                 <span ng-show="!order.feedback_adjustment">N/A</span>
-                                 <span ng-show="order.feedback_adjustment">{{order.feedback_adjustment|labelize:"order"}}</span>
-                            </td>
-                        </tr>
+<md-content ui-view md-scroll-y flex>
+    <div class="cards" autoload-on-vertical-scroll-end="scrollEnd">
+        <div class="card" ng-repeat="order in search.results">
+            <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="view(order, $event)">
+                <div class="padding-16">
+                    <h1 class="headline">#{{order.id}}</h1>
+                    <span class="first">{{order|output:'date'}}</span>
+                    <span class="first">{{order.total_amount|formatCurrency:order.currency}}</span>
+                    <table class="card-table">
+                        <tbody>
+                            <tr>
+                                <td class="first info">Seller</td>
+                                <td class="first">{{order._seller.name}}</td>
+                            </tr>
+                            <tr>
+                                <td class="first info">Buyer</td>
+                                <td class="first">{{order.parent.parent.id}}</td>
+                            </tr>
+                            
+                            <tr>
+                                <td class="first info">State</td>
+                                <td class="first">{{order.state|labelize:"order"}}</td>
+                            </tr>
+                            <!--
+                            <tr>
+                                <td class="first info">Feedback</td>
+                                <td class="first">
+                                    <span ng-show="!order.feedback">N/A</span>
+                                    <span ng-show="order.feedback">{{order.feedback|labelize:"order"}}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="first info">Feedback Adjustment</td>
+                                <td class="first">
+                                     <span ng-show="!order.feedback_adjustment">N/A</span>
+                                     <span ng-show="order.feedback_adjustment">{{order.feedback_adjustment|labelize:"order"}}</span>
+                                </td>
+                            </tr>
 
-                        <tr ng-if="false">
-                            <td class="first info">Payment</td>
-                            <td class="first">
-                                    <span ng-show="!order.payment_status">N/A</span>
-                                    <span ng-show="order.payment_status">{{order.payment_status|labelize:"order"}}</span>
-                            </td>
-                        </tr>
-                        -->
-                        <tr>
-                            <td class="first info">Updated</td>
-                            <td class="first">{{order|output:'updated'}}</td>
-                        </tr>
-                        
-                    </tbody>
-                </table>
-            </div>
-         </button>
+                            <tr ng-if="false">
+                                <td class="first info">Payment</td>
+                                <td class="first">
+                                        <span ng-show="!order.payment_status">N/A</span>
+                                        <span ng-show="order.payment_status">{{order.payment_status|labelize:"order"}}</span>
+                                </td>
+                            </tr>
+                            -->
+                            <tr>
+                                <td class="first info">Updated</td>
+                                <td class="first">{{order|output:'updated'}}</td>
+                            </tr>
+                            
+                        </tbody>
+                    </table>
+                </div>
+             </button>
+        </div>
     </div>
-</div>
-<!-- help -->
-<div ng-if="helpers.models.isEntityListEmpty(search.results) && search.loaded" 
-     help-render="listHelp"></div>
-<!-- end help -->
-<div load-more-button="search.pagination"></div>
+    <!-- help -->
+    <div ng-if="helpers.models.isEntityListEmpty(search.results) && search.loaded" 
+         help-render="listHelp"></div>
+    <!-- end help -->
+    <div load-more-button="search.pagination"></div>
+</md-content>

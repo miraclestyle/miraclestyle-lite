@@ -1,8 +1,12 @@
-<div ng-include="'core/misc/search_form.html'"></div>
+<md-content ui-view md-scroll-y flex>
 
-<div autoload-on-vertical-scroll-end="scrollEnd" class="clearfix">
-    <div ng-if="maybeTemplate" ng-include="maybeTemplate"></div>
-    <div ng-if="!maybeTemplate" ng-include="'admin/list_view/default.html'"></div>
-</div>
+    <div ng-include="'core/misc/search_form.html'"></div>
 
-<div load-more-button="search.pagination"></div>
+    <div autoload-on-vertical-scroll-end="scrollEnd" class="clearfix">
+        <div ng-if="maybeTemplate" ng-include="maybeTemplate"></div>
+        <div ng-if="!maybeTemplate" ng-include="'admin/list_view/default.html'"></div>
+    </div>
+
+    <div load-more-button="search.pagination"></div>
+
+</md-content>

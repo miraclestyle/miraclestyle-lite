@@ -18,14 +18,14 @@ md-checkbox .md-icon {
     color:rgba(117, 117, 117, 1);
 }
 
-md-checkbox .md-icon-check-box {
+md-checkbox .md-icon-check_box {
     opacity:0;
 }
 
-md-checkbox .md-icon-check-box-outline-blank {
+md-checkbox .md-icon-check_box_outline_blank {
     opacity:1;
 }
 
-.md-checked .md-icon-check-box {
+.md-checked .md-icon-check_box {
     opacity:1;
 }

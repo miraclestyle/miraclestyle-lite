@@ -1,44 +1,49 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('MainMenuController', ng(function ($scope, $mdSidenav, $timeout) {
-            $scope.closeMenu = function () {
-                $timeout(function () {
-                    $mdSidenav('left').close();
-                });
-            };
-            $scope.openMenu = function () {
-                $timeout(function () {
-                    $mdSidenav('left').open();
-                });
-            };
-        }))
+        .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
         .run(ng(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
+            $rootScope.site = {
+                title: '',
+                toolbar: {
+                    hideRight: true,
+                    hideLeft: false,
+                    title: '',
+                    menu: {}
+                }
+            };
             $rootScope.currentAccount = currentAccount;
             $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $rootScope.JSON = JSON;
             $rootScope.helpers = helpers;
-            $rootScope.pageToolbarTitle = '';
             $rootScope.setPageTitle = function (title, notToolbarTitle) {
-                $rootScope.pageTitle = helpers.toolbar.title(title);
+                $rootScope.site.title = helpers.toolbar.title(title);
                 if (!notToolbarTitle) {
-                    $rootScope.pageToolbarTitle = $rootScope.pageTitle;
+                    $rootScope.site.toolbar.title = $rootScope.site.title;
                 }
             };
             $rootScope.setPageToolbarTitle = function (title, notPageTitle) {
-                $rootScope.pageToolbarTitle = helpers.toolbar.title(title);
+                $rootScope.site.toolbar.title = helpers.toolbar.title(title);
                 if (!notPageTitle) {
-                    $rootScope.pageTitle = $rootScope.pageToolbarTitle;
+                    $rootScope.site.title = $rootScope.site.toolbar.title;
                 }
             };
+
+            $rootScope.$on('$stateChangeStart', function () {
+                $rootScope.site.toolbar.hideRight = true;
+            });
+
+            helpers.sideNav.setup($rootScope.site.toolbar.menu, 'left');
         }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
-            var args = {search: {}},
+            var args = {
+                    search: {}
+                },
                 defer = $q.defer(),
                 promise = defer.promise;
 
             $scope.setPageToolbarTitle('home');
-            $scope.sellerDetail = false;
+            $scope.sellerDetails = false;
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
                     popFrom: helpers.clicks.realEventTarget($event.target)
@@ -46,8 +51,13 @@
             };
 
             if ($stateParams.key) {
-                args.search.filters = [{field: 'seller_account_key', operator: 'IN', value: $stateParams.key}];
-                $scope.sellerDetail = {};
+                $scope.sellerMode = true;
+                $scope.setPageToolbarTitle('sellerProfile');
+                args.search.filters = [{
+                    field: 'seller_account_key',
+                    operator: 'IN',
+                    value: $stateParams.key
+                }];
                 models['23'].actions.read({
                     account: $stateParams.key,
                     read_arguments: {
@@ -55,17 +65,22 @@
                         _content: {}
                     }
                 }).then(function (response) {
-                    $.extend($scope.sellerDetail, response.data.entity);
+                    $scope.sellerDetails = models['23'].makeSellerDetails(response.data.entity);
                 });
 
-                $scope.viewSeller = function () {
-                    models['23'].viewModal($scope.sellerDetail);
+                $scope.site.toolbar.hideRight = false;
+                $scope.site.toolbar.actionRight = function () {
+                    $scope.sellerDetails.menu.open();
                 };
             }
             if ($state.current.name === 'following') {
                 promise = models['18'].current();
                 promise.then(function (response) {
-                    $scope.search.pagination.args.search.filters = [{field: 'ancestor', operator: 'IN', value: response.data.entity.sellers}];
+                    $scope.search.pagination.args.search.filters = [{
+                        field: 'ancestor',
+                        operator: 'IN',
+                        value: response.data.entity.sellers
+                    }];
                 });
             } else {
                 defer.resolve();
@@ -86,7 +101,9 @@
                     }
                 })
             };
-            $scope.scrollEnd = {loader: false};
+            $scope.scrollEnd = {
+                loader: false
+            };
             $scope.scrollEnd.loader = $scope.search.pagination;
             promise.then(function () {
                 $scope.search.pagination.load();
