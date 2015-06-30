@@ -363,9 +363,7 @@
                 transclude: true,
                 scope: true,
                 link: function (scope, element, attrs) {
-                    var types = attrs.type.split('.');
-                    scope.type = types[0];
-                    scope.icon = types[1];
+                    scope.icon = attrs.type;
                     scope.color = attrs.color || 'normal';
                 }
             };

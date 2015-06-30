@@ -133,3 +133,12 @@ a.sort-handle {
     padding-left: 16px;
     padding-right: 16px;
 }
+
+.uploaded-image {
+    padding: 0px;
+    display:block;
+}
+
+.uploaded-image .upload {
+    height: 100px;
+}

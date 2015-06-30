@@ -5,7 +5,7 @@
         <div class="pull-right">
            <span ng-include="config.ui.specifics.mainActionsLayout.before"></span>
            <button md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent">
-               <span><icon type="action.file-upload"></icon></span>
+               <span><icon type="file_upload"></icon></span>
                <input ng-show="<%= config.ui.writableCompiled %>"
                       class="upload"
                       name="<%= config.ui.name %>"
@@ -40,7 +40,7 @@
                        md-ink-ripple-action
                        ripple-light
                        draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action button-square sort-handle">
-                          <icon color="white" type="action.view-headline"></icon>
+                          <icon color="white" type="view_headline"></icon>
                     </a>
                 </div>
           </div>
@@ -55,23 +55,11 @@
   
       <% } else { %>
         <md-input-container class="block padding-0">
-            <div class="list-row no-padding clearfix list-row-has-secondary">
+            <div class="list-row no-padding clearfix">
                <div class="list-row list-content-tile list-row-avatar block list-row-one-line">
                   <div class="first">
-                     <div class="uploaded-image">
-                        <img class="not-pointable" display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
-                     </div>
-                  </div>
-                  <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
-                    <div ng-message="help"><%= config.ui.help %></div>
-                    <div ng-message="required">This field requires file selection!</div>
-                 </div>
-               </div>
-
-              <div class="list-secondary-tile ng-scope">
-                   <button md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent">
-                       <span><icon type="action.file-upload"></icon></span>
-                       <input ng-show="<%= config.ui.writableCompiled %>" 
+                     <button type="button" md-ink-ripple-action loading="!<%= config.ui.writableCompiled %>" class="fake-button button-transparent uploaded-image">
+                        <input ng-show="<%= config.ui.writableCompiled %>" 
                               class="upload" 
                               name="<%= config.ui.name %>"
                               generate-upload-url
@@ -79,8 +67,15 @@
                               valid-file
                               ng-model="<%= config.ui.args %>._file"
                               type="file" />
-                   </button>
-              </div>
+                        <img class="not-pointable" display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
+                     </div>
+                  </button>
+                  <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
+                    <div ng-message="help"><%= config.ui.help %></div>
+                    <div ng-message="required">This field requires file selection!</div>
+                 </div>
+               </div>
+ 
             </div>
         </md-input-container>
       <% }  %>

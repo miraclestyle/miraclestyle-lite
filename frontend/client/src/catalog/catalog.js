@@ -698,19 +698,19 @@
                                             stop: function () {
                                                 if (fields._images.ui.specifics.parentArgs.length) {
                                                     var total = fields._images.ui.specifics.parentArgs[0].sequence,
-                                                        cmp = [],
-                                                        cmp2 = [],
+                                                        dirty,
                                                         scope = fields._images.ui.directiveScope();
                                                     angular.forEach(fields._images.ui.specifics.parentArgs,
                                                         function (ent, i) {
                                                             i = (total - i);
-                                                            cmp.push(ent.sequence);
-                                                            cmp2.push(i);
+                                                            if (ent.sequence !== i || ent._state === 'deleted') {
+                                                                dirty = true;
+                                                            }
                                                             ent.sequence = i;
                                                             ent.ui.access[ent.ui.access.length - 1] = i;
                                                         });
 
-                                                    if (!cmp.equals(cmp2)) {
+                                                    if (dirty) {
                                                         scope.formSetDirty();
                                                     }
                                                     scope.$broadcast('itemOrderChanged');

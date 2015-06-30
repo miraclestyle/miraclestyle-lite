@@ -126,11 +126,11 @@
                                         helpers.update($scope.order, response.data.entity, ['state', 'feedback_adjustment', 'feedback', 'ui']);
                                         locals.reactOnUpdate();
                                     },
-                                    reactOnUpdate: function () {
+                                    reactOnUpdate: function (skipCache) {
                                         if (order) {
                                             $.extend(order, $scope.order);
                                         }
-                                        if (that.getCache('current' + seller.key)) {
+                                        if (!skipCache && that.getCache('current' + seller.key)) {
                                             that.current(seller.key).then(function (response) {
                                                 $.extend(response.data.entity, $scope.order);
                                             });
@@ -550,6 +550,8 @@
                                                 models['34'].actions.cancel({
                                                     key: $scope.order.key
                                                 }).then(function (response) {
+                                                    locals.updateLiveEntity(response);
+                                                    locals.reactOnUpdate(true);
                                                     models['34'].removeCache('current' + seller.key);
                                                     $scope.close();
                                                 });

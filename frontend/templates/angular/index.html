@@ -26,6 +26,8 @@
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="fragment" content="!" />
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
     {% if settings.DEBUG %}
         {% for style in settings.ANGULAR_CSS_PATHS %}
         <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
@@ -96,7 +98,7 @@
                 <div class="fill-height">
                     <div class="md-toolbar-item md-tools">
                         <button md-ink-ripple-action ng-click="openMenu()" type="button" class="button-transparent homepage-menu button-square">
-                            <icon type="navigation.menu"></icon>
+                            <icon type="menu"></icon>
                         </button>
                     </div>
                     <div class="md-toolbar-item md-breadcrumb">

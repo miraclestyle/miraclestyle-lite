@@ -93,7 +93,7 @@ ANGULAR_VENDOR_JS = (
     env('vendor/angular-google-chart/ng-google-chart.js'),
     env('vendor/angular-markdown-directive/markdown.js')
 )
-ANGULAR_VENDOR_CSS = ('vendor/material-design-iconic-font/css/material-design-iconic-font.min.css',)
+ANGULAR_VENDOR_CSS = ()
 ANGULAR_TEMPLATE_FILES = []
 ANGULAR_STATIC_FILES = []
 ANGULAR_CSS_FILES = []

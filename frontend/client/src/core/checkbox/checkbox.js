@@ -15,8 +15,8 @@
             transclude: true,
             require: '?ngModel',
             template: '<div class="md-container list-primary-tile">' +
-                '<div class="avatar-small"><div><icon class="button-square" type="toggle.check-box"></icon>' +
-                '<icon class="button-square" type="toggle.check-box-outline-blank"></icon></div>' +
+                '<div class="avatar-small"><div><icon class="button-square" type="check_box"></icon>' +
+                '<icon class="button-square" type="check_box_outline_blank"></icon></div>' +
                 '</div></div>' +
                 '<div ng-transclude class="md-label"></div>',
             compile: compile

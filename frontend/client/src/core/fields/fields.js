@@ -180,7 +180,6 @@
                                         label: false
                                     }]
                                 };
-
                                 $scope.$on('itemDelete', function () {
                                     $scope.formSetDirty();
                                 });
@@ -1162,7 +1161,6 @@
                                     if (deleteMode) {
                                         ui.helper.addClass('about-to-delete');
                                         item._state = 'deleted';
-                                        info.scope.formSetDirty();
                                     } else {
                                         ui.helper.removeClass('about-to-delete');
                                         item._state = null;
@@ -1171,17 +1169,18 @@
                                 info.scope.$broadcast('itemOrderSorting');
                             },
                             stop: function (e, ui) {
-                                var cmp = [],
-                                    cmp2 = [];
+                                var dirty;
                                 angular.forEach(config.ui.specifics.parentArgs,
                                     function (ent, i) {
-                                        cmp.push(ent._sequence);
+                                        console.log(ent);
+                                        if (ent._state === 'deleted' || ent._sequence !== i) {
+                                            dirty = true;
+                                        }
                                         i = ((config.ui.specifics.parentArgs.length - 1) - i);
-                                        cmp2.push(i);
                                         ent._sequence = i;
                                         ent.ui.access[ent.ui.access.length - 1] = i;
                                     });
-                                if (!cmp.equals(cmp2)) {
+                                if (dirty) {
                                     info.scope.formSetDirty();
                                 }
                                 info.scope.$broadcast('itemOrderChanged');
@@ -1404,7 +1403,7 @@
 
                                         } else {
                                             $.extend(config.ui.specifics.toolbar, {
-                                                leftIcon: 'navigation.arrow-back',
+                                                leftIcon: 'arrow_back',
                                                 hideSave: true
                                             });
                                             $scope.close = function () {

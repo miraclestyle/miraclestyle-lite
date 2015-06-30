@@ -15,7 +15,7 @@
                                         templateBodyUrl: 'core/record/list.html',
                                         toolbar: {
                                             hideSave: true,
-                                            leftIcon: 'navigation.arrow-back',
+                                            leftIcon: 'arrow_back',
                                             title: config.title + ' / History'
                                         }
                                     };

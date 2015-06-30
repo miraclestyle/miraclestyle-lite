@@ -490,7 +490,7 @@
                                             return {};
                                         };
                                     config.ui.specifics.toolbar = {
-                                        leftIcon: 'navigation.arrow-back',
+                                        leftIcon: 'arrow_back',
                                         hideSave: true
                                     };
                                     if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
