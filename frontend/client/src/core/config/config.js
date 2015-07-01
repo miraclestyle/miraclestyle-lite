@@ -123,6 +123,10 @@
 
 
         $.extend(GLOBAL_CONFIG.labels, {
+            account: {
+                active: 'Active',
+                suspended: 'Suspended'
+            },
             order: {
                 checkout: 'Checkout',
                 completed: 'Completed',

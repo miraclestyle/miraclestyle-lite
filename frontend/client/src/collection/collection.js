@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(ng(function (modelsConfig, endpoint, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
+    angular.module('app').run(ng(function (modelsConfig, endpoint, $state, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
         modelsConfig(function (models) {
             var read_arguments = {
                 _sellers: {
@@ -77,28 +77,8 @@
                                 this.entity._sellers.remove(seller);
                             },
                             view: function (seller, $event) {
-                                var thisScope = this;
-                                models['23'].actions.read({
-                                    account: seller.parent.key,
-                                    // 3 rpcs
-                                    read_arguments: {
-                                        _content: {},
-                                        _feedback: {}
-                                    }
-                                }).then(function (response) {
-                                    models['23'].viewModal(response.data.entity, {
-                                        popFrom: helpers.clicks.realEventTarget($event.target),
-                                        removedOrAdded: function (updatedCollection) {
-                                            thisScope.entity._sellers.iremove(function (seller) {
-                                                return $.inArray(seller.key, updatedCollection.sellers) === -1;
-                                            });
-                                            var rmkey = function (sellerKey) {
-                                                return $.inArray(sellerKey, updatedCollection.sellers) === -1;
-                                            };
-                                            thisScope.entity.sellers.iremove(rmkey);
-                                            thisScope.args.sellers.iremove(rmkey);
-                                        }
-                                    });
+                                this.close().then(function () {
+                                    $state.go('seller-info', {key: seller.parent.key});
                                 });
                             },
                             layouts: {

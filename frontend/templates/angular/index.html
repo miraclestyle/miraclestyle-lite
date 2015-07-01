@@ -45,12 +45,12 @@
             </div>
             <div class="list list-padding seam-bottom">
                 <div class="list-subheader subheader">Explore</div>
-                <sidenav-item ui-sref="following">Following</sidenav-item>
+                <sidenav-item ng-show="!currentAccount._is_guest" ui-sref="following">Following</sidenav-item>
                 <sidenav-item ui-sref="home">All</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
-                <div class="list-subheader subheader">Buy</div>
+                <div class="list-subheader subheader">Buyer</div>
                 <sidenav-item ng-click="manageCollection()">Following</sidenav-item>
                 <sidenav-item ui-sref="buy-carts">Carts</sidenav-item>
                 <sidenav-item ui-sref="buy-orders">Orders</sidenav-item>
@@ -58,7 +58,7 @@
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="SellerManagementController" ng-show="!currentAccount._is_guest">
-                <div class="list-subheader subheader">Sell</div>
+                <div class="list-subheader subheader">Seller</div>
                 <sidenav-item ui-sref="sell-catalogs">Catalogs</sidenav-item>
                 <sidenav-item ui-sref="sell-orders">Orders</sidenav-item>
                 <sidenav-item ng-click="settings()">Settings</sidenav-item>
@@ -72,7 +72,7 @@
 
             <div class="list list-padding seam-bottom" ng-controller="LoginLinksController" ng-show="currentAccount._is_guest">
                 <div class="list-subheader subheader">Account</div>
-                <sidenav-item ng-click="login(1)">Sign in with Google</sidenav-item>
+                <sidenav-item ng-click="login(1)">Sign In With Google</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">

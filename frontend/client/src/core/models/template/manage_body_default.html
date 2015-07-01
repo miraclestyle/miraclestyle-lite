@@ -1,5 +1,5 @@
 <div ng-repeat="layout in layouts.groups">
-    <div class="list list-padding seam-bottom" ng-if="formBuilder[$index].length && !layout.include">
+    <div ng-class="{'seam-bottom' : formBuilder[$index].length > 1}" class="list list-padding" ng-if="formBuilder[$index].length && !layout.include">
         <div ng-if="layout.label" class="list-subheader subheader">{{layout.label}}</div>
         <div form-builder="formBuilder[$index]"></div>
     </div>

@@ -76,6 +76,7 @@ li.catalog-new-pricetag {
 }
 .full-logo img {
     width: 100%;
+    display: block;
     height: auto;
 }
 

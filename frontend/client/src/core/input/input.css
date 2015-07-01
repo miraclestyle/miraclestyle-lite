@@ -29,20 +29,21 @@ md-input-container textarea {
 
 md-input-container label, md-input-container .md-placeholder {
 
-    pointer-events: none;
-    -webkit-font-smoothing: antialiased;
-    padding-left: 0px;
-    z-index: 1;
-    transform: translate3d(0, 27px, 0) scale(1);
-    -webkit-transform: translate3d(0, 27px, 0) scale(1);
-    -webkit-transform-origin: left top;
-    transform-origin: left top;
-    transition: -webkit-transform cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
-    transition: transform cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
-
-    min-height: 19px;
-    -webkit-transition-property: transform, font-size;
-    transition-property: transform, font-size;
+      pointer-events: none;
+      -webkit-font-smoothing: antialiased;
+      padding-left: 0px;
+      z-index: 1;
+      transform: translate3d(0, 28px, 0) scale(1);
+      -webkit-transform: translate3d(0, 28px, 0) scale(1);
+      -webkit-transform-origin: left top;
+      transform-origin: left top;
+      transition: -webkit-transform cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
+      transition: transform cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s;
+      -webkit-transition-property: transform, font-size;
+      transition-property: transform, font-size;
+      padding-top: 2px;
+      font-size: 16px;
+      line-height: 20px;
 }
 
 md-input-container .md-placeholder {
@@ -84,6 +85,7 @@ md-input-container .md-input, md-input-container .as-md-input {
     border-style: solid;
     padding: 8px 0px 7px;
     line-height: normal;
+    min-height: 36px;
 }
 
 md-input-container .md-input:focus, md-input-container .as-md-input:focus {
@@ -169,7 +171,7 @@ md-input-container .md-input, md-input-container .as-md-input {
     border-color: rgba(0, 0, 0, 0.12);
 }
 
-md-input-container .md-input::-webkit-input-placeholder, md-input-container .md-input::-moz-placeholder, md-input-container .md-input:-moz-placeholder, md-input-container .md-input:-ms-input-placeholder, md-input-container .as-md-input::-webkit-input-placeholder, md-input-container .as-md-input::-moz-placeholder, md-input-container .as-md-input:-moz-placeholder, md-input-container .as-md-input:-ms-input-placeholder {
+::-moz-placeholder  {
     font-family: inherit;
     text-decoration: none;
     font-size: 16px;
@@ -180,6 +182,32 @@ md-input-container .md-input::-webkit-input-placeholder, md-input-container .md-
     text-transform: none;
     color: rgba(0, 0, 0, 0.26);
 }
+
+::-webkit-input-placeholder  {
+    font-family: inherit;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    text-align: left;
+    text-transform: none;
+    color: rgba(0, 0, 0, 0.26);
+}
+
+
+*:-ms-input-placeholder, *:-moz-placeholder {
+    font-family: inherit;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    text-align: left;
+    text-transform: none;
+    color: rgba(0, 0, 0, 0.26);
+}
+
 
 md-input-container label, md-input-container .md-placeholder {
     color: rgba(0, 0, 0, 0.26);
