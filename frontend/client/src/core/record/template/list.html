@@ -2,10 +2,10 @@
     <list-button class="list-row-three-lines" ng-repeat="record in history.records" ng-click="history.view(record)">
         <strong class="first ellipsis-text">{{record|output: 'logged'}}</strong>
         <span class="second ellipsis-text">
-            {{record._action}}
+            {{record._agent}}
         </span>
         <span class="second ellipsis-text">
-            {{record._agent}}
+            {{record._action}}
         </span>
     </list-button>
 </div>

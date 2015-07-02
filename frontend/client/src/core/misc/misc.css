@@ -298,7 +298,7 @@ a.block, .block, button.block {
 pre {
     overflow: auto;
     font-size: 13px;
-    padding: 5px;
+    padding: 0px;
     width: auto;
     max-height: 600px;
     background-color: #eee;
@@ -494,7 +494,7 @@ body {
 
 .md-icon-color-white {
     color: rgba(255, 255, 255, 1);
-    text-shadow: 1px 1px 0px black;
+    text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.54);
 }
 
 .avatar .md-icon {
@@ -573,12 +573,12 @@ body {
 
 .fade {
     -webkit-animation-delay: 0s;
-    -webkit-animation-duration: 0.3s;
+    -webkit-animation-duration: 0.2s;
     -webkit-animation-timing-function: linear;
     -webkit-animation-direction: normal;
     -webkit-animation-fill-mode: both;
     animation-delay: 0s;
-    animation-duration: 0.3s;
+    animation-duration: 0.2s;
     animation-timing-function: linear;
     animation-direction: normal;
     animation-fill-mode: both;
@@ -598,12 +598,12 @@ body {
 }
 /*Modification used for backdrop fade, in conjuction with animation on sliding side dialogs.*/
 
-.backdrop.fade.in {
+.backdrop.fade.in, md-backdrop.fade.in {
     -webkit-animation-delay: 0s;
     animation-delay: 0s;
 }
 
-.backdrop.fade.out {
+.backdrop.fade.out, md-backdrop.fade.out {
     -webkit-animation-delay: 0.1s;
     animation-delay: 0.1s;
 }
@@ -995,6 +995,6 @@ button::-moz-focus-inner {
 }
 
 .top-close-right {
-    left:auto;
+    left: auto;
     right: 4px;
 }

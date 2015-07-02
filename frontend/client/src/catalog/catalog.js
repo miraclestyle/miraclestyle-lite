@@ -762,21 +762,11 @@
                                                     };
                                                     fields.weight_uom.ui = {
                                                         groupBy: 'weight',
-                                                        groupLabel: 'Weight',
-                                                        specifics: {
-                                                            search: {
-                                                                enabled: false
-                                                            }
-                                                        }
+                                                        groupLabel: 'Weight'
                                                     };
                                                     fields.volume_uom.ui = {
                                                         groupBy: 'volume',
-                                                        groupLabel: 'Volume',
-                                                        specifics: {
-                                                            search: {
-                                                                enabled: false
-                                                            }
-                                                        }
+                                                        groupLabel: 'Volume'
                                                     };
                                                 },
                                                 getTitle = function () {
@@ -795,7 +785,7 @@
                                             $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
                                             $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                             $scope.validateForm = angular.bind($scope, helpers.form.validate);
-
+                                            $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
                                             $scope.args._images = [];
 
                                             $scope.config._title_.push(getTitle);
@@ -808,7 +798,7 @@
 
                                             fields._images._title_ = $scope.config._title_.concat();
                                             fields._images.modelclass.pricetags._title_ = fields._images._title_.concat();
-                                            fields._images.modelclass.pricetags.modelclass._product._title_ = fields._images._title_.concat();
+                                            $scope.fieldProduct._title_ = fields._images._title_.concat();
 
                                             $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
 
@@ -1038,8 +1028,6 @@
                                                 recomputeRealPath($scope.fieldProduct);
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };
-
-                                            $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
                                             $.extend($scope.fieldProduct.ui, {
                                                 init: function (field) {
                                                     field.config.ui.specifics.remove = function (product, close) {
@@ -1127,6 +1115,12 @@
                                             $.extend($scope.fieldProduct.modelclass._instances.modelclass.images.ui, {
                                                 name: 'images'
                                             });
+
+                                            $scope.fieldProduct.modelclass.category.ui.specifics = {
+                                                search: {
+                                                    enabled: true
+                                                }
+                                            };
 
                                             groupWeightAndVolume($scope.fieldProduct.modelclass);
                                             groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);

@@ -13,15 +13,15 @@
                 }
             },
             disconnectSignInMethod: {
-                title: 'Disconnect this method?',
-                message: 'If this is the only sign in method connected to your Miraclestyle account, you will permanently lose access to the account and all of it\'s data once this action is completed!',
+                title: 'Disconnect identity?',
+                message: 'If this is the only sign in identity connected to your Miraclestyle account, you will permanently lose access to the account and all of its data once this action is completed!',
                 text: {
                     primary: 'Disconnect'
                 }
             },
             connectSignInMethod: {
-                title: 'Connect this method?',
-                message: 'If this sign in method is already connected to another Miraclestyle account you will have to disconnect it before you proceed with this acction!',
+                title: 'Connect identity?',
+                message: 'If this sign in identity is already connected to another Miraclestyle account you will have to disconnect it before you proceed with this action!',
                 text: {
                     primary: 'Connect'
                 }
@@ -232,7 +232,7 @@
                 logo: 'Seller Logo'
             },
             '18-update': {
-                notify: 'E-mail me when a catalog is published or discontinued by the seller that I\'m following.'
+                notify: 'Email me when a catalog is published or discontinued by the seller that I\'m following.'
             }
         });
 

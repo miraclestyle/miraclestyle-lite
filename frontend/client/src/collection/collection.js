@@ -75,6 +75,9 @@
                             remove: function (seller) {
                                 this.args.sellers.remove(seller.key);
                                 this.entity._sellers.remove(seller);
+                                this.save().then(function () {
+                                    snackbar.showK('changesSaved');
+                                });
                             },
                             view: function (seller, $event) {
                                 this.close().then(function () {
