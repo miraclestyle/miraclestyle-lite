@@ -56,6 +56,7 @@
                                                     $scope.dialog.templateBodyUrl = 'core/record/view_body.html';
                                                     $scope.dialog.toolbar = {
                                                         hideSave: true,
+                                                        leftIcon: 'arrow_back',
                                                         title: 'Log for date  ' + record.logged
                                                     };
                                                     $scope.close = function () {

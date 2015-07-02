@@ -35,6 +35,8 @@
                         $scope.container = {};
                         $scope.config = {};
 
+                        $scope.config.scroll = true;
+
                         $scope.config.dismiss = function () {
                             return $scope.$close();
                         };
