@@ -129,6 +129,10 @@
     padding: 0px 4px;
 }
 
+.list-row-three-lines .list-secondary-tile {
+    padding: 0px 4px;
+}
+
 body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body .list-row-is-clickable-and-hoverable:focus {
     background: rgba(0, 0, 0, 0.08);
 }
