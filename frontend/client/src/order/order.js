@@ -599,7 +599,7 @@
                                         }
                                     },
                                     whatSortMeans: function () {
-                                        modals.alert('howToDeleteLine');
+                                        modals.alert('howToDeleteDragging');
                                     },
                                     onStart: function (e, ui, line) {
                                         $(ui.helper).find('.sort-handle').addClass('dragged');

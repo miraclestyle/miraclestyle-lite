@@ -6,7 +6,7 @@
                 <img class="not-pointable" display-image-config="{size: true}" display-image="sellerDetails.seller.logo" />
             </div>
         </div>
-        <div class="list seam-bottom list-padding">
+        <div ng-class="{'seam-bottom': sellerDetails.seller._content.documents.length}" class="list list-padding">
             <div class="list-row list-content-tile list-row-avatar">
                 <span class="display1">{{sellerDetails.seller.name}}</span>
             </div>
@@ -36,7 +36,7 @@
                 </div>
             </div>
         </div>
-        <div class="list seam-bottom list-padding">
+        <div ng-if="sellerDetails.seller._content.documents.length" class="list seam-bottom list-padding">
              <div ng-repeat="content in sellerDetails.seller._content.documents track by content.key" class="list-row no-padding">
                <list-button ng-click="sellerDetails.viewContent(content)">
                   <strong class="first ellipsis-text">{{content.title}}</strong>

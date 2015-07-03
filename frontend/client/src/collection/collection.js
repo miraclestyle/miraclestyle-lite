@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(ng(function (modelsConfig, endpoint, $state, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
+    angular.module('app').run(ng(function (modelsConfig, endpoint, $state, modals, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
         modelsConfig(function (models) {
             var read_arguments = {
                 _sellers: {
@@ -56,10 +56,58 @@
                                             snackbar.showK('changesSaved');
                                         });
                                         cancelTimeouts(notthis);
-                                    }, 1000);
+                                    }, 400);
                                     timeouts.push(notthis);
                                 }
                             });
+
+                            $scope.collectionDrag = {
+                                options: {
+                                    disabled: false,
+                                    handle: '.sort-handle',
+                                    distance: 10,
+                                    stop: function (e, ui) {
+                                        $scope.$apply();
+                                    }
+                                },
+                                whatSortMeans: function () {
+                                    modals.alert('howToDeleteDragging');
+                                },
+                                onStart: function (e, ui, seller) {
+                                    $(ui.helper).find('.sort-handle').addClass('dragged');
+                                },
+                                onDrag: function (e, ui, seller) {
+                                    var deleteMode,
+                                        division,
+                                        helperWidth = ui.helper.width();
+                                    division = ui.offset.left + helperWidth;
+                                    if (division < (helperWidth / 2)) {
+                                        deleteMode = true;
+                                    }
+                                    if (seller) {
+                                        if (deleteMode) {
+                                            ui.helper.addClass('about-to-delete');
+                                        } else {
+                                            ui.helper.removeClass('about-to-delete');
+                                        }
+                                    }
+                                },
+                                onStop: function (e, ui, seller) {
+                                    if (ui.helper.hasClass('about-to-delete')) {
+                                        ui.helper.animate({
+                                            left: (ui.helper.width() * 2) * -1
+                                        }, function () {
+                                            $timeout(function () {
+                                                $scope.remove(seller);
+                                            });
+                                        });
+                                    } else {
+                                        ui.helper.animate(ui.originalPosition, function () {
+                                            ui.helper.attr('style', '');
+                                        });
+                                    }
+                                }
+                            };
                         },
                         afterComplete: function ($scope) {
                             $scope.entity._sellers.iremove(function (seller) {
@@ -73,10 +121,14 @@
                         },
                         scope: {
                             remove: function (seller) {
-                                this.args.sellers.remove(seller.key);
-                                this.entity._sellers.remove(seller);
-                                this.save().then(function () {
+                                var scope = this,
+                                    sellers;
+                                scope.args.sellers.remove(seller.key);
+                                scope.entity._sellers.remove(seller);
+                                sellers = scope.entity._sellers.concat();
+                                scope.save().then(function () {
                                     snackbar.showK('changesSaved');
+                                    scope.entity._sellers = sellers;
                                 });
                             },
                             view: function (seller, $event) {

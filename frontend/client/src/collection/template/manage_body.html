@@ -4,23 +4,24 @@
 <div class="list list-padding">
     <div class="list-subheader subheader">{{layouts.groups[1].label}}</div>
     <div grid-scale="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}" class="grid-wrapper clearfix">
-        <div ng-repeat="seller in entity._sellers track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
-            <button type="button"
-                    md-ink-ripple
-                    ripple-light
-                    ng-click="view(seller, $event)"
-                    class="button-transparent padding-0 pointable block">
-                <img class="not-pointable" display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
-            </button>
-            <div class="bottom-right-floating">
-                <button md-ink-ripple-action
-                       ripple-light 
-                       loading 
-                       class="button-transparent bottom-right-floating-action button-square" 
-                       ng-click="remove(seller, $event)">
-                    <icon color="white" type="delete"></icon>
+        <div
+             ng-repeat="seller in entity._sellers track by $index"  
+             drag="true"
+             jqyoui-draggable="{onDrag: 'collectionDrag.onDrag(seller)', onStart: 'collectionDrag.onStart(seller)', onStop: 'collectionDrag.onStop(seller)'}"
+             jqyoui-options="collectionDrag.options" grid-scale-item="{image: true}" class="grid-item grid-generator">
+                <div class="delete-overlay"></div>
+                <button type="button"
+                        md-ink-ripple
+                        ripple-light
+                        ng-click="view(seller, $event)"
+                        class="button-transparent padding-0 pointable block">
+                    <img class="not-pointable" display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
                 </button>
-            </div>
+                <div class="bottom-right-floating">
+                    <a md-ink-ripple-action draggable-click="collectionDrag.whatSortMeans($event)" class="button-square sort-handle">
+                        <icon color="white" type="delete"></icon>
+                    </a>
+                </div>
         </div>
     </div>
 

@@ -105,7 +105,7 @@
                     'Remove the item by dragging it outside the left edge of the screen.'],
                 text: locals.gotit
             },
-            howToDeleteLine: {
+            howToDeleteDragging: {
                 title: 'How to use this action',
                 message: 'Remove the item by dragging it outside the left edge of the screen.',
                 text: locals.gotit

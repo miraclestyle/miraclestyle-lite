@@ -341,6 +341,17 @@
                             }
                         },
                         pluginFieldOverrides: {
+                            '124': {
+                                product_categories: {
+                                    ui: {
+                                        specifics: {
+                                            search: {
+                                                enabled: true
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                             '113': {
                                 lines: {
                                     ui: {
@@ -403,6 +414,15 @@
                                 }
                             },
                             '109': {
+                                product_categories: {
+                                    ui: {
+                                        specifics: {
+                                            search: {
+                                                enabled: true
+                                            }
+                                        }
+                                    }
+                                },
                                 carriers: {
                                     ui: {
                                         specifics: {
