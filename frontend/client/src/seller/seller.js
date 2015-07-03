@@ -214,7 +214,8 @@
                             ui: {
                                 groupBy: what,
                                 groupHelp: help,
-                                groupLabel: label
+                                groupLabel: label,
+                                label: false
                             }
                         };
                     },
@@ -341,17 +342,6 @@
                             }
                         },
                         pluginFieldOverrides: {
-                            '124': {
-                                product_categories: {
-                                    ui: {
-                                        specifics: {
-                                            search: {
-                                                enabled: true
-                                            }
-                                        }
-                                    }
-                                }
-                            },
                             '113': {
                                 lines: {
                                     ui: {
@@ -407,6 +397,15 @@
                                         specifics: lineSpec()
                                     },
                                     modelclass: {
+                                        product_categories: {
+                                            ui: {
+                                                specifics: {
+                                                    search: {
+                                                        enabled: true
+                                                    }
+                                                }
+                                            }
+                                        },
                                         condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
                                         condition_operator: groupBy('conditional'),
                                         condition_value: groupBy('conditional')

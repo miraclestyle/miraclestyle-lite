@@ -753,20 +753,16 @@
                                                 setupCurrentPricetag,
                                                 groupWeightAndVolume = function (fields) {
                                                     fields.weight.ui = {
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
-                                                    };
-                                                    fields.volume.ui = {
-                                                        groupBy: 'volume',
-                                                        groupLabel: 'Volume'
+                                                        groupBy: 'weight'
                                                     };
                                                     fields.weight_uom.ui = {
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
+                                                        groupBy: 'weight'
+                                                    };
+                                                    fields.volume.ui = {
+                                                        groupBy: 'volume'
                                                     };
                                                     fields.volume_uom.ui = {
-                                                        groupBy: 'volume',
-                                                        groupLabel: 'Volume'
+                                                        groupBy: 'volume'
                                                     };
                                                 },
                                                 getTitle = function () {

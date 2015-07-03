@@ -43,6 +43,7 @@ md-input-container label, md-input-container .md-placeholder {
     padding-top: 2px;
     font-size: 16px;
     line-height: 20px;
+    letter-spacing: 0.1px;
 }
 
 md-input-container .md-placeholder {
@@ -102,6 +103,7 @@ md-input-container [ng-message], md-input-container .md-char-counter {
     line-height: 14px;
     padding: 4px 0px;
     position: static;
+    letter-spacing: 0.2px;
     /* making the messages non absolute causes weird animations */
 }
 

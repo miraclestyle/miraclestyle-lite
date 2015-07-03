@@ -110,3 +110,7 @@ li .ui-select-highlight {
 .modal-medium .list-row-two-lines .avatar {
     padding: 12px 4px 12px 20px;
 }
+
+.select-input md-input-container label {
+    padding-right: 32px;
+}

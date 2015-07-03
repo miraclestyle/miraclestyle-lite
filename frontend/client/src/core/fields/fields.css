@@ -132,6 +132,7 @@ a.sort-handle {
     color: rgba(0, 0, 0, 0.54);
     padding-left: 16px;
     padding-right: 16px;
+    letter-spacing: 0.2px;
 }
 
 .uploaded-image {

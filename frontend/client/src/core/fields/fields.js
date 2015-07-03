@@ -1470,7 +1470,6 @@
 
                                                     formBuilder['0'].push(groupBysMap[field.ui.groupBy]);
                                                 }
-                                                field.ui.label = false;
                                                 groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
                                                 return;
                                             }

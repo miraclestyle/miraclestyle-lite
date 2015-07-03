@@ -121,7 +121,7 @@ class SellerSetupDefaults(orm.BaseModel):
     default_address_billing = OrderAddressPlugin(name='Billing Worldwide', exclusion=False, address_type='billing')
     default_carrier = OrderCarrierPlugin(name='Free International Shipping', active=True, lines=[OrderCarrierLine(name='Shipping Everywhere', active=True)])
     default_currency = OrderCurrencyPlugin(name='Currency (USD)', currency=Unit.build_key('usd'))
-    default_paypal_payment = OrderPayPalPaymentPlugin(name='Paypal Payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
+    default_paypal_payment = OrderPayPalPaymentPlugin(name='PayPal Payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
     default_discount = OrderDiscountPlugin(name='Discount On Quantity (10%)',
                                            lines=[OrderDiscountLine(name='Discount On Quantity Over 5',
                                                                     condition_type='quantity',
@@ -131,8 +131,8 @@ class SellerSetupDefaults(orm.BaseModel):
                                                                     active=True)], active=False)
     default_tax = OrderTaxPlugin(name='Sales Tax', address_type='shipping', type='proportional', amount=Decimal('6'), active=False)
     if not plugin_group or not plugin_group.plugins:  # now user wont be in able to delete the config completely, he will always have these defaults
-      plugins = [default_address_shipping,
-                 default_address_billing,
+      plugins = [default_address_billing,
+                 default_address_shipping,
                  default_carrier,
                  default_currency,
                  default_discount,
