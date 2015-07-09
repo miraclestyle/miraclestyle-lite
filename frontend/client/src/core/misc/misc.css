@@ -963,7 +963,6 @@ button::-moz-focus-inner {
     letter-spacing: 0.1px;
     text-align: left;
     text-transform: none;
-    padding-bottom: 8px;
 }
 
 .collapse {

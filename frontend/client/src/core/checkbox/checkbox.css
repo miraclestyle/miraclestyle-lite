@@ -11,7 +11,7 @@ md-checkbox {
 md-checkbox .md-icon {
     opacity: 0;
     position: absolute;
-    transition-delay: 0.1s;
+    transition-delay: 0s;
     transition-duration: 0.2s;
     transition-timing-function: linear;
     transition-property: opacity;

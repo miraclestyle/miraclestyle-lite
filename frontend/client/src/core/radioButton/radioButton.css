@@ -1,6 +1,5 @@
 md-radio-button, .md-switch-thumb {
     display: block;
-    /*white-space: nowrap;*/
     cursor: pointer;
     padding-left: 16px;
     padding-right: 16px;
@@ -12,7 +11,7 @@ md-radio-button, .md-switch-thumb {
 md-radio-button .md-icon {
     opacity: 0;
     position: absolute;
-    transition-delay: 0.1s;
+    transition-delay: 0s;
     transition-duration: 0.2s;
     transition-timing-function: linear;
     transition-property: opacity;

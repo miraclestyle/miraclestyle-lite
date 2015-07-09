@@ -1,6 +1,6 @@
 <div class="help">
     <div ng-include="help" ng-if="isTemplate()"></div>
-    <div ng-if="!isTemplate()">
-      <div class="help-item" ng-repeat="part in help">{{part}}</div>
+    <div class="help-item" ng-if="!isTemplate()">
+      <div class="padding-bottom-8" ng-repeat="part in help">{{part}}</div>
     </div>
 </div>
