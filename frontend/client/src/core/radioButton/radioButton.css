@@ -12,11 +12,11 @@ md-radio-button, .md-switch-thumb {
 md-radio-button .md-icon {
     opacity: 0;
     position: absolute;
-    transition-delay: 0s;
+    transition-delay: 0.1s;
     transition-duration: 0.2s;
     transition-timing-function: linear;
     transition-property: opacity;
-    color:rgba(117, 117, 117, 1);
+    color:rgba(0, 0, 0, 0.54);
 }
 
 md-radio-button .md-icon-radio_button_checked {
@@ -29,4 +29,8 @@ md-radio-button .md-icon-radio_button_unchecked {
 
 .md-checked .md-icon-radio_button_checked {
     opacity:1;
+}
+
+.md-checked .md-icon-radio_button_unchecked {
+    opacity: 0;
 }

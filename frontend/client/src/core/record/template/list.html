@@ -1,10 +1,10 @@
 <div autoload-on-vertical-scroll-end="{loader: history.reader}" class="list list-padding">
     <list-button class="list-row-three-lines" ng-repeat="record in history.records" ng-click="history.view(record)">
-        <strong class="first ellipsis-text">{{record|output: 'logged'}}</strong>
+        <strong class="first">{{record|output: 'logged'}}</strong>
         <span class="second ellipsis-text">
             {{record._agent}}
         </span>
-        <span class="second ellipsis-text">
+        <span class="second">
             {{record._action}}
         </span>
     </list-button>

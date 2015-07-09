@@ -254,7 +254,7 @@
             '109': {
                 address_type: locals.addressTypeSpec,
                 type: {
-                    percent: 'Proportional (%)',
+                    proportional: 'Proportional (%)',
                     fixed: 'Fixed (Amount)'
                 }
             },
@@ -312,8 +312,8 @@
 
         $.extend(GLOBAL_CONFIG.fields.radioLabel, {
             pluginLocation: {
-                trueLabel: 'Applies to all locations except to those listed in the Locations section.',
-                falseLabel: 'Applies only to the locations listed in the Locations section.'
+                falseLabel: 'Applies to all locations except to those listed in the Locations section.',
+                trueLabel: 'Applies only to the locations listed in the Locations section.'
             }
         });
 
@@ -382,8 +382,9 @@
             addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
             addLocations: 'Add Locations',
-            editLines: 'Edit Lines',
+            editLines: 'Edit Line',
             addPrice: 'Add Price',
+            addPrices: 'Add Price',
             editPrice: 'Edit Price',
             viewInstances: 'Variant Configurations',
             editInstances: 'Edit Variant Configuration',

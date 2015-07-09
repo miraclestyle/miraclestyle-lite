@@ -866,6 +866,22 @@
                                             },
                                             argument = searchDefaults.search;
 
+                                        if (config.code_name === 'uom') {
+                                            argument.filters.unshift({
+                                                value: 'Currency',
+                                                field: 'measurement',
+                                                operator: '!='
+                                            });
+
+                                            argument.orders = [{
+                                                field: 'measurement',
+                                                operator: 'asc'
+                                            }, {
+                                                field: 'key',
+                                                operator: 'asc'
+                                            }];
+                                        }
+
                                         if (config.code_name === 'weight_uom') {
                                             argument.filters.push({
                                                 value: 'Weight',
@@ -880,22 +896,6 @@
                                                 field: 'measurement',
                                                 operator: '=='
                                             });
-                                        }
-
-                                        if (config.code_name === 'product_uom') {
-                                            argument.filters.unshift({
-                                                value: 'Currency',
-                                                field: 'measurement',
-                                                operator: '!='
-                                            });
-
-                                            argument.orders = [{
-                                                field: 'measurement',
-                                                operator: 'asc'
-                                            }, {
-                                                field: 'key',
-                                                operator: 'asc'
-                                            }];
                                         }
 
                                         return searchDefaults;

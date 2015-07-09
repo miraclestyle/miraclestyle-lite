@@ -98,7 +98,7 @@
 }
 
 .md-button.md-primary.md-raised:not([disabled]):hover, .md-button.md-primary.md-raised:not([disabled]):focus {
-    background-color: rgb(117, 117, 117);
+    background-color: rgba(0, 0, 0, 0.54);
 }
 
 .md-button.md-raised {

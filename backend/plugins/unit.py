@@ -142,8 +142,3 @@ class UnitUpdateWrite(orm.BaseModel):
         entity._use_rule_engine = False
       orm.put_multi(put_entities)
 
-
-class UnitRemoveCurrencies(orm.BaseModel):
-
-  def run(self, context):
-    context._entities = filter(lambda x: x.measurement != 'Currency', context._entities)

@@ -133,6 +133,7 @@ a.sort-handle {
     padding-left: 16px;
     padding-right: 16px;
     letter-spacing: 0.2px;
+    display:block;
 }
 
 .uploaded-image {

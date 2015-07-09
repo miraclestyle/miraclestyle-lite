@@ -18,7 +18,10 @@
                     <img class="not-pointable" display-image="seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
                 </button>
                 <div class="bottom-right-floating">
-                    <a md-ink-ripple-action draggable-click="collectionDrag.whatSortMeans($event)" class="button-square sort-handle">
+                    <a md-ink-ripple-action
+                       ripple-light
+                       draggable-click="collectionDrag.whatSortMeans($event)"
+                       class="button-square sort-handle">
                         <icon color="white" type="delete"></icon>
                     </a>
                 </div>

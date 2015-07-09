@@ -7,6 +7,7 @@ Created on May 6, 2014
 
 import datetime
 
+import decimal
 import orm
 import settings
 import notifications
@@ -139,10 +140,10 @@ class CatalogProductInstance(orm.BaseExpando):
       'description': orm.SuperTextProperty('4'),
       'unit_price': orm.SuperDecimalProperty('5'),
       'availability': orm.SuperStringProperty('6', default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder')),
-      'weight': orm.SuperDecimalProperty('7'),
-      'weight_uom': orm.SuperKeyProperty('8', kind='17'),
-      'volume': orm.SuperDecimalProperty('9'),
-      'volume_uom': orm.SuperKeyProperty('11', kind='17'),
+      'weight': orm.SuperDecimalProperty('7', default=decimal.Decimal('0')),
+      'weight_uom': orm.SuperKeyProperty('8', kind='17', default=Unit.build_key('pound')),
+      'volume': orm.SuperDecimalProperty('9', default=decimal.Decimal('0')),
+      'volume_uom': orm.SuperKeyProperty('11', kind='17', default=Unit.build_key('gallon')),
       'images': orm.SuperImageLocalStructuredProperty(orm.Image, '12', repeated=True),
       'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True)
   }
@@ -196,10 +197,10 @@ class CatalogProduct(orm.BaseExpando):
   _default_indexed = False
 
   _expando_fields = {
-      'weight': orm.SuperDecimalProperty('8'),
-      'weight_uom': orm.SuperKeyProperty('9', kind='17'),
-      'volume': orm.SuperDecimalProperty('10'),
-      'volume_uom': orm.SuperKeyProperty('11', kind='17'),
+      'weight': orm.SuperDecimalProperty('8', default=decimal.Decimal('0')),
+      'weight_uom': orm.SuperKeyProperty('9', kind='17', default=Unit.build_key('pound')),
+      'volume': orm.SuperDecimalProperty('10', default=decimal.Decimal('0')),
+      'volume_uom': orm.SuperKeyProperty('11', kind='17', default=Unit.build_key('gallon')),
       'images': orm.SuperImageLocalStructuredProperty(orm.Image, '12', repeated=True),
       'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True),
       'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '14', repeated=True)

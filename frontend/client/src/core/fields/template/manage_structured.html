@@ -14,7 +14,7 @@
             <div class="fixed-height relative has-toolbar overflow-y">
                 <div class="modal-body-inner">
                     <div ng-repeat="layout in layouts.groups">
-                        <div ng-class="{'seam-bottom': layouts.groups.length > 1}" class="list list-padding" ng-if="formBuilder[$index].length && !layout.include">
+                        <div ng-class="{'seam-bottom': layouts.groups.length > 1 && !$last}" class="list list-padding" ng-if="formBuilder[$index].length && !layout.include">
                             <div ng-if="layout.label" class="list-subheader subheader">{{layout.label}}</div>
                             <div form-builder="formBuilder[$index]"></div>
                         </div>

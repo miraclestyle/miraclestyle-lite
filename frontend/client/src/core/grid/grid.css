@@ -61,7 +61,7 @@ img.vertical, .vertical {
     float: left;
 }
 .grid-wrapper {
-    margin: 1px;
+    padding: 1px;
 }
 
 .grid-item {

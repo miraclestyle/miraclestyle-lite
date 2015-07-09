@@ -33,8 +33,8 @@
     margin-right: 0px;
     margin-top: 0px;
     padding-bottom: 12px;
-    padding-left: 80px;
-    padding-right: 80px;
+    padding-left: 72px;
+    padding-right: 72px;
     padding-top: 12px;
     position: relative;
     text-align: center;
@@ -46,7 +46,7 @@
     margin-right: 0px;
     margin-top: 0px;
     padding-bottom: 0px;
-    padding-left: 4px;
+    padding-left: 12px;
     padding-right: 12px;
     padding-top: 0px;
     position: absolute;
@@ -70,14 +70,14 @@
     width: 300px;
     min-height: 504px;
     padding-top: 12px;
-    padding-bottom: 16px;
+    padding-bottom: 12px;
 }
 
 .date-control-days {
     padding-right: 24px;
     padding-left: 24px;
-    padding-top: 16px;
-    padding-bottom: 16px;
+    padding-top: 12px;
+    padding-bottom: 12px;
 }
 
 .date-control .selected {
@@ -86,7 +86,6 @@
 }
 
 .time-inputs .md-button {
-    padding: 8px;
     margin: 0px;
     min-width: initial;
     text-align: center;

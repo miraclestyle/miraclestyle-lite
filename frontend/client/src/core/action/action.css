@@ -10,9 +10,6 @@
 .md-toolbar-tools.with-right-action {
     padding-right: 0px;
 }
-.no-right-actions .md-toolbar-tools {
-    padding-right: 16px;
-}
 .md-toolbar-title {
     text-overflow: ellipsis;
     white-space: nowrap;

@@ -348,7 +348,7 @@
                                         specifics: lineSpec()
                                     },
                                     modelclass: {
-                                        rules: {
+                                        prices: {
                                             ui: {
                                                 specifics: {
                                                     toolbar: {
@@ -444,7 +444,7 @@
                                         }
                                     }
                                 },
-                                exclusion: exclusionSpec,
+                                exclusion: exclusionSpec(),
                                 locations: {
                                     ui: {
                                         specifics: locationSpec()

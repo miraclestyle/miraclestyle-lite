@@ -753,17 +753,25 @@
                                                 setupCurrentPricetag,
                                                 groupWeightAndVolume = function (fields) {
                                                     fields.weight.ui = {
-                                                        groupBy: 'weight'
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight'
                                                     };
                                                     fields.weight_uom.ui = {
-                                                        groupBy: 'weight'
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight'
                                                     };
                                                     fields.volume.ui = {
-                                                        groupBy: 'volume'
+                                                        groupBy: 'volume',
+                                                        groupLabel: 'Volume'
                                                     };
                                                     fields.volume_uom.ui = {
-                                                        groupBy: 'volume'
+                                                        groupBy: 'volume',
+                                                        groupLabel: 'Volume'
                                                     };
+                                                    fields.weight.ui.label = false;
+                                                    fields.weight_uom.ui.label = false;
+                                                    fields.volume.ui.label = false;
+                                                    fields.volume_uom.ui.label = false;
                                                 },
                                                 getTitle = function () {
                                                     return 'viewProducts';
