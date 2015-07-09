@@ -44,6 +44,7 @@ md-input-container label, md-input-container .md-placeholder {
     font-size: 16px;
     line-height: 20px;
     letter-spacing: 0.2px;
+    font-weight: 400;
 }
 
 md-input-container .md-placeholder {
@@ -81,6 +82,7 @@ md-input-container .md-input, md-input-container .as-md-input {
     min-height: 36px;
     line-height: 20px;
     letter-spacing: 0.1px;
+    font-weight: 400;
 }
 
 md-input-container .md-input:focus, md-input-container .as-md-input:focus {
@@ -110,25 +112,34 @@ md-input-container [ng-message], md-input-container .md-char-counter {
 }
 
 md-input-container [ng-message].ng-enter, md-input-container .md-char-counter.ng-enter {
+    /*
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    transition-delay: 0.2s;
+    transition-delay: 0.1s;*/
+    transition-delay: 0.1s;
+    transition-duration: 0.2s;
+    transition-timing-function: linear;
+    transition-property: opacity;
 }
 
 md-input-container [ng-message].ng-leave, md-input-container .md-char-counter.ng-leave {
-    transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
+    transition-duration: 0.2s;
+    transition-timing-function: linear;
+    transition-property: opacity;
 }
 
 md-input-container [ng-message].ng-enter, md-input-container [ng-message].ng-leave.ng-leave-active, md-input-container .md-char-counter.ng-enter, md-input-container .md-char-counter.ng-leave.ng-leave-active {
     opacity: 0;
+    /*
     -webkit-transform: translate3d(0, -20%, 0);
-    transform: translate3d(0, -20%, 0);
+    transform: translate3d(0, -20%, 0);*/
     position: absolute;
 }
 
 md-input-container [ng-message].ng-leave, md-input-container [ng-message].ng-enter.ng-enter-active, md-input-container .md-char-counter.ng-leave, md-input-container .md-char-counter.ng-enter.ng-enter-active {
     opacity: 1;
+    /*
     -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);*/
 }
 
 md-input-container .md-char-counter {

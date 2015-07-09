@@ -39,29 +39,12 @@
                         templateBodyUrl: 'collection/manage_body.html',
                         excludeFields: ['account', 'read_arguments'],
                         init: function ($scope) {
-                            var timeouts = [];
                             $scope.close = $scope.$close;
                             $scope.$watch('args.notify', function (neww, old) {
-                                var notthis,
-                                    cancelTimeouts = function (notthis) {
-                                        if (timeouts.length) {
-                                            angular.forEach(timeouts, function (timeout) {
-                                                if (timeout !== notthis) {
-                                                    $timeout.cancel(timeout);
-                                                }
-                                            });
-                                            timeouts = [];
-                                        }
-                                    };
                                 if (neww !== old) {
-                                    cancelTimeouts();
-                                    notthis = $timeout(function () {
-                                        $scope.save().then(function () {
-                                            snackbar.showK('changesSaved');
-                                        });
-                                        cancelTimeouts(notthis);
-                                    }, 400);
-                                    timeouts.push(notthis);
+                                    $scope.save().then(function () {
+                                        snackbar.showK('changesSaved');
+                                    });
                                 }
                             });
 
