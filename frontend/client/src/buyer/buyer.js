@@ -4,11 +4,17 @@
         .controller('BuyerManagementController', ng(function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
-                models['19'].manageModal(currentAccount.key);
+                models['19'].manageModal(currentAccount.key, undefined, {
+                    inDirection: false,
+                    outDirection: false
+                });
             };
 
             $scope.manageCollection = function () {
-                models['18'].manageModal(currentAccount.key);
+                models['18'].manageModal(currentAccount.key, {
+                    inDirection: false,
+                    outDirection: false
+                });
             };
 
         })).controller('BuyOrdersController', ng(function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
@@ -96,7 +102,10 @@
                         });
                     },
                     manageModalFieldsOrder: ['country', 'region', 'city', 'postal_code', 'street', 'name'],
-                    manageModal: function (accountKey, afterSave) {
+                    manageModal: function (accountKey, afterSave, modalConfig) {
+                        if (!modalConfig) {
+                            modalConfig = {};
+                        }
                         var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                             that = this,
                             config;
@@ -153,6 +162,7 @@
                             fields: _.toArray(fields),
                             kind: this.kind,
                             action: 'update',
+                            modalConfig: modalConfig,
                             afterSave: function () {
                                 endpoint.removeCache(that.getCacheKey('current'));
                                 if (angular.isDefined(afterSave)) {

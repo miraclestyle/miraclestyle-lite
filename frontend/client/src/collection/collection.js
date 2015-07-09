@@ -20,7 +20,10 @@
                         cacheType: 'memory'
                     });
                 },
-                manageModal: function (accountKey) {
+                manageModal: function (accountKey, modalConfig) {
+                    if (!modalConfig) {
+                        modalConfig = {};
+                    }
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config,
                         that = this;
@@ -32,6 +35,7 @@
                             hideSave: true,
                             titleEdit: 'buyer.edit18'
                         },
+                        modalConfig: modalConfig,
                         templateBodyUrl: 'collection/manage_body.html',
                         excludeFields: ['account', 'read_arguments'],
                         init: function ($scope) {

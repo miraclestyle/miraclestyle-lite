@@ -2,6 +2,7 @@
 <div class="list list-padding">
     <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = (sellerDetails ? 240 : 340)"
        grid-scale="{maxHeight: maxHeight}"
+       ng-show="search.results.length"
        class="grid-wrapper clearfix">
         <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
             <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">

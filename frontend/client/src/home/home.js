@@ -2,6 +2,15 @@
     'use strict';
     angular.module('app')
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
+        .directive('closeMasterMenu', ng(function ($mdSidenav) {
+            return {
+                link: function (scope, element, attrs) {
+                    element.on('click', function () {
+                        scope.site.toolbar.menu.close();
+                    });
+                }
+            };
+        }))
         .run(ng(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
             $rootScope.site = {
                 title: '',

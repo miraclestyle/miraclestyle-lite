@@ -114,7 +114,9 @@
                                     hideSave: true
                                 },
                                 modalConfig: {
-                                    popFrom: extraConfig.popFrom
+                                    popFrom: extraConfig.popFrom,
+                                    inDirection: false,
+                                    outDirection: false
                                 },
                                 init: function ($scope) {
                                     var entity = $scope.entity,

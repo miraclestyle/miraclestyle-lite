@@ -3,7 +3,7 @@
 </div>
 <div class="list list-padding">
     <div class="list-subheader subheader">{{layouts.groups[1].label}}</div>
-    <div ng-show="entity._sellers.length" grid-scale="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}" class="grid-wrapper clearfix">
+    <div ng-show="!helpers.models.isEntityListEmpty(entity._sellers)" grid-scale="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}" class="grid-wrapper clearfix">
         <div
              ng-repeat="seller in entity._sellers track by $index"  
              drag="true"

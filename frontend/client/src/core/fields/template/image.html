@@ -22,6 +22,7 @@
            ng-model="config.ui.specifics.parentArgs"
            ng-class="{'grid-no-items': !config.ui.specifics.parentArgs.length}"
            autoload-on-vertical-scroll-end="{loader: config.ui.specifics.reader}"
+           ng-show="!helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs)"
            class="clearfix grid-wrapper unselectable">
            
           <div on-ng-repeat-end 

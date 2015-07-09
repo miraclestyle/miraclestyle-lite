@@ -957,6 +957,10 @@
                             submitNative: true,
                             titleEdit: 'seller.settings'
                         },
+                        modalConfig: {
+                            inDirection: false,
+                            outDirection: false
+                        },
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);

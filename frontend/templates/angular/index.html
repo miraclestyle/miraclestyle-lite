@@ -45,22 +45,22 @@
             </div>
             <div class="list list-padding seam-bottom">
                 <div class="list-subheader subheader">Explore</div>
-                <sidenav-item ng-show="!currentAccount._is_guest" ui-sref="following">Following</sidenav-item>
-                <sidenav-item ui-sref="home">All</sidenav-item>
+                <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Following</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="home">All</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
                 <div class="list-subheader subheader">Buyer</div>
                 <sidenav-item ng-click="manageCollection()">Following</sidenav-item>
-                <sidenav-item ui-sref="buy-carts">Carts</sidenav-item>
-                <sidenav-item ui-sref="buy-orders">Orders</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="buy-carts">Carts</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="buy-orders">Orders</sidenav-item>
                 <sidenav-item ng-click="settings()">Addresses</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="SellerManagementController" ng-show="!currentAccount._is_guest">
                 <div class="list-subheader subheader">Seller</div>
-                <sidenav-item ui-sref="sell-catalogs">Catalogs</sidenav-item>
-                <sidenav-item ui-sref="sell-orders">Orders</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="sell-catalogs">Catalogs</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="sell-orders">Orders</sidenav-item>
                 <sidenav-item ng-click="settings()">Settings</sidenav-item>
             </div>
 
@@ -77,16 +77,16 @@
 
             <div class="list list-padding seam-bottom" ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
                 <div class="list-subheader subheader">Administration</div>
-                <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: helpers.url.jsonToUrlsafe({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
+                <sidenav-item ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: helpers.url.jsonToUrlsafe({}), kind : item.kind})" close-master-menu ng-bind="item.name"></sidenav-item>
             </div>
 
               <div class="list list-padding">
                 <div class="list-subheader subheader">Support</div>
-                <sidenav-item ui-sref="about">About</sidenav-item>
-                <sidenav-item ui-sref="tour">Tour</sidenav-item>
-                <sidenav-item ui-sref="terms">Privacy &amp; Terms</sidenav-item>
-                <sidenav-item ui-sref="trademark">Copyright &amp; Trademark</sidenav-item>
-                <sidenav-item ui-sref="support">Support</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="about">About</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="tour">Tour</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="terms">Privacy &amp; Terms</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="trademark">Copyright &amp; Trademark</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="support">Support</sidenav-item>
               </div>
             </div>
         </md-content>
@@ -98,7 +98,7 @@
                 <div class="fill-height">
                     <div ng-if="!site.toolbar.hideLeft" class="md-toolbar-item md-tools actions-left ng-scope">
                         <button md-ink-ripple-action
-                                ng-click="site.toolbar.menu.open()" 
+                                ng-click="site.toolbar.menu.open()"
                                 type="button"
                                 class="button-transparent homepage-menu button-square">
                                 <icon type="menu"></icon>
