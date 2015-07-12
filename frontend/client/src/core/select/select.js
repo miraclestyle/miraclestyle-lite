@@ -16,6 +16,7 @@
                         view = scope.$eval(attrs.view),
                         search = scope.$eval(attrs.search),
                         multiple = scope.$eval(attrs.multiple),
+                        async = scope.$eval(attrs.async),
                         placeholder = attrs.placeholder,
                         select = {},
                         timeout,
@@ -236,7 +237,7 @@
                             $event = undefined;
                         }
 
-                        (select.multiple ? $modal.open : $simpleDialog.show)({
+                        (select.multiple || async ? $modal.open : $simpleDialog.show)({
                             template: root,
                             popFrom: ($event ? $event.target : undefined),
                             targetEvent: $event,
@@ -260,8 +261,8 @@
                                                 elementOffset = element.offset(),
                                                 parent = options.parent,
                                                 parentOffset = parent.offset(),
-                                                paddingTop = 24,
-                                                paddingBottom = 24,
+                                                paddingTop = async ? 24 : 16,
+                                                paddingBottom = async ? 24 : 16,
                                                 parentHeight = options.parent.height(),
                                                 scrollElement = dialogEl.find('md-content'),
                                                 maxTop,
