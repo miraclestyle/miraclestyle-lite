@@ -111,6 +111,11 @@ li .ui-select-highlight {
     padding: 12px 4px 12px 20px;
 }
 
+.modal-medium .list-content-tile {
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
 .select-input md-input-container label {
     padding-right: 32px;
 }

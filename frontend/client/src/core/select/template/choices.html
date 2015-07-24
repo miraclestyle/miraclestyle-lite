@@ -1,13 +1,7 @@
-<% if (!select.multiple) { %>
+<% if (!select.multiple && !select.async) { %>
 <simple-dialog>
 <% } %>
-     <% if (select.search && select.search.enabled) { %>
-     <div class="select-search" ng-form="select.search.form">
-       <div class="select-search-input">
-         <input tabindex="1" placeholder="Search..." type="search" name="search" fast-ng-change="select.search.doFind()" fast-ng-model="<%= select.search.model %>" />
-       </div>
-    </div>
-    <% } %>
+ 
     <md-content ng-class="{'has-search': select.search}">
       <% if (select.multiple) { %>
         <ul ng-show="select.anySelected()" class="list list-padding seam-bottom">
@@ -54,20 +48,39 @@
         </ul>
 
         <% } else { %>
-          <ul class="list list-padding">
-            <li md-ink-ripple-list ng-class="{'list-row-is-active': select.isSelected(item)}" class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
+          <ul ng-if="select.hasGrouping" ng-repeat="group in select.grouping" class="list list-padding seam-bottom">
+            <li>
+              <div class="list-subheader subheader">{{group.label}}</div>
+            </li>
+            <li md-ink-ripple-list
+                ng-class="{'list-row-is-active': select.isSelected(item)}"
+                class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
+                ng-click="select.select(item)"
+                item="item"
+                ng-repeat="item in group.items <% if (select.search) { %><%= select.search.filter %><% } %>"
+                tabindex="{{$index + 2}}">
+                  <div class="list-content-tile list-content-tile-one-line first">
+                        <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+                  </div>
+            </li>
+          </ul>
+
+          <ul ng-if="!select.hasGrouping" class="list list-padding">
+
+            <li md-ink-ripple-list
+                ng-class="{'list-row-is-active': select.isSelected(item)}"
+                class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
                 ng-click="select.select(item)"
                 item="item"
                 ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
-                ng-show="select.isFilterMatch(item)"
                 tabindex="{{$index + 2}}">
-                <div class="list-content-tile list-content-tile-one-line first">
-                      <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
-                </div>
+                  <div class="list-content-tile list-content-tile-one-line first">
+                        <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+                  </div>
             </li>
           </ul>
         <% } %>
     </md-content>
-<% if (!select.multiple) { %>
+<% if (!select.multiple && !select.async) { %>
 </simple-dialog>
 <% } %>

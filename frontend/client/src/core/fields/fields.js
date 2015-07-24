@@ -802,8 +802,7 @@
                                     query: {
                                         '24': true,
                                         '12': true,
-                                        '13': true,
-                                        //'17': true
+                                        '13': true
                                     },
                                     type: {
                                         '12': 'local',
@@ -813,6 +812,24 @@
                                 },
                                 finder: {
                                     '24': true
+                                },
+                                grouping: {
+                                    '17': function (items) {
+                                        var grouped = [], current;
+                                        angular.forEach(items, function (item) {
+                                            if (current && current.label !== item.measurement) {
+                                                current = null;
+                                            }
+                                            if (!current) {
+                                                current = {label: item.measurement, items: []};
+                                                grouped.push(current);
+                                            }
+
+                                            current.items.push(item);
+                                        });
+
+                                        return grouped;
+                                    }
                                 },
                                 view: {
                                     'default': function (result) {
@@ -973,6 +990,11 @@
 
                         if (angular.isUndefined(config.ui.specifics.entities)) {
                             config.ui.specifics.entities = [];
+                        }
+
+
+                        if (angular.isUndefined(config.ui.specifics.grouping)) {
+                            config.ui.specifics.grouping = defaults.grouping[config.kind];
                         }
 
                         repackMemory();

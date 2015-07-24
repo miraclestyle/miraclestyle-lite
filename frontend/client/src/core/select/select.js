@@ -17,6 +17,7 @@
                         search = scope.$eval(attrs.search),
                         multiple = scope.$eval(attrs.multiple),
                         async = scope.$eval(attrs.async),
+                        grouping = scope.$eval(attrs.grouping),
                         placeholder = attrs.placeholder,
                         select = {},
                         timeout,
@@ -60,6 +61,7 @@
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
+                    select.async = async;
                     select.placeholder = placeholder;
                     select.loading = false;
                     select.multiple = multiple;
@@ -120,6 +122,9 @@
                     select.setItems = function (items) {
                         select.items = items;
                         select.collectActive();
+                        if (grouping) {
+                            select.grouping = grouping(select.items);
+                        }
                     };
                     select.isSelected = function (item) {
                         var hash = select.getHash(item);
@@ -232,8 +237,8 @@
                             select: select
                         });
                         root = choices;
-                        if (select.multiple) {
-                            root = underscoreTemplate.get('core/select/multiple.html')().replace('{{content}}', choices);
+                        if (select.multiple || async) {
+                            root = underscoreTemplate.get('core/select/' + (select.multiple ? 'multiple' : 'single') + '.html')().replace('{{content}}', choices);
                             $event = undefined;
                         }
 
@@ -243,8 +248,10 @@
                             targetEvent: $event,
                             parent: attachTo,
                             inDirection: false,
+                            windowClass: 'modal-medium-simple',
                             outDirection: false,
                             fullScreen: false,
+                            backdrop: true,
                             disableScroll: [element.parents('md-content:first'), element.parents('.fixed-height:first')],
                             onBeforeHide: function (dialogEl, options) {
                                 $(window).off('resize', options.resize);
@@ -393,7 +400,7 @@
                             },
                             controller: ng(function ($scope) {
                                 select.close = function () {
-                                    if (select.multiple) {
+                                    if (select.multiple || select.async) {
                                         $scope.$close();
                                     } else {
                                         $simpleDialog.hide();
@@ -477,6 +484,10 @@
                             // filters are expensive
                             //select.search.filter = '| filter:select.search.query' + ((items && angular.isString(items[0])) ? ('.' + select.search.filterProp) : '');
                         }
+                    }
+                    if (grouping) {
+                        select.hasGrouping = true;
+                        select.grouping = [];
                     }
                     select.setItems(items);
                     scope.$watchGroup([attrs.items + '.length', attrs.items], function (neww, old) {
