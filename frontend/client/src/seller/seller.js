@@ -567,6 +567,7 @@
                                         fields.sort(helpers.fields.sorter);
                                         config.ui.specifics.fields = fields;
                                         angular.forEach(fields, function (field) {
+                                            helpers.fields.applyGlobalConfig(field);
                                             field._title_ = config._title_.concat();
                                             field.ui.name = 'plugin.' + field.code_name;
                                             field.ui.writable = true;
@@ -575,7 +576,7 @@
                                             if (extra) {
                                                 helpers.extendDeep(field, extra);
                                             }
-                                            if (field.is_structured && formInputTypes[field.type]) {
+                                            if ((field.is_structured || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated)) && formInputTypes[field.type]) {
                                                 $scope.layouts.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                     disabled: false,

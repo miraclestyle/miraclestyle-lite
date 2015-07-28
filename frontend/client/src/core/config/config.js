@@ -155,13 +155,10 @@
                 business: 'Email address on which you want to receive your PayPal payments. This value will be the same as "Receiver Email" in case that you have only one email address associated with your PayPal account.'
             },
             '109': {
-                carriers: 'Carriers, if any, to which this rule applies.',
-                product_categories: 'Product categories to which this rule applies.',
                 product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.',
                 address_type: 'Buyer address type this rule applies to.'
             },
             '124': {
-                product_categories: 'Product categories to which this rule applies.',
                 product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.'
             },
             '117': {
@@ -201,6 +198,10 @@
             plugins: {
                 kind: 'Rule'
             },
+            '109': {
+                carriers: 'Carriers, if any, this rule applies to',
+                product_categories: 'Product categories this rule applies to'
+            },
             '28': {
                 uom: 'Unit Of Measurement',
                 weight_uom: 'Weight Unit Of Measurement',
@@ -215,7 +216,8 @@
                 rules: 'Prices'
             },
             '124': {
-                discount_value: 'Discount (%)'
+                discount_value: 'Discount (%)',
+                product_categories: 'Product categories this rule applies to'
             },
             '31-update': {
                 discontinue_date: 'Expiration Date'

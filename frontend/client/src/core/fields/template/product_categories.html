@@ -1,0 +1,57 @@
+<div class="select-multiple-field">
+ 
+  <button loading="!<%= config.ui.writableCompiled %>" 
+          md-ink-ripple-list
+          ng-click="config.ui.specifics.create()" 
+          type="button" 
+          class="list-row list-row-one-line list-row-avatar list-row-is-clickable list-row-has-primary menu-item">
+          <div class="list-content-tile">
+            <div class="list-primary-tile">
+              <div class="avatar-small">
+                 <div class="button-square">
+                     <icon type="add_box"></icon>
+                 </div>
+               </div>
+            </div>
+            <div class="first">Add</div>
+          </div>
+  </button> 
+
+<div>
+  <ul ng-if="select.hasGrouping" ng-repeat="group in select.grouping" class="list list-padding seam-bottom">
+    <li>
+    <div class="list-subheader subheader">{{group.label}}</div>
+    </li>
+    <li md-ink-ripple-list
+      ng-class="{'list-row-is-active': select.isSelected(item)}"
+      class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
+      ng-click="select.select(item)"
+      item="item"
+      ng-repeat="item in group.items <% if (select.search) { %><%= select.search.filter %><% } %>"
+      tabindex="{{$index + 2}}">
+        <div class="list-content-tile list-content-tile-one-line first">
+              <strong class="first">
+                <span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span>
+              </strong>
+        </div>
+    </li>
+  </ul>
+
+  <ul ng-if="!select.hasGrouping" class="list list-padding">
+    <li md-ink-ripple-list
+      ng-class="{'list-row-is-active': select.isSelected(item)}"
+      class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
+      ng-click="select.select(item)"
+      item="item"
+      ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
+      tabindex="{{$index + 2}}">
+        <div class="list-content-tile list-content-tile-one-line first">
+              <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+        </div>
+    </li>
+  </ul>
+</div>
+<!-- help -->
+<div ng-if="helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs)" help-render="config.ui.emptyHelp"></div>
+<!-- end help -->
+</div>

@@ -1,4 +1,4 @@
-<md-input-container class="select-input" ng-class="{'no-label': config.ui.label === false}">
+<md-input-container class="select-input" <% if (config.ui.active !== undefined) { %>ng-if="<%=config.ui.active %>"<% } %> ng-class="{'no-label': config.ui.label === false}">
     <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
     <select-input 
         multiple="config.repeated"
@@ -6,7 +6,7 @@
         view="config.ui.specifics.view"
         items="config.ui.specifics.entities"
         grouping="config.ui.specifics.grouping"
-        async="true"
+        async="config.ui.specifics.async"
         class="<%= config.ui.attrs['class'] %>"
         name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>></select-input>
    

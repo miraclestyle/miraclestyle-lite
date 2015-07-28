@@ -1,6 +1,253 @@
 (function () {
     'use strict';
     angular.module('app')
+        .directive('selectInputMultiple', ng(function ($timeout, underscoreTemplate, $modal) {
+            return {
+                require: ['ngModel', '^?form'],
+                link: function (scope, element, attrs, ctrls) {
+                    var ngModel = ctrls[0],
+                        formCtrl = ctrls[1],
+                        grouping = scope.$eval(attrs.grouping),
+                        items = scope.$eval(attrs.items),
+                        view = scope.$eval(attrs.view),
+                        select = scope.$eval(attrs.select),
+                        ngModelPipelineCheckValue = function (arg) {
+                            var s = !ngModel.$isEmpty(arg);
+                            if (angular.isArray(arg)) {
+                                s = arg.length !== 0;
+                            }
+                            return arg;
+                        };
+                    ngModel.$parsers.push(ngModelPipelineCheckValue);
+                    ngModel.$formatters.push(ngModelPipelineCheckValue);
+                    ngModel.$formatters.push(function (value) {
+                        select.item = select.find(value);
+                        return value;
+                    });
+                    select.getHash = function (item) {
+                        return (angular.isObject(item) ? item.key : item);
+                    };
+                    select.anyItems = 0;
+                    select.async = true;
+                    select.loading = false;
+                    select.multiple = true;
+                    select.items = [];
+                    select.find = function (value) {
+                        if (value === null) {
+                            return undefined;
+                        }
+                        var active,
+                            missing,
+                            get = function (val) {
+                                var i,
+                                    found;
+                                if (!angular.isObject(select.items[0])) {
+                                    i = select.items.indexOf(val);
+                                    if (i !== -1) {
+                                        found = select.items[i];
+                                    }
+                                } else {
+                                    found = _.findWhere(select.items, {
+                                        key: val
+                                    });
+                                }
+                                return found;
+                            };
+                        if (select.multiple) {
+                            missing = [];
+                            active = [];
+                            if (value && value.length) {
+                                angular.forEach(value, function (val) {
+                                    var gets = get(val);
+                                    if (angular.isUndefined(gets)) {
+                                        missing.push(val);
+                                    } else {
+                                        active.push(gets);
+                                    }
+                                });
+                            }
+                        } else {
+                            active = get(value);
+                            if (angular.isUndefined(active)) {
+                                missing = value;
+                            }
+                        }
+                        if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
+                            select.search.ready.then(function () {
+                                if (select.search.missing) {
+                                    select.search.missing(missing);
+                                }
+                            });
+                        }
+                        return active;
+                    };
+                    select.getActive = function () {
+                        select.item = select.find(ngModel.$modelValue);
+                        return select.item;
+                    };
+                    select.setItems = function (items) {
+                        select.items = items;
+                        select.collectActive();
+                        if (grouping) {
+                            select.grouping = grouping(select.items);
+                        }
+                        select.anyItems = items.length;
+                    };
+                    select.isSelected = function (item) {
+                        var hash = select.getHash(item);
+                        if (select.multiple) {
+                            return $.inArray(hash, ngModel.$modelValue) !== -1;
+                        }
+                        return ngModel.$modelValue === hash;
+                    };
+                    select.remove = function (item) {
+                        select.select(item);
+                    };
+                    select.multipleSelection = {};
+                    select.multipleSelect = function (item) {
+                        var hash = select.getHash(item),
+                            hasIt = !select.multipleSelection[hash],
+                            already = ngModel.$modelValue || [],
+                            selected = $.inArray(hash, ngModel.$modelValue) !== -1;
+                        select.multipleSelection[hash] = hasIt;
+                        if (select.multiple) {
+                            return;
+                        }
+                        if (!angular.isArray(select.item)) {
+                            select.item = already;
+                        }
+                        if (hasIt) {
+                            if (!selected) {
+                                already.push(hash);
+                                select.item.push(item);
+                            }
+                        } else {
+                            if (selected) {
+                                already.remove(hash);
+                                select.item.remove(item);
+                            }
+                        }
+                        ngModel.$setViewValue(already);
+                        formCtrl.$setDirty();
+                        ngModelPipelineCheckValue(already);
+                    };
+
+                    select.completeMultiSelection = function () {
+                        var selected = [],
+                            founds = [];
+                        angular.forEach(select.items, function (item) {
+                            var hash = select.getHash(item);
+                            if (select.multipleSelection[hash]) {
+                                selected.push(hash);
+                                founds.push(item);
+                            }
+                        });
+                        ngModel.$setViewValue(selected);
+                        formCtrl.$setDirty();
+                        ngModelPipelineCheckValue(selected);
+                        select.item = founds;
+                        select.close();
+                    };
+
+
+                    select.collectActive = function () {
+                        angular.forEach(select.items, function (item) {
+                            var hash = select.getHash(item);
+                            if (angular.isUndefined(select.multipleSelection[hash]) && $.inArray(hash, ngModel.$modelValue) !== -1) {
+                                select.multipleSelection[hash] = true;
+                            }
+                        });
+                    };
+
+                    select.isChecked = function (item) {
+                        return select.multipleSelection[select.getHash(item)];
+                    };
+                    select.select = function (item) {
+                        select.multipleSelect(item);
+                        select.completeMultiSelection();
+                    };
+                    select.close = angular.noop;
+                    select.opened = false;
+                    select.open = function ($event) {
+                        if (select.opened) {
+                            return;
+                        }
+                        select.opened = true;
+                        $timeout(function () {
+                            select.openSimpleDialog($event);
+                        });
+                    };
+                    select.openSimpleDialog = function ($event) {
+                        if (element.attr('disabled')) {
+                            return;
+                        }
+                        if (select.search) {
+                            select.search.query = {};
+                        }
+                        select.multipleSelection = {};
+                        select.collectActive();
+
+                        var attachTo = element.parents('.modal:first').find('.modal-dialog:first'),
+                            choices;
+
+                        if (!attachTo.length) {
+                            attachTo = element.parents('body:first');
+                        }
+
+                        choices = underscoreTemplate.get('core/select/choices.html')({
+                            select: select
+                        });
+                        $modal.open({
+                            template: underscoreTemplate.get('core/select/single.html')().replace('{{content}}', choices),
+                            targetEvent: $event,
+                            parent: attachTo,
+                            inDirection: false,
+                            windowClass: 'modal-medium-simple',
+                            outDirection: false,
+                            fullScreen: false,
+                            backdrop: true,
+                            controller: ng(function ($scope) {
+                                select.close = function () {
+                                    $scope.$close();
+                                };
+                                $scope.select = select;
+                                $scope.$on('$destroy', function () {
+                                    select.opened = false;
+                                    select.close = angular.noop;
+                                });
+                            })
+                        });
+                    };
+                    select.view = view;
+                    if (!select.view) {
+                        select.view = function (item) {
+                            return angular.isObject(item) ? item.name : item;
+                        };
+                    }
+                    ngModel.$formatters.push(function (value) {
+                        select.item = select.find(value);
+                        return value;
+                    });
+                    if (grouping) {
+                        select.hasGrouping = true;
+                        select.grouping = [];
+                    }
+                    select.setItems(items);
+                    scope.$watchGroup([attrs.items + '.length', attrs.items], function (neww, old) {
+                        if (neww[0] !== old[0] || neww[1] !== old[1]) {
+                            select.setItems(scope.$eval(attrs.items));
+                            select.getActive();
+                            if (select.opened) {
+                                $timeout(function () {
+                                    $(window).triggerHandler('resize');
+                                }, 0, false);
+                            }
+                        }
+                    });
+
+                }
+            };
+        }))
         .directive('selectInput', ng(function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
             return {
                 replace: true,
@@ -479,10 +726,6 @@
                         select.search.filterProp = (select.search.filterProp ? select.search.filterProp : 'name');
                         if (!select.search.model) {
                             select.search.model = 'select.search.query' + ('.' + select.search.filterProp);
-                        }
-                        if (!select.search.filter) {
-                            // filters are expensive
-                            //select.search.filter = '| filter:select.search.query' + ((items && angular.isString(items[0])) ? ('.' + select.search.filterProp) : '');
                         }
                     }
                     if (grouping) {

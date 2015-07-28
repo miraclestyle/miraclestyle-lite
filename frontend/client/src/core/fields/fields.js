@@ -792,6 +792,12 @@
                     SuperVirtualKeyProperty: function (info) {
                         return this.SuperKeyProperty(info);
                     },
+                    _SuperKeyPropertyRepeated: function (info) {
+
+                        info.config.ui.specifics.select = {};
+
+                        return 'select_multiple';
+                    },
                     SuperKeyProperty: function (info) {
                         if (info.config.searchable === false) {
                             return this.SuperStringProperty(info);
@@ -847,7 +853,7 @@
                                                 if (neww !== old) {
                                                     var args = info.scope.$eval(info.config.ui.parentArgs);
                                                     args.region = null;
-                                                    config.ui.specifics.initial(); // refresh results
+                                                    info.config.ui.specifics.initial(); // refresh results
                                                 }
                                             });
                                     }
@@ -1079,6 +1085,10 @@
                             config.ui.specifics.entities = [];
                             config.ui.specifics._mapEntities = {};
                         });
+                        config.ui.specifics.async = true;
+                        if (config.repeated) {
+                            return this._SuperKeyPropertyRepeated(info);
+                        }
                         return 'select_async';
                     },
                     SuperLocalStructuredProperty: function (info) {
@@ -1194,7 +1204,6 @@
                                 var dirty;
                                 angular.forEach(config.ui.specifics.parentArgs,
                                     function (ent, i) {
-                                        console.log(ent);
                                         if (ent._state === 'deleted' || ent._sequence !== i) {
                                             dirty = true;
                                         }
@@ -1495,7 +1504,7 @@
                                                 groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
                                                 return;
                                             }
-                                            if (field.is_structured && formInputTypes[field.type]) {
+                                            if ((field.is_structured || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated)) && formInputTypes[field.type]) {
                                                 var group = {
                                                         label: inflector((field.ui.label || field.code_name), 'humanize')
                                                     },
@@ -1874,8 +1883,6 @@
         }).directive('msdElastic', [
             '$timeout', '$window', 'msdElasticConfig',
             function ($timeout, $window, config) {
-                'use strict';
-
                 return {
                     require: 'ngModel',
                     restrict: 'A, C',
