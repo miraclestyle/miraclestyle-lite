@@ -1,0 +1,57 @@
+
+      <div class="padding-top-bottom-12">
+ 
+        <div class="no-move list-row no-padding clearfix list-row-has-secondary list-row-one-line">
+            <button ng-repeat="item in select.product_categories.top track by item.key"
+                    md-ink-ripple-list
+                    ng-click="select.product_categories.next(item)"
+                    class="list-row menu-item list-content-tile block list-row-is-clickable">
+                    <strong class="first ellipsis-text" ng-bind="select.view(item)"></strong>
+                    <div class="list-secondary-tile">
+                      <div class="button-square">
+                        <icon type="chevron_right"></icon>
+                      </div>
+                    </div>
+            </button>
+        </div>
+
+        </div>
+        <div ng-repeat="children in select.product_categories.children track by $index"
+             ng-class="{'in' : children.visible, 'out' : !children.visible}"
+             class="category slide">
+
+        <div class="padding-top-bottom-12">
+            <button md-ink-ripple-list
+                    ng-click="select.product_categories.prev(children)"
+                    type="button"
+                    class="simple-dialog-option list-row list-row-has-primary menu-item">
+                    <div class="list-content-tile">
+                      <div class="list-primary-tile">
+                        <div class="avatar-small">
+                          <icon class="button-square" type="chevron_left"></icon>
+                        </div>
+                      </div>
+                      <div class="first ellipsis-text" ng-bind="children.item.name"></div>
+                    </div>
+            </button>
+
+
+            <div class="no-move list-row no-padding clearfix list-row-has-secondary list-row-one-line">
+                <button ng-repeat="item in children.items track by item.key"
+                        ng-click="select.product_categories.next(item)"
+                        ng-show="!select.isChecked(item)"
+                        item="item"
+                        md-ink-ripple-list
+                        class="list-row menu-item list-content-tile block list-row-is-clickable">
+                        <strong class="first ellipsis-text" ng-bind="item.leafname"></strong>
+                        <div class="list-secondary-tile">
+                          <div class="button-square">
+                            <icon type="chevron_right"></icon>
+                          </div>
+                        </div>
+                </button>
+            </div>
+ 
+          
+             </div> 
+        </div>

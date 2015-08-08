@@ -138,6 +138,7 @@ class SuperSearchProperty(SuperJsonProperty):
       # cfg_orders = [('name', ['asc'])]
       # input_orders = [{'field': 'name', 'operator': 'asc'}]
       if len(cfg_values) != len(input_values):
+        print cfg_values, len(cfg_values), input_values
         raise FormatError('%s_values_mismatch' % method)
       for i, input_value in enumerate(input_values):  # @note If input_values length is 0, and above validation passes, than there should not be any errors!?
         cfg_value = cfg_values[i]
@@ -181,6 +182,7 @@ class SuperSearchProperty(SuperJsonProperty):
         success = True
         break
       except Exception as e:
+        print e, cfg_index
         pass
     if success is not True:
       if isinstance(e, Exception):
@@ -366,6 +368,7 @@ class SuperSearchProperty(SuperJsonProperty):
         filters.append('(' + field + '<=' + value + ')')
       elif op == 'IN':
         filters.append('(' + ' OR '.join(['(' + field + '=' + v + ')' for v in value]) + ')')
+    print ' AND '.join(filters)
     return ' AND '.join(filters)
 
   def build_search_query_sort_options(self, value):

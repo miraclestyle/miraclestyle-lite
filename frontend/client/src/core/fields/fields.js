@@ -741,14 +741,17 @@
                         }
 
                         if (config.choices) {
+                            if (config.repeated) {
+                                return this._SuperStringRepeated(info);
+                            }
                             if (info.config.ui.attrs['repeated-text'] !== undefined) {
                                 delete info.config.ui.attrs['repeated-text'];
                             }
                             return this._SelectBox(info);
                         }
 
-                        if (info.config.repeated) {
-                            info.config.ui.attrs['repeated-text'] = '';
+                        if (config.repeated) {
+                            config.ui.attrs['repeated-text'] = '';
                             return this.SuperTextProperty(info);
                         }
 
@@ -792,10 +795,15 @@
                     SuperVirtualKeyProperty: function (info) {
                         return this.SuperKeyProperty(info);
                     },
+                    _SuperStringRepeated: function (info) {
+                        var select = {};
+                        info.config.ui.specifics.select = select;
+                        info.config._groupable = true;
+                        return 'select_multiple';
+                    },
                     _SuperKeyPropertyRepeated: function (info) {
-
-                        info.config.ui.specifics.select = {};
-
+                        var select = {};
+                        info.config.ui.specifics.select = select;
                         return 'select_multiple';
                     },
                     SuperKeyProperty: function (info) {
@@ -803,6 +811,7 @@
                             return this.SuperStringProperty(info);
                         }
                         var config = info.config,
+                            template = 'select_async',
                             defaults = {
                                 cache: {
                                     query: {
@@ -821,13 +830,17 @@
                                 },
                                 grouping: {
                                     '17': function (items) {
-                                        var grouped = [], current;
+                                        var grouped = [],
+                                            current;
                                         angular.forEach(items, function (item) {
                                             if (current && current.label !== item.measurement) {
                                                 current = null;
                                             }
                                             if (!current) {
-                                                current = {label: item.measurement, items: []};
+                                                current = {
+                                                    label: item.measurement,
+                                                    items: []
+                                                };
                                                 grouped.push(current);
                                             }
 
@@ -1087,9 +1100,109 @@
                         });
                         config.ui.specifics.async = true;
                         if (config.repeated) {
-                            return this._SuperKeyPropertyRepeated(info);
+                            template = this._SuperKeyPropertyRepeated(info);
                         }
-                        return 'select_async';
+                        (function () {
+                            var select = config.ui.specifics.select || config.ui.specifics.search;
+                            if (info.config.kind === '24') {
+                                select.init = function (select, scope, element, attrs, ctrls) {
+                                    var splitout = function (entities) {
+                                        angular.forEach(entities, function (ent) {
+                                            ent.leafname = _.last(ent.name.split(' / '));
+                                        });
+                                    };
+                                    select.openTemplate = 'core/select/product_categories.html';
+                                    select.windowClass = 'category-modal';
+                                    select.product_categories = {
+                                        children: [],
+                                        mapped: {},
+                                        top: [],
+                                        resetToTop: function () {
+                                            select.product_categories.children = [];
+                                            select.product_categories.mapped = {};
+                                        },
+                                        next: function (item) {
+                                            var newFilter = {
+                                                search: {
+                                                    orders: [{
+                                                        operator: 'asc',
+                                                        field: 'name'
+                                                    }],
+                                                    filters: [{
+                                                        value: 'indexable',
+                                                        operator: '==',
+                                                        field: 'state'
+                                                    }, {
+                                                        value: 'None',
+                                                        operator: '==',
+                                                        field: 'parent_record'
+                                                    }]
+                                                }
+                                            };
+                                            newFilter.search.filters[1].value = item.key;
+                                            models['24'].actions.search(newFilter).then(function (response) {
+                                                var entities = response.data.entities,
+                                                    child = {
+                                                        item: item
+                                                    },
+                                                    existing = select.product_categories.mapped[item.key];
+                                                splitout(entities);
+                                                if (existing) {
+                                                    child = existing;
+                                                }
+                                                child.visible = true;
+                                                if (entities.length) {
+                                                    child.items = entities;
+                                                    select.product_categories.children.push(child);
+                                                    select.product_categories.mapped[item.key] = child;
+                                                } else {
+                                                    select.select(item);
+                                                    select.product_categories.resetToTop();
+                                                }
+                                            });
+                                        },
+                                        prev: function (child) {
+                                            var children = select.product_categories.children,
+                                                reset = false;
+                                            angular.forEach(children, function (value, index) {
+                                                if (value === child) {
+                                                    value.visible = false;
+                                                    if (index === 0) {
+                                                        reset = true;
+                                                    }
+                                                }
+                                            });
+                                            if (reset) {
+                                                // select.product_categories.resetToTop();
+                                            }
+                                        }
+                                    };
+
+                                    models['24'].actions.search({
+                                        search: {
+                                            orders: [{
+                                                operator: 'asc',
+                                                field: 'name'
+                                            }],
+                                            filters: [{
+                                                value: 'indexable',
+                                                operator: '==',
+                                                field: 'state'
+                                            }, {
+                                                value: 'None',
+                                                operator: '==',
+                                                field: 'parent_record'
+                                            }]
+                                        }
+                                    }).then(function (response) {
+                                        var entities = response.data.entities;
+                                        splitout(entities);
+                                        select.product_categories.top = entities;
+                                    });
+                                };
+                            }
+                        }());
+                        return template;
                     },
                     SuperLocalStructuredProperty: function (info) {
                         var config = info.config,
@@ -1504,7 +1617,8 @@
                                                 groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
                                                 return;
                                             }
-                                            if ((field.is_structured || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated)) && formInputTypes[field.type]) {
+                                            if ((field.is_structured || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated) || field._groupable)
+                                                    && formInputTypes[field.type]) {
                                                 var group = {
                                                         label: inflector((field.ui.label || field.code_name), 'humanize')
                                                     },

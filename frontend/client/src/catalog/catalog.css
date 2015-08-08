@@ -127,3 +127,49 @@ button.product-quantity-button {
     padding-left: 16px;
     padding-right: 16px;
 }
+
+.category {
+    /*position: absolute;
+    top: 0px;
+    right: 0px;
+    left: 0px;
+    z-index: 10;
+    bottom: 0px;*/
+}
+
+@-webkit-keyframes category-slide-in {
+  0% {left: 100%; right: -100%;}
+  100% {left: 0px; right: 0px;}
+}
+
+@-webkit-keyframes category-slide-out {
+  0% {left: 0px; right: 0px;}
+  100% {left: 100%; right: -100%;}
+}
+
+.category.slide {
+  -webkit-animation-timing-function: cubic-bezier(0.8,0,0.4,1);
+}
+
+.category.slide.in {
+  -webkit-animation-name: category-slide-in;
+}
+
+.category.slide.out {
+  -webkit-animation-name: category-slide-out;
+}
+
+.category-modal .modal-content, .category-modal .modal-body {
+    position: static;
+}
+
+.category {
+    background-color: white;
+    top: 0px;
+    position: absolute;
+    overflow: auto;
+    left: 0px;
+    right: 0;
+    bottom: 0px;
+    z-index: 11;
+}

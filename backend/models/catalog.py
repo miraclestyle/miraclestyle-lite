@@ -75,10 +75,11 @@ class CatalogProductCategory(orm.BaseModel):
                       'search_by_keys': True,
                       'use_search_engine': True,
                       'filters': {'name': orm.SuperStringProperty(),
-                                  'state': orm.SuperStringProperty(choices=('indexable visible',))},
-                      'indexes': [{'filters': [('state', ['=='])],
+                                  'state': orm.SuperStringProperty(choices=('indexable visible', 'indexable')),
+                                  'parent_record': orm.SuperStringProperty()},
+                      'indexes': [{'filters': [('state', ['==']), ('parent_record', ['==', '!='])],
                                    'orders': [('name', ['asc', 'desc'])]},
-                                  {'filters': [('state', ['==']), ('name', ['==', '!='])],
+                                   {'filters': [('state', ['=='])],
                                    'orders': [('name', ['asc', 'desc'])]}]
                   }
               )

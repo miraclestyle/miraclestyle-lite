@@ -11,15 +11,7 @@
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
                         select = scope.$eval(attrs.select),
-                        ngModelPipelineCheckValue = function (arg) {
-                            var s = !ngModel.$isEmpty(arg);
-                            if (angular.isArray(arg)) {
-                                s = arg.length !== 0;
-                            }
-                            return arg;
-                        };
-                    ngModel.$parsers.push(ngModelPipelineCheckValue);
-                    ngModel.$formatters.push(ngModelPipelineCheckValue);
+                        init = (select && select.init ? select.init : null);
                     ngModel.$formatters.push(function (value) {
                         select.item = select.find(value);
                         return value;
@@ -110,9 +102,6 @@
                             already = ngModel.$modelValue || [],
                             selected = $.inArray(hash, ngModel.$modelValue) !== -1;
                         select.multipleSelection[hash] = hasIt;
-                        if (select.multiple) {
-                            return;
-                        }
                         if (!angular.isArray(select.item)) {
                             select.item = already;
                         }
@@ -129,26 +118,8 @@
                         }
                         ngModel.$setViewValue(already);
                         formCtrl.$setDirty();
-                        ngModelPipelineCheckValue(already);
-                    };
-
-                    select.completeMultiSelection = function () {
-                        var selected = [],
-                            founds = [];
-                        angular.forEach(select.items, function (item) {
-                            var hash = select.getHash(item);
-                            if (select.multipleSelection[hash]) {
-                                selected.push(hash);
-                                founds.push(item);
-                            }
-                        });
-                        ngModel.$setViewValue(selected);
-                        formCtrl.$setDirty();
-                        ngModelPipelineCheckValue(selected);
-                        select.item = founds;
                         select.close();
                     };
-
 
                     select.collectActive = function () {
                         angular.forEach(select.items, function (item) {
@@ -164,7 +135,6 @@
                     };
                     select.select = function (item) {
                         select.multipleSelect(item);
-                        select.completeMultiSelection();
                     };
                     select.close = angular.noop;
                     select.opened = false;
@@ -194,7 +164,7 @@
                             attachTo = element.parents('body:first');
                         }
 
-                        choices = underscoreTemplate.get('core/select/choices.html')({
+                        choices = underscoreTemplate.get(select.openTemplate || 'core/select/choices.html')({
                             select: select
                         });
                         $modal.open({
@@ -202,7 +172,7 @@
                             targetEvent: $event,
                             parent: attachTo,
                             inDirection: false,
-                            windowClass: 'modal-medium-simple',
+                            windowClass: 'modal-medium-simple ' + (select.windowClass ? select.windowClass : ''),
                             outDirection: false,
                             fullScreen: false,
                             backdrop: true,
@@ -245,6 +215,10 @@
                         }
                     });
 
+                    if (init) {
+                        init(select, scope, element, attrs, ctrls);
+                    }
+
                 }
             };
         }))
@@ -262,6 +236,7 @@
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
                         search = scope.$eval(attrs.search),
+                        init = (search && search.init ? search.init : null),
                         multiple = scope.$eval(attrs.multiple),
                         async = scope.$eval(attrs.async),
                         grouping = scope.$eval(attrs.grouping),
@@ -480,7 +455,7 @@
                             attachTo = element.parents('body:first');
                         }
 
-                        choices = underscoreTemplate.get('core/select/choices.html')({
+                        choices = underscoreTemplate.get(select.openTemplate || 'core/select/choices.html')({
                             select: select
                         });
                         root = choices;
@@ -495,7 +470,7 @@
                             targetEvent: $event,
                             parent: attachTo,
                             inDirection: false,
-                            windowClass: 'modal-medium-simple',
+                            windowClass: 'modal-medium-simple ' + (select.windowClass ? select.windowClass : ''),
                             outDirection: false,
                             fullScreen: false,
                             backdrop: true,
@@ -746,6 +721,11 @@
                     });
 
                     scope.select = select;
+
+                    if (init) {
+                        init(select, scope, element, attrs, ctrls);
+                    }
+
                 }
             };
         }));
