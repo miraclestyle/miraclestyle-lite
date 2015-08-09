@@ -322,19 +322,19 @@
                                 info.scope.$broadcast('itemOrderSorting');
                             },
                             stop: function (e, ui) {
-                                var cmp = [],
-                                    cmp2 = [];
+                                var dirty;
                                 angular.forEach(config.ui.specifics.parentArgs,
                                     function (ent, i) {
-                                        cmp.push(ent._sequence);
                                         i = ((config.ui.specifics.parentArgs.length - 1) - i);
-                                        cmp2.push(i);
+                                        if (ent._sequence !== i || ent._state === 'deleted') {
+                                            dirty = true;
+                                        }
                                         ent._sequence = i;
                                         if (ent.ui) {
                                             ent.ui.access[ent.ui.access.length - 1] = i;
                                         }
                                     });
-                                if (!cmp.equals(cmp2)) {
+                                if (dirty) {
                                     info.scope.formSetDirty();
                                 }
                                 info.scope.$broadcast('itemOrderChanged');

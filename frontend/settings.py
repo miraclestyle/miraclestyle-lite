@@ -161,8 +161,7 @@ for component in ANGULAR_ACTIVE_COMPONENTS:
       if f.endswith('.js') and not dirname.endswith('static') and iscomponent:
         ANGULAR_JAVASCRIPT_PATHS.append(path)
         ANGULAR_JAVASCRIPT_FILES.append(abs_path)
-      elif f.endswith('.css') and not dirname.endswith('static') and iscomponent \
-              and not f.endswith('-default-theme.css'):
+      elif f.endswith('.css') and not dirname.endswith('static') and iscomponent:
         ANGULAR_CSS_PATHS.append(path)
         ANGULAR_CSS_FILES.append(abs_path)
       elif f.endswith('.html') and dirname.endswith('template') or '/template/' in str(dirname):

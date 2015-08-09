@@ -4,16 +4,23 @@
                 class="<%= config.ui.attrs['class'] %> list list-row-has-primary" 
                 <%= config.ui.compiled.attrs %> 
                 aria-label="<%= config.ui.compiled.label %>">
- 
 
-                <md-radio-button md-ink-ripple class="list-content-tile list-row" ng-value="false" aria-label="{{ config.ui.specifics.falseLabel }}">
+                <md-radio-button 
+                    md-ink-ripple
+                    class="list-content-tile list-row"
+                    ng-value="false"
+                    aria-label="{{ config.ui.specifics.falseLabel }}">
                     <span class="first">{{ config.ui.specifics.falseLabel }}</span>
                 </md-radio-button>
 
-                <md-radio-button md-ink-ripple class="list-content-tile list-row" ng-value="true" aria-label="{{ config.ui.specifics.trueLabel }}">
+                <md-radio-button
+                    md-ink-ripple
+                    class="list-content-tile list-row"
+                    ng-value="true"
+                    aria-label="{{ config.ui.specifics.trueLabel }}">
                     <span class="first">{{ config.ui.specifics.trueLabel }}</span>
                 </md-radio-button>
-
+                
             </md-radio-group>
      <% } else if (config.ui.specifics.type === 'checkbox') { %>
          <div ng-class="{'list-row-two-lines': config.ui.help.length}" class="list-row-has-primary">

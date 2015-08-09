@@ -4,52 +4,43 @@
       list-view="config.ui.specifics.listView"
       select="config.ui.specifics.select"
       grouping="config.ui.specifics.grouping"
-      name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>
-      >
-  <div ng-class="{'field-with-label': config.ui.label}" class="select-multiple-field">
-
-    <button loading="!<%= config.ui.writableCompiled %>" 
-            md-ink-ripple-list
-            ng-click="config.ui.specifics.select.open()" 
-            type="button" 
-            class="simple-dialog-option list-row list-row-has-primary menu-item">
-            <div class="list-content-tile">
-              <div class="list-primary-tile">
-                <div class="avatar-small"><icon class="button-square" type="add_box"></icon></div>
+      name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
+        <div ng-class="{'field-with-label': config.ui.label}" class="select-multiple-field">
+              <button loading="!<%= config.ui.writableCompiled %>" 
+                      md-ink-ripple-list
+                      ng-click="config.ui.specifics.select.open()" 
+                      type="button" 
+                      class="simple-dialog-option list-row list-row-has-primary menu-item">
+                      <div class="list-content-tile">
+                        <div class="list-primary-tile">
+                          <div class="avatar-small"><icon class="button-square" type="add_box"></icon></div>
+                        </div>
+                        <div class="first">Add</div>
+                      </div>
+              </button>
+              <div class="list">
+                <button
+                    type="button"
+                    loading="!<%= config.ui.writableCompiled %>"
+                    md-ink-ripple-list
+                    ng-click="config.ui.specifics.select.remove(item)"
+                    item="item"
+                    ng-repeat="item in config.ui.specifics.select.item"
+                    class="list-row list-row-one-line list-row-has-primary menu-item">
+                        <div class="list-content-tile">
+                          <div class="list-primary-tile">
+                            <div class="avatar-small"><icon class="button-square" type="cancel"></icon></div>
+                          </div>
+                          <div class="first"><span ng-bind-html="config.ui.specifics.select.listView(item)"></span></div>
+                        </div>
+                </button>
               </div>
-              <div class="first">Add</div>
-            </div>
-    </button>
-
-      <div>
-
-        <div class="list">
-          <button
-              type="button"
-              loading="!<%= config.ui.writableCompiled %>"
-              md-ink-ripple-list
-              ng-click="config.ui.specifics.select.remove(item)"
-              item="item"
-              ng-repeat="item in config.ui.specifics.select.item"
-              class="list-row list-row-one-line list-row-has-primary menu-item">
-                  <div class="list-content-tile">
-                    <div class="list-primary-tile">
-                      <div class="avatar-small"><icon class="button-square" type="cancel"></icon></div>
-                    </div>
-                    <div class="first"><span ng-bind-html="config.ui.specifics.select.listView(item)"></span></div>
-                  </div>
-          </button>
+              <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
+                <div ng-message="help"><%= config.ui.help %></div>
+                <div ng-message="required">The field requires selection!</div>
+              </div>
+              <!-- help -->
+              <div ng-if="!config.ui.specifics.select.anyItems" help-render="config.ui.emptyHelp"></div>
+              <!-- end help -->
         </div>
-
-        <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
-          <div ng-message="help"><%= config.ui.help %></div>
-          <div ng-message="required">The field requires selection!</div>
-        </div>
-
-        <!-- help -->
-        <div ng-if="!config.ui.specifics.select.anyItems" help-render="config.ui.emptyHelp"></div>
-        <!-- end help -->
-       
-      </div>
-  </div>
 </select-input-multiple>
