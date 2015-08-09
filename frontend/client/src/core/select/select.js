@@ -172,19 +172,19 @@
                             targetEvent: $event,
                             parent: attachTo,
                             inDirection: false,
-                            windowClass: 'modal-medium-simple ' + (select.windowClass ? select.windowClass : ''),
+                            windowClass: 'modal-medium-simple ' + (select.windowClass || ''),
                             outDirection: false,
                             fullScreen: false,
                             backdrop: true,
                             controller: ng(function ($scope) {
-                                select.close = function () {
-                                    $scope.$close();
-                                };
                                 $scope.select = select;
                                 $scope.$on('$destroy', function () {
                                     select.opened = false;
                                     select.close = angular.noop;
                                 });
+                                select.close = function () {
+                                    $scope.$close();
+                                };
                             })
                         });
                     };
@@ -240,6 +240,7 @@
                         multiple = scope.$eval(attrs.multiple),
                         async = scope.$eval(attrs.async),
                         grouping = scope.$eval(attrs.grouping),
+                        listView = scope.$eval(attrs.listView),
                         placeholder = attrs.placeholder,
                         select = {},
                         timeout,
@@ -460,7 +461,7 @@
                         });
                         root = choices;
                         if (select.multiple || async) {
-                            root = underscoreTemplate.get('core/select/' + (select.multiple ? 'multiple' : 'single') + '.html')().replace('{{content}}', choices);
+                            root = underscoreTemplate.get('core/select/single.html')().replace('{{content}}', choices);
                             $event = undefined;
                         }
 
@@ -644,6 +645,7 @@
                             return angular.isObject(item) ? item.name : item;
                         };
                     }
+                    select.listView = listView || select.view;
                     ngModel.$formatters.push(function (value) {
                         select.item = select.find(value);
                         return value;

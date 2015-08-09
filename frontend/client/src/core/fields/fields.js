@@ -9,6 +9,11 @@
                 helpers.form = {};
             }
             $.extend(helpers.fields, {
+                isFieldset: function (field) {
+                    return (field.is_structured
+                                || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated)
+                                || field.ui.fieldset);
+                },
                 sorter: function (prev, next) {
                     var p1 = parseInt(prev.name, 10),
                         p2 = parseInt(next.name, 10);
@@ -982,6 +987,10 @@
                             initialDefer = $q.defer(),
                             initialPromise = initialDefer.promise;
 
+                        if (config.repeated) {
+                            config.ui.fieldset = true;
+                        }
+
                         config.ui.specifics.view = function (result) {
                             var fn = defaults.view[config.kind];
                             if (!fn) {
@@ -1222,6 +1231,7 @@
                                 perLine: 1,
                                 clickable: true
                             };
+                        config.ui.fieldset = true;
 
                         if (!config.ui.specifics.toolbar) {
                             config.ui.specifics.toolbar = {};
@@ -1571,6 +1581,7 @@
                                             config.ui.specifics.getScope = undefined;
                                         });
                                         angular.forEach(config.ui.specifics.formBuilder, function (field) {
+                                            var gr, group, next;
                                             helpers.fields.applyGlobalConfig(field);
                                             if (!field.ui.initialRealPath) {
                                                 field.ui.initialRealPath = angular.copy(field.ui.realPath);
@@ -1585,7 +1596,7 @@
                                             if (field.ui.groupBy) {
                                                 field.ui.hideMessages = true;
                                                 if (!groupBysMap[field.ui.groupBy]) {
-                                                    var gr = {
+                                                    gr = {
                                                         ui: {
                                                             group: {
                                                                 help: field.ui.groupHelp,
@@ -1617,12 +1628,10 @@
                                                 groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
                                                 return;
                                             }
-                                            if ((field.is_structured || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated) || field._groupable)
-                                                    && formInputTypes[field.type]) {
-                                                var group = {
-                                                        label: inflector((field.ui.label || field.code_name), 'humanize')
-                                                    },
-                                                    next;
+                                            if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
+                                                group = {
+                                                    label: inflector((field.ui.label || field.code_name), 'humanize')
+                                                };
                                                 if (_.string.contains(field.type, 'Remote')) {
                                                     group.include = 'core/misc/action.html';
                                                     group.action = function () {

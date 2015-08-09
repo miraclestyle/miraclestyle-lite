@@ -576,7 +576,7 @@
                                             if (extra) {
                                                 helpers.extendDeep(field, extra);
                                             }
-                                            if ((field.is_structured || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated)) && formInputTypes[field.type]) {
+                                            if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                                 $scope.layouts.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                     disabled: false,

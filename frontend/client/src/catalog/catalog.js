@@ -258,11 +258,12 @@
                             popFrom: config.popFrom,
                             controller: ng(function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey, shareWatch;
-                                $.extend($scope, fakeScope);
                                 $scope.variantMenu = {};
                                 $scope.productMenu = {};
                                 helpers.sideNav.setup($scope.productMenu, 'right_product_sidenav', doNotRipple);
                                 helpers.sideNav.setup($scope.variantMenu, 'right_variantMenu_sidenav', doNotRipple);
+
+                                $.extend($scope, fakeScope);
 
                                 shareWatch = function () {
                                     if (!$scope.product) {
@@ -773,6 +774,7 @@
                                                     fields.volume.ui.label = false;
                                                     fields.volume_uom.ui.label = false;
                                                 },
+                                                variantOptions,
                                                 getTitle = function () {
                                                     return 'viewProducts';
                                                 };
@@ -791,7 +793,6 @@
                                             $scope.validateForm = angular.bind($scope, helpers.form.validate);
                                             $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
                                             $scope.args._images = [];
-
                                             $scope.config._title_.push(getTitle);
                                             $scope.$on('$destroy', function () {
                                                 $scope.config._title_.remove(getTitle);
@@ -803,7 +804,6 @@
                                             fields._images._title_ = $scope.config._title_.concat();
                                             fields._images.modelclass.pricetags._title_ = fields._images._title_.concat();
                                             $scope.fieldProduct._title_ = fields._images._title_.concat();
-
                                             $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
 
                                             imagesReader = models['31'].reader({
@@ -816,6 +816,36 @@
                                                     $scope.args._images.extend(items);
                                                 }
                                             });
+                                            variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
+                                            variantOptions.ui.fieldset = true;
+                                            if (!variantOptions.ui.specifics) {
+                                                variantOptions.ui.specifics = {};
+                                            }
+                                            variantOptions.ui.specifics.listView = function (item) {
+                                                return angular.isObject(item) ? item.full : item;
+                                            };
+                                            variantOptions.ui.specifics.grouping = function (items) {
+                                                var list = [], map = {};
+                                                angular.forEach(items, function (value) {
+                                                    var split = value.split(': '),
+                                                        obj = map[split[0]];
+                                                    if (!obj) {
+                                                        obj = {
+                                                            label: split[0],
+                                                            items: []
+                                                        };
+                                                        map[split[0]] = obj;
+                                                        list.push(obj);
+                                                    }
+
+                                                    obj.items.push({
+                                                        name: split[1],
+                                                        key: value,
+                                                        full: value
+                                                    });
+                                                });
+                                                return list;
+                                            };
 
                                             imagesReader.load();
 
@@ -1008,7 +1038,6 @@
                                             };
 
                                             $scope.createProduct = function (image, config) {
-
                                                 var ii = $scope.args._images.indexOf(image),
                                                     newPricetag = {
                                                         _sequence: image.pricetags.length,
@@ -1032,6 +1061,7 @@
                                                 recomputeRealPath($scope.fieldProduct);
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };
+
                                             $.extend($scope.fieldProduct.ui, {
                                                 init: function (field) {
                                                     field.config.ui.specifics.remove = function (product, close) {
@@ -1151,26 +1181,28 @@
                                                         fieldScope.setAction('update');
                                                     },
                                                     sortableOptions: {
+                                                        forcePlaceholderSize: true,
                                                         stop: function () {
                                                             var field = $scope.fieldProduct.modelclass._instances,
                                                                 total,
-                                                                cmp = [],
-                                                                cmp2 = [],
-                                                                currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
+                                                                dirty,
+                                                                scope = field.ui.directiveScope();
                                                             if (field.ui.specifics.parentArgs.length) {
                                                                 total = field.ui.specifics.parentArgs[0].sequence;
                                                                 angular.forEach(field.ui.specifics.parentArgs,
                                                                     function (ent, i) {
                                                                         i = (total - i);
-                                                                        cmp.push(ent.sequence);
-                                                                        cmp2.push(i);
+                                                                        if (ent.sequence !== i || ent._state === 'deleted') {
+                                                                            dirty = true;
+                                                                        }
                                                                         ent.sequence = i;
                                                                         ent.ui.access[ent.ui.access.length - 1] = i;
                                                                     });
-                                                                if (!cmp.equals(cmp2)) {
-                                                                    currentFieldScope.formSetDirty();
+                                                                if (dirty) {
+                                                                    scope.formSetDirty();
                                                                 }
-                                                                currentFieldScope.$broadcast('itemOrderChanged');
+                                                                scope.$broadcast('itemOrderChanged');
+                                                                scope.$apply();
                                                             }
                                                         }
                                                     },

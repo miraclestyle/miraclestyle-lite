@@ -1,6 +1,7 @@
 <select-input-multiple 
-      items="config.ui.specifics.entities"
+      items="<%=(config.type === 'SuperStringProperty' ? 'config.ui.specifics.translatedChoices || config.choices' : 'config.ui.specifics.entities') %>"
       view="config.ui.specifics.view"
+      list-view="config.ui.specifics.listView"
       select="config.ui.specifics.select"
       grouping="config.ui.specifics.grouping"
       name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>
@@ -35,7 +36,7 @@
                     <div class="list-primary-tile">
                       <div class="avatar-small"><icon class="button-square" type="cancel"></icon></div>
                     </div>
-                    <div class="first"><span ng-bind-html="config.ui.specifics.select.view(item)"></span></div>
+                    <div class="first"><span ng-bind-html="config.ui.specifics.listView(item)"></span></div>
                   </div>
           </button>
         </div>
