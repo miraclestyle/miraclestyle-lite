@@ -10,6 +10,7 @@
                         grouping = scope.$eval(attrs.grouping),
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
+                        listView = scope.$eval(attrs.listView),
                         select = scope.$eval(attrs.select),
                         init = (select && select.init ? select.init : null);
                     ngModel.$formatters.push(function (value) {
@@ -188,12 +189,13 @@
                             })
                         });
                     };
-                    select.view = view;
-                    if (!select.view) {
-                        select.view = function (item) {
+                    if (!view) {
+                        view = function (item) {
                             return angular.isObject(item) ? item.name : item;
                         };
                     }
+                    select.view = view;
+                    select.listView = listView || view;
                     ngModel.$formatters.push(function (value) {
                         select.item = select.find(value);
                         return value;
@@ -639,13 +641,13 @@
                             })
                         });
                     };
-                    select.view = view;
                     if (!view) {
-                        select.view = function (item) {
+                        view = function (item) {
                             return angular.isObject(item) ? item.name : item;
                         };
                     }
-                    select.listView = listView || select.view;
+                    select.view = view;
+                    select.listView = listView || view;
                     ngModel.$formatters.push(function (value) {
                         select.item = select.find(value);
                         return value;
