@@ -74,5 +74,6 @@ class CatalogProductEmbed(base.SeoOrAngular):
 
 settings.ROUTES.extend(((r'/catalog/<key>', CatalogView, 'catalog.view'),
                         (r'/catalog/<key>/product/<image_id>/<pricetag_id>', CatalogProductView, 'catalog.product.view'),
+                        (r'/catalog/<key>/product-add-to-cart/<image_id>/<pricetag_id>/<variant>/<quantity>', CatalogProductView, 'catalog.product.add_to_cart'),
                         (r'/embed/catalog/<key>', CatalogView, 'embed.catalog'),
                         (r'/embed/catalog/<key>/product/<image_id>/<pricetag_id>', CatalogProductView, 'embed.catalog.product')))

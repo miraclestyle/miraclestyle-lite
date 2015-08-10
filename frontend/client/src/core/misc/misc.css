@@ -160,6 +160,14 @@ body .mb15 {
     padding-top: 64px;
 }
 
+.padding-top-24 {
+    padding-top: 24px;
+}
+
+.padding-bottom-16 {
+    padding-bottom: 16px;
+}
+
 .padding-top-sides-16 {
     padding-right: 16px;
     padding-top: 16px;

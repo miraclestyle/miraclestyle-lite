@@ -99,7 +99,8 @@ class Account(orm.BaseExpando):
           arguments={
               'login_method': orm.SuperStringProperty(required=True, choices=[login_method['type'] for login_method in settings.LOGIN_METHODS]),
               'code': orm.SuperStringProperty(),
-              'error': orm.SuperStringProperty()
+              'error': orm.SuperStringProperty(),
+              'redirect_to': orm.SuperStringProperty()
           },
           _plugin_groups=[
               orm.PluginGroup(

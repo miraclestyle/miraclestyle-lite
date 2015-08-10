@@ -757,13 +757,15 @@
                         $scope.seller = seller;
                         $scope.menu = {};
                         $scope.alreadyInCollection = false;
-                        $scope.loadedCollection = models['18'].current().then(function (response) {
-                            var collection = response.data.entity;
-                            if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
-                                $scope.alreadyInCollection = true;
-                            }
-                            return collection;
-                        });
+                        if (!currentAccount._is_guest) {
+                            $scope.loadedCollection = models['18'].current().then(function (response) {
+                                var collection = response.data.entity;
+                                if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
+                                    $scope.alreadyInCollection = true;
+                                }
+                                return collection;
+                            });
+                        }
 
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');
 
@@ -889,6 +891,9 @@
                         };
 
                         $scope.toggleCollection = function () {
+                            if (currentAccount._is_guest) {
+                                return;
+                            }
                             $scope.loadedCollection.then(function (collection) {
                                 var loadedCollection = collection,
                                     removed = false;

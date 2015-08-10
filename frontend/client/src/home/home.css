@@ -21,3 +21,6 @@
 .main-toolbar.ngloaded.hidden {
     display: none;
 }
+.login-methods .social-grid {
+    padding-top: 0px;
+}

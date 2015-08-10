@@ -23,6 +23,11 @@
                 controller: 'CatalogViewController',
                 template: ''
             })
+            .state('catalog-product-add-to-cart', {
+                url: '/catalog/:key/product-add-to-cart/:image_id/:pricetag_id/:variant/:quantity',
+                controller: 'CatalogProductAddToCartController',
+                template: ''
+            })
             .state('catalog-product-view', {
                 url: '/catalog/:key/product/:image_id/:pricetag_id',
                 controller: 'CatalogProductViewController',
@@ -62,6 +67,10 @@
                 url: '/buy/carts',
                 controller: 'BuyOrdersController',
                 templateUrl: 'buyer/carts.html'
+            })
+            .state('login', {
+                url: '/api/account/login/:provider',
+                template: ''
             })
             .state('login-status', {
                 url: '/login/status',

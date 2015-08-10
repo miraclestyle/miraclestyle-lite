@@ -56,6 +56,23 @@
             }
         });
 
+    })).controller('CatalogProductAddToCartController', ng(function ($scope, $state, helpers, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
+            variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
+            autoAddToCartQuantity: $state.params.quantity,
+            afterClose: function () {
+                $state.go('home');
+            },
+            loadProduct: {
+                image: $state.params.image_id,
+                id: $state.params.pricetag_id
+            }
+        });
+
     })).controller('CatalogProductViewController', ng(function ($scope, $state, models) {
         $scope.site.toolbar.hidden = true;
         models['31'].viewModal($state.params.key, {
@@ -145,7 +162,7 @@
                 };
             }
         };
-    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
+    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, currentAccount, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
 
         modelsConfig(function (models) {
             var doNotRipple = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'],
@@ -445,28 +462,32 @@
                                     $scope.productQuantity = 0;
                                     $scope.hasThisProduct = false;
                                     $scope.disableUpdateCart = false;
-                                    models['34'].current(sellerKey).then(function (response) {
-                                        var order = response.data.entity;
-                                        if (order.id) {
-                                            angular.forEach(order._lines, function (line) {
-                                                if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
-                                                    $scope.productQuantity = parseInt(line.product.quantity, 10);
-                                                    if ($scope.productQuantity > 0) {
-                                                        $scope.hasThisProduct = true;
-                                                        $scope.disableUpdateCart = true;
+                                    if (!currentAccount._is_guest) {
+                                        models['34'].current(sellerKey).then(function (response) {
+                                            var order = response.data.entity;
+                                            if (order.id) {
+                                                angular.forEach(order._lines, function (line) {
+                                                    if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
+                                                        $scope.productQuantity = parseInt(line.product.quantity, 10);
+                                                        if ($scope.productQuantity > 0) {
+                                                            $scope.hasThisProduct = true;
+                                                            $scope.disableUpdateCart = true;
+                                                        }
                                                     }
-                                                }
-                                            });
-                                            $scope.canAddToCart = order.ui.rule.action.update_line.executable;
-                                        } else {
-                                            $scope.canAddToCart = true;
-                                        }
+                                                });
+                                                $scope.canAddToCart = order.ui.rule.action.update_line.executable;
+                                            } else {
+                                                $scope.canAddToCart = true;
+                                            }
 
-                                        if (!$scope.productQuantity) {
-                                            $scope.productQuantity = 1;
-                                        }
+                                            if (!$scope.productQuantity) {
+                                                $scope.productQuantity = 1;
+                                            }
 
-                                    });
+                                        });
+                                    } else {
+                                        $scope.productQuantity = 1;
+                                    }
                                 };
 
                                 loadProductInstance = function (response) {
@@ -526,6 +547,19 @@
                                 };
 
                                 $scope.addToCart = function () {
+                                    if (currentAccount._is_guest) {
+                                        models['11'].login($state.href('catalog-product-add-to-cart', {
+                                            key: $scope.catalog.key,
+                                            image_id: $scope.catalog._images[0].id,
+                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id,
+                                            variant: helpers.url.jsonToUrlsafe($scope.currentVariation),
+                                            quantity: $scope.productQuantity
+                                        }));
+                                        return;
+                                    }
+                                    if (config.autoAddToCart) {
+                                        $scope.productQuantity = config.autoAddToCartQuantity;
+                                    }
                                     if (!$scope.hasThisProduct && $scope.productQuantity < 1) {
                                         $scope.container.form.$setDirty();
                                         var productQuantityField = $scope.container.form.productQuantity;
@@ -563,6 +597,13 @@
                                         snackbar.showK('cartUpdated');
                                     });
                                 };
+
+                                if (config.autoAddToCart) {
+                                    $timeout(function () {
+                                        $scope.addToCart();
+                                        config.autoAddToCart = false;
+                                    });
+                                }
 
                                 $scope.$watch('product.id', function (neww, old) {
                                     shareWatch();
@@ -690,7 +731,9 @@
                                 };
 
                                 // cache current user's cart
-                                models['34'].current($scope.catalog._seller.key);
+                                if (!currentAccount._is_guest) {
+                                    models['34'].current($scope.catalog._seller.key);
+                                }
 
                                 $scope.viewProduct = function (image, pricetag, $event) {
                                     var target = $event.target,
@@ -698,11 +741,15 @@
                                     if (theTarget.length) {
                                         target = theTarget.get(0);
                                     }
-                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, null, {
+                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, config.variantSignatureAsDicts, {
                                         popFrom: target,
                                         hideClose: config.hideCloseOnProduct,
-                                        noEscape: config.noEscapeOnProduct
+                                        noEscape: config.noEscapeOnProduct,
+                                        autoAddToCart: config.variantSignatureAsDicts ? true : false,
+                                        autoAddToCartQuantity: config.autoAddToCartQuantity
                                     });
+
+                                    config.variantSignatureAsDicts = null;
                                 };
 
                                 $scope.openSellerDetails = function () {
