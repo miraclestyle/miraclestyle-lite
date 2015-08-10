@@ -92,8 +92,8 @@
         </md-content>
     </md-sidenav>
     <div layout="column" layout-fill tabIndex="-1" role="main">
-        <md-toolbar ng-class="{'no-right-actions': site.toolbar.hideRight,
-                               'no-left-actions': site.toolbar.hideLeft}">
+        <md-toolbar class="main-toolbar" ng-class="{'no-right-actions': site.toolbar.hideRight,
+                               'no-left-actions': site.toolbar.hideLeft, 'ngloaded': true, 'hidden': site.toolbar.hidden}">
             <div class="md-toolbar-tools with-actions">
                 <div class="fill-height">
                     <div ng-if="!site.toolbar.hideLeft" class="md-toolbar-item md-tools actions-left ng-scope">

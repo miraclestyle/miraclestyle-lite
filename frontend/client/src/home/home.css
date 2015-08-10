@@ -4,7 +4,20 @@
     vertical-align: middle;
     display: block;
 }
+
 .bar-logo img {
     width: 100%;
-    display:block;
+    display: block;
+}
+
+.main-toolbar {
+    display: none;
+}
+
+.main-toolbar.ngloaded {
+    display: block;
+}
+
+.main-toolbar.ngloaded.hidden {
+    display: none;
 }

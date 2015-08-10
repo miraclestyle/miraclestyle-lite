@@ -49,6 +49,8 @@
         $scope.site.toolbar.hidden = true;
         models['31'].viewModal($state.params.key, {
             popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
             afterClose: function () {
                 $state.go('home');
             }
@@ -58,6 +60,8 @@
         $scope.site.toolbar.hidden = true;
         models['31'].viewModal($state.params.key, {
             popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
             afterClose: function () {
                 $state.go('home');
             },
@@ -71,6 +75,8 @@
         $scope.site.toolbar.hidden = true;
         models['31'].viewModal($state.params.key, {
             popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
             noEscape: true,
             hideClose: true
         });
@@ -80,9 +86,11 @@
         models['31'].viewModal($state.params.key, {
             popFrom: undefined,
             hideClose: true,
-            hideCloseOnProduct: true,
+            //hideCloseOnProduct: true,
             noEscape: true,
             noEscapeOnProduct: true,
+            inDirection: false,
+            outDirection: false,
             loadProduct: {
                 image: $state.params.image_id,
                 id: $state.params.pricetag_id
@@ -591,6 +599,8 @@
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
+                            inDirection: config.inDirection,
+                            outDirection: config.outDirection,
                             noEscape: config.noEscape,
                             controller: ng(function ($scope) {
                                 $scope.catalogMenu = {};

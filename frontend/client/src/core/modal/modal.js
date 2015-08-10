@@ -399,7 +399,7 @@
             };
 
             $modalStack._dequeue = function (modalWindow, modalInstance) {
-              
+
                 if (modalWindow && modalWindow.value) {
                     if (!modalWindow.value.modalScope.modalOptions.noEscape) {
                         mdContextualMonitor.dequeue(modalInstance.esc);
@@ -443,7 +443,8 @@
             };
 
             return $modalStack;
-        }]).provider('$modal', function () {
+        }
+    ]).provider('$modal', function () {
 
         var $modalProvider = {
             options: {
