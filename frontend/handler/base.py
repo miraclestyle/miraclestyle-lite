@@ -183,6 +183,8 @@ class SeoOrAngular(AngularBlank):
     self.abort(404)
 
   def api_endpoint(self, *args, **kwargs):
+    if 'headers' not in kwargs:
+      kwargs['headers'] = self.request.headers
     response = api.endpoint(*args, **kwargs)
     if 'errors' in response:
       self.abort(503, response['errors'])

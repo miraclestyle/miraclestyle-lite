@@ -12,12 +12,14 @@ import os
 from google.appengine.ext import blobstore
 from google.appengine.api import taskqueue, mail, urlfetch, channel
 from jinja2 import Environment, evalcontextfilter, Markup, escape, FileSystemLoader
+from webapp2_extras import securecookie
 
 import orm
+import settings
 from .util import normalize
 
 __all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'render_template',
-           'channel_create', 'mail_send', 'http_send', 'channel_send']
+           'channel_create', 'mail_send', 'http_send', 'channel_send', 'secure_cookie']
 
 
 def rule_prepare(entities, **kwargs):
@@ -106,3 +108,5 @@ def http_send(data):
 def channel_send(data):
   message = {'action_id': data['action'].key_id_str, 'body': render_template(data['body'], data).strip()}
   return channel.send_message(data['recipient'], json.dumps(message))
+
+secure_cookie = securecookie.SecureCookieSerializer(settings.COOKIE_SECRET)

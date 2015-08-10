@@ -1,6 +1,25 @@
 (function () {
     'use strict';
-    angular.module('app').directive('catalogNewPricetag', ng(function ($parse) {
+    angular.module('app').directive('trackIfProductView', ng(function ($timeout) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                var fired;
+                scope.$watch(attrs.trackIfProductView, function (old, neww) {
+                    if (fired) {
+                        return;
+                    }
+                    if (angular.isObject(neww)) {
+                        $timeout(function () {
+                            //console.log(element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]'), '[data-pricetag-id="' + neww.image + '-' + neww.id + '"]');
+                            element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]').click();
+                            fired = true;
+                        }, 100);
+                    }
+                });
+            }
+        };
+    })).directive('catalogNewPricetag', ng(function ($parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -26,6 +45,50 @@
                 });
             }
         };
+    })).controller('CatalogViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            afterClose: function () {
+                $state.go('home');
+            }
+        });
+
+    })).controller('CatalogProductViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            afterClose: function () {
+                $state.go('home');
+            },
+            loadProduct: {
+                image: $state.params.image_id,
+                id: $state.params.pricetag_id
+            }
+        });
+
+    })).controller('EmbedCatalogViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            noEscape: true,
+            hideClose: true
+        });
+
+    })).controller('EmbedCatalogProductViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            hideClose: true,
+            hideCloseOnProduct: true,
+            noEscape: true,
+            noEscapeOnProduct: true,
+            loadProduct: {
+                image: $state.params.image_id,
+                id: $state.params.pricetag_id
+            }
+        });
+
     })).directive('catalogPricetagPosition', ng(function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
         return {
             link: function (scope, element, attr) {
@@ -74,7 +137,7 @@
                 };
             }
         };
-    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar, social) {
+    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
 
         modelsConfig(function (models) {
             var doNotRipple = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'],
@@ -160,6 +223,7 @@
                                 $scope.variants = [];
                                 $scope.variantSelection = [];
                                 $scope.hideAddToCart = false;
+                                $scope.hideClose = config ? config.hideClose : false;
                                 $scope.currentVariation = [];
                                 angular.forEach($scope.product.variants, function (v, i) {
 
@@ -256,6 +320,7 @@
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
+                            noEscape: config.noEscape,
                             controller: ng(function ($scope, productInstanceResponse) {
                                 var loadProductInstance, sellerKey, shareWatch;
                                 $scope.variantMenu = {};
@@ -270,7 +335,11 @@
                                         $scope.socialMeta = {};
                                         return;
                                     }
-                                    var productUrl = helpers.url.abs('catalog/' + $scope.catalog.key + '/product/' + $scope.product.key),
+                                    var productUrl = helpers.url.abs($state.href('catalog-product-view', {
+                                        key: $scope.catalog.key,
+                                        image_id: $scope.catalog._images[0].id,
+                                        pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                    }).substr(1)),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
                                                 return $scope.product.images[0].serving_url + '=s' + (size || '600');
@@ -311,8 +380,13 @@
                                 };
 
                                 $scope.displayShare = function () {
+                                    var url = $state.href('embed-catalog-product-view', {
+                                        key: $scope.catalog.key,
+                                        image_id: $scope.catalog._images[0].id,
+                                        pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                    });
                                     return social.share($scope.socialMeta, {
-                                        src: helpers.url.abs('embed/catalog/' + $scope.catalog.key + '/product/' + $scope.product.key)
+                                        src: helpers.url.abs(url.substr(1))
                                     });
                                 };
 
@@ -517,6 +591,7 @@
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
+                            noEscape: config.noEscape,
                             controller: ng(function ($scope) {
                                 $scope.catalogMenu = {};
                                 helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
@@ -525,7 +600,10 @@
                                 $scope.logoImageConfig = {};
                                 var imagesReader,
                                     accessImages,
-                                    catalogUrl = helpers.url.abs('catalog/' + $scope.catalog.key);
+                                    loadProduct,
+                                    catalogUrl = helpers.url.abs($state.href('catalog-view', {
+                                        key: $scope.catalog.key
+                                    }).substr(1));
                                 accessImages = angular.copy($scope.catalog.ui.access);
                                 accessImages.push('_images');
 
@@ -572,10 +650,15 @@
                                 };
 
                                 $scope.displayShare = function () {
+                                    var url = $state.href('embed-catalog-view', {
+                                        key: $scope.catalog.key
+                                    });
                                     return social.share($scope.socialMeta, {
-                                        src: helpers.url.abs('embed/catalog/' + $scope.catalog.key)
+                                        src: helpers.url.abs(url.substr(1))
                                     });
                                 };
+
+                                $scope.hideClose = config.hideClose;
 
                                 $scope.loadMoreImages = function (callback) {
                                     var promise = imagesReader.load();
@@ -606,7 +689,9 @@
                                         target = theTarget.get(0);
                                     }
                                     that.viewProductModal($scope.catalog.key, image.key, pricetag.key, null, {
-                                        popFrom: target
+                                        popFrom: target,
+                                        hideClose: config.hideCloseOnProduct,
+                                        noEscape: config.noEscapeOnProduct
                                     });
                                 };
 
@@ -614,10 +699,31 @@
                                     $scope.sellerDetails.menu.open();
                                 };
 
+                                $scope.maybeLoadProduct = null;
+
+                                if (config.loadProduct) {
+                                    loadProduct = function () {
+                                        angular.forEach($scope.catalog._images, function (image) {
+                                            if (image.id.toString() === config.loadProduct.image.toString()) {
+                                                $scope.maybeLoadProduct = config.loadProduct;
+                                            }
+                                        });
+                                        if (!$scope.maybeLoadProduct) {
+                                            imagesReader.load().then(loadProduct);
+                                        }
+                                    };
+
+                                    loadProduct();
+                                }
+
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                    $scope.$close();
+                                    $scope.$close().then(function () {
+                                        if (config.afterClose) {
+                                            config.afterClose();
+                                        }
+                                    });
                                 });
                             })
                         });
@@ -825,7 +931,8 @@
                                                 return angular.isObject(item) ? item.full : item;
                                             };
                                             variantOptions.ui.specifics.grouping = function (items) {
-                                                var list = [], map = {};
+                                                var list = [],
+                                                    map = {};
                                                 angular.forEach(items, function (value) {
                                                     var split = value.split(': '),
                                                         obj = map[split[0]];
@@ -1159,10 +1266,22 @@
                                             groupWeightAndVolume($scope.fieldProduct.modelclass);
                                             groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);
 
+                                            // ["sequence", "variant_options", "code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "images", "contents", "_weight_uom", "_volume_uom"]
+
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
                                                 label: GLOBAL_CONFIG.subheaders.productInstances,
                                                 path: ['_images', 'pricetags'],
                                                 specifics: {
+                                                    layoutConfig: [{
+                                                        fields: ["variant_options"]
+                                                    }, {
+                                                        label: 'Details',
+                                                        fields: ["code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "_weight_uom", "_volume_uom"]
+                                                    }, {
+                                                        fields: ["images"]
+                                                    }, {
+                                                        fields: ["contents"]
+                                                    }],
                                                     cards: true,
                                                     cardView: 'product-instance-card-view',
                                                     getRootArgs: function () {
@@ -1222,8 +1341,7 @@
                                                     init: function () {
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                             currentArgs = currentFieldScope.args,
-                                                            choices = [],
-                                                            variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
+                                                            choices = [];
 
                                                         angular.forEach(currentArgs.variants, function (variant) {
                                                             if (variant.allow_custom_value) {
@@ -1252,6 +1370,31 @@
                                             $.extend($scope.fieldProduct.modelclass.variants.ui, {
                                                 specifics: {}
                                             });
+
+                                            if (!$scope.fieldProduct.modelclass.uom.ui.specifics) {
+                                                $scope.fieldProduct.modelclass.uom.ui.specifics = {};
+                                            }
+
+                                            $scope.fieldProduct.modelclass.uom.ui.specifics.grouping = function (items) {
+                                                var grouped = [],
+                                                    current;
+                                                angular.forEach(items, function (item) {
+                                                    if (current && current.label !== item.measurement) {
+                                                        current = null;
+                                                    }
+                                                    if (!current) {
+                                                        current = {
+                                                            label: item.measurement,
+                                                            items: []
+                                                        };
+                                                        grouped.push(current);
+                                                    }
+
+                                                    current.items.push(item);
+                                                });
+
+                                                return grouped;
+                                            };
 
                                             $scope.save = function () {
                                                 var promise;

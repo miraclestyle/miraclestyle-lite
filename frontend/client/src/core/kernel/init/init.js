@@ -18,6 +18,26 @@
                 controller: 'HomePageController',
                 templateUrl: 'home/index.html'
             })
+            .state('catalog-view', {
+                url: '/catalog/:key',
+                controller: 'CatalogViewController',
+                template: ''
+            })
+            .state('catalog-product-view', {
+                url: '/catalog/:key/product/:image_id/:pricetag_id',
+                controller: 'CatalogProductViewController',
+                template: ''
+            })
+            .state('embed-catalog-view', {
+                url: '/embed/catalog/:key',
+                controller: 'EmbedCatalogViewController',
+                template: ''
+            })
+            .state('embed-catalog-product-view', {
+                url: '/embed/catalog/:key/product/:image_id/:pricetag_id',
+                controller: 'EmbedCatalogProductViewController',
+                template: ''
+            })
             .state('sell-catalogs', {
                 url: '/sell/catalogs',
                 controller: 'SellCatalogsController',

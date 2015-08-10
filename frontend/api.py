@@ -27,6 +27,8 @@ def post(**kwds):
 
 
 def _exec(**kwds):
+  if 'deadline' not in kwds:
+    kwds['deadline'] = 60
   response = urlfetch.fetch(**kwds)
   return json.loads(response.content)
 

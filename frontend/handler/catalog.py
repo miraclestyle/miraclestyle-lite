@@ -73,8 +73,6 @@ class CatalogProductEmbed(base.SeoOrAngular):
     return CatalogProductView.respond_seo(self, *args, **kwargs)
 
 settings.ROUTES.extend(((r'/catalog/<key>', CatalogView, 'catalog.view'),
-                        (r'/catalog/<key>/product/<image_id>/<pricetag_id>',
-                         CatalogProductView, 'catalog.product.view'),
-                        (r'/embed/catalog/<key>',
-                         CatalogEmbed, 'embed.catalog'),
-                        (r'/embed/catalog/product/<key>', CatalogProductEmbed, 'embed.catalog.product')))
+                        (r'/catalog/<key>/product/<image_id>/<pricetag_id>', CatalogProductView, 'catalog.product.view'),
+                        (r'/embed/catalog/<key>', CatalogView, 'embed.catalog'),
+                        (r'/embed/catalog/<key>/product/<image_id>/<pricetag_id>', CatalogProductView, 'embed.catalog.product')))

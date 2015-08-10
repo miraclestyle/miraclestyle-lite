@@ -97,6 +97,7 @@
                         newSort = [],
                         defaults,
                         defaultSortable,
+                        findWhereByLayoutConfig,
                         buildPaths,
                         rootArgs,
                         rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
@@ -336,7 +337,7 @@
 
                             $modal.open({
                                 popFrom: (config.ui.specifics.cards && $event ? helpers.clicks.realEventTarget($event.target) : undefined),
-                                template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/fields/manage_structured.html')({
+                                template: underscoreTemplate.get(config.ui.specifics.templateUrl || 'core/fields/manage_structured.html')({
                                     config: config
                                 }),
                                 controller: ng(function ($scope, modelsUtil) {
@@ -344,6 +345,7 @@
                                         formBuilder = {
                                             '0': []
                                         },
+                                        fieldsMap = {},
                                         groupBysIndx = [],
                                         groupBysMap = {},
                                         getTitle,
@@ -370,6 +372,10 @@
 
                                             return value;
                                         };
+
+                                    angular.forEach(config.ui.specifics.formBuilder, function (value) {
+                                        fieldsMap[value.code_name] = value;
+                                    });
 
                                     config.ui.specifics.getScope = function () {
                                         return $scope;
@@ -450,10 +456,32 @@
                                     }
 
                                     $scope.validateForm = angular.bind($scope, helpers.form.validate);
-
                                     $scope.$on('$destroy', function () {
                                         config.ui.specifics.getScope = undefined;
                                     });
+                                    if (config.ui.specifics.layoutConfig) {
+                                        delete formBuilder['0'];
+                                        $scope.layouts = {
+                                            groups: []
+                                        };
+                                        angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
+                                            var firstField = fieldsMap[value.fields[0]];
+                                            $scope.layouts.groups.push({label: value.label || (firstField.label || inflector(firstField.code_name, 'humanize'))});
+                                        });
+                                    }
+                                    findWhereByLayoutConfig = function (field) {
+                                        var layout = config.ui.specifics.layoutConfig,
+                                            needle,
+                                            i;
+                                        for (i = layout.length - 1; i >= 0; i--) {
+                                            console.log(field.code_name, layout[i].fields, $.inArray(field.code_name, layout[i].fields));
+                                            if ($.inArray(field.code_name, layout[i].fields) !== -1) {
+                                                needle = i;
+                                                break;
+                                            }
+                                        }
+                                        return needle;
+                                    };
                                     angular.forEach(config.ui.specifics.formBuilder, function (field) {
                                         var gr, group, next;
                                         helpers.fields.applyGlobalConfig(field);
@@ -496,15 +524,31 @@
                                                 };
                                                 groupBysMap[field.ui.groupBy] = gr;
                                                 groupBysIndx.push(field.ui.groupBy);
-
-                                                formBuilder['0'].push(groupBysMap[field.ui.groupBy]);
+                                                if (config.ui.specifics.layoutConfig) {
+                                                    next = findWhereByLayoutConfig(field);
+                                                    if (!angular.isDefined(formBuilder[next])) {
+                                                        formBuilder[next] = [];
+                                                    }
+                                                    formBuilder[next].push(gr);
+                                                } else {
+                                                    formBuilder['0'].push(gr);
+                                                }
                                             }
                                             groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
                                             return;
                                         }
+                                        if (config.ui.specifics.layoutConfig) {
+                                            next = findWhereByLayoutConfig(field);
+                                            if (!angular.isDefined(formBuilder[next])) {
+                                                formBuilder[next] = [];
+                                            }
+                                            formBuilder[next].push(field);
+                                            // this is manual layout config, skip this part
+                                            return;
+                                        }
                                         if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                             group = {
-                                                label: inflector((field.ui.label || field.code_name), 'humanize')
+                                                label: field.ui.label || inflector(field.code_name, 'humanize')
                                             };
                                             if (_.string.contains(field.type, 'Remote')) {
                                                 group.include = 'core/misc/action.html';
@@ -524,8 +568,8 @@
 
                                             if (!angular.isDefined(formBuilder[next])) {
                                                 formBuilder[next] = [];
-                                                formBuilder[next].push(field);
                                             }
+                                            formBuilder[next].push(field);
                                         } else {
                                             formBuilder['0'].push(field);
                                         }

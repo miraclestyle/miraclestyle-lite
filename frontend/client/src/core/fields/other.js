@@ -235,28 +235,7 @@
                             finder: {
                                 '24': true
                             },
-                            grouping: {
-                                '17': function (items) {
-                                    var grouped = [],
-                                        current;
-                                    angular.forEach(items, function (item) {
-                                        if (current && current.label !== item.measurement) {
-                                            current = null;
-                                        }
-                                        if (!current) {
-                                            current = {
-                                                label: item.measurement,
-                                                items: []
-                                            };
-                                            grouped.push(current);
-                                        }
-
-                                        current.items.push(item);
-                                    });
-
-                                    return grouped;
-                                }
-                            },
+                            grouping: {},
                             view: {
                                 'default': function (result) {
                                     if (!result) {

@@ -4,7 +4,7 @@
   <div class="modal-body fixed-height relative">
   <div class="clearfix">
 
-      <div class="top-close">
+      <div ng-hide="hideClose" class="top-close">
            <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
              <icon color="white" type="close"></icon>
            </button>
@@ -16,7 +16,7 @@
            </button>
       </div>
  
-      <div class="image-slider-outer unselectable">
+      <div track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
          <div image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 
@@ -25,7 +25,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button md-ink-ripple type="button" class="button-transparent catalog-pricetag-link " loading ng-click="viewProduct(image, pricetag, $event)">
+                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple type="button" class="button-transparent catalog-pricetag-link " loading ng-click="viewProduct(image, pricetag, $event)">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>

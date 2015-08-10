@@ -132,7 +132,8 @@ class RequestHandler(webapp2.RequestHandler):
     '''
     if self.current_account is None and self.autoload_current_account:
       from models.account import Account
-      Account.set_current_account_from_access_token(self.request.cookies.get(settings.COOKIE_AUTH_KEY))
+      unsecure = tools.secure_cookie.deserialize(settings.COOKIE_AUTH_KEY, self.request.cookies.get(settings.COOKIE_AUTH_KEY))
+      Account.set_current_account_from_access_token(unsecure)
       current_account = Account.current_account()
       current_account.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None)  # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
       current_account.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None)  # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
@@ -216,6 +217,7 @@ class IOEngineRun(RequestHandler):
 class AccountLogin(RequestHandler):
 
   def respond(self, provider=None):
+    redirect_to_key = 'redirect_to'
     if provider is None:
       provider = 'google'
     input = self.get_input()
@@ -223,8 +225,15 @@ class AccountLogin(RequestHandler):
                   'login_method': provider,
                   'action_id': 'login'})
     output = iom.Engine.run(input)
+    if redirect_to_key in input:
+      redirect_to_secure = tools.secure_cookie.serialize(redirect_to_key, input.get(redirect_to_key))
+      self.response.set_cookie(redirect_to_key, redirect_to_secure, httponly=True)
     if 'access_token' in output:
-      self.response.set_cookie(settings.COOKIE_AUTH_KEY, output.get('access_token'), httponly=True)
+      secure = tools.secure_cookie.serialize(settings.COOKIE_AUTH_KEY, output.get('access_token'))
+      self.response.set_cookie(settings.COOKIE_AUTH_KEY, secure, httponly=True)
+      redirect_to = tools.secure_cookie.deserialize(redirect_to_key, self.request.cookies.get(redirect_to_key))
+      if redirect_to and not redirect_to.startswith('http'):
+        return self.redirect(redirect_to)
       self.redirect('/login/status?success=true')  # we need to see how we can handle continue to link behaviour, generally this needs more work
     elif 'errors' in output:
       self.redirect('/login/status?errors=%s' % urllib.quote(self.json_output(output['errors'])))

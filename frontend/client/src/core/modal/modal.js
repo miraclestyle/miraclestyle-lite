@@ -343,6 +343,7 @@
                     outDirection: modal.outDirection,
                     popFrom: modal.popFrom,
                     fullScreen: modal.fullScreen,
+                    noEscape: modal.noEscape,
                     opened: false
                 };
 
@@ -376,28 +377,36 @@
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
 
-                modalInstance.esc = function (e) {
-                    var modalWindow = openedWindows.get(modalInstance);
-                    if (e) {
-                        e.preventDefault();
-                    }
-                    if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope._close_) {
-                        return modalWindow.value.modalScope._close_();
-                    }
+                if (!modal.noEscape) {
+                    modalInstance.esc = function (e) {
+                        var modalWindow = openedWindows.get(modalInstance);
+                        if (e) {
+                            e.preventDefault();
+                        }
+                        if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope._close_) {
+                            return modalWindow.value.modalScope._close_();
+                        }
 
-                    $rootScope.$apply(function () {
-                        $modalStack.dismiss(modalInstance, 'escape key press');
-                    });
+                        $rootScope.$apply(function () {
+                            $modalStack.dismiss(modalInstance, 'escape key press');
+                        });
 
-                    return true;
-                };
-                mdContextualMonitor.queue(modalInstance.esc);
+                        return true;
+                    };
+                    mdContextualMonitor.queue(modalInstance.esc);
+                }
+
             };
 
             $modalStack._dequeue = function (modalWindow, modalInstance) {
-                mdContextualMonitor.dequeue(modalInstance.esc);
-                if (modalWindow && modalWindow.value && modalWindow.value.modalScope.modalOptions.resize) {
-                    $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
+              
+                if (modalWindow && modalWindow.value) {
+                    if (!modalWindow.value.modalScope.modalOptions.noEscape) {
+                        mdContextualMonitor.dequeue(modalInstance.esc);
+                    }
+                    if (modalWindow.value.modalScope.modalOptions.resize) {
+                        $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
+                    }
                 }
             };
 
@@ -531,7 +540,8 @@
                                 inDirection: modalOptions.inDirection,
                                 outDirection: modalOptions.outDirection,
                                 fullScreen: modalOptions.fullScreen,
-                                popFrom: modalOptions.popFrom
+                                popFrom: modalOptions.popFrom,
+                                noEscape: modalOptions.noEscape
                             });
 
                         }, function resolveError(reason) {
