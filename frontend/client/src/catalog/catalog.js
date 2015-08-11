@@ -256,7 +256,8 @@
                                         name: v.name,
                                         options: v.options,
                                         option: (variantSignatureAsDicts ? variantSignatureAsDicts[i][v.name] : v.options[0]),
-                                        description: v.description
+                                        description: v.description,
+                                        allow_custom_value: v.allow_custom_value
                                     });
 
                                     $scope.variantSelection.push({
@@ -264,11 +265,11 @@
                                         choices: (v.allow_custom_value ? null : v.options),
                                         code_name: 'option_' + i,
                                         ui: {
-                                            help: v.description,
-                                            label: v.name,
+                                            //help: v.description,
+                                            label: (v.allow_custom_value ? false : v.name),
                                             writable: true,
                                             attrs: {
-                                                'ng-change': 'changeVariation()'
+                                                'ng-change': 'delayedChangeVariation()'
                                             },
                                             args: 'variants[' + i + '].option'
                                         }
@@ -288,7 +289,7 @@
                                         if (v.option === null) {
                                             skip = true;
                                         }
-                                        if (!v.allow_custom_value) {
+                                        if (/*!v.allow_custom_value*/ 1) {
                                             buildVariantSignature.push(v.name + ': ' + v.option);
                                             d[v.name] = v.option;
                                             $scope.currentVariation.push(d);
@@ -347,7 +348,7 @@
                             popFrom: config.popFrom,
                             noEscape: config.noEscape,
                             controller: ng(function ($scope, productInstanceResponse) {
-                                var loadProductInstance, sellerKey, shareWatch;
+                                var loadProductInstance, sellerKey, shareWatch, timer;
                                 $scope.variantMenu = {};
                                 $scope.productMenu = {};
                                 helpers.sideNav.setup($scope.productMenu, 'right_product_sidenav', doNotRipple);
@@ -417,7 +418,8 @@
 
                                 $scope.variantChooser = {};
 
-                                $scope.setupVariantChooser = function (variant) {
+                                $scope.setupVariantChooser = function (variant, indice) {
+                                    variant.indice = indice;
                                     $scope.variantChooser = variant;
                                     $scope.variantMenu.open();
                                 };
@@ -516,6 +518,16 @@
                                     }
 
                                     $scope.variationApplied = true;
+                                };
+
+                                $scope.delayedChangeVariation = function () {
+                                    if (timer) {
+                                        $timeout.cancel(timer);
+                                    }
+                                    timer = $timeout(function () {
+                                        timer = null;
+                                        $scope.changeVariation();
+                                    }, 500, false);
                                 };
 
                                 $scope.changeVariation = function () {

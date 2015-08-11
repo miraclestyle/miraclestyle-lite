@@ -259,11 +259,17 @@
                     config: '=loadMoreButton'
                 }
             };
-        })).directive('autoloadOnVerticalScrollEnd', function () {
+        })).directive('autoloadOnVerticalScrollEnd', ng(function ($timeout) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    var config, listen, loadMore, steady, steadyOpts;
+                    var config,
+                        listen,
+                        loadMore,
+                        steady,
+                        steadyOpts,
+                        maybeMore,
+                        attempts = 0;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
                     if (!attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
                         return;
@@ -280,6 +286,24 @@
                         }
                         return listener;
                     }());
+
+
+                    maybeMore = function () {
+                        $timeout(function () {
+                            var maybe = listen.get(0).scrollHeight <= listen.height(),
+                                promise;
+                            if (maybe) {
+                                promise = loadMore({}, angular.noop);
+                                if (promise) {
+                                    promise.then(function () {
+                                        maybeMore();
+                                    });
+                                }
+                            }
+                        }, 1000, false);
+
+                    };
+
                     loadMore = function (values, done) {
                         var promise = config.loader.load();
                         if (!promise) {
@@ -289,10 +313,12 @@
                         promise.then(function () {
                             done();
                         });
+
+                        return promise;
                     };
                     steadyOpts = {
                         conditions: {
-                            "max-bottom": config.bottom || 40
+                            'max-bottom': config.bottom || 40
                         },
                         scrollElement: listen.get(0),
                         throttle: 100,
@@ -304,9 +330,11 @@
                         steady = undefined;
                     });
 
+                    maybeMore();
+
                 }
             };
-        }).directive('resizeChart', ng(function (helpers) {
+        })).directive('resizeChart', ng(function (helpers) {
             return {
                 priority: 100,
                 link: function (scope, element, attrs) {
