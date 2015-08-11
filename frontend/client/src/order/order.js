@@ -274,10 +274,11 @@
                                         var parentScope = $scope;
                                         models['19'].current().then(function (response) {
                                             $modal.open({
-                                                backdrop: true,
-                                                fullScreen: false,
                                                 inDirection: false,
+                                                windowClass: 'modal-medium-simple',
                                                 outDirection: false,
+                                                fullScreen: false,
+                                                backdrop: true,
                                                 templateUrl: 'order/browse_addresses.html',
                                                 controller: ng(function ($scope) {
                                                     $scope.addresses = response.data.entity.addresses;
