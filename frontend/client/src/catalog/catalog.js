@@ -5,7 +5,7 @@
             restrict: 'A',
             link: function (scope, element, attrs) {
                 var fired;
-                scope.$watch(attrs.trackIfProductView, function (old, neww) {
+                scope.$watch(attrs.trackIfProductView, function (neww, old) {
                     if (fired) {
                         return;
                     }
@@ -766,7 +766,11 @@
                                             }
                                         });
                                         if (!$scope.maybeLoadProduct) {
-                                            imagesReader.load().then(loadProduct);
+                                            //return;
+                                            var promise = imagesReader.load();
+                                            if (promise) {
+                                                promise.then(loadProduct);
+                                            }
                                         }
                                     };
 

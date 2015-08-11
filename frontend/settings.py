@@ -133,6 +133,7 @@ ANGULAR_ACTIVE_COMPONENTS = [
     'core/social',
     'core/upload',
     'core/responsive',
+    'core/spinner',
     'account',
     'buyer',
     'catalog',

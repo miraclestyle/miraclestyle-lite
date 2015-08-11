@@ -21,6 +21,19 @@
 .main-toolbar.ngloaded.hidden {
     display: none;
 }
+
 .login-methods .social-grid {
     padding-top: 0px;
+}
+
+.loading-splash {
+    z-index: 100;
+    width: 100%;
+    background: white;
+    height: 100%;
+    position: fixed;
+}
+
+.loading-splash .progress-wrapper {
+    padding: 15% !important;
 }

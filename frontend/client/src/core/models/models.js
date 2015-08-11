@@ -1045,7 +1045,12 @@
                                             read_arguments: next
                                         }));
 
-                                        promise.then(function (response) {
+                                        promise['finally'](function () {
+                                            reader.loading = false;
+                                            reader.loaded = true;
+                                        });
+
+                                        return promise.then(function (response) {
                                             var getAccess = [],
                                                 items,
                                                 loadedNext;
@@ -1067,12 +1072,9 @@
                                             if (that.more) {
                                                 that.next = loadedNext;
                                             }
-                                        })['finally'](function () {
-                                            reader.loading = false;
-                                            reader.loaded = true;
-                                        });
 
-                                        return promise;
+                                            return response;
+                                        });
                                     }
                                 };
 

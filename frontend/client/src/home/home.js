@@ -11,6 +11,16 @@
                 }
             };
         }))
+        .directive('homeSplash', ng(function ($animate) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    element.addClass('fade out').oneAnimationEnd(function () {
+                        element.addClass('ng-hide');
+                    });
+                }
+            };
+        }))
         .run(ng(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
             $rootScope.site = {
                 title: '',

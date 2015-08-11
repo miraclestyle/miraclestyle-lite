@@ -1,0 +1,161 @@
+.progress-wrapper.progress.circular {
+  cursor: default;
+  padding: 4px 0px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  /*text-align: center;*/
+}
+
+.ng-hide * {
+  -webkit-animation: none !important;
+  animation: none !important;
+}
+
+.progress.circular {
+    padding: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 1);
+}
+
+.progress.circular.raised {
+    box-shadow: 0px 1.5px 3px 0.75px rgba(0, 0, 0, 0.26);
+}
+
+@-webkit-keyframes spinner {
+    0% {
+        -webkit-transform: rotate(90deg);
+    }
+    40% {
+        -webkit-transform: rotate(360deg);
+    }
+    100% {
+        -webkit-transform: rotate(450deg);
+    }
+}
+
+@-webkit-keyframes arc-one {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    20% {
+        -webkit-transform: rotate(180deg);
+    }
+    40% {
+        -webkit-transform: rotate(360deg);
+    }
+    70% {
+        -webkit-transform: rotate(360deg);
+    }
+    100% {
+        -webkit-transform: rotate(540deg);
+    }
+}
+
+@-webkit-keyframes arc-two {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    20% {
+        -webkit-transform: rotate(180deg);
+    }
+    40% {
+        -webkit-transform: rotate(180deg);
+    }
+    70% {
+        -webkit-transform: rotate(360deg);
+    }
+    100% {
+        -webkit-transform: rotate(540deg);
+    }
+}
+
+@-webkit-keyframes mask-one {
+    0% {
+        opacity: 1;
+    }
+    20%, 100% {
+        opacity: 0;
+    }
+}
+
+@-webkit-keyframes mask-two {
+    0% {
+        opacity: 0;
+    }
+    70%, 100% {
+        opacity: 1;
+    }
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    position: relative;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 1);
+    border-radius: 50%;
+}
+
+.spinner {
+    -webkit-animation: spinner 1.6s linear infinite;
+    -webkit-transform: rotate(90deg);
+}
+
+.spinner .arc {
+    width: 50%;
+    height: 100%;
+    position: absolute;
+    -webkit-transform-origin: 100% 50%;
+    background: rgba(117, 117, 117, 1);
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 1);
+    border-radius: 100% 0 0 100% / 50% 0 0 50%;
+    border-right: none;
+}
+
+.spinner .arc.one {
+    z-index: 100;
+    -webkit-animation: arc-one 1.6s linear infinite;
+}
+
+.spinner .arc.two {
+    z-index: 200;
+    -webkit-animation: arc-two 1.6s linear infinite;
+}
+
+.spinner .mask {
+    width: 50%;
+    height: 100%;
+    position: absolute;
+    background: inherit;
+    opacity: 1;
+    box-sizing: border-box;
+}
+
+.spinner .mask.one {
+    left: 0%;
+    z-index: 300;
+    -webkit-animation: mask-one 1.6s steps(1, end) infinite;
+}
+
+.spinner .mask.two {
+    right: 0%;
+    z-index: 400;
+    -webkit-animation: mask-two 1.6s steps(1, end) infinite;
+}
+
+.spinner .pin {
+    width: 18px;
+    height: 18px;
+    top: 5px;
+    left: 5px;
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+    box-sizing: border-box;
+    z-index: 500;
+}

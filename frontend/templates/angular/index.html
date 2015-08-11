@@ -38,6 +38,20 @@
     {% endif %}
 </head>
 <body ng-controller="RootController" layout="row">
+    <div class="loading-splash" home-splash>
+        <div class="progress-wrapper progress circular">
+            <div class="progress circular">
+                <div class="spinner">
+                    <div class="arc one"></div>
+                    <div class="arc two"></div>
+                    <div class="mask one"></div>
+                    <div class="mask two"></div>
+                    <div class="pin"></div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
     <md-sidenav md-swipe-left="site.toolbar.menu.close()" layout="column" class="left md-closed" md-component-id="site.toolbar.menu.id">
         <md-content>
             <div class="bar-logo">
