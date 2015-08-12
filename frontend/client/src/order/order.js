@@ -1,29 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').directive('toggleExpand', ng(function ($timeout) {
-        return {
-            link: function (scope, element, attrs) {
-                var height,
-                    decider = function (neww, old) {
-                        if (angular.isUndefined(height)) {
-                            return;
-                        }
-                        element.css('overflow', 'hidden');
-                        if (neww) {
-                            element.height(height);
-                        } else {
-                            element.height(0);
-                        }
-                    };
-                $timeout(function () {
-                    height = element.height();
-                    decider(scope.$eval(attrs.toggleExpand));
-                }, 0, false);
-
-                scope.$watch(attrs.toggleExpand, decider);
-            }
-        };
-    })).directive('alwaysScrollToBottom', ng(function ($timeout) {
+    angular.module('app').directive('alwaysScrollToBottom', ng(function ($timeout) {
         return {
             link: function (scope, element, attrs) {
                 var cb = function () {
@@ -328,7 +305,7 @@
 
                                 $scope.carrier = {
                                     selected: $scope.order.carrier ? $scope.order.carrier.reference : null,
-                                    available: (response.data.carriers ? response.data.carriers : []),
+                                    available: (response.data.carriers || []),
                                     form: null
                                 };
 
