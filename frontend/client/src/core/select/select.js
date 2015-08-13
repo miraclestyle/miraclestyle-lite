@@ -96,6 +96,15 @@
                     select.remove = function (item) {
                         select.select(item);
                     };
+                    select.anySelected = function () {
+                        var any = true;
+                        angular.forEach(select.multipleSelection, function (value) {
+                            if (!any) {
+                                any = value;
+                            }
+                        });
+                        return any;
+                    };
                     select.multipleSelection = {};
                     select.multipleSelect = function (item) {
                         var hash = select.getHash(item),

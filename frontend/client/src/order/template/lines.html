@@ -1,47 +1,50 @@
 <div class="cards">
     <div ng-if="stage.current > 1" class="card">
         <div class="card-inner">
-            <div class="padding-16 clearfix">
+            <div class="card-inner-padding clearfix">
                 <h1 class="headline">#{{order.id}}</h1>
+                <div class="secondary padding-bottom-16">{{order|output:'date'}}</div>
                 <table class="card-table">
                     <tbody>
                         <tr>
-                            <td class="first info">Seller</td>
-                            <td class="first">{{order._seller.name}}</td>
+                            <td class="secondary info">Seller</td>
+                            <td class="secondary">{{order._seller.name}}</td>
                         </tr>
                         <tr>
-                            <td class="first info">Buyer</td>
-                            <td class="first">{{order.parent.parent.id}}</td>
+                            <td class="secondary info">Buyer</td>
+                            <td class="secondary">{{order.parent.parent.id}}</td>
                         </tr>
                         <tr>
-                            <td class="first info">State</td>
-                            <td class="first">{{order.state|labelize:"order"}}</td>
+                            <td class="secondary info">State</td>
+                            <td class="secondary">{{order.state|labelize:"order"}}</td>
                         </tr>
 
                         <tr>
-                            <td class="first info">Payment</td>
-                            <td class="first">
+                            <td class="secondary info">Payment</td>
+                            <td class="secondary">
                                 <span ng-show="!order.payment_status">N/A</span>
                                 <span ng-show="order.payment_status">{{order.payment_status|labelize:"order"}}</span>
                             </td>
                         </tr>
 
                         <tr>
-                            <td class="first info">Feedback</td>
-                            <td class="first">
+                            <td class="secondary info">Feedback</td>
+                            <td class="secondary">
                                 <span ng-show="!order.feedback">N/A</span>
                                 <span ng-show="order.feedback">{{order.feedback|labelize:"order"}}</span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="first info">Feedback Adjustment</td>
-                            <td class="first">
+                            <td class="secondary info">Feedback Adjustment</td>
+                            <td class="secondary">
                                 <span ng-show="!order.feedback_adjustment">N/A</span>
                                 <span ng-show="order.feedback_adjustment">{{order.feedback_adjustment|labelize:"order"}}</span>
                             </td>
                         </tr>
-
-        
+                        <tr>
+                            <td class="secondary info">Updated</td>
+                            <td class="secondary">{{order|output:'updated'}}</td>
+                        </tr>
 
                     </tbody>
                 </table>
@@ -51,24 +54,24 @@
 
     <div ng-if="stage.current > 1" class="card">
         <div class="card-inner">
-            <div class="padding-16 clearfix">
-                <h1 class="headline">Billing Address</h1>
-                <div class="first">{{order.billing_address.name}}</div>
-                <div class="first">{{order.billing_address.address}}</div>
-                <div class="first">{{order.billing_address.city}} {{order.billing_address.region}} {{order.billing_address.postal_code}}</div>
-                <div class="first">{{order.billing_address.country}}</div>
+            <div class="card-inner-padding clearfix">
+                <h1 class="headline padding-bottom-16">Billing Address</h1>
+                <div class="secondary">{{order.billing_address.name}}</div>
+                <div class="secondary">{{order.billing_address.street}}</div>
+                <div class="secondary">{{order.billing_address.city}} {{order.billing_address.region}} {{order.billing_address.postal_code}}</div>
+                <div class="secondary">{{order.billing_address.country}}</div>
             </div>
         </div>
     </div>
 
     <div ng-if="stage.current > 1" class="card">
         <div class="card-inner">
-            <div class="padding-16 clearfix">
-                <h1 class="headline">Shipping Address</h1>
-                <div class="first">{{order.shipping_address.name}}</div>
-                <div class="first">{{order.shipping_address.address}}</div>
-                <div class="first">{{order.shipping_address.city}} {{order.shipping_address.region}} {{order.shipping_address.postal_code}}</div>
-                <div class="first">{{order.shipping_address.country}}</div>
+            <div class="card-inner-padding clearfix">
+                <h1 class="headline padding-bottom-16">Shipping Address</h1>
+                <div class="secondary">{{order.shipping_address.name}}</div>
+                <div class="secondary">{{order.shipping_address.street}}</div>
+                <div class="secondary">{{order.shipping_address.city}} {{order.shipping_address.region}} {{order.shipping_address.postal_code}}</div>
+                <div class="secondary">{{order.shipping_address.country}}</div>
             </div>
         </div>
     </div>
@@ -77,39 +80,44 @@
     <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStart: 'lineDrag.onStart(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
         <button loading ng-click="cmd.line.view(line, $event)" type="button" md-ink-ripple class="menu-item card-inner">
             <div class="delete-overlay"></div>
-            <div class="card-primary-action">
-                <h1 class="headline">{{line.product.name}}</h1>
-                <span class="first">{{line.product.code}}</span>
-                <span class="first">{{line.product.unit_price|formatCurrency:order.currency}}</span>
-                <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
-                <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
-                <input type="hidden" value="{{line.product.quantity}}" name="quantity_{{line.sequence}}" />
-                <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
-                <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
-                <table class="card-table">
-                    <tbody>
-                        <tr ng-repeat="variant in line.product.variant_signature track by $index">
-                            <td class="first info">{{format.variantLabel(variant)}}</td>
-                            <td class="first">{{format.variantValue(variant)}}</td>
-                        </tr>
-                        <tr>
-                            <td class="first info">Quantity ({{line.product.uom.symbol}})</td>
-                            <td class="first">{{line.product.quantity}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <div class="card-inner-padding">
+                <div class="card-primary-action padding-bottom-16">
+                    <h1 class="headline">{{line.product.name}}</h1>
+                    <div class="secondary padding-bottom-16">{{line.product.code}}</div>
+                    <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
+                    <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
+                    <input type="hidden" value="{{line.product.quantity}}" name="quantity_{{line.sequence}}" />
+                    <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
+                    <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
+                    <table class="card-table">
+                        <tbody>
+                            <tr>
+                                <td class="secondary info">Unit price</td>
+                                <td class="secondary">{{line.product.unit_price|formatCurrency:order.currency}}</td>
+                            </tr>
+                            <tr ng-repeat="variant in line.product.variant_signature track by $index">
+                                <td class="secondary info">{{format.variantLabel(variant)}}</td>
+                                <td class="secondary">{{format.variantValue(variant)}}</td>
+                            </tr>
+                            <tr>
+                                <td class="secondary info">Quantity ({{line.product.uom.symbol}})</td>
+                                <td class="secondary">{{line.product.quantity}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
 
-            <div class="clearfix padding-16">
-                <table class="pull-right card-table">
-                    <tbody>
-                        <tr>
-                            <td class="first info">Subtotal</td>
-                            <td class="first">{{line.discount_subtotal|formatCurrency:order.currency}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="clearfix">
+                    <table class="pull-right card-table">
+                        <tbody>
+                            <tr>
+                                <td class="secondary info">Subtotal</td>
+                                <td class="secondary">{{line.discount_subtotal|formatCurrency:order.currency}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </button>
@@ -122,50 +130,52 @@
 
     <div class="card" ng-if="stage.current > 1">
         <div class="menu-item card-inner">
-            <div class="card-primary-action">
-                <h1 class="headline">Delivery</h1>
-                <span class="first">{{order.carrier.description}}</span>
-            </div>
-            <div class="clearfix padding-16">
-                <table class="pull-right card-table">
-                    <tbody>
-                        <tr>
-                            <td class="first info">Subtotal</td>
-                            <td class="first">{{order.carrier.total|formatCurrency:order.currency}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="card-inner-padding">
+                <div class="card-primary-action">
+                    <h1 class="headline">Delivery</h1>
+                    <div class="secondary padding-bottom-16">{{order.carrier.description}}</div>
+                </div>
+                <div class="clearfix">
+                    <table class="pull-right card-table">
+                        <tbody>
+                            <tr>
+                                <td class="secondary info">Subtotal</td>
+                                <td class="secondary">{{order.carrier.total|formatCurrency:order.currency}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         </div>
 
         <div class="card">
             <div class="card-inner">
-                <div class="padding-16 clearfix">
-                    <h1 class="headline">Summary</h1>
+                <div class="card-inner-padding clearfix">
+                    <h1 class="headline padding-bottom-16">Summary</h1>
                     <table class="pull-right card-table">
                         <tbody>
                             <tr>
-                                <td class="first info">Shipping &amp; Handling</td>
-                                <td ng-if="stage.current > 1" class="first">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
-                                <td ng-if="stage.current === 1" class="first">To be calculated.</td>
+                                <td class="secondary info">Shipping &amp; Handling</td>
+                                <td ng-if="stage.current > 1" class="secondary">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
+                                <td ng-if="stage.current === 1" class="secondary">To be calculated.</td>
                             </tr>
                             <tr>
-                                <td class="first info">Net Total</td>
-                                <td class="first">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
+                                <td class="secondary info">Net Total</td>
+                                <td class="secondary">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
                             </tr>
                             <tr>
-                                <td class="first info">Taxes</td>
-                                <td ng-if="stage.current > 1" class="first">{{order.tax_amount|formatCurrency:order.currency}}</td>
-                                <td ng-if="stage.current === 1" class="first">To be calculated.</td>
+                                <td class="secondary info">Taxes</td>
+                                <td ng-if="stage.current > 1" class="secondary">{{order.tax_amount|formatCurrency:order.currency}}</td>
+                                <td ng-if="stage.current === 1" class="secondary">To be calculated.</td>
                             </tr>
                             <tr>
-                                <td class="first info">Total</td>
-                                <td class="first">{{order.total_amount|formatCurrency:order.currency}}</td>
+                                <td class="secondary info">Total</td>
+                                <td class="secondary">{{order.total_amount|formatCurrency:order.currency}}</td>
                             </tr>
                             <tr>
-                                <td class="first info">Currency</td>
-                                <td class="first">{{order.currency.name}} ({{order.currency.code}})</td>
+                                <td class="secondary info">Currency</td>
+                                <td class="secondary">{{order.currency.name}} ({{order.currency.code}})</td>
                             </tr>
                         </tbody>
                     </table>

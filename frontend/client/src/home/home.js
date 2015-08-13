@@ -21,6 +21,11 @@
                 }
             };
         }))
+        .controller('LoginLinksController', ng(function ($scope, models) {
+            $scope.login = function () {
+                models['11'].login();
+            };
+        }))
         .run(ng(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
             $rootScope.site = {
                 title: '',

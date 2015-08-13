@@ -604,9 +604,9 @@ class OrderTaxPlugin(orm.BaseModel):
   amount = orm.SuperDecimalProperty('4', required=True, indexed=False)
   carriers = orm.SuperVirtualKeyProperty('5', kind='113', repeated=True, indexed=False)
   product_categories = orm.SuperKeyProperty('6', kind='24', repeated=True, indexed=False)
-  product_codes = orm.SuperStringProperty('7', repeated=True, indexed=False)
-  address_type = orm.SuperStringProperty('8', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
-  exclusion = orm.SuperBooleanProperty('9', required=True, default=False, indexed=False)
+  address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
+  exclusion = orm.SuperBooleanProperty('8', required=True, default=False, indexed=False)
+  product_codes = orm.SuperStringProperty('9', repeated=True, indexed=False)
   locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '10', repeated=True)
 
   def run(self, context):

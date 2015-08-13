@@ -2,52 +2,56 @@
     <div class="cards" autoload-on-vertical-scroll-end="scrollEnd">
         <div class="card" ng-repeat="order in search.results">
             <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="view(order, $event)">
-                <div class="padding-16">
+                <div class="card-inner-padding">
                     <h1 class="headline">#{{order.id}}</h1>
-                    <span class="first">{{order|output:'date'}}</span>
-                    <span class="first">{{order.total_amount|formatCurrency:order.currency}}</span>
+                    <div class="secondary padding-bottom-16">{{order|output:'date'}}</div>
                     <table class="card-table">
                         <tbody>
                             <tr>
-                                <td class="first info">Seller</td>
-                                <td class="first">{{order._seller.name}}</td>
+                                <td class="secondary info">Seller</td>
+                                <td class="secondary">{{order._seller.name}}</td>
                             </tr>
                             <tr>
-                                <td class="first info">Buyer</td>
-                                <td class="first">{{order.parent.parent.id}}</td>
+                                <td class="secondary info">Buyer</td>
+                                <td class="secondary">{{order.parent.parent.id}}</td>
                             </tr>
                             
                             <tr>
-                                <td class="first info">State</td>
-                                <td class="first">{{order.state|labelize:"order"}}</td>
+                                <td class="secondary info">State</td>
+                                <td class="secondary">{{order.state|labelize:"order"}}</td>
+                            </tr>
+
+                            <tr>
+                                <td class="secondary info">Total</td>
+                                <td class="secondary">{{order.total_amount|formatCurrency:order.currency}}</td>
                             </tr>
                             <!--
                             <tr>
-                                <td class="first info">Feedback</td>
-                                <td class="first">
+                                <td class="secondary info">Feedback</td>
+                                <td class="secondary">
                                     <span ng-show="!order.feedback">N/A</span>
                                     <span ng-show="order.feedback">{{order.feedback|labelize:"order"}}</span>
                                 </td>
                             </tr>
                             <tr>
-                                <td class="first info">Feedback Adjustment</td>
-                                <td class="first">
+                                <td class="secondary info">Feedback Adjustment</td>
+                                <td class="secondary">
                                      <span ng-show="!order.feedback_adjustment">N/A</span>
                                      <span ng-show="order.feedback_adjustment">{{order.feedback_adjustment|labelize:"order"}}</span>
                                 </td>
                             </tr>
 
                             <tr ng-if="false">
-                                <td class="first info">Payment</td>
-                                <td class="first">
+                                <td class="secondary info">Payment</td>
+                                <td class="secondary">
                                         <span ng-show="!order.payment_status">N/A</span>
                                         <span ng-show="order.payment_status">{{order.payment_status|labelize:"order"}}</span>
                                 </td>
                             </tr>
                             -->
                             <tr>
-                                <td class="first info">Updated</td>
-                                <td class="first">{{order|output:'updated'}}</td>
+                                <td class="secondary info">Updated</td>
+                                <td class="secondary">{{order|output:'updated'}}</td>
                             </tr>
                             
                         </tbody>

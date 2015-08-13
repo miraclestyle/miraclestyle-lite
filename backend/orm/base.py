@@ -321,12 +321,12 @@ class _BaseModel(object):
     '''
       Initilization method for model. It must be called by iom upon loading all models into memory
     '''
-    cls._initialized = True
     fields = cls.get_fields()
     for field_key, field in fields.iteritems():
       if hasattr(field, 'initialized') and not field.initialized:  # initialize() can only be called once
         field.initialized = True
         field.initialize()
+    cls._initialized = True
     return True
 
   def __repr__(self):

@@ -17,7 +17,7 @@ class BuyerLocation(orm.BaseExpando):
 
   _kind = 121
 
-  reference = orm.SuperKeyProperty('1', kind='14', required=True, indexed=False)
+  reference = orm.SuperKeyProperty('1', kind='14', required=False, indexed=False)
   name = orm.SuperStringProperty('2', required=True, indexed=False)
   country = orm.SuperStringProperty('3', required=True, indexed=False)
   country_code = orm.SuperStringProperty('4', required=True, indexed=False)

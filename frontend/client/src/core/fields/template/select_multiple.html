@@ -40,7 +40,7 @@
                 <div ng-message="required">The field requires selection!</div>
               </div>
               <!-- help -->
-              <div ng-if="!config.ui.specifics.select.anyItems" help-render="config.ui.emptyHelp"></div>
+              <div ng-if="!config.ui.specifics.select.item.length" help-render="config.ui.emptyHelp"></div>
               <!-- end help -->
         </div>
 </select-input-multiple>

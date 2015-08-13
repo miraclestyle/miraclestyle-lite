@@ -64,6 +64,13 @@ class RequestHandler(webapp2.RequestHandler):
     self.current_csrf = None
     self._input = None
 
+  def secure_cookie_get(self, key):
+    return tools.secure_cookie.deserialize(key, self.request.cookies.get(key))
+
+  def secure_cookie_set(self, key, value, **kwargs):
+    secure = tools.secure_cookie.serialize(key, value)
+    return self.response.set_cookie(key, secure, **kwargs)
+
   @tools.profile(HTTP_PERFORMANCE_TEXT)
   def get_input(self):
     if self._input is not None:
@@ -132,7 +139,7 @@ class RequestHandler(webapp2.RequestHandler):
     '''
     if self.current_account is None and self.autoload_current_account:
       from models.account import Account
-      unsecure = tools.secure_cookie.deserialize(settings.COOKIE_AUTH_KEY, self.request.cookies.get(settings.COOKIE_AUTH_KEY))
+      unsecure = self.secure_cookie_get(settings.COOKIE_AUTH_KEY)
       Account.set_current_account_from_access_token(unsecure)
       current_account = Account.current_account()
       current_account.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None)  # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
@@ -178,7 +185,6 @@ class ModelMeta(RequestHandler):
   def respond(self):
     # @todo include cache headers here
     # @todo implement only the list of kinds that get out by config
-    # @todo specify which models need to be available to the client
     output = {}
     kinds = []
     models = iom.Engine.get_schema()
@@ -226,12 +232,10 @@ class AccountLogin(RequestHandler):
                   'action_id': 'login'})
     output = iom.Engine.run(input)
     if redirect_to_key in input:
-      redirect_to_secure = tools.secure_cookie.serialize(redirect_to_key, input.get(redirect_to_key))
-      self.response.set_cookie(redirect_to_key, redirect_to_secure, httponly=True)
+      self.secure_cookie_set(redirect_to_key, input.get(redirect_to_key), httponly=True)
     if 'access_token' in output:
-      secure = tools.secure_cookie.serialize(settings.COOKIE_AUTH_KEY, output.get('access_token'))
-      self.response.set_cookie(settings.COOKIE_AUTH_KEY, secure, httponly=True)
-      redirect_to = tools.secure_cookie.deserialize(redirect_to_key, self.request.cookies.get(redirect_to_key))
+      self.secure_cookie_set(settings.COOKIE_AUTH_KEY, output.get('access_token'), httponly=True)
+      redirect_to = self.secure_cookie_get(redirect_to_key)
       if redirect_to and not redirect_to.startswith('http'):
         return self.redirect(redirect_to)
       self.redirect('/login/status?success=true')  # we need to see how we can handle continue to link behaviour, generally this needs more work
@@ -347,14 +351,18 @@ class Reset(BaseTestHandler):
 class BeginMemTest(BaseTestHandler):
 
   def respond(self):
+    items = []
+    self.response.headers['Content-Type'] = 'text/html'
+    for i in xrange(1, 100):
+      items.append('<script src="http://127.0.0.1:9982/api/tests/AssertTest?v=%s"></script>' % i)
+    return self.response.write('\n'.join(items))
     ctx = orm.get_context()
     i = 0
     while True:
       i += 1
-      if i == 100:
+      if i == 200:
         break
-      ctx.urlfetch('http://128.65.105.64:9982/api/tests/MemTest')
-      ctx.urlfetch('http://128.65.105.64:9982/api/tests/AssertTest')
+      ctx.urlfetch('http://127.0.0.1:9982/api/tests/AssertTest')
 
 
 class MemTest(BaseTestHandler):
@@ -363,11 +371,54 @@ class MemTest(BaseTestHandler):
     tools.mem_temp_set('cuser', 1)
 
 
+import threading
+import time
+
+lock = threading.RLock()
+
+class basec:
+  initilized = False
+
+  @classmethod
+  def init(cls):
+    if not cls.initilized:
+      cls.should = 1
+      time.sleep(0.1)
+      cls.initilized = True
+
+class c1(basec):
+  pass
+class c2(basec):
+  pass
+class c3(basec):
+  pass
+class c4(basec):
+  pass
+class c5(basec):
+  pass
+class c6(basec):
+  pass
+
+
+classes = [c1, c2, c3, c4, c5, c6]
+
+def init():
+    for c in classes:
+      c.init()
+
 class AssertTest(BaseTestHandler):
 
   def respond(self):
-    if tools.mem_temp_get('cuser') is not None:
-      tools.log.debug('cuser failed, got %s' % tools.mem_temp_get('cuser'))
+    init()
+
+    print 'c1', c1.should
+    print 'c2', c2.should
+    print 'c3', c3.should
+    print 'c4', c4.should
+    print 'c5', c5.should
+    print 'c6', c6.should
+
+    return ''
 
 
 class LoginAs(BaseTestHandler):

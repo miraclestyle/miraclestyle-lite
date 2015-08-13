@@ -198,10 +198,6 @@
             plugins: {
                 kind: 'Rule'
             },
-            '109': {
-                carriers: 'Carriers, if any, this rule applies to',
-                product_categories: 'Product categories this rule applies to'
-            },
             '28': {
                 uom: 'Unit Of Measurement',
                 weight_uom: 'Weight Unit Of Measurement',
@@ -234,7 +230,7 @@
                 logo: 'Seller Logo'
             },
             '18-update': {
-                notify: 'Email me when a catalog is published or discontinued by the seller that I\'m following.'
+                notify: 'Receive email notifications when a catalog is published or discontinued by the seller that you are following'
             }
         });
 
@@ -292,6 +288,10 @@
             },
             '31-update': {
                 _images: 'catalog/help/images.html'
+            },
+            '109': {
+                carriers: 'seller/help/carriers.html',
+                product_categories: 'seller/help/product_categories.html'
             },
             '28': {
                 images: 'catalog/product/help/images.html',

@@ -1,15 +1,16 @@
-class foo:
+import threading
+lock = threading.Lock()
 
-    def bar(zar, **kwargs):
-        return zar
+gc = 0
 
-    def go(**kwargs):
-        return kwargs
+def init():
+    global gc
+    with lock:
+        print 'initilizing'
+        i = 1000
+        while i:
+            i -= 1
+            gc +=1
+        print 'finished global counter at %s' % gc
 
-    _permissions = [
-        go,
-        bar
-    ]
-
-for perm in foo._permissions:
-    print perm(bar=1, zar=2, far=3)
+init()

@@ -52,6 +52,6 @@
   </ul>
 </div>
 <!-- help -->
-<div ng-if="helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs)" help-render="config.ui.emptyHelp"></div>
+<div ng-if="select.anySelected()" help-render="config.ui.emptyHelp"></div>
 <!-- end help -->
 </div>
