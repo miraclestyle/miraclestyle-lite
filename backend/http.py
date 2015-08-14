@@ -308,44 +308,48 @@ class Reset(BaseTestHandler):
     kinds = [str(i) for i in xrange(200)]
     namespaces = metadata.get_namespaces()
     indexes = []
-    if self.request.get('kinds'):
-      kinds = self.request.get('kinds').split(',')
-    ignore = []
-    if self.request.get('ignore'):
-      ignore = self.request.get('ignore')
-    tools.log.debug('Delete kinds %s' % kinds)
-    for kind in kinds:
-      for namespace in namespaces:
-        if kind in ignore:
-          continue
-        p = tools.Profile()
-        gets = datastore.Query(kind, namespace=namespace, keys_only=True).Run()
-        keys = list(gets)
-        total_keys = len(keys)
-        if total_keys:
-          tools.log.debug('Delete kind %s. Found %s keys. Took %sms to get.' % (kind, total_keys, p.miliseconds))
+    if not self.request.get('do_not_delete_datastore'):
+      if self.request.get('kinds'):
+        kinds = self.request.get('kinds').split(',')
+      ignore = []
+      if self.request.get('ignore'):
+        ignore = self.request.get('ignore')
+      tools.log.debug('Delete kinds %s' % kinds)
+      for kind in kinds:
+        for namespace in namespaces:
+          if kind in ignore:
+            continue
           p = tools.Profile()
-          datastore.Delete(keys)
-          tools.log.debug('Deleted all records for kind %s. Took %sms.' % (kind, p.miliseconds))
+          gets = datastore.Query(kind, namespace=namespace, keys_only=True).Run()
+          keys = list(gets)
+          total_keys = len(keys)
+          if total_keys:
+            tools.log.debug('Delete kind %s. Found %s keys. Took %sms to get.' % (kind, total_keys, p.miliseconds))
+            p = tools.Profile()
+            datastore.Delete(keys)
+            tools.log.debug('Deleted all records for kind %s. Took %sms.' % (kind, p.miliseconds))
     indexes.extend((search.Index(name='catalogs'), search.Index(name='24')))
     # empty catalog index!
-    docs = 0
-    for index in indexes:
-      while True:
-        document_ids = [document.doc_id for document in index.get_range(ids_only=True)]
-        if not document_ids:
-          break
-        try:
-          index.delete(document_ids)
-          docs += len(document_ids)
-        except:
-          pass
+    if not self.request.get('do_not_delete_indexes'):
+      docs = 0
+      for index in indexes:
+        while True:
+          document_ids = [document.doc_id for document in index.get_range(ids_only=True)]
+          if not document_ids:
+            break
+          try:
+            index.delete(document_ids)
+            docs += len(document_ids)
+          except:
+            pass
     tools.log.debug('Deleted %s indexes. With total of %s documents.' % (len(indexes), docs))
     # delete all blobs
-    keys = blobstore.BlobInfo.all().fetch(None, keys_only=True)
-    blobstore.delete(keys)
-    tools.log.debug('Deleted %s blobs.' % len(keys))
-    tools.mem_flush_all()
+    if not self.request.get('do_not_delete_blobs'):
+      keys = blobstore.BlobInfo.all().fetch(None, keys_only=True)
+      blobstore.delete(keys)
+      tools.log.debug('Deleted %s blobs.' % len(keys))
+    if not self.request.get('do_not_delete_memcache'):
+      tools.mem_flush_all()
 
 
 class BeginMemTest(BaseTestHandler):
