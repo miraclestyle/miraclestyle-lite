@@ -16,7 +16,7 @@
            </button>
       </div>
  
-      <div track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
+      <div ng-if="modalOptions.opened" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
          <div image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 

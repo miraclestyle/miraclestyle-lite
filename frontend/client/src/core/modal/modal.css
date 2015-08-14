@@ -71,8 +71,7 @@
 
 .modal-medium .modal-dialog {
     background: #FFFFFF;
-    -webkit-box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
-    box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 12px 24px 6px rgba(0, 0, 0, 0.26);
     background-clip: padding-box;
 }
 
@@ -85,7 +84,7 @@
 .md-dialog {
     opacity: 0;
     overflow: hidden;
-    box-shadow: 0px 27px 24px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0px 0px 16px 4px rgba(0, 0, 0, 0.26);
 }
 
 .md-dialog.visible {

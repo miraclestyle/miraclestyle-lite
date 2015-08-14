@@ -3,7 +3,7 @@
           <div class="modal-body-inner modal-confirm-inner-padding">
               <div ng-if="config.templateUrl" ng-include="config.templateUrl" class="confirm-message"></div>
               <div ng-if="!config.templateUrl" class="confirm-message">
-                <div ng-if="config.title" class="title padding-bottom-24">{{config.title}}</div>
+                <div ng-if="config.title" class="title padding-bottom-20">{{config.title}}</div>
                 <div ng-repeat="message in config.messages" class="confirmation-message padding-bottom-8">
                   {{message}}
                 </div>

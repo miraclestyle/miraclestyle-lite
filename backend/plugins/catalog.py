@@ -38,7 +38,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
     structure = collections.OrderedDict()
     for i, item in enumerate(categories):
       if i == 100:  # all instances now only import 100 items
-        break
+        break # break
       full_path = item.split(' > ')
       current_structure = structure
       for path in full_path:

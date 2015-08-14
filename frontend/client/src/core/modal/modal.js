@@ -191,7 +191,7 @@
                             element.addClass('visible');
                             $(window).triggerHandler('modal.visible', [element]);
                             scope.modalOptions.opened = true;
-                            scope.$broadcast('opened');
+                            scope.$apply();
                         });
 
                         $(window).triggerHandler('modal.open', [element]);
