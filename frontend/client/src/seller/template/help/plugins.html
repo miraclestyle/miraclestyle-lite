@@ -3,10 +3,10 @@
         <div class="help">
           <div class="help-item">
             <div class="padding-bottom-8">
-          As their name implies, seller rules are principles that impose business policies on customers. Most seller rules operate as part of the logic of the checkout process within shopping cart. System requires at least one active and configured seller rule of each kind in order to operate correctly. All active seller rules are executed sequentially from top to bottom.
+Seller rules impose business policies and regulations on commercial transactions. Seller rules operate as part of the checkout process logic within shopping cart. System depends on some seller rules to be in place for normal operation. All active seller rules are executed sequentially from top to bottom.
                 </div>
                 <div class="padding-bottom-8">
-                  Your seller rules will appear in the order you have manually ordered them.
+                  Seller rules will appear in the order you have manually ordered them.
                 </div>
                 <div class="padding-bottom-8">
                   Click "Add" action to add new rule.
@@ -25,19 +25,17 @@
     </div>
 
 
-
-
     <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Address</div>
         <div class="help">
-          <div>Use address rule to define billing and shipping address restrictions during purchase. System requires exactly two address rules, one for billing and other for shipping address.</div>
+          <div>Address rule controls billing or shipping address that buyer submits during shopping cart checkout. System requires that seller has exactly two active address rules, one for billing and the other for shipping address.</div>
         </div>
     </div>
 
         <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Carrier</div>
         <div class="help">
-          <div>Use carrier rule to define available delivery method during purchase. One carrier rule coresponds to one delivery method. Each carrier rule can be configured to dynamically calculate shipping and handling prices based given circumstances. System requires at least one carrier rule. You can define multiple carrier rules, and all applicable carrier rules will be available to a customer during purchase.</div>
+          <div>Carrier rule defines delivery method that will be matched and calculated against order, and become available as an option to buyer during shopping cart checkout. System requires that seller has at least one active carrier rule. System supports multiple active carrier rules.</div>
         </div>
     </div>
 
@@ -46,7 +44,7 @@
         <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Currency</div>
         <div class="help">
-          <div>Use currency rule to define a currency you accept. System requires exactly one currency rule.</div>
+          <div>Currency rule establishes accepted currency. This rule makes an exception in terms of operation as it operates on both, catalog product unit prices, and checkout process logic within shopping cart. System requires that seller has exactly one active currency rule.</div>
         </div>
     </div>
 
@@ -55,14 +53,14 @@
         <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Discount</div>
         <div class="help">
-          <div>Use discount rule to define discount given under desired circumstances during purchase. System does not require discount rules. You can define multiple discount rules, and all discount rules that match during purchase will be applied accordingly.</div>
+          <div>Discount rule defines product discount that will be matched, calculated, and applied against order lines during shopping cart checkout. System does not require that seller has active discount rules. System supports multiple active discount rules.</div>
         </div>
     </div>
 
             <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">PayPal</div>
         <div class="help">
-          <div>Use PayPal rule to define PayPal as acceptable payment method during purchase. System does not require PayPal rules. You can define one PayPal rule.</div>
+          <div>PayPal rule defines PayPal as acceptable payment method that buyer can use to make a payment during shopping cart checkout. System does not require that seller has active PayPal rules. System supports one active PayPal rule.</div>
         </div>
     </div>
 
@@ -71,7 +69,7 @@
        <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Tax</div>
         <div class="help">
-          <div>Use tax rule to define taxes during purchase. System does not require tax rules. You can define multiple tax rules, and all tax rules that match during purchase will be applied accordingly.</div>
+          <div>Tax rule defines sales tax that will be matched, calculated, and applied against order lines during shopping cart checkout. System does not require that seller has active tax rules. System supports multiple active tax rules.</div>
         </div>
     </div>
  

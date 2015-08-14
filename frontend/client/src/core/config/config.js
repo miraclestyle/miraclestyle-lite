@@ -128,17 +128,17 @@
                 suspended: 'Suspended'
             },
             order: {
-                checkout: 'Checkout',
-                completed: 'Completed',
-                cart: 'Cart',
-                canceled: 'Canceled',
-                sudo: 'Administered',
-                review: 'Review',
-                reported: 'Reported',
-                positive: 'Positive',
-                negative: 'Negative',
-                neutral: 'Neutral',
-                revision: 'Review'
+                checkout: 'checkout',
+                completed: 'completed',
+                cart: 'cart',
+                canceled: 'canceled',
+                sudo: 'administered',
+                review: 'review',
+                reported: 'reported',
+                positive: 'positive',
+                negative: 'negative',
+                neutral: 'neutral',
+                revision: 'review'
             }
         });
 
@@ -155,14 +155,14 @@
                 business: 'Email address on which you want to receive your PayPal payments. This value will be the same as "Receiver Email" in case that you have only one email address associated with your PayPal account.'
             },
             '109': {
-                product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.',
+                product_codes: 'Specific product codes this rule applies to. Specify one product code per line.',
                 address_type: 'Buyer address type this rule applies to.'
             },
             '124': {
                 product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.'
             },
             '117': {
-                currency: 'Currency you accept, and your product prices are expressed in.'
+                currency: 'Currency you accept, and your product unit prices are expressed in.'
             },
             '111-update': {
                 condition_type: 'Condition under which this price applies.',
@@ -213,7 +213,7 @@
             },
             '124': {
                 discount_value: 'Discount (%)',
-                product_categories: 'Product categories this rule applies to'
+                product_categories: 'Product categories'
             },
             '31-update': {
                 discontinue_date: 'Expiration Date'
@@ -291,7 +291,24 @@
             },
             '109': {
                 carriers: 'seller/help/carriers.html',
-                product_categories: 'seller/help/product_categories.html'
+                product_categories: 'seller/help/product_categories.html',
+                locations: 'seller/help/locations.html'
+            },
+            '124': {
+                product_categories: 'seller/help/product_categories_line.html'
+            },
+            '113': {
+                lines: 'seller/help/carrier_lines.html',
+            },
+            '112': {
+                locations: 'seller/help/locations_line.html',
+                prices: 'seller/help/prices.html',
+            },
+            '126': {
+                lines: 'seller/help/discount_lines.html'
+            },
+            '107': {
+                locations: 'seller/help/locations.html'
             },
             '28': {
                 images: 'catalog/product/help/images.html',

@@ -342,7 +342,7 @@ class Reset(BaseTestHandler):
             docs += len(document_ids)
           except:
             pass
-    tools.log.debug('Deleted %s indexes. With total of %s documents.' % (len(indexes), docs))
+      tools.log.debug('Deleted %s indexes. With total of %s documents.' % (len(indexes), docs))
     # delete all blobs
     if not self.request.get('do_not_delete_blobs'):
       keys = blobstore.BlobInfo.all().fetch(None, keys_only=True)

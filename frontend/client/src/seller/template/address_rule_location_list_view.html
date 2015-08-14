@@ -1,3 +1,3 @@
-<strong ng-if="notEmpty(val._country.name) || notEmpty(val._region.name)" class="first">{{val._country.name}}</strong>
-<span ng-if="notEmpty(val._region.name)" class="second">{{val._region.name}}</span>
-<span ng-class="{'second': notEmpty(val._country.name) || notEmpty(val._region.name), 'first': (!notEmpty(val._country.name) && !notEmpty(val._region.name))}">{{postalCodes(val.postal_codes)}}</span>
+<strong ng-if="notEmpty(val._country.name) || notEmpty(val._region.name)" class="first ellipsis-text">{{val._country.name}}</strong>
+<span ng-if="notEmpty(val._region.name)" class="second ellipsis-text">{{val._region.name}}</span>
+<span class="ellipsis-text" ng-class="{'second': notEmpty(val._country.name) || notEmpty(val._region.name), 'first': (!notEmpty(val._country.name) && !notEmpty(val._region.name))}">{{postalCodes(val.postal_codes)}}</span>

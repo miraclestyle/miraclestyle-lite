@@ -117,19 +117,19 @@ class SellerSetupDefaults(orm.BaseModel):
     plugin_group = seller._plugin_group
     plugin_group.read()
     plugin_group = plugin_group.value
-    default_address_shipping = OrderAddressPlugin(name='Shipping Worldwide', exclusion=False, address_type='shipping')
-    default_address_billing = OrderAddressPlugin(name='Billing Worldwide', exclusion=False, address_type='billing')
-    default_carrier = OrderCarrierPlugin(name='Free International Shipping', active=True, lines=[OrderCarrierLine(name='Shipping Everywhere', active=True)])
+    default_address_shipping = OrderAddressPlugin(name='Shipping worldwide', exclusion=False, address_type='shipping')
+    default_address_billing = OrderAddressPlugin(name='Billing worldwide', exclusion=False, address_type='billing')
+    default_carrier = OrderCarrierPlugin(name='Free international shipping', active=True, lines=[OrderCarrierLine(name='Shipping everywhere', active=True)])
     default_currency = OrderCurrencyPlugin(name='Currency (USD)', currency=Unit.build_key('usd'))
-    default_paypal_payment = OrderPayPalPaymentPlugin(name='PayPal Payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
-    default_discount = OrderDiscountPlugin(name='Discount On Quantity (10%)',
-                                           lines=[OrderDiscountLine(name='Discount On Quantity Over 5',
+    default_paypal_payment = OrderPayPalPaymentPlugin(name='PayPal payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
+    default_discount = OrderDiscountPlugin(name='Discount on quantity (10%)',
+                                           lines=[OrderDiscountLine(name='Discount on quantity (10%)',
                                                                     condition_type='quantity',
                                                                     condition_operator='>',
                                                                     condition_value=Decimal('5'),
                                                                     discount_value=Decimal('10'),
                                                                     active=True)], active=False)
-    default_tax = OrderTaxPlugin(name='Sales Tax', address_type='shipping', type='proportional', amount=Decimal('6'), active=False)
+    default_tax = OrderTaxPlugin(name='Sales tax', address_type='shipping', type='proportional', amount=Decimal('6'), active=False)
     if not plugin_group or not plugin_group.plugins:  # now user wont be in able to delete the config completely, he will always have these defaults
       plugins = [default_address_billing,
                  default_address_shipping,
