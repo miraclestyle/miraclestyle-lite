@@ -166,7 +166,6 @@
                                         }
                                     });
                                 };
-                                $scope.close = $scope.$close;
                             })
                         });
                     },

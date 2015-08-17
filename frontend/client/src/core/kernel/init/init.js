@@ -15,8 +15,13 @@
             })
             .state('seller-info', {
                 url: '/seller/:key',
-                controller: 'HomePageController',
-                templateUrl: 'home/index.html'
+                controller: 'SellerInfo',
+                template: ''
+            })
+            .state('embed-seller-info', {
+                url: '/embed/seller/:key',
+                controller: 'SellerEmbedInfo',
+                template: ''
             })
             .state('catalog-view', {
                 url: '/catalog/:key',
@@ -36,6 +41,11 @@
             .state('embed-catalog-view', {
                 url: '/embed/catalog/:key',
                 controller: 'EmbedCatalogViewController',
+                template: ''
+            })
+            .state('embed-seller-view', {
+                url: '/embed/seller/:key',
+                controller: 'EmbedSellerViewController',
                 template: ''
             })
             .state('embed-catalog-product-view', {

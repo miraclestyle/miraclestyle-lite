@@ -996,15 +996,15 @@ $(function () {
                 }
             },
             disconnectSignInMethod: {
-                title: 'Disconnect this method?',
-                message: 'If this is the only sign in method connected to your Miraclestyle account, you will permanently lose access to the account and all of it\'s data once this action is completed!',
+                title: 'Disconnect identity?',
+                message: 'If this is the only sign in identity connected to your Miraclestyle account, you will permanently lose access to the account and all of its data once this action is completed!',
                 text: {
                     primary: 'Disconnect'
                 }
             },
             connectSignInMethod: {
-                title: 'Connect this method?',
-                message: 'If this sign in method is already connected to another Miraclestyle account you will have to disconnect it before you proceed with this acction!',
+                title: 'Connect identity?',
+                message: 'If this sign in identity is already connected to another Miraclestyle account you will have to disconnect it before you proceed with this action!',
                 text: {
                     primary: 'Connect'
                 }
@@ -1088,7 +1088,7 @@ $(function () {
                     'Remove the item by dragging it outside the left edge of the screen.'],
                 text: locals.gotit
             },
-            howToDeleteLine: {
+            howToDeleteDragging: {
                 title: 'How to use this action',
                 message: 'Remove the item by dragging it outside the left edge of the screen.',
                 text: locals.gotit
@@ -1106,18 +1106,22 @@ $(function () {
 
 
         $.extend(GLOBAL_CONFIG.labels, {
+            account: {
+                active: 'Active',
+                suspended: 'Suspended'
+            },
             order: {
-                checkout: 'Checkout',
-                completed: 'Completed',
-                cart: 'Cart',
-                canceled: 'Canceled',
-                sudo: 'Administered',
-                review: 'Review',
-                reported: 'Reported',
-                positive: 'Positive',
-                negative: 'Negative',
-                neutral: 'Neutral',
-                revision: 'Review'
+                checkout: 'checkout',
+                completed: 'completed',
+                cart: 'cart',
+                canceled: 'canceled',
+                sudo: 'administered',
+                review: 'review',
+                reported: 'reported',
+                positive: 'positive',
+                negative: 'negative',
+                neutral: 'neutral',
+                revision: 'review'
             }
         });
 
@@ -1134,17 +1138,14 @@ $(function () {
                 business: 'Email address on which you want to receive your PayPal payments. This value will be the same as "Receiver Email" in case that you have only one email address associated with your PayPal account.'
             },
             '109': {
-                carriers: 'Carriers, if any, to which this rule applies.',
-                product_categories: 'Product categories to which this rule applies.',
-                product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.',
+                product_codes: 'Specific product codes this rule applies to. Specify one product code per line.',
                 address_type: 'Buyer address type this rule applies to.'
             },
             '124': {
-                product_categories: 'Product categories to which this rule applies.',
                 product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.'
             },
             '117': {
-                currency: 'Currency you accept, and your product prices are expressed in.'
+                currency: 'Currency you accept, and your product unit prices are expressed in.'
             },
             '111-update': {
                 condition_type: 'Condition under which this price applies.',
@@ -1194,7 +1195,8 @@ $(function () {
                 rules: 'Prices'
             },
             '124': {
-                discount_value: 'Discount (%)'
+                discount_value: 'Discount (%)',
+                product_categories: 'Product categories'
             },
             '31-update': {
                 discontinue_date: 'Expiration Date'
@@ -1211,7 +1213,7 @@ $(function () {
                 logo: 'Seller Logo'
             },
             '18-update': {
-                notify: 'E-mail me when a catalog is published or discontinued by the seller that I\'m following.'
+                notify: 'Receive email notifications when a catalog is published or discontinued by the seller that you are following'
             }
         });
 
@@ -1233,7 +1235,7 @@ $(function () {
             '109': {
                 address_type: locals.addressTypeSpec,
                 type: {
-                    percent: 'Proportional (%)',
+                    proportional: 'Proportional (%)',
                     fixed: 'Fixed (Amount)'
                 }
             },
@@ -1270,6 +1272,27 @@ $(function () {
             '31-update': {
                 _images: 'catalog/help/images.html'
             },
+            '109': {
+                carriers: 'seller/help/carriers.html',
+                product_categories: 'seller/help/product_categories.html',
+                locations: 'seller/help/locations.html'
+            },
+            '124': {
+                product_categories: 'seller/help/product_categories_line.html'
+            },
+            '113': {
+                lines: 'seller/help/carrier_lines.html',
+            },
+            '112': {
+                locations: 'seller/help/locations_line.html',
+                prices: 'seller/help/prices.html',
+            },
+            '126': {
+                lines: 'seller/help/discount_lines.html'
+            },
+            '107': {
+                locations: 'seller/help/locations.html'
+            },
             '28': {
                 images: 'catalog/product/help/images.html',
                 contents: 'catalog/product/help/contents.html',
@@ -1291,8 +1314,8 @@ $(function () {
 
         $.extend(GLOBAL_CONFIG.fields.radioLabel, {
             pluginLocation: {
-                trueLabel: 'Applies to all locations except to those listed in the Locations section.',
-                falseLabel: 'Applies only to the locations listed in the Locations section.'
+                falseLabel: 'Applies to all locations except to those listed in the Locations section.',
+                trueLabel: 'Applies only to the locations listed in the Locations section.'
             }
         });
 
@@ -1361,8 +1384,9 @@ $(function () {
             addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
             addLocations: 'Add Locations',
-            editLines: 'Edit Lines',
+            editLines: 'Edit Line',
             addPrice: 'Add Price',
+            addPrices: 'Add Price',
             editPrice: 'Edit Price',
             viewInstances: 'Variant Configurations',
             editInstances: 'Edit Variant Configuration',
@@ -1372,7 +1396,11 @@ $(function () {
             account: 'Account',
             admin: 'Admin',
             users: 'Users',
-            aboutRules: 'About Rules'
+            aboutRules: 'About Rules',
+            addDocuments: 'Add Content',
+            editDocuments: 'Edit Content',
+            editContent: false,
+            sellerProfile: 'Seller Profile'
         });
 
     }));
@@ -1443,8 +1471,8 @@ $(function () {
             transclude: true,
             require: '?ngModel',
             template: '<div class="md-container list-primary-tile">' +
-                '<div class="avatar-small"><div><icon class="button-square" type="toggle.check-box"></icon>' +
-                '<icon class="button-square" type="toggle.check-box-outline-blank"></icon></div>' +
+                '<div class="avatar-small"><div><icon class="button-square" type="check_box"></icon>' +
+                '<icon class="button-square" type="check_box_outline_blank"></icon></div>' +
                 '</div></div>' +
                 '<div ng-transclude class="md-label"></div>',
             compile: compile
@@ -4638,8 +4666,8 @@ $(function () {
             require: '^mdRadioGroup',
             transclude: true,
             template: '<div class="md-container list-primary-tile">' +
-                '<div class="avatar-small"><div><icon class="button-square" type="toggle.radio-button-on"></icon>' +
-                '<icon class="button-square" type="toggle.radio-button-off"></icon></div>' +
+                '<div class="avatar-small"><div><icon class="button-square" type="radio_button_checked"></icon>' +
+                '<icon class="button-square" type="radio_button_unchecked"></icon></div>' +
                 '</div></div>' +
                 '<div ng-transclude class="md-label"></div>',
             link: link
@@ -4716,7 +4744,52 @@ $(function () {
         ])
         .factory('$mdSidenav', SidenavService)
         .directive('mdSidenav', SidenavDirective)
-        .controller('$mdSidenavController', SidenavController);
+        .controller('$mdSidenavController', SidenavController)
+        .run(ng(function (helpers, $mdSidenav, $timeout) {
+            if (!helpers.sideNav) {
+                helpers.sideNav = {};
+            }
+            helpers.sideNav.setup = function (menu, id, notRipplable) {
+                if (!notRipplable) {
+                    notRipplable = [];
+                }
+                id = id + _.uniqueId();
+                menu.id = id;
+                menu.notRipplable = notRipplable;
+                menu.toggling = false;
+                menu.close = function () {
+                    return menu.toggle(undefined, 'close');
+                };
+                menu.open = function () {
+                    return menu.toggle(undefined, 'open');
+                };
+                menu.toggle = function ($event, dowhat) {
+                    if (menu.toggling) {
+                        return;
+                    }
+                    var it = $mdSidenav(menu.id),
+                        check = false,
+                        target;
+                    if ($event && $event.target) {
+                        target = $($event.target);
+                        angular.forEach(menu.notRipplable, function (skip) {
+                            if (target.is(skip) || target.parent().is(skip)) {
+                                check = true;
+                            }
+                        });
+                        if (check) {
+                            return;
+                        }
+                    }
+                    menu.toggling = true;
+                    $timeout(function () {
+                        it[dowhat || (it.isOpen() ? 'close' : 'open')]().then(function () {
+                            menu.toggling = false;
+                        });
+                    });
+                };
+            };
+        }));
 
     function SidenavService($mdComponentRegistry, $q) {
         return function (handle) {
@@ -4986,9 +5059,7 @@ $(function () {
     }
     SidenavController.$inject = ["$scope", "$element", "$attrs", "$mdComponentRegistry", "$q", "$parse"];
 
-
-
-})();
+}());
 (function () {
     'use strict';
 
@@ -5775,10 +5846,18 @@ $(function () {
                                     if (newLeft > maxLeft) {
                                         newLeft = maxLeft;
                                     }
-                                    dialogEl.css({
-                                        top: newTop,
-                                        left: newLeft
-                                    });
+                                    if (!attrs.fixedPosition) {
+                                        dialogEl.css({
+                                            top: newTop,
+                                            left: newLeft
+                                        });
+                                    } else if (attrs.fixedPosition === 'toolbar') {
+                                        dialogEl.css({
+                                            top: '8px',
+                                            left: 'auto',
+                                            right: '8px'
+                                        });
+                                    }
                                     if (dialogEl.height() > height) {
                                         dialogEl.height(height);
                                     }
@@ -8861,270 +8940,6 @@ $(function () {
 (function () {
     'use strict';
     angular.module('app')
-        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
-            if (!helpers.fields) {
-                helpers.fields = {};
-            }
-            if (!helpers.form) {
-                helpers.form = {};
-            }
-            $.extend(helpers.fields, {
-                sorter: function (prev, next) {
-                    var p1 = parseInt(prev.name, 10),
-                        p2 = parseInt(next.name, 10);
-                    if (isNaN(p1)) {
-                        p1 = 999999;
-                    }
-                    if (isNaN(p2)) {
-                        p2 = 999999;
-                    }
-                    return p1 - p2;
-                },
-                applyGlobalConfig: function (config) {
-                    if (angular.isUndefined(config.ui.help) && angular.isDefined(GLOBAL_CONFIG.fields.help[config._maker_])) {
-                        config.ui.help = GLOBAL_CONFIG.fields.help[config._maker_][config.code_name];
-                    }
-
-                    if (angular.isUndefined(config.ui.emptyHelp) && angular.isDefined(GLOBAL_CONFIG.fields.emptyHelp[config._maker_])) {
-                        config.ui.emptyHelp = GLOBAL_CONFIG.fields.emptyHelp[config._maker_][config.code_name];
-                    }
-
-                    if (angular.isUndefined(config.ui.label) && angular.isDefined(GLOBAL_CONFIG.fields.label[config._maker_])) {
-                        config.ui.label = GLOBAL_CONFIG.fields.label[config._maker_][config.code_name];
-                    }
-                },
-                utils: {
-                    attrs: function (config) {
-                        var defaults = this.defaultAttrs(config),
-                            extra = this.extraAttrs(config),
-                            attrs = [];
-
-                        angular.extend(defaults, extra);
-
-                        angular.forEach(defaults, function (value, key) {
-                            attrs.push(key + (value ? '="' + value + '"' : ''));
-                        });
-
-                        return attrs.join(' ');
-                    },
-                    defaultAttrs: function (config) {
-                        var attrs = {},
-                            writableCompiled;
-                        if (config.max_size) {
-                            attrs['ng-maxlength'] = 'config.max_size';
-                        }
-
-                        if (config.ui.pattern !== undefined) {
-                            attrs['ng-pattern'] = config.pattern;
-                        }
-
-                        if (angular.isString(config.required)) {
-                            attrs['ng-required'] = config.required;
-                        } else {
-                            attrs['ng-required'] = 'config.required';
-                        }
-                        attrs['ng-model'] = config.ui.args;
-                        attrs.placeholder = config.ui.placeholder;
-
-                        if (!angular.isArray(config.ui.writable)) {
-                            attrs['ng-disabled'] = '!' + config.ui.writable;
-                            config.ui.writableCompiled = config.ui.writable;
-                        } else {
-                            writableCompiled = config.ui.model + '.ui.rule.field' + $.map(config.ui.writable,
-                                function (item) {
-                                    return "['" + helpers.addslashes(item) + "']";
-                                }).join('') + '.writable';
-
-                            attrs['ng-disabled'] = '!' + writableCompiled;
-
-                            config.ui.writableCompiled = writableCompiled;
-                        }
-
-                        if (attrs.readonly) {
-                            delete attrs['ng-disabled'];
-                        }
-
-                        return attrs;
-                    },
-                    extraAttrs: function (config) {
-                        return config.ui.attrs;
-                    },
-                    label: function (config) {
-                        var use = '{{config.ui.label}}';
-                        if (config.ui.label === undefined) {
-                            use = '{{config.ui.autoLabel|inflector:humanize}}';
-                        }
-                        return use;
-                    }
-                }
-            });
-            $.extend(helpers.form, {
-                wakeUp: function (form, dirty) {
-                    var happend = false;
-                    angular.forEach(form, function (formElement) {
-                        if (angular.isObject(formElement) && formElement.hasOwnProperty('$valid') && !formElement.$valid && angular.isFunction(formElement.$setViewValue)) {
-                            formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
-                            formElement.$setDirty();
-                            formElement.$setTouched();
-                            if (dirty) {
-                                form.$setDirty();
-                            }
-
-                            happend = true;
-                        }
-                    });
-
-                    return happend;
-                },
-                setDirty: function () {
-                    if (this.container && this.container.form) {
-                        this.container.form.$setDirty();
-                    }
-                },
-                setPristine: function () {
-                    if (this.container && this.container.form) {
-                        this.container.form.$setPristine();
-                    }
-                },
-                validate: function () {
-                    var form = this.container.form;
-                    if (!form.$valid) {
-                        helpers.form.wakeUp(form);
-                        this.$broadcast('invalidForm');
-                        return false;
-                    }
-                    return true;
-                },
-                leave: function (cb) {
-                    var form = this.container.form;
-                    if (form.$pristine) {
-                        cb();
-                    } else {
-                        modals.confirm('discard', cb);
-                    }
-                }
-            });
-
-            $.extend(modals, {
-                fields: {
-                    remote: function (scope, field, config) {
-                        $modal.open({
-                            scope: scope,
-                            templateUrl: 'core/models/manage.html',
-                            controller: ng(function ($scope) {
-                                var save = scope.save,
-                                    complete = scope.complete,
-                                    getTitle,
-                                    initial = true;
-                                getTitle = function () {
-                                    return 'view' + helpers.toolbar.makeTitle(field.code_name);
-                                };
-                                field._title_.push(getTitle);
-                                $scope.dialog = {
-                                    templateBodyUrl: 'core/models/manage_body_default.html',
-                                    toolbar: {}
-                                };
-                                $scope.parentContainer = $scope.container;
-                                $scope.container = {};
-                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                    $scope.formSetPristine();
-                                    $scope.$close();
-                                });
-                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
-                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-                                $scope.formBuilder = {
-                                    '0': [field]
-                                };
-                                $scope.layouts = {
-                                    groups: [{
-                                        label: false
-                                    }]
-                                };
-
-                                $scope.$on('itemDelete', function () {
-                                    $scope.formSetDirty();
-                                });
-                                $scope.$watch('parentContainer.form.$dirty', function (neww, old) {
-                                    if (initial) {
-                                        initial = false;
-                                        return;
-                                    }
-                                    if (neww) {
-                                        $scope.formSetDirty();
-                                    } else {
-                                        $scope.formSetPristine();
-                                    }
-                                });
-
-                                $scope.$watch('entity.id', function () {
-                                    $scope.dialog.toolbar.title = helpers.toolbar.buildTitle(field._title_);
-                                });
-
-                                $scope.save = function (dontShowMessage) {
-                                    var maybePromise = save.call(scope, dontShowMessage);
-                                    if (maybePromise) {
-                                        maybePromise.then($scope.formSetPristine);
-                                    }
-                                    return maybePromise;
-                                };
-
-                                $scope.complete = function (response) {
-                                    complete.call(scope, response);
-                                    $scope.formSetPristine();
-                                };
-
-                                $scope.$on('$destroy', function () {
-                                    if (angular.isArray(field.ui.specifics.parentArgs)) {
-                                        field.ui.specifics.parentArgs.empty();
-                                    }
-                                    field._title_.remove(getTitle);
-                                });
-                            })
-                        });
-                    }
-                }
-            });
-        }))
-        .directive('validFile', function () {
-            return {
-                require: 'ngModel',
-                link: function (scope, el, attrs, ngModel) {
-                    el.bind('change', function () {
-                        scope.$apply(function () {
-                            ngModel.$setViewValue(el.val());
-                            ngModel.$render();
-                        });
-                    });
-                }
-            };
-        })
-        .directive('jsonOnly', function () {
-            return {
-                require: 'ngModel',
-                link: function (scope, element, attrs, ctrl) {
-                    var worker = function (value, what) {
-                            var test = false;
-                            try {
-                                value = angular[what](value);
-                                test = true;
-                            } catch (ignore) {}
-
-                            ctrl.$setValidity('jsonOnly', test);
-
-                            return value;
-                        },
-                        parser = function (value) {
-                            return worker(value, 'fromJson');
-                        },
-                        formatter = function (value) {
-                            return worker(value, 'toJson');
-                        };
-
-                    ctrl.$parsers.push(parser);
-                    ctrl.$formatters.push(formatter);
-                }
-            };
-        })
         .directive('repeatedText', ng(function (helpers) {
             return {
                 require: 'ngModel',
@@ -9163,367 +8978,7 @@ $(function () {
                     ctrl.$formatters.push(formatter);
                 }
             };
-        }))
-        .directive('generateUploadUrl', ng(function (endpoint, $rootScope) {
-            return {
-                restrict: 'A',
-                require: '^form',
-                link: function (scope, element, attrs, ctrl) {
-
-                    var that = element,
-                        form = that.parents('form:first'),
-                        change = function () {
-
-                            if (!that.val()) {
-                                return false;
-                            }
-
-                            endpoint.post('blob_upload_url', '11', {
-                                upload_url: endpoint.url
-                            }).then(function (response) {
-                                form.attr('action', response.data.upload_url);
-                                ctrl.$setDirty();
-                            });
-                        },
-                        reset = function ($event, content) {
-                            form.attr('action', endpoint.url);
-                            that.val('');
-                        };
-
-                    if (!form.length) {
-                        console.error('Directive generateUploadUrl demands explicit <form> tag');
-                        return false;
-                    }
-
-                    $(element).on('change', change);
-
-                    scope.$on('$destroy', function () {
-                        $(element).off('change', change);
-                    });
-
-                    scope.$on('ngUploadComplete', reset);
-                    scope.$on('ngUploadCompleteError', change);
-                }
-            };
-        })).directive('formBuilder', ng(function ($compile, underscoreTemplate, modelsMeta) {
-            return {
-                restrict: 'A',
-                require: '^form',
-                templateUrl: 'core/fields/builder.html',
-                scope: true,
-                transclude: true,
-                controller: ng(function ($scope, $element, $attrs) {
-                    $scope.configurations = $scope.$eval($attrs.formBuilder);
-                })
-            };
-        }))
-        .directive('formInput', ng(function ($compile, underscoreTemplate,
-            formInputTypes, helpers, GLOBAL_CONFIG) {
-
-            var types = formInputTypes,
-                utils = helpers.fields.utils;
-
-            return {
-                restrict: 'A',
-                require: '^form',
-                scope: true,
-                transclude: true,
-                link: function (scope, element, attrs, ctrl) {
-
-                    var run = function () {
-                        var supplied_config = scope.$eval(attrs.formInput),
-                            name,
-                            label = null,
-                            config,
-                            tpl,
-                            template,
-                            info,
-                            constructor;
-
-                        if (!angular.isObject(supplied_config)) {
-                            console.warn('Config provided is not object for element: ', element);
-                            return;
-                        }
-
-                        name = supplied_config.code_name;
-
-                        // use backend defined label if was provided, otherwise the label will be humanized
-                        if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined) {
-                            label = supplied_config.verbose_name;
-                        } else {
-                            label = name;
-                        }
-
-                        if (!name) {
-                            console.error('Your field config', supplied_config, 'has no name defined defined. element: ', element);
-                            return;
-                        }
-
-                        config = {
-                            ui: { // root config for entire config, upper structure is ndb property definition
-                                args: 'args.' + name,
-                                parentArgs: 'args',
-                                rootScope: 'rootScope', // pointer to rootScope that should be considered
-                                model: 'entity',
-                                autoLabel: label,
-                                directiveScope: function () {
-                                    return scope;
-                                },
-                                specifics: {}, // used for property specific configurations
-                                systemName: name,
-                                name: name,
-                                form: {
-                                    root: ctrl,
-                                    field: function () {
-                                        return this.root[config.ui.name];
-                                    },
-                                    hasErrors: function () {
-                                        if (!this.field()) {
-                                            return false;
-                                        }
-                                        return Object.keys(this.field().$error).length;
-                                    },
-                                    messages: function () {
-                                        if (!this.field()) {
-                                            return false;
-                                        }
-                                        return ((this.field().$dirty && this.hasErrors()) ? this.field().$error : false) || config.ui;
-                                    },
-                                    shouldShowMessages: function () {
-                                        if (config.ui.hideMessages) {
-                                            return false;
-                                        }
-                                        return true;
-                                        return this.field().$dirty || config.ui.help;
-                                    }
-                                },
-                                writable: [name],
-                                path: undefined,
-                                realPath: undefined,
-                                attrs: {}
-                            }
-                        };
-                        helpers.mergeDeep(supplied_config, config);
-                        config = supplied_config;
-
-                        if (angular.isFunction(config.ui.init)) {
-                            constructor = config.ui.init;
-                            config.ui.init = undefined;
-                        }
-
-                        if (!config.ui.init) {
-                            config.ui.init = {
-                                callbacks: [],
-                                add: function (name, callback) {
-                                    var theObj = null;
-                                    angular.forEach(this.callbacks, function (obj, i) {
-                                        if (angular.isDefined(obj[name])) {
-                                            theObj = obj;
-                                        }
-                                    });
-                                    if (theObj !== null) {
-                                        theObj[name] = callback;
-                                    } else {
-                                        theObj = {};
-                                        theObj[name] = callback;
-                                        this.callbacks.push(theObj);
-                                    }
-                                }
-                            };
-                        }
-
-                        if (constructor) {
-                            config.ui.init.add('init', constructor);
-                        }
-
-                        if (!angular.isDefined(config.ui.path)) {
-                            config.ui.path = [name];
-                        }
-
-                        if (angular.isArray(config.ui.writable)) {
-                            config.ui.writable = angular.copy(config.ui.path);
-                        }
-
-                        if (!angular.isDefined(config.ui.realPath)) {
-                            config.ui.realPath = [name];
-                        }
-
-                        helpers.fields.applyGlobalConfig(config);
-
-                        if (types[config.type] !== undefined) {
-                            // reference main locals to type builder
-                            info = {
-                                config: config,
-                                element: element,
-                                scope: scope,
-                                attrs: attrs
-                            };
-                            tpl = types[config.type](info);
-
-                            // compiled variables for the template
-                            config.ui.compiled = {
-                                attrs: utils.attrs(config),
-                                label: utils.label(config)
-                            };
-                            angular.forEach(config.ui.init.callbacks, function (obj) {
-                                angular.forEach(obj, function (callback) {
-                                    callback(info);
-                                });
-                            });
-
-                            if (config.ui.render === false) {
-                                return;
-                            }
-
-                            template = underscoreTemplate.get(angular.isDefined(config.ui.template) ? config.ui.template : 'core/fields/' + tpl + '.html')({
-                                config: config
-                            });
-
-                            scope.config = config;
-                            element.html(template);
-                            $compile(element.contents())(scope);
-
-                        } else {
-                            /* console.warn('Field type: ' + config.type +
-                                ' is not supported.'); */
-                        }
-
-                        scope.$on('$destroy', function () {
-                            config.ui.directiveScope = undefined;
-                            config.ui.form = undefined;
-                        });
-
-                    };
-
-                    run();
-
-                }
-
-            };
-        })).directive('compatibilityMaker', ng(function (modelsUtil) {
-            return {
-                restrict: 'A',
-                link: function (scope, element, attrs, ctrl) {
-                    var fn = function () {
-                        var newval = scope.$eval(attrs.compatibilityMaker),
-                            stringified = modelsUtil.argumentsToJson(newval);
-                        element.val(stringified);
-                    };
-                    scope.$watch(attrs.compatibilityMaker, fn);
-                    scope.$on('ngUploadSubmit', fn);
-
-                }
-            };
-        })).directive('submitIfFiles', ng(function ($parse, helpers) {
-            return {
-                require: '^form',
-                link: function (scope, element, attrs, ctrl) {
-                    var form = element.parents('form:first'),
-                        files,
-                        submit = $parse(attrs.submitIfFiles),
-                        complete = $parse(attrs.submitIfFilesNoComplete),
-                        check = $parse(attrs.submitIf),
-                        nativeSubmit = $parse(attrs.submitNative),
-                        execute,
-                        click = function () {
-                            var promise,
-                                isNative,
-                                thingsHappened = helpers.form.wakeUp(ctrl, true);
-                            if (thingsHappened) {
-                                if (!scope.$$phase) {
-                                    scope.$apply();
-                                }
-                            }
-                            if (check && !check(scope)) {
-                                return false;
-                            }
-                            isNative = nativeSubmit(scope);
-                            files = form.find('input[type="file"]');
-                            execute = false;
-                            if (files.length) {
-                                files.each(function () {
-                                    if ($(this).val()) {
-                                        execute = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            if (isNative) {
-                                if (execute) {
-                                    form.trigger('submit');
-                                    return false;
-                                }
-                            }
-                            promise = submit(scope, {dontShowMessage: execute});
-                            if (promise && angular.isObject(promise) && promise.then) {
-                                promise.then(function () {
-                                    if (execute) {
-                                        form.trigger('submit');
-                                        return false;
-                                    }
-                                    complete(scope);
-                                });
-                            }
-
-                            scope.$apply();
-                        };
-
-                    element.on('click', click);
-                    scope.$on('$destroy', function () {
-                        element.off('click', click);
-                    });
-
-                }
-            };
-        })).directive('submitIfValid', ng(function ($parse) {
-            return {
-                require: '^form',
-                link: function (scope, element, attrs, ctrl) {
-                    var form = element.parents('form:first'),
-                        check = $parse(attrs.submitIfValid),
-                        click = function (e) {
-                            if (check(scope)) {
-                                form.submit();
-                            }
-                            return e.preventDefault();
-                        };
-
-                    element.on('click', click);
-                    scope.$on('$destroy', function () {
-                        element.off('click', click);
-                    });
-
-                }
-            };
-        })).directive('showNumberOfSelectedFiles', function () {
-            return {
-                restrict: 'A',
-                link: function (scope, element, attrs) {
-                    var root = element.parents('.fake-button:first'),
-                        target = root.find(attrs.showNumberOfSelectedFiles),
-                        totalText = target.text(),
-                        change = function () {
-                            setTimeout(function () {
-                                var files = element.prop('files');
-                                if (files && files.length) {
-                                    target.css('display', 'inline');
-                                    target.text(totalText.replace(':total', files.length));
-                                } else {
-                                    target.hide();
-                                }
-                            }, 200);
-
-                        };
-                    element.bind('change', change);
-                    change();
-                    scope.$on('ngUploadComplete', change);
-                    scope.$on('ngUploadCompleteError', change);
-                    scope.$on('$destroy', function () {
-                        element.unbind('change', change);
-                    });
-                }
-            };
-        }).directive('checkNumeric', function () {
+        })).directive('checkNumeric', function () {
             return {
                 require: ['ngModel', '^form'],
                 link: function (scope, element, attrs, ctrls) {
@@ -9557,1167 +9012,11 @@ $(function () {
                     });
                 }
             };
-        }).factory('formInputTypes', ng(function (underscoreTemplate, $timeout, $parse,
-            endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
-            errorHandling, modals, GLOBAL_CONFIG, snackbar) {
-
-            var inflector = $filter('inflector'),
-                formInputTypes = {
-                    _SelectBox: function (info) {
-
-                        if (!angular.isDefined(info.config.ui.specifics.searchEnabled)) {
-                            if (info.config.choices.length < 10) {
-                                info.config.ui.specifics.searchEnabled = false;
-                            } else {
-                                info.config.ui.specifics.searchEnabled = true;
-                            }
-                        }
-
-                        if (info.config.choices.length && (info.config.ui.specifics && info.config.ui.specifics.translatedChoices !== false)) {
-                            info.config.ui.specifics.translatedChoices = [];
-                            angular.forEach(info.config.choices, function (value) {
-                                // @todo this might cause problems when config.choices = some other list is applied trough the lifecycle
-                                // the choices will not be re-parsed to translatedChoices
-                                // this code will only run upon directive initilization
-                                var hasit = helpers.getProperty(GLOBAL_CONFIG.fields.translateChoices, [info.config._maker_, info.config.code_name, value]);
-                                if (angular.isUndefined(hasit)) {
-                                    hasit = value;
-                                }
-                                info.config.ui.specifics.translatedChoices.push({
-                                    key: value,
-                                    name: hasit
-                                });
-                            });
-                        }
-
-                        return 'select';
-                    },
-                    SuperStringProperty: function (info) {
-                        var config = info.config;
-
-
-                        if (config.ui.attrs.type === undefined) {
-                            config.ui.attrs.type = 'text';
-                        }
-
-                        if (config.choices) {
-                            if (info.config.ui.attrs['repeated-text'] !== undefined) {
-                                delete info.config.ui.attrs['repeated-text'];
-                            }
-                            return this._SelectBox(info);
-                        }
-
-                        if (info.config.repeated) {
-                            info.config.ui.attrs['repeated-text'] = '';
-                            return this.SuperTextProperty(info);
-                        }
-
-                        return 'string';
-                    },
-                    SuperFloatProperty: function (info) {
-                        var config = info.config;
-
-                        if (config.choices) {
-                            return this._SelectBox(info);
-                        }
-                        config.ui.attrs['check-numeric'] = '';
-                        return this.SuperStringProperty(info);
-                    },
-                    SuperIntegerProperty: function (info) {
-                        var config = info.config;
-
-                        if (config.choices) {
-                            return this._SelectBox(info);
-                        }
-
-                        config.ui.attrs['check-numeric'] = '';
-
-                        return this.SuperFloatProperty(info);
-                    },
-                    SuperDecimalProperty: function (info) {
-                        var config = info.config;
-                        if (config.choices) {
-                            return this._SelectBox(info);
-                        }
-                        config.ui.attrs['check-numeric'] = '';
-                        return this.SuperFloatProperty(info);
-                    },
-                    SuperBooleanProperty: function (info) {
-                        info.config.required = false;
-                        if (!info.config.ui.specifics || angular.isUndefined(info.config.ui.specifics.type)) {
-                            info.config.ui.specifics.type = 'checkbox';
-                        }
-                        return 'boolean';
-                    },
-                    SuperVirtualKeyProperty: function (info) {
-                        return this.SuperKeyProperty(info);
-                    },
-                    SuperKeyProperty: function (info) {
-                        if (info.config.searchable === false) {
-                            return this.SuperStringProperty(info);
-                        }
-                        var config = info.config,
-                            defaults = {
-                                cache: {
-                                    query: {
-                                        '24': true,
-                                        '12': true,
-                                        '13': true,
-                                        '17': true
-                                    },
-                                    type: {
-                                        '12': 'local',
-                                        '17': 'local',
-                                        'default': 'memory'
-                                    }
-                                },
-                                finder: {
-                                    '24': true
-                                },
-                                view: {
-                                    'default': function (result) {
-                                        if (!result) {
-                                            return '';
-                                        }
-                                        return result.name;
-                                    }
-                                },
-                                init: {
-                                    '13': function (info) {
-                                        info.scope.$watch(info.config.ui.parentArgs +
-                                            '.country',
-                                            function (neww, old) {
-                                                if (neww !== old) {
-                                                    var args = info.scope.$eval(info.config.ui.parentArgs);
-                                                    args.region = null;
-                                                    config.ui.specifics.initial(); // refresh results
-                                                }
-                                            });
-                                    }
-                                },
-                                queryFilter: {
-                                    '24': function (term, searchArguments) {
-                                        var searchDefaults = angular.copy(searchArguments.search['default']),
-                                            args = {
-                                                search: searchDefaults
-                                            };
-                                        if (term) {
-                                            args.search.filters.push({
-                                                field: 'name',
-                                                operator: '==',
-                                                value: term
-                                            });
-                                        }
-                                        return args;
-                                    },
-                                    '17': function (term, searchArguments) {
-                                        var searchDefaults = {
-                                                search: {
-                                                    filters: [{
-                                                        value: true,
-                                                        field: 'active',
-                                                        operator: '=='
-                                                    }],
-                                                    orders: [{
-                                                        field: 'name',
-                                                        operator: 'asc'
-                                                    }],
-                                                }
-                                            },
-                                            argument = searchDefaults.search;
-
-                                        if (config.code_name === 'weight_uom') {
-                                            argument.filters.push({
-                                                value: 'Weight',
-                                                field: 'measurement',
-                                                operator: '=='
-                                            });
-                                        }
-
-                                        if (config.code_name === 'volume_uom') {
-                                            argument.filters.push({
-                                                value: 'Volume',
-                                                field: 'measurement',
-                                                operator: '=='
-                                            });
-                                        }
-
-                                        if (config.code_name === 'product_uom') {
-                                            argument.filters.unshift({
-                                                value: 'Currency',
-                                                field: 'measurement',
-                                                operator: '!='
-                                            });
-
-                                            argument.orders = [{
-                                                field: 'measurement',
-                                                operator: 'asc'
-                                            }, {
-                                                field: 'key',
-                                                operator: 'asc'
-                                            }];
-                                        }
-
-                                        return searchDefaults;
-
-                                    },
-                                    '13': function (term, searchArguments) {
-                                        var args = info.scope.$eval(info.config.ui.parentArgs);
-                                        if ((args && args.country)) {
-                                            return {
-                                                search: {
-                                                    ancestor: args.country,
-                                                    filters: [{
-                                                        value: true,
-                                                        field: 'active',
-                                                        operator: '=='
-                                                    }],
-                                                    orders: [{
-                                                        field: 'name',
-                                                        operator: 'asc'
-                                                    }],
-                                                }
-                                            };
-                                        }
-                                        return false;
-                                    }
-                                }
-                            },
-                            init,
-                            model = models[config.kind],
-                            search = {},
-                            args,
-                            opts = {},
-                            override = config.ui.specifics.override || {},
-                            repackMemory = function () {
-                                config.ui.specifics._mapEntities = {};
-                                angular.forEach(config.ui.specifics.entities, function (val) {
-                                    config.ui.specifics._mapEntities[val.key] = 1;
-                                });
-                            },
-                            actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
-                            response = function (response) {
-                                config.ui.specifics.entities = response.data.entities;
-                                repackMemory();
-                                return config.ui.specifics.entities;
-                            },
-                            findArgs,
-                            finder,
-                            initialDefer = $q.defer(),
-                            initialPromise = initialDefer.promise;
-
-                        config.ui.specifics.view = function (result) {
-                            var fn = defaults.view[config.kind];
-                            if (!fn) {
-                                fn = defaults.view['default'];
-                            }
-                            if (override.view) {
-                                fn = override.view;
-                            }
-                            return fn(result);
-                        };
-                        init = defaults.init[config.kind];
-                        if (override.init) {
-                            init = override.init;
-                        }
-                        if (angular.isDefined(init)) {
-                            init(info);
-                        }
-                        $.extend(search, config.ui.specifics.search);
-                        config.ui.specifics.search = search;
-
-                        if (angular.isFunction(config.ui.specifics.entities)) {
-                            config.ui.specifics.getEntities = config.ui.specifics.entities;
-                            config.ui.specifics.entities = config.ui.specifics.entities();
-                        }
-
-                        if (angular.isUndefined(config.ui.specifics.entities)) {
-                            config.ui.specifics.entities = [];
-                        }
-
-                        repackMemory();
-
-                        finder = defaults.finder[config.kind];
-                        if (override.finder) {
-                            finder = override.finder;
-                        }
-
-                        config.ui.specifics.search.ready = initialPromise;
-
-                        if (model && !config.ui.specifics.getEntities) {
-                            if (model.actions.search) {
-                                opts.cache = defaults.cache.query[config.kind];
-                                opts.cacheType = defaults.cache.type[config.kind] || defaults.cache.type['default'];
-                                if (override.cache && angular.isDefined(override.cache.query)) {
-                                    opts.cache = override.cache.query;
-                                }
-                                if (override.cache && angular.isDefined(override.cache.type)) {
-                                    opts.cacheType = override.cache.type;
-                                }
-                                config.ui.specifics.initial = function () {
-                                    args = defaults.queryFilter[config.kind];
-                                    if (override.queryFilter) {
-                                        args = override.queryFilter;
-                                    }
-                                    if (!args) {
-                                        args = actionArguments.search['default'];
-                                    } else {
-                                        findArgs = args;
-                                        args = findArgs(null, actionArguments);
-                                        if (finder) {
-                                            config.ui.specifics.search.find = function (term) {
-                                                return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
-                                                    var entities = response.data.entities;
-                                                    angular.forEach(entities, function (ent) {
-                                                        if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
-                                                            config.ui.specifics._mapEntities[ent.key] = 1;
-                                                            config.ui.specifics.entities.push(ent);
-                                                        }
-                                                    });
-                                                });
-                                            };
-                                        }
-                                        config.ui.specifics.search.missing = function (id) {
-                                            if (id === null || id === undefined || !id.length) {
-                                                return;
-                                            }
-                                            var selectedIsArray = angular.isArray(id);
-                                            model.actions.search({
-                                                search: {
-                                                    keys: (selectedIsArray ? id : [id])
-                                                }
-                                            }, {
-                                                cache: true
-                                            }).then(function (response) {
-                                                var fetchedEntities = response.data.entities;
-                                                if (!selectedIsArray) {
-                                                    if (angular.isUndefined(config.ui.specifics._mapEntities[id])) {
-                                                        config.ui.specifics._mapEntities[id] = 1;
-                                                        config.ui.specifics.entities.unshift(response.data.entities[0]);
-                                                    }
-                                                } else {
-                                                    angular.forEach(fetchedEntities, function (ent) {
-                                                        if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
-                                                            config.ui.specifics._mapEntities[ent.key] = 1;
-                                                            config.ui.specifics.entities.push(ent);
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        };
-                                    }
-                                    return model.actions.search(args, opts).then(response);
-                                };
-                                config.ui.specifics.initial().then(function () {
-                                    initialDefer.resolve();
-                                });
-                            }
-                        }
-                        return 'select_async';
-                    },
-                    SuperLocalStructuredProperty: function (info) {
-                        var config = info.config,
-                            fields = [],
-                            newFields = [],
-                            modelFields = config.modelclass,
-                            defaultFields = _.toArray(modelFields),
-                            noSpecifics = !angular.isDefined(config.ui.specifics),
-                            newSort = [],
-                            defaults,
-                            defaultSortable,
-                            buildPaths,
-                            rootArgs,
-                            rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
-                            list = {
-                                secondary: true,
-                                perLine: 1,
-                                clickable: true
-                            };
-
-                        if (!config.ui.specifics.toolbar) {
-                            config.ui.specifics.toolbar = {};
-                        }
-
-                        config.ui.specifics.sortMode = true;
-                        defaultFields = defaultFields.sort(helpers.fields.sorter);
-
-                        if (noSpecifics || !config.ui.specifics.fields) {
-                            config.ui.specifics.fields = defaultFields;
-                            if (config.ui.specifics.sortFields) {
-                                angular.forEach(config.ui.specifics.sortFields, function (key) {
-                                    newSort.push(_.findWhere(config.ui.specifics.fields, {
-                                        code_name: key
-                                    }));
-                                });
-
-                                config.ui.specifics.fields = newSort;
-                            }
-                        }
-
-                        if (!noSpecifics && config.ui.specifics.excludeFields) {
-                            angular.forEach(config.ui.specifics.fields, function (field, i) {
-                                if ($.inArray(field.code_name, config.ui.specifics.excludeFields) === -1) {
-                                    newFields.push(field);
-                                }
-                            });
-                            config.ui.specifics.fields = newFields;
-                        }
-
-                        defaults = {
-                            fields: fields,
-                            addNewText: 'Add',
-                            addText: '{{config.ui.specifics.addNewText}}'
-                        };
-
-                        if (config.ui.specifics.listConfig) {
-                            $.extend(list, config.ui.specifics.listConfig);
-                        }
-
-                        config.ui.specifics.listConfig = list;
-
-                        // merge defaults into the
-                        angular.forEach(defaults, function (value, key) {
-                            if (config.ui.specifics[key] === undefined) {
-                                config.ui.specifics[key] = value;
-                            }
-                        });
-
-                        config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
-                        config.ui.specifics.entity = info.scope.$eval(config.ui.model);
-                        config.ui.specifics.rootScope = info.scope.$eval(config.ui.rootScope);
-
-                        if (!config.ui.specifics.sortableOptions) {
-                            config.ui.specifics.sortableOptions = {};
-                        }
-
-                        defaultSortable = {
-                            disabled: false,
-                            start: function (e, ui) {
-                                info.scope.$broadcast('itemOrderStarted');
-                            },
-                            axis: false,
-                            containment: false,
-                            whatSortMeans: function () {
-                                modals.alert('howToSort');
-                            },
-                            handle: '.sort-handle',
-                            tolerance: 'pointer',
-                            helper: 'clone',
-                            sort: function (e, ui) {
-                                var deleteMode,
-                                    division,
-                                    helperWidth = ui.helper.width(),
-                                    itemScope = ui.item.scope(),
-                                    item = itemScope.$eval(ui.item.attr('current-item'));
-                                division = ui.offset.left + helperWidth;
-                                if (division < (helperWidth / 2)) {
-                                    deleteMode = true;
-                                }
-                                if (item) {
-                                    if (deleteMode) {
-                                        ui.helper.addClass('about-to-delete');
-                                        item._state = 'deleted';
-                                        info.scope.formSetDirty();
-                                    } else {
-                                        ui.helper.removeClass('about-to-delete');
-                                        item._state = null;
-                                    }
-                                }
-                                info.scope.$broadcast('itemOrderSorting');
-                            },
-                            stop: function (e, ui) {
-                                var cmp = [],
-                                    cmp2 = [];
-                                angular.forEach(config.ui.specifics.parentArgs,
-                                    function (ent, i) {
-                                        cmp.push(ent._sequence);
-                                        i = ((config.ui.specifics.parentArgs.length - 1) - i);
-                                        cmp2.push(i);
-                                        ent._sequence = i;
-                                        ent.ui.access[ent.ui.access.length - 1] = i;
-                                    });
-                                if (!cmp.equals(cmp2)) {
-                                    info.scope.formSetDirty();
-                                }
-                                info.scope.$broadcast('itemOrderChanged');
-                                info.scope.$apply();
-                            }
-                        };
-                        // add default sorting config
-                        $.extend(defaultSortable, config.ui.specifics.sortableOptions);
-                        config.ui.specifics.sortableOptions = defaultSortable;
-                        // disables sorting if the field is not writable
-                        // writableCompiled is as-is specification
-                        config.ui.init.add('checkDisabledStateForSortable', function () {
-                            var fieldIsWritable = $parse(config.ui.writableCompiled + '');
-                            config.ui.specifics.sortableOptions.disabled = !fieldIsWritable(info.scope);
-                        });
-                        // watches list of arguments args != new
-                        info.scope.$watch(config.ui.args, function (neww, old) {
-                            if (neww !== old) {
-                                config.ui.specifics.parentArgs = neww;
-                            }
-                        });
-
-                        buildPaths = function () {
-                            // builds form fields
-                            // it appends needed paths depending on hierarchy depth
-                            config.ui.specifics.formBuilder = [];
-                            angular.forEach(config.ui.specifics.fields, function (field) {
-                                var copyWritable = angular.copy(config.ui.writable);
-
-                                if (angular.isArray(copyWritable)) {
-                                    copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
-                                }
-
-                                field.ui.path = [];
-                                field.ui.path.extend(config.ui.path);
-                                field.ui.path.push(field.code_name);
-                                field.ui.realPath = [];
-                                field.ui.realPath.extend(config.ui.realPath);
-                                field.ui.realPath.push(field.code_name);
-                                if (!angular.isDefined(field.ui.name)) {
-                                    field.ui.name = config.ui.name + '.' + field.code_name;
-                                }
-                                field.ui.writable = copyWritable;
-                                config.ui.specifics.formBuilder.push(field);
-                            });
-                        };
-
-                        buildPaths();
-
-                        if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
-                            config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
-                        }
-                        if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
-                            config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
-                        }
-
-                        if (config.ui.specifics.remote) {
-                            // construct reference to root arguments
-                            rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
-                            // assign "load more" logic
-                            if (config.repeated && rootArgs.id && info.scope.args.id) {
-
-                                config.ui.specifics.reader = models[rootArgs.action_model].reader({
-                                    kind: rootArgs.action_model,
-                                    key: rootArgs.key,
-                                    args: rootArgs,
-                                    access: config.ui.realPath,
-                                    complete: function (items) {
-                                        config.ui.specifics.parentArgs.extend(items);
-                                    }
-                                });
-                                // apply direct reader settings if any
-                                if (angular.isDefined(config.ui.specifics.readerSettings)) {
-                                    config.ui.specifics.reader.state(config.ui.specifics.readerSettings);
-                                }
-
-                                if ((angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload)) {
-                                    if (angular.isArray(config.ui.specifics.parentArgs)) {
-                                        config.ui.specifics.parentArgs.empty();
-                                    }
-                                    $timeout(function () {
-                                        config.ui.specifics.reader.load();
-                                    }, 100, false);
-                                }
-
-                            }
-                        }
-
-                        if (!config.repeated && config.ui.specifics.modal !== true) {
-
-                            config.ui.specifics.SingularCtrl = ng(function ($scope) {
-                                $scope.args = config.ui.specifics.parentArgs;
-                                info.scope.$watchCollection(config.ui.args, function (neww, old) {
-                                    $.extend($scope.args, neww);
-                                });
-                                config.ui.specifics.getScope = function () {
-                                    return $scope;
-                                };
-                                var getTitle = function () {
-                                    return config.ui.specifics.toolbar.titleEdit;
-                                };
-                                config._title_.push(getTitle);
-                                angular.forEach(config.ui.specifics.fields, function (field) {
-                                    field._title_ = config._title_.concat();
-                                });
-                                $scope.$on('$destroy', function () {
-                                    config._title_.remove(getTitle);
-                                    config.ui.specifics.getScope = undefined;
-                                });
-                            });
-
-                        } else {
-
-                            config.ui.specifics.remove = function (arg) {
-                                arg._state = 'deleted';
-                                info.scope.$emit('itemDelete', arg);
-                                info.scope.$broadcast('itemDelete', arg);
-                                rootFormSetDirty();
-                            };
-
-                            // generic manage dialog that handles editing of remote and local structured properties
-                            config.ui.specifics.manage = function (arg, defaultArgs, $event) {
-
-                                buildPaths(); // force path rebuild
-
-                                $modal.open({
-                                    popFrom: (config.ui.specifics.cards && $event ? helpers.clicks.realEventTarget($event.target) : undefined),
-                                    template: underscoreTemplate.get(config.ui.specifics.templateUrl ? config.ui.specifics.templateUrl : 'core/fields/manage_structured.html')({
-                                        config: config
-                                    }),
-                                    controller: ng(function ($scope, modelsUtil) {
-                                        var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
-                                            formBuilder = {
-                                                '0': []
-                                            },
-                                            groupBysIndx = [],
-                                            groupBysMap = {},
-                                            getTitle,
-                                            getResult = function (response, access) {
-                                                var accessPath = [],
-                                                    value,
-                                                    isNewAndRepeated = ($scope.isNew && config.repeated);
-                                                angular.forEach(access, function (path, i) {
-                                                    var parse = parseInt(path, 10);
-                                                    if (!isNaN(parse)) {
-                                                        path = 0;
-                                                    }
-                                                    accessPath.push(path);
-                                                });
-                                                if (isNewAndRepeated) {
-                                                    accessPath.pop();
-                                                }
-                                                value = helpers.getProperty(response.data.entity, accessPath);
-                                                if (isNewAndRepeated && value.length) {
-                                                    value = _.findWhere(value, {
-                                                        _state: 'created'
-                                                    });
-                                                }
-
-                                                return value;
-                                            };
-
-                                        config.ui.specifics.getScope = function () {
-                                            return $scope;
-                                        };
-
-                                        $scope.isNew = false;
-
-                                        $scope.rootFormSetDirty = rootFormSetDirty;
-                                        $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
-                                        $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-
-                                        $scope.response = null;
-                                        $scope.config = config;
-                                        if (!arg) {
-                                            arg = {
-                                                kind: config.modelclass_kind,
-                                                _sequence: length
-                                            };
-                                            modelsUtil.normalize(arg, config.modelclass,
-                                                config.ui.specifics.entity, config.code_name,
-                                                length);
-                                            if (angular.isDefined(defaultArgs)) {
-                                                $.extend(arg, defaultArgs);
-                                            }
-                                            $scope.isNew = true;
-                                        } else if (!config.ui.specifics.modal && arg.ui) {
-                                            length = _.last(arg.ui.access);
-                                        }
-
-
-                                        if (angular.isDefined(arg.ui)) {
-                                            arg.ui.access = angular.copy(config.ui.realPath);
-                                            if (!config.ui.specifics.modal) {
-                                                arg.ui.access.push(length);
-                                            }
-                                        }
-
-                                        $scope.layouts = {
-                                            groups: [{
-                                                label: false
-                                            }]
-                                        };
-
-                                        $scope.formBuilder = formBuilder;
-                                        $scope.container = {
-                                            action: endpoint.url
-                                        };
-                                        $scope.args = angular.copy(arg);
-                                        $scope.parentArgs = config.ui.specifics.parentArgs;
-                                        $scope.rootScope = config.ui.specifics.rootScope;
-                                        $scope.entity = config.ui.specifics.entity;
-                                        if (config.ui.specifics.remote) {
-                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                                $scope.$close();
-                                                if (config.ui.specifics.afterClose) {
-                                                    config.ui.specifics.afterClose($scope);
-                                                }
-                                            });
-
-                                        } else {
-                                            $.extend(config.ui.specifics.toolbar, {
-                                                leftIcon: 'navigation.arrow-back',
-                                                hideSave: true
-                                            });
-                                            $scope.close = function () {
-                                                var save = $scope.save();
-                                                if (save) {
-                                                    save.then(function () {
-                                                        $scope._close_ = undefined;
-                                                        $scope.$close();
-                                                    });
-                                                } else {
-                                                    modals.confirm('discardWithFieldsRequired', $scope.$close);
-                                                }
-                                            };
-
-                                            $scope._close_ = $scope.close;
-                                        }
-
-                                        $scope.validateForm = angular.bind($scope, helpers.form.validate);
-
-                                        $scope.$on('$destroy', function () {
-                                            config.ui.specifics.getScope = undefined;
-                                        });
-                                        angular.forEach(config.ui.specifics.formBuilder, function (field) {
-                                            helpers.fields.applyGlobalConfig(field);
-                                            if (!field.ui.initialRealPath) {
-                                                field.ui.initialRealPath = angular.copy(field.ui.realPath);
-                                            } else {
-                                                field.ui.realPath = angular.copy(field.ui.initialRealPath);
-                                            }
-                                            field.ui.realPath.pop();
-                                            if (!config.ui.specifics.modal) {
-                                                field.ui.realPath.push(length);
-                                            }
-                                            field.ui.realPath.push(field.code_name);
-                                            if (field.ui.groupBy) {
-                                                field.ui.hideMessages = true;
-                                                if (!groupBysMap[field.ui.groupBy]) {
-                                                    var gr = {
-                                                        ui: {
-                                                            group: {
-                                                                help: field.ui.groupHelp,
-                                                                label: field.ui.groupLabel,
-                                                                name: field.ui.groupBy,
-                                                                fields: [],
-                                                                messages: function () {
-                                                                    var messages = {
-                                                                        help: true
-                                                                    };
-                                                                    angular.forEach(gr.ui.group.fields, function (field) {
-                                                                        if (field.ui.form.hasErrors() && field.ui.form.field().$dirty) {
-                                                                            messages = field.ui.form.messages();
-                                                                        }
-                                                                    });
-                                                                    return messages;
-                                                                },
-                                                                shouldShowMessages: function () {
-                                                                    return true;
-                                                                    var maybe = false;
-                                                                    angular.forEach(gr.ui.group.fields, function (field) {
-                                                                        if (field.ui.form.hasErrors()) {
-                                                                            maybe = true;
-                                                                        }
-                                                                    });
-                                                                    return maybe || gr.ui.group.help;
-                                                                }
-                                                            }
-                                                        }
-                                                    };
-                                                    groupBysMap[field.ui.groupBy] = gr;
-                                                    groupBysIndx.push(field.ui.groupBy);
-
-                                                    formBuilder['0'].push(groupBysMap[field.ui.groupBy]);
-                                                }
-                                                field.ui.label = false;
-                                                groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
-                                                return;
-                                            }
-                                            if (field.is_structured && formInputTypes[field.type]) {
-                                                var group = {
-                                                        label: inflector((field.ui.label || field.code_name), 'humanize')
-                                                    },
-                                                    next;
-                                                if (_.string.contains(field.type, 'Remote')) {
-                                                    group.include = 'core/misc/action.html';
-                                                    group.action = function () {
-                                                        var test = true;
-                                                        if (field.ui.specifics.canOpen) {
-                                                            test = field.ui.specifics.canOpen();
-                                                        }
-                                                        if (test) {
-                                                            modals.fields.remote($scope, field);
-                                                        }
-                                                    };
-                                                }
-                                                $scope.layouts.groups.push(group);
-
-                                                next = $scope.layouts.groups.length - 1;
-
-                                                if (!angular.isDefined(formBuilder[next])) {
-                                                    formBuilder[next] = [];
-                                                    formBuilder[next].push(field);
-                                                }
-                                            } else {
-                                                formBuilder['0'].push(field);
-                                            }
-                                        });
-
-                                        if (config.ui.specifics.remote) {
-
-                                            // reference to args that get sent
-                                            $scope.rootArgs = rootArgs;
-                                            $scope.setAction = function (action) {
-                                                // internal helper to set the action to be executed
-                                                $scope.sendRootArgs.action_id = action;
-                                            };
-                                            // copy of root args used for packing the customized arguments
-                                            $scope.sendRootArgs = {};
-                                            $scope.save = function (dontShowMessage) {
-                                                if (!$scope.validateForm()) { // check if the form is valid
-                                                    return false;
-                                                }
-                                                var promise,
-                                                    prepare = function () {
-                                                        var readArgs = {},
-                                                            readRootArgs = $scope.rootArgs,
-                                                            readRootArgsAsList,
-                                                            parentArgsPath = $scope.args.ui.access,
-                                                            fieldList,
-                                                            traceDeep;
-                                                        // set this args as single item in array
-                                                        // delete all remote structured property from rpc data
-                                                        readRootArgs = angular.copy(readRootArgs);
-                                                        helpers.setProperty(readRootArgs, parentArgsPath, $scope.args);
-                                                        $scope.sendRootArgs = readRootArgs;
-                                                        angular.forEach($scope.rootScope.config.fields, function (field) {
-                                                            if (_.string.contains(field.type, 'RemoteStructured') && field.code_name !== $scope.args.ui.access[0]) {
-                                                                delete readRootArgs[field.code_name];
-                                                            }
-                                                        });
-                                                        readRootArgs.read_arguments = readArgs;
-                                                        angular.forEach(parentArgsPath, function (part, i) {
-                                                            // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
-                                                            // properties in datastore that begin with an number, which we do not
-                                                            if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
-                                                                readArgs[part] = {
-                                                                    config: {}
-                                                                };
-                                                                readArgs = readArgs[part];
-                                                            }
-                                                            // produce read path for the rpc
-                                                            readRootArgs = readRootArgs[part];
-                                                            if (angular.isArray(readRootArgs)) {
-                                                                readRootArgsAsList = readRootArgs;
-                                                            } else {
-                                                                if (angular.isDefined(readRootArgsAsList)) {
-                                                                    readRootArgsAsList.empty();
-                                                                    readRootArgsAsList.push(readRootArgs);
-                                                                    readRootArgsAsList = undefined;
-                                                                }
-                                                                if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
-                                                                    if (!angular.isDefined(readArgs.config.keys)) {
-                                                                        readArgs.config.keys = [];
-                                                                    }
-                                                                    readArgs.config.keys.push(readRootArgs.key);
-
-                                                                }
-                                                            }
-                                                        });
-
-                                                        traceDeep = function (readRootArgs, readArgs) {
-                                                            if (readRootArgs && readRootArgs.key) {
-                                                                fieldList = modelsMeta.getFields(readRootArgs.kind);
-                                                                angular.forEach(fieldList, function (field) {
-                                                                    if (field.is_structured && _.string.contains(field.type, 'RemoteStructured')) {
-                                                                        var keys = [],
-                                                                            newReadArgs = {
-                                                                                config: {
-                                                                                    keys: keys
-                                                                                }
-                                                                            };
-                                                                        if (field.repeated) {
-                                                                            angular.forEach(readRootArgs[field.code_name], function (ent) {
-                                                                                if (ent.key) {
-                                                                                    keys.push(ent.key);
-                                                                                    traceDeep(ent, newReadArgs);
-                                                                                }
-                                                                            });
-                                                                        }
-                                                                        readArgs[field.code_name] = newReadArgs;
-                                                                    }
-                                                                });
-                                                            } else if (angular.isArray(readRootArgs)) {
-                                                                angular.forEach(readRootArgs, function (readRootArg) {
-                                                                    traceDeep(readRootArg, readArgs);
-                                                                });
-                                                            }
-                                                        };
-
-                                                        traceDeep(readRootArgs, readArgs);
-                                                    };
-
-                                                prepare();
-                                                if (config.ui.specifics.beforeSave) {
-                                                    config.ui.specifics.beforeSave($scope);
-                                                }
-                                                // create rpc from root args's action model and action id
-                                                promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
-                                                promise.then(function (response) {
-                                                    $scope.response = response;
-                                                    var keepAccess = angular.copy($scope.args.ui.access),
-                                                        // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
-                                                        value = getResult(response, keepAccess);
-                                                    $.extend($scope.args, value); // modify current args
-                                                    $scope.args.ui.access = keepAccess; // reference back original access path
-                                                    if ($scope.isNew) {
-                                                        if (config.repeated) {
-                                                            $scope.parentArgs.unshift($scope.args); // preappend arg if they are new
-                                                        }
-                                                        $scope.isNew = false;
-                                                    }
-                                                    $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
-                                                    // re-run prepare to ensure proper paths for complete hook
-                                                    prepare();
-                                                    if (angular.isDefined(config.ui.specifics.afterSave)) {
-                                                        config.ui.specifics.afterSave($scope);
-                                                    }
-                                                    $scope.formSetPristine();
-                                                    if (!dontShowMessage) {
-                                                        snackbar.showK('changesSaved');
-                                                    }
-
-                                                }, function (response) {
-                                                    // here handle error...
-                                                    if (angular.isDefined(config.ui.specifics.afterSaveError)) {
-                                                        config.ui.specifics.afterSaveError($scope, response);
-                                                    }
-                                                });
-
-                                                return promise;
-                                            };
-
-                                            $scope.complete = function (response) {
-                                                $scope.response = response;
-                                                var keepAccess = angular.copy($scope.args.ui.access),
-                                                    value = getResult(response, keepAccess);
-
-                                                $.extend($scope.args, value);
-                                                $scope.args.ui.access = keepAccess;
-                                                if (angular.isDefined(config.ui.specifics.afterComplete)) {
-                                                    config.ui.specifics.afterComplete($scope);
-                                                }
-                                                $scope.formSetPristine();
-
-                                                snackbar.showK('changesSaved');
-                                            };
-
-                                            $scope.noComplete = function () {
-                                                // fired when the scope.complete() does not get fired i.e. when no files were sent for upload
-                                                if (angular.isDefined(config.ui.specifics.noComplete)) {
-                                                    config.ui.specifics.noComplete($scope);
-                                                }
-                                                $scope.formSetPristine();
-                                            };
-
-                                            $scope.completeError = function (response) {
-                                                // fired when it failed to send http-form-data rpc
-                                                if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
-                                                    config.ui.specifics.afterCompleteError($scope, response);
-                                                }
-                                                $scope.formSetPristine();
-                                            };
-
-
-                                        } else {
-
-
-                                            $scope.save = function () {
-                                                if (!$scope.validateForm()) { // check if the form is valid
-                                                    return false;
-                                                }
-                                                if ($scope.container.form.$dirty) {
-                                                    $scope.rootFormSetDirty();
-                                                }
-                                                var promise = null,
-                                                    saveCompleteDefer = $q.defer(),
-                                                    saveCompletePromise = saveCompleteDefer.promise,
-                                                    complete = function () {
-                                                        var completePromise = null,
-                                                            total = 0;
-
-                                                        if (config.repeated) {
-                                                            if ($scope.isNew) {
-                                                                $scope.parentArgs.unshift($scope.args);
-                                                                $scope.isNew = false;
-                                                                total = $scope.parentArgs.length - 1;
-                                                                angular.forEach($scope.parentArgs, function (item, i) {
-                                                                    i = total - i;
-                                                                    item._sequence = i;
-                                                                    item.sequence = i;
-                                                                });
-                                                            } else {
-                                                                $.extend(arg, $scope.args);
-                                                            }
-                                                        }
-
-                                                        if (angular.isFunction(config.ui.specifics.afterSave)) {
-                                                            completePromise = config.ui.specifics.afterSave($scope, info);
-                                                        }
-
-                                                        if (completePromise && completePromise.then) {
-                                                            completePromise.then(function () {
-                                                                $scope.formSetPristine();
-                                                                saveCompleteDefer.resolve();
-                                                                if (config.closeAfterSave) {
-                                                                    $scope.close();
-                                                                }
-                                                            });
-                                                        } else {
-                                                            $scope.formSetPristine();
-                                                            saveCompleteDefer.resolve();
-                                                            if (config.closeAfterSave) {
-                                                                $scope.close();
-                                                            }
-                                                        }
-
-                                                    };
-
-                                                if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                    promise = config.ui.specifics.beforeSave($scope, info);
-                                                }
-
-                                                if (promise && promise.then) {
-                                                    promise.then(complete);
-
-                                                } else {
-                                                    complete();
-                                                }
-                                                return saveCompletePromise;
-
-                                            };
-                                        }
-
-                                        // construct direct scope
-                                        if (config.ui.specifics.scope) {
-                                            $.extend($scope, config.ui.specifics.scope);
-                                        }
-
-                                        // call constructor
-                                        if (angular.isFunction(config.ui.specifics.init)) {
-                                            config.ui.specifics.init($scope);
-                                        }
-
-                                        getTitle = function () {
-                                            return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
-                                        };
-
-                                        config._title_.push(getTitle);
-
-                                        $scope.$watch('isNew', function () {
-                                            config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
-                                        });
-
-                                        angular.forEach(config.ui.specifics.fields, function (field) {
-                                            field._title_ = config._title_.concat();
-                                        });
-
-                                        $scope.$on('$destroy', function () {
-                                            config._title_.remove(getTitle);
-                                        });
-
-                                    })
-                                });
-                            };
-
-                            if (angular.isUndefined(config.ui.specifics.create)) {
-                                config.ui.specifics.create = config.ui.specifics.manage;
-                            }
-
-                            info.scope.$on('$destroy', function () {
-                                config.ui.specifics.create = undefined;
-                            });
-
-                        }
-
-                        return 'structured_' + (config.repeated ? 'repeated' : 'single');
-                    },
-                    _RemoteStructuredPropery: function (info) {
-                        var config = info.config;
-                        config.ui.specifics.remote = true;
-                    },
-                    SuperStructuredProperty: function (info) {
-                        return this.SuperLocalStructuredProperty(info);
-                    },
-                    SuperRemoteStructuredProperty: function (info) {
-                        this._RemoteStructuredPropery(info);
-                        var ret = this.SuperLocalStructuredProperty(info);
-                        return ret;
-                    },
-                    SuperImageLocalStructuredProperty: function (info) {
-                        this.SuperLocalStructuredProperty(info);
-                        if (!info.config.ui.specifics.displayImageConfig) {
-                            info.config.ui.specifics.displayImageConfig = {
-                                size: 360
-                            };
-                        }
-                        if (!info.config.ui.specifics.sortableOptions) {
-                            info.config.ui.specifics.sortableOptions = {};
-                        }
-                        $.extend(info.config.ui.specifics.sortableOptions, {
-                            axis: false,
-                            containment: false
-                        });
-                        return 'image';
-                    },
-                    SuperImageStructuredProperty: function (info) {
-                        if (!info.config.ui.specifics.sortableOptions) {
-                            info.config.ui.specifics.sortableOptions = {};
-                        }
-                        $.extend(info.config.ui.specifics.sortableOptions, {
-                            axis: false,
-                            containment: false
-                        });
-                        return this.SuperImageLocalStructuredProperty(info);
-                    },
-                    SuperImageRemoteStructuredProperty: function (info) {
-                        this._RemoteStructuredPropery(info);
-                        var ret = this.SuperImageLocalStructuredProperty(info);
-                        return ret;
-                    },
-                    SuperTextProperty: function (info) {
-                        if (info.config.repeated) {
-                            info.config.ui.attrs['repeated-text'] = '';
-                        }
-                        if (info.config.ui.specifics.autoGrow === undefined || info.config.ui.specifics.autoGrow) {
-                            info.config.ui.attrs['msd-elastic'] = '';
-                        }
-                        return 'text';
-                    },
-                    SuperJsonProperty: function (info) {
-                        info.config.ui.attrs['json-only'] = '';
-                        return this.SuperTextProperty(info);
-                    },
-                    SuperDateTimeProperty: function (info) {
-                        info.config.ui.attrs['time-date-picker-dialog'] = '';
-                        info.config.ui.attrs.readonly = 'true';
-                        return 'string';
-                    }
-                };
-
-            return formInputTypes;
-
-        })).constant('msdElasticConfig', {
+        }).constant('msdElasticConfig', {
             append: ''
         }).directive('msdElastic', [
             '$timeout', '$window', 'msdElasticConfig',
             function ($timeout, $window, config) {
-                'use strict';
-
                 return {
                     require: 'ngModel',
                     restrict: 'A, C',
@@ -10919,7 +9218,478 @@ $(function () {
                     }
                 };
             }
-        ]).directive('fastNgChange', ng(function ($parse, $mdUtil) {
+        ]).run(ng(function (formInputTypes, GLOBAL_CONFIG, helpers) {
+            $.extend(formInputTypes, {
+                _SelectBox: function (info) {
+
+                    if (!angular.isDefined(info.config.ui.specifics.searchEnabled)) {
+                        if (info.config.choices.length < 10) {
+                            info.config.ui.specifics.searchEnabled = false;
+                        } else {
+                            info.config.ui.specifics.searchEnabled = true;
+                        }
+                    }
+
+                    if (info.config.choices.length && (info.config.ui.specifics && info.config.ui.specifics.translatedChoices !== false)) {
+                        info.config.ui.specifics.translatedChoices = [];
+                        angular.forEach(info.config.choices, function (value) {
+                            // @todo this might cause problems when config.choices = some other list is applied trough the lifecycle
+                            // the choices will not be re-parsed to translatedChoices
+                            // this code will only run upon directive initilization
+                            var hasit = helpers.getProperty(GLOBAL_CONFIG.fields.translateChoices, [info.config._maker_, info.config.code_name, value]);
+                            if (angular.isUndefined(hasit)) {
+                                hasit = value;
+                            }
+                            info.config.ui.specifics.translatedChoices.push({
+                                key: value,
+                                name: hasit
+                            });
+                        });
+                    }
+
+                    return 'select';
+                },
+                SuperStringProperty: function (info) {
+                    var config = info.config;
+
+
+                    if (config.ui.attrs.type === undefined) {
+                        config.ui.attrs.type = 'text';
+                    }
+
+                    if (config.choices) {
+                        if (config.repeated) {
+                            return this._SuperStringRepeated(info);
+                        }
+                        if (info.config.ui.attrs['repeated-text'] !== undefined) {
+                            delete info.config.ui.attrs['repeated-text'];
+                        }
+                        return this._SelectBox(info);
+                    }
+
+                    if (config.repeated) {
+                        config.ui.attrs['repeated-text'] = '';
+                        return this.SuperTextProperty(info);
+                    }
+
+                    return 'string';
+                },
+                SuperFloatProperty: function (info) {
+                    var config = info.config;
+
+                    if (config.choices) {
+                        return this._SelectBox(info);
+                    }
+                    config.ui.attrs['check-numeric'] = '';
+                    return this.SuperStringProperty(info);
+                },
+                SuperIntegerProperty: function (info) {
+                    var config = info.config;
+
+                    if (config.choices) {
+                        return this._SelectBox(info);
+                    }
+
+                    config.ui.attrs['check-numeric'] = '';
+
+                    return this.SuperFloatProperty(info);
+                },
+                SuperDecimalProperty: function (info) {
+                    var config = info.config;
+                    if (config.choices) {
+                        return this._SelectBox(info);
+                    }
+                    config.ui.attrs['check-numeric'] = '';
+                    return this.SuperFloatProperty(info);
+                },
+                _SuperStringRepeated: function (info) {
+                    var select = {};
+                    info.config.ui.specifics.select = select;
+                    info.config._groupable = true;
+                    return 'select_multiple';
+                },
+                SuperTextProperty: function (info) {
+                    if (info.config.repeated) {
+                        info.config.ui.attrs['repeated-text'] = '';
+                    }
+                    if (info.config.ui.specifics.autoGrow === undefined || info.config.ui.specifics.autoGrow) {
+                        info.config.ui.attrs['msd-elastic'] = '';
+                    }
+                    return 'text';
+                },
+                SuperDateTimeProperty: function (info) {
+                    info.config.ui.attrs['time-date-picker-dialog'] = '';
+                    info.config.ui.attrs.readonly = 'true';
+                    return 'string';
+                }
+            });
+        }));
+}());
+(function () {
+    'use strict';
+    angular.module('app')
+        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
+            if (!helpers.fields) {
+                helpers.fields = {};
+            }
+            if (!helpers.form) {
+                helpers.form = {};
+            }
+            $.extend(helpers.fields, {
+                isFieldset: function (field) {
+                    return (field.is_structured || ((_.string.contains(field.type, 'KeyProperty')) && field.repeated) || field.ui.fieldset);
+                },
+                sorter: function (prev, next) {
+                    var p1 = parseInt(prev.name, 10),
+                        p2 = parseInt(next.name, 10);
+                    if (isNaN(p1)) {
+                        p1 = 999999;
+                    }
+                    if (isNaN(p2)) {
+                        p2 = 999999;
+                    }
+                    return p1 - p2;
+                },
+                applyGlobalConfig: function (config) {
+                    if (angular.isUndefined(config.ui.help) && angular.isDefined(GLOBAL_CONFIG.fields.help[config._maker_])) {
+                        config.ui.help = GLOBAL_CONFIG.fields.help[config._maker_][config.code_name];
+                    }
+
+                    if (angular.isUndefined(config.ui.emptyHelp) && angular.isDefined(GLOBAL_CONFIG.fields.emptyHelp[config._maker_])) {
+                        config.ui.emptyHelp = GLOBAL_CONFIG.fields.emptyHelp[config._maker_][config.code_name];
+                    }
+
+                    if (angular.isUndefined(config.ui.label) && angular.isDefined(GLOBAL_CONFIG.fields.label[config._maker_])) {
+                        config.ui.label = GLOBAL_CONFIG.fields.label[config._maker_][config.code_name];
+                    }
+                },
+                utils: {
+                    attrs: function (config) {
+                        var defaults = this.defaultAttrs(config),
+                            extra = this.extraAttrs(config),
+                            attrs = [];
+
+                        angular.extend(defaults, extra);
+
+                        angular.forEach(defaults, function (value, key) {
+                            attrs.push(key + (value ? '="' + value + '"' : ''));
+                        });
+
+                        return attrs.join(' ');
+                    },
+                    defaultAttrs: function (config) {
+                        var attrs = {},
+                            writableCompiled;
+                        if (config.max_size) {
+                            attrs['ng-maxlength'] = 'config.max_size';
+                        }
+
+                        if (config.ui.pattern !== undefined) {
+                            attrs['ng-pattern'] = config.pattern;
+                        }
+
+                        if (angular.isString(config.required)) {
+                            attrs['ng-required'] = config.required;
+                        } else {
+                            attrs['ng-required'] = 'config.required';
+                        }
+                        attrs['ng-model'] = config.ui.args;
+                        attrs.placeholder = config.ui.placeholder;
+
+                        if (!angular.isArray(config.ui.writable)) {
+                            attrs['ng-disabled'] = '!' + config.ui.writable;
+                            config.ui.writableCompiled = config.ui.writable;
+                        } else {
+                            writableCompiled = config.ui.model + '.ui.rule.field' + $.map(config.ui.writable,
+                                function (item) {
+                                    return "['" + helpers.addslashes(item) + "']";
+                                }).join('') + '.writable';
+
+                            attrs['ng-disabled'] = '!' + writableCompiled;
+
+                            config.ui.writableCompiled = writableCompiled;
+                        }
+
+                        if (attrs.readonly) {
+                            delete attrs['ng-disabled'];
+                        }
+
+                        return attrs;
+                    },
+                    extraAttrs: function (config) {
+                        return config.ui.attrs;
+                    },
+                    label: function (config) {
+                        var use = '{{config.ui.label}}';
+                        if (config.ui.label === undefined) {
+                            use = '{{config.ui.autoLabel|inflector:humanize}}';
+                        }
+                        return use;
+                    }
+                }
+            });
+            $.extend(helpers.form, {
+                wakeUp: function (form, dirty) {
+                    var happend = false;
+                    angular.forEach(form, function (formElement) {
+                        if (angular.isObject(formElement) && formElement.hasOwnProperty('$valid') && !formElement.$valid && angular.isFunction(formElement.$setViewValue)) {
+                            formElement.$setViewValue(formElement.$viewValue !== undefined ? formElement.$viewValue : '');
+                            formElement.$setDirty();
+                            formElement.$setTouched();
+                            if (dirty) {
+                                form.$setDirty();
+                            }
+
+                            happend = true;
+                        }
+                    });
+
+                    return happend;
+                },
+                setDirty: function () {
+                    if (this.container && this.container.form) {
+                        this.container.form.$setDirty();
+                    }
+                },
+                setPristine: function () {
+                    if (this.container && this.container.form) {
+                        this.container.form.$setPristine();
+                    }
+                },
+                validate: function () {
+                    var form = this.container.form;
+                    if (!form.$valid) {
+                        helpers.form.wakeUp(form);
+                        this.$broadcast('invalidForm');
+                        return false;
+                    }
+                    return true;
+                },
+                leave: function (cb) {
+                    var form = this.container.form;
+                    if (form.$pristine) {
+                        cb();
+                    } else {
+                        modals.confirm('discard', cb);
+                    }
+                }
+            });
+        }))
+        .directive('formBuilder', ng(function ($compile, underscoreTemplate, modelsMeta) {
+            return {
+                restrict: 'A',
+                require: '^form',
+                templateUrl: 'core/fields/builder.html',
+                scope: true,
+                transclude: true,
+                controller: ng(function ($scope, $element, $attrs) {
+                    $scope.configurations = $scope.$eval($attrs.formBuilder);
+                })
+            };
+        }))
+        .directive('formInput', ng(function ($compile, underscoreTemplate,
+            formInputTypes, helpers, GLOBAL_CONFIG) {
+
+            var types = formInputTypes,
+                utils = helpers.fields.utils;
+
+            return {
+                restrict: 'A',
+                require: '^form',
+                scope: true,
+                transclude: true,
+                link: function (scope, element, attrs, ctrl) {
+
+                    var run = function () {
+                        var supplied_config = scope.$eval(attrs.formInput),
+                            name,
+                            label = null,
+                            config,
+                            tpl,
+                            template,
+                            info,
+                            constructor;
+
+                        if (!angular.isObject(supplied_config)) {
+                            console.warn('Config provided is not object for element: ', element);
+                            return;
+                        }
+
+                        name = supplied_config.code_name;
+
+                        // use backend defined label if was provided, otherwise the label will be humanized
+                        if (supplied_config.verbose_name !== null && supplied_config.verbose_name !== undefined) {
+                            label = supplied_config.verbose_name;
+                        } else {
+                            label = name;
+                        }
+
+                        if (!name) {
+                            console.error('Your field config', supplied_config, 'has no name defined defined. element: ', element);
+                            return;
+                        }
+
+                        config = {
+                            ui: { // root config for entire config, upper structure is ndb property definition
+                                args: 'args.' + name,
+                                parentArgs: 'args',
+                                rootScope: 'rootScope', // pointer to rootScope that should be considered
+                                model: 'entity',
+                                autoLabel: label,
+                                directiveScope: function () {
+                                    return scope;
+                                },
+                                specifics: {}, // used for property specific configurations
+                                systemName: name,
+                                name: name,
+                                form: {
+                                    root: ctrl,
+                                    field: function () {
+                                        return this.root[config.ui.name];
+                                    },
+                                    hasErrors: function () {
+                                        if (!this.field()) {
+                                            return false;
+                                        }
+                                        return Object.keys(this.field().$error).length;
+                                    },
+                                    messages: function () {
+                                        if (!this.field()) {
+                                            return false;
+                                        }
+                                        return ((this.field().$dirty && this.hasErrors()) ? this.field().$error : false) || config.ui;
+                                    },
+                                    shouldShowMessages: function () {
+                                        if (config.ui.hideMessages) {
+                                            return false;
+                                        }
+                                        return true;
+                                    }
+                                },
+                                writable: [name],
+                                path: undefined,
+                                realPath: undefined,
+                                attrs: {}
+                            }
+                        };
+                        helpers.mergeDeep(supplied_config, config);
+                        config = supplied_config;
+
+                        if (angular.isFunction(config.ui.init)) {
+                            constructor = config.ui.init;
+                            config.ui.init = undefined;
+                        }
+
+                        if (!config.ui.init) {
+                            config.ui.init = {
+                                callbacks: [],
+                                add: function (name, callback) {
+                                    var theObj = null;
+                                    angular.forEach(this.callbacks, function (obj, i) {
+                                        if (angular.isDefined(obj[name])) {
+                                            theObj = obj;
+                                        }
+                                    });
+                                    if (theObj !== null) {
+                                        theObj[name] = callback;
+                                    } else {
+                                        theObj = {};
+                                        theObj[name] = callback;
+                                        this.callbacks.push(theObj);
+                                    }
+                                }
+                            };
+                        }
+
+                        if (constructor) {
+                            config.ui.init.add('init', constructor);
+                        }
+
+                        if (!angular.isDefined(config.ui.path)) {
+                            config.ui.path = [name];
+                        }
+
+                        if (angular.isArray(config.ui.writable)) {
+                            config.ui.writable = angular.copy(config.ui.path);
+                        }
+
+                        if (!angular.isDefined(config.ui.realPath)) {
+                            config.ui.realPath = [name];
+                        }
+
+                        helpers.fields.applyGlobalConfig(config);
+
+                        if (types[config.type] !== undefined) {
+                            // reference main locals to type builder
+                            info = {
+                                config: config,
+                                element: element,
+                                scope: scope,
+                                attrs: attrs
+                            };
+                            tpl = types[config.type](info);
+
+                            // compiled variables for the template
+                            config.ui.compiled = {
+                                attrs: utils.attrs(config),
+                                label: utils.label(config)
+                            };
+                            angular.forEach(config.ui.init.callbacks, function (obj) {
+                                angular.forEach(obj, function (callback) {
+                                    callback(info);
+                                });
+                            });
+
+                            if (config.ui.render === false) {
+                                return;
+                            }
+
+                            template = underscoreTemplate.get(angular.isDefined(config.ui.template) ? config.ui.template : 'core/fields/' + tpl + '.html')({
+                                config: config
+                            });
+
+                            scope.config = config;
+                            element.html(template);
+                            $compile(element.contents())(scope);
+
+                        } else {
+                            /* console.warn('Field type: ' + config.type +
+                                ' is not supported.'); */
+                        }
+
+                        scope.$on('$destroy', function () {
+                            config.ui.directiveScope = undefined;
+                            config.ui.form = undefined;
+                        });
+
+                    };
+
+                    run();
+
+                }
+
+            };
+        })).directive('compatibilityMaker', ng(function (modelsUtil) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs, ctrl) {
+                    var fn = function () {
+                        var newval = scope.$eval(attrs.compatibilityMaker),
+                            stringified = modelsUtil.argumentsToJson(newval);
+                        element.val(stringified);
+                    };
+                    scope.$watch(attrs.compatibilityMaker, fn);
+                    scope.$on('ngUploadSubmit', fn);
+
+                }
+            };
+        })).factory('formInputTypes', ng(function () {
+
+            var formInputTypes = {};
+
+            return formInputTypes;
+
+        })).directive('fastNgChange', ng(function ($parse, $mdUtil) {
             return {
                 priority: 1,
                 link: function (scope, element, attrs) {
@@ -10929,7 +9699,9 @@ $(function () {
                             var cval = element.val();
                             if (prev !== cval) {
                                 prev = cval;
-                                fn(scope, {$event: ev});
+                                fn(scope, {
+                                    $event: ev
+                                });
                             }
                         }, 100, scope, true);
                     element.on('change keydown', change);
@@ -10952,6 +9724,1518 @@ $(function () {
                     });
                 }
             };
+        }));
+}());
+(function () {
+    'use strict';
+    angular.module('app')
+        .directive('validFile', function () {
+            return {
+                require: 'ngModel',
+                link: function (scope, el, attrs, ngModel) {
+                    el.bind('change', function () {
+                        scope.$apply(function () {
+                            ngModel.$setViewValue(el.val());
+                            ngModel.$render();
+                        });
+                    });
+                }
+            };
+        })
+        .directive('jsonOnly', function () {
+            return {
+                require: 'ngModel',
+                link: function (scope, element, attrs, ctrl) {
+                    var worker = function (value, what) {
+                            var test = false;
+                            try {
+                                value = angular[what](value);
+                                test = true;
+                            } catch (ignore) {}
+
+                            ctrl.$setValidity('jsonOnly', test);
+
+                            return value;
+                        },
+                        parser = function (value) {
+                            return worker(value, 'fromJson');
+                        },
+                        formatter = function (value) {
+                            return worker(value, 'toJson');
+                        };
+
+                    ctrl.$parsers.push(parser);
+                    ctrl.$formatters.push(formatter);
+                }
+            };
+        })
+        .directive('generateUploadUrl', ng(function (endpoint, $rootScope) {
+            return {
+                restrict: 'A',
+                require: '^form',
+                link: function (scope, element, attrs, ctrl) {
+
+                    var that = element,
+                        form = that.parents('form:first'),
+                        change = function () {
+
+                            if (!that.val()) {
+                                return false;
+                            }
+
+                            endpoint.post('blob_upload_url', '11', {
+                                upload_url: endpoint.url
+                            }).then(function (response) {
+                                form.attr('action', response.data.upload_url);
+                                ctrl.$setDirty();
+                            });
+                        },
+                        reset = function ($event, content) {
+                            form.attr('action', endpoint.url);
+                            that.val('');
+                        };
+
+                    if (!form.length) {
+                        console.error('Directive generateUploadUrl demands explicit <form> tag');
+                        return false;
+                    }
+
+                    $(element).on('change', change);
+
+                    scope.$on('$destroy', function () {
+                        $(element).off('change', change);
+                    });
+
+                    scope.$on('ngUploadComplete', reset);
+                    scope.$on('ngUploadCompleteError', change);
+                }
+            };
+        })).directive('submitIfFiles', ng(function ($parse, helpers) {
+            return {
+                require: '^form',
+                link: function (scope, element, attrs, ctrl) {
+                    var form = element.parents('form:first'),
+                        files,
+                        submit = $parse(attrs.submitIfFiles),
+                        complete = $parse(attrs.submitIfFilesNoComplete),
+                        check = $parse(attrs.submitIf),
+                        nativeSubmit = $parse(attrs.submitNative),
+                        execute,
+                        click = function () {
+                            var promise,
+                                isNative,
+                                thingsHappened = helpers.form.wakeUp(ctrl, true);
+                            if (thingsHappened) {
+                                if (!scope.$$phase) {
+                                    scope.$apply();
+                                }
+                            }
+                            if (check && !check(scope)) {
+                                return false;
+                            }
+                            isNative = nativeSubmit(scope);
+                            files = form.find('input[type="file"]');
+                            execute = false;
+                            if (files.length) {
+                                files.each(function () {
+                                    if ($(this).val()) {
+                                        execute = true;
+                                        return false;
+                                    }
+                                });
+                            }
+                            if (isNative) {
+                                if (execute) {
+                                    form.trigger('submit');
+                                    return false;
+                                }
+                            }
+                            promise = submit(scope, {
+                                dontShowMessage: execute
+                            });
+                            if (promise && angular.isObject(promise) && promise.then) {
+                                promise.then(function () {
+                                    if (execute) {
+                                        form.trigger('submit');
+                                        return false;
+                                    }
+                                    complete(scope);
+                                });
+                            }
+
+                            scope.$apply();
+                        };
+
+                    element.on('click', click);
+                    scope.$on('$destroy', function () {
+                        element.off('click', click);
+                    });
+
+                }
+            };
+        })).directive('submitIfValid', ng(function ($parse) {
+            return {
+                require: '^form',
+                link: function (scope, element, attrs, ctrl) {
+                    var form = element.parents('form:first'),
+                        check = $parse(attrs.submitIfValid),
+                        click = function (e) {
+                            if (check(scope)) {
+                                form.submit();
+                            }
+                            return e.preventDefault();
+                        };
+
+                    element.on('click', click);
+                    scope.$on('$destroy', function () {
+                        element.off('click', click);
+                    });
+
+                }
+            };
+        })).directive('showNumberOfSelectedFiles', function () {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    var root = element.parents('.fake-button:first'),
+                        target = root.find(attrs.showNumberOfSelectedFiles),
+                        totalText = target.text(),
+                        change = function () {
+                            setTimeout(function () {
+                                var files = element.prop('files');
+                                if (files && files.length) {
+                                    target.css('display', 'inline');
+                                    target.text(totalText.replace(':total', files.length));
+                                } else {
+                                    target.hide();
+                                }
+                            }, 200);
+
+                        };
+                    element.bind('change', change);
+                    change();
+                    scope.$on('ngUploadComplete', change);
+                    scope.$on('ngUploadCompleteError', change);
+                    scope.$on('$destroy', function () {
+                        element.unbind('change', change);
+                    });
+                }
+            };
+        }).run(ng(function (formInputTypes, underscoreTemplate, $timeout, $parse,
+            endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
+            errorHandling, modals, GLOBAL_CONFIG, snackbar) {
+
+            $.extend(formInputTypes, {
+                SuperBooleanProperty: function (info) {
+                    info.config.required = false;
+                    if (!info.config.ui.specifics || angular.isUndefined(info.config.ui.specifics.type)) {
+                        info.config.ui.specifics.type = 'checkbox';
+                    }
+                    return 'boolean';
+                },
+                SuperVirtualKeyProperty: function (info) {
+                    return this.SuperKeyProperty(info);
+                },
+                _SuperKeyPropertyRepeated: function (info) {
+                    var select = {};
+                    info.config.ui.specifics.select = select;
+                    return 'select_multiple';
+                },
+                SuperKeyProperty: function (info) {
+                    if (info.config.searchable === false) {
+                        return this.SuperStringProperty(info);
+                    }
+                    var config = info.config,
+                        template = 'select_async',
+                        defaults = {
+                            cache: {
+                                query: {
+                                    '24': true,
+                                    '12': true,
+                                    '13': true
+                                },
+                                type: {
+                                    '12': 'local',
+                                    '17': 'local',
+                                    'default': 'memory'
+                                }
+                            },
+                            finder: {
+                                '24': true
+                            },
+                            grouping: {},
+                            view: {
+                                'default': function (result) {
+                                    if (!result) {
+                                        return '';
+                                    }
+                                    return result.name;
+                                }
+                            },
+                            init: {
+                                '13': function (info) {
+                                    info.scope.$watch(info.config.ui.parentArgs +
+                                        '.country',
+                                        function (neww, old) {
+                                            if (neww !== old) {
+                                                var args = info.scope.$eval(info.config.ui.parentArgs);
+                                                args.region = null;
+                                                info.config.ui.specifics.initial(); // refresh results
+                                            }
+                                        });
+                                }
+                            },
+                            queryFilter: {
+                                '24': function (term, searchArguments) {
+                                    var searchDefaults = angular.copy(searchArguments.search['default']),
+                                        args = {
+                                            search: searchDefaults
+                                        };
+                                    if (term) {
+                                        args.search.filters.push({
+                                            field: 'name',
+                                            operator: '==',
+                                            value: term
+                                        });
+                                    }
+                                    return args;
+                                },
+                                '17': function (term, searchArguments) {
+                                    var searchDefaults = {
+                                            search: {
+                                                filters: [{
+                                                    value: true,
+                                                    field: 'active',
+                                                    operator: '=='
+                                                }],
+                                                orders: [{
+                                                    field: 'name',
+                                                    operator: 'asc'
+                                                }],
+                                            }
+                                        },
+                                        argument = searchDefaults.search;
+
+                                    if (config.code_name === 'uom') {
+                                        argument.filters.unshift({
+                                            value: 'Currency',
+                                            field: 'measurement',
+                                            operator: '!='
+                                        });
+
+                                        argument.orders = [{
+                                            field: 'measurement',
+                                            operator: 'asc'
+                                        }, {
+                                            field: 'key',
+                                            operator: 'asc'
+                                        }];
+                                    }
+
+                                    if (config.code_name === 'weight_uom') {
+                                        argument.filters.push({
+                                            value: 'Weight',
+                                            field: 'measurement',
+                                            operator: '=='
+                                        });
+                                    }
+
+                                    if (config.code_name === 'volume_uom') {
+                                        argument.filters.push({
+                                            value: 'Volume',
+                                            field: 'measurement',
+                                            operator: '=='
+                                        });
+                                    }
+
+                                    return searchDefaults;
+
+                                },
+                                '13': function (term, searchArguments) {
+                                    var args = info.scope.$eval(info.config.ui.parentArgs);
+                                    if ((args && args.country)) {
+                                        return {
+                                            search: {
+                                                ancestor: args.country,
+                                                filters: [{
+                                                    value: true,
+                                                    field: 'active',
+                                                    operator: '=='
+                                                }],
+                                                orders: [{
+                                                    field: 'name',
+                                                    operator: 'asc'
+                                                }],
+                                            }
+                                        };
+                                    }
+                                    return false;
+                                }
+                            }
+                        },
+                        init,
+                        model = models[config.kind],
+                        search = {},
+                        args,
+                        opts = {},
+                        override = config.ui.specifics.override || {},
+                        repackMemory = function () {
+                            config.ui.specifics._mapEntities = {};
+                            angular.forEach(config.ui.specifics.entities, function (val) {
+                                config.ui.specifics._mapEntities[val.key] = 1;
+                            });
+                        },
+                        actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
+                        response = function (response) {
+                            config.ui.specifics.entities = response.data.entities;
+                            repackMemory();
+                            return config.ui.specifics.entities;
+                        },
+                        findArgs,
+                        finder,
+                        initialDefer = $q.defer(),
+                        initialPromise = initialDefer.promise;
+
+                    if (config.repeated) {
+                        config.ui.fieldset = true;
+                    }
+
+                    config.ui.specifics.view = function (result) {
+                        var fn = defaults.view[config.kind];
+                        if (!fn) {
+                            fn = defaults.view['default'];
+                        }
+                        if (override.view) {
+                            fn = override.view;
+                        }
+                        return fn(result);
+                    };
+                    init = defaults.init[config.kind];
+                    if (override.init) {
+                        init = override.init;
+                    }
+                    if (angular.isDefined(init)) {
+                        init(info);
+                    }
+                    $.extend(search, config.ui.specifics.search);
+                    config.ui.specifics.search = search;
+
+                    if (angular.isFunction(config.ui.specifics.entities)) {
+                        config.ui.specifics.getEntities = config.ui.specifics.entities;
+                        config.ui.specifics.entities = config.ui.specifics.entities();
+                    }
+
+                    if (angular.isUndefined(config.ui.specifics.entities)) {
+                        config.ui.specifics.entities = [];
+                    }
+
+
+                    if (angular.isUndefined(config.ui.specifics.grouping)) {
+                        config.ui.specifics.grouping = defaults.grouping[config.kind];
+                    }
+
+                    repackMemory();
+
+                    finder = defaults.finder[config.kind];
+                    if (override.finder) {
+                        finder = override.finder;
+                    }
+
+                    config.ui.specifics.search.ready = initialPromise;
+
+                    if (model && !config.ui.specifics.getEntities) {
+                        if (model.actions.search) {
+                            opts.cache = defaults.cache.query[config.kind];
+                            opts.cacheType = defaults.cache.type[config.kind] || defaults.cache.type['default'];
+                            if (override.cache && angular.isDefined(override.cache.query)) {
+                                opts.cache = override.cache.query;
+                            }
+                            if (override.cache && angular.isDefined(override.cache.type)) {
+                                opts.cacheType = override.cache.type;
+                            }
+                            config.ui.specifics.initial = function () {
+                                args = defaults.queryFilter[config.kind];
+                                if (override.queryFilter) {
+                                    args = override.queryFilter;
+                                }
+                                if (!args) {
+                                    args = actionArguments.search['default'];
+                                } else {
+                                    findArgs = args;
+                                    args = findArgs(null, actionArguments);
+                                    if (finder) {
+                                        config.ui.specifics.search.find = function (term) {
+                                            return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
+                                                var entities = response.data.entities;
+                                                angular.forEach(entities, function (ent) {
+                                                    if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
+                                                        config.ui.specifics._mapEntities[ent.key] = 1;
+                                                        config.ui.specifics.entities.push(ent);
+                                                    }
+                                                });
+                                            });
+                                        };
+                                    }
+                                    config.ui.specifics.search.missing = function (id) {
+                                        if (id === null || id === undefined || !id.length) {
+                                            return;
+                                        }
+                                        var selectedIsArray = angular.isArray(id);
+                                        model.actions.search({
+                                            search: {
+                                                keys: (selectedIsArray ? id : [id])
+                                            }
+                                        }, {
+                                            cache: true
+                                        }).then(function (response) {
+                                            var fetchedEntities = response.data.entities;
+                                            if (!selectedIsArray) {
+                                                if (angular.isUndefined(config.ui.specifics._mapEntities[id])) {
+                                                    config.ui.specifics._mapEntities[id] = 1;
+                                                    config.ui.specifics.entities.unshift(response.data.entities[0]);
+                                                }
+                                            } else {
+                                                angular.forEach(fetchedEntities, function (ent) {
+                                                    if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
+                                                        config.ui.specifics._mapEntities[ent.key] = 1;
+                                                        config.ui.specifics.entities.push(ent);
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    };
+                                }
+                                return model.actions.search(args, opts).then(response);
+                            };
+                            config.ui.specifics.initial().then(function () {
+                                initialDefer.resolve();
+                            });
+                        }
+                    }
+                    info.scope.$on('$destroy', function () {
+                        config.ui.specifics.entities = [];
+                        config.ui.specifics._mapEntities = {};
+                    });
+                    config.ui.specifics.async = true;
+                    if (config.repeated) {
+                        template = this._SuperKeyPropertyRepeated(info);
+                    }
+                    (function () {
+                        var select = config.ui.specifics.select || config.ui.specifics.search;
+                        if (info.config.kind === '24') {
+                            select.init = function (select, scope, element, attrs, ctrls) {
+                                var splitout = function (entities) {
+                                    angular.forEach(entities, function (ent) {
+                                        ent.leafname = _.last(ent.name.split(' / '));
+                                    });
+                                };
+                                select.openTemplate = 'core/select/product_categories.html';
+                                select.windowClass = 'category-modal';
+                                select.product_categories = {
+                                    children: [],
+                                    mapped: {},
+                                    top: [],
+                                    resetToTop: function () {
+                                        select.product_categories.children = [];
+                                        select.product_categories.mapped = {};
+                                    },
+                                    next: function (item) {
+                                        var newFilter = {
+                                            search: {
+                                                orders: [{
+                                                    operator: 'asc',
+                                                    field: 'name'
+                                                }],
+                                                filters: [{
+                                                    value: 'indexable',
+                                                    operator: '==',
+                                                    field: 'state'
+                                                }, {
+                                                    value: 'None',
+                                                    operator: '==',
+                                                    field: 'parent_record'
+                                                }]
+                                            }
+                                        };
+                                        newFilter.search.filters[1].value = item.key;
+                                        models['24'].actions.search(newFilter).then(function (response) {
+                                            var entities = response.data.entities,
+                                                child = {
+                                                    item: item
+                                                },
+                                                existing = select.product_categories.mapped[item.key];
+                                            splitout(entities);
+                                            if (existing) {
+                                                child = existing;
+                                            }
+                                            child.visible = true;
+                                            if (entities.length) {
+                                                child.items = entities;
+                                                select.product_categories.children.push(child);
+                                                select.product_categories.mapped[item.key] = child;
+                                            } else {
+                                                select.select(item);
+                                                select.product_categories.resetToTop();
+                                            }
+                                        });
+                                    },
+                                    prev: function (child) {
+                                        var children = select.product_categories.children,
+                                            reset = false;
+                                        angular.forEach(children, function (value, index) {
+                                            if (value === child) {
+                                                value.visible = false;
+                                                if (index === 0) {
+                                                    reset = true;
+                                                }
+                                            }
+                                        });
+                                        if (reset) {
+                                            // select.product_categories.resetToTop();
+                                        }
+                                    }
+                                };
+
+                                models['24'].actions.search({
+                                    search: {
+                                        orders: [{
+                                            operator: 'asc',
+                                            field: 'name'
+                                        }],
+                                        filters: [{
+                                            value: 'indexable',
+                                            operator: '==',
+                                            field: 'state'
+                                        }, {
+                                            value: 'None',
+                                            operator: '==',
+                                            field: 'parent_record'
+                                        }]
+                                    }
+                                }).then(function (response) {
+                                    var entities = response.data.entities;
+                                    splitout(entities);
+                                    select.product_categories.top = entities;
+                                });
+                            };
+                        }
+                    }());
+                    return template;
+                },
+                SuperJsonProperty: function (info) {
+                    info.config.ui.attrs['json-only'] = '';
+                    return this.SuperTextProperty(info);
+                },
+                SuperDateTimeProperty: function (info) {
+                    info.config.ui.attrs['time-date-picker-dialog'] = '';
+                    info.config.ui.attrs.readonly = 'true';
+                    return 'string';
+                }
+            });
+
+        }));
+}());
+(function () {
+    'use strict';
+    angular.module('app')
+        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
+            $.extend(modals, {
+                fields: {
+                    remote: function (scope, field, config) {
+                        $modal.open({
+                            scope: scope,
+                            templateUrl: 'core/models/manage.html',
+                            controller: ng(function ($scope) {
+                                var save = scope.save,
+                                    complete = scope.complete,
+                                    getTitle,
+                                    initial = true;
+                                getTitle = function () {
+                                    return 'view' + helpers.toolbar.makeTitle(field.code_name);
+                                };
+                                field._title_.push(getTitle);
+                                $scope.dialog = {
+                                    templateBodyUrl: 'core/models/manage_body_default.html',
+                                    toolbar: {}
+                                };
+                                $scope.parentContainer = $scope.container;
+                                $scope.container = {};
+                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                    $scope.formSetPristine();
+                                    $scope.$close();
+                                });
+                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                $scope.formBuilder = {
+                                    '0': [field]
+                                };
+                                $scope.layouts = {
+                                    groups: [{
+                                        label: false
+                                    }]
+                                };
+                                $scope.$on('itemDelete', function () {
+                                    $scope.formSetDirty();
+                                });
+                                $scope.$watch('parentContainer.form.$dirty', function (neww, old) {
+                                    if (initial) {
+                                        initial = false;
+                                        return;
+                                    }
+                                    if (neww) {
+                                        $scope.formSetDirty();
+                                    } else {
+                                        $scope.formSetPristine();
+                                    }
+                                });
+
+                                $scope.$watch('entity.id', function () {
+                                    $scope.dialog.toolbar.title = helpers.toolbar.buildTitle(field._title_);
+                                });
+
+                                $scope.save = function (dontShowMessage) {
+                                    var maybePromise = save.call(scope, dontShowMessage);
+                                    if (maybePromise) {
+                                        maybePromise.then($scope.formSetPristine);
+                                    }
+                                    return maybePromise;
+                                };
+
+                                $scope.complete = function (response) {
+                                    complete.call(scope, response);
+                                    $scope.formSetPristine();
+                                };
+
+                                $scope.$on('$destroy', function () {
+                                    if (angular.isArray(field.ui.specifics.parentArgs)) {
+                                        field.ui.specifics.parentArgs.empty();
+                                    }
+                                    field._title_.remove(getTitle);
+                                });
+                            })
+                        });
+                    }
+                }
+            });
+        })).run(ng(function (formInputTypes, underscoreTemplate, $timeout, $parse,
+            endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
+            errorHandling, modals, GLOBAL_CONFIG, snackbar) {
+
+            var inflector = $filter('inflector');
+
+            $.extend(formInputTypes, {
+                SuperLocalStructuredProperty: function (info) {
+                    var config = info.config,
+                        fields = [],
+                        newFields = [],
+                        modelFields = config.modelclass,
+                        defaultFields = _.toArray(modelFields),
+                        noSpecifics = !angular.isDefined(config.ui.specifics),
+                        newSort = [],
+                        defaults,
+                        defaultSortable,
+                        findWhereByLayoutConfig,
+                        buildPaths,
+                        rootArgs,
+                        rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
+                        list = {
+                            secondary: true,
+                            perLine: 1,
+                            clickable: true
+                        };
+                    config.ui.fieldset = true;
+
+                    if (!config.ui.specifics.toolbar) {
+                        config.ui.specifics.toolbar = {};
+                    }
+
+                    config.ui.specifics.sortMode = true;
+                    defaultFields = defaultFields.sort(helpers.fields.sorter);
+
+                    if (noSpecifics || !config.ui.specifics.fields) {
+                        config.ui.specifics.fields = defaultFields;
+                        if (config.ui.specifics.sortFields) {
+                            angular.forEach(config.ui.specifics.sortFields, function (key) {
+                                newSort.push(_.findWhere(config.ui.specifics.fields, {
+                                    code_name: key
+                                }));
+                            });
+
+                            config.ui.specifics.fields = newSort;
+                        }
+                    }
+
+                    if (!noSpecifics && config.ui.specifics.excludeFields) {
+                        angular.forEach(config.ui.specifics.fields, function (field, i) {
+                            if ($.inArray(field.code_name, config.ui.specifics.excludeFields) === -1) {
+                                newFields.push(field);
+                            }
+                        });
+                        config.ui.specifics.fields = newFields;
+                    }
+
+                    defaults = {
+                        fields: fields,
+                        addNewText: 'Add',
+                        addText: '{{config.ui.specifics.addNewText}}'
+                    };
+
+                    if (config.ui.specifics.listConfig) {
+                        $.extend(list, config.ui.specifics.listConfig);
+                    }
+
+                    config.ui.specifics.listConfig = list;
+
+                    // merge defaults into the
+                    angular.forEach(defaults, function (value, key) {
+                        if (config.ui.specifics[key] === undefined) {
+                            config.ui.specifics[key] = value;
+                        }
+                    });
+
+                    config.ui.specifics.parentArgs = info.scope.$eval(config.ui.args);
+                    config.ui.specifics.entity = info.scope.$eval(config.ui.model);
+                    config.ui.specifics.rootScope = info.scope.$eval(config.ui.rootScope);
+
+                    if (!config.ui.specifics.sortableOptions) {
+                        config.ui.specifics.sortableOptions = {};
+                    }
+
+                    defaultSortable = {
+                        disabled: false,
+                        start: function (e, ui) {
+                            info.scope.$broadcast('itemOrderStarted');
+                        },
+                        axis: false,
+                        containment: false,
+                        whatSortMeans: function () {
+                            modals.alert('howToSort');
+                        },
+                        handle: '.sort-handle',
+                        tolerance: 'pointer',
+                        helper: 'clone',
+                        sort: function (e, ui) {
+                            var deleteMode,
+                                division,
+                                helperWidth = ui.helper.width(),
+                                itemScope = ui.item.scope(),
+                                item = itemScope.$eval(ui.item.attr('current-item'));
+                            division = ui.offset.left + helperWidth;
+                            if (division < (helperWidth / 2)) {
+                                deleteMode = true;
+                            }
+                            if (item) {
+                                if (deleteMode) {
+                                    ui.helper.addClass('about-to-delete');
+                                    item._state = 'deleted';
+                                } else {
+                                    ui.helper.removeClass('about-to-delete');
+                                    item._state = null;
+                                }
+                            }
+                            info.scope.$broadcast('itemOrderSorting');
+                        },
+                        stop: function (e, ui) {
+                            var dirty;
+                            angular.forEach(config.ui.specifics.parentArgs,
+                                function (ent, i) {
+                                    if (ent._state === 'deleted' || ent._sequence !== i) {
+                                        dirty = true;
+                                    }
+                                    i = ((config.ui.specifics.parentArgs.length - 1) - i);
+                                    ent._sequence = i;
+                                    ent.ui.access[ent.ui.access.length - 1] = i;
+                                });
+                            if (dirty) {
+                                info.scope.formSetDirty();
+                            }
+                            info.scope.$broadcast('itemOrderChanged');
+                            info.scope.$apply();
+                        }
+                    };
+                    // add default sorting config
+                    $.extend(defaultSortable, config.ui.specifics.sortableOptions);
+                    config.ui.specifics.sortableOptions = defaultSortable;
+                    // disables sorting if the field is not writable
+                    // writableCompiled is as-is specification
+                    config.ui.init.add('checkDisabledStateForSortable', function () {
+                        var fieldIsWritable = $parse(config.ui.writableCompiled + '');
+                        config.ui.specifics.sortableOptions.disabled = !fieldIsWritable(info.scope);
+                    });
+                    // watches list of arguments args != new
+                    info.scope.$watch(config.ui.args, function (neww, old) {
+                        if (neww !== old) {
+                            config.ui.specifics.parentArgs = neww;
+                        }
+                    });
+
+                    buildPaths = function () {
+                        // builds form fields
+                        // it appends needed paths depending on hierarchy depth
+                        config.ui.specifics.formBuilder = [];
+                        angular.forEach(config.ui.specifics.fields, function (field) {
+                            var copyWritable = angular.copy(config.ui.writable);
+
+                            if (angular.isArray(copyWritable)) {
+                                copyWritable.push((field.ui.writableName ? field.ui.writableName : field.code_name));
+                            }
+
+                            field.ui.path = [];
+                            field.ui.path.extend(config.ui.path);
+                            field.ui.path.push(field.code_name);
+                            field.ui.realPath = [];
+                            field.ui.realPath.extend(config.ui.realPath);
+                            field.ui.realPath.push(field.code_name);
+                            if (!angular.isDefined(field.ui.name)) {
+                                field.ui.name = config.ui.name + '.' + field.code_name;
+                            }
+                            field.ui.writable = copyWritable;
+                            config.ui.specifics.formBuilder.push(field);
+                        });
+                    };
+
+                    buildPaths();
+
+                    if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
+                        config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
+                    }
+                    if (angular.isUndefined(config.ui.specifics.toolbar.titleEdit)) {
+                        config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
+                    }
+
+                    if (config.ui.specifics.remote) {
+                        // construct reference to root arguments
+                        rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
+                        // assign "load more" logic
+                        if (config.repeated && rootArgs.id && info.scope.args.id) {
+
+                            config.ui.specifics.reader = models[rootArgs.action_model].reader({
+                                kind: rootArgs.action_model,
+                                key: rootArgs.key,
+                                args: rootArgs,
+                                access: config.ui.realPath,
+                                complete: function (items) {
+                                    config.ui.specifics.parentArgs.extend(items);
+                                }
+                            });
+                            // apply direct reader settings if any
+                            if (angular.isDefined(config.ui.specifics.readerSettings)) {
+                                config.ui.specifics.reader.state(config.ui.specifics.readerSettings);
+                            }
+
+                            if ((angular.isUndefined(config.ui.specifics.remoteAutoload) || config.ui.specifics.remoteAutoload)) {
+                                if (angular.isArray(config.ui.specifics.parentArgs)) {
+                                    config.ui.specifics.parentArgs.empty();
+                                }
+                                $timeout(function () {
+                                    config.ui.specifics.reader.load();
+                                }, 100, false);
+                            }
+
+                        }
+                    }
+
+                    if (!config.repeated && config.ui.specifics.modal !== true) {
+
+                        config.ui.specifics.SingularCtrl = ng(function ($scope) {
+                            $scope.args = config.ui.specifics.parentArgs;
+                            info.scope.$watchCollection(config.ui.args, function (neww, old) {
+                                $.extend($scope.args, neww);
+                            });
+                            config.ui.specifics.getScope = function () {
+                                return $scope;
+                            };
+                            var getTitle = function () {
+                                return config.ui.specifics.toolbar.titleEdit;
+                            };
+                            config._title_.push(getTitle);
+                            angular.forEach(config.ui.specifics.fields, function (field) {
+                                field._title_ = config._title_.concat();
+                            });
+                            $scope.$on('$destroy', function () {
+                                config._title_.remove(getTitle);
+                                config.ui.specifics.getScope = undefined;
+                            });
+                        });
+
+                    } else {
+
+                        config.ui.specifics.remove = function (arg) {
+                            arg._state = 'deleted';
+                            info.scope.$emit('itemDelete', arg);
+                            info.scope.$broadcast('itemDelete', arg);
+                            rootFormSetDirty();
+                        };
+
+                        // generic manage dialog that handles editing of remote and local structured properties
+                        config.ui.specifics.manage = function (arg, defaultArgs, $event) {
+
+                            buildPaths(); // force path rebuild
+
+                            $modal.open({
+                                popFrom: (config.ui.specifics.cards && $event ? helpers.clicks.realEventTarget($event.target) : undefined),
+                                template: underscoreTemplate.get(config.ui.specifics.templateUrl || 'core/fields/manage_structured.html')({
+                                    config: config
+                                }),
+                                controller: ng(function ($scope, modelsUtil) {
+                                    var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
+                                        formBuilder = {
+                                            '0': []
+                                        },
+                                        fieldsMap = {},
+                                        groupBysIndx = [],
+                                        groupBysMap = {},
+                                        getTitle,
+                                        getResult = function (response, access) {
+                                            var accessPath = [],
+                                                value,
+                                                isNewAndRepeated = ($scope.isNew && config.repeated);
+                                            angular.forEach(access, function (path, i) {
+                                                var parse = parseInt(path, 10);
+                                                if (!isNaN(parse)) {
+                                                    path = 0;
+                                                }
+                                                accessPath.push(path);
+                                            });
+                                            if (isNewAndRepeated) {
+                                                accessPath.pop();
+                                            }
+                                            value = helpers.getProperty(response.data.entity, accessPath);
+                                            if (isNewAndRepeated && value.length) {
+                                                value = _.findWhere(value, {
+                                                    _state: 'created'
+                                                });
+                                            }
+
+                                            return value;
+                                        };
+
+                                    angular.forEach(config.ui.specifics.formBuilder, function (value) {
+                                        fieldsMap[value.code_name] = value;
+                                    });
+
+                                    config.ui.specifics.getScope = function () {
+                                        return $scope;
+                                    };
+
+                                    $scope.isNew = false;
+
+                                    $scope.rootFormSetDirty = rootFormSetDirty;
+                                    $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                    $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+
+                                    $scope.response = null;
+                                    $scope.config = config;
+                                    if (!arg) {
+                                        arg = {
+                                            kind: config.modelclass_kind,
+                                            _sequence: length
+                                        };
+                                        modelsUtil.normalize(arg, config.modelclass,
+                                            config.ui.specifics.entity, config.code_name,
+                                            length);
+                                        if (angular.isDefined(defaultArgs)) {
+                                            $.extend(arg, defaultArgs);
+                                        }
+                                        $scope.isNew = true;
+                                    } else if (!config.ui.specifics.modal && arg.ui) {
+                                        length = _.last(arg.ui.access);
+                                    }
+
+
+                                    if (angular.isDefined(arg.ui)) {
+                                        arg.ui.access = angular.copy(config.ui.realPath);
+                                        if (!config.ui.specifics.modal) {
+                                            arg.ui.access.push(length);
+                                        }
+                                    }
+
+                                    $scope.layouts = {
+                                        groups: [{
+                                            label: false
+                                        }]
+                                    };
+
+                                    $scope.formBuilder = formBuilder;
+                                    $scope.container = {
+                                        action: endpoint.url
+                                    };
+                                    $scope.args = angular.copy(arg);
+                                    $scope.parentArgs = config.ui.specifics.parentArgs;
+                                    $scope.rootScope = config.ui.specifics.rootScope;
+                                    $scope.entity = config.ui.specifics.entity;
+                                    if (config.ui.specifics.remote) {
+                                        $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                            $scope.$close();
+                                            if (config.ui.specifics.afterClose) {
+                                                config.ui.specifics.afterClose($scope);
+                                            }
+                                        });
+
+                                    } else {
+                                        $.extend(config.ui.specifics.toolbar, {
+                                            leftIcon: 'arrow_back',
+                                            hideSave: true
+                                        });
+                                        $scope.close = function () {
+                                            var save = $scope.save();
+                                            if (save) {
+                                                save.then(function () {
+                                                    $scope._close_ = undefined;
+                                                    $scope.$close();
+                                                });
+                                            } else {
+                                                modals.confirm('discardWithFieldsRequired', $scope.$close);
+                                            }
+                                        };
+
+                                        $scope._close_ = $scope.close;
+                                    }
+
+                                    $scope.validateForm = angular.bind($scope, helpers.form.validate);
+                                    $scope.$on('$destroy', function () {
+                                        config.ui.specifics.getScope = undefined;
+                                    });
+                                    if (config.ui.specifics.layoutConfig) {
+                                        delete formBuilder['0'];
+                                        $scope.layouts = {
+                                            groups: []
+                                        };
+                                        angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
+                                            var firstField = fieldsMap[value.fields[0]];
+                                            $scope.layouts.groups.push({label: value.label || (firstField.label || inflector(firstField.code_name, 'humanize'))});
+                                        });
+                                    }
+                                    findWhereByLayoutConfig = function (field) {
+                                        var layout = config.ui.specifics.layoutConfig,
+                                            needle,
+                                            i;
+                                        for (i = layout.length - 1; i >= 0; i--) {
+                                            console.log(field.code_name, layout[i].fields, $.inArray(field.code_name, layout[i].fields));
+                                            if ($.inArray(field.code_name, layout[i].fields) !== -1) {
+                                                needle = i;
+                                                break;
+                                            }
+                                        }
+                                        return needle;
+                                    };
+                                    angular.forEach(config.ui.specifics.formBuilder, function (field) {
+                                        var gr, group, next;
+                                        helpers.fields.applyGlobalConfig(field);
+                                        if (!field.ui.initialRealPath) {
+                                            field.ui.initialRealPath = angular.copy(field.ui.realPath);
+                                        } else {
+                                            field.ui.realPath = angular.copy(field.ui.initialRealPath);
+                                        }
+                                        field.ui.realPath.pop();
+                                        if (!config.ui.specifics.modal) {
+                                            field.ui.realPath.push(length);
+                                        }
+                                        field.ui.realPath.push(field.code_name);
+                                        if (field.ui.groupBy) {
+                                            field.ui.hideMessages = true;
+                                            if (!groupBysMap[field.ui.groupBy]) {
+                                                gr = {
+                                                    ui: {
+                                                        group: {
+                                                            help: field.ui.groupHelp,
+                                                            label: field.ui.groupLabel,
+                                                            name: field.ui.groupBy,
+                                                            fields: [],
+                                                            messages: function () {
+                                                                var messages = {
+                                                                    help: true
+                                                                };
+                                                                angular.forEach(gr.ui.group.fields, function (field) {
+                                                                    if (field.ui.form.hasErrors() && field.ui.form.field().$dirty) {
+                                                                        messages = field.ui.form.messages();
+                                                                    }
+                                                                });
+                                                                return messages;
+                                                            },
+                                                            shouldShowMessages: function () {
+                                                                return true;
+                                                            }
+                                                        }
+                                                    }
+                                                };
+                                                groupBysMap[field.ui.groupBy] = gr;
+                                                groupBysIndx.push(field.ui.groupBy);
+                                                if (config.ui.specifics.layoutConfig) {
+                                                    next = findWhereByLayoutConfig(field);
+                                                    if (!angular.isDefined(formBuilder[next])) {
+                                                        formBuilder[next] = [];
+                                                    }
+                                                    formBuilder[next].push(gr);
+                                                } else {
+                                                    formBuilder['0'].push(gr);
+                                                }
+                                            }
+                                            groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
+                                            return;
+                                        }
+                                        if (config.ui.specifics.layoutConfig) {
+                                            next = findWhereByLayoutConfig(field);
+                                            if (!angular.isDefined(formBuilder[next])) {
+                                                formBuilder[next] = [];
+                                            }
+                                            formBuilder[next].push(field);
+                                            // this is manual layout config, skip this part
+                                            return;
+                                        }
+                                        if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
+                                            group = {
+                                                label: field.ui.label || inflector(field.code_name, 'humanize')
+                                            };
+                                            if (_.string.contains(field.type, 'Remote')) {
+                                                group.include = 'core/misc/action.html';
+                                                group.action = function () {
+                                                    var test = true;
+                                                    if (field.ui.specifics.canOpen) {
+                                                        test = field.ui.specifics.canOpen();
+                                                    }
+                                                    if (test) {
+                                                        modals.fields.remote($scope, field);
+                                                    }
+                                                };
+                                            }
+                                            $scope.layouts.groups.push(group);
+
+                                            next = $scope.layouts.groups.length - 1;
+
+                                            if (!angular.isDefined(formBuilder[next])) {
+                                                formBuilder[next] = [];
+                                            }
+                                            formBuilder[next].push(field);
+                                        } else {
+                                            formBuilder['0'].push(field);
+                                        }
+                                    });
+
+                                    if (config.ui.specifics.remote) {
+
+                                        // reference to args that get sent
+                                        $scope.rootArgs = rootArgs;
+                                        $scope.setAction = function (action) {
+                                            // internal helper to set the action to be executed
+                                            $scope.sendRootArgs.action_id = action;
+                                        };
+                                        // copy of root args used for packing the customized arguments
+                                        $scope.sendRootArgs = {};
+                                        $scope.save = function (dontShowMessage) {
+                                            if (!$scope.validateForm()) { // check if the form is valid
+                                                return false;
+                                            }
+                                            var promise,
+                                                prepare = function () {
+                                                    var readArgs = {},
+                                                        readRootArgs = $scope.rootArgs,
+                                                        readRootArgsAsList,
+                                                        parentArgsPath = $scope.args.ui.access,
+                                                        fieldList,
+                                                        traceDeep;
+                                                    // set this args as single item in array
+                                                    // delete all remote structured property from rpc data
+                                                    readRootArgs = angular.copy(readRootArgs);
+                                                    helpers.setProperty(readRootArgs, parentArgsPath, $scope.args);
+                                                    $scope.sendRootArgs = readRootArgs;
+                                                    angular.forEach($scope.rootScope.config.fields, function (field) {
+                                                        if (_.string.contains(field.type, 'RemoteStructured') && field.code_name !== $scope.args.ui.access[0]) {
+                                                            delete readRootArgs[field.code_name];
+                                                        }
+                                                    });
+                                                    readRootArgs.read_arguments = readArgs;
+                                                    angular.forEach(parentArgsPath, function (part, i) {
+                                                        // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
+                                                        // properties in datastore that begin with an number, which we do not
+                                                        if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
+                                                            readArgs[part] = {
+                                                                config: {}
+                                                            };
+                                                            readArgs = readArgs[part];
+                                                        }
+                                                        // produce read path for the rpc
+                                                        readRootArgs = readRootArgs[part];
+                                                        if (angular.isArray(readRootArgs)) {
+                                                            readRootArgsAsList = readRootArgs;
+                                                        } else {
+                                                            if (angular.isDefined(readRootArgsAsList)) {
+                                                                readRootArgsAsList.empty();
+                                                                readRootArgsAsList.push(readRootArgs);
+                                                                readRootArgsAsList = undefined;
+                                                            }
+                                                            if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
+                                                                if (!angular.isDefined(readArgs.config.keys)) {
+                                                                    readArgs.config.keys = [];
+                                                                }
+                                                                readArgs.config.keys.push(readRootArgs.key);
+
+                                                            }
+                                                        }
+                                                    });
+
+                                                    traceDeep = function (readRootArgs, readArgs) {
+                                                        if (readRootArgs && readRootArgs.key) {
+                                                            fieldList = modelsMeta.getFields(readRootArgs.kind);
+                                                            angular.forEach(fieldList, function (field) {
+                                                                if (field.is_structured && _.string.contains(field.type, 'RemoteStructured')) {
+                                                                    var keys = [],
+                                                                        newReadArgs = {
+                                                                            config: {
+                                                                                keys: keys
+                                                                            }
+                                                                        };
+                                                                    if (field.repeated) {
+                                                                        angular.forEach(readRootArgs[field.code_name], function (ent) {
+                                                                            if (ent.key) {
+                                                                                keys.push(ent.key);
+                                                                                traceDeep(ent, newReadArgs);
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                    readArgs[field.code_name] = newReadArgs;
+                                                                }
+                                                            });
+                                                        } else if (angular.isArray(readRootArgs)) {
+                                                            angular.forEach(readRootArgs, function (readRootArg) {
+                                                                traceDeep(readRootArg, readArgs);
+                                                            });
+                                                        }
+                                                    };
+
+                                                    traceDeep(readRootArgs, readArgs);
+                                                };
+
+                                            prepare();
+                                            if (config.ui.specifics.beforeSave) {
+                                                config.ui.specifics.beforeSave($scope);
+                                            }
+                                            // create rpc from root args's action model and action id
+                                            promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
+                                            promise.then(function (response) {
+                                                $scope.response = response;
+                                                var keepAccess = angular.copy($scope.args.ui.access),
+                                                    // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
+                                                    value = getResult(response, keepAccess);
+                                                $.extend($scope.args, value); // modify current args
+                                                $scope.args.ui.access = keepAccess; // reference back original access path
+                                                if ($scope.isNew) {
+                                                    if (config.repeated) {
+                                                        $scope.parentArgs.unshift($scope.args); // preappend arg if they are new
+                                                    }
+                                                    $scope.isNew = false;
+                                                }
+                                                $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
+                                                // re-run prepare to ensure proper paths for complete hook
+                                                prepare();
+                                                if (angular.isDefined(config.ui.specifics.afterSave)) {
+                                                    config.ui.specifics.afterSave($scope);
+                                                }
+                                                $scope.formSetPristine();
+                                                if (!dontShowMessage) {
+                                                    snackbar.showK('changesSaved');
+                                                }
+
+                                            }, function (response) {
+                                                // here handle error...
+                                                if (angular.isDefined(config.ui.specifics.afterSaveError)) {
+                                                    config.ui.specifics.afterSaveError($scope, response);
+                                                }
+                                            });
+
+                                            return promise;
+                                        };
+
+                                        $scope.complete = function (response) {
+                                            $scope.response = response;
+                                            var keepAccess = angular.copy($scope.args.ui.access),
+                                                value = getResult(response, keepAccess);
+
+                                            $.extend($scope.args, value);
+                                            $scope.args.ui.access = keepAccess;
+                                            if (angular.isDefined(config.ui.specifics.afterComplete)) {
+                                                config.ui.specifics.afterComplete($scope);
+                                            }
+                                            $scope.formSetPristine();
+
+                                            snackbar.showK('changesSaved');
+                                        };
+
+                                        $scope.noComplete = function () {
+                                            // fired when the scope.complete() does not get fired i.e. when no files were sent for upload
+                                            if (angular.isDefined(config.ui.specifics.noComplete)) {
+                                                config.ui.specifics.noComplete($scope);
+                                            }
+                                            $scope.formSetPristine();
+                                        };
+
+                                        $scope.completeError = function (response) {
+                                            // fired when it failed to send http-form-data rpc
+                                            if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
+                                                config.ui.specifics.afterCompleteError($scope, response);
+                                            }
+                                            $scope.formSetPristine();
+                                        };
+
+
+                                    } else {
+
+
+                                        $scope.save = function () {
+                                            if (!$scope.validateForm()) { // check if the form is valid
+                                                return false;
+                                            }
+                                            if ($scope.container.form.$dirty) {
+                                                $scope.rootFormSetDirty();
+                                            }
+                                            var promise = null,
+                                                saveCompleteDefer = $q.defer(),
+                                                saveCompletePromise = saveCompleteDefer.promise,
+                                                complete = function () {
+                                                    var completePromise = null,
+                                                        total = 0;
+
+                                                    if (config.repeated) {
+                                                        if ($scope.isNew) {
+                                                            $scope.parentArgs.unshift($scope.args);
+                                                            $scope.isNew = false;
+                                                            total = $scope.parentArgs.length - 1;
+                                                            angular.forEach($scope.parentArgs, function (item, i) {
+                                                                i = total - i;
+                                                                item._sequence = i;
+                                                                item.sequence = i;
+                                                            });
+                                                        } else {
+                                                            $.extend(arg, $scope.args);
+                                                        }
+                                                    }
+
+                                                    if (angular.isFunction(config.ui.specifics.afterSave)) {
+                                                        completePromise = config.ui.specifics.afterSave($scope, info);
+                                                    }
+
+                                                    if (completePromise && completePromise.then) {
+                                                        completePromise.then(function () {
+                                                            $scope.formSetPristine();
+                                                            saveCompleteDefer.resolve();
+                                                            if (config.closeAfterSave) {
+                                                                $scope.close();
+                                                            }
+                                                        });
+                                                    } else {
+                                                        $scope.formSetPristine();
+                                                        saveCompleteDefer.resolve();
+                                                        if (config.closeAfterSave) {
+                                                            $scope.close();
+                                                        }
+                                                    }
+
+                                                };
+
+                                            if (angular.isFunction(config.ui.specifics.beforeSave)) {
+                                                promise = config.ui.specifics.beforeSave($scope, info);
+                                            }
+
+                                            if (promise && promise.then) {
+                                                promise.then(complete);
+
+                                            } else {
+                                                complete();
+                                            }
+                                            return saveCompletePromise;
+
+                                        };
+                                    }
+
+                                    // construct direct scope
+                                    if (config.ui.specifics.scope) {
+                                        $.extend($scope, config.ui.specifics.scope);
+                                    }
+
+                                    // call constructor
+                                    if (angular.isFunction(config.ui.specifics.init)) {
+                                        config.ui.specifics.init($scope);
+                                    }
+
+                                    getTitle = function () {
+                                        return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
+                                    };
+
+                                    config._title_.push(getTitle);
+
+                                    $scope.$watch('isNew', function () {
+                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
+                                    });
+
+                                    angular.forEach(config.ui.specifics.fields, function (field) {
+                                        field._title_ = config._title_.concat();
+                                    });
+
+                                    $scope.$on('$destroy', function () {
+                                        config._title_.remove(getTitle);
+                                    });
+
+                                })
+                            });
+                        };
+
+                        if (angular.isUndefined(config.ui.specifics.create)) {
+                            config.ui.specifics.create = config.ui.specifics.manage;
+                        }
+
+                        info.scope.$on('$destroy', function () {
+                            config.ui.specifics.create = undefined;
+                        });
+
+                    }
+
+                    return 'structured_' + (config.repeated ? 'repeated' : 'single');
+                },
+                _RemoteStructuredPropery: function (info) {
+                    var config = info.config;
+                    config.ui.specifics.remote = true;
+                },
+                SuperStructuredProperty: function (info) {
+                    return this.SuperLocalStructuredProperty(info);
+                },
+                SuperRemoteStructuredProperty: function (info) {
+                    this._RemoteStructuredPropery(info);
+                    var ret = this.SuperLocalStructuredProperty(info);
+                    return ret;
+                },
+                SuperImageLocalStructuredProperty: function (info) {
+                    this.SuperLocalStructuredProperty(info);
+                    if (!info.config.ui.specifics.displayImageConfig) {
+                        info.config.ui.specifics.displayImageConfig = {
+                            size: 360
+                        };
+                    }
+                    if (!info.config.ui.specifics.sortableOptions) {
+                        info.config.ui.specifics.sortableOptions = {};
+                    }
+                    $.extend(info.config.ui.specifics.sortableOptions, {
+                        axis: false,
+                        containment: false
+                    });
+                    return 'image';
+                },
+                SuperImageStructuredProperty: function (info) {
+                    if (!info.config.ui.specifics.sortableOptions) {
+                        info.config.ui.specifics.sortableOptions = {};
+                    }
+                    $.extend(info.config.ui.specifics.sortableOptions, {
+                        axis: false,
+                        containment: false
+                    });
+                    return this.SuperImageLocalStructuredProperty(info);
+                },
+                SuperImageRemoteStructuredProperty: function (info) {
+                    this._RemoteStructuredPropery(info);
+                    var ret = this.SuperImageLocalStructuredProperty(info);
+                    return ret;
+                }
+            });
+
         }));
 }());
 (function () {
@@ -11383,7 +11667,7 @@ $(function () {
                         if (nv !== ov) {
                             var img = element,
                                 done = function () {
-                                    img.css('visibility', 'visible');
+                                    img.css('visibility', 'inherit');
                                     scope.$emit('displayImageLoaded', img);
                                 },
                                 error = function () {
@@ -11400,8 +11684,10 @@ $(function () {
                                     .on('error', error)
                                     .attr('src', scope.image.serving_url + (scope.config.size === true ? '' : '=s' + scope.config.size));
                             } else {
-                                error();
-                                done();
+                                setTimeout(function () {
+                                    error();
+                                    done();
+                                }, 50);
                             }
                         }
                     };
@@ -11505,11 +11791,17 @@ $(function () {
                     config: '=loadMoreButton'
                 }
             };
-        })).directive('autoloadOnVerticalScrollEnd', function () {
+        })).directive('autoloadOnVerticalScrollEnd', ng(function ($timeout) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    var config, listen, loadMore, steady, steadyOpts;
+                    var config,
+                        listen,
+                        loadMore,
+                        steady,
+                        steadyOpts,
+                        maybeMore,
+                        attempts = 0;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
                     if (!attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
                         return;
@@ -11526,6 +11818,24 @@ $(function () {
                         }
                         return listener;
                     }());
+
+
+                    maybeMore = function () {
+                        $timeout(function () {
+                            var maybe = listen.get(0).scrollHeight <= listen.height(),
+                                promise;
+                            if (maybe) {
+                                promise = loadMore({}, angular.noop);
+                                if (promise) {
+                                    promise.then(function () {
+                                        maybeMore();
+                                    });
+                                }
+                            }
+                        }, 1000, false);
+
+                    };
+
                     loadMore = function (values, done) {
                         var promise = config.loader.load();
                         if (!promise) {
@@ -11535,10 +11845,12 @@ $(function () {
                         promise.then(function () {
                             done();
                         });
+
+                        return promise;
                     };
                     steadyOpts = {
                         conditions: {
-                            "max-bottom": config.bottom || 40
+                            'max-bottom': config.bottom || 40
                         },
                         scrollElement: listen.get(0),
                         throttle: 100,
@@ -11550,9 +11862,11 @@ $(function () {
                         steady = undefined;
                     });
 
+                    maybeMore();
+
                 }
             };
-        }).directive('resizeChart', ng(function (helpers) {
+        })).directive('resizeChart', ng(function (helpers) {
             return {
                 priority: 100,
                 link: function (scope, element, attrs) {
@@ -11609,9 +11923,7 @@ $(function () {
                 transclude: true,
                 scope: true,
                 link: function (scope, element, attrs) {
-                    var types = attrs.type.split('.');
-                    scope.type = types[0];
-                    scope.icon = types[1];
+                    scope.icon = attrs.type;
                     scope.color = attrs.color || 'normal';
                 }
             };
@@ -12371,7 +12683,7 @@ $(function () {
                 window._channelApi = channelApi;
             }
             return channelApi;
-        })).factory('channelNotifications', ng(function (channelApi, modals) {
+        })).factory('channelNotifications', ng(function (channelApi, snackbar) {
             var channelNotifications = {
                 instances: {},
                 create: function (token) {
@@ -12388,10 +12700,7 @@ $(function () {
                                 if (angular.isObject(message) && message.data) {
                                     try {
                                         var response = angular.fromJson(message.data);
-                                        modals.alert('channelNotifications', {
-                                            title: 'Notification from server',
-                                            messages: [response.body]
-                                        });
+                                        snackbar.show(response.body);
                                     } catch (ignore) {}
                                 }
                             }
@@ -12655,7 +12964,7 @@ $(function () {
                             element.addClass('visible');
                             $(window).triggerHandler('modal.visible', [element]);
                             scope.modalOptions.opened = true;
-                            scope.$broadcast('opened');
+                            scope.$apply();
                         });
 
                         $(window).triggerHandler('modal.open', [element]);
@@ -12807,6 +13116,7 @@ $(function () {
                     outDirection: modal.outDirection,
                     popFrom: modal.popFrom,
                     fullScreen: modal.fullScreen,
+                    noEscape: modal.noEscape,
                     opened: false
                 };
 
@@ -12840,28 +13150,39 @@ $(function () {
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
 
-                modalInstance.esc = function (e) {
-                    var modalWindow = openedWindows.get(modalInstance);
-                    if (e) {
-                        e.preventDefault();
-                    }
-                    if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope._close_) {
-                        return modalWindow.value.modalScope._close_();
-                    }
+                if (!modal.noEscape) {
+                    modalInstance.esc = function (e) {
+                        var modalWindow = openedWindows.get(modalInstance);
+                        if (e) {
+                            e.preventDefault();
+                        }
+                        if (modalWindow && modalWindow.value && modalWindow.value.modalScope && modalWindow.value.modalScope._close_) {
+                            return modalWindow.value.modalScope._close_();
+                        }
 
-                    $rootScope.$apply(function () {
-                        $modalStack.dismiss(modalInstance, 'escape key press');
-                    });
+                        $rootScope.$apply(function () {
+                            if (modalWindow && modalWindow.value && modalWindow.value.modalScope) {
+                                return modalWindow.value.modalScope.close();
+                            }
+                            $modalStack.dismiss(modalInstance, 'escape key press');
+                        });
 
-                    return true;
-                };
-                mdContextualMonitor.queue(modalInstance.esc);
+                        return true;
+                    };
+                    mdContextualMonitor.queue(modalInstance.esc);
+                }
+
             };
 
             $modalStack._dequeue = function (modalWindow, modalInstance) {
-                mdContextualMonitor.dequeue(modalInstance.esc);
-                if (modalWindow && modalWindow.value && modalWindow.value.modalScope.modalOptions.resize) {
-                    $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
+
+                if (modalWindow && modalWindow.value) {
+                    if (!modalWindow.value.modalScope.modalOptions.noEscape) {
+                        mdContextualMonitor.dequeue(modalInstance.esc);
+                    }
+                    if (modalWindow.value.modalScope.modalOptions.resize) {
+                        $(window).off('resize', modalWindow.value.modalScope.modalOptions.resize);
+                    }
                 }
             };
 
@@ -12898,7 +13219,8 @@ $(function () {
             };
 
             return $modalStack;
-        }]).provider('$modal', function () {
+        }
+    ]).provider('$modal', function () {
 
         var $modalProvider = {
             options: {
@@ -12965,6 +13287,7 @@ $(function () {
 
                             var modalScope = (modalOptions.scope || $rootScope).$new();
                             modalScope.$close = modalInstance.close;
+                            modalScope.close = modalScope.$close;
                             modalScope.$dismiss = modalInstance.dismiss;
 
                             var ctrlInstance, ctrlLocals = {};
@@ -12995,7 +13318,8 @@ $(function () {
                                 inDirection: modalOptions.inDirection,
                                 outDirection: modalOptions.outDirection,
                                 fullScreen: modalOptions.fullScreen,
-                                popFrom: modalOptions.popFrom
+                                popFrom: modalOptions.popFrom,
+                                noEscape: modalOptions.noEscape
                             });
 
                         }, function resolveError(reason) {
@@ -13184,6 +13508,8 @@ $(function () {
 
                         $scope.container = {};
                         $scope.config = {};
+
+                        $scope.config.scroll = true;
 
                         $scope.config.dismiss = function () {
                             return $scope.$close();
@@ -13414,7 +13740,7 @@ $(function () {
                             field: fieldPermissions
                         },
                         actionTranslate = function (actionName) {
-                            return actionPermissions[ruleActions[actionName].key];
+                            return actionPermissions[ruleActions[actionName].id];
                         },
                         executable = function (actionName) {
                             var gets = actionTranslate(actionName);
@@ -13704,30 +14030,28 @@ $(function () {
                                 };
                             }
                             var that = this;
-                            models[config.kind].actions.read(args).then(function (response) {
+                            return models[config.kind].actions.read(args).then(function (response) {
                                 $.extend(entity, response.data.entity);
-                                that.open(entity, args);
+                                return that.open(entity, args);
                             });
-                            return this;
                         },
                         prepare: function (entity, args) {
                             var that = this;
-                            models[config.kind].actions.prepare(args).then(function (response) {
+                            return models[config.kind].actions.prepare(args).then(function (response) {
                                 $.extend(entity, response.data.entity);
-                                that.open(entity, args);
+                                return that.open(entity, args);
                             });
-                            return this;
                         },
                         open: function (entity, args) {
                             var opener = $modal,
                                 fn = 'open',
+                                defer = $q.defer(),
+                                completePromise = defer.promise,
                                 ctrl;
                             ctrl = function ($scope) {
                                 var inflector = $filter('inflector'),
                                     field,
                                     done = {},
-                                    found = false,
-                                    realTotal = 0,
                                     rootTitle,
                                     madeHistory = false,
                                     makeHistory = function () {
@@ -13857,10 +14181,11 @@ $(function () {
 
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope._close_ = undefined;
-                                    $scope.$close();
+                                    var promise = $scope.$close();
                                     if (config.afterClose) {
                                         config.afterClose($scope);
                                     }
+                                    return promise;
                                 });
 
                                 $scope._close_ = $scope.close;
@@ -13974,6 +14299,8 @@ $(function () {
                                 $scope.$on('$destroy', function () {
                                     config.getScope = undefined;
                                 });
+
+                                defer.resolve($scope);
                             };
 
                             ctrl.$inject = ['$scope'];
@@ -13983,7 +14310,7 @@ $(function () {
                                 controller: ctrl
                             }, config.modalConfig));
 
-                            return this;
+                            return completePromise;
                         }
                     };
 
@@ -14193,7 +14520,12 @@ $(function () {
                                             read_arguments: next
                                         }));
 
-                                        promise.then(function (response) {
+                                        promise['finally'](function () {
+                                            reader.loading = false;
+                                            reader.loaded = true;
+                                        });
+
+                                        return promise.then(function (response) {
                                             var getAccess = [],
                                                 items,
                                                 loadedNext;
@@ -14215,12 +14547,9 @@ $(function () {
                                             if (that.more) {
                                                 that.next = loadedNext;
                                             }
-                                        })['finally'](function () {
-                                            reader.loading = false;
-                                            reader.loaded = true;
-                                        });
 
-                                        return promise;
+                                            return response;
+                                        });
                                     }
                                 };
 
@@ -14314,7 +14643,7 @@ $(function () {
                                         templateBodyUrl: 'core/record/list.html',
                                         toolbar: {
                                             hideSave: true,
-                                            leftIcon: 'navigation.arrow-back',
+                                            leftIcon: 'arrow_back',
                                             title: config.title + ' / History'
                                         }
                                     };
@@ -14341,8 +14670,6 @@ $(function () {
 
                                     $.extend(defaultReaderOpts, config.reader);
 
-                                    $scope.close = $scope.$close;
-
                                     $scope.history = {
                                         records: [],
                                         reader: models[config.kind].reader(defaultReaderOpts),
@@ -14355,10 +14682,8 @@ $(function () {
                                                     $scope.dialog.templateBodyUrl = 'core/record/view_body.html';
                                                     $scope.dialog.toolbar = {
                                                         hideSave: true,
+                                                        leftIcon: 'arrow_back',
                                                         title: 'Log for date  ' + record.logged
-                                                    };
-                                                    $scope.close = function () {
-                                                        $scope.$close();
                                                     };
                                                 })
                                             });
@@ -14377,69 +14702,29 @@ $(function () {
 }());(function () {
     'use strict';
     angular.module('app')
-        .directive('selectInput', ng(function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
+        .directive('selectInputMultiple', ng(function ($timeout, underscoreTemplate, $modal) {
             return {
-                replace: true,
-                transclude: true,
-                require: ['ngModel', '^?mdInputContainer', '^?form'],
-                templateUrl: 'core/select/input.html',
-                scope: true,
+                require: ['ngModel', '^?form'],
                 link: function (scope, element, attrs, ctrls) {
                     var ngModel = ctrls[0],
-                        containerCtrl = ctrls[1],
-                        formCtrl = ctrls[2],
+                        formCtrl = ctrls[1],
+                        grouping = scope.$eval(attrs.grouping),
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
-                        search = scope.$eval(attrs.search),
-                        multiple = scope.$eval(attrs.multiple),
-                        placeholder = attrs.placeholder,
-                        select = {},
-                        timeout,
-                        ngModelPipelineCheckValue,
-                        dontOpen = false;
-                    containerCtrl.input = element;
-                    ngModelPipelineCheckValue = function (arg) {
-                        var s = !ngModel.$isEmpty(arg);
-                        if (angular.isArray(arg)) {
-                            s = arg.length !== 0;
-                        }
-                        containerCtrl.setHasValue(s);
-                        return arg;
-                    };
-                    scope.$watch(function () {
-                        return ngModel.$invalid && ngModel.$touched;
-                    }, containerCtrl.setInvalid);
-
-                    ngModel.$parsers.push(ngModelPipelineCheckValue);
-                    ngModel.$formatters.push(ngModelPipelineCheckValue);
-
-                    element.on('keyup', function (ev) {
-                        if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
-                            select.open();
-                        }
-                    });
-                    element.on('click', function (ev) {
-                        if (!dontOpen) {
-                            select.open();
-                        }
-                        dontOpen = false;
-
-                        ev.preventDefault();
-                    });
-                    element.on('blur', function (ev) {
-                        containerCtrl.setFocused(false);
-                    });
-                    scope.$on('$destroy', function () {
-                        containerCtrl.setFocused(false);
-                        containerCtrl.setHasValue(false);
-                        containerCtrl.input = null;
+                        listView = scope.$eval(attrs.listView),
+                        select = scope.$eval(attrs.select),
+                        init = (select && select.init ? select.init : null);
+                    ngModel.$formatters.push(function (value) {
+                        select.item = select.find(value);
+                        return value;
                     });
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
-                    select.placeholder = placeholder;
+                    select.anyItems = 0;
+                    select.async = true;
                     select.loading = false;
-                    select.multiple = multiple;
+                    select.multiple = true;
                     select.items = [];
                     select.find = function (value) {
                         if (value === null) {
@@ -14456,7 +14741,9 @@ $(function () {
                                         found = select.items[i];
                                     }
                                 } else {
-                                    found = _.findWhere(select.items, {key: val});
+                                    found = _.findWhere(select.items, {
+                                        key: val
+                                    });
                                 }
                                 return found;
                             };
@@ -14495,6 +14782,284 @@ $(function () {
                     select.setItems = function (items) {
                         select.items = items;
                         select.collectActive();
+                        if (grouping) {
+                            select.grouping = grouping(select.items);
+                        }
+                        select.anyItems = items.length;
+                    };
+                    select.isSelected = function (item) {
+                        var hash = select.getHash(item);
+                        if (select.multiple) {
+                            return $.inArray(hash, ngModel.$modelValue) !== -1;
+                        }
+                        return ngModel.$modelValue === hash;
+                    };
+                    select.remove = function (item) {
+                        select.select(item);
+                    };
+                    select.anySelected = function () {
+                        var any = true;
+                        angular.forEach(select.multipleSelection, function (value) {
+                            if (!any) {
+                                any = value;
+                            }
+                        });
+                        return any;
+                    };
+                    select.multipleSelection = {};
+                    select.multipleSelect = function (item) {
+                        var hash = select.getHash(item),
+                            hasIt = !select.multipleSelection[hash],
+                            already = ngModel.$modelValue || [],
+                            selected = $.inArray(hash, ngModel.$modelValue) !== -1;
+                        select.multipleSelection[hash] = hasIt;
+                        if (!angular.isArray(select.item)) {
+                            select.item = already;
+                        }
+                        if (hasIt) {
+                            if (!selected) {
+                                already.push(hash);
+                                select.item.push(item);
+                            }
+                        } else {
+                            if (selected) {
+                                already.remove(hash);
+                                select.item.remove(item);
+                            }
+                        }
+                        ngModel.$setViewValue(already);
+                        formCtrl.$setDirty();
+                        select.close();
+                    };
+
+                    select.collectActive = function () {
+                        angular.forEach(select.items, function (item) {
+                            var hash = select.getHash(item);
+                            if (angular.isUndefined(select.multipleSelection[hash]) && $.inArray(hash, ngModel.$modelValue) !== -1) {
+                                select.multipleSelection[hash] = true;
+                            }
+                        });
+                    };
+
+                    select.isChecked = function (item) {
+                        return select.multipleSelection[select.getHash(item)];
+                    };
+                    select.select = function (item) {
+                        select.multipleSelect(item);
+                    };
+                    select.close = angular.noop;
+                    select.opened = false;
+                    select.open = function ($event) {
+                        if (select.opened) {
+                            return;
+                        }
+                        select.opened = true;
+                        $timeout(function () {
+                            select.openSimpleDialog($event);
+                        });
+                    };
+                    select.openSimpleDialog = function ($event) {
+                        if (element.attr('disabled')) {
+                            return;
+                        }
+                        if (select.search) {
+                            select.search.query = {};
+                        }
+                        select.multipleSelection = {};
+                        select.collectActive();
+
+                        var attachTo = element.parents('.modal:first').find('.modal-dialog:first'),
+                            choices;
+
+                        if (!attachTo.length) {
+                            attachTo = element.parents('body:first');
+                        }
+
+                        choices = underscoreTemplate.get(select.openTemplate || 'core/select/choices.html')({
+                            select: select
+                        });
+                        $modal.open({
+                            template: underscoreTemplate.get('core/select/single.html')().replace('{{content}}', choices),
+                            targetEvent: $event,
+                            parent: attachTo,
+                            inDirection: false,
+                            windowClass: 'modal-medium-simple ' + (select.windowClass || ''),
+                            outDirection: false,
+                            fullScreen: false,
+                            backdrop: true,
+                            controller: ng(function ($scope) {
+                                $scope.select = select;
+                                $scope.$on('$destroy', function () {
+                                    select.opened = false;
+                                    select.close = angular.noop;
+                                });
+                                select.close = function () {
+                                    $scope.$close();
+                                };
+                            })
+                        });
+                    };
+                    if (!view) {
+                        view = function (item) {
+                            return angular.isObject(item) ? item.name : item;
+                        };
+                    }
+                    select.view = view;
+                    select.listView = listView || view;
+                    ngModel.$formatters.push(function (value) {
+                        select.item = select.find(value);
+                        return value;
+                    });
+                    if (grouping) {
+                        select.hasGrouping = true;
+                        select.grouping = [];
+                    }
+                    select.setItems(items);
+                    scope.$watchGroup([attrs.items + '.length', attrs.items], function (neww, old) {
+                        if (neww[0] !== old[0] || neww[1] !== old[1]) {
+                            select.setItems(scope.$eval(attrs.items));
+                            select.getActive();
+                            if (select.opened) {
+                                $timeout(function () {
+                                    $(window).triggerHandler('resize');
+                                }, 0, false);
+                            }
+                        }
+                    });
+
+                    if (init) {
+                        init(select, scope, element, attrs, ctrls);
+                    }
+
+                }
+            };
+        }))
+        .directive('selectInput', ng(function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, helpers, $q, $modal) {
+            return {
+                replace: true,
+                transclude: true,
+                require: ['ngModel', '^?mdInputContainer', '^?form'],
+                templateUrl: 'core/select/input.html',
+                scope: true,
+                link: function (scope, element, attrs, ctrls) {
+                    var ngModel = ctrls[0],
+                        containerCtrl = ctrls[1],
+                        formCtrl = ctrls[2],
+                        items = scope.$eval(attrs.items),
+                        view = scope.$eval(attrs.view),
+                        search = scope.$eval(attrs.search),
+                        init = (search && search.init ? search.init : null),
+                        multiple = scope.$eval(attrs.multiple),
+                        async = scope.$eval(attrs.async),
+                        grouping = scope.$eval(attrs.grouping),
+                        listView = scope.$eval(attrs.listView),
+                        placeholder = attrs.placeholder,
+                        select = {},
+                        timeout,
+                        ngModelPipelineCheckValue,
+                        dontOpen = false;
+                    containerCtrl.input = element;
+                    ngModelPipelineCheckValue = function (arg) {
+                        var s = !ngModel.$isEmpty(arg);
+                        if (angular.isArray(arg)) {
+                            s = arg.length !== 0;
+                        }
+                        containerCtrl.setHasValue(s);
+                        return arg;
+                    };
+                    scope.$watch(function () {
+                        return ngModel.$invalid && ngModel.$touched;
+                    }, containerCtrl.setInvalid);
+
+                    ngModel.$parsers.push(ngModelPipelineCheckValue);
+                    ngModel.$formatters.push(ngModelPipelineCheckValue);
+
+                    element.on('keyup', function (ev) {
+                        if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
+                            select.open();
+                        }
+                    }).on('click', function (ev) {
+                        if (!dontOpen) {
+                            select.open();
+                        }
+                        dontOpen = false;
+
+                        ev.preventDefault();
+                    }).on('blur', function (ev) {
+                        containerCtrl.setFocused(false);
+                    });
+                    scope.$on('$destroy', function () {
+                        containerCtrl.setFocused(false);
+                        containerCtrl.setHasValue(false);
+                        containerCtrl.input = null;
+                    });
+                    select.getHash = function (item) {
+                        return (angular.isObject(item) ? item.key : item);
+                    };
+                    select.async = async;
+                    select.placeholder = placeholder;
+                    select.loading = false;
+                    select.multiple = multiple;
+                    select.items = [];
+                    select.find = function (value) {
+                        if (value === null) {
+                            return undefined;
+                        }
+                        var active,
+                            missing,
+                            get = function (val) {
+                                var i,
+                                    found;
+                                if (!angular.isObject(select.items[0])) {
+                                    i = select.items.indexOf(val);
+                                    if (i !== -1) {
+                                        found = select.items[i];
+                                    }
+                                } else {
+                                    found = _.findWhere(select.items, {
+                                        key: val
+                                    });
+                                }
+                                return found;
+                            };
+                        if (select.multiple) {
+                            missing = [];
+                            active = [];
+                            if (value && value.length) {
+                                angular.forEach(value, function (val) {
+                                    var gets = get(val);
+                                    if (angular.isUndefined(gets)) {
+                                        missing.push(val);
+                                    } else {
+                                        active.push(gets);
+                                    }
+                                });
+                            }
+                        } else {
+                            active = get(value);
+                            if (angular.isUndefined(active)) {
+                                missing = value;
+                            }
+                        }
+                        if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
+                            select.search.ready.then(function () {
+                                if (select.search.missing) {
+                                    select.search.missing(missing);
+                                }
+                            });
+                        }
+                        return active;
+                    };
+                    select.getActive = function () {
+                        select.item = select.find(ngModel.$modelValue);
+                        return select.item;
+                    };
+                    select.setItems = function (items) {
+                        select.items = items;
+                        select.collectActive();
+                        if (grouping) {
+                            select.grouping = grouping(select.items);
+                        }
                     };
                     select.isSelected = function (item) {
                         var hash = select.getHash(item);
@@ -14559,8 +15124,7 @@ $(function () {
                     select.collectActive = function () {
                         angular.forEach(select.items, function (item) {
                             var hash = select.getHash(item);
-                            if (angular.isUndefined(select.multipleSelection[hash])
-                                    && $.inArray(hash, ngModel.$modelValue) !== -1) {
+                            if (angular.isUndefined(select.multipleSelection[hash]) && $.inArray(hash, ngModel.$modelValue) !== -1) {
                                 select.multipleSelection[hash] = true;
                             }
                         });
@@ -14604,21 +15168,25 @@ $(function () {
                             attachTo = element.parents('body:first');
                         }
 
-                        choices = underscoreTemplate.get('core/select/choices.html')({select: select});
+                        choices = underscoreTemplate.get(select.openTemplate || 'core/select/choices.html')({
+                            select: select
+                        });
                         root = choices;
-                        if (select.multiple) {
-                            root = underscoreTemplate.get('core/select/multiple.html')().replace('{{content}}', choices);
+                        if (select.multiple || async) {
+                            root = underscoreTemplate.get('core/select/single.html')().replace('{{content}}', choices);
                             $event = undefined;
                         }
 
-                        (select.multiple ? $modal.open : $simpleDialog.show)({
+                        (select.multiple || async ? $modal.open : $simpleDialog.show)({
                             template: root,
                             popFrom: ($event ? $event.target : undefined),
                             targetEvent: $event,
                             parent: attachTo,
                             inDirection: false,
+                            windowClass: 'modal-medium-simple ' + (select.windowClass ? select.windowClass : ''),
                             outDirection: false,
                             fullScreen: false,
+                            backdrop: true,
                             disableScroll: [element.parents('md-content:first'), element.parents('.fixed-height:first')],
                             onBeforeHide: function (dialogEl, options) {
                                 $(window).off('resize', options.resize);
@@ -14635,8 +15203,8 @@ $(function () {
                                                 elementOffset = element.offset(),
                                                 parent = options.parent,
                                                 parentOffset = parent.offset(),
-                                                paddingTop = 24,
-                                                paddingBottom = 24,
+                                                paddingTop = async ? 24 : 16,
+                                                paddingBottom = async ? 24 : 16,
                                                 parentHeight = options.parent.height(),
                                                 scrollElement = dialogEl.find('md-content'),
                                                 maxTop,
@@ -14664,9 +15232,7 @@ $(function () {
                                             maxTop = parentOffset.top + paddingTop + toolbarHeight;
                                             innerHeight = parentHeight - (paddingBottom + paddingTop + toolbarHeight);
                                             dialogEl.width(target.width());
-                                            if ((dialogEl.height() > parentHeight)
-                                                    || (scrollElement.prop('scrollHeight') > parentHeight)
-                                                    || (dialogEl.height() > innerHeight)) {
+                                            if ((dialogEl.height() > parentHeight) || (scrollElement.prop('scrollHeight') > parentHeight) || (dialogEl.height() > innerHeight)) {
                                                 dialogEl.css({
                                                     top: maxTop,
                                                     left: elementOffset.left
@@ -14698,8 +15264,7 @@ $(function () {
                                             }
 
                                             if (wrapAroundOffset) {
-                                                dialogEl.css($mdConstant.CSS.TRANSFORMORIGIN,
-                                                    (wrapAroundOffset.left + target.width() / 2) + 'px ' + (wrapAroundOffset.top + active.height() / 2 - scrollElement.scrollTop()) + 'px 0px');
+                                                dialogEl.css($mdConstant.CSS.TRANSFORMORIGIN, (wrapAroundOffset.left + target.width() / 2) + 'px ' + (wrapAroundOffset.top + active.height() / 2 - scrollElement.scrollTop()) + 'px 0px');
                                             }
                                         };
                                         options.resize();
@@ -14707,78 +15272,54 @@ $(function () {
                                             setTimeout(options.resize, 100);
                                         });
 
-                                        dialogEl/*.css($mdConstant.CSS.TRANSFORM, 'scale(' +
-                                            Math.min(target.width() / dialogEl.width(), 1.0) + ',' +
-                                            Math.min(target.height() / dialogEl.height(), 1.0) + ')')
-                                            .on($mdConstant.CSS.TRANSITIONEND, function (ev) {
-                                                if (ev.target === dialogEl[0]) {
-                                                    nextDefer.resolve();
-                                                    nextActive = dialogEl.find('.list-row-is-active:first');
-                                                    if (!nextActive.length) {
-                                                        nextActive = firstTabbable;
-                                                    }
-                                                    if (select.search) {
-                                                        setTimeout(function () {
-                                                            dialogEl.find('input[type="search"]').focus();
-                                                        }, 100);
-                                                    } else {
-                                                        nextActive.focus();
-                                                    }
-                                                }
-                                            })*/.oneAnimationEnd(function (ev) {
-                                                nextDefer.resolve();
-                                                nextActive = dialogEl.find('.list-row-is-active:first');
+                                        dialogEl.oneAnimationEnd(function (ev) {
+                                            nextDefer.resolve();
+                                            nextActive = dialogEl.find('.list-row-is-active:first');
+                                            if (!nextActive.length) {
+                                                nextActive = firstTabbable;
+                                            }
+                                            if (select.search) {
+                                                setTimeout(function () {
+                                                    dialogEl.find('input[type="search"]').focus();
+                                                }, 100);
+                                            } else {
+                                                nextActive.focus();
+                                            }
+                                            dialogEl.addClass('opacity-in');
+                                        }).on('keyup', function (ev) {
+                                            if (!nextActive) {
+                                                return;
+                                            }
+                                            var original = nextActive,
+                                                doFocus = false,
+                                                indx = -1;
+                                            if (ev.keyCode === $mdConstant.KEY_CODE.DOWN_ARROW) {
+                                                nextActive = nextActive.next();
+                                                doFocus = true;
+                                            } else if (ev.keyCode === $mdConstant.KEY_CODE.UP_ARROW) {
+                                                nextActive = nextActive.prev();
+                                                doFocus = true;
+                                            } else if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
+                                                nextActive = dialogEl.find('.simple-dialog-option:focus');
                                                 if (!nextActive.length) {
-                                                    nextActive = firstTabbable;
+                                                    nextActive = dialogEl.find('.list-row-is-active:first');
                                                 }
-                                                if (select.search) {
-                                                    setTimeout(function () {
-                                                        dialogEl.find('input[type="search"]').focus();
-                                                    }, 100);
+                                                if (nextActive.length) {
+                                                    indx = $parse(nextActive.attr('item'))(nextActive.scope());
                                                 } else {
-                                                    nextActive.focus();
+                                                    indx = select.items[0];
                                                 }
-                                                dialogEl.addClass('opacity-in');
-                                            }).on('keyup', function (ev) {
-                                                if (!nextActive) {
-                                                    return;
+                                                if (indx) {
+                                                    select.select(indx);
                                                 }
-                                                var original = nextActive,
-                                                    doFocus = false,
-                                                    indx = -1;
-                                                if (ev.keyCode === $mdConstant.KEY_CODE.DOWN_ARROW) {
-                                                    nextActive = nextActive.next();
-                                                    doFocus = true;
-                                                } else if (ev.keyCode === $mdConstant.KEY_CODE.UP_ARROW) {
-                                                    nextActive = nextActive.prev();
-                                                    doFocus = true;
-                                                } else if (ev.keyCode === $mdConstant.KEY_CODE.ENTER) {
-                                                    nextActive = dialogEl.find('.simple-dialog-option:focus');
-                                                    if (!nextActive.length) {
-                                                        nextActive = dialogEl.find('.list-row-is-active:first');
-                                                    }
-                                                    if (nextActive.length) {
-                                                        indx = $parse(nextActive.attr('item'))(nextActive.scope());
-                                                    } else {
-                                                        indx = select.items[0];
-                                                    }
-                                                    if (indx) {
-                                                        select.select(indx);
-                                                    }
-                                                }
-                                                if (!nextActive.length && doFocus) {
-                                                    nextActive = original;
-                                                }
-                                                if (doFocus) {
-                                                    nextActive.focus();
-                                                }
-                                            });
-                                        /*
-                                        $$rAF(function () {
-                                            dialogEl.addClass('transition-in').addClass('opacity-in');
-                                            dialogEl.css($mdConstant.CSS.TRANSFORM, '');
-                                            dontOpen = false;
-                                        });*/
+                                            }
+                                            if (!nextActive.length && doFocus) {
+                                                nextActive = original;
+                                            }
+                                            if (doFocus) {
+                                                nextActive.focus();
+                                            }
+                                        });
 
                                         $$rAF(function () {
                                             dialogEl.addClass('fade in');
@@ -14794,7 +15335,7 @@ $(function () {
                             },
                             controller: ng(function ($scope) {
                                 select.close = function () {
-                                    if (select.multiple) {
+                                    if (select.multiple || select.async) {
                                         $scope.$close();
                                     } else {
                                         $simpleDialog.hide();
@@ -14810,12 +15351,13 @@ $(function () {
                             })
                         });
                     };
-                    select.view = view;
                     if (!view) {
-                        select.view = function (item) {
+                        view = function (item) {
                             return angular.isObject(item) ? item.name : item;
                         };
                     }
+                    select.view = view;
+                    select.listView = listView || view;
                     ngModel.$formatters.push(function (value) {
                         select.item = select.find(value);
                         return value;
@@ -14852,6 +15394,7 @@ $(function () {
                         select.search = {
                             query: {},
                             delay: 200,
+                            enabled: false,
                             doFind: function () {
                                 var term = select.getFindTerm();
                                 if (timeout) {
@@ -14873,10 +15416,10 @@ $(function () {
                         if (!select.search.model) {
                             select.search.model = 'select.search.query' + ('.' + select.search.filterProp);
                         }
-                        if (!select.search.filter) {
-                            // filters are expensive
-                            //select.search.filter = '| filter:select.search.query' + ((items && angular.isString(items[0])) ? ('.' + select.search.filterProp) : '');
-                        }
+                    }
+                    if (grouping) {
+                        select.hasGrouping = true;
+                        select.grouping = [];
                     }
                     select.setItems(items);
                     scope.$watchGroup([attrs.items + '.length', attrs.items], function (neww, old) {
@@ -14892,10 +15435,16 @@ $(function () {
                     });
 
                     scope.select = select;
+
+                    if (init) {
+                        init(select, scope, element, attrs, ctrls);
+                    }
+
                 }
             };
         }));
-}());(function () {
+}());
+(function () {
     'use strict';
     angular.module('app').directive('imageSlider', ng(function ($timeout, $parse) {
         return {
@@ -14996,13 +15545,16 @@ $(function () {
                             newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
                             newWidth = Math.ceil(newHeight * image.proportion),
                             imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
-                            originalNewHeight = newHeight;
+                            originalNewHeight = newHeight,
+                            reactingElement = element.parents('.image-slider-item:first');
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
-                        element.attr('src', image.serving_url + '=s' + imageSize)
+                        element.bind('load', function () {
+                            scope.$broadcast('readySingleImageSlider', reactingElement);
+                        }).attr('src', image.serving_url + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 
-                        element.parents('.image-slider-item:first')
+                        reactingElement
                             .width(newWidth)
                             .height(newHeight);
                     },
@@ -15030,7 +15582,7 @@ $(function () {
     'use strict';
     angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG) {
         var social = {
-            share: function (meta, embed) {
+            share: function (meta, embed, link) {
                 $modal.open({
                     templateUrl: 'core/social/share.html',
                     controller: ng(function ($scope) {
@@ -15081,23 +15633,51 @@ $(function () {
                                 h = $(window).height() / 1.3,
                                 left = (screen.width / 2) - (w / 2),
                                 top = (screen.height / 2) - (h / 2),
-                                link = soc.command,
+                                cmd = soc.command,
                                 popup;
                             angular.forEach(soc.require, function (key) {
                                 var hasit = meta[soc.key][key];
                                 if (angular.isUndefined(hasit)) {
-                                    link = link.replace('&' + key + '={' + key + '}', '');
-                                    link = link.replace('?' + key + '={' + key + '}', '');
+                                    cmd = cmd.replace('&' + key + '={' + key + '}', '');
+                                    cmd = cmd.replace('?' + key + '={' + key + '}', '');
                                 } else {
-                                    link = link.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
+                                    cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
                                 }
                             });
-                            popup = window.open(link, 'Share to ' + soc.name, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                            popup = window.open(cmd, 'Share to ' + soc.name, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
                             popup.focus();
                             return popup;
                         };
 
                         $scope.container = {};
+
+                        if (angular.isUndefined(link)) {
+                            link = {
+                                src: meta.googleplus.url
+                            };
+                        }
+
+                        $scope.link = {
+                            enabled: link,
+                            values: {
+                                url: (angular.isObject(link) ? link.src : link)
+                            },
+                            fields: [{
+                                type: 'SuperTextProperty',
+                                code_name: 'url',
+                                ui: {
+                                    label: false,
+                                    writable: true,
+                                    args: 'link.values.url',
+                                    parentArgs: 'link.values',
+                                    attrs: {
+                                        readonly: 'true',
+                                        onclick: 'this.select()'
+                                    }
+                                }
+
+                            }]
+                        };
 
                         $scope.embed = {
                             enabled: embed,
@@ -15107,6 +15687,9 @@ $(function () {
                                 code: ''
                             },
                             setCode: function () {
+                                if (!embed) {
+                                    return '';
+                                }
                                 var values = $scope.embed.values;
                                 values.code = '<iframe width="' + values.width + '" height="' + values.height + '" src="' + embed.src + '" frameborder="0" allowfullscreen></iframe>';
                                 return values.code;
@@ -15154,7 +15737,6 @@ $(function () {
                         };
 
                         $scope.embed.setCode();
-                        $scope.close = $scope.$close;
                     })
                 });
             }
@@ -15453,8 +16035,7 @@ angular.module('app')
 (function () {
     'use strict';
     // code for account
-    angular.module('app').constant('LOGIN_PROVIDERS',
-        [{
+    angular.module('app').constant('LOGIN_PROVIDERS', [{
             name: 'Google',
             id: 1
         }, {
@@ -15473,6 +16054,13 @@ angular.module('app')
                 mappedLoginProviders[value.id] = value;
             });
             return mappedLoginProviders;
+        }))
+        .controller('LoginProviderConnectedController', ng(function ($scope, snackbar, currentAccount, models) {
+            models['11'].manageModal(currentAccount, {
+                fromRedirect: true
+            }).then(function () {
+                snackbar.showK('identityConnected');
+            });
         }))
         .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, modals) {
             var data = $location.search(),
@@ -15522,7 +16110,7 @@ angular.module('app')
                 }
                 return out;
             };
-        })).run(ng(function (modelsConfig, channelApi, channelNotifications, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
+        })).run(ng(function (modelsConfig, channelApi, channelNotifications, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
                 return ident.identity.split('-')[1];
@@ -15556,104 +16144,186 @@ angular.module('app')
                     adminManageModal: function (account, extraConfig) {
                         return this.manageModal(account, extraConfig);
                     },
+                    login: function (redirect_to) {
+                        if (!redirect_to) {
+                            redirect_to = '';
+                        }
+                        $modal.open({
+                            templateUrl: 'account/login.html',
+                            inDirection: false,
+                            windowClass: 'modal-medium-simple',
+                            outDirection: false,
+                            fullScreen: false,
+                            backdrop: true,
+                            controller: ng(function ($scope) {
+                                $scope.socials = [{
+                                    name: 'Facebook',
+                                    key: '2'
+                                }, {
+                                    name: 'Twitter',
+                                    key: '3'
+                                }, {
+                                    name: 'Pinterest',
+                                    key: '4'
+                                }, {
+                                    name: 'Reddit',
+                                    key: '5'
+                                }, {
+                                    name: 'Linkedin',
+                                    key: '6'
+                                }, {
+                                    name: 'Google+',
+                                    icon: 'googleplus',
+                                    key: '1'
+                                }, {
+                                    name: 'Tumblr',
+                                    key: '7'
+                                }];
+
+                                $scope.getIcon = function (soc) {
+                                    return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                                };
+
+                                $scope.login = function (soc) {
+                                    $http.post($state.href('login', {
+                                        provider: soc.key
+                                    }), {
+                                        action_id: 'login',
+                                        action_model: '11',
+                                        redirect_to: redirect_to
+                                    }).then(function (response) {
+                                        var data = response.data;
+                                        if (data && !data.errors && data.authorization_url) {
+                                            window.location.href = data.authorization_url;
+                                        } else {
+                                            modals.alert('failedGeneratingAuthorizaitonUrl');
+                                        }
+                                    });
+                                };
+                            })
+                        });
+                    },
                     manageModal: function (account, extraConfig) {
                         extraConfig = helpers.alwaysObject(extraConfig);
                         var config = {
-                                kind: this.kind,
-                                templateBodyUrl: 'account/manage_body.html',
-                                toolbar: {
-                                    titleEdit: 'account.settings',
-                                    hideSave: true
-                                },
-                                modalConfig: {
-                                    popFrom: extraConfig.popFrom
-                                },
-                                init: function ($scope) {
-                                    var entity = $scope.entity,
-                                        updateFields = ['state', 'ui.rule', 'created', 'updated'],
-                                        updateState = function (newArgs) {
-                                            angular.forEach(['args', 'entity'], function (p) {
-                                                helpers.update($scope[p], newArgs, updateFields);
-                                            });
-                                        },
-                                        recompute = function () {
-                                            var missing = Object.keys(mappedLoginProviders);
-                                            $scope.identities = $scope.entity.identities.concat();
-                                            angular.forEach($scope.identities, function (value) {
-                                                var id = getProvider(value);
-                                                if (missing[id]) {
-                                                    delete missing[id];
-                                                }
-                                            });
-                                            angular.forEach(LOGIN_PROVIDERS, function (value) {
-                                                if (missing[value.id]) {
-                                                    $scope.identities.push({
-                                                        identity: '0-' + value.id,
-                                                        associated: false
-                                                    });
-                                                }
-                                            });
-                                        };
-                                    recompute();
-
-                                    if (entity.ui.rule.action.sudo.executable) {
-                                        config.toolbar.templateActionsUrl = 'account/manage_actions.html';
-                                    }
-
-                                    $scope.args.disassociate = [];
-                                    $scope.maybeDisconnect = function (identity) {
-                                        if (identity.email && identity.associated === undefined) {
-                                            modals.confirm('disconnectSignInMethod', function () {
-                                                $scope.args.disassociate.push(identity.identity);
-                                                $scope.save().then(function () {
-                                                    recompute();
-                                                    snackbar.showK('identityDisconnected');
+                            kind: this.kind,
+                            templateBodyUrl: 'account/manage_body.html',
+                            toolbar: {
+                                titleEdit: 'account.settings',
+                                hideSave: true
+                            },
+                            modalConfig: {
+                                popFrom: extraConfig.popFrom,
+                                inDirection: false,
+                                outDirection: false
+                            },
+                            init: function ($scope) {
+                                var entity = $scope.entity,
+                                    close,
+                                    updateFields = ['state', 'ui.rule', 'created', 'updated'],
+                                    updateState = function (newArgs) {
+                                        angular.forEach(['args', 'entity'], function (p) {
+                                            helpers.update($scope[p], newArgs, updateFields);
+                                        });
+                                    },
+                                    recompute = function () {
+                                        var missing = Object.keys(mappedLoginProviders);
+                                        $scope.identities = $scope.entity.identities.concat();
+                                        angular.forEach($scope.identities, function (value) {
+                                            var id = getProvider(value);
+                                            if (missing[id]) {
+                                                delete missing[id];
+                                            }
+                                        });
+                                        angular.forEach(LOGIN_PROVIDERS, function (value) {
+                                            if (missing[value.id]) {
+                                                $scope.identities.push({
+                                                    identity: '0-' + value.id,
+                                                    associated: false
                                                 });
-                                            });
-                                        } else {
-                                            modals.confirm('connectSignInMethod', function () {
-                                                models['11'].actions.login({
-                                                    login_method: getProvider(identity)
-                                                }).then(function (response) {
-                                                    window.location.href = response.data.authorization_url;
-                                                });
-                                            });
-                                        }
+                                            }
+                                        });
                                     };
+                                recompute();
 
-                                    $scope.actions.sudo = function () {
-                                        modals.models.sudo(entity, {templateUrl: 'account/administer.html', onConfirm: updateState});
-                                    };
-                                },
-                                scope: {
-                                    historyConfig: true,
-                                    isAssociated: function (ident) {
-                                        return $.inArray(ident.identity, this.args.disassociate) === -1;
-                                    },
-                                    setPrimary: function (ident) {
-                                        this.container.form.$setDirty();
-                                        this.args.primary_identity = ident.identity;
-                                    },
-                                    disassociate: function (ident) {
-                                        this.container.form.$setDirty();
-                                        if (this.isAssociated(ident)) {
-                                            this.args.disassociate.push(ident.identity);
-                                        } else {
-                                            this.args.disassociate.remove(ident.identity);
-                                        }
-                                    },
-                                    actions: {},
-                                    layouts: {
-                                        groups: [{
-                                            label: false
-                                        }, {
-                                            label: GLOBAL_CONFIG.subheaders.loginMethods
-                                        }]
-                                    }
+                                if (entity.ui.rule.action.sudo.executable) {
+                                    config.toolbar.templateActionsUrl = 'account/manage_actions.html';
                                 }
-                            };
 
-                        modelsEditor.create(config).read(account, {
+                                $scope.args.disassociate = [];
+                                $scope.maybeDisconnect = function (identity) {
+                                    if (identity.email && identity.associated === undefined) {
+                                        modals.confirm('disconnectSignInMethod', function () {
+                                            $scope.args.disassociate.push(identity.identity);
+                                            $scope.save().then(function () {
+                                                recompute();
+                                                snackbar.showK('identityDisconnected');
+                                            });
+                                        });
+                                    } else {
+                                        modals.confirm('connectSignInMethod', function () {
+                                            var redirect_to = $state.href('loginProviderConnected', {
+                                                provider: getProvider(identity)
+                                            });
+                                            $http.post($state.href('login', {
+                                                provider: getProvider(identity)
+                                            }), {
+                                                action_id: 'login',
+                                                action_model: '11',
+                                                redirect_to: redirect_to
+                                            }).then(function (response) {
+                                                var data = response.data;
+                                                if (data && !data.errors && data.authorization_url) {
+                                                    window.location.href = data.authorization_url;
+                                                } else {
+                                                    modals.alert('failedGeneratingAuthorizaitonUrl');
+                                                }
+                                            });
+                                        });
+                                    }
+                                };
+
+                                $scope.actions.sudo = function () {
+                                    modals.models.sudo(entity, {
+                                        templateUrl: 'account/administer.html',
+                                        onConfirm: updateState
+                                    });
+                                };
+                            },
+                            afterClose: function () {
+                                if (extraConfig.fromRedirect) {
+                                    $state.go('home');
+                                }
+                            },
+                            scope: {
+                                historyConfig: true,
+                                isAssociated: function (ident) {
+                                    return $.inArray(ident.identity, this.args.disassociate) === -1;
+                                },
+                                setPrimary: function (ident) {
+                                    this.container.form.$setDirty();
+                                    this.args.primary_identity = ident.identity;
+                                },
+                                disassociate: function (ident) {
+                                    this.container.form.$setDirty();
+                                    if (this.isAssociated(ident)) {
+                                        this.args.disassociate.push(ident.identity);
+                                    } else {
+                                        this.args.disassociate.remove(ident.identity);
+                                    }
+                                },
+                                actions: {},
+                                layouts: {
+                                    groups: [{
+                                        label: false
+                                    }, {
+                                        label: GLOBAL_CONFIG.subheaders.loginMethods
+                                    }]
+                                }
+                            }
+                        };
+
+                        return modelsEditor.create(config).read(account, {
                             key: account.key
                         });
 
@@ -15683,11 +16353,17 @@ angular.module('app')
         .controller('BuyerManagementController', ng(function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
-                models['19'].manageModal(currentAccount.key);
+                models['19'].manageModal(currentAccount.key, undefined, {
+                    inDirection: false,
+                    outDirection: false
+                });
             };
 
             $scope.manageCollection = function () {
-                models['18'].manageModal(currentAccount.key);
+                models['18'].manageModal(currentAccount.key, {
+                    inDirection: false,
+                    outDirection: false
+                });
             };
 
         })).controller('BuyOrdersController', ng(function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
@@ -15775,7 +16451,10 @@ angular.module('app')
                         });
                     },
                     manageModalFieldsOrder: ['country', 'region', 'city', 'postal_code', 'street', 'name'],
-                    manageModal: function (accountKey, afterSave) {
+                    manageModal: function (accountKey, afterSave, modalConfig) {
+                        if (!modalConfig) {
+                            modalConfig = {};
+                        }
                         var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                             that = this,
                             config;
@@ -15832,6 +16511,7 @@ angular.module('app')
                             fields: _.toArray(fields),
                             kind: this.kind,
                             action: 'update',
+                            modalConfig: modalConfig,
                             afterSave: function () {
                                 endpoint.removeCache(that.getCacheKey('current'));
                                 if (angular.isDefined(afterSave)) {
@@ -15865,7 +16545,26 @@ angular.module('app')
         }));
 }());(function () {
     'use strict';
-    angular.module('app').directive('catalogNewPricetag', ng(function ($parse) {
+    angular.module('app').directive('trackIfProductView', ng(function ($timeout) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                var fired;
+                scope.$watch(attrs.trackIfProductView, function (neww, old) {
+                    if (fired) {
+                        return;
+                    }
+                    if (angular.isObject(neww)) {
+                        $timeout(function () {
+                            //console.log(element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]'), '[data-pricetag-id="' + neww.image + '-' + neww.id + '"]');
+                            element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]').click();
+                            fired = true;
+                        }, 100);
+                    }
+                });
+            }
+        };
+    })).directive('catalogNewPricetag', ng(function ($parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -15891,15 +16590,87 @@ angular.module('app')
                 });
             }
         };
+    })).controller('CatalogViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
+            afterClose: function () {
+                $state.go('home');
+            }
+        });
+
+    })).controller('CatalogProductAddToCartController', ng(function ($scope, $state, helpers, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
+            variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
+            autoAddToCartQuantity: $state.params.quantity,
+            afterClose: function () {
+                $state.go('home');
+            },
+            loadProduct: {
+                image: $state.params.image_id,
+                id: $state.params.pricetag_id
+            }
+        });
+
+    })).controller('CatalogProductViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
+            afterClose: function () {
+                $state.go('home');
+            },
+            loadProduct: {
+                image: $state.params.image_id,
+                id: $state.params.pricetag_id
+            }
+        });
+
+    })).controller('EmbedCatalogViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
+            noEscape: true,
+            hideClose: true
+        });
+
+    })).controller('EmbedCatalogProductViewController', ng(function ($scope, $state, models) {
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            hideClose: true,
+            //hideCloseOnProduct: true,
+            noEscape: true,
+            noEscapeOnProduct: true,
+            inDirection: false,
+            outDirection: false,
+            loadProduct: {
+                image: $state.params.image_id,
+                id: $state.params.pricetag_id
+            }
+        });
+
     })).directive('catalogPricetagPosition', ng(function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
         return {
             link: function (scope, element, attr) {
 
                 var pricetag = scope.$eval(attr.catalogPricetagPosition),
-                    resize = function () {
+                    wait = true,
+                    resize = function (justElement) {
                         var pa = $(element).parents('.image-slider-item:first'),
                             sizes;
-
+                        if (justElement) {
+                            return pa;
+                        }
                         sizes = models['31'].calculatePricetagPosition(
                             pricetag.position_top,
                             pricetag.position_left,
@@ -15917,7 +16688,19 @@ angular.module('app')
                             left: pricetag._position_left,
                             visibility: 'visible'
                         });
+                    },
+                    waitResize = function () {
+                        if (!wait) {
+                            resize();
+                        }
                     };
+                /*
+                scope.$on('readySingleImageSlider', function (which) {
+                    if (which === resize(true)) {
+                        wait = false;
+                        resize();
+                    }
+                });*/
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
@@ -15939,45 +16722,10 @@ angular.module('app')
                 };
             }
         };
-    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, snackbar, social) {
+    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, currentAccount, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
 
         modelsConfig(function (models) {
-            var setupToggleMenu = function (menu, id) {
-                    menu.sidenavMenuID = id;
-                    menu.notRipplable = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
-                    menu.toggling = false;
-                    menu.close = function () {
-                        return menu.toggle(undefined, 'close');
-                    };
-                    menu.open = function () {
-                        return menu.toggle(undefined, 'open');
-                    };
-                    menu.toggle = function ($event, dowhat) {
-                        if (menu.toggling) {
-                            return;
-                        }
-                        var it = $mdSidenav(menu.sidenavMenuID),
-                            check = false,
-                            target;
-                        if ($event && $event.target) {
-                            target = $($event.target);
-                            angular.forEach(menu.notRipplable, function (skip) {
-                                if (target.is(skip) || target.parent().is(skip)) {
-                                    check = true;
-                                }
-                            });
-                            if (check) {
-                                return;
-                            }
-                        }
-                        menu.toggling = true;
-                        $timeout(function () {
-                            it[dowhat || (it.isOpen() ? 'close' : 'open')]().then(function () {
-                                menu.toggling = false;
-                            });
-                        });
-                    };
-                },
+            var doNotRipple = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'],
                 recomputeRealPath = function (field1, level) {
                     if (!level) {
                         level = 0;
@@ -16060,6 +16808,7 @@ angular.module('app')
                                 $scope.variants = [];
                                 $scope.variantSelection = [];
                                 $scope.hideAddToCart = false;
+                                $scope.hideClose = config ? config.hideClose : false;
                                 $scope.currentVariation = [];
                                 angular.forEach($scope.product.variants, function (v, i) {
 
@@ -16067,7 +16816,8 @@ angular.module('app')
                                         name: v.name,
                                         options: v.options,
                                         option: (variantSignatureAsDicts ? variantSignatureAsDicts[i][v.name] : v.options[0]),
-                                        description: v.description
+                                        description: v.description,
+                                        allow_custom_value: v.allow_custom_value
                                     });
 
                                     $scope.variantSelection.push({
@@ -16075,11 +16825,11 @@ angular.module('app')
                                         choices: (v.allow_custom_value ? null : v.options),
                                         code_name: 'option_' + i,
                                         ui: {
-                                            help: v.description,
-                                            label: v.name,
+                                            //help: v.description,
+                                            label: (v.allow_custom_value ? false : v.name),
                                             writable: true,
                                             attrs: {
-                                                'ng-change': 'changeVariation()'
+                                                'ng-change': 'delayedChangeVariation()'
                                             },
                                             args: 'variants[' + i + '].option'
                                         }
@@ -16099,7 +16849,7 @@ angular.module('app')
                                         if (v.option === null) {
                                             skip = true;
                                         }
-                                        if (!v.allow_custom_value) {
+                                        if (/*!v.allow_custom_value*/ 1) {
                                             buildVariantSignature.push(v.name + ': ' + v.option);
                                             d[v.name] = v.option;
                                             $scope.currentVariation.push(d);
@@ -16156,20 +16906,28 @@ angular.module('app')
                             templateUrl: 'catalog/product/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
+                            noEscape: config.noEscape,
                             controller: ng(function ($scope, productInstanceResponse) {
-                                var loadProductInstance, sellerKey, shareWatch;
-                                $.extend($scope, fakeScope);
+                                var loadProductInstance, sellerKey, shareWatch, timer;
                                 $scope.variantMenu = {};
                                 $scope.productMenu = {};
-                                setupToggleMenu($scope.productMenu, 'right_product_sidenav' + _.uniqueId());
-                                setupToggleMenu($scope.variantMenu, 'right_variantMenu_sidenav' + _.uniqueId());
+                                helpers.sideNav.setup($scope.productMenu, 'right_product_sidenav', doNotRipple);
+                                helpers.sideNav.setup($scope.variantMenu, 'right_variantMenu_sidenav', doNotRipple);
+
+                                $.extend($scope, fakeScope);
 
                                 shareWatch = function () {
                                     if (!$scope.product) {
                                         $scope.socialMeta = {};
                                         return;
                                     }
-                                    var productUrl = helpers.url.abs('catalog/' + $scope.catalog.key + '/product/' + $scope.product.key),
+                                    var productUrl = $state.href('catalog-product-view', {
+                                        key: $scope.catalog.key,
+                                        image_id: $scope.catalog._images[0].id,
+                                        pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                    }, {
+                                        absolute: true
+                                    }),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
                                                 return $scope.product.images[0].serving_url + '=s' + (size || '600');
@@ -16210,14 +16968,13 @@ angular.module('app')
                                 };
 
                                 $scope.displayShare = function () {
-                                    return social.share($scope.socialMeta, {
-                                        src: helpers.url.abs('embed/catalog/' + $scope.catalog.key + '/product/' + $scope.product.key)
-                                    });
+                                    return social.share($scope.socialMeta, false);
                                 };
 
                                 $scope.variantChooser = {};
 
-                                $scope.setupVariantChooser = function (variant) {
+                                $scope.setupVariantChooser = function (variant, indice) {
+                                    variant.indice = indice;
                                     $scope.variantChooser = variant;
                                     $scope.variantMenu.open();
                                 };
@@ -16246,9 +17003,6 @@ angular.module('app')
                                         controller: ng(function ($scope) {
                                             $scope.markDown = true;
                                             $scope.content = content;
-                                            $scope.close = function () {
-                                                $scope.$close();
-                                            };
                                         })
                                     });
                                 };
@@ -16262,28 +17016,32 @@ angular.module('app')
                                     $scope.productQuantity = 0;
                                     $scope.hasThisProduct = false;
                                     $scope.disableUpdateCart = false;
-                                    models['34'].current(sellerKey).then(function (response) {
-                                        var order = response.data.entity;
-                                        if (order.id) {
-                                            angular.forEach(order._lines, function (line) {
-                                                if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
-                                                    $scope.productQuantity = parseInt(line.product.quantity, 10);
-                                                    if ($scope.productQuantity > 0) {
-                                                        $scope.hasThisProduct = true;
-                                                        $scope.disableUpdateCart = true;
+                                    if (!currentAccount._is_guest) {
+                                        models['34'].current(sellerKey).then(function (response) {
+                                            var order = response.data.entity;
+                                            if (order.id) {
+                                                angular.forEach(order._lines, function (line) {
+                                                    if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
+                                                        $scope.productQuantity = parseInt(line.product.quantity, 10);
+                                                        if ($scope.productQuantity > 0) {
+                                                            $scope.hasThisProduct = true;
+                                                            $scope.disableUpdateCart = true;
+                                                        }
                                                     }
-                                                }
-                                            });
-                                            $scope.canAddToCart = order.ui.rule.action.update_line.executable;
-                                        } else {
-                                            $scope.canAddToCart = true;
-                                        }
+                                                });
+                                                $scope.canAddToCart = order.ui.rule.action.update_line.executable;
+                                            } else {
+                                                $scope.canAddToCart = true;
+                                            }
 
-                                        if (!$scope.productQuantity) {
-                                            $scope.productQuantity = 1;
-                                        }
+                                            if (!$scope.productQuantity) {
+                                                $scope.productQuantity = 1;
+                                            }
 
-                                    });
+                                        });
+                                    } else {
+                                        $scope.productQuantity = 1;
+                                    }
                                 };
 
                                 loadProductInstance = function (response) {
@@ -16312,6 +17070,16 @@ angular.module('app')
                                     }
 
                                     $scope.variationApplied = true;
+                                };
+
+                                $scope.delayedChangeVariation = function () {
+                                    if (timer) {
+                                        $timeout.cancel(timer);
+                                    }
+                                    timer = $timeout(function () {
+                                        timer = null;
+                                        $scope.changeVariation();
+                                    }, 500, false);
                                 };
 
                                 $scope.changeVariation = function () {
@@ -16343,6 +17111,19 @@ angular.module('app')
                                 };
 
                                 $scope.addToCart = function () {
+                                    if (currentAccount._is_guest) {
+                                        models['11'].login($state.href('catalog-product-add-to-cart', {
+                                            key: $scope.catalog.key,
+                                            image_id: $scope.catalog._images[0].id,
+                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id,
+                                            variant: helpers.url.jsonToUrlsafe($scope.currentVariation),
+                                            quantity: $scope.productQuantity
+                                        }));
+                                        return;
+                                    }
+                                    if (config.autoAddToCart) {
+                                        $scope.productQuantity = config.autoAddToCartQuantity;
+                                    }
                                     if (!$scope.hasThisProduct && $scope.productQuantity < 1) {
                                         $scope.container.form.$setDirty();
                                         var productQuantityField = $scope.container.form.productQuantity;
@@ -16381,13 +17162,17 @@ angular.module('app')
                                     });
                                 };
 
+                                if (config.autoAddToCart) {
+                                    $timeout(function () {
+                                        $scope.addToCart();
+                                        config.autoAddToCart = false;
+                                    });
+                                }
+
                                 $scope.$watch('product.id', function (neww, old) {
                                     shareWatch();
                                 });
 
-                                $scope.close = function () {
-                                    $scope.$close();
-                                };
                             })
                         });
                     });
@@ -16416,15 +17201,28 @@ angular.module('app')
                             templateUrl: 'catalog/view.html',
                             windowClass: 'no-overflow',
                             popFrom: config.popFrom,
+                            inDirection: config.inDirection,
+                            outDirection: config.outDirection,
+                            noEscape: config.noEscape,
                             controller: ng(function ($scope) {
                                 $scope.catalogMenu = {};
-                                setupToggleMenu($scope.catalogMenu, 'right_catalog_sidenav' + _.uniqueId());
+                                helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = '31';
                                 $scope.logoImageConfig = {};
                                 var imagesReader,
                                     accessImages,
-                                    catalogUrl = helpers.url.abs('catalog/' + $scope.catalog.key);
+                                    loadProduct,
+                                    catalogUrl = $state.href('catalog-view', {
+                                        key: $scope.catalog.key
+                                    }, {
+                                        absolute: true
+                                    }),
+                                    embedCatalogUrl = $state.href('embed-catalog-view', {
+                                        key: $scope.catalog.key
+                                    }, {
+                                        absolute: true
+                                    });
                                 accessImages = angular.copy($scope.catalog.ui.access);
                                 accessImages.push('_images');
 
@@ -16472,9 +17270,11 @@ angular.module('app')
 
                                 $scope.displayShare = function () {
                                     return social.share($scope.socialMeta, {
-                                        src: helpers.url.abs('embed/catalog/' + $scope.catalog.key)
+                                        src: embedCatalogUrl
                                     });
                                 };
+
+                                $scope.hideClose = config.hideClose;
 
                                 $scope.loadMoreImages = function (callback) {
                                     var promise = imagesReader.load();
@@ -16496,7 +17296,9 @@ angular.module('app')
                                 };
 
                                 // cache current user's cart
-                                models['34'].current($scope.catalog._seller.key);
+                                if (!currentAccount._is_guest) {
+                                    models['34'].current($scope.catalog._seller.key);
+                                }
 
                                 $scope.viewProduct = function (image, pricetag, $event) {
                                     var target = $event.target,
@@ -16504,17 +17306,50 @@ angular.module('app')
                                     if (theTarget.length) {
                                         target = theTarget.get(0);
                                     }
-                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, null, {
-                                        popFrom: target
+                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, config.variantSignatureAsDicts, {
+                                        popFrom: target,
+                                        hideClose: config.hideCloseOnProduct,
+                                        noEscape: config.noEscapeOnProduct,
+                                        autoAddToCart: config.variantSignatureAsDicts ? true : false,
+                                        autoAddToCartQuantity: config.autoAddToCartQuantity
                                     });
+
+                                    config.variantSignatureAsDicts = null;
                                 };
 
-                                $scope.sellerDetails = function () {
-                                    models['23'].viewModal($scope.catalog._seller);
+                                $scope.openSellerDetails = function () {
+                                    $scope.sellerDetails.menu.open();
                                 };
+
+                                $scope.maybeLoadProduct = null;
+
+                                if (config.loadProduct) {
+                                    loadProduct = function () {
+                                        angular.forEach($scope.catalog._images, function (image) {
+                                            if (image.id.toString() === config.loadProduct.image.toString()) {
+                                                $scope.maybeLoadProduct = config.loadProduct;
+                                            }
+                                        });
+                                        if (!$scope.maybeLoadProduct) {
+                                            //return;
+                                            var promise = imagesReader.load();
+                                            if (promise) {
+                                                promise.then(loadProduct);
+                                            }
+                                        }
+                                    };
+
+                                    loadProduct();
+                                }
+
+                                $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                    $scope.$close();
+                                    $scope.$close().then(function () {
+                                        if (config.afterClose) {
+                                            config.afterClose();
+                                        }
+                                    });
                                 });
                             })
                         });
@@ -16563,19 +17398,19 @@ angular.module('app')
                                             stop: function () {
                                                 if (fields._images.ui.specifics.parentArgs.length) {
                                                     var total = fields._images.ui.specifics.parentArgs[0].sequence,
-                                                        cmp = [],
-                                                        cmp2 = [],
+                                                        dirty,
                                                         scope = fields._images.ui.directiveScope();
                                                     angular.forEach(fields._images.ui.specifics.parentArgs,
                                                         function (ent, i) {
                                                             i = (total - i);
-                                                            cmp.push(ent.sequence);
-                                                            cmp2.push(i);
+                                                            if (ent.sequence !== i || ent._state === 'deleted') {
+                                                                dirty = true;
+                                                            }
                                                             ent.sequence = i;
                                                             ent.ui.access[ent.ui.access.length - 1] = i;
                                                         });
 
-                                                    if (!cmp.equals(cmp2)) {
+                                                    if (dirty) {
                                                         scope.formSetDirty();
                                                     }
                                                     scope.$broadcast('itemOrderChanged');
@@ -16649,7 +17484,32 @@ angular.module('app')
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
                                                 setupCurrentPricetag,
-                                                getTitle;
+                                                groupWeightAndVolume = function (fields) {
+                                                    fields.weight.ui = {
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight'
+                                                    };
+                                                    fields.weight_uom.ui = {
+                                                        groupBy: 'weight',
+                                                        groupLabel: 'Weight'
+                                                    };
+                                                    fields.volume.ui = {
+                                                        groupBy: 'volume',
+                                                        groupLabel: 'Volume'
+                                                    };
+                                                    fields.volume_uom.ui = {
+                                                        groupBy: 'volume',
+                                                        groupLabel: 'Volume'
+                                                    };
+                                                    fields.weight.ui.label = false;
+                                                    fields.weight_uom.ui.label = false;
+                                                    fields.volume.ui.label = false;
+                                                    fields.volume_uom.ui.label = false;
+                                                },
+                                                variantOptions,
+                                                getTitle = function () {
+                                                    return 'viewProducts';
+                                                };
                                             accessImages.push(fields._images.code_name);
                                             $scope.rootScope = parentScope.rootScope; // pass the rootScope
                                             $scope.config = parentScope.rootScope.config;
@@ -16663,13 +17523,8 @@ angular.module('app')
                                             $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
                                             $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                             $scope.validateForm = angular.bind($scope, helpers.form.validate);
-
+                                            $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
                                             $scope.args._images = [];
-
-                                            getTitle = function () {
-                                                return 'viewProducts';
-                                            };
-
                                             $scope.config._title_.push(getTitle);
                                             $scope.$on('$destroy', function () {
                                                 $scope.config._title_.remove(getTitle);
@@ -16680,8 +17535,7 @@ angular.module('app')
 
                                             fields._images._title_ = $scope.config._title_.concat();
                                             fields._images.modelclass.pricetags._title_ = fields._images._title_.concat();
-                                            fields._images.modelclass.pricetags.modelclass._product._title_ = fields._images._title_.concat();
-
+                                            $scope.fieldProduct._title_ = fields._images._title_.concat();
                                             $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
 
                                             imagesReader = models['31'].reader({
@@ -16694,6 +17548,37 @@ angular.module('app')
                                                     $scope.args._images.extend(items);
                                                 }
                                             });
+                                            variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
+                                            variantOptions.ui.fieldset = true;
+                                            if (!variantOptions.ui.specifics) {
+                                                variantOptions.ui.specifics = {};
+                                            }
+                                            variantOptions.ui.specifics.listView = function (item) {
+                                                return angular.isObject(item) ? item.full : item;
+                                            };
+                                            variantOptions.ui.specifics.grouping = function (items) {
+                                                var list = [],
+                                                    map = {};
+                                                angular.forEach(items, function (value) {
+                                                    var split = value.split(': '),
+                                                        obj = map[split[0]];
+                                                    if (!obj) {
+                                                        obj = {
+                                                            label: split[0],
+                                                            items: []
+                                                        };
+                                                        map[split[0]] = obj;
+                                                        list.push(obj);
+                                                    }
+
+                                                    obj.items.push({
+                                                        name: split[1],
+                                                        key: value,
+                                                        full: value
+                                                    });
+                                                });
+                                                return list;
+                                            };
 
                                             imagesReader.load();
 
@@ -16886,7 +17771,6 @@ angular.module('app')
                                             };
 
                                             $scope.createProduct = function (image, config) {
-
                                                 var ii = $scope.args._images.indexOf(image),
                                                     newPricetag = {
                                                         _sequence: image.pricetags.length,
@@ -16911,7 +17795,6 @@ angular.module('app')
                                                 $scope.fieldProduct.ui.specifics.create();
                                             };
 
-                                            $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
                                             $.extend($scope.fieldProduct.ui, {
                                                 init: function (field) {
                                                     field.config.ui.specifics.remove = function (product, close) {
@@ -17000,10 +17883,31 @@ angular.module('app')
                                                 name: 'images'
                                             });
 
+                                            $scope.fieldProduct.modelclass.category.ui.specifics = {
+                                                search: {
+                                                    enabled: true
+                                                }
+                                            };
+
+                                            groupWeightAndVolume($scope.fieldProduct.modelclass);
+                                            groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);
+
+                                            // ["sequence", "variant_options", "code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "images", "contents", "_weight_uom", "_volume_uom"]
+
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
                                                 label: GLOBAL_CONFIG.subheaders.productInstances,
                                                 path: ['_images', 'pricetags'],
                                                 specifics: {
+                                                    layoutConfig: [{
+                                                        fields: ["variant_options"]
+                                                    }, {
+                                                        label: 'Details',
+                                                        fields: ["code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "_weight_uom", "_volume_uom"]
+                                                    }, {
+                                                        fields: ["images"]
+                                                    }, {
+                                                        fields: ["contents"]
+                                                    }],
                                                     cards: true,
                                                     cardView: 'product-instance-card-view',
                                                     getRootArgs: function () {
@@ -17022,26 +17926,28 @@ angular.module('app')
                                                         fieldScope.setAction('update');
                                                     },
                                                     sortableOptions: {
+                                                        forcePlaceholderSize: true,
                                                         stop: function () {
                                                             var field = $scope.fieldProduct.modelclass._instances,
                                                                 total,
-                                                                cmp = [],
-                                                                cmp2 = [],
-                                                                currentFieldScope = $scope.fieldProduct.ui.specifics.getScope();
+                                                                dirty,
+                                                                scope = field.ui.directiveScope();
                                                             if (field.ui.specifics.parentArgs.length) {
                                                                 total = field.ui.specifics.parentArgs[0].sequence;
                                                                 angular.forEach(field.ui.specifics.parentArgs,
                                                                     function (ent, i) {
                                                                         i = (total - i);
-                                                                        cmp.push(ent.sequence);
-                                                                        cmp2.push(i);
+                                                                        if (ent.sequence !== i || ent._state === 'deleted') {
+                                                                            dirty = true;
+                                                                        }
                                                                         ent.sequence = i;
                                                                         ent.ui.access[ent.ui.access.length - 1] = i;
                                                                     });
-                                                                if (!cmp.equals(cmp2)) {
-                                                                    currentFieldScope.formSetDirty();
+                                                                if (dirty) {
+                                                                    scope.formSetDirty();
                                                                 }
-                                                                currentFieldScope.$broadcast('itemOrderChanged');
+                                                                scope.$broadcast('itemOrderChanged');
+                                                                scope.$apply();
                                                             }
                                                         }
                                                     },
@@ -17061,8 +17967,7 @@ angular.module('app')
                                                     init: function () {
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                             currentArgs = currentFieldScope.args,
-                                                            choices = [],
-                                                            variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
+                                                            choices = [];
 
                                                         angular.forEach(currentArgs.variants, function (variant) {
                                                             if (variant.allow_custom_value) {
@@ -17091,6 +17996,31 @@ angular.module('app')
                                             $.extend($scope.fieldProduct.modelclass.variants.ui, {
                                                 specifics: {}
                                             });
+
+                                            if (!$scope.fieldProduct.modelclass.uom.ui.specifics) {
+                                                $scope.fieldProduct.modelclass.uom.ui.specifics = {};
+                                            }
+
+                                            $scope.fieldProduct.modelclass.uom.ui.specifics.grouping = function (items) {
+                                                var grouped = [],
+                                                    current;
+                                                angular.forEach(items, function (item) {
+                                                    if (current && current.label !== item.measurement) {
+                                                        current = null;
+                                                    }
+                                                    if (!current) {
+                                                        current = {
+                                                            label: item.measurement,
+                                                            items: []
+                                                        };
+                                                        grouped.push(current);
+                                                    }
+
+                                                    current.items.push(item);
+                                                });
+
+                                                return grouped;
+                                            };
 
                                             $scope.save = function () {
                                                 var promise;
@@ -17170,7 +18100,7 @@ angular.module('app')
 }());
 (function () {
     'use strict';
-    angular.module('app').run(ng(function (modelsConfig, endpoint, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
+    angular.module('app').run(ng(function (modelsConfig, endpoint, $state, modals, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
         modelsConfig(function (models) {
             var read_arguments = {
                 _sellers: {
@@ -17190,7 +18120,10 @@ angular.module('app')
                         cacheType: 'memory'
                     });
                 },
-                manageModal: function (accountKey) {
+                manageModal: function (accountKey, modalConfig) {
+                    if (!modalConfig) {
+                        modalConfig = {};
+                    }
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config,
                         that = this;
@@ -17202,34 +18135,65 @@ angular.module('app')
                             hideSave: true,
                             titleEdit: 'buyer.edit18'
                         },
+                        modalConfig: modalConfig,
                         templateBodyUrl: 'collection/manage_body.html',
                         excludeFields: ['account', 'read_arguments'],
                         init: function ($scope) {
-                            var timeouts = [];
-                            $scope.close = $scope.$close;
                             $scope.$watch('args.notify', function (neww, old) {
-                                var notthis,
-                                    cancelTimeouts = function (notthis) {
-                                        if (timeouts.length) {
-                                            angular.forEach(timeouts, function (timeout) {
-                                                if (timeout !== notthis) {
-                                                    $timeout.cancel(timeout);
-                                                }
-                                            });
-                                            timeouts = [];
-                                        }
-                                    };
                                 if (neww !== old) {
-                                    cancelTimeouts();
-                                    notthis = $timeout(function () {
-                                        $scope.save().then(function () {
-                                            snackbar.showK('changesSaved');
-                                        });
-                                        cancelTimeouts(notthis);
-                                    }, 1000);
-                                    timeouts.push(notthis);
+                                    $scope.save().then(function () {
+                                        snackbar.showK('changesSaved');
+                                    });
                                 }
                             });
+
+                            $scope.collectionDrag = {
+                                options: {
+                                    disabled: false,
+                                    handle: '.sort-handle',
+                                    distance: 10,
+                                    stop: function (e, ui) {
+                                        $scope.$apply();
+                                    }
+                                },
+                                whatSortMeans: function () {
+                                    modals.alert('howToDeleteDragging');
+                                },
+                                onStart: function (e, ui, seller) {
+                                    $(ui.helper).find('.sort-handle').addClass('dragged');
+                                },
+                                onDrag: function (e, ui, seller) {
+                                    var deleteMode,
+                                        division,
+                                        helperWidth = ui.helper.width();
+                                    division = ui.offset.left + helperWidth;
+                                    if (division < (helperWidth / 2)) {
+                                        deleteMode = true;
+                                    }
+                                    if (seller) {
+                                        if (deleteMode) {
+                                            ui.helper.addClass('about-to-delete');
+                                        } else {
+                                            ui.helper.removeClass('about-to-delete');
+                                        }
+                                    }
+                                },
+                                onStop: function (e, ui, seller) {
+                                    if (ui.helper.hasClass('about-to-delete')) {
+                                        ui.helper.animate({
+                                            left: (ui.helper.width() * 2) * -1
+                                        }, function () {
+                                            $timeout(function () {
+                                                $scope.remove(seller);
+                                            });
+                                        });
+                                    } else {
+                                        ui.helper.animate(ui.originalPosition, function () {
+                                            ui.helper.attr('style', '');
+                                        });
+                                    }
+                                }
+                            };
                         },
                         afterComplete: function ($scope) {
                             $scope.entity._sellers.iremove(function (seller) {
@@ -17243,32 +18207,19 @@ angular.module('app')
                         },
                         scope: {
                             remove: function (seller) {
-                                this.args.sellers.remove(seller.key);
-                                this.entity._sellers.remove(seller);
+                                var scope = this,
+                                    sellers;
+                                scope.args.sellers.remove(seller.key);
+                                scope.entity._sellers.remove(seller);
+                                sellers = scope.entity._sellers.concat();
+                                scope.save().then(function () {
+                                    snackbar.showK('changesSaved');
+                                    scope.entity._sellers = sellers;
+                                });
                             },
                             view: function (seller, $event) {
-                                var thisScope = this;
-                                models['23'].actions.read({
-                                    account: seller.parent.key,
-                                    // 3 rpcs
-                                    read_arguments: {
-                                        _content: {},
-                                        _feedback: {}
-                                    }
-                                }).then(function (response) {
-                                    models['23'].viewModal(response.data.entity, {
-                                        popFrom: helpers.clicks.realEventTarget($event.target),
-                                        removedOrAdded: function (updatedCollection) {
-                                            thisScope.entity._sellers.iremove(function (seller) {
-                                                return $.inArray(seller.key, updatedCollection.sellers) === -1;
-                                            });
-                                            var rmkey = function (sellerKey) {
-                                                return $.inArray(sellerKey, updatedCollection.sellers) === -1;
-                                            };
-                                            thisScope.entity.sellers.iremove(rmkey);
-                                            thisScope.args.sellers.iremove(rmkey);
-                                        }
-                                    });
+                                this.close().then(function () {
+                                    $state.go('seller-info', {key: seller.parent.key});
                                 });
                             },
                             layouts: {
@@ -17294,44 +18245,80 @@ angular.module('app')
 }());(function () {
     'use strict';
     angular.module('app')
-        .controller('MainMenuController', ng(function ($scope, $mdSidenav, $timeout) {
-            $scope.closeMenu = function () {
-                $timeout(function () {
-                    $mdSidenav('left').close();
-                });
+        .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
+        .directive('closeMasterMenu', ng(function ($mdSidenav) {
+            return {
+                link: function (scope, element, attrs) {
+                    element.on('click', function () {
+                        scope.site.toolbar.menu.close();
+                    });
+                }
             };
-            $scope.openMenu = function () {
-                $timeout(function () {
-                    $mdSidenav('left').open();
-                });
+        }))
+        .directive('homeSplash', ng(function ($animate) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    element.addClass('fade out').oneAnimationEnd(function () {
+                        element.addClass('ng-hide');
+                    });
+                }
+            };
+        }))
+        .controller('LoginLinksController', ng(function ($scope, models) {
+            $scope.login = function () {
+                models['11'].login();
             };
         }))
         .run(ng(function ($rootScope, GLOBAL_CONFIG, currentAccount, helpers) {
+            $rootScope.site = {
+                title: '',
+                toolbar: {
+                    hideRight: true,
+                    hideLeft: false,
+                    title: '',
+                    menu: {}
+                }
+            };
             $rootScope.currentAccount = currentAccount;
             $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $rootScope.JSON = JSON;
             $rootScope.helpers = helpers;
-            $rootScope.pageToolbarTitle = '';
             $rootScope.setPageTitle = function (title, notToolbarTitle) {
-                $rootScope.pageTitle = helpers.toolbar.title(title);
+                $rootScope.site.title = helpers.toolbar.title(title);
                 if (!notToolbarTitle) {
-                    $rootScope.pageToolbarTitle = $rootScope.pageTitle;
+                    $rootScope.site.toolbar.title = $rootScope.site.title;
                 }
             };
             $rootScope.setPageToolbarTitle = function (title, notPageTitle) {
-                $rootScope.pageToolbarTitle = helpers.toolbar.title(title);
+                $rootScope.site.toolbar.title = helpers.toolbar.title(title);
                 if (!notPageTitle) {
-                    $rootScope.pageTitle = $rootScope.pageToolbarTitle;
+                    $rootScope.site.title = $rootScope.site.toolbar.title;
                 }
             };
+
+            $rootScope.$on('$stateChangeStart', function () {
+                $rootScope.site.toolbar.hideRight = true;
+                $rootScope.site.toolbar.actionRight = undefined;
+                $rootScope.site.toolbar.hidden = false;
+            });
+
+            helpers.sideNav.setup($rootScope.site.toolbar.menu, 'left');
         }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
-            var args = {search: {}},
+            var args = {
+                    search: {}
+                },
                 defer = $q.defer(),
                 promise = defer.promise;
 
             $scope.setPageToolbarTitle('home');
-            $scope.sellerDetail = false;
+            $scope.sellerDetails = false;
+            $scope.viewProfile = function (key, $event) {
+                models['23'].viewProfileModal(key, {
+                    popFrom: helpers.clicks.realEventTarget($event.target)
+                });
+            };
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
                     popFrom: helpers.clicks.realEventTarget($event.target)
@@ -17339,8 +18326,13 @@ angular.module('app')
             };
 
             if ($stateParams.key) {
-                args.search.filters = [{field: 'seller_account_key', operator: 'IN', value: $stateParams.key}];
-                $scope.sellerDetail = {};
+                $scope.sellerMode = true;
+                $scope.setPageToolbarTitle('sellerProfile');
+                args.search.filters = [{
+                    field: 'seller_account_key',
+                    operator: 'IN',
+                    value: $stateParams.key
+                }];
                 models['23'].actions.read({
                     account: $stateParams.key,
                     read_arguments: {
@@ -17348,17 +18340,22 @@ angular.module('app')
                         _content: {}
                     }
                 }).then(function (response) {
-                    $.extend($scope.sellerDetail, response.data.entity);
+                    $scope.sellerDetails = models['23'].makeSellerDetails(response.data.entity);
                 });
 
-                $scope.viewSeller = function () {
-                    models['23'].viewModal($scope.sellerDetail);
+                $scope.site.toolbar.hideRight = false;
+                $scope.site.toolbar.actionRight = function () {
+                    $scope.sellerDetails.menu.open();
                 };
             }
             if ($state.current.name === 'following') {
                 promise = models['18'].current();
                 promise.then(function (response) {
-                    $scope.search.pagination.args.search.filters = [{field: 'ancestor', operator: 'IN', value: response.data.entity.sellers}];
+                    $scope.search.pagination.args.search.filters = [{
+                        field: 'ancestor',
+                        operator: 'IN',
+                        value: response.data.entity.sellers
+                    }];
                 });
             } else {
                 defer.resolve();
@@ -17379,7 +18376,9 @@ angular.module('app')
                     }
                 })
             };
-            $scope.scrollEnd = {loader: false};
+            $scope.scrollEnd = {
+                loader: false
+            };
             $scope.scrollEnd.loader = $scope.search.pagination;
             promise.then(function () {
                 $scope.search.pagination.load();
@@ -17388,7 +18387,8 @@ angular.module('app')
 
         }));
 
-}());(function () {
+}());
+(function () {
     'use strict';
     angular.module('app').run(ng(function (modelsConfig, modelsMeta) {
         modelsConfig(function (models) {
@@ -17405,30 +18405,7 @@ angular.module('app')
     }));
 }());(function () {
     'use strict';
-    angular.module('app').directive('toggleExpand', ng(function ($timeout) {
-        return {
-            link: function (scope, element, attrs) {
-                var height,
-                    decider = function (neww, old) {
-                        if (angular.isUndefined(height)) {
-                            return;
-                        }
-                        element.css('overflow', 'hidden');
-                        if (neww) {
-                            element.height(height);
-                        } else {
-                            element.height(0);
-                        }
-                    };
-                $timeout(function () {
-                    height = element.height();
-                    decider(scope.$eval(attrs.toggleExpand));
-                }, 0, false);
-
-                scope.$watch(attrs.toggleExpand, decider);
-            }
-        };
-    })).directive('alwaysScrollToBottom', ng(function ($timeout) {
+    angular.module('app').directive('alwaysScrollToBottom', ng(function ($timeout) {
         return {
             link: function (scope, element, attrs) {
                 var cb = function () {
@@ -17442,6 +18419,17 @@ angular.module('app')
                 });
             }
         };
+    })).controller('OrderPaymentCanceledController', ng(function ($state, snackbar, models) {
+
+        models['34'].manageModal({
+            key: $state.params.key
+        }, undefined, undefined, {
+            inDirection: false,
+            outDirection: false
+        }).then(function () {
+            snackbar.showK('orderPaymentCanceled');
+        });
+
     })).filter('displayTaxes', ng(function () {
         return function (value) {
             var formatted = '';
@@ -17452,7 +18440,7 @@ angular.module('app')
             }
             return formatted;
         };
-    })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
+    })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
         modelsConfig(function (models) {
             $.extend(models['34'], {
                 current: function (sellerKey) {
@@ -17479,6 +18467,8 @@ angular.module('app')
                     var args, that = this,
                         cartMode = config.cartMode,
                         sellerMode = config.sellerMode,
+                        openDefer = $q.defer(),
+                        openPromise = openDefer.promise,
                         rpc = {};
                     if (!cartMode) {
                         args = {
@@ -17516,9 +18506,12 @@ angular.module('app')
 
                     models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
 
-                        $modal.open({
+                        if (angular.isUndefined(seller)) {
+                            seller = response.data.entity._seller;
+                        }
+
+                        var modalOpen = {
                             templateUrl: 'order/view.html',
-                            popFrom: config.popFrom,
                             controller: ng(function ($scope) {
                                 var locals = {
                                     customPlaceholder: null,
@@ -17531,11 +18524,11 @@ angular.module('app')
                                         helpers.update($scope.order, response.data.entity, ['state', 'feedback_adjustment', 'feedback', 'ui']);
                                         locals.reactOnUpdate();
                                     },
-                                    reactOnUpdate: function () {
+                                    reactOnUpdate: function (skipCache) {
                                         if (order) {
                                             $.extend(order, $scope.order);
                                         }
-                                        if (that.getCache('current' + seller.key)) {
+                                        if (!skipCache && that.getCache('current' + seller.key)) {
                                             that.current(seller.key).then(function (response) {
                                                 $.extend(response.data.entity, $scope.order);
                                             });
@@ -17679,10 +18672,11 @@ angular.module('app')
                                         var parentScope = $scope;
                                         models['19'].current().then(function (response) {
                                             $modal.open({
-                                                backdrop: true,
-                                                fullScreen: false,
                                                 inDirection: false,
+                                                windowClass: 'modal-medium-simple',
                                                 outDirection: false,
+                                                fullScreen: false,
+                                                backdrop: true,
                                                 templateUrl: 'order/browse_addresses.html',
                                                 controller: ng(function ($scope) {
                                                     $scope.addresses = response.data.entity.addresses;
@@ -17732,7 +18726,7 @@ angular.module('app')
 
                                 $scope.carrier = {
                                     selected: $scope.order.carrier ? $scope.order.carrier.reference : null,
-                                    available: (response.data.carriers ? response.data.carriers : []),
+                                    available: (response.data.carriers || []),
                                     form: null
                                 };
 
@@ -17955,6 +18949,8 @@ angular.module('app')
                                                 models['34'].actions.cancel({
                                                     key: $scope.order.key
                                                 }).then(function (response) {
+                                                    locals.updateLiveEntity(response);
+                                                    locals.reactOnUpdate(true);
                                                     models['34'].removeCache('current' + seller.key);
                                                     $scope.close();
                                                 });
@@ -17983,13 +18979,11 @@ angular.module('app')
 
                                 $scope.cmd.seller = {
                                     view: function () {
-                                        models['23'].viewModal($scope.seller);
+                                        $scope.sellerDetails.menu.open();
                                     }
                                 };
 
-                                $scope.close = function () {
-                                    $scope.$close();
-                                };
+                                $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller);
 
                                 $scope.lineDrag = {
                                     options: {
@@ -18002,7 +18996,7 @@ angular.module('app')
                                         }
                                     },
                                     whatSortMeans: function () {
-                                        modals.alert('howToDeleteLine');
+                                        modals.alert('howToDeleteDragging');
                                     },
                                     onStart: function (e, ui, line) {
                                         $(ui.helper).find('.sort-handle').addClass('dragged');
@@ -18051,17 +19045,36 @@ angular.module('app')
                                     }
                                 }());
 
-                                //$scope.$watch('order.state', );
 
-                                $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
-                                $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
-                                $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
+                                $scope.notifyUrl = $state.href('paypal-ipn', {}, {
+                                    absolute: true
+                                });
+
+                                $scope.completePath = $state.href('order-payment-success', {
+                                    key: $scope.order.key
+                                }, {
+                                    absolute: true
+                                });
+
+                                $scope.cancelPath = $state.href('order-payment-canceled', {
+                                    key: $scope.order.key
+                                }, {
+                                    absolute: true
+                                });
+
+                                openDefer.resolve();
 
                             })
-                        });
+                        };
+
+                        $.extend(modalOpen, config);
+
+                        $modal.open(modalOpen);
 
 
                     });
+
+                    return openPromise;
 
                 }
             });
@@ -18076,7 +19089,23 @@ angular.module('app')
     var notEmpty = function (val) {
         return angular.isString(val) || angular.isNumber(val);
     };
-    angular.module('app').directive('addressRuleLocationListView', function () {
+    angular.module('app').controller('SellerInfo', ng(function ($scope, $state, $stateParams, models) {
+        $scope.site.toolbar.hidden = true;
+        models['23'].viewProfileModal($stateParams.key, {
+            inDirection: false,
+            outDirection: false,
+            afterClose: function () {
+                $state.go('home');
+            }
+        });
+    })).controller('SellerEmbedInfo', ng(function ($scope, $stateParams, models) {
+        $scope.site.toolbar.hidden = true;
+        models['23'].viewProfileModal($stateParams.key, {
+            hideClose: true,
+            inDirection: false,
+            outDirection: false
+        });
+    })).directive('addressRuleLocationListView', function () {
         return {
             scope: {
                 val: '=addressRuleLocationListView'
@@ -18249,7 +19278,7 @@ angular.module('app')
             $scope.search.pagination.load();
         });
     })).run(ng(function (modelsConfig, modelsMeta,
-        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
+        modelsEditor, formInputTypes, underscoreTemplate, $state, $stateParams, $modal, modals, social, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
 
         var pluginName = function (kind) {
             var find = GLOBAL_CONFIG.fields.translateChoices.rules.kind[kind];
@@ -18263,76 +19292,83 @@ angular.module('app')
                 var config = info.config,
                     kinds = config.kinds,
                     rootFormSetDirty = helpers.callable(info.scope.formSetDirty),
-                    lineSpec = {
-                        listView: 'default-line-list-view',
-                        listConfig: {
-                            perLine: 2
-                        }
-                    },
-                    exclusionSpec = {
-                        ui: {
-                            specifics: {
-                                type: 'radio',
-                                trueLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.trueLabel,
-                                falseLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.falseLabel
+                    lineSpec = function () {
+                        return {
+                            listView: 'default-line-list-view',
+                            listConfig: {
+                                perLine: 2
                             }
-                        }
+                        };
+                    },
+                    exclusionSpec = function () {
+                        return {
+                            ui: {
+                                specifics: {
+                                    type: 'radio',
+                                    trueLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.trueLabel,
+                                    falseLabel: GLOBAL_CONFIG.fields.radioLabel.pluginLocation.falseLabel
+                                }
+                            }
+                        };
                     },
                     groupBy = function (what, label, help) {
                         return {
                             ui: {
                                 groupBy: what,
                                 groupHelp: help,
-                                groupLabel: label
+                                groupLabel: label,
+                                label: false
                             }
                         };
                     },
-                    locationSpec = {
-                        listView: 'address-rule-location-list-view',
-                        sortFields: ['country', 'region', 'postal_codes'],
-                        listConfig: {
-                            perLine: 3
-                        },
-                        beforeSave: function ($scope, info) {
-                            var promises = [],
-                                updatedAddress = $scope.args,
-                                promise;
+                    locationSpec = function () {
+                        return {
+                            listView: 'address-rule-location-list-view',
+                            sortFields: ['country', 'region', 'postal_codes'],
+                            listConfig: {
+                                perLine: 3
+                            },
+                            beforeSave: function ($scope, info) {
+                                var promises = [],
+                                    updatedAddress = $scope.args,
+                                    promise;
 
-                            if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                promise = models['13'].get(updatedAddress.region);
-                                promise.then(function (response) {
-                                    if (response.data.entities.length) {
-                                        updatedAddress._region = response.data.entities[0];
-                                    }
-                                });
-                                promises.push(promise);
-                            }
+                                if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
+                                    promise = models['13'].get(updatedAddress.region);
+                                    promise.then(function (response) {
+                                        if (response.data.entities.length) {
+                                            updatedAddress._region = response.data.entities[0];
+                                        }
+                                    });
+                                    promises.push(promise);
+                                }
 
-                            if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
-                                promise = models['12'].actions.search(undefined, {
-                                    cache: true
-                                });
-                                promise.then(function (response) {
-                                    if (response.data.entities.length) {
-                                        var country = _.findWhere(response.data.entities, {
-                                            key: updatedAddress.country
-                                        });
-                                        if (angular.isDefined(country)) {
-                                            updatedAddress._country = country;
+                                if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
+                                    promise = models['12'].actions.search(undefined, {
+                                        cache: true
+                                    });
+                                    promise.then(function (response) {
+                                        if (response.data.entities.length) {
+                                            var country = _.findWhere(response.data.entities, {
+                                                key: updatedAddress.country
+                                            });
+                                            if (angular.isDefined(country)) {
+                                                updatedAddress._country = country;
+                                            }
+
                                         }
 
-                                    }
+                                    });
+                                    promises.push(promise);
+                                }
 
-                                });
-                                promises.push(promise);
+                                if (promises.length) {
+                                    return $q.all(promises);
+                                }
+                                return false;
+
                             }
-
-                            if (promises.length) {
-                                return $q.all(promises);
-                            }
-                            return false;
-
-                        }
+                        };
                     },
                     defaultSpecifics = {
                         aboutPlugins: function () {
@@ -18345,9 +19381,6 @@ angular.module('app')
                                             hideSave: true,
                                             title: helpers.toolbar.title('seller.settings.aboutRules')
                                         }
-                                    };
-                                    $scope.close = function () {
-                                        $scope.$close();
                                     };
                                 })
                             });
@@ -18388,19 +19421,19 @@ angular.module('app')
                                 info.scope.$broadcast('itemOrderSorting');
                             },
                             stop: function (e, ui) {
-                                var cmp = [],
-                                    cmp2 = [];
+                                var dirty;
                                 angular.forEach(config.ui.specifics.parentArgs,
                                     function (ent, i) {
-                                        cmp.push(ent._sequence);
                                         i = ((config.ui.specifics.parentArgs.length - 1) - i);
-                                        cmp2.push(i);
+                                        if (ent._sequence !== i || ent._state === 'deleted') {
+                                            dirty = true;
+                                        }
                                         ent._sequence = i;
                                         if (ent.ui) {
                                             ent.ui.access[ent.ui.access.length - 1] = i;
                                         }
                                     });
-                                if (!cmp.equals(cmp2)) {
+                                if (dirty) {
                                     info.scope.formSetDirty();
                                 }
                                 info.scope.$broadcast('itemOrderChanged');
@@ -18411,10 +19444,10 @@ angular.module('app')
                             '113': {
                                 lines: {
                                     ui: {
-                                        specifics: lineSpec
+                                        specifics: lineSpec()
                                     },
                                     modelclass: {
-                                        rules: {
+                                        prices: {
                                             ui: {
                                                 specifics: {
                                                     toolbar: {
@@ -18440,29 +19473,38 @@ angular.module('app')
                                                 price_value: groupBy('price')
                                             }
                                         },
-                                        exclusion: exclusionSpec,
+                                        exclusion: exclusionSpec(),
                                         locations: {
                                             ui: {
-                                                specifics: locationSpec
+                                                specifics: locationSpec()
                                             }
                                         }
                                     }
                                 }
                             },
                             '107': {
-                                exclusion: exclusionSpec,
+                                exclusion: exclusionSpec(),
                                 locations: {
                                     ui: {
-                                        specifics: locationSpec
+                                        specifics: locationSpec()
                                     }
                                 }
                             },
                             '126': {
                                 lines: {
                                     ui: {
-                                        specifics: lineSpec
+                                        specifics: lineSpec()
                                     },
                                     modelclass: {
+                                        product_categories: {
+                                            ui: {
+                                                specifics: {
+                                                    search: {
+                                                        enabled: true
+                                                    }
+                                                }
+                                            }
+                                        },
                                         condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
                                         condition_operator: groupBy('conditional'),
                                         condition_value: groupBy('conditional')
@@ -18470,6 +19512,15 @@ angular.module('app')
                                 }
                             },
                             '109': {
+                                product_categories: {
+                                    ui: {
+                                        specifics: {
+                                            search: {
+                                                enabled: true
+                                            }
+                                        }
+                                    }
+                                },
                                 carriers: {
                                     ui: {
                                         specifics: {
@@ -18492,10 +19543,10 @@ angular.module('app')
                                         }
                                     }
                                 },
-                                exclusion: exclusionSpec,
+                                exclusion: exclusionSpec(),
                                 locations: {
                                     ui: {
-                                        specifics: locationSpec
+                                        specifics: locationSpec()
                                     }
                                 }
                             }
@@ -18557,7 +19608,7 @@ angular.module('app')
                                             return {};
                                         };
                                     config.ui.specifics.toolbar = {
-                                        leftIcon: 'navigation.arrow-back',
+                                        leftIcon: 'arrow_back',
                                         hideSave: true
                                     };
                                     if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
@@ -18615,6 +19666,7 @@ angular.module('app')
                                         fields.sort(helpers.fields.sorter);
                                         config.ui.specifics.fields = fields;
                                         angular.forEach(fields, function (field) {
+                                            helpers.fields.applyGlobalConfig(field);
                                             field._title_ = config._title_.concat();
                                             field.ui.name = 'plugin.' + field.code_name;
                                             field.ui.writable = true;
@@ -18623,7 +19675,7 @@ angular.module('app')
                                             if (extra) {
                                                 helpers.extendDeep(field, extra);
                                             }
-                                            if (field.is_structured && formInputTypes[field.type]) {
+                                            if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                                 $scope.layouts.groups.push({
                                                     label: inflector((field.ui.label || field.code_name), 'humanize'),
                                                     disabled: false,
@@ -18789,36 +19841,285 @@ angular.module('app')
 
         modelsConfig(function (models) {
             var read_arguments = {
-                _content: {
-                    documents: {}
+                    _content: {
+                        documents: {}
+                    },
+                    _plugin_group: {}
                 },
-                _plugin_group: {}
-            };
+                globalSellerStack = {};
 
             $.extend(models['23'], {
-                viewModal: function (seller, config) {
+                makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
-                    var removedOrAdded = config.removedOrAdded,
-                        popFrom = config.popFrom;
-                    $modal.open({
-                        templateUrl: 'seller/view.html',
-                        popFrom: popFrom,
-                        controller: ng(function ($scope, currentAccount) {
-                            var cartData;
-                            $scope.seller = seller;
-                            $scope.alreadyInCollection = false;
+                    var removedOrAdded = config.removedOrAdded;
+                    return (function ($scope) {
+                        var chartData,
+                            sellerUrl = $state.href('seller-info', {
+                                key: seller.parent.key
+                            }, {
+                                absolute: true
+                            }),
+                            embedSellerUrl = $state.href('embed-seller-info', {
+                                key: seller.parent.key
+                            }, {
+                                absolute: true
+                            }),
+                            sellerLogo = seller.logo.serving_url;
+                        $scope.seller = seller;
+                        if (!globalSellerStack[seller.key]) {
+                            globalSellerStack[seller.key] = {
+                                follower_count: seller._follower_count,
+                                notified_followers_count: seller._notified_followers_count
+                            };
+                        }
+                        $scope.globalSellerStack = globalSellerStack[seller.key];
+                        $scope.menu = {};
+                        $scope.globalSellerStack.inCollection = false;
+                        if (!currentAccount._is_guest) {
                             $scope.loadedCollection = models['18'].current().then(function (response) {
                                 var collection = response.data.entity;
                                 if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
-                                    $scope.alreadyInCollection = true;
+                                    $scope.globalSellerStack.inCollection = true;
                                 }
                                 return collection;
                             });
+                        }
 
-                            cartData = [];
+                        helpers.sideNav.setup($scope.menu, 'right_seller_details');
 
-                            $scope.catalogs = [];
+                        chartData = [];
 
+                        if ($scope.seller._feedback) {
+
+                            angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
+                                feedback.positive_count = _.random(0, 100);
+                                feedback.negative_count = _.random(0, 100);
+                                feedback.neutral_count = _.random(0, 100);
+                                chartData.push({
+                                    c: [{
+                                        v: dateFilter(feedback.date, 'MMM')
+                                    }, {
+                                        v: feedback.positive_count
+                                    }, {
+                                        v: feedback.negative_count
+                                    }, {
+                                        v: feedback.neutral_count
+                                    }]
+                                });
+
+                            });
+
+                            $scope.chartConfig = {
+                                type: "ColumnChart",
+                                data: {
+                                    cols: [{
+                                        id: "months",
+                                        label: "Months",
+                                        type: "string"
+                                    }, {
+                                        id: "positive",
+                                        label: "Positive",
+                                        type: "number"
+                                    }, {
+                                        id: "negative",
+                                        label: "Negative",
+                                        type: "number"
+                                    }, {
+                                        id: "neutral",
+                                        label: "Neutral",
+                                        type: "number"
+                                    }],
+                                    rows: chartData
+                                },
+                                options: {
+                                    colors: ['green', 'red', 'gray'],
+                                    series: {
+                                        0: {
+                                            axis: 'positive'
+                                        },
+                                        1: {
+                                            axis: 'negative'
+                                        },
+                                        3: {
+                                            axis: 'neutral'
+                                        }
+                                    },
+                                    axes: {
+                                        y: {
+                                            positive: {
+                                                label: 'Positive'
+                                            },
+                                            negative: {
+                                                label: 'Negative',
+                                                side: 'right'
+                                            },
+                                            neutral: {
+                                                label: 'Neutral',
+                                                side: 'right'
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+
+                            $scope.socialMeta = {
+                                facebook: {
+                                    'p[url]': sellerUrl,
+                                    'p[images][0]': sellerLogo,
+                                    'p[title]': $scope.seller.name
+                                },
+                                twitter: {
+                                    url: sellerUrl,
+                                    text: $scope.seller.name
+                                },
+                                pinterest: {
+                                    url: sellerUrl,
+                                    media: sellerLogo,
+                                    description: $scope.seller.name
+                                },
+                                googleplus: {
+                                    url: sellerUrl
+                                },
+                                reddit: {
+                                    url: sellerUrl,
+                                    title: $scope.seller.name
+                                },
+                                linkedin: {
+                                    url: sellerUrl,
+                                    title: $scope.seller.name
+                                },
+                                tumblr: {
+                                    url: sellerUrl,
+                                    name: $scope.seller.name
+                                }
+                            };
+
+                            $scope.displayShare = function () {
+                                return social.share($scope.socialMeta, {
+                                    src: embedSellerUrl
+                                });
+                            };
+
+
+                            $scope.feedbackStats = (function () {
+                                var positive_count = 0,
+                                    neutral_count = 0,
+                                    negative_count = 0,
+                                    positive_average,
+                                    negative_average,
+                                    neutral_average,
+                                    score,
+                                    values = [];
+
+                                positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
+                                negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
+                                neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
+
+                                if ((positive_count - negative_count) > 0) {
+                                    score = positive_count - negative_count;
+                                } else {
+                                    score = 0;
+                                }
+                                values[0] = positive_count;
+                                values[1] = neutral_count;
+                                values[2] = negative_count;
+                                values[3] = positive_average;
+                                values[4] = negative_average;
+                                values[5] = neutral_average;
+                                values[6] = score;
+                                return values;
+                            }());
+
+                        }
+
+
+                        $scope.viewContent = function (content) {
+                            $modal.open({
+                                templateUrl: 'core/misc/content_view.html',
+                                controller: ng(function ($scope) {
+                                    $scope.plainText = true;
+                                    $scope.content = content;
+                                })
+                            });
+                        };
+
+                        $scope.toggleCollection = function () {
+                            if (currentAccount._is_guest) {
+                                return;
+                            }
+                            $scope.loadedCollection.then(function (collection) {
+                                var loadedCollection = collection,
+                                    removed = false;
+                                if ($scope.globalSellerStack.inCollection) {
+                                    removed = true;
+                                    loadedCollection.sellers.remove($scope.seller.key);
+                                } else {
+                                    loadedCollection.sellers.unshift($scope.seller.key);
+                                }
+                                models['18'].actions.update({
+                                    account: currentAccount.key,
+                                    sellers: loadedCollection.sellers,
+                                    notify: loadedCollection.notify
+                                }).then(function (newResponse) {
+                                    var updatedCollection = newResponse.data.entity;
+                                    $scope.globalSellerStack.inCollection = !removed;
+                                    if (removed) {
+                                        $scope.globalSellerStack.follower_count -= 1;
+                                    } else {
+                                        $scope.globalSellerStack.follower_count += 1;
+                                    }
+                                    // update cache
+                                    $.extend(loadedCollection, updatedCollection);
+                                    if (angular.isFunction(removedOrAdded)) {
+                                        removedOrAdded(updatedCollection, $scope.globalSellerStack.inCollection);
+                                    }
+                                });
+                            });
+                        };
+
+                        return $scope;
+                    }({}));
+                },
+                current: function (args) {
+                    if (!args) {
+                        args = {};
+                    }
+                    args.account = currentAccount.key;
+                    return this.actions.read(args, {
+                        cache: 'currentSeller',
+                        cacheType: 'memory'
+                    });
+                },
+                viewProfileModal: function (accountKey, config) {
+                    config = helpers.alwaysObject(config);
+                    $modal.open({
+                        templateUrl: 'seller/profile.html',
+                        popFrom: config.popFrom,
+                        inDirection: config.inDirection,
+                        outDirection: config.outDirection,
+                        noEscape: config.noEscape,
+                        resolve: {
+                            seller: function () {
+                                return models['23'].actions.read({
+                                    account: accountKey,
+                                    read_arguments: {
+                                        _feedback: {},
+                                        _content: {}
+                                    }
+                                }).then(function (response) {
+                                    return response.data.entity;
+                                });
+                            }
+                        },
+                        controller: ng(function ($scope, seller) {
+                            $scope.view = function (key, $event) {
+                                models['31'].viewModal(key, {
+                                    popFrom: helpers.clicks.realEventTarget($event.target)
+                                });
+                            };
+                            $scope.hideClose = config.hideClose;
+                            $scope.seller = seller;
+                            $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller);
                             $scope.search = {
                                 results: [],
                                 pagination: models['31'].paginate({
@@ -18826,9 +20127,9 @@ angular.module('app')
                                     args: {
                                         search: {
                                             filters: [{
-                                                field: 'ancestor',
+                                                field: 'seller_account_key',
                                                 operator: 'IN',
-                                                value: $scope.seller.key
+                                                value: accountKey
                                             }]
                                         }
                                     },
@@ -18844,176 +20145,14 @@ angular.module('app')
                                 })
                             };
                             $scope.scrollEnd = {
-                                loader: false
+                                loader: $scope.search.pagination
                             };
-                            $scope.scrollEnd.loader = $scope.search.pagination;
                             $scope.search.pagination.load();
-
-                            $scope.viewCatalog = function (result, $event) {
-                                models['31'].viewModal(result.key, {
-                                    popFrom: helpers.clicks.realEventTarget($event.target)
-                                });
-                            };
-
-                            if ($scope.seller._feedback) {
-
-                                angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
-                                    feedback.positive_count = _.random(0, 100);
-                                    feedback.negative_count = _.random(0, 100);
-                                    feedback.neutral_count = _.random(0, 100);
-                                    cartData.push({
-                                        c: [{
-                                            v: dateFilter(feedback.date, 'MMM')
-                                        }, {
-                                            v: feedback.positive_count
-                                        }, {
-                                            v: feedback.negative_count
-                                        }, {
-                                            v: feedback.neutral_count
-                                        }]
-                                    });
-
-                                });
-
-                                $scope.chartConfig = {
-                                    type: "ColumnChart",
-                                    data: {
-                                        cols: [{
-                                            id: "months",
-                                            label: "Months",
-                                            type: "string"
-                                        }, {
-                                            id: "positive",
-                                            label: "Positive",
-                                            type: "number"
-                                        }, {
-                                            id: "negative",
-                                            label: "Negative",
-                                            type: "number"
-                                        }, {
-                                            id: "neutral",
-                                            label: "Neutral",
-                                            type: "number"
-                                        }],
-                                        rows: cartData
-                                    },
-                                    options: {
-                                        colors: ['green', 'red', 'gray'],
-                                        series: {
-                                            0: {
-                                                axis: 'positive'
-                                            },
-                                            1: {
-                                                axis: 'negative'
-                                            },
-                                            3: {
-                                                axis: 'neutral'
-                                            }
-                                        },
-                                        axes: {
-                                            y: {
-                                                positive: {
-                                                    label: 'Positive'
-                                                },
-                                                negative: {
-                                                    label: 'Negative',
-                                                    side: 'right'
-                                                },
-                                                neutral: {
-                                                    label: 'Neutral',
-                                                    side: 'right'
-                                                }
-                                            }
-                                        }
-                                    }
-                                };
-
-
-                                $scope.feedbackStats = (function () {
-                                    var positive_count = 0,
-                                        neutral_count = 0,
-                                        negative_count = 0,
-                                        positive_average,
-                                        negative_average,
-                                        neutral_average,
-                                        score,
-                                        values = [];
-
-                                    positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
-                                    negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
-                                    neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
-
-                                    if ((positive_count - negative_count) > 0) {
-                                        score = positive_count - negative_count;
-                                    } else {
-                                        score = 0;
-                                    }
-                                    values[0] = positive_count;
-                                    values[1] = neutral_count;
-                                    values[2] = negative_count;
-                                    values[3] = positive_average;
-                                    values[4] = negative_average;
-                                    values[5] = neutral_average;
-                                    values[6] = score;
-                                    return values;
-                                }());
-
-                            }
-
-
-                            $scope.viewContent = function (content) {
-                                $modal.open({
-                                    templateUrl: 'core/misc/content_view.html',
-                                    controller: ng(function ($scope) {
-                                        $scope.plainText = true;
-                                        $scope.content = content;
-                                        $scope.close = function () {
-                                            $scope.$close();
-                                        };
-                                    })
-                                });
-                            };
-
-                            $scope.toggleCollection = function () {
-                                $scope.loadedCollection.then(function (collection) {
-                                    var loadedCollection = collection,
-                                        removed = false;
-                                    if ($scope.alreadyInCollection) {
-                                        removed = true;
-                                        loadedCollection.sellers.remove($scope.seller.key);
-                                    } else {
-                                        loadedCollection.sellers.unshift($scope.seller.key);
-                                    }
-                                    models['18'].actions.update({
-                                        account: currentAccount.key,
-                                        sellers: loadedCollection.sellers,
-                                        notify: loadedCollection.notify
-                                    }).then(function (newResponse) {
-                                        var updatedCollection = newResponse.data.entity;
-                                        $scope.alreadyInCollection = !removed;
-                                        // update cache
-                                        $.extend(loadedCollection, updatedCollection);
-                                        if (angular.isFunction(removedOrAdded)) {
-                                            removedOrAdded(updatedCollection, $scope.alreadyInCollection);
-                                        }
-                                    });
-                                });
-                            };
-
                             $scope.close = function () {
-                                $scope.$close();
+                                $scope.$close().then(config.afterClose || angular.noop);
                             };
-                        }),
-                    });
-                },
-                current: function (args) {
-                    if (!args) {
-                        args = {};
-                    }
-                    args.account = currentAccount.key;
-                    return this.actions.read(args, {
-                        cache: 'currentSeller',
-                        cacheType: 'memory'
+
+                        })
                     });
                 },
                 manageModal: function (accountKey) {
@@ -19046,6 +20185,10 @@ angular.module('app')
                         toolbar: {
                             submitNative: true,
                             titleEdit: 'seller.settings'
+                        },
+                        modalConfig: {
+                            inDirection: false,
+                            outDirection: false
                         },
                         excludeFields: ['account', 'read_arguments'],
                         argumentLoader: function ($scope) {
@@ -19168,8 +20311,43 @@ angular.module('app')
             })
             .state('seller-info', {
                 url: '/seller/:key',
-                controller: 'HomePageController',
-                templateUrl: 'home/index.html'
+                controller: 'SellerInfo',
+                template: ''
+            })
+            .state('embed-seller-info', {
+                url: '/embed/seller/:key',
+                controller: 'SellerEmbedInfo',
+                template: ''
+            })
+            .state('catalog-view', {
+                url: '/catalog/:key',
+                controller: 'CatalogViewController',
+                template: ''
+            })
+            .state('catalog-product-add-to-cart', {
+                url: '/catalog/:key/product-add-to-cart/:image_id/:pricetag_id/:variant/:quantity',
+                controller: 'CatalogProductAddToCartController',
+                template: ''
+            })
+            .state('catalog-product-view', {
+                url: '/catalog/:key/product/:image_id/:pricetag_id',
+                controller: 'CatalogProductViewController',
+                template: ''
+            })
+            .state('embed-catalog-view', {
+                url: '/embed/catalog/:key',
+                controller: 'EmbedCatalogViewController',
+                template: ''
+            })
+            .state('embed-seller-view', {
+                url: '/embed/seller/:key',
+                controller: 'EmbedSellerViewController',
+                template: ''
+            })
+            .state('embed-catalog-product-view', {
+                url: '/embed/catalog/:key/product/:image_id/:pricetag_id',
+                controller: 'EmbedCatalogProductViewController',
+                template: ''
             })
             .state('sell-catalogs', {
                 url: '/sell/catalogs',
@@ -19196,10 +20374,33 @@ angular.module('app')
                 controller: 'BuyOrdersController',
                 templateUrl: 'buyer/carts.html'
             })
+            .state('login', {
+                url: '/api/account/login/:provider',
+                template: ''
+            })
+            .state('loginProviderConnected', {
+                url: '/login_provider_connected/:provider',
+                controller: 'LoginProviderConnectedController',
+                template: ''
+            })
+            .state('order-payment-canceled', {
+                url: '/order/payment/canceled/:key',
+                controller: 'OrderPaymentCanceledController',
+                template: ''
+            })
+            .state('order-payment-success', {
+                url: '/order/payment/success/:key',
+                controller: 'OrderPaymentSuccessController',
+                template: ''
+            })
             .state('login-status', {
                 url: '/login/status',
                 template: '',
                 controller: 'AccountLoginStatusController'
+            })
+            .state('paypal-ipn', {
+                url: '/api/order/complete/paypal',
+                template: '',
             })
             .state('admin-list', {
                 url: '/admin/list/:kind/:query',

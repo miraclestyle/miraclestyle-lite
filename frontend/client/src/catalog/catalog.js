@@ -119,10 +119,13 @@
             link: function (scope, element, attr) {
 
                 var pricetag = scope.$eval(attr.catalogPricetagPosition),
-                    resize = function () {
+                    wait = true,
+                    resize = function (justElement) {
                         var pa = $(element).parents('.image-slider-item:first'),
                             sizes;
-
+                        if (justElement) {
+                            return pa;
+                        }
                         sizes = models['31'].calculatePricetagPosition(
                             pricetag.position_top,
                             pricetag.position_left,
@@ -140,7 +143,19 @@
                             left: pricetag._position_left,
                             visibility: 'visible'
                         });
+                    },
+                    waitResize = function () {
+                        if (!wait) {
+                            resize();
+                        }
                     };
+                /*
+                scope.$on('readySingleImageSlider', function (which) {
+                    if (which === resize(true)) {
+                        wait = false;
+                        resize();
+                    }
+                });*/
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
@@ -408,16 +423,7 @@
                                 };
 
                                 $scope.displayShare = function () {
-                                    var url = $state.href('embed-catalog-product-view', {
-                                        key: $scope.catalog.key,
-                                        image_id: $scope.catalog._images[0].id,
-                                        pricetag_id: $scope.catalog._images[0].pricetags[0].id
-                                    }, {
-                                        absolute: true
-                                    });
-                                    return social.share($scope.socialMeta, {
-                                        src: url
-                                    });
+                                    return social.share($scope.socialMeta, false);
                                 };
 
                                 $scope.variantChooser = {};
@@ -452,9 +458,6 @@
                                         controller: ng(function ($scope) {
                                             $scope.markDown = true;
                                             $scope.content = content;
-                                            $scope.close = function () {
-                                                $scope.$close();
-                                            };
                                         })
                                     });
                                 };
@@ -625,9 +628,6 @@
                                     shareWatch();
                                 });
 
-                                $scope.close = function () {
-                                    $scope.$close();
-                                };
                             })
                         });
                     });
@@ -669,6 +669,11 @@
                                     accessImages,
                                     loadProduct,
                                     catalogUrl = $state.href('catalog-view', {
+                                        key: $scope.catalog.key
+                                    }, {
+                                        absolute: true
+                                    }),
+                                    embedCatalogUrl = $state.href('embed-catalog-view', {
                                         key: $scope.catalog.key
                                     }, {
                                         absolute: true
@@ -719,13 +724,8 @@
                                 };
 
                                 $scope.displayShare = function () {
-                                    var url = $state.href('embed-catalog-view', {
-                                        key: $scope.catalog.key
-                                    }, {
-                                        absolute: true
-                                    });
                                     return social.share($scope.socialMeta, {
-                                        src: url
+                                        src: embedCatalogUrl
                                     });
                                 };
 

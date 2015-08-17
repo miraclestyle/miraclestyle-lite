@@ -1,0 +1,40 @@
+<div class="fitter" fit-in-modal>
+
+    <div class="modal-body">
+        <div class="fixed-height relative overflow-y has-toolbar">
+            <div class="modal-body-inner">
+                <div class="clearfix">
+
+                    <div ng-hide="hideClose" class="top-close">
+                        <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
+                            <icon color="white" type="close"></icon>
+                        </button>
+                    </div>
+
+                    <div class="top-close top-close-right">
+                        <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="sellerDetails.menu.toggle()">
+                            <icon color="white" type="more_vert"></icon>
+                        </button>
+                    </div>
+
+                    <div class="list">
+                        <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = 240" grid-scale="{maxHeight: maxHeight}" ng-show="search.results.length" class="grid-wrapper clearfix">
+                            <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
+                                <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
+                                    <img class="not-pointable" display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:240}" />
+                                </button>
+                            </div>
+                        </div>
+                        <div load-more-button="search.pagination"></div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+                    <div ng-include="'seller/view.html'"></div>
+
+</div>

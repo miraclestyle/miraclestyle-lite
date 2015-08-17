@@ -15,4 +15,5 @@ class SellerView(base.SeoOrAngular):
   def respond_seo(self, *args, **kwargs):
     self.render_response('seller/view.html')
 
-settings.ROUTES.extend(((r'/seller/<key>', SellerView, 'seller.view'),))
+settings.ROUTES.extend(((r'/seller/<key>', SellerView, 'seller.view'),
+                        (r'/embed/seller/<key>', SellerView, 'seller.view'),))

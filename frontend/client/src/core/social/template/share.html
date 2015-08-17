@@ -2,7 +2,7 @@
     <div ng-form="container.form" class="modal-body">
         <div class="top-close">
                 <button md-ink-ripple-action loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
-                    <icon type="close"></icon>
+                    <icon color="white" type="close"></icon>
                 </button>
         </div>
         <div class="fixed-height relative overflow-y">
@@ -20,6 +20,12 @@
                         </button>
                     </div>
                 </div>
+
+                <div ng-if="link.enabled" ng-class="{'seam-bottom': embed.enabled}" class="list list-padding">
+                    <div class="list-subheader subheader">Link</div>
+                    <div form-builder="link.fields"></div>
+                </div>
+
                 <div ng-if="embed.enabled" class="list list-padding">
                     <div class="list-subheader subheader">Embed</div>
                     <div form-builder="embed.fields"></div>

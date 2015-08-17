@@ -3,7 +3,23 @@
     var notEmpty = function (val) {
         return angular.isString(val) || angular.isNumber(val);
     };
-    angular.module('app').directive('addressRuleLocationListView', function () {
+    angular.module('app').controller('SellerInfo', ng(function ($scope, $state, $stateParams, models) {
+        $scope.site.toolbar.hidden = true;
+        models['23'].viewProfileModal($stateParams.key, {
+            inDirection: false,
+            outDirection: false,
+            afterClose: function () {
+                $state.go('home');
+            }
+        });
+    })).controller('SellerEmbedInfo', ng(function ($scope, $stateParams, models) {
+        $scope.site.toolbar.hidden = true;
+        models['23'].viewProfileModal($stateParams.key, {
+            hideClose: true,
+            inDirection: false,
+            outDirection: false
+        });
+    })).directive('addressRuleLocationListView', function () {
         return {
             scope: {
                 val: '=addressRuleLocationListView'
@@ -176,7 +192,7 @@
             $scope.search.pagination.load();
         });
     })).run(ng(function (modelsConfig, modelsMeta,
-        modelsEditor, formInputTypes, underscoreTemplate, $modal, modals, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
+        modelsEditor, formInputTypes, underscoreTemplate, $state, $stateParams, $modal, modals, social, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
 
         var pluginName = function (kind) {
             var find = GLOBAL_CONFIG.fields.translateChoices.rules.kind[kind];
@@ -279,9 +295,6 @@
                                             hideSave: true,
                                             title: helpers.toolbar.title('seller.settings.aboutRules')
                                         }
-                                    };
-                                    $scope.close = function () {
-                                        $scope.$close();
                                     };
                                 })
                             });
@@ -742,18 +755,30 @@
 
         modelsConfig(function (models) {
             var read_arguments = {
-                _content: {
-                    documents: {}
+                    _content: {
+                        documents: {}
+                    },
+                    _plugin_group: {}
                 },
-                _plugin_group: {}
-            }, globalSellerStack = {};
+                globalSellerStack = {};
 
             $.extend(models['23'], {
                 makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
                     return (function ($scope) {
-                        var chartData;
+                        var chartData,
+                            sellerUrl = $state.href('seller-info', {
+                                key: seller.parent.key
+                            }, {
+                                absolute: true
+                            }),
+                            embedSellerUrl = $state.href('embed-seller-info', {
+                                key: seller.parent.key
+                            }, {
+                                absolute: true
+                            }),
+                            sellerLogo = seller.logo.serving_url;
                         $scope.seller = seller;
                         if (!globalSellerStack[seller.key]) {
                             globalSellerStack[seller.key] = {
@@ -851,6 +876,44 @@
                                 }
                             };
 
+                            $scope.socialMeta = {
+                                facebook: {
+                                    'p[url]': sellerUrl,
+                                    'p[images][0]': sellerLogo,
+                                    'p[title]': $scope.seller.name
+                                },
+                                twitter: {
+                                    url: sellerUrl,
+                                    text: $scope.seller.name
+                                },
+                                pinterest: {
+                                    url: sellerUrl,
+                                    media: sellerLogo,
+                                    description: $scope.seller.name
+                                },
+                                googleplus: {
+                                    url: sellerUrl
+                                },
+                                reddit: {
+                                    url: sellerUrl,
+                                    title: $scope.seller.name
+                                },
+                                linkedin: {
+                                    url: sellerUrl,
+                                    title: $scope.seller.name
+                                },
+                                tumblr: {
+                                    url: sellerUrl,
+                                    name: $scope.seller.name
+                                }
+                            };
+
+                            $scope.displayShare = function () {
+                                return social.share($scope.socialMeta, {
+                                    src: embedSellerUrl
+                                });
+                            };
+
 
                             $scope.feedbackStats = (function () {
                                 var positive_count = 0,
@@ -890,9 +953,6 @@
                                 controller: ng(function ($scope) {
                                     $scope.plainText = true;
                                     $scope.content = content;
-                                    $scope.close = function () {
-                                        $scope.$close();
-                                    };
                                 })
                             });
                         };
@@ -904,7 +964,7 @@
                             $scope.loadedCollection.then(function (collection) {
                                 var loadedCollection = collection,
                                     removed = false;
-                                if ($scope.globalSellerStack.inCollection) {
+                                if (!$scope.globalSellerStack.inCollection) {
                                     removed = true;
                                     loadedCollection.sellers.remove($scope.seller.key);
                                 } else {
@@ -916,7 +976,6 @@
                                     notify: loadedCollection.notify
                                 }).then(function (newResponse) {
                                     var updatedCollection = newResponse.data.entity;
-                                    $scope.globalSellerStack.inCollection = !removed;
                                     if (removed) {
                                         $scope.globalSellerStack.follower_count -= 1;
                                     } else {
@@ -942,6 +1001,71 @@
                     return this.actions.read(args, {
                         cache: 'currentSeller',
                         cacheType: 'memory'
+                    });
+                },
+                viewProfileModal: function (accountKey, config) {
+                    config = helpers.alwaysObject(config);
+                    $modal.open({
+                        templateUrl: 'seller/profile.html',
+                        popFrom: config.popFrom,
+                        inDirection: config.inDirection,
+                        outDirection: config.outDirection,
+                        noEscape: config.noEscape,
+                        resolve: {
+                            seller: function () {
+                                return models['23'].actions.read({
+                                    account: accountKey,
+                                    read_arguments: {
+                                        _feedback: {},
+                                        _content: {}
+                                    }
+                                }).then(function (response) {
+                                    return response.data.entity;
+                                });
+                            }
+                        },
+                        controller: ng(function ($scope, seller) {
+                            $scope.view = function (key, $event) {
+                                models['31'].viewModal(key, {
+                                    popFrom: helpers.clicks.realEventTarget($event.target)
+                                });
+                            };
+                            $scope.hideClose = config.hideClose;
+                            $scope.seller = seller;
+                            $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller);
+                            $scope.search = {
+                                results: [],
+                                pagination: models['31'].paginate({
+                                    kind: '31',
+                                    args: {
+                                        search: {
+                                            filters: [{
+                                                field: 'seller_account_key',
+                                                operator: 'IN',
+                                                value: accountKey
+                                            }]
+                                        }
+                                    },
+                                    config: {
+                                        normalizeEntity: false
+                                    },
+                                    action: 'public_search',
+                                    complete: function (response) {
+                                        var results = response.data.entities;
+                                        models['31'].formatPublicSearchResults(results);
+                                        $scope.search.results.extend(results);
+                                    }
+                                })
+                            };
+                            $scope.scrollEnd = {
+                                loader: $scope.search.pagination
+                            };
+                            $scope.search.pagination.load();
+                            $scope.close = function () {
+                                $scope.$close().then(config.afterClose || angular.noop);
+                            };
+
+                        })
                     });
                 },
                 manageModal: function (accountKey) {

@@ -70,6 +70,11 @@
 
             $scope.setPageToolbarTitle('home');
             $scope.sellerDetails = false;
+            $scope.viewProfile = function (key, $event) {
+                models['23'].viewProfileModal(key, {
+                    popFrom: helpers.clicks.realEventTarget($event.target)
+                });
+            };
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
                     popFrom: helpers.clicks.realEventTarget($event.target)

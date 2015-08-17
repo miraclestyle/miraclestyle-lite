@@ -8,7 +8,7 @@
             <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
                 <img class="not-pointable" display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:240}" />
             </button>
-            <button md-ink-ripple ripple-light ng-if="!sellerMode" loading ui-sref="seller-info({key: result.seller_account_key})" class="button-transparent button-block seller-logo-bellow">
+            <button md-ink-ripple ripple-light ng-if="!sellerMode" loading ng-click="viewProfile(result.seller_account_key, $event)" class="button-transparent button-block seller-logo-bellow">
                 <img class="not-pointable" display-image="result._seller_logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
             </button>
         </div>
@@ -16,4 +16,3 @@
     <div load-more-button="search.pagination"></div>
 </div>
 </md-content>
-<div ng-if="sellerDetails" ng-include="'seller/view.html'"></div>

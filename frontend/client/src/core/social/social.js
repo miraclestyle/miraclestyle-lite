@@ -2,7 +2,7 @@
     'use strict';
     angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG) {
         var social = {
-            share: function (meta, embed) {
+            share: function (meta, embed, link) {
                 $modal.open({
                     templateUrl: 'core/social/share.html',
                     controller: ng(function ($scope) {
@@ -53,23 +53,51 @@
                                 h = $(window).height() / 1.3,
                                 left = (screen.width / 2) - (w / 2),
                                 top = (screen.height / 2) - (h / 2),
-                                link = soc.command,
+                                cmd = soc.command,
                                 popup;
                             angular.forEach(soc.require, function (key) {
                                 var hasit = meta[soc.key][key];
                                 if (angular.isUndefined(hasit)) {
-                                    link = link.replace('&' + key + '={' + key + '}', '');
-                                    link = link.replace('?' + key + '={' + key + '}', '');
+                                    cmd = cmd.replace('&' + key + '={' + key + '}', '');
+                                    cmd = cmd.replace('?' + key + '={' + key + '}', '');
                                 } else {
-                                    link = link.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
+                                    cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
                                 }
                             });
-                            popup = window.open(link, 'Share to ' + soc.name, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                            popup = window.open(cmd, 'Share to ' + soc.name, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
                             popup.focus();
                             return popup;
                         };
 
                         $scope.container = {};
+
+                        if (angular.isUndefined(link)) {
+                            link = {
+                                src: meta.googleplus.url
+                            };
+                        }
+
+                        $scope.link = {
+                            enabled: link,
+                            values: {
+                                url: (angular.isObject(link) ? link.src : link)
+                            },
+                            fields: [{
+                                type: 'SuperTextProperty',
+                                code_name: 'url',
+                                ui: {
+                                    label: false,
+                                    writable: true,
+                                    args: 'link.values.url',
+                                    parentArgs: 'link.values',
+                                    attrs: {
+                                        readonly: 'true',
+                                        onclick: 'this.select()'
+                                    }
+                                }
+
+                            }]
+                        };
 
                         $scope.embed = {
                             enabled: embed,
@@ -79,6 +107,9 @@
                                 code: ''
                             },
                             setCode: function () {
+                                if (!embed) {
+                                    return '';
+                                }
                                 var values = $scope.embed.values;
                                 values.code = '<iframe width="' + values.width + '" height="' + values.height + '" src="' + embed.src + '" frameborder="0" allowfullscreen></iframe>';
                                 return values.code;
@@ -126,7 +157,6 @@
                         };
 
                         $scope.embed.setCode();
-                        $scope.close = $scope.$close;
                     })
                 });
             }

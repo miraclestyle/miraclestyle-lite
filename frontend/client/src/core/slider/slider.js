@@ -99,13 +99,16 @@
                             newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
                             newWidth = Math.ceil(newHeight * image.proportion),
                             imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
-                            originalNewHeight = newHeight;
+                            originalNewHeight = newHeight,
+                            reactingElement = element.parents('.image-slider-item:first');
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
-                        element.attr('src', image.serving_url + '=s' + imageSize)
+                        element.bind('load', function () {
+                            scope.$broadcast('readySingleImageSlider', reactingElement);
+                        }).attr('src', image.serving_url + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 
-                        element.parents('.image-slider-item:first')
+                        reactingElement
                             .width(newWidth)
                             .height(newHeight);
                     },

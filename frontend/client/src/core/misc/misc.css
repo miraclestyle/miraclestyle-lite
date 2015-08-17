@@ -1020,3 +1020,10 @@ button::-moz-focus-inner {
     left: auto;
     right: 4px;
 }
+
+.content-view {
+    padding-top: 24px;
+    padding-bottom: 24px;
+    padding-left: 16px;
+    padding-right: 16px;
+}

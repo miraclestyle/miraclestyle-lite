@@ -11,7 +11,6 @@
 }
 
 .ng-hide * {
-  -webkit-animation: none !important;
   animation: none !important;
 }
 
@@ -25,55 +24,55 @@
     box-shadow: 0px 1.5px 3px 0.75px rgba(0, 0, 0, 0.26);
 }
 
-@-webkit-keyframes spinner {
+@keyframes spinner {
     0% {
-        -webkit-transform: rotate(90deg);
+        transform: rotate(90deg);
     }
     40% {
-        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
     }
     100% {
-        -webkit-transform: rotate(450deg);
+        transform: rotate(450deg);
     }
 }
 
-@-webkit-keyframes arc-one {
+@keyframes arc-one {
     0% {
-        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
     }
     20% {
-        -webkit-transform: rotate(180deg);
+        transform: rotate(180deg);
     }
     40% {
-        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
     }
     70% {
-        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
     }
     100% {
-        -webkit-transform: rotate(540deg);
+        transform: rotate(540deg);
     }
 }
 
-@-webkit-keyframes arc-two {
+@keyframes arc-two {
     0% {
-        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
     }
     20% {
-        -webkit-transform: rotate(180deg);
+        transform: rotate(180deg);
     }
     40% {
-        -webkit-transform: rotate(180deg);
+        transform: rotate(180deg);
     }
     70% {
-        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
     }
     100% {
-        -webkit-transform: rotate(540deg);
+        transform: rotate(540deg);
     }
 }
 
-@-webkit-keyframes mask-one {
+@keyframes mask-one {
     0% {
         opacity: 1;
     }
@@ -82,7 +81,7 @@
     }
 }
 
-@-webkit-keyframes mask-two {
+@keyframes mask-two {
     0% {
         opacity: 0;
     }
@@ -101,15 +100,15 @@
 }
 
 .spinner {
-    -webkit-animation: spinner 1.6s linear infinite;
-    -webkit-transform: rotate(90deg);
+    animation: spinner 1.6s linear infinite;
+    transform: rotate(90deg);
 }
 
 .spinner .arc {
     width: 50%;
     height: 100%;
     position: absolute;
-    -webkit-transform-origin: 100% 50%;
+    transform-origin: 100% 50%;
     background: rgba(117, 117, 117, 1);
     box-sizing: border-box;
     border: 1px solid rgba(255, 255, 255, 1);
@@ -119,12 +118,12 @@
 
 .spinner .arc.one {
     z-index: 100;
-    -webkit-animation: arc-one 1.6s linear infinite;
+    animation: arc-one 1.6s linear infinite;
 }
 
 .spinner .arc.two {
     z-index: 200;
-    -webkit-animation: arc-two 1.6s linear infinite;
+    animation: arc-two 1.6s linear infinite;
 }
 
 .spinner .mask {
@@ -139,13 +138,13 @@
 .spinner .mask.one {
     left: 0%;
     z-index: 300;
-    -webkit-animation: mask-one 1.6s steps(1, end) infinite;
+    animation: mask-one 1.6s steps(1, end) infinite;
 }
 
 .spinner .mask.two {
     right: 0%;
     z-index: 400;
-    -webkit-animation: mask-two 1.6s steps(1, end) infinite;
+    animation: mask-two 1.6s steps(1, end) infinite;
 }
 
 .spinner .pin {

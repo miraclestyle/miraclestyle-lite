@@ -42,8 +42,6 @@
 
                                     $.extend(defaultReaderOpts, config.reader);
 
-                                    $scope.close = $scope.$close;
-
                                     $scope.history = {
                                         records: [],
                                         reader: models[config.kind].reader(defaultReaderOpts),
@@ -58,9 +56,6 @@
                                                         hideSave: true,
                                                         leftIcon: 'arrow_back',
                                                         title: 'Log for date  ' + record.logged
-                                                    };
-                                                    $scope.close = function () {
-                                                        $scope.$close();
                                                     };
                                                 })
                                             });

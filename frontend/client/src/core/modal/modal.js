@@ -514,6 +514,7 @@
 
                             var modalScope = (modalOptions.scope || $rootScope).$new();
                             modalScope.$close = modalInstance.close;
+                            modalScope.close = modalScope.$close;
                             modalScope.$dismiss = modalInstance.dismiss;
 
                             var ctrlInstance, ctrlLocals = {};

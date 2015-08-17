@@ -578,10 +578,6 @@
                                     }
                                 };
 
-                                $scope.close = function () {
-                                    $scope.$close();
-                                };
-
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller);
 
                                 $scope.lineDrag = {

@@ -39,7 +39,6 @@
                         templateBodyUrl: 'collection/manage_body.html',
                         excludeFields: ['account', 'read_arguments'],
                         init: function ($scope) {
-                            $scope.close = $scope.$close;
                             $scope.$watch('args.notify', function (neww, old) {
                                 if (neww !== old) {
                                     $scope.save().then(function () {
