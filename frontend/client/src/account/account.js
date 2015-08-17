@@ -21,6 +21,13 @@
             });
             return mappedLoginProviders;
         }))
+        .controller('LoginProviderConnectedController', ng(function ($scope, snackbar, currentAccount, models) {
+            models['11'].manageModal(currentAccount, {
+                fromRedirect: true
+            }).then(function () {
+                snackbar.showK('identityConnected');
+            });
+        }))
         .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, modals) {
             var data = $location.search(),
                 errors;
@@ -155,7 +162,7 @@
                                         if (data && !data.errors && data.authorization_url) {
                                             window.location.href = data.authorization_url;
                                         } else {
-                                            modals.alert('failedToAttemptAtLogin');
+                                            modals.alert('failedGeneratingAuthorizaitonUrl');
                                         }
                                     });
                                 };
@@ -179,6 +186,7 @@
                             },
                             init: function ($scope) {
                                 var entity = $scope.entity,
+                                    close,
                                     updateFields = ['state', 'ui.rule', 'created', 'updated'],
                                     updateState = function (newArgs) {
                                         angular.forEach(['args', 'entity'], function (p) {
@@ -221,10 +229,22 @@
                                         });
                                     } else {
                                         modals.confirm('connectSignInMethod', function () {
-                                            models['11'].actions.login({
-                                                login_method: getProvider(identity)
+                                            var redirect_to = $state.href('loginProviderConnected', {
+                                                provider: getProvider(identity)
+                                            });
+                                            $http.post($state.href('login', {
+                                                provider: getProvider(identity)
+                                            }), {
+                                                action_id: 'login',
+                                                action_model: '11',
+                                                redirect_to: redirect_to
                                             }).then(function (response) {
-                                                window.location.href = response.data.authorization_url;
+                                                var data = response.data;
+                                                if (data && !data.errors && data.authorization_url) {
+                                                    window.location.href = data.authorization_url;
+                                                } else {
+                                                    modals.alert('failedGeneratingAuthorizaitonUrl');
+                                                }
                                             });
                                         });
                                     }
@@ -236,6 +256,11 @@
                                         onConfirm: updateState
                                     });
                                 };
+                            },
+                            afterClose: function () {
+                                if (extraConfig.fromRedirect) {
+                                    $state.go('home');
+                                }
                             },
                             scope: {
                                 historyConfig: true,
@@ -265,7 +290,7 @@
                             }
                         };
 
-                        modelsEditor.create(config).read(account, {
+                        return modelsEditor.create(config).read(account, {
                             key: account.key
                         });
 

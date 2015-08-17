@@ -1,19 +1,19 @@
 <div class="cards">
     <div class="card" ng-repeat="user in search.results">
         <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(user, $event)">
-            <div class="padding-16">
+            <div class="card-inner-padding">
                 <h1 class="headline">#{{user.id}}</h1>
-                <span class="first">{{user|output:'created'}}</span>
+                <div class="secondary padding-bottom-16">{{user|output:'created'}}</div>
                 <table class="card-table">
                     <tbody>
 
                         <tr>
-                            <td class="first info">State</td>
-                            <td class="first">{{user.state|labelize:"user"}}</td>
+                            <td class="secondary info">State</td>
+                            <td class="secondary">{{user.state|labelize:"user"}}</td>
                         </tr>
                         <tr>
-                            <td class="first info">Updated</td>
-                            <td class="first">{{user|output:'updated'}}</td>
+                            <td class="secondary info">Updated</td>
+                            <td class="secondary">{{user|output:'updated'}}</td>
                         </tr>
                         
                     </tbody>

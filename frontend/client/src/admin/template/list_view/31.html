@@ -1,41 +1,40 @@
 <div class="cards">
     <div class="card" ng-repeat="catalog in search.results">
         <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(catalog, $event)">
-            <div class="padding-16">
+            <div class="card-inner-padding">
                 <h1 class="headline">#{{catalog.id}}</h1>
-                <span class="first">{{catalog|output:'created'}}</span>
-                <span class="first">{{catalog.total_amount|formatCurrency:catalog.currency}}</span>
+                <div class="secondary padding-bottom-16">{{catalog|output:'created'}}</div>
                 <table class="card-table">
                     <tbody>
 
                         <tr>
-                            <td class="first info">Seller</td>
-                            <td class="first">#{{catalog.parent.parent.id}}</td>
+                            <td class="secondary info">Seller</td>
+                            <td class="secondary">#{{catalog.parent.parent.id}}</td>
                         </tr>
 
                         <tr>
-                            <td class="first info">Name</td>
-                            <td class="first">{{catalog.name}}</td>
+                            <td class="secondary info">Name</td>
+                            <td class="secondary">{{catalog.name}}</td>
                         </tr>
 
                         <tr>
-                            <td class="first info">State</td>
-                            <td class="first">{{catalog.state|labelize:"catalog"}}</td>
+                            <td class="secondary info">State</td>
+                            <td class="secondary">{{catalog.state|labelize:"catalog"}}</td>
                         </tr>
 
                         <tr>
-                            <td class="first info">Updated</td>
-                            <td class="first">{{catalog|output:'updated'}}</td>
+                            <td class="secondary info">Updated</td>
+                            <td class="secondary">{{catalog|output:'updated'}}</td>
                         </tr>
                         
                         <tr>
-                            <td class="first info">Publish Date</td>
-                            <td class="first">{{catalog|output:'published'}}</td>
+                            <td class="secondary info">Publish Date</td>
+                            <td class="secondary">{{catalog|output:'published'}}</td>
                         </tr>
 
                         <tr>
-                            <td class="first info">Discontinue Date</td>
-                            <td class="first">{{catalog|output:'discontinue_date'}}</td>
+                            <td class="secondary info">Discontinue Date</td>
+                            <td class="secondary">{{catalog|output:'discontinue_date'}}</td>
                         </tr>
  
                     </tbody>

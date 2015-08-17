@@ -361,11 +361,13 @@
                                         $scope.socialMeta = {};
                                         return;
                                     }
-                                    var productUrl = helpers.url.abs($state.href('catalog-product-view', {
+                                    var productUrl = $state.href('catalog-product-view', {
                                         key: $scope.catalog.key,
                                         image_id: $scope.catalog._images[0].id,
                                         pricetag_id: $scope.catalog._images[0].pricetags[0].id
-                                    }).substr(1)),
+                                    }, {
+                                        absolute: true
+                                    }),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
                                                 return $scope.product.images[0].serving_url + '=s' + (size || '600');
@@ -410,9 +412,11 @@
                                         key: $scope.catalog.key,
                                         image_id: $scope.catalog._images[0].id,
                                         pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                    }, {
+                                        absolute: true
                                     });
                                     return social.share($scope.socialMeta, {
-                                        src: helpers.url.abs(url.substr(1))
+                                        src: url
                                     });
                                 };
 
@@ -664,9 +668,11 @@
                                 var imagesReader,
                                     accessImages,
                                     loadProduct,
-                                    catalogUrl = helpers.url.abs($state.href('catalog-view', {
+                                    catalogUrl = $state.href('catalog-view', {
                                         key: $scope.catalog.key
-                                    }).substr(1));
+                                    }, {
+                                        absolute: true
+                                    });
                                 accessImages = angular.copy($scope.catalog.ui.access);
                                 accessImages.push('_images');
 
@@ -715,9 +721,11 @@
                                 $scope.displayShare = function () {
                                     var url = $state.href('embed-catalog-view', {
                                         key: $scope.catalog.key
+                                    }, {
+                                        absolute: true
                                     });
                                     return social.share($scope.socialMeta, {
-                                        src: helpers.url.abs(url.substr(1))
+                                        src: url
                                     });
                                 };
 

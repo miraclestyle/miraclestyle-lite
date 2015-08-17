@@ -14,6 +14,17 @@
                 });
             }
         };
+    })).controller('OrderPaymentCanceledController', ng(function ($state, snackbar, models) {
+
+        models['34'].manageModal({
+            key: $state.params.key
+        }, undefined, undefined, {
+            inDirection: false,
+            outDirection: false
+        }).then(function () {
+            snackbar.showK('orderPaymentCanceled');
+        });
+
     })).filter('displayTaxes', ng(function () {
         return function (value) {
             var formatted = '';
@@ -24,7 +35,7 @@
             }
             return formatted;
         };
-    })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
+    })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
         modelsConfig(function (models) {
             $.extend(models['34'], {
                 current: function (sellerKey) {
@@ -51,6 +62,8 @@
                     var args, that = this,
                         cartMode = config.cartMode,
                         sellerMode = config.sellerMode,
+                        openDefer = $q.defer(),
+                        openPromise = openDefer.promise,
                         rpc = {};
                     if (!cartMode) {
                         args = {
@@ -88,9 +101,12 @@
 
                     models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
 
-                        $modal.open({
+                        if (angular.isUndefined(seller)) {
+                            seller = response.data.entity._seller;
+                        }
+
+                        var modalOpen = {
                             templateUrl: 'order/view.html',
-                            popFrom: config.popFrom,
                             controller: ng(function ($scope) {
                                 var locals = {
                                     customPlaceholder: null,
@@ -558,13 +574,15 @@
 
                                 $scope.cmd.seller = {
                                     view: function () {
-                                        models['23'].viewModal($scope.seller);
+                                        $scope.sellerDetails.menu.open();
                                     }
                                 };
 
                                 $scope.close = function () {
                                     $scope.$close();
                                 };
+
+                                $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller);
 
                                 $scope.lineDrag = {
                                     options: {
@@ -626,17 +644,36 @@
                                     }
                                 }());
 
-                                //$scope.$watch('order.state', );
 
-                                $scope.notifyUrl = helpers.url.abs('api/order/complete/paypal');
-                                $scope.completePath = helpers.url.abs('payment/completed/' + $scope.order.key);
-                                $scope.cancelPath = helpers.url.abs('payment/canceled/' + $scope.order.key);
+                                $scope.notifyUrl = $state.href('paypal-ipn', {}, {
+                                    absolute: true
+                                });
+
+                                $scope.completePath = $state.href('order-payment-success', {
+                                    key: $scope.order.key
+                                }, {
+                                    absolute: true
+                                });
+
+                                $scope.cancelPath = $state.href('order-payment-canceled', {
+                                    key: $scope.order.key
+                                }, {
+                                    absolute: true
+                                });
+
+                                openDefer.resolve();
 
                             })
-                        });
+                        };
+
+                        $.extend(modalOpen, config);
+
+                        $modal.open(modalOpen);
 
 
                     });
+
+                    return openPromise;
 
                 }
             });

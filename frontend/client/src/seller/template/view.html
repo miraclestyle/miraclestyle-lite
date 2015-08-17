@@ -25,14 +25,14 @@
             </div>
            <div class="list-row list-content-tile button-set">
                 <md-button ng-click="sellerDetails.toggleCollection()" loading type="button">
-                    <span ng-if="!sellerDetails.alreadyInCollection">Follow</span>
-                    <span ng-if="sellerDetails.alreadyInCollection">Unfollow</span>
+                    <span ng-if="!sellerDetails.globalSellerStack.inCollection">Follow</span>
+                    <span ng-if="sellerDetails.globalSellerStack.inCollection">Unfollow</span>
                 </md-button>
             </div>
 
             <div class="list-row list-content-tile list-row-one-line">
                 <div class="feedback-stats">
-                    <span class="first">{{sellerDetails.seller._follower_count|number}} Followers</span>
+                    <span class="first">{{sellerDetails.globalSellerStack.follower_count|number}} Followers</span>
                 </div>
             </div>
         </div>

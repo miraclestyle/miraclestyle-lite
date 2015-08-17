@@ -746,7 +746,7 @@
                     documents: {}
                 },
                 _plugin_group: {}
-            };
+            }, globalSellerStack = {};
 
             $.extend(models['23'], {
                 makeSellerDetails: function (seller, config) {
@@ -755,13 +755,20 @@
                     return (function ($scope) {
                         var chartData;
                         $scope.seller = seller;
+                        if (!globalSellerStack[seller.key]) {
+                            globalSellerStack[seller.key] = {
+                                follower_count: seller._follower_count,
+                                notified_followers_count: seller._notified_followers_count
+                            };
+                        }
+                        $scope.globalSellerStack = globalSellerStack[seller.key];
                         $scope.menu = {};
-                        $scope.alreadyInCollection = false;
+                        $scope.globalSellerStack.inCollection = false;
                         if (!currentAccount._is_guest) {
                             $scope.loadedCollection = models['18'].current().then(function (response) {
                                 var collection = response.data.entity;
                                 if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
-                                    $scope.alreadyInCollection = true;
+                                    $scope.globalSellerStack.inCollection = true;
                                 }
                                 return collection;
                             });
@@ -897,7 +904,7 @@
                             $scope.loadedCollection.then(function (collection) {
                                 var loadedCollection = collection,
                                     removed = false;
-                                if ($scope.alreadyInCollection) {
+                                if ($scope.globalSellerStack.inCollection) {
                                     removed = true;
                                     loadedCollection.sellers.remove($scope.seller.key);
                                 } else {
@@ -909,11 +916,16 @@
                                     notify: loadedCollection.notify
                                 }).then(function (newResponse) {
                                     var updatedCollection = newResponse.data.entity;
-                                    $scope.alreadyInCollection = !removed;
+                                    $scope.globalSellerStack.inCollection = !removed;
+                                    if (removed) {
+                                        $scope.globalSellerStack.follower_count -= 1;
+                                    } else {
+                                        $scope.globalSellerStack.follower_count += 1;
+                                    }
                                     // update cache
                                     $.extend(loadedCollection, updatedCollection);
                                     if (angular.isFunction(removedOrAdded)) {
-                                        removedOrAdded(updatedCollection, $scope.alreadyInCollection);
+                                        removedOrAdded(updatedCollection, $scope.globalSellerStack.inCollection);
                                     }
                                 });
                             });

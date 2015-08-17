@@ -37,6 +37,9 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                         (r'/copyright', CopyrightPage, 'copyright'),
                         (r'/support', SupportPage, 'support'),
                         (r'/login/status', base.AngularBlank),
+                        (r'/order/payment/success/<key>', base.AngularBlank),
+                        (r'/order/payment/canceled/<key>', base.AngularBlank),
+                        (r'/login_provider_connected/<provider>', base.AngularBlank),
                         (r'/admin/list/<kind>/<filter>', base.AngularBlank)))
 
 # due development server bug, proxy the endpoint api to the real module

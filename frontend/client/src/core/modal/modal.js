@@ -388,6 +388,9 @@
                         }
 
                         $rootScope.$apply(function () {
+                            if (modalWindow && modalWindow.value && modalWindow.value.modalScope) {
+                                return modalWindow.value.modalScope.close();
+                            }
                             $modalStack.dismiss(modalInstance, 'escape key press');
                         });
 

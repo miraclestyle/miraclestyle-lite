@@ -72,10 +72,29 @@
                 url: '/api/account/login/:provider',
                 template: ''
             })
+            .state('loginProviderConnected', {
+                url: '/login_provider_connected/:provider',
+                controller: 'LoginProviderConnectedController',
+                template: ''
+            })
+            .state('order-payment-canceled', {
+                url: '/order/payment/canceled/:key',
+                controller: 'OrderPaymentCanceledController',
+                template: ''
+            })
+            .state('order-payment-success', {
+                url: '/order/payment/success/:key',
+                controller: 'OrderPaymentSuccessController',
+                template: ''
+            })
             .state('login-status', {
                 url: '/login/status',
                 template: '',
                 controller: 'AccountLoginStatusController'
+            })
+            .state('paypal-ipn', {
+                url: '/api/order/complete/paypal',
+                template: '',
             })
             .state('admin-list', {
                 url: '/admin/list/:kind/:query',

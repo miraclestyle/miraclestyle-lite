@@ -556,30 +556,28 @@
                                 };
                             }
                             var that = this;
-                            models[config.kind].actions.read(args).then(function (response) {
+                            return models[config.kind].actions.read(args).then(function (response) {
                                 $.extend(entity, response.data.entity);
-                                that.open(entity, args);
+                                return that.open(entity, args);
                             });
-                            return this;
                         },
                         prepare: function (entity, args) {
                             var that = this;
-                            models[config.kind].actions.prepare(args).then(function (response) {
+                            return models[config.kind].actions.prepare(args).then(function (response) {
                                 $.extend(entity, response.data.entity);
-                                that.open(entity, args);
+                                return that.open(entity, args);
                             });
-                            return this;
                         },
                         open: function (entity, args) {
                             var opener = $modal,
                                 fn = 'open',
+                                defer = $q.defer(),
+                                completePromise = defer.promise,
                                 ctrl;
                             ctrl = function ($scope) {
                                 var inflector = $filter('inflector'),
                                     field,
                                     done = {},
-                                    found = false,
-                                    realTotal = 0,
                                     rootTitle,
                                     madeHistory = false,
                                     makeHistory = function () {
@@ -709,10 +707,11 @@
 
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope._close_ = undefined;
-                                    $scope.$close();
+                                    var promise = $scope.$close();
                                     if (config.afterClose) {
                                         config.afterClose($scope);
                                     }
+                                    return promise;
                                 });
 
                                 $scope._close_ = $scope.close;
@@ -826,6 +825,8 @@
                                 $scope.$on('$destroy', function () {
                                     config.getScope = undefined;
                                 });
+
+                                defer.resolve($scope);
                             };
 
                             ctrl.$inject = ['$scope'];
@@ -835,7 +836,7 @@
                                 controller: ctrl
                             }, config.modalConfig));
 
-                            return this;
+                            return completePromise;
                         }
                     };
 

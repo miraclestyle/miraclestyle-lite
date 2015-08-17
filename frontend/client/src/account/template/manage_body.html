@@ -34,8 +34,9 @@
                 <div class="list-primary-tile">
                    <div class="avatar-small">
                      <div class="button-square">
-                       <icon ng-show="!ident.associated && ident.associated !== undefined" type="check_box_outline_blank"></icon>
-                       <icon ng-show="ident.associated || ident.associated === undefined" type="check_box"></icon>
+                       <span ng-show="!ident.associated && ident.associated !== undefined"><icon type="check_box_outline_blank"></icon>
+                       </span>
+                       <span ng-show="ident.associated || ident.associated === undefined"><icon type="check_box"></icon></span>
                      </div>
                    </div>
                 </div>
