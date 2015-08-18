@@ -799,13 +799,13 @@
 
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
-                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                $scope.close = function () {
                                     $scope.$close().then(function () {
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
                                     });
-                                });
+                                };
                             })
                         });
                     });

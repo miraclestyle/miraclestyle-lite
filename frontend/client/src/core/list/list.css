@@ -196,3 +196,16 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 .modal-medium-simple .list-row-one-line .list-secondary-tile {
     padding: 0 12px;
 }
+
+.list-row-one-line.list-row-has-avatar {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.modal-medium-simple .list-row-one-line.list-row-has-primary .list-content-tile {
+    padding-left: 80px;
+}
+
+.modal-medium-simple .list-row-one-line.list-row-has-primary .avatar {
+    padding: 4px 12px 4px 20px;
+}

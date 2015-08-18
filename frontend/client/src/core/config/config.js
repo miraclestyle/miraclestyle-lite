@@ -318,7 +318,8 @@
             },
             '27': {
                 images: 'catalog/product/help/images.html',
-                contents: 'catalog/product/help/contents.html'
+                contents: 'catalog/product/help/contents.html',
+                variant_options: 'catalog/product/help/variant_options.html'
             },
             '21': {
                 documents: 'seller/help/contents.html'
