@@ -123,9 +123,6 @@
                     resize = function (justElement) {
                         var pa = $(element).parents('.image-slider-item:first'),
                             sizes;
-                        if (justElement) {
-                            return pa;
-                        }
                         sizes = models['31'].calculatePricetagPosition(
                             pricetag.position_top,
                             pricetag.position_left,
@@ -143,19 +140,7 @@
                             left: pricetag._position_left,
                             visibility: 'visible'
                         });
-                    },
-                    waitResize = function () {
-                        if (!wait) {
-                            resize();
-                        }
                     };
-                /*
-                scope.$on('readySingleImageSlider', function (which) {
-                    if (which === resize(true)) {
-                        wait = false;
-                        resize();
-                    }
-                });*/
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
@@ -1292,6 +1277,7 @@
                                                         // after save hook
                                                         fieldScope.setAction('product_upload_images');
                                                         var updatedPricetag = fieldScope.response.data.entity._images[0].pricetags[0];
+                                                        $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
                                                         $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
                                                     },
                                                     afterComplete: function (fieldScope) {

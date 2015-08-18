@@ -189,7 +189,7 @@ class CatalogProduct(orm.BaseExpando):
 
   category = orm.SuperKeyProperty('1', kind='24', required=True, indexed=False, searchable=True)
   name = orm.SuperStringProperty('2', required=True, indexed=False, searchable=True)
-  uom = orm.SuperKeyProperty('3', kind='17', required=True, indexed=False)
+  uom = orm.SuperKeyProperty('3', kind='17', default=Unit.build_key('unit'), required=True, indexed=False)
   code = orm.SuperStringProperty('4', required=True, indexed=False, searchable=True)
   description = orm.SuperTextProperty('5', required=True, searchable=True)  # Soft limit 64kb.
   unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
