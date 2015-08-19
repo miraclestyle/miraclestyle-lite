@@ -14,17 +14,6 @@
                 });
             }
         };
-    })).controller('OrderPaymentCanceledController', ng(function ($state, snackbar, models) {
-
-        models['34'].manageModal({
-            key: $state.params.key
-        }, undefined, undefined, {
-            inDirection: false,
-            outDirection: false
-        }).then(function () {
-            snackbar.showK('orderPaymentCanceled');
-        });
-
     })).filter('displayTaxes', ng(function () {
         return function (value) {
             var formatted = '';
@@ -641,6 +630,11 @@
                                 }());
 
 
+                                $scope.close = function () {
+                                    $scope.$close().then(config.afterClose || angular.noop);
+                                };
+
+
                                 $scope.notifyUrl = $state.href('paypal-ipn', {}, {
                                     absolute: true
                                 });
@@ -657,7 +651,7 @@
                                     absolute: true
                                 });
 
-                                openDefer.resolve();
+                                openDefer.resolve($scope.order);
 
                             })
                         };

@@ -72,7 +72,7 @@
             $scope.sellerDetails = false;
             $scope.viewProfile = function (key, $event) {
                 models['23'].viewProfileModal(key, {
-                    popFrom: helpers.clicks.realEventTarget($event.target)
+                    popFrom: $event.target
                 });
             };
             $scope.view = function (key, $event) {

@@ -17,9 +17,83 @@
                 });
             };
 
-        })).controller('BuyOrdersController', ng(function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
+        })).controller('BuyOrdersController', ng(function ($scope, $timeout, modals, snackbar, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
-            var carts = $state.current.name === 'buy-carts';
+            var carts = $state.current.name === 'buy-carts',
+                isOrderPaymentCanceled = $state.current.name === 'order-payment-canceled',
+                isOrderPaymentSuccess = $state.current.name === 'order-payment-success',
+                wait = null,
+                loaded = false,
+                tick = null,
+                gorder,
+                maxTries = 10,
+                scheduleTick = function () {
+                    if (!$state.params.key) {
+                        return;
+                    }
+                    if (tick) {
+                        $timeout.cancel(tick);
+                    }
+                    tick = $timeout(function () {
+                        models['34'].actions.read({
+                            key: $state.params.key
+                        }).then(function (response) {
+                            if (gorder) {
+                                helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'feedback_adjustment', 'feedback', 'ui']);
+                            }
+                            if (response.data.entity.state === 'completed') {
+                                snackbar.showK('orderPaymentSuccessProgress' + response.data.entity.state);
+                            } else {
+                                scheduleTick();
+                            }
+                        }, function () {
+                            maxTries += 1;
+                            if (maxTries < 10) { // if it fails 10 rpcs then obv something wrong, abort
+                                scheduleTick();
+                            }
+                        }); // schedule tick if error, and if entity state did not change from cart.
+                    }, 2000);
+                },
+                viewOpts = {
+                    inDirection: false,
+                    outDirection: false,
+                    afterClose: function () {
+                        $state.go('buy-carts');
+                    }
+                },
+                viewThen = function (order) {
+                    gorder = order;
+                    if (isOrderPaymentCanceled) {
+                        snackbar.showK('orderPaymentCanceled');
+                    } else {
+                        snackbar.showK('orderPaymentSuccessProgress');
+                        scheduleTick();
+                    }
+                },
+                maybeOpenOrder = function () {
+                    if (loaded) {
+                        return;
+                    }
+                    if (wait) {
+                        clearTimeout(wait);
+                    }
+                    wait = setTimeout(function () {
+                        var find = {
+                            key: $state.params.key
+                        }, order = _.findWhere($scope.search.results, find);
+                        loaded = true;
+                        if (order) {
+                            return $scope.view(order, false);
+                        }
+                        models['34'].manageModal(find, undefined, undefined, viewOpts).then(viewThen);
+                    }, 300);
+
+                };
+
+            if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+                carts = true;
+            }
+
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
 
@@ -37,10 +111,17 @@
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
-                    models['34'].manageModal(order, order._seller, buyer, {
+                    var opts = {
                         cartMode: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
-                    });
+                    }, viewPromise, directView = $event === false;
+                    if (directView) {
+                        $.extend(opts, viewOpts);
+                    }
+                    viewPromise = models['34'].manageModal(order, order._seller, buyer, opts);
+                    if (viewPromise && directView) {
+                        viewPromise.then(viewThen);
+                    }
                 });
             };
 
@@ -66,6 +147,10 @@
                             }
                         } else {
                             $scope.search.results.extend(response.data.entities);
+                        }
+
+                        if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+                            maybeOpenOrder();
                         }
 
                         $scope.search.loaded = true;

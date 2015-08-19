@@ -89,13 +89,13 @@
             })
             .state('order-payment-canceled', {
                 url: '/order/payment/canceled/:key',
-                controller: 'OrderPaymentCanceledController',
-                template: ''
+                controller: 'BuyOrdersController',
+                templateUrl: 'buyer/carts.html'
             })
             .state('order-payment-success', {
                 url: '/order/payment/success/:key',
-                controller: 'OrderPaymentSuccessController',
-                template: ''
+                controller: 'BuyOrdersController',
+                templateUrl: 'buyer/carts.html'
             })
             .state('login-status', {
                 url: '/login/status',
