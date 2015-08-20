@@ -2361,6 +2361,16 @@
     (function () {
         'use strict';
 
+        function isSafari() {
+            var ua = navigator.userAgent.toLowerCase(); 
+            if (ua.indexOf('safari') !== -1) { 
+                if (ua.indexOf('chrome') === -1) {
+                  return true;
+                }
+            }
+            return false;
+        }
+
         angular.module('material.core')
             .factory('$mdInkRipple', InkRippleService)
             .directive('mdInkRipple', InkRippleDirective)
@@ -2482,16 +2492,16 @@
                 // temporary fix for the safari ripple
                 var k = null;
 
-                function onPressDown2(ev) {
+                function onPressDown(ev) {
                     if (k) {
                         clearTimeout(k);
                     }
                     k = setTimeout(function () {
                         onPressDown2(ev);
-                    }, 100);
+                    }, (isSafari() ? 80 : 0));
                 }
 
-                function onPressDown(ev) {
+                function onPressDown2(ev) {
                     if (!isRippleAllowed()) return;
 
                     var cls = 'ripple-animation';

@@ -333,14 +333,15 @@ html, body {
     height: 100%;
     color: rgba(0, 0, 0, 0.87);
     background: white;
+    overflow-x:hidden;
+}
+
+html, body, button {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     -webkit-touch-callout: none;
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
-    /*
     text-rendering: optimizeLegibility;
-    */
-    overflow-x:hidden;
 }
 
 html p, body p {
@@ -1139,7 +1140,19 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 .modal-medium-simple .list-row-one-line .list-secondary-tile {
     padding: 0 12px;
 }
-md-input-group label, .md-input-group label {
+
+.list-row-one-line.list-row-has-avatar {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.modal-medium-simple .list-row-one-line.list-row-has-primary .list-content-tile {
+    padding-left: 80px;
+}
+
+.modal-medium-simple .list-row-one-line.list-row-has-primary .avatar {
+    padding: 4px 12px 4px 20px;
+}md-input-group label, .md-input-group label {
     display: block;
     font-size: 0.75em;
 }
@@ -2093,11 +2106,6 @@ pre {
     margin: 0px;
 }
 
-.no-things-available {
-    color: #CCC;
-    text-align: center;
-}
-
 .ellipsis-text {
     width: auto;
     white-space: nowrap;
@@ -2590,7 +2598,7 @@ body {
 
 .message {
     border-radius: 2px;
-    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 1px 2px 0.5px rgba(0, 0, 0, 0.26);
     display: block;
     position: relative;
     box-sizing: border-box;
@@ -2715,7 +2723,7 @@ button::-moz-focus-inner {
     height: 0px;
     border-top: 24px solid transparent;
     border-bottom: 24px solid transparent;
-    border-right: 16px solid rgba(0, 0, 0, 0.54);
+    border-right: 24px solid rgba(0, 0, 0, 0.54);
     display: block;
     position: relative;
     box-sizing: border-box;
@@ -2784,6 +2792,18 @@ button::-moz-focus-inner {
 .top-close-right {
     left: auto;
     right: 4px;
+}
+
+.multiline {
+    padding-top: 24px;
+    padding-bottom: 24px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.no-things-available {
+    text-align: center;
+    margin-top: 72px;
 }
 .modal-open {
     overflow: hidden;
@@ -3174,19 +3194,19 @@ li .ui-select-highlight {
     }
 
 }.progress-wrapper.progress.circular {
-  cursor: default;
-  padding: 4px 0px;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
-  /*text-align: center;*/
+    cursor: default;
+    padding: 4px 0px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    /*text-align: center;*/
 }
 
 .ng-hide * {
-  animation: none !important;
+    animation: none !important;
 }
 
 .progress.circular {
@@ -3304,8 +3324,8 @@ li .ui-select-highlight {
 .spinner .mask {
     width: 50%;
     height: 100%;
-    position: absolute;
     background: inherit;
+    position: absolute;
     opacity: 1;
     box-sizing: border-box;
 }

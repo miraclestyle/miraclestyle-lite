@@ -1301,7 +1301,8 @@ $(function () {
             },
             '27': {
                 images: 'catalog/product/help/images.html',
-                contents: 'catalog/product/help/contents.html'
+                contents: 'catalog/product/help/contents.html',
+                variant_options: 'catalog/product/help/variant_options.html'
             },
             '21': {
                 documents: 'seller/help/contents.html'
@@ -4066,6 +4067,16 @@ $(function () {
     (function () {
         'use strict';
 
+        function isSafari() {
+            var ua = navigator.userAgent.toLowerCase(); 
+            if (ua.indexOf('safari') !== -1) { 
+                if (ua.indexOf('chrome') === -1) {
+                  return true;
+                }
+            }
+            return false;
+        }
+
         angular.module('material.core')
             .factory('$mdInkRipple', InkRippleService)
             .directive('mdInkRipple', InkRippleDirective)
@@ -4187,16 +4198,16 @@ $(function () {
                 // temporary fix for the safari ripple
                 var k = null;
 
-                function onPressDown2(ev) {
+                function onPressDown(ev) {
                     if (k) {
                         clearTimeout(k);
                     }
                     k = setTimeout(function () {
                         onPressDown2(ev);
-                    }, 100);
+                    }, (isSafari() ? 80 : 0));
                 }
 
-                function onPressDown(ev) {
+                function onPressDown2(ev) {
                     if (!isRippleAllowed()) return;
 
                     var cls = 'ripple-animation';
@@ -10229,6 +10240,9 @@ $(function () {
                                         ent.leafname = _.last(ent.name.split(' / '));
                                     });
                                 };
+                                select.afterClose = function () {
+                                    select.product_categories.resetToTop();
+                                };
                                 select.openTemplate = 'core/select/product_categories.html';
                                 select.windowClass = 'category-modal';
                                 select.product_categories = {
@@ -10668,15 +10682,19 @@ $(function () {
                         };
 
                         // generic manage dialog that handles editing of remote and local structured properties
-                        config.ui.specifics.manage = function (arg, defaultArgs, $event) {
+                        config.ui.specifics.manage = function (arg, defaultArgs, modalSettings) {
 
                             buildPaths(); // force path rebuild
 
+                            modalSettings = helpers.alwaysObject(modalSettings);
+
                             $modal.open({
-                                popFrom: (config.ui.specifics.cards && $event ? helpers.clicks.realEventTarget($event.target) : undefined),
+                                popFrom: (modalSettings && modalSettings.target ? helpers.clicks.realEventTarget(modalSettings.target) : undefined),
                                 template: underscoreTemplate.get(config.ui.specifics.templateUrl || 'core/fields/manage_structured.html')({
                                     config: config
                                 }),
+                                inDirection: modalSettings.inDirection,
+                                outDirection: modalSettings.outDirection,
                                 controller: ng(function ($scope, modelsUtil) {
                                     var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
                                         formBuilder = {
@@ -12978,7 +12996,7 @@ $(function () {
                         }
                     });
 
-                    scope.close = function (evt) {
+                    scope.close2 = function (evt) {
                         var modal = $modalStack.getTop(),
                             defer = $q.defer();
                         defer.resolve();
@@ -12990,7 +13008,11 @@ $(function () {
                         return defer.promise;
                     };
 
-                    scope.backdropClose = scope.close;
+                    scope.backdropClose = function ($event) {
+                        if ($event.target === $event.currentTarget) {
+                            scope.$parent.close();
+                        }
+                    };
                 }
             };
         }
@@ -13271,7 +13293,7 @@ $(function () {
                         };
 
                         //merge and clean up options
-                        modalOptions = angular.extend({}, $modalProvider.options, modalOptions);
+                        modalOptions = $.extend({}, $modalProvider.options, modalOptions);
                         modalOptions.resolve = modalOptions.resolve || {};
 
                         //verify options
@@ -14893,8 +14915,11 @@ $(function () {
                                     select.opened = false;
                                     select.close = angular.noop;
                                 });
+                                $scope.close = function () {
+                                    $scope.$close().then(select.afterClose || angular.noop);
+                                };
                                 select.close = function () {
-                                    $scope.$close();
+                                    $scope.close();
                                 };
                             })
                         });
@@ -15336,10 +15361,13 @@ $(function () {
                             controller: ng(function ($scope) {
                                 select.close = function () {
                                     if (select.multiple || select.async) {
-                                        $scope.$close();
+                                        $scope.close();
                                     } else {
                                         $simpleDialog.hide();
                                     }
+                                };
+                                $scope.close = function () {
+                                    $scope.$close().then(select.afterClose || angular.noop);
                                 };
                                 $scope.select = select;
                                 $scope.$on('$destroy', function () {
@@ -16366,9 +16394,83 @@ angular.module('app')
                 });
             };
 
-        })).controller('BuyOrdersController', ng(function ($scope, modals, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
+        })).controller('BuyOrdersController', ng(function ($scope, $timeout, modals, snackbar, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
-            var carts = $state.current.name === 'buy-carts';
+            var carts = $state.current.name === 'buy-carts',
+                isOrderPaymentCanceled = $state.current.name === 'order-payment-canceled',
+                isOrderPaymentSuccess = $state.current.name === 'order-payment-success',
+                wait = null,
+                loaded = false,
+                tick = null,
+                gorder,
+                maxTries = 10,
+                scheduleTick = function () {
+                    if (!$state.params.key) {
+                        return;
+                    }
+                    if (tick) {
+                        $timeout.cancel(tick);
+                    }
+                    tick = $timeout(function () {
+                        models['34'].actions.read({
+                            key: $state.params.key
+                        }).then(function (response) {
+                            if (gorder) {
+                                helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'feedback_adjustment', 'feedback', 'ui']);
+                            }
+                            if (response.data.entity.state === 'completed') {
+                                snackbar.showK('orderPaymentSuccessProgress' + response.data.entity.state);
+                            } else {
+                                scheduleTick();
+                            }
+                        }, function () {
+                            maxTries += 1;
+                            if (maxTries < 10) { // if it fails 10 rpcs then obv something wrong, abort
+                                scheduleTick();
+                            }
+                        }); // schedule tick if error, and if entity state did not change from cart.
+                    }, 2000);
+                },
+                viewOpts = {
+                    inDirection: false,
+                    outDirection: false,
+                    afterClose: function () {
+                        $state.go('buy-carts');
+                    }
+                },
+                viewThen = function (order) {
+                    gorder = order;
+                    if (isOrderPaymentCanceled) {
+                        snackbar.showK('orderPaymentCanceled');
+                    } else {
+                        snackbar.showK('orderPaymentSuccessProgress');
+                        scheduleTick();
+                    }
+                },
+                maybeOpenOrder = function () {
+                    if (loaded) {
+                        return;
+                    }
+                    if (wait) {
+                        clearTimeout(wait);
+                    }
+                    wait = setTimeout(function () {
+                        var find = {
+                            key: $state.params.key
+                        }, order = _.findWhere($scope.search.results, find);
+                        loaded = true;
+                        if (order) {
+                            return $scope.view(order, false);
+                        }
+                        models['34'].manageModal(find, undefined, undefined, viewOpts).then(viewThen);
+                    }, 300);
+
+                };
+
+            if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+                carts = true;
+            }
+
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
 
@@ -16386,10 +16488,17 @@ angular.module('app')
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
-                    models['34'].manageModal(order, order._seller, buyer, {
+                    var opts = {
                         cartMode: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
-                    });
+                    }, viewPromise, directView = $event === false;
+                    if (directView) {
+                        $.extend(opts, viewOpts);
+                    }
+                    viewPromise = models['34'].manageModal(order, order._seller, buyer, opts);
+                    if (viewPromise && directView) {
+                        viewPromise.then(viewThen);
+                    }
                 });
             };
 
@@ -16415,6 +16524,10 @@ angular.module('app')
                             }
                         } else {
                             $scope.search.results.extend(response.data.entities);
+                        }
+
+                        if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+                            maybeOpenOrder();
                         }
 
                         $scope.search.loaded = true;
@@ -16668,9 +16781,6 @@ angular.module('app')
                     resize = function (justElement) {
                         var pa = $(element).parents('.image-slider-item:first'),
                             sizes;
-                        if (justElement) {
-                            return pa;
-                        }
                         sizes = models['31'].calculatePricetagPosition(
                             pricetag.position_top,
                             pricetag.position_left,
@@ -16688,19 +16798,7 @@ angular.module('app')
                             left: pricetag._position_left,
                             visibility: 'visible'
                         });
-                    },
-                    waitResize = function () {
-                        if (!wait) {
-                            resize();
-                        }
                     };
-                /*
-                scope.$on('readySingleImageSlider', function (which) {
-                    if (which === resize(true)) {
-                        wait = false;
-                        resize();
-                    }
-                });*/
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
@@ -17344,13 +17442,13 @@ angular.module('app')
 
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
-                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                $scope.close = function () {
                                     $scope.$close().then(function () {
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
                                     });
-                                });
+                                };
                             })
                         });
                     });
@@ -17694,13 +17792,24 @@ angular.module('app')
                                                 var target_drop = $(event.target),
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
+                                                    rtop = posi2.top - posi.top,
+                                                    rleft = posi2.left - posi.left,
+                                                    vdom = $('<div style="visibility:hidden;"></div>'),
                                                     newPricetagConfig = {
-                                                        position_top: posi2.top - posi.top,
-                                                        position_left: posi2.left - posi.left,
+                                                        position_top: rtop,
+                                                        position_left: rleft,
                                                         image_width: target_drop.width(),
                                                         image_height: target_drop.height()
                                                     };
-                                                $scope.createProduct(image, newPricetagConfig);
+                                                vdom.css({
+                                                    top: rtop,
+                                                    position: 'absolute',
+                                                    left: rleft,
+                                                    width: ui.draggable.width(),
+                                                    height: ui.draggable.height()
+                                                });
+                                                vdom.appendTo(target_drop);
+                                                $scope.createProduct(image, newPricetagConfig, vdom);
                                             };
 
                                             $scope.loadMoreImages = function (callback) {
@@ -17721,7 +17830,7 @@ angular.module('app')
 
                                             $scope.loadingManageProduct = false;
 
-                                            $scope.manageProduct = function (image, pricetag) {
+                                            $scope.manageProduct = function (image, pricetag, $event) {
                                                 if (pricetag._image) {
                                                     image = pricetag._image;
                                                 }
@@ -17759,7 +17868,7 @@ angular.module('app')
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     recomputeRealPath($scope.fieldProduct);
-                                                    $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
+                                                    $scope.fieldProduct.ui.specifics.manage(product, undefined, $event); // fire up modal dialog
 
                                                 })['finally'](function () {
                                                     $scope.loadingManageProduct = false;
@@ -17770,7 +17879,7 @@ angular.module('app')
                                                 modals.alert('howToDropPricetag');
                                             };
 
-                                            $scope.createProduct = function (image, config) {
+                                            $scope.createProduct = function (image, config, target) {
                                                 var ii = $scope.args._images.indexOf(image),
                                                     newPricetag = {
                                                         _sequence: image.pricetags.length,
@@ -17786,13 +17895,14 @@ angular.module('app')
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]
                                                         }
                                                     };
-
                                                 image.pricetags.push(newPricetag); // append new pricetag to image
                                                 setupCurrentPricetag(image, newPricetag); // set current
                                                 $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = false;
                                                 $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product']; // set correct pathing for the new product
                                                 recomputeRealPath($scope.fieldProduct);
-                                                $scope.fieldProduct.ui.specifics.create();
+                                                $scope.fieldProduct.ui.specifics.create(undefined, undefined, {
+                                                    target: target
+                                                });
                                             };
 
                                             $.extend($scope.fieldProduct.ui, {
@@ -17837,6 +17947,7 @@ angular.module('app')
                                                         // after save hook
                                                         fieldScope.setAction('product_upload_images');
                                                         var updatedPricetag = fieldScope.response.data.entity._images[0].pricetags[0];
+                                                        $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
                                                         $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
                                                     },
                                                     afterComplete: function (fieldScope) {
@@ -18316,7 +18427,7 @@ angular.module('app')
             $scope.sellerDetails = false;
             $scope.viewProfile = function (key, $event) {
                 models['23'].viewProfileModal(key, {
-                    popFrom: helpers.clicks.realEventTarget($event.target)
+                    popFrom: $event.target
                 });
             };
             $scope.view = function (key, $event) {
@@ -18419,17 +18530,6 @@ angular.module('app')
                 });
             }
         };
-    })).controller('OrderPaymentCanceledController', ng(function ($state, snackbar, models) {
-
-        models['34'].manageModal({
-            key: $state.params.key
-        }, undefined, undefined, {
-            inDirection: false,
-            outDirection: false
-        }).then(function () {
-            snackbar.showK('orderPaymentCanceled');
-        });
-
     })).filter('displayTaxes', ng(function () {
         return function (value) {
             var formatted = '';
@@ -19046,6 +19146,11 @@ angular.module('app')
                                 }());
 
 
+                                $scope.close = function () {
+                                    $scope.$close().then(config.afterClose || angular.noop);
+                                };
+
+
                                 $scope.notifyUrl = $state.href('paypal-ipn', {}, {
                                     absolute: true
                                 });
@@ -19062,7 +19167,7 @@ angular.module('app')
                                     absolute: true
                                 });
 
-                                openDefer.resolve();
+                                openDefer.resolve($scope.order);
 
                             })
                         };
@@ -20050,7 +20155,7 @@ angular.module('app')
                             $scope.loadedCollection.then(function (collection) {
                                 var loadedCollection = collection,
                                     removed = false;
-                                if ($scope.globalSellerStack.inCollection) {
+                                if (!$scope.globalSellerStack.inCollection) {
                                     removed = true;
                                     loadedCollection.sellers.remove($scope.seller.key);
                                 } else {
@@ -20062,7 +20167,6 @@ angular.module('app')
                                     notify: loadedCollection.notify
                                 }).then(function (newResponse) {
                                     var updatedCollection = newResponse.data.entity;
-                                    $scope.globalSellerStack.inCollection = !removed;
                                     if (removed) {
                                         $scope.globalSellerStack.follower_count -= 1;
                                     } else {
@@ -20385,13 +20489,13 @@ angular.module('app')
             })
             .state('order-payment-canceled', {
                 url: '/order/payment/canceled/:key',
-                controller: 'OrderPaymentCanceledController',
-                template: ''
+                controller: 'BuyOrdersController',
+                templateUrl: 'buyer/carts.html'
             })
             .state('order-payment-success', {
                 url: '/order/payment/success/:key',
-                controller: 'OrderPaymentSuccessController',
-                template: ''
+                controller: 'BuyOrdersController',
+                templateUrl: 'buyer/carts.html'
             })
             .state('login-status', {
                 url: '/login/status',

@@ -1,17 +1,17 @@
 .progress-wrapper.progress.circular {
-  cursor: default;
-  padding: 4px 0px;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
-  /*text-align: center;*/
+    cursor: default;
+    padding: 4px 0px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    /*text-align: center;*/
 }
 
 .ng-hide * {
-  animation: none !important;
+    animation: none !important;
 }
 
 .progress.circular {
@@ -129,8 +129,8 @@
 .spinner .mask {
     width: 50%;
     height: 100%;
-    position: absolute;
     background: inherit;
+    position: absolute;
     opacity: 1;
     box-sizing: border-box;
 }
