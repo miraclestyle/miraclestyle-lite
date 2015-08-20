@@ -205,7 +205,7 @@
                         }
                     });
 
-                    scope.close = function (evt) {
+                    scope.close2 = function (evt) {
                         var modal = $modalStack.getTop(),
                             defer = $q.defer();
                         defer.resolve();
@@ -217,7 +217,11 @@
                         return defer.promise;
                     };
 
-                    scope.backdropClose = scope.close;
+                    scope.backdropClose = function ($event) {
+                        if ($event.target === $event.currentTarget) {
+                            scope.$parent.close();
+                        }
+                    };
                 }
             };
         }
@@ -498,7 +502,7 @@
                         };
 
                         //merge and clean up options
-                        modalOptions = angular.extend({}, $modalProvider.options, modalOptions);
+                        modalOptions = $.extend({}, $modalProvider.options, modalOptions);
                         modalOptions.resolve = modalOptions.resolve || {};
 
                         //verify options

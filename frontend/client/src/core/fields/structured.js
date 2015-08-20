@@ -335,6 +335,8 @@
 
                             buildPaths(); // force path rebuild
 
+                            modalSettings = helpers.alwaysObject(modalSettings);
+
                             $modal.open({
                                 popFrom: (modalSettings && modalSettings.target ? helpers.clicks.realEventTarget(modalSettings.target) : undefined),
                                 template: underscoreTemplate.get(config.ui.specifics.templateUrl || 'core/fields/manage_structured.html')({

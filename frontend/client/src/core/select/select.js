@@ -638,10 +638,13 @@
                             controller: ng(function ($scope) {
                                 select.close = function () {
                                     if (select.multiple || select.async) {
-                                        $scope.$close();
+                                        $scope.close();
                                     } else {
                                         $simpleDialog.hide();
                                     }
+                                };
+                                $scope.close = function () {
+                                    $scope.$close().then(select.afterClose || angular.noop);
                                 };
                                 $scope.select = select;
                                 $scope.$on('$destroy', function () {
