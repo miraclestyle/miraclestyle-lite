@@ -192,8 +192,11 @@
                                     select.opened = false;
                                     select.close = angular.noop;
                                 });
+                                $scope.close = function () {
+                                    $scope.$close().then(select.afterClose || angular.noop);
+                                };
                                 select.close = function () {
-                                    $scope.$close();
+                                    $scope.close();
                                 };
                             })
                         });

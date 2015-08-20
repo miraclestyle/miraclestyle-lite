@@ -331,15 +331,17 @@
                         };
 
                         // generic manage dialog that handles editing of remote and local structured properties
-                        config.ui.specifics.manage = function (arg, defaultArgs, $event) {
+                        config.ui.specifics.manage = function (arg, defaultArgs, modalSettings) {
 
                             buildPaths(); // force path rebuild
 
                             $modal.open({
-                                popFrom: (config.ui.specifics.cards && $event ? helpers.clicks.realEventTarget($event.target) : undefined),
+                                popFrom: (modalSettings && modalSettings.target ? helpers.clicks.realEventTarget(modalSettings.target) : undefined),
                                 template: underscoreTemplate.get(config.ui.specifics.templateUrl || 'core/fields/manage_structured.html')({
                                     config: config
                                 }),
+                                inDirection: modalSettings.inDirection,
+                                outDirection: modalSettings.outDirection,
                                 controller: ng(function ($scope, modelsUtil) {
                                     var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
                                         formBuilder = {

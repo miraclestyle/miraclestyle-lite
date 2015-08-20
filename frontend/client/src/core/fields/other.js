@@ -501,6 +501,9 @@
                                         ent.leafname = _.last(ent.name.split(' / '));
                                     });
                                 };
+                                select.afterClose = function () {
+                                    select.product_categories.resetToTop();
+                                };
                                 select.openTemplate = 'core/select/product_categories.html';
                                 select.windowClass = 'category-modal';
                                 select.product_categories = {

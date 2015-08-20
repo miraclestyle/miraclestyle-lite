@@ -1134,13 +1134,24 @@
                                                 var target_drop = $(event.target),
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
+                                                    rtop = posi2.top - posi.top,
+                                                    rleft = posi2.left - posi.left,
+                                                    vdom = $('<div style="visibility:hidden;"></div>'),
                                                     newPricetagConfig = {
-                                                        position_top: posi2.top - posi.top,
-                                                        position_left: posi2.left - posi.left,
+                                                        position_top: rtop,
+                                                        position_left: rleft,
                                                         image_width: target_drop.width(),
                                                         image_height: target_drop.height()
                                                     };
-                                                $scope.createProduct(image, newPricetagConfig);
+                                                vdom.css({
+                                                    top: rtop,
+                                                    position: 'absolute',
+                                                    left: rleft,
+                                                    width: ui.draggable.width(),
+                                                    height: ui.draggable.height()
+                                                });
+                                                vdom.appendTo(target_drop);
+                                                $scope.createProduct(image, newPricetagConfig, vdom);
                                             };
 
                                             $scope.loadMoreImages = function (callback) {
@@ -1161,7 +1172,7 @@
 
                                             $scope.loadingManageProduct = false;
 
-                                            $scope.manageProduct = function (image, pricetag) {
+                                            $scope.manageProduct = function (image, pricetag, $event) {
                                                 if (pricetag._image) {
                                                     image = pricetag._image;
                                                 }
@@ -1199,7 +1210,7 @@
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     recomputeRealPath($scope.fieldProduct);
-                                                    $scope.fieldProduct.ui.specifics.manage(product); // fire up modal dialog
+                                                    $scope.fieldProduct.ui.specifics.manage(product, undefined, $event); // fire up modal dialog
 
                                                 })['finally'](function () {
                                                     $scope.loadingManageProduct = false;
@@ -1210,7 +1221,7 @@
                                                 modals.alert('howToDropPricetag');
                                             };
 
-                                            $scope.createProduct = function (image, config) {
+                                            $scope.createProduct = function (image, config, target) {
                                                 var ii = $scope.args._images.indexOf(image),
                                                     newPricetag = {
                                                         _sequence: image.pricetags.length,
@@ -1226,13 +1237,14 @@
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]
                                                         }
                                                     };
-
                                                 image.pricetags.push(newPricetag); // append new pricetag to image
                                                 setupCurrentPricetag(image, newPricetag); // set current
                                                 $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = false;
                                                 $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product']; // set correct pathing for the new product
                                                 recomputeRealPath($scope.fieldProduct);
-                                                $scope.fieldProduct.ui.specifics.create();
+                                                $scope.fieldProduct.ui.specifics.create(undefined, undefined, {
+                                                    target: target
+                                                });
                                             };
 
                                             $.extend($scope.fieldProduct.ui, {

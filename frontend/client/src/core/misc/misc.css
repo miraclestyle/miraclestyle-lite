@@ -328,11 +328,6 @@ pre {
     margin: 0px;
 }
 
-.no-things-available {
-    color: #CCC;
-    text-align: center;
-}
-
 .ellipsis-text {
     width: auto;
     white-space: nowrap;
@@ -1026,4 +1021,9 @@ button::-moz-focus-inner {
     padding-bottom: 24px;
     padding-left: 16px;
     padding-right: 16px;
+}
+
+.no-things-available {
+    text-align: center;
+    margin-top: 72px;
 }
