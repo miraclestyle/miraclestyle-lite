@@ -143,7 +143,7 @@
                         var errors = response.data.errors;
                         if (errors) {
                             if (errors.buyer) {
-                                modals.alert('noBuyer');
+                                snackbar.showK('noBuyer');
                             }
                         } else {
                             $scope.search.results.extend(response.data.entities);

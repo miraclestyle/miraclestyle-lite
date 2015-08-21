@@ -57,7 +57,7 @@
             models['23'].manageModal(currentAccount.key);
         };
 
-    })).controller('SellCatalogsController', ng(function ($scope, modals, helpers, currentAccount, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
+    })).controller('SellCatalogsController', ng(function ($scope, modals, helpers, currentAccount, modelsEditor, modelsMeta, snackbar, models, modelsUtil, $rootScope) {
 
         $scope.setPageToolbarTitle('seller.catalogs');
 
@@ -110,9 +110,7 @@
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        modals.confirm('sellerProfileNotFound', function () {
-                            models['23'].manageModal(currentAccount.key);
-                        });
+                        snackbar.showK('sellerProfileNotFound');
                     } else {
                         angular.forEach(_.range(1, 10), function (value, key) {
                             // $scope.search.results.extend(response.data.entities);
@@ -128,7 +126,7 @@
             $scope.search.pagination.load();
         });
 
-    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
+    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
@@ -178,9 +176,7 @@
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        modals.confirm('sellerProfileNotFound', function () {
-                            models['23'].manageModal(currentAccount.key);
-                        });
+                        snackbar.showK('sellerProfileNotFound');
                     } else {
                         $scope.search.results.extend(response.data.entities);
                     }

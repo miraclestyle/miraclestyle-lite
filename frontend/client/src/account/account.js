@@ -28,7 +28,7 @@
                 snackbar.showK('identityConnected');
             });
         }))
-        .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, modals) {
+        .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, snackbar) {
             var data = $location.search(),
                 errors;
             if (data.success) {
@@ -37,9 +37,7 @@
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
                     if (errors && errors.action_denied) {
-                        modals.alert('forbidden', function () {
-                            $state.go('home');
-                        });
+                        snackbar.showK('accessDenied');
                     }
                 }
             }

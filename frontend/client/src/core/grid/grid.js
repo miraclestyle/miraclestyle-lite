@@ -3,13 +3,6 @@
     angular.module('app').run(ng(function (helpers) {
         helpers.grid = {
             calculate: function (canvas_width, max_width, min_width, margin) {
-                /*
-                velicina covera je uvek izmedju 240x360px i 180x270px
-                padding sa svih strana covera je 1px
-                preferirani broj covera u horizontali je 4 ili vise
-                ako je ostatak ekrana izmedju 240px i 360px onda se opet preferira najveci cover
-                sto se tice GAE blobstore-a najbolje je da se uvek radi fetch covera dimenzija 240x360 pa da se ostalo radi na client side.
-                */
                 var loop = max_width - min_width,
                     values = [],
                     i,

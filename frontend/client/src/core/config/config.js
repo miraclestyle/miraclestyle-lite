@@ -74,13 +74,6 @@
                 text: {
                     primary: 'Schedule'
                 }
-            },
-            sellerProfileNotFound: {
-                title: 'No seller information provided',
-                message: 'You must configure your seller profile in order to do this.',
-                text: {
-                    primary: 'Configure'
-                }
             }
         });
 
@@ -89,16 +82,6 @@
         };
 
         $.extend(GLOBAL_CONFIG.modals.alerts, {
-            forbidden: {
-                title: 'Action Denied',
-                message: 'Action you tried to perform is forbidden for this account.',
-                text: locals.gotit
-            },
-            noBuyer: {
-                title: 'Buyer address required',
-                message: 'You did not provide any buyer information.',
-                text: locals.gotit
-            },
             howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
@@ -374,7 +357,10 @@
             messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!',
             feedbackReviewed: 'Feedback reviewed.',
             feedbackReported: 'Feedback reported.',
-            feedbackLeft: 'Feedback left.'
+            feedbackLeft: 'Feedback left.',
+            accessDenied: 'Action you tried to perform is forbidden for this account.',
+            noBuyer: 'No buyer address. You did not provide any buyer information.',
+            sellerProfileNotFound: 'No seller information provided. You must configure your seller profile in order to do this.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
