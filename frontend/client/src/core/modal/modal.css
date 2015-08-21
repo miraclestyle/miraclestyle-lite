@@ -92,19 +92,9 @@
 }
 
 .md-dialog .md-actions {
-    display: -webkit-flex;
-    display: -ms-flexbox;
     display: flex;
-    /* -webkit-order: 2;
-    -ms-flex-order: 2;
-    order: 2;*/
-    
     box-sizing: border-box;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
-    -webkit-justify-content: flex-end;
-    -ms-flex-pack: end;
     justify-content: flex-end;
     min-height: 40px;
     padding-bottom: 0px;
@@ -139,14 +129,9 @@
     max-height: 100%;
     position: relative;
     overflow: hidden;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
     display: flex;
     -webkit-box-orient: vertical;
     -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    -ms-flex-direction: column;
     flex-direction: column;
     border-radius: 2px;
     min-width: 280px;
@@ -160,19 +145,13 @@
 }
 
 .md-dialog.modal-medium {
-    -webkit-box-shadow: none;
     box-shadow: none;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
     display: flex;
     -webkit-box-pack: center;
     -webkit-justify-content: center;
     -ms-flex-pack: center;
     justify-content: center;
     -webkit-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
     position: absolute;
     top: 0;

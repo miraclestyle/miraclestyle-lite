@@ -9,8 +9,11 @@ var exec = require('child_process').exec;
 gulp.task('css', function () {
     return gulp.src('raw/style.css')
         .pipe(scss())
-        .pipe(autoprefixer())
-        .pipe(minifyCss())
+        .pipe(autoprefixer({
+            cascade: false,
+            remove: false
+        }))
+        .pipe(minifyCss({restructuring: false, aggressiveMerging: false, advanced: false}))
         .pipe(gulp.dest('../client/dist'));
 });
 

@@ -32,7 +32,6 @@ md-input-container .as-md-input {
     width: 100%;
     display: block;
     box-sizing: border-box;
-    -webkit-box-sizing: border-box;
     line-height: 20px;
     font-size: 16px;
     font-weight: 400;
@@ -46,11 +45,7 @@ md-input-container .as-md-input {
     background: white;
     width: 100%;
     z-index: 11;
-    display: -webkit-flex;
-    display: -ms-flexbox;
     display: flex;
-    -webkit-flex-direction: column;
-    -ms-flex-direction: column;
     flex-direction: column;
     position: relative;
     z-index: 2;

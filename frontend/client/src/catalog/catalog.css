@@ -6,7 +6,6 @@ div.catalog-pricetag, li.catalog-new-pricetag {
     padding: 0px;
     visibility: hidden;
     border-radius: 2px;
-    -webkit-box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
     box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
     background: white;
     cursor: pointer;
@@ -137,26 +136,38 @@ button.product-quantity-button {
     bottom: 0px;*/
 }
 
-@-webkit-keyframes category-slide-in {
-  0% {left: 100%; right: -100%;}
-  100% {left: 0px; right: 0px;}
+@keyframes category-slide-in {
+    0% {
+        left: 100%;
+        right: -100%;
+    }
+    100% {
+        left: 0px;
+        right: 0px;
+    }
 }
 
-@-webkit-keyframes category-slide-out {
-  0% {left: 0px; right: 0px;}
-  100% {left: 100%; right: -100%;}
+@keyframes category-slide-out {
+    0% {
+        left: 0px;
+        right: 0px;
+    }
+    100% {
+        left: 100%;
+        right: -100%;
+    }
 }
 
 .category.slide {
-  -webkit-animation-timing-function: cubic-bezier(0.8,0,0.4,1);
+    animation-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
 }
 
 .category.slide.in {
-  -webkit-animation-name: category-slide-in;
+    animation-name: category-slide-in;
 }
 
 .category.slide.out {
-  -webkit-animation-name: category-slide-out;
+    animation-name: category-slide-out;
 }
 
 .category-modal .modal-content, .category-modal .modal-body {

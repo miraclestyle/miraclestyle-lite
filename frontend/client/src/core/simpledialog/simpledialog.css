@@ -13,11 +13,7 @@ simple-dialog {
     left: 10px;
     top: 10px;
     box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26);
-    display: -webkit-flex;
-    display: -ms-flexbox;
     display: flex;
-    -webkit-flex-direction: column;
-    -ms-flex-direction: column;
     flex-direction: column;
     overflow: hidden;
     border-radius: 2px;
@@ -26,7 +22,6 @@ simple-dialog {
 }
 
 simple-dialog.transition-in {
-    transition: -webkit-transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transition: transform all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transition-duration: 200ms;
 }
@@ -50,28 +45,14 @@ simple-dialog.transition-out {
 
 
 simple-dialog md-content {
-    /*
-    -webkit-order: 1;
-    -ms-flex-order: 1;
-    order: 1;*/
     overflow: auto;
     -webkit-overflow-scrolling: touch;
 }
 
 simple-dialog .md-actions {
-    display: -webkit-flex;
-    display: -ms-flexbox;
     display: flex;
-    /*
-    -webkit-order: 2;
-    -ms-flex-order: 2;
-    order: 2;*/
     box-sizing: border-box;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
-    -webkit-justify-content: flex-end;
-    -ms-flex-pack: end;
     justify-content: flex-end;
     min-height: 40px;
     padding-bottom: 14px;
