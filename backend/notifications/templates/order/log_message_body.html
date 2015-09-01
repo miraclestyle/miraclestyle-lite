@@ -1,0 +1,19 @@
+
+{% extends 'base.html' %}
+
+{% block body %}
+<span>
+  {% if account._root_admin %}
+  Administrator left you the following message:
+  {% endif %}
+  {% if not account._root_admin and account.key == entity._root %}
+  Buyer left you the following message:
+  {% endif %}
+  {% if not account._root_admin and account.key == entity.seller_reference._root %}
+  Seller left you the following message:
+  {% endif %}
+</span><br/>
+<span>
+  {{input.message|safe|nl2br}}
+</span>
+{% endblock %}

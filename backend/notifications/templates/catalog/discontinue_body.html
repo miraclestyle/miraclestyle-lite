@@ -1,0 +1,41 @@
+
+{% extends 'base.html' %}
+
+{% block body %}
+
+<span>
+  Your Miraclestyle catalog 
+  "<a href="https://www.miraclestyle.com/catalog/{{entity.key_urlsafe}}">{{entity.name|safe}}</a>" 
+  was successfully discontinued.
+</span><br/>
+{% if account._is_taskqueue %}
+<span>
+  The catalog was set to expire on {{entity.discontinue_date|safe}}, 
+  and it was automatically discontinued as a consequence of the setting.
+</span><br/>
+{% else %}
+<span>
+  You have manually requested catalog discontinuation, 
+  and the catalog was discontinued as a consequence of this request.
+</span><br/>
+{% endif %}
+<span>
+  Here are few reminders to be aware of:
+</span><br/>
+<span>
+  Catalog can be shared and embedded to third party web sites.
+</span><br/>
+<span>
+  Published catalog is accessible to the general public until it expires or is discontinued. 
+  With exception of a product "Availability" field, published catalog cannot be edited. 
+  However, published catalog can be duplicated and duplicate 
+  will initially be in draft state ready for editing.
+</span><br/>
+<span>
+  Discontinued catalog is not accessible to the general public, 
+  and will eventually be entirely removed from the Miraclestyle. 
+  However, products of discontinued catalog will remain accessible 
+  for the next 180 days to those who have purchased them. 
+  Discontinued catalog cannot be edited or duplicated.
+</span><br/>
+{% endblock %}

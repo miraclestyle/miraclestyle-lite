@@ -1,0 +1,16 @@
+
+{% extends 'base.html' %}
+
+{% block body %}
+<span>
+  Seller has reported {{entity.feedback}} feedback that you have left on your Miraclestyle sales order 
+  "<a href="https://www.miraclestyle.com/order/{{entity.key_urlsafe}}">#{{entity.key_id}}</a>" 
+  to Miraclestyle administrators.
+</span><br/>
+<span>
+  Seller left the following comment:
+</span><br/>
+<span>
+  {{input.message|safe|nl2br}}
+</span>
+{% endblock %}

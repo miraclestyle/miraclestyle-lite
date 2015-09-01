@@ -655,8 +655,8 @@ class Order(orm.BaseExpando):
                       Set(cfg={'d': {'output.entity': '_order'}}),
                       # @todo cron to send buyer a message when he is ready to leave feedback because there is wait time
                       Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_COMPLETE_SUBJECT,
-                                        'body': notifications.ORDER_COMPLETE_BODY},
+                                        'subject': notifications.ORDER_LEAVE_FEEDBACK_SUBJECT,
+                                        'body': notifications.ORDER_LEAVE_FEEDBACK_BODY},
                                   'd': {'recipient': '_order.seller_email'}})
                   ]
               )

@@ -979,8 +979,8 @@ class Catalog(orm.BaseExpando):
                       Set(cfg={'s': {'_catalog.state': 'draft'}, 'rm': ['_catalog.created']}),
                       Write(),
                       # notify duplication process complete via channel
-                      Notify(cfg={'s': {'body': notifications.CATALOG_CATALOG_PROCESS_DUPLICATE_BODY, 'sender': settings.NOTIFY_EMAIL},
-                                  'd': {'recipient': 'input.channel'},
+                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL},
+                                  'd': {'recipient': 'input.channel', 'catalog': '_catalog.key_urlsafe'},
                                   'method': 'channel'})
                   ]
               )
@@ -1034,8 +1034,11 @@ class Catalog(orm.BaseExpando):
                       CatalogPricetagSetDuplicatedPosition(),
                       Write(),
                       # notify duplication process complete via channel
-                      Notify(cfg={'s': {'body': notifications.CATALOG_PRICETAG_PROCESS_DUPLICATE_BODY, 'sender': settings.NOTIFY_EMAIL},
-                                  'd': {'recipient': 'input.channel'},
+                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL},
+                                  'd': {'recipient': 'input.channel',
+                                        'catalog_key': '_catalog.key_urlsafe',
+                                        'image_key': '_catalog._images.value.0.key_urlsafe',
+                                        'pricetag_key': '_catalog._images.value.0.pricetags.read_value.0.key_urlsafe'},
                                   'method': 'channel'})
                   ]
               )

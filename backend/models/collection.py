@@ -94,8 +94,8 @@ class Collection(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Notify(cfg={'condition': lambda recipient_account, **kwargs: recipient_account.state == "active",
-                                  's': {'subject': notifications.COLLECTION_NOTIFY_SUBJECT,
-                                        'body': notifications.COLLECTION_NOTIFY_BODY,
+                                  's': {'subject': notifications.COLLECTION_CATALOG_PUBLISH_SUBJECT,
+                                        'body': notifications.COLLECTION_CATALOG_PUBLISH_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_recipient._primary_email',
                                         'recipient_account': '_recipient',

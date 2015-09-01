@@ -1,21 +1,17 @@
+
 {% extends 'base.html' %}
 
-{% block content %}
-
-{% if admin %}
-    Note: <br />
-    {{input.note|safe|nl2br}}
-{% else %}
-    {% if entity.state == "suspended" %}
-    Your account {{entity._primary_email}} has been suspended.<br />
-    Message from admin:<br />
-    {{input.message|safe|nl2br}}
-    {% else %}
-    Your account {{entity._primary_email}} has been activated.<br />
-    Message from admin:<br />
-    {{input.message|safe|nl2br}}
-    {% endif %}
-{% endif %}
-
-
+{% block body %}
+<span>
+  Administrative action was taken against your Miraclestyle account ID# {{entity.key_id}}.
+</span><br/>
+<span>
+  The account is {% if entity.state == "suspended" %}suspended{% else %}active{% endif %}.
+</span><br/>
+<span>
+  Administrator left you the following message:
+</span><br/>
+<span>
+  {{input.message|safe|nl2br}}
+</span>
 {% endblock %}
