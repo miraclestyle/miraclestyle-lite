@@ -1057,13 +1057,6 @@ $(function () {
                 text: {
                     primary: 'Schedule'
                 }
-            },
-            sellerProfileNotFound: {
-                title: 'No seller information provided',
-                message: 'You must configure your seller profile in order to do this.',
-                text: {
-                    primary: 'Configure'
-                }
             }
         });
 
@@ -1072,16 +1065,6 @@ $(function () {
         };
 
         $.extend(GLOBAL_CONFIG.modals.alerts, {
-            forbidden: {
-                title: 'Action Denied',
-                message: 'Action you tried to perform is forbidden for this account.',
-                text: locals.gotit
-            },
-            noBuyer: {
-                title: 'Buyer address required',
-                message: 'You did not provide any buyer information.',
-                text: locals.gotit
-            },
             howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
@@ -1357,7 +1340,10 @@ $(function () {
             messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!',
             feedbackReviewed: 'Feedback reviewed.',
             feedbackReported: 'Feedback reported.',
-            feedbackLeft: 'Feedback left.'
+            feedbackLeft: 'Feedback left.',
+            accessDenied: 'Action you tried to perform is forbidden for this account.',
+            noBuyer: 'No buyer address. You did not provide any buyer information.',
+            sellerProfileNotFound: 'No seller information provided. You must configure your seller profile in order to do this.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -11261,13 +11247,6 @@ $(function () {
     angular.module('app').run(ng(function (helpers) {
         helpers.grid = {
             calculate: function (canvas_width, max_width, min_width, margin) {
-                /*
-                velicina covera je uvek izmedju 240x360px i 180x270px
-                padding sa svih strana covera je 1px
-                preferirani broj covera u horizontali je 4 ili vise
-                ako je ostatak ekrana izmedju 240px i 360px onda se opet preferira najveci cover
-                sto se tice GAE blobstore-a najbolje je da se uvek radi fetch covera dimenzija 240x360 pa da se ostalo radi na client side.
-                */
                 var loop = max_width - min_width,
                     values = [],
                     i,
@@ -16090,7 +16069,7 @@ angular.module('app')
                 snackbar.showK('identityConnected');
             });
         }))
-        .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, modals) {
+        .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, snackbar) {
             var data = $location.search(),
                 errors;
             if (data.success) {
@@ -16099,9 +16078,7 @@ angular.module('app')
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
                     if (errors && errors.action_denied) {
-                        modals.alert('forbidden', function () {
-                            $state.go('home');
-                        });
+                        snackbar.showK('accessDenied');
                     }
                 }
             }
@@ -16520,7 +16497,7 @@ angular.module('app')
                         var errors = response.data.errors;
                         if (errors) {
                             if (errors.buyer) {
-                                modals.alert('noBuyer');
+                                snackbar.showK('noBuyer');
                             }
                         } else {
                             $scope.search.results.extend(response.data.entities);
@@ -19248,7 +19225,7 @@ angular.module('app')
             models['23'].manageModal(currentAccount.key);
         };
 
-    })).controller('SellCatalogsController', ng(function ($scope, modals, helpers, currentAccount, modelsEditor, modelsMeta, models, modelsUtil, $rootScope) {
+    })).controller('SellCatalogsController', ng(function ($scope, modals, helpers, currentAccount, modelsEditor, modelsMeta, snackbar, models, modelsUtil, $rootScope) {
 
         $scope.setPageToolbarTitle('seller.catalogs');
 
@@ -19301,9 +19278,7 @@ angular.module('app')
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        modals.confirm('sellerProfileNotFound', function () {
-                            models['23'].manageModal(currentAccount.key);
-                        });
+                        snackbar.showK('sellerProfileNotFound');
                     } else {
                         angular.forEach(_.range(1, 10), function (value, key) {
                             // $scope.search.results.extend(response.data.entities);
@@ -19319,7 +19294,7 @@ angular.module('app')
             $scope.search.pagination.load();
         });
 
-    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
+    })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts';
 
@@ -19369,9 +19344,7 @@ angular.module('app')
                 complete: function (response) {
                     var errors = response.data.errors;
                     if (errors) {
-                        modals.confirm('sellerProfileNotFound', function () {
-                            models['23'].manageModal(currentAccount.key);
-                        });
+                        snackbar.showK('sellerProfileNotFound');
                     } else {
                         $scope.search.results.extend(response.data.entities);
                     }

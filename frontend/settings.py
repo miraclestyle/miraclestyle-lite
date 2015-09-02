@@ -229,16 +229,18 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
           with read(paths[b], 'w') as f:
             f.write(w)
   if templates:
+    out('Caching templates...')
     cached_templates = []
     for tpl in ANGULAR_TEMPLATE_FILES:
       with read(tpl) as f:
         d = tpl.replace('/template/', '/')[_client_components_dir_length:]
-        out('Caching template %s' % d)
+        #out('Caching template %s' % d)
         cached_templates.append('    $templateCache.put(%s, %s);' % (json.dumps(d), json.dumps(f.read())))
     buff['templates.js'] = """angular.module('app').run(ng(function ($templateCache) {\n%s\n}));""" % "\n".join(cached_templates)
+    out('Cached %s templates' % len(cached_templates))
   if write:
     with read(paths['templates.js'], 'w') as f:
-      out('Writing cache %s' % paths['templates.js'])
+      #out('Writing cache %s' % paths['templates.js'])
       f.write(buff['templates.js'])
 
   if statics and write:

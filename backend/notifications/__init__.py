@@ -50,3 +50,6 @@ ORDER_SUDO_FEEDBACK_BODY = template('order/sudo_feedback_body.html')
 
 ORDER_LOG_MESSAGE_SUBJECT = template('order/log_message_subject.html')
 ORDER_LOG_MESSAGE_BODY = template('order/log_message_body.html')
+
+ORDER_COMPLETE_SUBJECT = template('order/complete_subject.html')
+ORDER_COMPLETE_BODY = template('order/complete_body.html')
