@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 function default_deploy {
    dev_appserver.py backend/app.yaml frontend/app.yaml dispatch.yaml  --port=9982 --require_indexes=yes --log_level=debug $@
 }
