@@ -1051,6 +1051,13 @@ $(function () {
                     primary: 'Discontinue'
                 }
             },
+            duplicateCatalogPricetag: {
+                title: 'Schedule duplication?',
+                message: 'Duplication can take a while to complete! You will be notified once this action is completed.',
+                text: {
+                    primary: 'Schedule'
+                }
+            },
             duplicateCatalog: {
                 title: 'Schedule duplication?',
                 message: 'Duplication can take a while to complete! You will be notified once this action is completed.',
@@ -1343,7 +1350,9 @@ $(function () {
             feedbackLeft: 'Feedback left.',
             accessDenied: 'Action you tried to perform is forbidden for this account.',
             noBuyer: 'No buyer address. You did not provide any buyer information.',
-            sellerProfileNotFound: 'No seller information provided. You must configure your seller profile in order to do this.'
+            sellerProfileNotFound: 'No seller information provided. You must configure your seller profile in order to do this.',
+            productDuplicated: 'Product duplicated.',
+            catalogDuplicated: 'Catalog duplicated.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -12683,7 +12692,7 @@ $(function () {
         })).factory('channelNotifications', ng(function (channelApi, snackbar) {
             var channelNotifications = {
                 instances: {},
-                create: function (token) {
+                create: function (token, callback) {
                     var out;
                     if (!channelNotifications.instances[token]) {
                         out = channelApi.create(token);
@@ -12697,7 +12706,11 @@ $(function () {
                                 if (angular.isObject(message) && message.data) {
                                     try {
                                         var response = angular.fromJson(message.data);
-                                        snackbar.show(response.body);
+                                        if (callback) {
+                                            callback(response);
+                                        } else {
+                                            snackbar.show(response.body);
+                                        }
                                     } catch (ignore) {}
                                 }
                             }
@@ -16137,12 +16150,13 @@ angular.module('app')
                         });
                     },
                     channelNotifications: function (config) {
+                        config = helpers.alwaysObject(config);
                         var promise = this.channel();
                         return promise.then(function (response) {
                             var token = response.token;
                             return {
                                 token: token,
-                                channel: channelNotifications.create(token)
+                                channel: channelNotifications.create(token, config.callback)
                             };
                         });
                     },
@@ -16646,7 +16660,6 @@ angular.module('app')
                     }
                     if (angular.isObject(neww)) {
                         $timeout(function () {
-                            //console.log(element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]'), '[data-pricetag-id="' + neww.image + '-' + neww.id + '"]');
                             element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]').click();
                             fired = true;
                         }, 100);
@@ -16738,7 +16751,6 @@ angular.module('app')
         models['31'].viewModal($state.params.key, {
             popFrom: undefined,
             hideClose: true,
-            //hideCloseOnProduct: true,
             noEscape: true,
             noEscapeOnProduct: true,
             inDirection: false,
@@ -16754,7 +16766,6 @@ angular.module('app')
             link: function (scope, element, attr) {
 
                 var pricetag = scope.$eval(attr.catalogPricetagPosition),
-                    wait = true,
                     resize = function (justElement) {
                         var pa = $(element).parents('.image-slider-item:first'),
                             sizes;
@@ -16924,7 +16935,7 @@ angular.module('app')
                                         if (v.option === null) {
                                             skip = true;
                                         }
-                                        if (/*!v.allow_custom_value*/ 1) {
+                                        if ( /*!v.allow_custom_value*/ 1) {
                                             buildVariantSignature.push(v.name + ': ' + v.option);
                                             d[v.name] = v.option;
                                             $scope.currentVariation.push(d);
@@ -16997,12 +17008,12 @@ angular.module('app')
                                         return;
                                     }
                                     var productUrl = $state.href('catalog-product-view', {
-                                        key: $scope.catalog.key,
-                                        image_id: $scope.catalog._images[0].id,
-                                        pricetag_id: $scope.catalog._images[0].pricetags[0].id
-                                    }, {
-                                        absolute: true
-                                    }),
+                                            key: $scope.catalog.key,
+                                            image_id: $scope.catalog._images[0].id,
+                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                        }, {
+                                            absolute: true
+                                        }),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
                                                 return $scope.product.images[0].serving_url + '=s' + (size || '600');
@@ -17529,12 +17540,22 @@ angular.module('app')
                                     duplicate: function () {
                                         modals.confirm('duplicateCatalog',
                                             function () {
-                                                models['11'].channelNotifications().then(function (response) {
+                                                models['11'].channelNotifications({
+                                                    callback: function (response) {
+                                                        models['31'].actions.read({
+                                                            key: response.catalog_key,
+                                                            read_arguments: {
+                                                                cover: {}
+                                                            }
+                                                        }).then(function (response) {
+                                                            snackbar.showK('catalogDuplicated');
+                                                            callback(response.data.entity);
+                                                        });
+                                                    }
+                                                }).then(function (response) {
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
-                                                    }).then(function (response) {
-                                                        snackbar.showK('duplicationInProgressCatalog');
                                                     });
                                                 });
                                             });
@@ -17607,7 +17628,6 @@ angular.module('app')
                                                 fields._images.modelclass.pricetags._title_.remove(getTitle);
                                                 fields._images.modelclass.pricetags.modelclass._product._title_.remove(getTitle);
                                             });
-
                                             fields._images._title_ = $scope.config._title_.concat();
                                             fields._images.modelclass.pricetags._title_ = fields._images._title_.concat();
                                             $scope.fieldProduct._title_ = fields._images._title_.concat();
@@ -17938,7 +17958,37 @@ angular.module('app')
                                                     duplicate: function () {
                                                         modals.confirm('duplicateCatalogPricetag',
                                                             function () {
-                                                                models['11'].channelNotifications().then(function (response) {
+                                                                models['11'].channelNotifications({
+                                                                    callback: function (response) {
+                                                                        models['31'].actions.read({
+                                                                            key: response.catalog_key,
+                                                                            read_arguments: {
+                                                                                _images: {
+                                                                                    config: {
+                                                                                        keys: [response.image_key]
+                                                                                    },
+                                                                                    pricetags: {}
+                                                                                }
+                                                                            }
+                                                                        }).then(function (response2) {
+                                                                            var pricetag,
+                                                                                pricetags = response2.data.entity._images[0].pricetags[0];
+
+                                                                            pricetag = _.findWhere(pricetags, {key: response.pricetag_key});
+
+                                                                            console.log(pricetag);
+
+                                                                            angular.forEach($scope.args._images, function (image, i) {
+                                                                                if (response.image_key === image.key) {
+                                                                                    pricetag.ui.access[1] = i;
+                                                                                    pricetag.ui.access[3] = image.pricetags.length;
+                                                                                    image.pricetags.push(pricetag);
+                                                                                }
+                                                                            });
+                                                                            snackbar.showK('productDuplicated');
+                                                                        });
+                                                                    }
+                                                                }).then(function (response) {
                                                                     models['31'].actions.catalog_pricetag_duplicate({
                                                                         key: $scope.entity.key,
                                                                         channel: response.token,
@@ -17954,8 +18004,6 @@ angular.module('app')
                                                                                 }
                                                                             }
                                                                         }
-                                                                    }).then(function (response) {
-                                                                        snackbar.showK('duplicationInProgressCatalogPricetag');
                                                                     });
                                                                 });
                                                             });
@@ -17979,8 +18027,6 @@ angular.module('app')
 
                                             groupWeightAndVolume($scope.fieldProduct.modelclass);
                                             groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);
-
-                                            // ["sequence", "variant_options", "code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "images", "contents", "_weight_uom", "_volume_uom"]
 
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
                                                 label: GLOBAL_CONFIG.subheaders.productInstances,

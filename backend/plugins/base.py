@@ -173,6 +173,9 @@ class Duplicate(orm.BaseModel):
         duplicated_child_entity = [duplicated_child_entity]
       except ValueError:
         pass
+      if isinstance(duplicated_child_entity, list):
+        length = len(tools.get_attr(entity, '%s.value' % child_entity_path))
+        duplicated_child_entity[0]._sequence = length
       tools.set_attr(entity, child_entity_path, duplicated_child_entity)
     else:
       if entity and isinstance(entity, orm.Model):

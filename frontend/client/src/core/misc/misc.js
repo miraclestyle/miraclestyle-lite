@@ -1154,7 +1154,7 @@
         })).factory('channelNotifications', ng(function (channelApi, snackbar) {
             var channelNotifications = {
                 instances: {},
-                create: function (token) {
+                create: function (token, callback) {
                     var out;
                     if (!channelNotifications.instances[token]) {
                         out = channelApi.create(token);
@@ -1168,7 +1168,11 @@
                                 if (angular.isObject(message) && message.data) {
                                     try {
                                         var response = angular.fromJson(message.data);
-                                        snackbar.show(response.body);
+                                        if (callback) {
+                                            callback(response);
+                                        } else {
+                                            snackbar.show(response.body);
+                                        }
                                     } catch (ignore) {}
                                 }
                             }

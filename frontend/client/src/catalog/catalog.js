@@ -11,7 +11,6 @@
                     }
                     if (angular.isObject(neww)) {
                         $timeout(function () {
-                            //console.log(element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]'), '[data-pricetag-id="' + neww.image + '-' + neww.id + '"]');
                             element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]').click();
                             fired = true;
                         }, 100);
@@ -103,7 +102,6 @@
         models['31'].viewModal($state.params.key, {
             popFrom: undefined,
             hideClose: true,
-            //hideCloseOnProduct: true,
             noEscape: true,
             noEscapeOnProduct: true,
             inDirection: false,
@@ -119,7 +117,6 @@
             link: function (scope, element, attr) {
 
                 var pricetag = scope.$eval(attr.catalogPricetagPosition),
-                    wait = true,
                     resize = function (justElement) {
                         var pa = $(element).parents('.image-slider-item:first'),
                             sizes;
@@ -289,7 +286,7 @@
                                         if (v.option === null) {
                                             skip = true;
                                         }
-                                        if (/*!v.allow_custom_value*/ 1) {
+                                        if ( /*!v.allow_custom_value*/ 1) {
                                             buildVariantSignature.push(v.name + ': ' + v.option);
                                             d[v.name] = v.option;
                                             $scope.currentVariation.push(d);
@@ -362,12 +359,12 @@
                                         return;
                                     }
                                     var productUrl = $state.href('catalog-product-view', {
-                                        key: $scope.catalog.key,
-                                        image_id: $scope.catalog._images[0].id,
-                                        pricetag_id: $scope.catalog._images[0].pricetags[0].id
-                                    }, {
-                                        absolute: true
-                                    }),
+                                            key: $scope.catalog.key,
+                                            image_id: $scope.catalog._images[0].id,
+                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                        }, {
+                                            absolute: true
+                                        }),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
                                                 return $scope.product.images[0].serving_url + '=s' + (size || '600');
@@ -894,12 +891,22 @@
                                     duplicate: function () {
                                         modals.confirm('duplicateCatalog',
                                             function () {
-                                                models['11'].channelNotifications().then(function (response) {
+                                                models['11'].channelNotifications({
+                                                    callback: function (response) {
+                                                        models['31'].actions.read({
+                                                            key: response.catalog_key,
+                                                            read_arguments: {
+                                                                cover: {}
+                                                            }
+                                                        }).then(function (response) {
+                                                            snackbar.showK('catalogDuplicated');
+                                                            callback(response.data.entity);
+                                                        });
+                                                    }
+                                                }).then(function (response) {
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
-                                                    }).then(function (response) {
-                                                        snackbar.showK('duplicationInProgressCatalog');
                                                     });
                                                 });
                                             });
@@ -972,7 +979,6 @@
                                                 fields._images.modelclass.pricetags._title_.remove(getTitle);
                                                 fields._images.modelclass.pricetags.modelclass._product._title_.remove(getTitle);
                                             });
-
                                             fields._images._title_ = $scope.config._title_.concat();
                                             fields._images.modelclass.pricetags._title_ = fields._images._title_.concat();
                                             $scope.fieldProduct._title_ = fields._images._title_.concat();
@@ -1303,7 +1309,32 @@
                                                     duplicate: function () {
                                                         modals.confirm('duplicateCatalogPricetag',
                                                             function () {
-                                                                models['11'].channelNotifications().then(function (response) {
+                                                                models['11'].channelNotifications({
+                                                                    callback: function (response) {
+                                                                        models['31'].actions.read({
+                                                                            key: response.catalog_key,
+                                                                            read_arguments: {
+                                                                                _images: {
+                                                                                    config: {
+                                                                                        keys: [response.image_key]
+                                                                                    },
+                                                                                    pricetags: {}
+                                                                                }
+                                                                            }
+                                                                        }).then(function (response2) {
+                                                                            var pricetag = response2.data.entity._images[0].pricetags[0];
+
+                                                                            angular.forEach($scope.args._images, function (image, i) {
+                                                                                if (response.image_key === image.key) {
+                                                                                    pricetag.ui.access[1] = i;
+                                                                                    pricetag.ui.access[3] = image.pricetags.length;
+                                                                                    image.pricetags.push(pricetag);
+                                                                                }
+                                                                            });
+                                                                            snackbar.showK('productDuplicated');
+                                                                        });
+                                                                    }
+                                                                }).then(function (response) {
                                                                     models['31'].actions.catalog_pricetag_duplicate({
                                                                         key: $scope.entity.key,
                                                                         channel: response.token,
@@ -1319,8 +1350,6 @@
                                                                                 }
                                                                             }
                                                                         }
-                                                                    }).then(function (response) {
-                                                                        snackbar.showK('duplicationInProgressCatalogPricetag');
                                                                     });
                                                                 });
                                                             });
@@ -1344,8 +1373,6 @@
 
                                             groupWeightAndVolume($scope.fieldProduct.modelclass);
                                             groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);
-
-                                            // ["sequence", "variant_options", "code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "images", "contents", "_weight_uom", "_volume_uom"]
 
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
                                                 label: GLOBAL_CONFIG.subheaders.productInstances,

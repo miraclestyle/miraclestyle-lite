@@ -106,7 +106,14 @@ def http_send(data):
 
 
 def channel_send(data):
-  message = {'action_id': data['action'].key_id_str, 'body': render_template(data['body'], data).strip()}
-  return channel.send_message(data['recipient'], json.dumps(message))
+  body = ''
+  if 'body' in data:
+    body = data['body']
+  extra = {'action_id': data['action'].key_id_str, 'body': render_template(body, data).strip()}
+  output = data.copy()
+  for k in ('account', 'action', 'input', 'entity'):
+    del output[k]
+  output.update(extra)
+  return channel.send_message(data['recipient'], json.dumps(output))
 
 secure_cookie = securecookie.SecureCookieSerializer(settings.COOKIE_SECRET)

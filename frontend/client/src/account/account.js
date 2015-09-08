@@ -96,12 +96,13 @@
                         });
                     },
                     channelNotifications: function (config) {
+                        config = helpers.alwaysObject(config);
                         var promise = this.channel();
                         return promise.then(function (response) {
                             var token = response.token;
                             return {
                                 token: token,
-                                channel: channelNotifications.create(token)
+                                channel: channelNotifications.create(token, config.callback)
                             };
                         });
                     },

@@ -68,6 +68,13 @@
                     primary: 'Discontinue'
                 }
             },
+            duplicateCatalogPricetag: {
+                title: 'Schedule duplication?',
+                message: 'Duplication can take a while to complete! You will be notified once this action is completed.',
+                text: {
+                    primary: 'Schedule'
+                }
+            },
             duplicateCatalog: {
                 title: 'Schedule duplication?',
                 message: 'Duplication can take a while to complete! You will be notified once this action is completed.',
@@ -360,7 +367,9 @@
             feedbackLeft: 'Feedback left.',
             accessDenied: 'Action you tried to perform is forbidden for this account.',
             noBuyer: 'No buyer address. You did not provide any buyer information.',
-            sellerProfileNotFound: 'No seller information provided. You must configure your seller profile in order to do this.'
+            sellerProfileNotFound: 'No seller information provided. You must configure your seller profile in order to do this.',
+            productDuplicated: 'Product duplicated.',
+            catalogDuplicated: 'Catalog duplicated.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
