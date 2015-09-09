@@ -13,15 +13,15 @@
                 }
             },
             disconnectSignInMethod: {
-                title: 'Disconnect identity?',
-                message: 'If this is the only sign in identity connected to your Miraclestyle account, you will permanently lose access to the account and all of its data once this action is completed!',
+                title: 'Disconnect the identity?',
+                message: 'If this is the only sign in identity connected to your Miraclestyle account, you will permanently lose access to the account and all of its data after this action is completed!',
                 text: {
                     primary: 'Disconnect'
                 }
             },
             connectSignInMethod: {
-                title: 'Connect identity?',
-                message: 'If this sign in identity is already connected to another Miraclestyle account you will have to disconnect it before you proceed with this action!',
+                title: 'Connect the identity?',
+                message: 'If this sign in identity is already connected to another Miraclestyle account, you will have to disconnect it before you proceed with this action!',
                 text: {
                     primary: 'Connect'
                 }
@@ -34,36 +34,36 @@
                 }
             },
             maybeLogout: {
-                title: 'Confirm Logout',
-                message: 'Are you sure you want to logout?',
+                title: 'Confirm sign out',
+                message: 'Are you sure you want to sign out?',
                 text: {
-                    primary: 'Logout'
+                    primary: 'Sign out'
                 },
             },
             cancelOrder: {
-                title: 'Reset shopping cart?',
-                message: 'This cart will be emptied and all of its settings will be lost after completing this action.',
+                title: 'Reset the cart?',
+                message: 'This cart will be emptied, and all of its settings will be lost after this action is completed.',
                 text: {
                     primary: 'Reset'
                 }
             },
             toCheckout: {
-                title: 'Review shopping cart?',
-                message: 'You won\'t be able to update this cart while reviewing it. However, you will be able to reset the cart, or place an order by making a payment.',
+                title: 'Review the cart?',
+                message: 'You won\'t be able to update the cart after this step. However, you will be able to reset the cart, or place an order by making a payment.',
                 text: {
                     primary: 'Review'
                 }
             },
             publishCatalog: {
-                title: 'Publish catalog?',
-                message: 'Published catalog is accessible to the general public until it expires or is discontinued. With exception of a product "Availability" field, published catalog cannot be edited. However, published catalog can be duplicated and duplicate will initially be in draft state ready for editing. You will be notified once this action is completed.',
+                title: 'Publish the catalog?',
+                message: 'A published catalog is accessible to the general public and can be shared and embedded to third party websites. With an exception of a product "Availability" field, a published catalog cannot be edited. However, a published catalog can be duplicated, and the duplicate is ready for editing. You will be notified once this action is completed.',
                 text: {
                     primary: 'Publish'
                 }
             },
             discontinueCatalog: {
-                title: 'Discontinue catalog?',
-                message: 'Discontinued catalog is not accessible to the general public, and will eventually be entirely removed from the Miraclestyle. However, products of discontinued catalog will remain accessible for the next 180 days to those who have purchased them. Discontinued catalog cannot be edited or duplicated. You will be notified once this action is completed.',
+                title: 'Discontinue the catalog?',
+                message: 'A discontinued catalog is not accessible to the general public and is eventually entirely removed from the Miraclestyle. However, products of a discontinued catalog remain accessible for the 180 days to those who have purchased them. A discontinued catalog cannot be edited or duplicated. You will be notified once this action is completed.',
                 text: {
                     primary: 'Discontinue'
                 }
@@ -102,10 +102,10 @@
             },
             howToDropPricetag: {
                 title: 'How to use this action',
-                messages: ['Add new product to the catalog by dragging the "Add" tag to a catalog image. While dragging, it is preferable to aim the tag dot for the image area that shows the product that the tag will link to. Add one tag per product per catalog.',
+                messages: ['Add a new product to the catalog by dragging the "Add" tag to a catalog image. While dragging, it is preferable to aim the tag dot for the image area that shows the product that the tag will link to. Add one tag per product per catalog.',
                     'Reposition a tag by dragging it within images area.',
-                    'Click a tag to open the "Edit Product" form while editing the catalog.',
-                    'Click a tag to open the product view while viewing the catalog.'
+                    'Click on a tag to open the "Edit Product" form while editing the catalog.',
+                    'Click on a tag to open the product view while viewing the catalog.'
                 ],
                 text: locals.gotit
             }
@@ -134,14 +134,14 @@
 
         $.extend(GLOBAL_CONFIG.fields.help, {
             '124-update': {
-                condition_type: 'Condition under which this price applies.',
-                price_type: 'Price formula that calculates the price.'
+                condition_type: 'Condition under which this line applies.',
+                price_type: 'Price formula that calculates this price.'
             },
             '106': {
-                postal_codes: 'Range of postal codes this location affects. Specify one postal code per line.'
+                postal_codes: 'Postal codes this location affects. Specify one postal code per line.'
             },
             '108': {
-                reciever_email: 'Primary email address of your PayPal account.',
+                reciever_email: 'Primary email address for your PayPal account.',
                 business: 'Email address on which you want to receive your PayPal payments. This value will be the same as "Receiver Email" in case that you have only one email address associated with your PayPal account.'
             },
             '109': {
@@ -149,21 +149,21 @@
                 address_type: 'Buyer address type this rule applies to.'
             },
             '124': {
-                product_codes: 'Specific product codes to which this rule applies. Specify one product code per line.'
+                product_codes: 'Specific product codes this line applies to. Specify one product code per line.'
             },
             '117': {
                 currency: 'Currency you accept, and your product unit prices are expressed in.'
             },
             '111-update': {
                 condition_type: 'Condition under which this price applies.',
-                price_type: 'Price formula that calculates the price.'
+                price_type: 'Price formula that calculates this price.'
             },
             '23-update': {
-                name: 'Name of the brand, company, or store that you own or represent.',
-                logo: 'Click on the logo above to upload logo image of the brand, company, or store that you own or represent. Logo must be of 2.4:1 aspect ratio, preferably 2400 pixels wide and 1000 pixels high.'
+                name: 'Name of the brand, company, or store that you represent.',
+                logo: 'Click on the logo above to upload logo image of the brand, company, or store that you represent. Logo must be of 2.4:1 aspect ratio, preferably 2400 pixels wide and 1000 pixels high.'
             },
             '14': {
-                name: 'Recipient\'s full name, or business name.'
+                name: 'Recipient\'s full name or business name.'
             },
             '107': {
                 address_type: 'Buyer address type this rule applies to.'
@@ -172,10 +172,10 @@
                 discontinue_date: 'Date when this catalog will be automatically discontinued and become unavailable to the general public.'
             },
             '26': {
-                name: 'Name of the variant input control that will be visible on the product view.',
-                options: 'Options that will be available for selection on the variant input control. Specify one option per line.',
+                name: 'Name of the variant input control that is visible on the product view.',
+                options: 'Options that are available for selection on the variant input control. Specify one option per line.',
                 description: 'Brief description visible beneath the variant input control.',
-                allow_custom_value: 'If enabled, options defined above will be ignored, and buyers will be able to supply custom value in variant input control.'
+                allow_custom_value: 'If enabled, options defined above will be ignored, and buyers will be able to supply a custom value in the variant input control'
             }
         });
 
@@ -189,14 +189,14 @@
                 kind: 'Rule'
             },
             '28': {
-                uom: 'Unit Of Measurement',
-                weight_uom: 'Weight Unit Of Measurement',
-                volume_uom: 'Volume Unit Of Measurement',
+                uom: 'Unit of measurement',
+                weight_uom: 'Weight unit of measurement',
+                volume_uom: 'Volume unit of measurement',
             },
             '27': {
-                uom: 'Unit Of Measurement',
-                weight_uom: 'Weight Unit Of Measurement',
-                volume_uom: 'Volume Unit Of Measurement',
+                uom: 'Unit of measurement',
+                weight_uom: 'Weight unit of measurement',
+                volume_uom: 'Volume unit of measurement',
             },
             '112': {
                 rules: 'Prices'
@@ -217,7 +217,7 @@
                 price_type: 'Price'
             },
             '23-update': {
-                logo: 'Seller Logo'
+                logo: 'Seller logo'
             },
             '18-update': {
                 notify: 'Receive email notifications when a catalog is published or discontinued by the seller that you are following'
@@ -225,11 +225,11 @@
         });
 
         locals.conditionOperatorSpec = {
-            '<=': 'is less than or equals to',
-            '>=': 'is greater than or equals to',
+            '<=': 'is less than or equal to',
+            '>=': 'is greater than or equal to',
             '==': 'equals to',
-            '<': 'less than',
-            '>': 'greater than'
+            '<': 'is less than',
+            '>': 'is greater than'
         };
         locals.addressTypeSpec = {
             shipping: 'Shipping',
@@ -322,14 +322,14 @@
 
         $.extend(GLOBAL_CONFIG.fields.radioLabel, {
             pluginLocation: {
-                falseLabel: 'Applies to all locations except to those listed in the Locations section.',
-                trueLabel: 'Applies only to the locations listed in the Locations section.'
+                falseLabel: 'Applies to all locations except those listed in the Locations section',
+                trueLabel: 'Applies only to the locations listed in the Locations section'
             }
         });
 
         $.extend(GLOBAL_CONFIG.subheaders, {
-            loginMethods: 'Login Methods',
-            productInstances: 'Variant Configurations',
+            loginMethods: 'Sign in identities',
+            productInstances: 'Variant configurations',
             catalogImages: 'Images',
             catalogProducts: 'Products',
             collectionSeller: 'Sellers',
@@ -360,14 +360,14 @@
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
-            uploadImagesFirst: 'Use "Images" dialog to upload and arrange catalog images first.',
+            uploadImagesFirst: 'Navigate to the "Images" to upload and arrange catalog images first.',
             messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!',
             feedbackReviewed: 'Feedback reviewed.',
             feedbackReported: 'Feedback reported.',
             feedbackLeft: 'Feedback left.',
-            accessDenied: 'Action you tried to perform is forbidden for this account.',
+            accessDenied: 'Action denied! Your account is not authorized to perform this action.',
             noBuyer: 'No buyer address. You did not provide any buyer information.',
-            sellerProfileNotFound: 'No seller information provided. You must configure your seller profile in order to do this.',
+            sellerProfileNotFound: 'Navigate to the "Seller / Settings" to configure seller profile first.',
             productDuplicated: 'Product duplicated.',
             catalogDuplicated: 'Catalog duplicated.'
         });
