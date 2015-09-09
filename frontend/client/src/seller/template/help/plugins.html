@@ -3,23 +3,28 @@
         <div class="help">
           <div class="help-item">
             <div class="padding-bottom-8">
-Seller rules impose business policies and regulations on commercial transactions. Seller rules operate as part of the checkout process logic within shopping cart. System depends on some seller rules to be in place for normal operation. All active seller rules are executed sequentially from top to bottom.
-                </div>
-                <div class="padding-bottom-8">
-                  Seller rules will appear in the order you have manually ordered them.
-                </div>
-                <div class="padding-bottom-8">
-                  Click "Add" action to add new rule.
-                </div>
-                <div class="padding-bottom-8">
-                  Click on a rule to edit rule. 
-                </div>
-                <div class="padding-bottom-8">
-                  Use drag handle to reorder a rule by dragging it within its group.
-                </div>
-                <div>
-                  Use drag handle to remove a rule by dragging it outside the left edge of the screen.
-                </div>
+            Seller rules impose business policies and regulations on commercial transactions. 
+            Seller rules operate as part of the shopping cart workflow logic. 
+            Your seller account depends on some seller rules to be in place for normal operation. 
+            All active seller rules are executed sequentially from top to bottom.
+            </div>
+            <div class="padding-bottom-8">
+            Seller rules will appear ordered the way you have manually ordered them.
+            </div>
+            <div class="padding-bottom-8">
+            Click the "Add" action to add a new rule.
+            </div>
+            <div class="padding-bottom-8">
+            Click a rule to edit it.
+            </div>
+            <div class="padding-bottom-8">
+            Use <span class="inline-icon">reorder</span>
+            to reorder a rule by dragging it within its group.
+            </div>
+            <div>
+            Use <span class="inline-icon">reorder</span>
+            to remove a rule by dragging it outside the left edge of the screen.
+            </div>
           </div>
         </div>
     </div>
@@ -28,14 +33,29 @@ Seller rules impose business policies and regulations on commercial transactions
     <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Address</div>
         <div class="help">
-          <div>Address rule controls billing or shipping address that buyer submits during shopping cart checkout. System requires that seller has exactly two active address rules, one for billing and the other for shipping address.</div>
+          <div>
+          Address rule qualifies billing or shipping address that buyer submits
+          to a shopping cart when he/she proceeds to checkout.
+          The system requires that seller has exactly two active address rules,
+          one for billing and the other for shipping address.
+          An example of proper use of address rule is using it to
+          restrict shipping to a particular country.
+          </div>
         </div>
     </div>
 
         <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Carrier</div>
         <div class="help">
-          <div>Carrier rule defines delivery method that will be matched and calculated against order, and become available as an option to buyer during shopping cart checkout. System requires that seller has at least one active carrier rule. System supports multiple active carrier rules.</div>
+          <div>
+          Carrier rule defines conditionally available and dynamically priced
+          delivery method as an option in a shopping cart.
+          The system requires that seller has at least one active carrier rule.
+          The system supports multiple active carrier rules.
+          An example of proper use of carrier rule is using it to define
+          a delivery method that becomes available when
+          a certain weight of a shipment is below specified limit.
+          </div>
         </div>
     </div>
 
@@ -44,7 +64,12 @@ Seller rules impose business policies and regulations on commercial transactions
         <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Currency</div>
         <div class="help">
-          <div>Currency rule establishes accepted currency. This rule makes an exception in terms of operation as it operates on both, catalog product unit prices, and checkout process logic within shopping cart. System requires that seller has exactly one active currency rule.</div>
+          <div>
+          Currency rule establishes accepted currency.
+          This rule makes an exception in terms of operation as it operates on both,
+          catalog product unit prices, and the shopping cart workflow logic.
+          The system requires that seller has exactly one active currency rule.
+          </div>
         </div>
     </div>
 
@@ -53,14 +78,27 @@ Seller rules impose business policies and regulations on commercial transactions
         <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Discount</div>
         <div class="help">
-          <div>Discount rule defines product discount that will be matched, calculated, and applied against order lines during shopping cart checkout. System does not require that seller has active discount rules. System supports multiple active discount rules.</div>
+          <div>
+          Discount rule defines conditionally applicable product discounts
+          that are applied to shopping cart products after a buyer proceeds to checkout.
+          The system does not require that seller has active discount rules.
+          The system supports multiple active discount rules.
+          An example of proper use of discount rule is using it to define
+          a product discount that becomes available when
+          a certain quantity of a specific product is purchased.
+          </div>
         </div>
     </div>
 
             <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">PayPal</div>
         <div class="help">
-          <div>PayPal rule defines PayPal as acceptable payment method that buyer can use to make a payment during shopping cart checkout. System does not require that seller has active PayPal rules. System supports one active PayPal rule.</div>
+          <div>
+          PayPal rule defines PayPal as an acceptable payment method
+          that buyer can use to make a payment on a shopping cart.
+          The system does not require that seller has active PayPal rules.
+          The system supports one active PayPal rule.
+          </div>
         </div>
     </div>
 
@@ -69,7 +107,14 @@ Seller rules impose business policies and regulations on commercial transactions
        <div class="list list-padding seam-bottom">
         <div class="list-subheader subheader">Tax</div>
         <div class="help">
-          <div>Tax rule defines sales tax that will be matched, calculated, and applied against order lines during shopping cart checkout. System does not require that seller has active tax rules. System supports multiple active tax rules.</div>
+          <div>
+          Tax rule defines conditional sales tax.
+          The system does not require that seller has active tax rules.
+          The system supports multiple active tax rules.
+          An example of proper use of tax rule is using
+          it to define a sales tax that is collected from buyers
+          with a billing address in a particular region.
+          </div>
         </div>
     </div>
  
