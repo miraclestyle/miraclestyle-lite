@@ -405,7 +405,7 @@
                                             parentArgs: 'feedback',
                                             args: 'feedback.message',
                                             label: false,
-                                            placeholder: 'Please, write comment here. Comments appear in the messages feed.',
+                                            placeholder: 'Please, write a comment here. Comments appear in the messages feed.',
                                             attrs: {
                                                 'native-placeholder': '',
                                                 'class': 'full-width'
@@ -473,12 +473,12 @@
                                                         choice: 'review_feedback',
                                                         choices: [{
                                                             key: 'review_feedback',
-                                                            name: 'Review Feedback',
-                                                            help: 'Ask Buyer to review feedback.'
+                                                            name: 'Ask the buyer to review feedback',
+                                                            help: ''
                                                         }, {
                                                             key: 'report_feedback',
-                                                            name: 'Report Feedback',
-                                                            help: 'Ask Admin to intervene.'
+                                                            name: 'Ask the admin to intervene',
+                                                            help: ''
                                                         }]
                                                     };
                                                     $scope.config.dismiss = function () {
