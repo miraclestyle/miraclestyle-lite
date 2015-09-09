@@ -47,7 +47,7 @@
                         </div>
                         <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
                             <div class="list list-padding seam-bottom">
-                              <div class="list-subheader subheader">Billing Info</div>
+                              <div class="list-subheader subheader">Billing info</div>
                               <button md-ink-ripple-list
                                       ng-click="addresses.browse('billing')" 
                                       type="button" 
@@ -58,7 +58,7 @@
                                             <icon type="arrow_drop_down_circle"></icon>
                                           </div>
                                         </div>
-                                        <div class="first">Use saved address to populate address fields below</div>
+                                        <div class="first">Use a saved address to automatically populate the fields below</div>
                                       </div>
                               </button>
                               <div ng-form="addresses.form.billing">
@@ -67,7 +67,7 @@
                             </div>
 
                             <div class="list list-padding seam-bottom">
-                              <div class="list-subheader subheader">Shipping Info</div>
+                              <div class="list-subheader subheader">Shipping info</div>
                               <div form-input="addresses.fields.sameAsBilling"></div>
                               <div collapse="addresses.sameAsBilling" class="order-expanding-address" ng-form="addresses.form.shipping">
                                   <button md-ink-ripple-list
@@ -80,7 +80,7 @@
                                                 <icon type="arrow_drop_down_circle"></icon>
                                               </div>
                                             </div>
-                                            <div class="first">Use saved address to populate address fields below</div>
+                                            <div class="first">Use a saved address to automatically populate the fields below</div>
                                           </div>
                                   </button>
                                  <div form-builder="addresses.fields.shipping"></div>
@@ -128,7 +128,7 @@
                                       ng-click="stage.toReviewOrder()" 
                                       type="button">
                                 <div class="order-next-stage-inner">
-                                  <span class="md-button-text">Review Your Order</span>
+                                  <span class="md-button-text">Review Cart</span>
                                   <div class="wide-arrow-down">
                                      <span class="pager">3/4</span>
                                   </div>
