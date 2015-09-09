@@ -106,7 +106,7 @@
                         </div>
                         <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
                               <div ng-form="carrier.form" class="list list-padding seam-bottom">
-                                <div class="list-subheader subheader">Delivery Methods</div>
+                                <div class="list-subheader subheader">Delivery methods</div>
                                      <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
                                       <md-radio-button ng-repeat="available_carrier in carrier.available" 
                                                        md-ink-ripple
