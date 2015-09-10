@@ -397,6 +397,9 @@
                                         });
                                         return maybe;
                                     },
+                                    isBuyer: function () {
+                                        return $scope.order.ui.rule.action.leave_feedback.executable || $scope.order.ui.rule.action.sudo_feedback.executable;
+                                    },
                                     showAction: function () {
                                         var parentScope = $scope,
                                             leaveFeedbackArgs = modelsMeta.getActionArguments('34', 'leave_feedback');
@@ -411,7 +414,7 @@
                                                 'class': 'full-width'
                                             }
                                         });
-                                        if ($scope.order.ui.rule.action.leave_feedback.executable || $scope.order.ui.rule.action.sudo_feedback.executable) {
+                                        if ($scope.feedback.isBuyer()) {
                                             $modal.open({
                                                 fullScreen: false,
                                                 inDirection: false,
