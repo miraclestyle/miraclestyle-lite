@@ -28,8 +28,8 @@
                             $scope.args[field.code_name] = entity[field.code_name];
                         });
 
-                        $scope.fields.message.ui.placeholder = 'Write message to user!';
-                        $scope.fields.note.ui.placeholder = 'Write note to admins!';
+                        $scope.fields.message.ui.placeholder = 'Write a message to the user!';
+                        $scope.fields.note.ui.placeholder = 'Write a note to the admins!';
                         $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
                         $scope.container = {};
