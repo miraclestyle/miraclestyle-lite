@@ -437,7 +437,7 @@
                                                     };
 
                                                     $scope.config.text = {
-                                                        primary: 'Leave Feedback'
+                                                        primary: 'Ok'
                                                     };
 
                                                     $scope.config.confirm = function () {
@@ -473,12 +473,10 @@
                                                         choice: 'review_feedback',
                                                         choices: [{
                                                             key: 'review_feedback',
-                                                            name: 'Ask the buyer to review feedback',
-                                                            help: ''
+                                                            name: 'Ask the buyer to review feedback'
                                                         }, {
                                                             key: 'report_feedback',
-                                                            name: 'Ask the admin to intervene',
-                                                            help: ''
+                                                            name: 'Ask the admin to intervene'
                                                         }]
                                                     };
                                                     $scope.config.dismiss = function () {
@@ -486,7 +484,7 @@
                                                     };
 
                                                     $scope.config.text = {
-                                                        primary: 'Leave Feedback'
+                                                        primary: 'Ok'
                                                     };
 
                                                     $scope.order = parentScope.order;
