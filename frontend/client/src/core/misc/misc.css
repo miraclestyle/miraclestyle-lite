@@ -314,13 +314,9 @@ a.block, .block, button.block {
 
 pre {
     overflow: auto;
-    font-size: 13px;
     padding: 0px;
-    width: auto;
-    max-height: 600px;
-    background-color: #eee;
-    margin-bottom: 0px;
-    font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, sans-serif;
+    margin: 0px;
+    font-family: inherit;
 }
 
 .load-more {
