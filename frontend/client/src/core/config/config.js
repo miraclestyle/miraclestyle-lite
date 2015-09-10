@@ -334,6 +334,7 @@
             catalogProducts: 'Products',
             collectionSeller: 'Sellers',
             history: 'History',
+            record: 'Log Entry',
             sellerContents: 'Contents',
             sellerPlugins: 'Rules'
         });
