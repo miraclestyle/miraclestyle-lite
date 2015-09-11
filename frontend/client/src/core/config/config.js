@@ -346,7 +346,8 @@
             cartBuyerList: 'buyer/help/carts.html',
             catalogList: 'catalog/help/list.html',
             cart: 'order/help/empty.html',
-            following: 'collection/help/sellers.html'
+            following: 'collection/help/sellers.html',
+            sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
 
         $.extend(GLOBAL_CONFIG.snackbar.messages, {

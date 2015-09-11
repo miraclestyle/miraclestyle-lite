@@ -1,6 +1,14 @@
 (function () {
     'use strict';
     angular.module('app')
+        .filter('humanized', ng(function ($filter) {
+            return function (str) {
+                var inflector = $filter('inflector'),
+                    human = inflector(str, 'humanize');
+                human = human.toLowerCase();
+                return _.string.capitalize(human);
+            };
+        }))
         .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
             if (!helpers.fields) {
                 helpers.fields = {};
@@ -95,7 +103,7 @@
                     label: function (config) {
                         var use = '{{config.ui.label}}';
                         if (config.ui.label === undefined) {
-                            use = '{{config.ui.autoLabel|inflector:humanize}}';
+                            use = '{{config.ui.autoLabel|humanized}}';
                         }
                         return use;
                     }

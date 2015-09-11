@@ -84,8 +84,6 @@
             endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
             errorHandling, modals, GLOBAL_CONFIG, snackbar) {
 
-            var inflector = $filter('inflector');
-
             $.extend(formInputTypes, {
                 SuperLocalStructuredProperty: function (info) {
                     var config = info.config,
@@ -470,7 +468,7 @@
                                         };
                                         angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
                                             var firstField = fieldsMap[value.fields[0]];
-                                            $scope.layouts.groups.push({label: value.label || (firstField.label || inflector(firstField.code_name, 'humanize'))});
+                                            $scope.layouts.groups.push({label: value.label || (firstField.label || $filter('humanize')(firstField.code_name))});
                                         });
                                     }
                                     findWhereByLayoutConfig = function (field) {
@@ -552,7 +550,7 @@
                                         }
                                         if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                             group = {
-                                                label: field.ui.label || inflector(field.code_name, 'humanize')
+                                                label: field.ui.label || $filter('humanized')(field.code_name)
                                             };
                                             if (_.string.contains(field.type, 'Remote')) {
                                                 group.include = 'core/misc/action.html';
