@@ -1372,6 +1372,11 @@ $(function () {
             addVariants: 'Add Variant',
             editVariants: 'Edit Variant',
             home: 'Home',
+            about: 'About',
+            acceptable_use_policy: 'Acceptable Use Policy',
+            tos: 'Terms of Service',
+            copyright_policy: 'Copyright Policy',
+            privacy_policy: 'Privacy Policy',
             buyer: 'Buyer',
             carts: 'Carts',
             orders: 'Orders',
@@ -18446,48 +18451,42 @@ angular.module('app')
             $scope.socials = [{
                 name: 'Facebook',
                 key: 'facebook',
-                command: 'https://www.facebook.com/sharer.php?s=100&p[url]={p[url]}&p[images][0]={p[images][0]}&p[title]={p[title]}&p[summary]={p[summary]}',
-                require: ['href']
+                command: 'https://www.facebook.com/fbpage'
             }, {
                 name: 'Twitter',
                 key: 'twitter',
-                command: 'https://twitter.com/intent/tweet?text={text}&url={url}',
-                require: ['url', 'text']
+                command: 'https://twitter.com/twitteracc'
             }, {
                 name: 'Pinterest',
                 key: 'pinterest',
-                command: 'https://www.pinterest.com/pin/create/button/?url={url}&media={media}&description={description}',
-                require: ['url', 'media', 'description']
+                command: 'https://www.pinterest.com/pinterestacc'
             }, {
                 name: 'Reddit',
                 key: 'reddit',
-                command: 'https://www.reddit.com/submit?url={url}&title={title}',
-                require: ['url', 'title']
+                command: 'https://www.reddit.com/subreddit'
             }, {
                 name: 'Linkedin',
                 key: 'linkedin',
-                command: 'https://www.linkedin.com/shareArticle?url={url}&title={title}',
-                require: ['url', 'title']
+                command: 'https://www.linkedin.com/profile'
             }, {
                 name: 'Google+',
                 icon: 'googleplus',
-                key: 'googleplus',
-                command: 'https://plus.google.com/share?url={url}',
-                require: ['url']
+                command: 'https://plus.google.com/pageid',
             }, {
                 name: 'Tumblr',
                 key: 'tumblr',
-                command: 'https://www.tumblr.com/share/link?url={url}&name={name}&description={description}',
-                require: ['url', 'name', 'description']
+                command: 'https://www.tumblr.com/profile'
             }];
 
             $scope.share = function (soc) {
-
+                return soc.command;
             };
 
             $scope.getIcon = function (soc) {
                 return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
             };
+
+            $scope.setPageToolbarTitle('about');
 
         }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
@@ -20582,6 +20581,26 @@ angular.module('app')
                 controller: 'AboutController',
                 templateUrl: 'home/about.html',
             })
+            .state('tos', {
+                url: '/tos',
+                title: 'tos',
+                templateUrl: 'home/tos.html',
+            })
+            .state('acceptable_use_policy', {
+                url: '/acceptable_use_policy',
+                title: 'acceptable_use_policy',
+                templateUrl: 'home/acceptable_use_policy.html',
+            })
+            .state('privacy_policy', {
+                url: '/privacy_policy',
+                title: 'privacy_policy',
+                templateUrl: 'home/privacy_policy.html',
+            })
+            .state('copyright_policy', {
+                url: '/copyright_policy',
+                title: 'copyright_policy',
+                templateUrl: 'home/copyright_policy.html',
+            })
             .state('admin-list', {
                 url: '/admin/list/:kind/:query',
                 templateUrl: function ($stateParams) {
@@ -20601,7 +20620,13 @@ angular.module('app')
                 controller: 'AdminListController'
             });
 
-    })).run(ng(function (modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+    })).run(ng(function ($rootScope, modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+        $rootScope.$on('$stateChangeSuccess',
+            function (event, toState, toParams, fromState, fromParams) {
+                if (toState.title) {
+                    $rootScope.setPageToolbarTitle(toState.title);
+                }
+            });
         $.extend(modelsInfo, window.MODELS_META);
         $.extend(currentAccount, window.CURRENT_ACCOUNT);
         modelsUtil.normalize(currentAccount);

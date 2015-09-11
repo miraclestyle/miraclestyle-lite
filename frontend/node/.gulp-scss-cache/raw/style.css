@@ -308,7 +308,10 @@ button {
 
 a {
   background: transparent;
-  outline: none; }
+  outline: none;
+  cursor: pointer;
+  text-decoration: underline;
+  color: rgba(0, 0, 0, 0.87); }
 
 h1 {
   font-size: 2em;
@@ -408,6 +411,9 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
   /*
   transform: rotate(0.000001deg);
   */ }
+
+ul, ol {
+  margin: 0px; }
 
 md-input-container {
   display: flex;
@@ -1351,6 +1357,9 @@ img.vertical, .vertical {
   background: none;
   text-align: left; }
 
+.bullet {
+  list-style-type: disc; }
+
 .pull-right {
   float: right !important; }
 
@@ -1489,6 +1498,9 @@ body .mb15 {
   padding-bottom: 24px;
   padding-left: 24px; }
 
+.padding-bottom-40 {
+  padding-bottom: 40px; }
+
 .padding-bottom-24 {
   padding-bottom: 24px; }
 
@@ -1604,6 +1616,9 @@ body {
 
 .headline {
   margin: 0px; }
+
+.body1, .subhead, .headline {
+  display: block; }
 
 .button {
   font-size: 14px;
@@ -2081,6 +2096,13 @@ button::-moz-focus-inner {
   text-align: center;
   margin-top: 72px; }
 
+img.auto-width, .auto-width {
+  width: auto;
+  height: auto; }
+
+.bold {
+  font-weight: 500; }
+
 .modal-open {
   overflow: hidden; }
 
@@ -2325,6 +2347,9 @@ li .ui-select-highlight {
   padding-top: 56px;
   padding-bottom: 8px; }
 
+.social-grid.native {
+  padding-top: 8px; }
+
 .social-grid-item {
   border: none;
   outline: none;
@@ -2337,6 +2362,7 @@ li .ui-select-highlight {
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
+  text-decoration: none;
   padding: 8px 24px; }
 
 .social-grid-item-line {
@@ -2353,6 +2379,13 @@ li .ui-select-highlight {
   width: 48px;
   height: 48px;
   display: block; }
+
+.social-icon.large {
+  width: 192px;
+  height: 192px; }
+
+.social-grid.padding-0 {
+  padding: 0px; }
 
 #is-mobile {
   visibility: hidden; }
@@ -2685,6 +2718,24 @@ button.product-quantity-button {
 
 .loading-splash .progress-wrapper {
   padding: 15% !important; }
+
+.about-page-top {
+  padding-top: 32px;
+  padding-bottom: 32px;
+  padding-left: 16px;
+  padding-right: 16px; }
+
+.main-toolbar {
+  display: block;
+  position: absolute;
+  z-index: 11; }
+
+.ui-view-wrapper {
+  margin-top: 56px;
+  overflow: auto; }
+
+body, html {
+  overflow: hidden; }
 
 .order-stage {
   width: 100%;

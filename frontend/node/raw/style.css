@@ -368,6 +368,9 @@ button {
 a {
     background: transparent;
     outline: none;
+    cursor: pointer;
+    text-decoration: underline;
+    color: rgba(0, 0, 0, 0.87);
 }
 
 h1 {
@@ -495,6 +498,10 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
   /*
   transform: rotate(0.000001deg);
   */
+}
+
+ul, ol {
+    margin: 0px;
 }md-input-container {
     display: flex;
     position: relative;
@@ -1606,6 +1613,10 @@ img.vertical, .vertical {
     text-align: left;
 }
 
+.bullet {
+    list-style-type: disc;
+}
+
 .pull-right {
     float: right !important;
 }
@@ -1782,6 +1793,10 @@ body .mb15 {
     padding-left: 24px;
 }
 
+.padding-bottom-40 {
+    padding-bottom: 40px;
+}
+
 .padding-bottom-24 {
     padding-bottom: 24px;
 }
@@ -1926,6 +1941,10 @@ body {
 
 .headline {
     margin: 0px;
+}
+
+.body1, .subhead, .headline {
+    display: block;
 }
 
 .button {
@@ -2113,6 +2132,7 @@ body {
     pointer-events: none
 }
 
+
 /* standard */
 
 @keyframes fade-in {
@@ -2134,7 +2154,6 @@ body {
 }
 
 .fade {
-
     animation-delay: 0s;
     animation-duration: 0.2s;
     animation-timing-function: linear;
@@ -2144,13 +2163,11 @@ body {
 }
 
 .fade.in {
-
     animation-delay: 0.1s;
     animation-name: fade-in;
 }
 
 .fade.out {
-
     animation-name: fade-out;
 }
 
@@ -2167,6 +2184,7 @@ body {
 
 
 /*Animation used for container/dialog sliding in and out of the screen.*/
+
 
 /* standard */
 
@@ -2207,7 +2225,6 @@ body {
 }
 
 .slide {
-
     animation-delay: 0s;
     animation-duration: 0.3s;
     animation-direction: normal;
@@ -2215,7 +2232,6 @@ body {
 }
 
 .pop {
-
     animation-delay: 0s;
     animation-duration: 0.3s;
     animation-direction: normal;
@@ -2225,43 +2241,35 @@ body {
 }
 
 .slide.in {
-
     animation-delay: 0.1s;
     animation-timing-function: cubic-bezier(0, 0, 0.4, 1);
 }
 
 .slide.out {
-
     animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
 }
 
 .drawer.slide.left.in {
-
     animation-name: left-slide-in;
 }
 
 .drawer.slide.left.out {
-
     animation-name: left-slide-out;
 }
 
 .drawer.slide.right.in {
-
     animation-name: right-slide-in;
 }
 
 .drawer.slide.right.out {
-
     animation-name: right-slide-out;
 }
 
 .pop.in {
-
     animation-name: pop-in;
 }
 
 .pop.out {
-
     animation-name: pop-out;
 }
 
@@ -2521,6 +2529,15 @@ button::-moz-focus-inner {
 .no-things-available {
     text-align: center;
     margin-top: 72px;
+}
+
+img.auto-width, .auto-width {
+    width: auto;
+    height: auto;
+}
+
+.bold {
+    font-weight: 500;
 }
 .modal-open {
     overflow: hidden;
@@ -2805,8 +2822,12 @@ li .ui-select-highlight {
     position: relative;
     box-sizing: border-box;
     margin: 0px;
-    padding-top:56px;
+    padding-top: 56px;
     padding-bottom: 8px;
+}
+
+.social-grid.native {
+    padding-top: 8px;
 }
 
 .social-grid-item {
@@ -2821,6 +2842,7 @@ li .ui-select-highlight {
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: center;
+    text-decoration: none;
     padding: 8px 24px;
 }
 
@@ -2840,7 +2862,17 @@ li .ui-select-highlight {
     width: 48px;
     height: 48px;
     display: block;
-}#is-mobile {
+}
+
+.social-icon.large {
+    width: 192px;
+    height: 192px;
+}
+
+.social-grid.padding-0 {
+    padding: 0px;
+}
+#is-mobile {
     visibility: hidden;
 }
 #is-tablet {
@@ -3269,7 +3301,27 @@ button.product-quantity-button {
 .loading-splash .progress-wrapper {
     padding: 15% !important;
 }
-.order-stage {
+
+.about-page-top {
+    padding-top: 32px;
+    padding-bottom: 32px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+.main-toolbar {
+    display: block;
+    position: absolute;
+    z-index: 11;
+}
+
+.ui-view-wrapper {
+    margin-top: 56px;
+    overflow: auto;
+}
+
+body, html {
+    overflow: hidden;
+}.order-stage {
     width: 100%;
     transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
     transition-property: top;
