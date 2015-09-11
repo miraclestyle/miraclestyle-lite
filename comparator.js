@@ -1,5 +1,7 @@
 compare = function (sampler) {
-
+    /*
+    Script used to spot differences in css based on inspect element in developer tools console
+     */
     'use strict';
 
     var $ = window.jQuery || window.$;

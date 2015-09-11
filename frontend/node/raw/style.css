@@ -133,7 +133,7 @@ md-backdrop.md-opaque {
 }
 
 .md-button.md-raised[disabled] {
-    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 1px 2px 0.5px rgba(0, 0, 0, 0.26);
 }
 .card {
     padding: 4px 8px;
@@ -1890,13 +1890,9 @@ a.block, .block, button.block {
 
 pre {
     overflow: auto;
-    font-size: 13px;
     padding: 0px;
-    width: auto;
-    max-height: 600px;
-    background-color: #eee;
-    margin-bottom: 0px;
-    font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, sans-serif;
+    margin: 0px;
+    font-family: inherit;
 }
 
 .load-more {
@@ -2624,15 +2620,15 @@ button::-moz-focus-inner {
     align-items: center;
     justify-content: flex-end;
     min-height: 40px;
-    padding-bottom: 0px;
-    padding-top: 0px;
+    padding-bottom: 2px;
+    padding-top: 1px;
     padding-left: 4px;
     padding-right: 4px;
     border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .no-scroll .md-actions {
-    padding-bottom: 2px;
+    padding-top: 2px;
     border-top: none;
 }
 
@@ -2650,7 +2646,7 @@ button::-moz-focus-inner {
 }
 
 .modal-medium .modal-dialog {
-    box-shadow: 0px 12px 30px 4px rgba(0, 0, 0, 0.26);
+    box-shadow: 0px 12px 24px 6px rgba(0, 0, 0, 0.26);
     min-width: 240px;
     max-width: 100%;
     max-height: 100%;
