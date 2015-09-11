@@ -9,6 +9,11 @@ import urllib
 
 from handler import base
 
+class AcceptableUsePolicyPage(base.SeoOrAngular):
+  pass
+
+class TosPage(base.SeoOrAngular):
+  pass
 
 class AboutPage(base.SeoOrAngular):
   pass
@@ -32,10 +37,16 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                         (r'/sell/catalogs', base.AngularBlank),
                         (r'/sell/orders', base.AngularBlank),
                         (r'/sell/carts', base.AngularBlank),
+
+                        # static pages
                         (r'/about', AboutPage, 'about'),
-                        (r'/privacy', PrivacyPage, 'privacy'),
-                        (r'/copyright', CopyrightPage, 'copyright'),
                         (r'/support', SupportPage, 'support'),
+                        (r'/acceptable_use_policy', AcceptableUsePolicyPage),
+                        (r'/tos', TosPage),
+                        (r'/privacy_policy', PrivacyPage),
+                        (r'/copyright_policy', CopyrightPage),
+
+                        # other
                         (r'/login/status', base.AngularBlank),
                         (r'/order/payment/success/<key>', base.AngularBlank),
                         (r'/order/payment/canceled/<key>', base.AngularBlank),

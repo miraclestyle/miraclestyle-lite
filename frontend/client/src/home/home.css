@@ -37,3 +37,24 @@
 .loading-splash .progress-wrapper {
     padding: 15% !important;
 }
+
+.about-page-top {
+    padding-top: 32px;
+    padding-bottom: 32px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+.main-toolbar {
+    display: block;
+    position: absolute;
+    z-index: 11;
+}
+
+.ui-view-wrapper {
+    margin-top: 56px;
+    overflow: auto;
+}
+
+body, html {
+    overflow: hidden;
+}

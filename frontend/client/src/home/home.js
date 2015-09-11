@@ -61,6 +61,48 @@
 
             helpers.sideNav.setup($rootScope.site.toolbar.menu, 'left');
         }))
+        .controller('AboutController', ng(function ($scope) {
+            $scope.socials = [{
+                name: 'Facebook',
+                key: 'facebook',
+                command: 'https://www.facebook.com/fbpage'
+            }, {
+                name: 'Twitter',
+                key: 'twitter',
+                command: 'https://twitter.com/twitteracc'
+            }, {
+                name: 'Pinterest',
+                key: 'pinterest',
+                command: 'https://www.pinterest.com/pinterestacc'
+            }, {
+                name: 'Reddit',
+                key: 'reddit',
+                command: 'https://www.reddit.com/subreddit'
+            }, {
+                name: 'Linkedin',
+                key: 'linkedin',
+                command: 'https://www.linkedin.com/profile'
+            }, {
+                name: 'Google+',
+                icon: 'googleplus',
+                command: 'https://plus.google.com/pageid',
+            }, {
+                name: 'Tumblr',
+                key: 'tumblr',
+                command: 'https://www.tumblr.com/profile'
+            }];
+
+            $scope.share = function (soc) {
+                return soc.command;
+            };
+
+            $scope.getIcon = function (soc) {
+                return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+            };
+
+            $scope.setPageToolbarTitle('about');
+
+        }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {
                     search: {}

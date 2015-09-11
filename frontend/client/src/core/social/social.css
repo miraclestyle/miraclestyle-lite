@@ -9,8 +9,12 @@
     position: relative;
     box-sizing: border-box;
     margin: 0px;
-    padding-top:56px;
+    padding-top: 56px;
     padding-bottom: 8px;
+}
+
+.social-grid.native {
+    padding-top: 8px;
 }
 
 .social-grid-item {
@@ -25,6 +29,7 @@
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: center;
+    text-decoration: none;
     padding: 8px 24px;
 }
 
@@ -44,4 +49,13 @@
     width: 48px;
     height: 48px;
     display: block;
+}
+
+.social-icon.large {
+    width: 192px;
+    height: 192px;
+}
+
+.social-grid.padding-0 {
+    padding: 0px;
 }

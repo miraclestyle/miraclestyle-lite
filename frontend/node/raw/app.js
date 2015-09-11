@@ -1329,7 +1329,8 @@ $(function () {
             cartBuyerList: 'buyer/help/carts.html',
             catalogList: 'catalog/help/list.html',
             cart: 'order/help/empty.html',
-            following: 'collection/help/sellers.html'
+            following: 'collection/help/sellers.html',
+            sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
 
         $.extend(GLOBAL_CONFIG.snackbar.messages, {
@@ -9335,6 +9336,14 @@ $(function () {
 (function () {
     'use strict';
     angular.module('app')
+        .filter('humanized', ng(function ($filter) {
+            return function (str) {
+                var inflector = $filter('inflector'),
+                    human = inflector(str, 'humanize');
+                human = human.toLowerCase();
+                return _.string.capitalize(human);
+            };
+        }))
         .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
             if (!helpers.fields) {
                 helpers.fields = {};
@@ -9429,7 +9438,7 @@ $(function () {
                     label: function (config) {
                         var use = '{{config.ui.label}}';
                         if (config.ui.label === undefined) {
-                            use = '{{config.ui.autoLabel|inflector:humanize}}';
+                            use = '{{config.ui.autoLabel|humanized}}';
                         }
                         return use;
                     }
@@ -10431,8 +10440,6 @@ $(function () {
             endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
             errorHandling, modals, GLOBAL_CONFIG, snackbar) {
 
-            var inflector = $filter('inflector');
-
             $.extend(formInputTypes, {
                 SuperLocalStructuredProperty: function (info) {
                     var config = info.config,
@@ -10817,7 +10824,7 @@ $(function () {
                                         };
                                         angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
                                             var firstField = fieldsMap[value.fields[0]];
-                                            $scope.layouts.groups.push({label: value.label || (firstField.label || inflector(firstField.code_name, 'humanize'))});
+                                            $scope.layouts.groups.push({label: value.label || (firstField.label || $filter('humanize')(firstField.code_name))});
                                         });
                                     }
                                     findWhereByLayoutConfig = function (field) {
@@ -10899,7 +10906,7 @@ $(function () {
                                         }
                                         if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                             group = {
-                                                label: field.ui.label || inflector(field.code_name, 'humanize')
+                                                label: field.ui.label || $filter('humanized')(field.code_name)
                                             };
                                             if (_.string.contains(field.type, 'Remote')) {
                                                 group.include = 'core/misc/action.html';
@@ -18435,6 +18442,54 @@ angular.module('app')
 
             helpers.sideNav.setup($rootScope.site.toolbar.menu, 'left');
         }))
+        .controller('AboutController', ng(function ($scope) {
+            $scope.socials = [{
+                name: 'Facebook',
+                key: 'facebook',
+                command: 'https://www.facebook.com/sharer.php?s=100&p[url]={p[url]}&p[images][0]={p[images][0]}&p[title]={p[title]}&p[summary]={p[summary]}',
+                require: ['href']
+            }, {
+                name: 'Twitter',
+                key: 'twitter',
+                command: 'https://twitter.com/intent/tweet?text={text}&url={url}',
+                require: ['url', 'text']
+            }, {
+                name: 'Pinterest',
+                key: 'pinterest',
+                command: 'https://www.pinterest.com/pin/create/button/?url={url}&media={media}&description={description}',
+                require: ['url', 'media', 'description']
+            }, {
+                name: 'Reddit',
+                key: 'reddit',
+                command: 'https://www.reddit.com/submit?url={url}&title={title}',
+                require: ['url', 'title']
+            }, {
+                name: 'Linkedin',
+                key: 'linkedin',
+                command: 'https://www.linkedin.com/shareArticle?url={url}&title={title}',
+                require: ['url', 'title']
+            }, {
+                name: 'Google+',
+                icon: 'googleplus',
+                key: 'googleplus',
+                command: 'https://plus.google.com/share?url={url}',
+                require: ['url']
+            }, {
+                name: 'Tumblr',
+                key: 'tumblr',
+                command: 'https://www.tumblr.com/share/link?url={url}&name={name}&description={description}',
+                require: ['url', 'name', 'description']
+            }];
+
+            $scope.share = function (soc) {
+
+            };
+
+            $scope.getIcon = function (soc) {
+                return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+            };
+
+        }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {
                     search: {}
@@ -20521,6 +20576,11 @@ angular.module('app')
             .state('paypal-ipn', {
                 url: '/api/order/complete/paypal',
                 template: '',
+            })
+            .state('about', {
+                url: '/about',
+                controller: 'AboutController',
+                templateUrl: 'home/about.html',
             })
             .state('admin-list', {
                 url: '/admin/list/:kind/:query',

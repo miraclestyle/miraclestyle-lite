@@ -106,6 +106,31 @@
                 url: '/api/order/complete/paypal',
                 template: '',
             })
+            .state('about', {
+                url: '/about',
+                controller: 'AboutController',
+                templateUrl: 'home/about.html',
+            })
+            .state('tos', {
+                url: '/tos',
+                title: 'tos',
+                templateUrl: 'home/tos.html',
+            })
+            .state('acceptable_use_policy', {
+                url: '/acceptable_use_policy',
+                title: 'acceptable_use_policy',
+                templateUrl: 'home/acceptable_use_policy.html',
+            })
+            .state('privacy_policy', {
+                url: '/privacy_policy',
+                title: 'privacy_policy',
+                templateUrl: 'home/privacy_policy.html',
+            })
+            .state('copyright_policy', {
+                url: '/copyright_policy',
+                title: 'copyright_policy',
+                templateUrl: 'home/copyright_policy.html',
+            })
             .state('admin-list', {
                 url: '/admin/list/:kind/:query',
                 templateUrl: function ($stateParams) {
@@ -125,7 +150,13 @@
                 controller: 'AdminListController'
             });
 
-    })).run(ng(function (modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+    })).run(ng(function ($rootScope, modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+        $rootScope.$on('$stateChangeSuccess',
+            function (event, toState, toParams, fromState, fromParams) {
+                if (toState.title) {
+                    $rootScope.setPageToolbarTitle(toState.title);
+                }
+            });
         $.extend(modelsInfo, window.MODELS_META);
         $.extend(currentAccount, window.CURRENT_ACCOUNT);
         modelsUtil.normalize(currentAccount);

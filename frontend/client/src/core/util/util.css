@@ -92,6 +92,9 @@ button {
 a {
     background: transparent;
     outline: none;
+    cursor: pointer;
+    text-decoration: underline;
+    color: rgba(0, 0, 0, 0.87);
 }
 
 h1 {
@@ -219,4 +222,8 @@ input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-s
   /*
   transform: rotate(0.000001deg);
   */
+}
+
+ul, ol {
+    margin: 0px;
 }
