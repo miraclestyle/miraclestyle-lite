@@ -142,8 +142,8 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 }
 
 .list-row-avatar {
-    padding-top: 16px;
-    padding-bottom: 16px;
+    padding-top: 24px;
+    padding-bottom: 24px;
 }
 
 .list-subheader {
