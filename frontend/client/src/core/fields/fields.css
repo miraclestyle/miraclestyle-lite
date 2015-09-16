@@ -86,6 +86,7 @@ a.sort-handle {
 }
 
 .fields-grouping [ng-messages] {
+    -webkit-font-smoothing: antialiased;
     padding-left: 16px;
     font-size: 12px;
     padding-right: 16px;
@@ -93,6 +94,8 @@ a.sort-handle {
     padding-top: 4px;
     padding-bottom: 4px;
     min-height: 22px;
+    letter-spacing: 0.2px;
+    font-weight: 400;
     position: relative;
 }
 
