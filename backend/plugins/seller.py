@@ -129,7 +129,7 @@ class SellerSetupDefaults(orm.BaseModel):
                                                                     condition_value=Decimal('5'),
                                                                     discount_value=Decimal('10'),
                                                                     active=True)], active=False)
-    default_tax = OrderTaxPlugin(name='Sales tax', address_type='shipping', type='proportional', amount=Decimal('6'), active=False)
+    default_tax = OrderTaxPlugin(name='Sales tax', address_type='billing', type='proportional', amount=Decimal('6'), active=False)
     if not plugin_group or not plugin_group.plugins:  # now user wont be in able to delete the config completely, he will always have these defaults
       plugins = [default_address_billing,
                  default_address_shipping,
