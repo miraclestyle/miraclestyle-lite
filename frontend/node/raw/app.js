@@ -9489,10 +9489,9 @@ $(function () {
                 leave: function (cb) {
                     var form = this.container.form;
                     if (form.$pristine) {
-                        cb();
-                    } else {
-                        modals.confirm('discard', cb);
+                        return cb();
                     }
+                    modals.confirm('discard', cb);
                 }
             });
         }))
@@ -18357,6 +18356,12 @@ angular.module('app')
                                 scope.save().then(function () {
                                     snackbar.showK('changesSaved');
                                     scope.entity._sellers = sellers;
+                                    models['23'].decrementGlobalSellerStack(seller.key, scope.args.notify);
+                                    models['18'].current().then(function (response) {
+                                        var collection = response.data.entity;
+                                        collection.sellers.remove(seller.key);
+                                        return collection;
+                                    });
                                 });
                             },
                             view: function (seller, $event) {
@@ -18388,11 +18393,12 @@ angular.module('app')
     'use strict';
     angular.module('app')
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
-        .directive('closeMasterMenu', ng(function ($mdSidenav) {
+        .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout) {
             return {
+                priority: 3333,
                 link: function (scope, element, attrs) {
                     element.on('click', function () {
-                        scope.site.toolbar.menu.close();
+                        $timeout(scope.site.toolbar.menu.close, 200, 0);
                     });
                 }
             };
@@ -20024,6 +20030,16 @@ angular.module('app')
                 globalSellerStack = {};
 
             $.extend(models['23'], {
+                decrementGlobalSellerStack: function (key, notified) {
+                    var gss = globalSellerStack[key];
+                    if (gss) {
+                        gss.follower_count -= 1;
+                        gss.inCollection = false;
+                        if (notified) {
+                            gss.notified_followers_count -= 1;
+                        }
+                    }
+                },
                 makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
