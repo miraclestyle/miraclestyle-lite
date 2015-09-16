@@ -65,7 +65,7 @@
 
             <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
                 <div class="list-subheader subheader">Buyer</div>
-                <sidenav-item ng-click="manageCollection()">Following</sidenav-item>
+                <sidenav-item close-master-menu ng-click="manageCollection()">Following</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="buy-carts">Carts</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="buy-orders">Orders</sidenav-item>
                 <sidenav-item close-master-menu  ng-click="settings()">Addresses</sidenav-item>
@@ -75,7 +75,7 @@
                 <div class="list-subheader subheader">Seller</div>
                 <sidenav-item close-master-menu ui-sref="sell-catalogs">Catalogs</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="sell-orders">Orders</sidenav-item>
-                <sidenav-item close-master-menu  ng-click="settings()">Settings</sidenav-item>
+                <sidenav-item close-master-menu ng-click="settings()">Settings</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="AccountManagementController" ng-show="!currentAccount._is_guest">
