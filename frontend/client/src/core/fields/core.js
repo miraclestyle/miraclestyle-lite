@@ -149,10 +149,9 @@
                 leave: function (cb) {
                     var form = this.container.form;
                     if (form.$pristine) {
-                        cb();
-                    } else {
-                        modals.confirm('discard', cb);
+                        return cb();
                     }
+                    modals.confirm('discard', cb);
                 }
             });
         }))

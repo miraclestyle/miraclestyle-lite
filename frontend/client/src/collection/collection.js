@@ -115,6 +115,12 @@
                                 scope.save().then(function () {
                                     snackbar.showK('changesSaved');
                                     scope.entity._sellers = sellers;
+                                    models['23'].decrementGlobalSellerStack(seller.key, scope.args.notify);
+                                    models['18'].current().then(function (response) {
+                                        var collection = response.data.entity;
+                                        collection.sellers.remove(seller.key);
+                                        return collection;
+                                    });
                                 });
                             },
                             view: function (seller, $event) {

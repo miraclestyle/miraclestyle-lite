@@ -27,7 +27,9 @@
                         </div>
                         <div load-more-button="search.pagination"></div>
                         <!-- help -->
-                        <div ng-if="helpers.models.isEntityListEmpty(search.results) && search.loaded" help-render="GLOBAL_CONFIG.emptyHelp.sellerProfileCatalogList"></div>
+                        <div class="padding-top-64 padding-bottom-8" ng-if="helpers.models.isEntityListEmpty(search.results) && !search.pagination.loading">
+                            <div help-render="GLOBAL_CONFIG.emptyHelp.sellerProfileCatalogList"></div>
+                        </div>
                        <!-- end help -->
                     </div>
 

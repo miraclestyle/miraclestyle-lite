@@ -759,6 +759,16 @@
                 globalSellerStack = {};
 
             $.extend(models['23'], {
+                decrementGlobalSellerStack: function (key, notified) {
+                    var gss = globalSellerStack[key];
+                    if (gss) {
+                        gss.follower_count -= 1;
+                        gss.inCollection = false;
+                        if (notified) {
+                            gss.notified_followers_count -= 1;
+                        }
+                    }
+                },
                 makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;

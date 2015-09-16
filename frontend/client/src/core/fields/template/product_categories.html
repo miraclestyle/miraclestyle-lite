@@ -18,7 +18,7 @@
   </button> 
 
 <div>
-  <ul ng-if="select.hasGrouping" ng-repeat="group in select.grouping" class="list list-padding seam-bottom">
+  <ul ng-if="select.hasGrouping" ng-repeat="group in select.grouping" class="list list-padding-one-line seam-bottom">
     <li>
     <div class="list-subheader subheader">{{group.label}}</div>
     </li>
@@ -37,7 +37,7 @@
     </li>
   </ul>
 
-  <ul ng-if="!select.hasGrouping" class="list list-padding">
+  <ul ng-if="!select.hasGrouping" class="list list-padding-one-line">
     <li md-ink-ripple-list
       ng-class="{'list-row-is-active': select.isSelected(item)}"
       class="simple-dialog-option list-row list-row-is-clickable-and-hoverable"
