@@ -68,25 +68,25 @@
                 <sidenav-item ng-click="manageCollection()">Following</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="buy-carts">Carts</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="buy-orders">Orders</sidenav-item>
-                <sidenav-item ng-click="settings()">Addresses</sidenav-item>
+                <sidenav-item close-master-menu  ng-click="settings()">Addresses</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="SellerManagementController" ng-show="!currentAccount._is_guest">
                 <div class="list-subheader subheader">Seller</div>
                 <sidenav-item close-master-menu ui-sref="sell-catalogs">Catalogs</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="sell-orders">Orders</sidenav-item>
-                <sidenav-item ng-click="settings()">Settings</sidenav-item>
+                <sidenav-item close-master-menu  ng-click="settings()">Settings</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="AccountManagementController" ng-show="!currentAccount._is_guest">
                 <div class="list-subheader subheader">Account</div>
-                <sidenav-item ng-click="logout()">Sign out</sidenav-item>
-                <sidenav-item ng-click="settings()">Settings</sidenav-item>
+                <sidenav-item close-master-menu ng-click="logout()">Sign out</sidenav-item>
+                <sidenav-item close-master-menu ng-click="settings()">Settings</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-controller="LoginLinksController" ng-show="currentAccount._is_guest">
                 <div class="list-subheader subheader">Account</div>
-                <sidenav-item ng-click="login()">Sign in / Sign up</sidenav-item>
+                <sidenav-item close-master-menu ng-click="login()">Sign in / Sign up</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
