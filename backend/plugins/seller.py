@@ -122,8 +122,8 @@ class SellerSetupDefaults(orm.BaseModel):
     default_carrier = OrderCarrierPlugin(name='Free international shipping', active=True, lines=[OrderCarrierLine(name='Shipping everywhere', active=True)])
     default_currency = OrderCurrencyPlugin(name='Currency (USD)', currency=Unit.build_key('usd'))
     default_paypal_payment = OrderPayPalPaymentPlugin(name='PayPal payments', reciever_email=context.account._primary_email, business=context.account._primary_email)
-    default_discount = OrderDiscountPlugin(name='Discount on quantity (10%)',
-                                           lines=[OrderDiscountLine(name='Discount on quantity (10%)',
+    default_discount = OrderDiscountPlugin(name='Discounts',
+                                           lines=[OrderDiscountLine(name='Discount 10% on quantity over 5',
                                                                     condition_type='quantity',
                                                                     condition_operator='>',
                                                                     condition_value=Decimal('5'),
