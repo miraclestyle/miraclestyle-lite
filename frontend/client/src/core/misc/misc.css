@@ -762,7 +762,7 @@ body {
 }
 
 .messages-box md-input-container {
-    padding: 18px 56px 18px 16px;
+    padding: 17px 56px 18px 16px;
 }
 
 .messages-box textarea {
@@ -785,8 +785,8 @@ body {
 }
 
 .messages-send-wrapper {
-    max-height: 56px;
-    min-height: 56px;
+    max-height: 55px;
+    min-height: 55px;
     overflow-x: hidden;
     overflow-y: auto;
 }
@@ -797,7 +797,7 @@ body {
 
 .messages-send {
     top: 0px;
-    padding: 4px;
+    padding: 4px 4px 3px;
     display: block;
     position: absolute;
     box-sizing: border-box;
