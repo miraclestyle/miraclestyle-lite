@@ -371,10 +371,10 @@
                                                 }
                                             },
                                             modelclass: {
-                                                condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['124-update'].condition_type, GLOBAL_CONFIG.fields.help['124-update'].condition_type),
+                                                condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
                                                 condition_operator: groupBy('conditional'),
                                                 condition_value: groupBy('conditional'),
-                                                price_type: groupBy('price', GLOBAL_CONFIG.fields.label['124-update'].price_type, GLOBAL_CONFIG.fields.help['124-update'].price_type),
+                                                price_type: groupBy('price', GLOBAL_CONFIG.fields.label['111-update'].price_type, GLOBAL_CONFIG.fields.help['111-update'].price_type),
                                                 price_operator: helpers.extendDeep(groupBy('price'), {
                                                     ui: {
                                                         active: 'args.price_type !== \'fixed\''
@@ -415,7 +415,7 @@
                                                 }
                                             }
                                         },
-                                        condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
+                                        condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['124-update'].condition_type, GLOBAL_CONFIG.fields.help['124-update'].condition_type),
                                         condition_operator: groupBy('conditional'),
                                         condition_value: groupBy('conditional')
                                     }
