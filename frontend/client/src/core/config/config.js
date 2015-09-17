@@ -404,6 +404,7 @@
             addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
             addLocations: 'Add Location',
+            editLocations: 'Edit Location',
             editLines: 'Edit Line',
             addPrice: 'Add Price',
             addPrices: 'Add Price',
