@@ -232,8 +232,8 @@
             '>': 'is greater than'
         };
         locals.addressTypeSpec = {
-            shipping: 'Shipping',
-            billing: 'Billing'
+            billing: 'Billing',
+            shipping: 'Shipping'
         };
         $.extend(GLOBAL_CONFIG.fields.translateChoices, {
             '107': {
@@ -403,7 +403,7 @@
             viewAddresses: 'Addresses',
             addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
-            addLocations: 'Add Locations',
+            addLocations: 'Add Location',
             editLines: 'Edit Line',
             addPrice: 'Add Price',
             addPrices: 'Add Price',
