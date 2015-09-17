@@ -161,7 +161,7 @@
                                     args: 'messages.draft.message',
                                     parentArgs: 'messages.draft',
                                     writable: 'order.ui.rule.action.log_message.executable',
-                                    placeholder: 'Type message here.',
+                                    placeholder: 'Type message here',
                                     attrs: {
                                         'native-placeholder': '',
                                         'class': 'primary'
