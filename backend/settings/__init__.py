@@ -20,7 +20,7 @@ PROFILING = False  # profiling of every function call using cProfile. Debug must
 PROFILING_SORT = ('cumulative', )  # 'time'
 
 # Notify
-NOTIFY_EMAIL = 'notify-noreply@miraclestyle.com'  # Password: xZa9hv8nbWyzk67boq4Q0
+NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 
 # User settings.
 ROOT_ADMINS = ('elvinkosova@gmail.com', 'vertazzar@gmail.com', 'edis.sehalic@gmail.com')
