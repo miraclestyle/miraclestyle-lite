@@ -1,14 +1,13 @@
-
 {% extends 'base.html' %}
 
 {% block body %}
 <span>
-  Administrative action was taken against your Miraclestyle catalog 
+  Administrative action was taken against your catalog
   "<a href="https://www.miraclestyle.com/catalog/{{entity.key_urlsafe}}">{{entity.name|safe}}</a>".
 </span><br/>
 <span>
-  The catalog is {{entity.state}} {% if input.index_state == "index" %}and set to be indexed in Miraclestyle public index{% else %}
-  and set to be unindexed from Miraclestyle public index{% endif %}.
+  The catalog is {{entity.state}} {% if input.index_state == "index" %}and set to be indexed on the Miraclestyle app{% else %}
+  and set to be unindexed from the Miraclestyle app{% endif %}.
 </span><br/>
 <span>
   Administrator left you the following message:
