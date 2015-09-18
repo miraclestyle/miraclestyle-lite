@@ -113,6 +113,11 @@
 }
 
 .time-inputs input {
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 40px;
+    letter-spacing: 0px;
+    color: rgba(0, 0, 0, 0.54);
     border-bottom: none;
     width: 64px;
     padding: 4px 0px;
