@@ -117,6 +117,12 @@
                 active: 'Active',
                 suspended: 'Suspended'
             },
+            catalog: {
+                published: 'Published',
+                discontinued: 'Discontinued',
+                unindex: 'Unindex',
+                index: 'Index'
+            },
             order: {
                 checkout: 'checkout',
                 completed: 'completed',
