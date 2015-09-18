@@ -1,5 +1,6 @@
 .day-cell {
     display: block;
+    white-space: nowrap;
     position: relative;
     box-sizing: border-box;
     margin: 0px;
