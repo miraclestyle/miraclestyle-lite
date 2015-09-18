@@ -10,6 +10,9 @@ div.catalog-pricetag, li.catalog-new-pricetag {
     background: white;
     cursor: move;
     font-size: 14px;
+    transition-duration: 0.25s;
+    transition-timing-function: linear;
+    transition-property: box-shadow, background;
 }
 
 div.catalog-pricetag:active, 
