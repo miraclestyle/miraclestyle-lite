@@ -189,9 +189,14 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
     padding-bottom: 16px;
 }
 
+.modal-medium-simple .list-content-tile,
 .modal-medium-simple .list-row-one-line .list-content-tile {
     padding-left: 24px;
     padding-right: 24px;
+}
+
+.modal-medium-simple .list-row-has-primary .list-content-tile {
+    padding-left: 80px;
 }
 
 .modal-medium-simple .list-row-has-secondary .list-content-tile {
