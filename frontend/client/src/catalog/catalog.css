@@ -54,6 +54,7 @@ li.catalog-new-pricetag {
     text-decoration: none;
     display: block;
     padding: 6px 8px;
+    min-width: 64px;
 }
 
 .catalog-new-pricetag {
