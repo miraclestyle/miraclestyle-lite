@@ -81,6 +81,7 @@
     text-decoration: none;
     cursor: pointer;
     overflow: hidden;
+    display: block;
 }
 
 .md-button {
