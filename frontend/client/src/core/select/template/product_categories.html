@@ -6,7 +6,7 @@
                     md-ink-ripple-list
                     ng-click="select.product_categories.next(item)"
                     class="list-row menu-item list-content-tile block list-row-is-clickable">
-                    <strong class="first ellipsis-text" ng-bind="select.view(item)"></strong>
+                    <strong class="first" ng-bind="select.view(item)"></strong>
                     <div class="list-secondary-tile">
                       <div class="button-square">
                         <icon type="chevron_right"></icon>
@@ -31,7 +31,7 @@
                           <icon class="button-square" type="chevron_left"></icon>
                         </div>
                       </div>
-                      <div class="first ellipsis-text" ng-bind="children.item.name"></div>
+                      <div class="first" ng-bind="children.item.name"></div>
                     </div>
             </button>
 
@@ -43,7 +43,7 @@
                         item="item"
                         md-ink-ripple-list
                         class="list-row menu-item list-content-tile block list-row-is-clickable">
-                        <strong class="first ellipsis-text" ng-bind="item.leafname"></strong>
+                        <strong class="first" ng-bind="item.leafname"></strong>
                         <div class="list-secondary-tile">
                           <div class="button-square">
                             <icon type="chevron_right"></icon>
