@@ -7,10 +7,10 @@
             </div>
         </div>
         <div ng-class="{'seam-bottom': sellerDetails.seller._content.documents.length}" class="list list-padding">
-            <div class="list-row list-content-tile list-row-avatar">
+            <div class="list-row list-content-tile list-row-large-multiline">
                 <span class="display1">{{sellerDetails.seller.name}}</span>
             </div>
-            <div class="list-row list-content-tile list-row-avatar">
+            <div class="list-row list-content-tile list-row-large-multiline">
                 <div ng-if="sellerDetails.chartConfig" resize-chart google-chart chart="sellerDetails.chartConfig"></div>
                 <div ng-if="!sellerDetails.chartConfig">
                     <h1 class="no-things-available">No feedback stats available</h1>
@@ -44,9 +44,9 @@
           </md-input-container>
 
         </div>
-        <div ng-if="sellerDetails.seller._content.documents.length" class="list seam-bottom list-padding">
+        <div ng-if="sellerDetails.seller._content.documents.length" class="list list-padding">
              <list-button ng-click="sellerDetails.displayShare()">
-                  <strong class="first ellipsis-text">Share</strong>
+                  <strong class="first">Share</strong>
              </list-button>
              <div ng-repeat="content in sellerDetails.seller._content.documents track by content.key" class="list-row no-padding">
                <list-button ng-click="sellerDetails.viewContent(content)">
