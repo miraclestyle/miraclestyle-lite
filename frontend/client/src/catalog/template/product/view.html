@@ -98,9 +98,10 @@
                                                 </md-button>
                                             </div>
 
-                                        </div>
+                                        
                                          <div ng-messages="container.form.productQuantity.$error">
                                           <div ng-message="required">Quantity must be larger than 1!</div>
+                                        </div>
                                         </div>
                                     </md-input-container>
                                 </div>
@@ -123,7 +124,7 @@
                         md-component-id="variantMenu.id">
                 <md-content>
                     <div class="list seam-bottom list-padding">
-                         <div class="list-row list-row-multiline">
+                         <div class="list-row list-row-two-lines">
                              <div class="list-content-tile">
                                  <span class="first" ng-bind="variantChooser.name"></span>
                                  <span class="second" ng-bind="variantChooser.description"></span>
