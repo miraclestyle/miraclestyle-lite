@@ -36,34 +36,29 @@
             <md-sidenav md-swipe-right="productMenu.close()" layout="column" class="right md-closed wide-sidenav" md-component-id="productMenu.id">
                 <md-content>
                         <div class="product-detail-content">
-                            <div class="list list-padding">
-                                <div class="list">
-                                    <div class="padding-top-bottom-2" ng-include="'catalog/quick_info.html'"></div>
-                                </div>
-
-                                <div class="list-row list-row-three-line list-row-multiline">
+                                <div class="list seam-bottom list-padding">
+                                  <div ng-include="'catalog/quick_info.html'"></div>
+                                  <div class="list-row list-row-three-line list-row-large-multiline">
                                     <div class="list-content-tile">
-                                        <h1 class="headline">{{product.name}}</h1>
-                                        <span class="first">{{product._category.name}}</span>
-                                        <span class="first">{{product.code}}</span>
+                                      <h1 class="headline">{{product.name}}</h1>
+                                      <span class="second">{{product._category.name}}</span>
+                                      <span class="second padding-bottom-16">{{product.code}}</span>
+                                      <span class="body1">{{product.description}}</span>
                                     </div>
+                                  </div>
                                 </div>
-                                <div class="list-row list-row-one-line list-row-multiline">
-                                    <div class="list-content-tile">
-                                        <span class="body1">{{product.description}}</span>
-                                    </div>
-                                </div>
-                                <div class="list list-padding seam-top seam-bottom">
+                                <div class="list list-padding seam-bottom">
                                     <div class="list-row list-row-one-line no-padding">
                                         <list-button ng-click="displayShare()" loading><span class="first">Share</span></list-button>
                                     </div>
                                     <div ng-if="product.contents.length" ng-repeat="content in product.contents track by content.key" class="list-row list-row-one-line no-padding">
                                         <list-button ng-click="viewContent(content)">
-                                            <strong class="first">{{content.title}}</strong>
+                                            <strong class="first ellipsis-text">{{content.title}}</strong>
                                         </list-button>
                                     </div>
                                 </div>
-                                <div class="product-price list-row list-row-two-lines list-row-multiline">
+                                <div class="list list-padding">
+                                <div class="product-price list-row list-row-two-lines">
                                     <div class="list-content-tile">
                                         <span class="first">{{product.unit_price|formatCurrency:catalog._seller._currency}} ({{catalog._seller._currency.code}})</span>
                                         <span class="second">{{product.availability}}</span>
@@ -74,15 +69,13 @@
                                 </div>
 
 
-                                <div class="list list-padding">
-                                    <div ng-repeat="variant in variants" class="list-row list-row-three-lines list-row-has-secondary no-padding">
+                                    <div ng-repeat="variant in variants" class="list-row list-row-two-lines no-padding">
                                         <button md-ink-ripple loading ng-click="setupVariantChooser(variant, $index)" type="button" class="list-row menu-item list-content-tile list-row-is-clickable">
-                                            <span class="first ellipsis-text" ng-bind="variant.name"></span>
-                                            <span class="second ellipsis-text" ng-bind="variant.option"></span>
-                                            <span class="second ellipsis-text" ng-bind="variant.description"></span>
+                                            <span class="first" ng-bind="variant.name"></span>
+                                            <span class="second" ng-bind="variant.option"></span>
                                         </button>
                                     </div>
-                                </div>
+                                
 
                                 <div class="product-quantifier">
                                     <md-input-container>
@@ -119,7 +112,7 @@
                                     </md-button>
                                 </div>
                             </div>
-                        </div>
+                            </div>
                 </md-content>
             </md-sidenav>
 
