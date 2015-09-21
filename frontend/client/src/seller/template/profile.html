@@ -17,7 +17,7 @@
                         </button>
                     </div>
 
-                    <div class="list">
+                    <div class="list padding-bottom-8">
                         <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = 240" grid-scale="{maxHeight: maxHeight}" ng-show="search.results.length" class="grid-wrapper clearfix">
                             <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
                                 <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
