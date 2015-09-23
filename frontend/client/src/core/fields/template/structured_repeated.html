@@ -41,7 +41,8 @@
                 ng-click="config.ui.specifics.manage(ent, undefined, $event)" 
                 type="button" 
                 md-ink-ripple 
-                class="card-primary-action menu-item">
+                ng-class="{'padding-right-56': config.ui.specifics.listConfig.secondary}"
+                class="card-inner-padding menu-item">
 
                   <% if (config.ui.specifics.cardView) { %>
                     <span <%=config.ui.specifics.cardView %>="ent"
