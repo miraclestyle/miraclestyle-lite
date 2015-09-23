@@ -77,6 +77,8 @@
 }
 
 .card-inner-padding {
+    display: block;
+    width: 100%;
     padding-top: 24px;
     padding-bottom: 24px;
     padding-left: 16px;
