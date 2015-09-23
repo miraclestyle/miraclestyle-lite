@@ -933,7 +933,7 @@ button::-moz-focus-inner {
 .wide-arrow-down .pager {
     color: rgba(255, 255, 255, 1);
     margin-left: -10px;
-    bottom: 35px;
+    bottom: 32px;
     display: block;
     position: relative;
     box-sizing: border-box;
