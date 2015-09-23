@@ -81,7 +81,7 @@
         <button loading ng-click="cmd.line.view(line, $event)" type="button" md-ink-ripple class="menu-item card-inner">
             <div class="delete-overlay"></div>
             <div class="card-inner-padding">
-                <div class="card-primary-action padding-bottom-16">
+                <div ng-class="{'padding-right-40': stage.current < 2 && order.ui.rule.action.update.executable}" class="padding-bottom-16">
                     <h1 class="headline">{{line.product.name}}</h1>
                     <div class="secondary padding-bottom-16">{{line.product.code}}</div>
                     <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
@@ -131,10 +131,8 @@
     <div class="card" ng-if="stage.current > 1">
         <div class="menu-item card-inner">
             <div class="card-inner-padding">
-                <div class="card-primary-action">
-                    <h1 class="headline">Delivery method</h1>
-                    <div class="secondary padding-bottom-16">{{order.carrier.description}}</div>
-                </div>
+                <h1 class="headline">Delivery method</h1>
+                <div class="secondary padding-bottom-16">{{order.carrier.description}}</div>
                 <div class="clearfix">
                     <table class="pull-right card-table">
                         <tbody>
