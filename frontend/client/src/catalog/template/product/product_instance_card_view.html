@@ -1,4 +1,4 @@
-<h1 class="headline">{{val.code}}</h1>
+<h1 class="headline" ng-class="{'padding-bottom-16': val.code.length}">{{val.code}}</h1>
 <table class="card-table">
     <tbody>
         <tr ng-repeat="variant in val.variant_options">
