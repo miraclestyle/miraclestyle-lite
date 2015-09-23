@@ -14,6 +14,9 @@
     padding: 0px;
     background: white;
     position: relative;
+    transition-duration: 0.25s;
+    transition-timing-function: linear;
+    transition-property: box-shadow, background;
 }
 
 .ui-draggable-dragging .card-inner {
