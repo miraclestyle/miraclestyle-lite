@@ -221,6 +221,36 @@ body .mb15 {
     padding-bottom: 20px;
 }
 
+.padding-56 {
+    padding: 56px;
+}
+
+.padding-sides-56 {
+    padding-left: 56px;
+    padding-right: 56px;
+}
+
+.padding-left-56 {
+    padding-left: 56px;
+}
+
+.padding-right-56 {
+    padding-right: 56px;
+}
+
+.padding-top-bottom-56 {
+    padding-top: 56px;
+    padding-bottom: 56px;
+}
+
+.padding-top-56 {
+    padding-top: 56px;
+}
+
+.padding-bottom-56 {
+    padding-bottom: 56px;
+}
+
 .margin-0 {
     margin: 0px;
 }
