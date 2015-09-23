@@ -909,9 +909,9 @@ button::-moz-focus-inner {
 .wide-arrow-down {
     width: 0px;
     height: 0px;
-    border-left: 80px solid transparent;
-    border-right: 80px solid transparent;
-    border-top: 40px solid rgba(0, 0, 0, 0.54);
+    border-left: 72px solid transparent;
+    border-right: 72px solid transparent;
+    border-top: 36px solid rgba(0, 0, 0, 0.54);
     margin-left: auto;
     margin-right: auto;
     display: block;
