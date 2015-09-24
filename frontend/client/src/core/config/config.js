@@ -118,6 +118,7 @@
                 suspended: 'Suspended'
             },
             catalog: {
+                draft: 'Draft',
                 published: 'Published',
                 discontinued: 'Discontinued',
                 unindex: 'Unindex',
