@@ -125,17 +125,17 @@
                 index: 'Index'
             },
             order: {
-                checkout: 'checkout',
-                completed: 'completed',
-                cart: 'cart',
-                canceled: 'canceled',
-                sudo: 'administered',
-                review: 'review',
-                reported: 'reported',
-                positive: 'positive',
-                negative: 'negative',
-                neutral: 'neutral',
-                revision: 'review'
+                cart: 'Cart',
+                checkout: 'Checkout',
+                completed: 'Completed',
+                canceled: 'Canceled',
+                positive: 'Positive',
+                negative: 'Negative',
+                neutral: 'Neutral',
+                revision: 'Review',
+                reported: 'Reported',
+                sudo: 'Administered',
+                review: 'Review'
             }
         });
 
