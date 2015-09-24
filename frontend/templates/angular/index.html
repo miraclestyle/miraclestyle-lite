@@ -59,8 +59,8 @@
             </div>
             <div class="list list-padding seam-bottom">
                 <div class="list-subheader subheader">Explore</div>
-                <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Following</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="home">All</sidenav-item>
+                <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Following</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
