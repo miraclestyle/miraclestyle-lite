@@ -156,7 +156,7 @@
                             <tr>
                                 <td class="secondary info">Shipping &amp; handling</td>
                                 <td ng-if="stage.current > 1" class="secondary">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
-                                <td ng-if="stage.current === 1" class="secondary">To be calculated.</td>
+                                <td ng-if="stage.current === 1" class="secondary">To be calculated</td>
                             </tr>
                             <tr>
                                 <td class="secondary info">Net total</td>
@@ -165,7 +165,7 @@
                             <tr>
                                 <td class="secondary info">Taxes</td>
                                 <td ng-if="stage.current > 1" class="secondary">{{order.tax_amount|formatCurrency:order.currency}}</td>
-                                <td ng-if="stage.current === 1" class="secondary">To be calculated.</td>
+                                <td ng-if="stage.current === 1" class="secondary">To be calculated</td>
                             </tr>
                             <tr>
                                 <td class="secondary info">Total</td>
