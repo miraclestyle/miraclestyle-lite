@@ -30,6 +30,7 @@
 .card-table td {
     padding: 0px;
     display: table-cell;
+    vertical-align: top;
 }
 
 .card-table td.info {
