@@ -30,6 +30,29 @@
                                 <td class="secondary">{{order|output:'updated'}}</td>
                             </tr>
                             
+                            <tr>
+                                <td class="secondary info">Feedback</td>
+                                <td class="secondary">
+                                    <span ng-show="!order.feedback">N/A</span>
+                                    <span ng-show="order.feedback">{{order.feedback|labelize:"order"}}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="secondary info">Feedback Adjustment</td>
+                                <td class="secondary">
+                                     <span ng-show="!order.feedback_adjustment">N/A</span>
+                                     <span ng-show="order.feedback_adjustment">{{order.feedback_adjustment|labelize:"order"}}</span>
+                                </td>
+                            </tr>
+
+                            <tr ng-if="false">
+                                <td class="secondary info">Payment</td>
+                                <td class="secondary">
+                                        <span ng-show="!order.payment_status">N/A</span>
+                                        <span ng-show="order.payment_status">{{order.payment_status|labelize:"order"}}</span>
+                                </td>
+                            </tr>
+                            
                         </tbody>
                     </table>
                 </div>
