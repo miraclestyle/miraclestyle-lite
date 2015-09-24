@@ -90,7 +90,8 @@ md-backdrop.md-opaque {
   line-height: inherit;
   text-decoration: none;
   cursor: pointer;
-  overflow: hidden; }
+  overflow: hidden;
+  display: block; }
 
 .md-button {
   border-radius: 2px; }
@@ -131,14 +132,21 @@ md-backdrop.md-opaque {
   display: block;
   padding: 0px;
   background: white;
-  position: relative; }
+  position: relative;
+  transition-duration: 0.25s;
+  transition-timing-function: linear;
+  transition-property: box-shadow, background; }
+
+.ui-draggable-dragging .card-inner {
+  box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26); }
 
 .card-table, .card-table td {
   border-spacing: 0px; }
 
 .card-table td {
   padding: 0px;
-  display: table-cell; }
+  display: table-cell;
+  vertical-align: top; }
 
 .card-table td.info {
   padding-right: 16px;
@@ -150,7 +158,10 @@ md-backdrop.md-opaque {
 .card-primary-action {
   display: block;
   width: 100%;
-  padding-right: 72px; }
+  padding-top: 24px;
+  padding-bottom: 24px;
+  padding-left: 16px;
+  padding-right: 56px; }
 
 .card-action-top-right, .card-action-bottom-right {
   top: 4px;
@@ -179,6 +190,8 @@ md-backdrop.md-opaque {
   text-align: right; }
 
 .card-inner-padding {
+  display: block;
+  width: 100%;
   padding-top: 24px;
   padding-bottom: 24px;
   padding-left: 16px;
@@ -880,9 +893,13 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
   padding-top: 16px;
   padding-bottom: 16px; }
 
+.modal-medium-simple .list-content-tile,
 .modal-medium-simple .list-row-one-line .list-content-tile {
   padding-left: 24px;
   padding-right: 24px; }
+
+.modal-medium-simple .list-row-has-primary .list-content-tile {
+  padding-left: 80px; }
 
 .modal-medium-simple .list-row-has-secondary .list-content-tile {
   padding-right: 72px; }
@@ -912,6 +929,7 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
   box-sizing: border-box;
   margin: 0px;
   padding: 0px;
+  box-shadow: 0px 3px 6px 1.5px rgba(0, 0, 0, 0.26);
   background: rgba(0, 0, 0, 0.8);
   left: 0px;
   right: 0px;
@@ -1033,6 +1051,7 @@ md-toolbar {
 
 .day-cell {
   display: block;
+  white-space: nowrap;
   position: relative;
   box-sizing: border-box;
   margin: 0px;
@@ -1088,7 +1107,7 @@ md-toolbar {
   right: auto;
   left: 0px;
   padding-left: 12px;
-  padding-right: 4px; }
+  padding-right: 12px; }
 
 .title-above .pager button {
   min-width: inherit;
@@ -1132,6 +1151,11 @@ md-toolbar {
   padding: 52px 0px; }
 
 .time-inputs input {
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 40px;
+  letter-spacing: 0px;
+  color: rgba(0, 0, 0, 0.54);
   border-bottom: none;
   width: 64px;
   padding: 4px 0px;
@@ -1224,6 +1248,7 @@ a.sort-handle {
   padding-left: 16px; }
 
 .fields-grouping [ng-messages] {
+  -webkit-font-smoothing: antialiased;
   padding-left: 16px;
   font-size: 12px;
   padding-right: 16px;
@@ -1231,6 +1256,8 @@ a.sort-handle {
   padding-top: 4px;
   padding-bottom: 4px;
   min-height: 22px;
+  letter-spacing: 0.2px;
+  font-weight: 400;
   position: relative; }
 
 .fields-grouping [ng-message] {
@@ -1517,6 +1544,52 @@ body .mb15 {
 .padding-bottom-20 {
   padding-bottom: 20px; }
 
+.padding-56 {
+  padding: 56px; }
+
+.padding-sides-56 {
+  padding-left: 56px;
+  padding-right: 56px; }
+
+.padding-left-56 {
+  padding-left: 56px; }
+
+.padding-right-56 {
+  padding-right: 56px; }
+
+.padding-top-bottom-56 {
+  padding-top: 56px;
+  padding-bottom: 56px; }
+
+.padding-top-56 {
+  padding-top: 56px; }
+
+.padding-bottom-56 {
+  padding-bottom: 56px; }
+
+.padding-40 {
+  padding: 40px; }
+
+.padding-sides-40 {
+  padding-left: 40px;
+  padding-right: 40px; }
+
+.padding-left-40 {
+  padding-left: 40px; }
+
+.padding-right-40 {
+  padding-right: 40px; }
+
+.padding-top-bottom-40 {
+  padding-top: 40px;
+  padding-bottom: 40px; }
+
+.padding-top-40 {
+  padding-top: 40px; }
+
+.padding-bottom-40 {
+  padding-bottom: 40px; }
+
 .margin-0 {
   margin: 0px; }
 
@@ -1663,7 +1736,7 @@ body {
 
 .brief {
   color: white;
-  line-height: 14px; }
+  line-height: 16px; }
 
 .body2, .menu, .subheader {
   font-size: 14px;
@@ -1948,7 +2021,7 @@ body {
   margin: 0px; }
 
 .messages-box md-input-container {
-  padding: 18px 56px 18px 16px; }
+  padding: 17px 56px 18px 16px; }
 
 .messages-box textarea {
   padding: 0px;
@@ -1966,8 +2039,8 @@ body {
   right: -56px; }
 
 .messages-send-wrapper {
-  max-height: 56px;
-  min-height: 56px;
+  max-height: 55px;
+  min-height: 55px;
   overflow-x: hidden;
   overflow-y: auto; }
 
@@ -1976,7 +2049,7 @@ body {
 
 .messages-send {
   top: 0px;
-  padding: 4px;
+  padding: 4px 4px 3px;
   display: block;
   position: absolute;
   box-sizing: border-box;
@@ -2022,9 +2095,9 @@ button::-moz-focus-inner {
 .wide-arrow-down {
   width: 0px;
   height: 0px;
-  border-left: 80px solid transparent;
-  border-right: 80px solid transparent;
-  border-top: 40px solid rgba(0, 0, 0, 0.54);
+  border-left: 72px solid transparent;
+  border-right: 72px solid transparent;
+  border-top: 36px solid rgba(0, 0, 0, 0.54);
   margin-left: auto;
   margin-right: auto;
   display: block;
@@ -2044,7 +2117,7 @@ button::-moz-focus-inner {
 .wide-arrow-down .pager {
   color: white;
   margin-left: -10px;
-  bottom: 35px;
+  bottom: 32px;
   display: block;
   position: relative;
   box-sizing: border-box; }
@@ -2554,10 +2627,21 @@ div.catalog-pricetag, li.catalog-new-pricetag {
   padding: 0px;
   visibility: hidden;
   border-radius: 2px;
-  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.26);
+  box-shadow: 0px 1px 2px 0.5px rgba(0, 0, 0, 0.26);
   background: white;
-  cursor: pointer;
-  font-size: 14px; }
+  cursor: move;
+  font-size: 14px;
+  transition-duration: 0.25s;
+  transition-timing-function: linear;
+  transition-property: box-shadow, background; }
+
+div.catalog-pricetag:active,
+li.catalog-new-pricetag:active {
+  box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26); }
+
+a.catalog-pricetag-link,
+div.catalog-pricetag-link {
+  cursor: move; }
 
 li.catalog-new-pricetag {
   position: static;
@@ -2584,7 +2668,8 @@ li.catalog-new-pricetag {
 .catalog-pricetag button.button-transparent {
   text-decoration: none;
   display: block;
-  padding: 6px 8px; }
+  padding: 6px 8px;
+  min-width: 64px; }
 
 .catalog-new-pricetag {
   display: block; }
@@ -2628,6 +2713,14 @@ md-input-container .product-quantity-input {
 .product-quantifier input, .product-quantifier button {
   color: rgba(0, 0, 0, 0.54); }
 
+.product-quantifier input {
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 40px;
+  letter-spacing: 0px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54); }
+
 .product-quantity-control {
   float: left;
   padding-right: 4px;
@@ -2641,9 +2734,6 @@ md-input-container .product-quantity-input {
 button.product-quantity-button {
   min-width: initial;
   margin: 0px; }
-
-.product-quantity-controls {
-  order: 2; }
 
 .product-quantifier label {
   padding-left: 16px;
@@ -2781,7 +2871,7 @@ body, html {
   width: 100%; }
 
 .order-next-stage-inner {
-  padding: 16px;
+  padding: 24px;
   text-align: center;
   margin-left: auto;
   margin-right: auto;

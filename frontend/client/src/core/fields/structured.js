@@ -468,7 +468,7 @@
                                         };
                                         angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
                                             var firstField = fieldsMap[value.fields[0]];
-                                            $scope.layouts.groups.push({label: value.label || (firstField.label || $filter('humanize')(firstField.code_name))});
+                                            $scope.layouts.groups.push({label: value.label || (firstField.label || $filter('humanized')(firstField.code_name))});
                                         });
                                     }
                                     findWhereByLayoutConfig = function (field) {

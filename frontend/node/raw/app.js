@@ -1046,7 +1046,7 @@ $(function () {
             },
             discontinueCatalog: {
                 title: 'Discontinue the catalog?',
-                message: 'A discontinued catalog is not accessible to the general public and is eventually entirely removed from the Miraclestyle. However, products of a discontinued catalog remain accessible for the 180 days to those who have purchased them. A discontinued catalog cannot be edited or duplicated. You will be notified once this action is completed.',
+                message: 'A discontinued catalog is not accessible to the general public and is eventually entirely removed from the Miraclestyle app. However, products of a discontinued catalog remain accessible for the 180 days to those who have purchased them. A discontinued catalog cannot be edited or duplicated. You will be notified once this action is completed.',
                 text: {
                     primary: 'Discontinue'
                 }
@@ -1100,18 +1100,25 @@ $(function () {
                 active: 'Active',
                 suspended: 'Suspended'
             },
+            catalog: {
+                draft: 'Draft',
+                published: 'Published',
+                discontinued: 'Discontinued',
+                unindex: 'Unindex',
+                index: 'Index'
+            },
             order: {
-                checkout: 'checkout',
-                completed: 'completed',
-                cart: 'cart',
-                canceled: 'canceled',
-                sudo: 'administered',
-                review: 'review',
-                reported: 'reported',
-                positive: 'positive',
-                negative: 'negative',
-                neutral: 'neutral',
-                revision: 'review'
+                cart: 'Cart',
+                checkout: 'Checkout',
+                completed: 'Completed',
+                canceled: 'Canceled',
+                positive: 'Positive',
+                negative: 'Negative',
+                neutral: 'Neutral',
+                revision: 'Review',
+                reported: 'Reported',
+                sudo: 'Administered',
+                review: 'Review'
             }
         });
 
@@ -1208,15 +1215,16 @@ $(function () {
         });
 
         locals.conditionOperatorSpec = {
-            '<=': 'is less than or equal to',
-            '>=': 'is greater than or equal to',
             '==': 'equals to',
+            '!=': 'is not equal to',
             '<': 'is less than',
-            '>': 'is greater than'
+            '>': 'is greater than',
+            '<=': 'is less than or equal to',
+            '>=': 'is greater than or equal to'
         };
         locals.addressTypeSpec = {
-            shipping: 'Shipping',
-            billing: 'Billing'
+            billing: 'Billing',
+            shipping: 'Shipping'
         };
         $.extend(GLOBAL_CONFIG.fields.translateChoices, {
             '107': {
@@ -1386,7 +1394,8 @@ $(function () {
             viewAddresses: 'Addresses',
             addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
-            addLocations: 'Add Locations',
+            addLocations: 'Add Location',
+            editLocations: 'Edit Location',
             editLines: 'Edit Line',
             addPrice: 'Add Price',
             addPrices: 'Add Price',
@@ -1398,7 +1407,7 @@ $(function () {
             editContents: 'Edit Content',
             account: 'Account',
             admin: 'Admin',
-            users: 'Users',
+            users: 'Accounts',
             aboutRules: 'About Rules',
             addDocuments: 'Add Content',
             editDocuments: 'Edit Content',
@@ -10828,7 +10837,7 @@ $(function () {
                                         };
                                         angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
                                             var firstField = fieldsMap[value.fields[0]];
-                                            $scope.layouts.groups.push({label: value.label || (firstField.label || $filter('humanize')(firstField.code_name))});
+                                            $scope.layouts.groups.push({label: value.label || (firstField.label || $filter('humanized')(firstField.code_name))});
                                         });
                                     }
                                     findWhereByLayoutConfig = function (field) {
@@ -18756,7 +18765,7 @@ angular.module('app')
                                     args: 'messages.draft.message',
                                     parentArgs: 'messages.draft',
                                     writable: 'order.ui.rule.action.log_message.executable',
-                                    placeholder: 'Type message here.',
+                                    placeholder: 'Type message here',
                                     attrs: {
                                         'native-placeholder': '',
                                         'class': 'primary'
@@ -19642,10 +19651,10 @@ angular.module('app')
                                                 }
                                             },
                                             modelclass: {
-                                                condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['124-update'].condition_type, GLOBAL_CONFIG.fields.help['124-update'].condition_type),
+                                                condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
                                                 condition_operator: groupBy('conditional'),
                                                 condition_value: groupBy('conditional'),
-                                                price_type: groupBy('price', GLOBAL_CONFIG.fields.label['124-update'].price_type, GLOBAL_CONFIG.fields.help['124-update'].price_type),
+                                                price_type: groupBy('price', GLOBAL_CONFIG.fields.label['111-update'].price_type, GLOBAL_CONFIG.fields.help['111-update'].price_type),
                                                 price_operator: helpers.extendDeep(groupBy('price'), {
                                                     ui: {
                                                         active: 'args.price_type !== \'fixed\''
@@ -19686,7 +19695,7 @@ angular.module('app')
                                                 }
                                             }
                                         },
-                                        condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['111-update'].condition_type, GLOBAL_CONFIG.fields.help['111-update'].condition_type),
+                                        condition_type: groupBy('conditional', GLOBAL_CONFIG.fields.label['124-update'].condition_type, GLOBAL_CONFIG.fields.help['124-update'].condition_type),
                                         condition_operator: groupBy('conditional'),
                                         condition_value: groupBy('conditional')
                                     }

@@ -4,526 +4,539 @@
 		"selected_items":
 		[
 			[
-				"multiple",
-				"multipleSelection"
+				"re",
+				"reorder"
 			],
 			[
-				"specific",
-				"specifics"
+				"child_en",
+				"child_entity_path"
 			],
 			[
-				"selectedI",
-				"selectedIsArray"
+				"pricetag",
+				"pricetag"
 			],
 			[
-				"searchA",
-				"searchArguments"
+				"orderPayment",
+				"orderPaymentSuccessProgress"
 			],
 			[
-				"getActionA",
-				"getDefaultActionArguments"
+				"isO",
+				"isOrderPaymentSuccess〔variable〕"
 			],
 			[
-				"underscore",
-				"underscoreTemplate"
+				"list-row-has",
+				"list-row-has-primary"
 			],
 			[
-				"$$",
-				"$$rAF"
+				"list-row-ha",
+				"list-row-has-primary"
 			],
 			[
-				"dropdown",
-				"dropdownMenu"
+				"maplist",
+				"maplist2〔variable〕"
 			],
 			[
-				"datepic",
-				"datepickerPopup"
+				"hide",
+				"hideClose"
 			],
 			[
-				"isD",
-				"angular.isDate"
+				"viewM",
+				"viewProfileModal"
 			],
 			[
-				"should",
-				"shouldDisable"
+				"ret",
+				"return〔keyword〕"
 			],
 			[
-				"steady",
-				"steadyScroll"
+				"init",
+				"initilized"
 			],
 			[
-				"for",
-				"for	for (…) {…}"
+				"auto",
+				"autoAddToCartQuantity"
 			],
 			[
-				"property",
-				"proeprty"
+				"load",
+				"loadProduct"
+			],
+			[
+				"view",
+				"viewModal"
+			],
+			[
+				"redirect",
+				"redirect_to〔variable〕"
+			],
+			[
+				"secure",
+				"secure_cookie"
+			],
+			[
+				"va",
+				"variantOptions"
+			],
+			[
+				"variantOP",
+				"variantOptions〔variable〕"
+			],
+			[
+				"input_val",
+				"input_values〔argument〕"
+			],
+			[
+				"__",
+				"__file__〔variable〕"
 			],
 			[
 				"seller",
-				"seller_reference"
+				"sellerDetail"
 			],
 			[
-				"true",
-				"True"
+				"$root",
+				"$rootScope	AngularJS"
 			],
 			[
-				"selectedIS",
-				"selectedIsString"
+				"side",
+				"sideNav"
 			],
 			[
-				"discount",
-				"discount_line"
-			],
-			[
-				"disco",
-				"discount_line"
-			],
-			[
-				"tru",
-				"True"
-			],
-			[
-				"product",
-				"product_categories"
-			],
-			[
-				"SuperStructured",
-				"SuperReferenceStructuredProperty"
-			],
-			[
-				"_root",
-				"_root_admin"
-			],
-			[
-				"copy",
-				"copy_product"
-			],
-			[
-				"cron",
-				"cron_generate_feedback_stats"
-			],
-			[
-				"sor",
-				"sorted_and_sequenced"
-			],
-			[
-				"Ac",
-				"ActionPermission"
-			],
-			[
-				"feed",
-				"feedback_state"
-			],
-			[
-				"feedbac_stat",
-				"feedback_states"
-			],
-			[
-				"reactON",
-				"reactOnStateChange"
-			],
-			[
-				"feedbak",
-				"feedbackField"
-			],
-			[
-				"ship",
-				"shipping_address_reference"
-			],
-			[
-				"bill",
-				"billing_address_reference"
-			],
-			[
-				"variantS",
-				"variantSignatureAsDicts"
-			],
-			[
-				"current",
-				"currentVariation"
-			],
-			[
-				"get",
-				"get_partial_reference_key_path"
-			],
-			[
-				"input",
-				"input_address_reference"
-			],
-			[
-				"_get_K",
-				"_get_key_structure"
-			],
-			[
-				"modif",
-				"modifiy_product_key"
-			],
-			[
-				"modified",
-				"modified_product_key"
-			],
-			[
-				"payment",
-				"payment_method"
-			],
-			[
-				"addres",
-				"addresses"
-			],
-			[
-				"Prop",
-				"PropertyError"
-			],
-			[
-				"yei",
-				"yielder"
-			],
-			[
-				"new_",
-				"new_order_message"
-			],
-			[
-				"curre",
-				"current_values"
-			],
-			[
-				"isDefined",
-				"angular.isUndefined"
-			],
-			[
-				"read_Ar",
-				"read_arguments_path"
-			],
-			[
-				"Va",
-				"ValueError"
-			],
-			[
-				"resolve",
-				"resolve_search_document_field"
-			],
-			[
-				"all",
-				"ALL_IN"
-			],
-			[
-				"Key",
-				"KeyFormatter"
-			],
-			[
-				"PRo",
-				"PropertyError"
-			],
-			[
-				"default",
-				"default_shipping"
-			],
-			[
-				"variant",
-				"variant_options"
+				"account",
+				"account_discontinue"
 			],
 			[
 				"volume",
 				"volume_uom"
 			],
 			[
-				"formSet",
-				"formSetPristine"
-			],
-			[
-				"ORder",
-				"OrderLine"
-			],
-			[
-				"order",
-				"order_line"
-			],
-			[
-				"filter",
-				"filter	.filter()"
-			],
-			[
 				"tax",
-				"taxes"
+				"tax_subtotal"
 			],
 			[
-				"bases",
-				"basestring"
+				"condition_",
+				"condition_log_message"
 			],
 			[
-				"searchAction",
-				"searchActionArguments"
+				"condi",
+				"condition_search"
 			],
 			[
-				"steadY",
-				"steadyScroll"
+				"cond",
+				"condition_not_guest_and_owner"
 			],
 			[
-				"produ",
-				"productDetails"
+				"Write",
+				"WriteFieldPermission"
 			],
 			[
-				"Seller",
-				"seller"
+				"posi",
+				"position_left"
 			],
 			[
-				"loaded",
-				"loadedCollection"
+				"vol",
+				"volume_uom"
 			],
 			[
-				"discont",
-				"discontinue_date"
+				"desc",
+				"description"
 			],
 			[
-				"make",
-				"makeFilters"
+				"id",
+				"identities"
 			],
 			[
-				"$s",
-				"$scope	AngularJS"
+				"conditi",
+				"condition_root〔function〕"
 			],
 			[
-				"_",
-				"_images"
+				"condit",
+				"condition_read_update_logout〔function〕"
 			],
 			[
-				"trace",
-				"traceback"
+				"price",
+				"price_value〔variable〕"
 			],
 			[
-				"perpare",
-				"prepare_key"
+				"con",
+				"condition_value〔variable〕"
 			],
 			[
-				"_get_c",
-				"_get_currency_format"
+				"ev",
+				"evaluated〔variable〕"
 			],
 			[
-				"SuperRefe",
-				"SuperReferenceStructuredProperty"
+				"static_token_",
+				"static_token_reference〔variable〕"
 			],
 			[
-				"cover_width",
-				"cover_width_rounded"
+				"dyna",
+				"dynamic_token_reference"
 			],
 			[
-				"writable",
-				"writableCompiled"
+				"enti",
+				"entity"
 			],
 			[
-				"_ac",
-				"_action_permissions"
+				"_read",
+				"_read_arguments〔variable〕"
 			],
 			[
-				"disconi",
-				"discontinue_date"
-			],
-			[
-				"models",
-				"modelsMeta"
-			],
-			[
-				"duplic",
-				"duplicated_child_entity"
-			],
-			[
-				"_prod",
-				"_product_category"
-			],
-			[
-				"message",
-				"messageOrConfig"
-			],
-			[
-				"angular",
-				"angular.bind"
-			],
-			[
-				"_proper",
-				"_property_value"
-			],
-			[
-				"auto_",
-				"auto_now_add"
-			],
-			[
-				"current_",
-				"current_values"
-			],
-			[
-				"generate",
-				"generate_unique_key"
+				"read",
+				"readable"
 			],
 			[
 				"value",
-				"value_instance"
+				"value_options〔variable〕"
 			],
 			[
-				"as_list",
-				"as_list_current_values"
+				"call",
+				"callback"
 			],
 			[
-				"Stru",
-				"StructuredProperty"
+				"class_",
+				"class_action"
 			],
 			[
-				"Proper",
-				"PropertyValue"
+				"class_ac",
+				"class_actions"
 			],
 			[
-				"priceta",
-				"pricetag_set"
+				"mem_",
+				"mem_delete"
 			],
 			[
-				"catalog",
-				"catalog_images"
+				"current_f",
+				"current_field_key〔variable〕"
 			],
 			[
-				"_property",
-				"_property_value_by_read_arguments"
+				"Remote",
+				"RemoteStructuredImagePropertyValue"
 			],
 			[
-				"_B",
-				"_BaseStructuredProperty"
+				"Referen",
+				"ReferenceStructuredPropertyValue"
 			],
 			[
-				"_prop",
-				"_property_value_by_read_arguments"
+				"BaseB",
+				"BaseBlobKeyProperty"
+			],
+			[
+				"weight",
+				"weight_uom"
+			],
+			[
+				"publishe",
+				"published_catalogs〔variable〕"
+			],
+			[
+				"publis",
+				"published_catalogs"
+			],
+			[
+				"discont",
+				"discontinued_catalogs"
+			],
+			[
+				"publi",
+				"published_catalogs〔variable〕"
+			],
+			[
+				"seller_key",
+				"seller_key_urlsafe〔variable〕"
+			],
+			[
+				"document",
+				"document_ids〔variable〕"
+			],
+			[
+				"data",
+				"datastore"
+			],
+			[
+				"pro",
+				"production"
+			],
+			[
+				"set",
+				"setrecursionlimit(1000"
+			],
+			[
+				"override",
+				"override_dict2〔function〕"
+			],
+			[
+				"overri",
+				"override_dict"
+			],
+			[
+				"try",
+				"try	Try/Except"
 			],
 			[
 				"tr",
 				"try	Try/Except"
 			],
 			[
-				"supplied",
-				"supplied_key"
+				"next",
+				"next_args〔variable〕"
 			],
 			[
-				"_property_value",
-				"_property_value_read_arguments"
+				"current_per",
+				"current_permissions"
 			],
 			[
-				"allowed_",
-				"allowed_state"
+				"current",
+				"current_permissions"
 			],
 			[
-				"vari",
-				"variantSelection"
+				"cure",
+				"current_permissions"
 			],
 			[
-				"field",
-				"fieldProduct"
+				"permi",
+				"permissions"
 			],
 			[
-				"varian",
-				"variant_signature"
+				"initi",
+				"initial_value_options〔variable〕"
 			],
 			[
-				"$modal",
-				"$modalInstance"
+				"per",
+				"permissions"
 			],
 			[
-				"posit",
-				"position"
+				"tail",
+				"tail_call_optimized"
 			],
 			[
-				"_position",
-				"_position_left"
+				"catalog_",
+				"catalog_image_pricetag"
 			],
 			[
-				"position",
-				"position_left"
+				"catalog_image_",
+				"catalog_image_pricetag〔variable〕"
 			],
 			[
-				"fieldP",
-				"fieldProducts"
+				"Angu",
+				"AngularBlank"
 			],
 			[
-				"fieldPR",
-				"fieldProductsAfterSave"
+				"ngModel",
+				"ngModel"
 			],
 			[
-				"SuperIm",
-				"SuperImageRemoteStructuredProperty"
+				"md",
+				"mdComponentId"
 			],
 			[
-				"SuperR",
-				"SuperRemoteStructuredProperty"
+				"manage",
+				"manageModal"
 			],
 			[
-				"accord",
-				"accordion"
+				"apply",
+				"applyGlobalConfig"
 			],
 			[
-				"accordin",
-				"accordion-group"
+				"list",
+				"listConfig"
 			],
 			[
-				"Non",
-				"Nonexistent"
+				"isDef",
+				"angular.isDefined"
 			],
 			[
-				"ang",
-				"angular.copy"
+				"md-co",
+				"md-input-container"
 			],
 			[
-				"eq",
-				"angular.equals"
+				"groupBy",
+				"groupBysIndx"
 			],
 			[
-				"sortable",
-				"sortableOptions"
+				"transition-d",
+				"transition-duration"
 			],
 			[
-				"access",
-				"accessPath"
+				"br",
+				"break-word"
 			],
 			[
-				"delete",
-				"delete_filepath"
+				"empt",
+				"emptyHelp〔variable〕"
 			],
 			[
-				"_prope",
-				"_property_value"
+				"abs",
+				"abs_path〔variable〕"
 			],
 			[
-				"noop",
-				"angular.noop"
+				"snack",
+				"snackbar-inner"
 			],
 			[
-				"response",
-				"response"
+				"test_",
+				"test_recursion2"
 			],
 			[
-				"accordion",
-				"accordionKey"
+				"HTTP",
+				"HTTP_PERFORMANCE_TEXT"
 			],
 			[
-				"prepare",
-				"prepare_supplied_keys"
+				"template",
+				"templateBodyUrl"
 			],
 			[
-				"get_mul",
-				"get_multi_async"
+				"validate",
+				"validateForm"
 			],
 			[
-				"refere",
-				"referenceArgs"
+				"not",
+				"notthis"
 			],
 			[
-				"extra",
-				"extraConfig"
+				"animation",
+				"animationGenerator"
+			],
+			[
+				"eval",
+				"evaled〔variable〕"
+			],
+			[
+				"leaveFe",
+				"leaveFeedbackArgs"
+			],
+			[
+				"feed",
+				"feedback"
+			],
+			[
+				"addr",
+				"address〔variable〕"
+			],
+			[
+				"bill",
+				"billing"
+			],
+			[
+				"form-",
+				"form-input=〔attribute〕"
+			],
+			[
+				"billing",
+				"billingAddressFields"
+			],
+			[
+				"scroll",
+				"scrollTop	.scrollTop()"
+			],
+			[
+				"z",
+				"z-index"
+			],
+			[
+				"logM",
+				"logMessageAction"
+			],
+			[
+				"toolbar",
+				"toolbarTitle〔argument〕"
+			],
+			[
+				"isD",
+				"isDefined	AngularJS"
+			],
+			[
+				"backdro",
+				"backdropScope〔variable〕"
+			],
+			[
+				"backD",
+				"backdropDomEl〔variable〕"
+			],
+			[
+				"iden",
+				"identity〔variable〕"
+			],
+			[
+				"identit",
+				"identity"
+			],
+			[
+				"duplicate",
+				"duplicationInProgress"
+			],
+			[
+				"translate",
+				"translateX()"
+			],
+			[
+				"images",
+				"imagesReader〔variable〕"
+			],
+			[
+				"_init",
+				"_initialized"
+			],
+			[
+				"initilize",
+				"initialized"
+			],
+			[
+				"_model",
+				"_modelclass2〔variable〕"
+			],
+			[
+				"initiliz",
+				"initialized〔variable〕"
+			],
+			[
+				"set_model",
+				"set_modelclass2"
+			],
+			[
+				"backdrop",
+				"backdropDomEl"
+			],
+			[
+				"backDrop",
+				"backdropDomEl"
+			],
+			[
+				"getC",
+				"getPositionToClickElement"
+			],
+			[
+				"initila",
+				"initial_height_scale"
+			],
+			[
+				"outer",
+				"outerWidth〔function〕"
+			],
+			[
+				"animat",
+				"animationGenerator"
 			]
 		]
 	},
 	"buffers":
 	[
+		{
+			"file": "backend/orm/base.py",
+			"settings":
+			{
+				"buffer_size": 59608,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
 	"command_palette":
 	{
-		"height": 225.0,
+		"height": 291.0,
+		"last_filter": "push",
 		"selected_items":
 		[
 			[
@@ -539,12 +552,80 @@
 				"Git: Add..."
 			],
 			[
-				"git:diff",
-				"Git: Diff Tool Current File"
+				"pull",
+				"Git: Pull"
 			],
 			[
 				"diff",
+				"Git: Diff All Files"
+			],
+			[
+				"comi",
+				"Git: Commit"
+			],
+			[
+				"ADD",
+				"Git: Add..."
+			],
+			[
+				"status",
+				"Git: Status"
+			],
+			[
+				"comm",
+				"Git: Commit"
+			],
+			[
+				"comit",
+				"Git: Commit"
+			],
+			[
+				"REPL",
+				"SublimeREPL: Node"
+			],
+			[
+				"sublimeR",
+				"SublimeREPL: PHP"
+			],
+			[
+				"unstage",
+				"Git: Reset (unstage) Current File"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"disable",
+				"Package Control: Disable Package"
+			],
+			[
+				"pep",
+				"User: Python PEP8 Autoformat"
+			],
+			[
+				"enable",
+				"Package Control: Enable Package"
+			],
+			[
+				"ommit",
+				"Git: Commit"
+			],
+			[
+				"git pull",
+				"Git: Pull"
+			],
+			[
+				"diff ",
 				"Git: Diff Current File"
+			],
+			[
+				"Snippet: ",
+				"Snippet: Anonymous Function"
+			],
+			[
+				"git:diff",
+				"Git: Diff Tool Current File"
 			],
 			[
 				"diff current",
@@ -555,14 +636,6 @@
 				"Git: Add..."
 			],
 			[
-				"status",
-				"Git: Status"
-			],
-			[
-				"pull",
-				"Git: Pull"
-			],
-			[
 				"git status",
 				"Git: Status"
 			],
@@ -571,23 +644,11 @@
 				"Git: Push"
 			],
 			[
-				"comit",
-				"Git: Commit"
-			],
-			[
-				"comm",
-				"Git: Commit"
-			],
-			[
 				"sattus",
 				"Git: Status"
 			],
 			[
 				"reset",
-				"Git: Reset (unstage) Current File"
-			],
-			[
-				"unstage",
 				"Git: Reset (unstage) Current File"
 			],
 			[
@@ -607,16 +668,8 @@
 				"Git: Pull"
 			],
 			[
-				"ADD",
-				"Git: Add..."
-			],
-			[
 				"statu",
 				"Git: Status"
-			],
-			[
-				"comi",
-				"Git: Commit"
 			],
 			[
 				"cmmi",
@@ -637,10 +690,6 @@
 			[
 				"pul",
 				"Git: Pull"
-			],
-			[
-				"install",
-				"Package Control: Install Package"
 			],
 			[
 				"intel",
@@ -699,10 +748,6 @@
 				"phpfmt: format selection"
 			],
 			[
-				"disable",
-				"Package Control: Disable Package"
-			],
-			[
 				"list ",
 				"Package Control: List Packages"
 			],
@@ -745,10 +790,6 @@
 			[
 				"git push",
 				"Git: Push"
-			],
-			[
-				"enable",
-				"Package Control: Enable Package"
 			],
 			[
 				"disable ",
@@ -831,172 +872,175 @@
 		"/Users/admin/Dev/py/miraclestyle-lite/backend",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/etc",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/etc/data",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/lib",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/account",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/catalog",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/collection",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/settings",
 		"/Users/admin/Dev/py/miraclestyle-lite/backend/tools",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/account",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/catalog",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/home",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/order",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-bootstrap",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/account",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/account/template",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/buyer",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/buyer/template",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/collection",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/template",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/models",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/models/template",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/radioButton",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/responsive",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/select",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/select/template",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/social",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/social/template",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/dialog",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/dialog",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form/dialog",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/home",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap/accordion",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/dialog"
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/seo"
 	],
 	"file_history":
 	[
+		"/Users/admin/Dev/py/miraclestyle-lite/deploy.sh",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/list/list.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/select/template/choices.html",
 		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/index.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form/dialog/select.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/structured.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/dialog/manage_actions.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog/toolbar.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/dialog/structured.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/dialog/manage_actions.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/general.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/md.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/plugins.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/list.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/directives.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/dialog/manage_body.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/buyer/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/catalog/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/settings.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/home/index.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap/accordion/accordion-group.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/accordion.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/account/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/dropdown.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/style.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/form.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/select.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/modal.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form/select.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/home/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/select.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog/editor_default_body.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/dialog/plugins.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/dialog/editor.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/select_async.html",
-		"/Users/admin/Dev/js/material/src/components/select/select.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-bootstrap/ui-bootstrap-tpls.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material/angular-material.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/location.py",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/HTML-CSS-JS Prettify/.jsbeautifyrc",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-bootstrap/modal/window.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/filters.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/app.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/iom.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/unit.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/catalog/directives.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor/material-design-icons/sprites/css-sprite/sprite-hardware-grey600.png",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/order/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/collection/services.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material/angular-material.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/test.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/shim.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-ui-select/dist/select.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/string.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/entity/modal/editor_default_footer.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/text.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/search_form.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/account/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/tests/select.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/tests/dialog1.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/overrides.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/bootstrap.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/init.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material/readme.txt",
-		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/variables.scss",
-		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/structure.scss",
-		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/components/sidenav/sidenav.scss",
-		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/components/subheader/subheader.scss",
-		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/layout.scss",
-		"/Users/admin/Downloads/material-2ad189a6adaa49975ed82df5ad0e54db9d51629d/src/core/style/mixins.scss",
-		"/Users/admin/Downloads/material-master/dist/docs/docs.js",
-		"/Users/admin/Downloads/material-master/dist/docs/index.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/image.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/datetime.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/underscore/form/image.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/load_more_button.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/helper.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-ui-bootstrap-datetimepicker/datetimepicker-tpls-0.11.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/underscore/form/boolean.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/table.css",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css/testchannel.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor/angular-animate/angular-animate.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/modal/manage_body.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/collection/modal/manage_body.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-cache/.bower.json",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/tools/base.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/base.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/catalog.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/seller.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/catalog.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/account.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/util.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/index.yaml",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/account.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/http.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/queue.yaml",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/CSS3/CSS3.sublime-settings",
-		"/Users/admin/Library/Application Support/Sublime Text 3/Packages/User/CSS3.sublime-settings",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/settings.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/order.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/errors.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/buyer/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/admin/directive/list/34.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/admin/filters.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/order.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/admin/controllers.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/base.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/tools/oauth2.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/order/modal/view.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/home.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/template/boolean.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/core.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/profile.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/template/product_categories.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/seller.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/collection/collection.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/config/config.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/account/template/administer.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/template/image.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/models/template/manage_body_default.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/template/about.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/home.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/social/social.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/kernel/init/init.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/template/privacy_policy.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/template/acceptable_use_policy.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/handler/misc.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/misc/misc.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/template/tos.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/util/util.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/template/copyright_policy.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/social/social.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/structured.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/profile_catalogs.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/node/node_modules/gulp-autoprefixer/node_modules/autoprefixer-core/node_modules/caniuse-db/features-json/fieldset-disabled.json",
+		"/Users/admin/Dev/py/miraclestyle-lite/README",
 		"/Users/admin/Dev/py/miraclestyle-lite/INSTALL",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components/seller/directives.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/seller/directive/default_line_display.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/http.pyc",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/seller.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modal/content_view_body.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/history.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modal/history_view_body.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/ngUpload/ng-upload.js",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/account/modal/administer.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/catalog/modal/administer.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/misc/modal/history_view_footer.html",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/cloudstorage/storage_api.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/mem.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/location.py",
-		"/Users/admin/Dev/py/miraclestyle-lite/backend/etc/data/location.xml"
+		"/Users/admin/Dev/py/miraclestyle-lite/build.sh",
+		"/Users/admin/Dev/py/miraclestyle-lite/comparator.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/BUILD",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/order/template/toolbar_actions.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/order/order.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/locations.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/product/help/instances.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/prices.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/plugins.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/locations_line.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/discount_lines.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/contents.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/help/carrier_lines.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/collection/template/help/sellers.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/product/help/variants.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/product/help/images.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/product/help/contents.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/buyer/template/help/addresses.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/models/models.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/help/list.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/help/images.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/catalog.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/tools/base.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/catalog.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/catalog.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties/base.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/settings.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/account/account.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/misc/misc.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/base.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties/values.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/base.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/manage_products.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/__init__.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/order.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/dev_server.sh",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/account/sudo_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/models/collection.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/account/sudo_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/leave_feedback_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/report_feedback_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/report_feedback_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/catalog/publish_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/leave_feedback_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/catalog/discontinue_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/catalog/discontinue_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/catalog/sudo_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/catalog/sudo_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/catalog/publish_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/untitled",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/review_feedback_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/review_feedback_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/collection/published_catalog_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/collection/published_catalog_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/sudo_feedback_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/sudo_feedback_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/log_message_subject.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/order/log_message_body.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/notifications/templates/base.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/grid/grid.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/buyer/buyer.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/admin/template/list_view/34.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/fields.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/modal/modal.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/button/button.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/snackbar/snackbar.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/catalog.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/node/gulpfile.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/input/input.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/sidenav/sidenav.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/select/select.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/simpledialog/simpledialog.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/textField/textField.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/node/node_modules/gulp/bin/gulp.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/select/select.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/util/util.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/spinner/spinner.css",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/modal/modal.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields/other.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/vendor/momentjs/locale/da.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/order/template/view.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/product/view.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins/order.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/kernel/kernel.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/TODOS",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/seller/template/view.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/product/help/variant_options.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/order/template/help/empty.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/order/template/browse_addresses.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/handler/catalog.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/misc/template/content_view.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/catalog/template/product/variant_options.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/social/template/share.html",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/slider/slider.js",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/handler/seller.py",
+		"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/home/template/index.html"
 	],
 	"find":
 	{
@@ -1007,133 +1051,133 @@
 		"height": 95.0,
 		"where_history":
 		[
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/form",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-ui-select",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-ui-select",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib/angular-material",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor/angular-material",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/lib",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/documentation",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite",
 			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/cloudstorage",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/modal",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/vendor",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm/properties",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/dist",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/dist/static",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/handler",
-			"/Users/admin/Dev/py/miraclestyle-lite,*.css,*.js,*.py",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/account.py",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts/lib/angular-ui-select/select2",
-			"/Users/admin/Dev/py/miraclestyle-lite",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/plugins",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/models",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core/fields",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/vendor",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates/angular/parts",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/css",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src,*.html",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/templates",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/usr/local/google_appengine/google/appengine/ext/ndb",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite",
-			"/usr/local/google_appengine/google/appengine/ext/ndb",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
-			"/Users/admin/Dev/py/miraclestyle-lite",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js",
-			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/js/components",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend/orm.py",
-			"/Users/admin/Dev/py/miraclestyle-lite/backend",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src/core",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client",
+			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client/src",
 			"/Users/admin/Dev/py/miraclestyle-lite/frontend/client"
 		]
 	},
@@ -1142,134 +1186,134 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"class=\"list-row ",
-			"main-menu-item",
-			"settings(",
-			"<button",
-			"addText",
-			"addNewText",
-			"addText",
-			"target.",
-			".main-menu-item",
-			"md-list",
-			"<md",
-			"md-list",
-			".accordion-arrow",
-			"md-padding",
-			"currentAccount",
-			"form-element-wrapper",
-			"templateActions",
-			"manage_footer",
-			"'accordion",
-			"font-size: 0px",
-			"font-size:",
-			"addText",
-			".panel-body",
-			"options.parent.height()",
-			"paddingTop",
-			"md-asimple-dialog md-content",
-			"<button",
-			".height",
-			"md-content",
-			"71px",
-			"helpers.getProperty(",
-			".getProperty",
-			"select.find",
-			"collectActive",
-			"missing.length",
-			"triggerHandler",
-			"resize",
-			"select.opened",
-			"opened",
-			"select.find",
-			"search.find",
-			".find(",
-			".selected",
-			"isChecked",
-			"collectActive",
-			"getActive",
-			".item =",
-			"selected",
-			"select",
-			".getActive",
-			"index",
-			"select.find",
-			"getActive",
-			"gethash",
-			"hashGetter",
-			".entities",
-			"items",
-			"entities",
-			"$mdA",
-			"$window",
-			"$windowž",
-			"$window",
-			"mdAdialog",
-			"strings =",
-			"strings",
-			"as-md-input-container",
-			"entity",
-			"include-footer-height",
-			"parentHeight",
-			"parent.height",
-			"limit",
-			"firstWatch",
-			"getActive",
-			"select.item =",
-			"opts",
-			"find =",
-			"select.find",
-			".item =",
-			"mdEscFactory",
-			".add(",
-			"key: ",
-			"modal.key",
-			"esc",
-			"escFactory",
-			"/modal/",
-			"_updateable",
-			"._updateable",
-			"class Record",
-			"hammer",
-			"highlight",
-			"removeAfterAnimate",
-			"attrs.inDirec",
-			"inDirection",
-			"inDirection: '",
-			"animate",
-			"\"animate\"",
-			"animate",
-			"scope",
-			".animate =",
-			"inDirection",
-			"inDirection: ",
-			"transc",
-			"modalStack.open",
-			"inDirection",
-			"modalScope",
-			"scope.inDirection",
-			"scope.left",
-			"left:",
-			"left",
-			"left =",
-			"left:",
-			"inDirection",
-			"scope.right",
-			"scope.left",
-			"exitRight",
-			"scope ",
-			"scope.animate",
-			"scope",
-			"removeAfterAnimate(",
-			"removeAfterAnimate",
-			".animate =",
-			"exitDirection",
-			".direction",
-			"direction:",
-			"scope.direction",
+			"while True",
+			"close-master-menu",
+			"close-master-menu ",
+			"ng-if=\"!select.hasGrouping\"",
+			"decrementGlobalSellerStack",
+			"globalSellerStack",
+			"leave:",
+			"leave",
+			"list-row-multiline",
+			"list-row-multiline ",
+			"ul ",
+			"headline",
+			"<a ",
+			"pad-",
+			"<a ",
+			"pad-",
+			"-sids",
+			"pad-",
+			"padd-",
+			"<a ",
+			"<ah",
+			"padding-bottom-40",
+			"pad-",
+			".social-grid",
+			"inflector",
+			"humanized",
+			"humanize",
+			"'filter",
+			"humanize",
+			"label",
+			"postal Code",
+			"emptyHelp",
+			"inline-icon",
+			"inline-",
+			"inline-icon",
+			"placeholder",
+			"'catalog'",
+			"_sequence",
+			"duplicate:",
+			"$scope.catalog",
+			".catalog",
+			"duplicate:",
+			"callback",
+			"duplicate:",
+			"duplicated",
+			"channelNotifications.create",
+			"'channelNotifications'",
+			"channel",
+			"render_template",
+			"ORDER_COMPLETE_SUBJECT",
+			"Notify(",
+			"sellerProfileNotFound",
+			"snackbar",
+			"errors",
+			"forbidden",
+			".forbidden",
+			"-webkit",
+			"-webkit-",
+			" label",
+			"-webkit-",
+			"category-slide-in",
+			"md-input-container .md-placeholder, md-input-container label ",
+			"-webkit-",
+			"$sniffer",
+			"safari",
+			"setT",
+			"indirection",
+			".inDire",
+			"createProduct",
 			"clickElement",
-			"trigger(",
-			"scope.animate"
+			"getClickElement",
+			"createProduct",
+			"createPR",
+			".manage",
+			"manage",
+			"createProduct",
+			"no images a",
+			"completed",
+			"checkout",
+			"order-payment-success",
+			"manageModal",
+			"viewOpts",
+			"afterClose",
+			".close =",
+			"console.log",
+			".close",
+			"maybeOpenOrder",
+			"_.findWhere",
+			"carts",
+			"OrderPaymentCanceledController",
+			"view =",
+			"afterSave",
+			"manage_actions",
+			"afterSave",
+			"toolbar",
+			"optimizeLegibility",
+			"optimizeLegibilityž",
+			".message ",
+			".message",
+			"content-view",
+			"multiline",
+			"text-rendering",
+			"0",
+			"toggleCollection",
+			"24",
+			"padding-top: 24",
+			"readyImageSlider",
+			"viewProfileModal",
+			"$stateParams",
+			"state.params",
+			"viewProfileModal",
+			"-webkit-",
+			".pin",
+			".close =",
+			"$close = ",
+			"$stateParams",
+			"social.share(",
+			"$state",
+			"productUrl",
+			"embed",
+			"already",
+			"makeSeller",
+			"make",
+			".seller",
+			"sellerDetails",
+			"inDirection:",
+			".inDirection",
+			".abs"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1277,6 +1321,40 @@
 		"regex": false,
 		"replace_history":
 		[
+			"tools.",
+			"(orm.Image",
+			"= orm.GlobalRole",
+			"helpers.clicks.realEventTarget(",
+			"ng-if",
+			" nng-if=\"config.ui.form.shouldShowMessages()\"",
+			"Controller'",
+			"_title_",
+			"false",
+			".layouts.",
+			"layouts = ",
+			"layouts:",
+			"not-pointable",
+			"list-content-tile-",
+			"list-row-",
+			"core/models/manage.html",
+			"formatCurrency",
+			"mdContextualMonitor",
+			"draggable-click",
+			"listConfig",
+			"listView",
+			"viewListItem",
+			"modal-body-inner padding-24",
+			"form/manage_entity_default_body.html",
+			"form/manage_entity.html",
+			"",
+			"fit-in-modal",
+			"core/misc/",
+			"simple-dialog-option",
+			"list-dropdown-item",
+			"md-ink-ripple md-themable",
+			"config.ui.specifics.listDisplay.",
+			"config.ui.specifics.listDisplay",
+			"list-row list-row--is-clickable-and-hoverable",
 			"loading class=\"list-row ",
 			"outDirection",
 			"scope.inDirection",
@@ -1327,8 +1405,99 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "backend/orm/base.py",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 59608,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								22310,
+								22320
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
+							],
+							"color_scheme": "Packages/User/Color Highlighter/themes/LAZY (SL).tmTheme",
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 10418.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -1363,6 +1532,10 @@
 		]
 	},
 	"menu_visible": true,
+	"output.autopep8":
+	{
+		"height": 120.0
+	},
 	"output.exec":
 	{
 		"height": 100.0
@@ -1375,20 +1548,530 @@
 	{
 		"height": 102.0
 	},
+	"pinned_build_system": "",
 	"project": "miraclestyle-lite.sublime-project",
 	"replace":
 	{
-		"height": 66.0
+		"height": 42.0
 	},
 	"save_all_on_build": true,
 	"select_file":
 	{
 		"height": 0.0,
+		"last_filter": "",
 		"selected_items":
 		[
 			[
+				"home.js",
+				"frontend/client/src/home/home.js"
+			],
+			[
+				"list.css",
+				"frontend/client/src/core/list/list.css"
+			],
+			[
+				"config.",
+				"frontend/client/src/core/config/config.js"
+			],
+			[
+				"home.css",
+				"frontend/client/src/home/home.css"
+			],
+			[
+				"util.css",
+				"frontend/client/src/core/util/util.css"
+			],
+			[
+				"config.js",
+				"frontend/client/src/core/config/config.js"
+			],
+			[
+				"util.",
+				"frontend/client/src/core/util/util.css"
+			],
+			[
+				"misc",
+				"frontend/handler/misc.py"
+			],
+			[
+				"mic.css",
+				"frontend/client/src/core/misc/misc.css"
+			],
+			[
+				"misc.css",
+				"frontend/client/src/core/misc/misc.css"
+			],
+			[
+				"social",
+				"frontend/client/src/core/social/social.css"
+			],
+			[
+				"social.js",
+				"frontend/client/src/core/social/social.js"
+			],
+			[
+				"init.js",
+				"frontend/client/src/core/kernel/init/init.js"
+			],
+			[
+				"core.js",
+				"frontend/client/src/core/fields/core.js"
+			],
+			[
+				"fields.js",
+				"frontend/node/node_modules/gulp-autoprefixer/node_modules/autoprefixer-core/node_modules/caniuse-db/features-json/fieldset-disabled.json"
+			],
+			[
+				"order.js",
+				"frontend/client/src/order/order.js"
+			],
+			[
+				"gulp.js",
+				"frontend/node/node_modules/gulp/bin/gulp.js"
+			],
+			[
+				"settings.py",
+				"frontend/settings.py"
+			],
+			[
+				"modal.js",
+				"frontend/client/src/core/modal/modal.js"
+			],
+			[
+				"moda.js",
+				"frontend/client/vendor/momentjs/locale/da.js"
+			],
+			[
+				"structured",
+				"frontend/client/src/core/fields/structured.js"
+			],
+			[
+				"select.js",
+				"frontend/client/src/core/select/select.js"
+			],
+			[
+				"catalog.css",
+				"frontend/client/src/catalog/catalog.css"
+			],
+			[
+				"order.py",
+				"backend/models/order.py"
+			],
+			[
+				"init",
+				"frontend/client/src/core/kernel/init/init.js"
+			],
+			[
+				"structured.js",
+				"frontend/client/src/core/fields/structured.js"
+			],
+			[
+				"catalog.js",
+				"frontend/client/src/catalog/catalog.js"
+			],
+			[
+				"catalog.py",
+				"backend/models/catalog.py"
+			],
+			[
+				"misccss",
+				"frontend/client/src/core/misc/misc.css"
+			],
+			[
+				"seller.js",
+				"frontend/client/src/seller/seller.js"
+			],
+			[
+				"home.html",
+				"frontend/templates/seo/home/view.html"
+			],
+			[
+				"view.html",
+				"frontend/client/src/seller/template/view.html"
+			],
+			[
+				"misc.",
+				"frontend/handler/misc.py"
+			],
+			[
+				"models.",
+				"frontend/client/src/core/models/models.js"
+			],
+			[
+				"modal.css",
+				"frontend/client/src/core/modal/modal.css"
+			],
+			[
+				"button.css",
+				"frontend/client/src/core/button/button.css"
+			],
+			[
 				"",
-				"backend/orm.py"
+				"frontend/client/src/core/config/config.js"
+			],
+			[
+				"config",
+				"frontend/client/src/core/config/config.js"
+			],
+			[
+				"http.py",
+				"backend/http.py"
+			],
+			[
+				"iom.py",
+				"backend/iom.py"
+			],
+			[
+				"modal",
+				"frontend/client/src/core/modal/modal.css"
+			],
+			[
+				"toolbar",
+				"frontend/client/src/core/toolbar/toolbar.css"
+			],
+			[
+				"card.",
+				"frontend/client/src/core/card/card.css"
+			],
+			[
+				"account.js",
+				"frontend/client/src/account/account.js"
+			],
+			[
+				"share.",
+				"frontend/client/src/core/social/template/share.html"
+			],
+			[
+				"models",
+				"frontend/client/src/core/models/models.js"
+			],
+			[
+				"other.js",
+				"frontend/client/src/core/fields/other.js"
+			],
+			[
+				"select_mu",
+				"frontend/client/src/core/fields/template/select_multiple.html"
+			],
+			[
+				"seletct.js",
+				"frontend/client/vendor/jquery/src/selector-native.js"
+			],
+			[
+				"select.css",
+				"frontend/client/src/core/select/select.css"
+			],
+			[
+				"general",
+				"frontend/client/uxui_blueprints/css/general.css"
+			],
+			[
+				"fields",
+				"frontend/client/src/core/fields/fields.js"
+			],
+			[
+				"list.",
+				"frontend/client/src/core/list/list.css"
+			],
+			[
+				"input.css",
+				"frontend/client/src/core/input/input.css"
+			],
+			[
+				"misc.ss",
+				"frontend/client/src/core/misc/misc.css"
+			],
+			[
+				"checkbo",
+				"frontend/client/src/core/checkbox/checkbox.css"
+			],
+			[
+				"misc.js",
+				"frontend/client/src/core/misc/misc.js"
+			],
+			[
+				"catalog",
+				"frontend/client/src/catalog/catalog.css"
+			],
+			[
+				"fields.css",
+				"frontend/client/src/core/fields/fields.css"
+			],
+			[
+				"select.",
+				"frontend/client/src/core/select/select.css"
+			],
+			[
+				"fields.j",
+				"frontend/client/src/core/fields/fields.js"
+			],
+			[
+				"collectio",
+				"frontend/client/src/collection/collection.js"
+			],
+			[
+				"select",
+				"frontend/client/src/core/select/select.css"
+			],
+			[
+				"side",
+				"frontend/client/src/core/sidenav/sidenav.css"
+			],
+			[
+				"siden",
+				"frontend/client/src/core/sidenav/sidenav.js"
+			],
+			[
+				"seller.",
+				"frontend/client/src/seller/seller.js"
+			],
+			[
+				"seller.py",
+				"backend/models/seller.py"
+			],
+			[
+				"sidenav",
+				"frontend/client/src/core/sidenav/sidenav.css"
+			],
+			[
+				"core.py",
+				"backend/orm/core.py"
+			],
+			[
+				"base.py",
+				"backend/orm/properties/base.py"
+			],
+			[
+				"fields.",
+				"frontend/client/src/core/fields/fields.js"
+			],
+			[
+				"grid.js",
+				"frontend/client/src/core/grid/grid.js"
+			],
+			[
+				"mem",
+				"backend/mem.py"
+			],
+			[
+				"index.html",
+				"miraclestyle-lite/frontend/templates/angular/index.html"
+			],
+			[
+				"util.py",
+				"miraclestyle-lite/backend/util.py"
+			],
+			[
+				"product",
+				"miraclestyle-lite/frontend/templates/seo/catalog/product/view.html"
+			],
+			[
+				"snackbar",
+				"miraclestyle-lite/frontend/client/src/core/snackbar/snackbar.js"
+			],
+			[
+				"boot.js",
+				"miraclestyle-lite/frontend/client/src/core/kernel/boot/boot.js"
+			],
+			[
+				"select.html",
+				"miraclestyle-lite/frontend/client/src/core/fields/template/select.html"
+			],
+			[
+				"model.js",
+				"miraclestyle-lite/frontend/client/src/core/models/models.js"
+			],
+			[
+				"buyer.js",
+				"miraclestyle-lite/frontend/client/src/buyer/buyer.js"
+			],
+			[
+				"admin.js",
+				"miraclestyle-lite/frontend/client/src/admin/admin.js"
+			],
+			[
+				"button",
+				"miraclestyle-lite/frontend/client/src/core/button/button.css"
+			],
+			[
+				"order.css",
+				"miraclestyle-lite/frontend/client/src/order/order.css"
+			],
+			[
+				"home",
+				"miraclestyle-lite/frontend/client/src/home/home.css"
+			],
+			[
+				"orm.py",
+				"miraclestyle-lite/backend/orm.py"
+			],
+			[
+				"settings",
+				"miraclestyle-lite/frontend/settings.py"
+			],
+			[
+				"settings.",
+				"miraclestyle-lite/frontend/settings.py"
+			],
+			[
+				"setting",
+				"miraclestyle-lite/frontend/settings.py"
+			],
+			[
+				"content_view",
+				"frontend/client/src/core/misc/template/content_view.html"
+			],
+			[
+				"social.css",
+				"frontend/client/src/core/social/social.css"
+			],
+			[
+				"share.htm",
+				"frontend/client/src/core/social/template/share.html"
+			],
+			[
+				"contentview",
+				"frontend/client/src/core/misc/template/content_view_body.html"
+			],
+			[
+				"sellerview",
+				"frontend/client/src/seller/template/view.html"
+			],
+			[
+				"modal.j",
+				"frontend/client/src/core/modal/modal.js"
+			],
+			[
+				"view.",
+				"frontend/client/src/catalog/template/product/view.html"
+			],
+			[
+				"modal.",
+				"frontend/client/src/core/modal/modal.js"
+			],
+			[
+				"backdr",
+				"frontend/client/src/core/backdrop/backdrop.css"
+			],
+			[
+				"view",
+				"frontend/client/src/catalog/template/product/view.html"
+			],
+			[
+				"text",
+				"frontend/client/src/core/fields/template/text.html"
+			],
+			[
+				"util.js",
+				"frontend/client/src/core/util/util.js"
+			],
+			[
+				"misc.s",
+				"frontend/client/src/core/misc/misc.js"
+			],
+			[
+				"util",
+				"frontend/client/src/core/util/util.js"
+			],
+			[
+				"util.cs",
+				"frontend/client/src/core/util/util.css"
+			],
+			[
+				"bool",
+				"frontend/client/src/core/fields/template/boolean.html"
+			],
+			[
+				"steady.j",
+				"frontend/client/vendor/Steady.js/Steady.js"
+			],
+			[
+				"config.s",
+				"frontend/client/src/core/config/config.js"
+			],
+			[
+				"datetime",
+				"frontend/client/src/core/datetime/datetime.css"
+			],
+			[
+				"input.js",
+				"frontend/client/src/core/input/input.js"
+			],
+			[
+				"field",
+				"frontend/client/src/core/fields/fields.js"
+			],
+			[
+				"string",
+				"frontend/client/src/core/fields/template/string.html"
+			],
+			[
+				"text.",
+				"frontend/client/src/core/fields/template/text.html"
+			],
+			[
+				"switch",
+				"frontend/client/src/core/switch/switch.js"
+			],
+			[
+				"boolean",
+				"frontend/client/src/core/fields/template/boolean.html"
+			],
+			[
+				"action",
+				"frontend/client/src/core/action/action.js"
+			],
+			[
+				"datet",
+				"frontend/client/src/core/datetime/datetime.css"
+			],
+			[
+				"input",
+				"frontend/client/src/core/datetime/template/input.html"
+			],
+			[
+				"plugins",
+				"frontend/client/src/core/fields/template/plugins.html"
+			],
+			[
+				"grid",
+				"frontend/client/src/core/grid/grid.js"
+			],
+			[
+				"grid.",
+				"frontend/client/src/core/grid/grid.js"
+			],
+			[
+				"seller",
+				"frontend/client/src/seller/seller.js"
+			],
+			[
+				"select.htm",
+				"frontend/client/src/core/fields/template/select.html"
+			],
+			[
+				"text.htm",
+				"frontend/client/src/core/fields/template/text.html"
+			],
+			[
+				"structu",
+				"frontend/client/src/core/fields/template/structured_repeated.html"
+			],
+			[
+				"index",
+				"frontend/templates/angular/index.html"
+			],
+			[
+				"input.html",
+				"frontend/client/src/core/datetime/template/input.html"
+			],
+			[
+				"image.html",
+				"frontend/client/src/core/fields/template/image.html"
+			],
+			[
+				"structure",
+				"frontend/client/src/core/fields/template/structured_repeated.html"
 			]
 		],
 		"width": 0.0
@@ -1396,6 +2079,7 @@
 	"select_project":
 	{
 		"height": 0.0,
+		"last_filter": "",
 		"selected_items":
 		[
 		],
@@ -1404,6 +2088,7 @@
 	"select_symbol":
 	{
 		"height": 0.0,
+		"last_filter": "",
 		"selected_items":
 		[
 		],
@@ -1413,11 +2098,11 @@
 	"settings":
 	{
 	},
-	"show_minimap": true,
+	"show_minimap": false,
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 346.0,
+	"side_bar_width": 333.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
