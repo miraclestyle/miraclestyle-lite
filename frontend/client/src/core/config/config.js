@@ -424,7 +424,7 @@
             editContents: 'Edit Content',
             account: 'Account',
             admin: 'Admin',
-            users: 'Users',
+            users: 'Accounts',
             aboutRules: 'About Rules',
             addDocuments: 'Add Content',
             editDocuments: 'Edit Content',
