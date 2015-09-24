@@ -2,14 +2,14 @@
     <div class="card" ng-repeat="catalog in search.results">
         <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="manage(catalog, $event)">
             <div class="card-inner-padding">
-                <h1 class="headline">#{{catalog.id}}</h1>
+                <h1 class="headline">{{catalog.id}}</h1>
                 <div class="secondary padding-bottom-16">{{catalog|output:'created'}}</div>
                 <table class="card-table">
                     <tbody>
 
                         <tr>
                             <td class="secondary info">Seller</td>
-                            <td class="secondary">#{{catalog.parent.parent.id}}</td>
+                            <td class="secondary">{{catalog.parent.parent.id}}</td>
                         </tr>
 
                         <tr>
