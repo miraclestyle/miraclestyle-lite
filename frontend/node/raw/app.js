@@ -10502,7 +10502,10 @@ $(function () {
                         list = {
                             secondary: true,
                             perLine: 1,
-                            clickable: true
+                            clickable: true,
+                            calculate: function (ent, p) {
+                                return parseInt(p, 10) === parseInt(this.perLine, 10);
+                            }
                         };
                     config.ui.fieldset = true;
 
@@ -19563,7 +19566,16 @@ angular.module('app')
                             listView: 'address-rule-location-list-view',
                             sortFields: ['country', 'region', 'postal_codes'],
                             listConfig: {
-                                perLine: 3
+                                calculate: function (ent, i) {
+                                    var lines = 0;
+                                    angular.forEach(['country', 'region', 'postal_codes'], function (k) {
+                                        var maybe = ent[k];
+                                        if (maybe && maybe.length) {
+                                            lines += 1;
+                                        }
+                                    });
+                                    return lines === i;
+                                }
                             },
                             beforeSave: function ($scope, info) {
                                 var promises = [],

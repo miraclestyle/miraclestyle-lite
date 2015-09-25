@@ -69,7 +69,10 @@
 
       <div ng-hide="ent._state == 'deleted'" 
            ng-repeat="ent in config.ui.specifics.parentArgs" 
-           ng-class="{'list-row-has-secondary': config.ui.specifics.listConfig.secondary, 'list-row-one-line': config.ui.specifics.listConfig.perLine == 1, 'list-row-two-lines': config.ui.specifics.listConfig.perLine == 2, 'list-row-three-lines': config.ui.specifics.listConfig.perLine == 3}"
+           ng-class="{'list-row-has-secondary': config.ui.specifics.listConfig.secondary, 
+                      'list-row-one-line': config.ui.specifics.listConfig.calculate(ent, 1),
+                      'list-row-two-lines': config.ui.specifics.listConfig.calculate(ent, 2),
+                      'list-row-three-lines': config.ui.specifics.listConfig.calculate(ent, 3)}"
            current-item="ent"
            class="no-move list-row no-padding clearfix">
               <div class="delete-overlay"></div>

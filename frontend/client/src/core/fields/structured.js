@@ -102,7 +102,10 @@
                         list = {
                             secondary: true,
                             perLine: 1,
-                            clickable: true
+                            clickable: true,
+                            calculate: function (ent, p) {
+                                return parseInt(p, 10) === parseInt(this.perLine, 10);
+                            }
                         };
                     config.ui.fieldset = true;
 

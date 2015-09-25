@@ -228,7 +228,16 @@
                             listView: 'address-rule-location-list-view',
                             sortFields: ['country', 'region', 'postal_codes'],
                             listConfig: {
-                                perLine: 3
+                                calculate: function (ent, i) {
+                                    var lines = 0;
+                                    angular.forEach(['country', 'region', 'postal_codes'], function (k) {
+                                        var maybe = ent[k];
+                                        if (maybe && maybe.length) {
+                                            lines += 1;
+                                        }
+                                    });
+                                    return lines === i;
+                                }
                             },
                             beforeSave: function ($scope, info) {
                                 var promises = [],

@@ -25,6 +25,7 @@
          <button 
               type="button"
               md-ink-ripple
+              ng-disabled="!entity.ui.rule.field.identities.writable"
               ng-repeat="ident in identities"
               ng-click="maybeDisconnect(ident)"
               class="menu-item list-row list-row-has-primary"
