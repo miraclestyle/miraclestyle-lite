@@ -32,11 +32,14 @@ class _BaseProperty(object):
   initialized = False
 
   def __init__(self, *args, **kwargs):
+    choices = kwargs.get('choices')
     self._max_size = kwargs.pop('max_size', self._max_size)
     self._value_filters = kwargs.pop('value_filters', self._value_filters)
     self._searchable = kwargs.pop('searchable', self._searchable)
     self._search_document_field_name = kwargs.pop('search_document_field_name', self._search_document_field_name)
     super(_BaseProperty, self).__init__(*args, **kwargs)
+    if hasattr(self, '_choices'):
+      self._choices = choices
 
   @property
   def can_be_none(self):  # checks if the property can be set to None

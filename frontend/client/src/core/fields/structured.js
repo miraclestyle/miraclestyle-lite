@@ -443,6 +443,9 @@
                                             hideSave: true
                                         });
                                         $scope.close = function () {
+                                            if (!$scope.container.form.$dirty) {
+                                                return $scope.$close();
+                                            }
                                             var save = $scope.save();
                                             if (save) {
                                                 save.then(function () {

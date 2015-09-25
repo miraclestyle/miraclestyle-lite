@@ -419,6 +419,7 @@
                                                 fullScreen: false,
                                                 inDirection: false,
                                                 outDirection: false,
+                                                cantCloseWithBackdrop: true,
                                                 templateUrl: 'order/leave_feedback.html',
                                                 controller: ng(function ($scope) {
                                                     $scope.config = {};
@@ -466,6 +467,7 @@
                                                 fullScreen: false,
                                                 inDirection: false,
                                                 outDirection: false,
+                                                cantCloseWithBackdrop: true,
                                                 templateUrl: 'order/seller_feedback.html',
                                                 controller: ng(function ($scope) {
                                                     $scope.config = {};

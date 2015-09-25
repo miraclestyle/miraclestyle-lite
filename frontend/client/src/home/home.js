@@ -4,9 +4,9 @@
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
         .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout) {
             return {
-                priority: 3333,
                 link: function (scope, element, attrs) {
                     element.on('click', function () {
+                        console.log(scope.site.toolbar.menu.close);
                         $timeout(scope.site.toolbar.menu.close, 200, 0);
                     });
                 }
@@ -150,10 +150,11 @@
             if ($state.current.name === 'following') {
                 promise = models['18'].current();
                 promise.then(function (response) {
-                    $scope.search.pagination.args.search.filters = [{
+                    var sids = response.data.entity.sellers;
+                    args.search.filters = [{
                         field: 'ancestor',
                         operator: 'IN',
-                        value: response.data.entity.sellers
+                        value: sids.length ? sids : ['nothing']
                     }];
                 });
             } else {

@@ -1115,7 +1115,8 @@ md-toolbar {
 
 .time-date {
   width: 300px;
-  min-height: 504px;
+  min-height: 492px;
+  /*504px*/
   padding-top: 12px;
   padding-bottom: 12px; }
 
@@ -1245,7 +1246,7 @@ a.sort-handle {
 
 .field-grouping md-input-container {
   padding: 0px;
-  padding-left: 16px; }
+  padding-left: 8px; }
 
 .fields-grouping [ng-messages] {
   -webkit-font-smoothing: antialiased;
@@ -1297,6 +1298,10 @@ a.sort-handle {
 
 .uploaded-image .upload {
   height: 100px; }
+
+.field-grouping-wrapper {
+  padding-right: 16px;
+  padding-left: 8px; }
 
 .image-image {
   display: block;
@@ -2186,6 +2191,14 @@ img.auto-width, .auto-width {
 .bold {
   font-weight: 500; }
 
+.with-icon input {
+  padding-right: 32px;
+  z-index: 1; }
+
+.with-icon .select-icon {
+  bottom: 28px;
+  right: 16px; }
+
 .modal-open {
   overflow: hidden; }
 
@@ -2340,8 +2353,10 @@ md-input-container .as-md-input {
   cursor: pointer; }
 
 .selected-item {
-  padding-right: 32px;
   min-height: 20px; }
+
+.selected-item-wrapper {
+  padding-right: 32px; }
 
 .select-icon {
   position: absolute;

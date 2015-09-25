@@ -217,6 +217,8 @@ class Order(orm.BaseExpando):
         and entity._original.state == "cart"
 
   def condition_root_or_owner_or_seller(account, entity, **kwargs):
+    if entity._original.seller_reference is None:
+      return False
     return account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key)
                                                               or (entity._original.seller_reference._root == account.key)))
 

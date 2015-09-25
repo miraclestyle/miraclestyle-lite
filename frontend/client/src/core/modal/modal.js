@@ -218,6 +218,10 @@
                     };
 
                     scope.backdropClose = function ($event) {
+                        console.log(scope.modalOption);
+                        if (scope.modalOptions.cantCloseWithBackdrop) {
+                            return;
+                        }
                         if ($event.target === $event.currentTarget) {
                             scope.$parent.close();
                         }
@@ -345,6 +349,7 @@
                 modal.scope.modalOptions = {
                     inDirection: modal.inDirection,
                     outDirection: modal.outDirection,
+                    cantCloseWithBackdrop: modal.cantCloseWithBackdrop,
                     popFrom: modal.popFrom,
                     fullScreen: modal.fullScreen,
                     noEscape: modal.noEscape,
@@ -545,6 +550,7 @@
                                 backdropClass: modalOptions.backdropClass,
                                 windowClass: modalOptions.windowClass,
                                 windowTemplateUrl: modalOptions.windowTemplateUrl,
+                                cantCloseWithBackdrop: modalOptions.cantCloseWithBackdrop,
                                 size: modalOptions.size,
                                 inDirection: modalOptions.inDirection,
                                 outDirection: modalOptions.outDirection,
@@ -666,9 +672,10 @@
                     fullScreen: false,
                     inDirection: false,
                     outDirection: false,
+                    cantCloseWithBackdrop: true,
                     templateUrl: 'core/misc/confirm.html',
                     controller: ng(function ($scope) {
-                        var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
+                        var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok || null));
                         config.dismiss = function () {
                             var close = $scope.$close();
                             close.then(function () {

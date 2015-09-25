@@ -54,7 +54,7 @@
 
             $scope.login = function (type) {
                 endpoint.removeCache('currentAccount');
-                window.location.href = $scope.authorization_urls[type];
+                window.location.replace($scope.authorization_urls[type]);
             };
 
         })).controller('AccountManagementController', ng(function ($scope, currentAccount, models, modelsUtil) {
@@ -74,7 +74,7 @@
                 }
                 return out;
             };
-        })).run(ng(function (modelsConfig, channelApi, channelNotifications, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
+        })).run(ng(function (modelsConfig, channelApi, channelNotifications, currentAccount, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
                 return ident.identity.split('-')[1];
@@ -295,13 +295,12 @@
                     },
                     logout: function (accountKey) {
                         var that = this;
-                        modals.confirm('maybeLogout', function () {
-                            that.actions.logout({
-                                key: accountKey
-                            }).then(function (response) {
-                                endpoint.removeCache();
-                                $window.location.reload(false);
-                            });
+                        that.actions.logout({
+                            key: accountKey
+                        }).then(function (response) {
+                            endpoint.removeCache();
+                            $.extend(currentAccount, response.data.entity);
+                            $state.go('home');
                         });
 
                     }

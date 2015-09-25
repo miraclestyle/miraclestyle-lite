@@ -116,6 +116,8 @@ class Seller(orm.BaseExpando):
     return action.key_id_str not in ("cron_generate_feedback_stats",) and not account._is_guest and entity._original.key_root == account.key
 
   def condition_not_guest_and_owner_active(action, account, entity, **kwargs):
+    # this entity._original.root_entity._original.state  cant be like this because make_original is never called automatically only after .read() was done
+    entity._original.root_entity.read()
     return action.key_id_str not in ("cron_generate_feedback_stats",) and not account._is_guest and entity._original.root_entity._original.state == "active"
 
   def condition_taskqueue_or_cron_or_root(account, **kwargs):

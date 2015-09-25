@@ -1367,8 +1367,8 @@ $(function () {
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
             seller: 'Seller',
-            edit31: 'Edit Catalog',
-            add31: 'Create Catalog',
+            edit31: 'Catalog',
+            add31: 'Catalog',
             viewImages: 'Images',
             viewProducts: 'Products',
             editProduct: 'Edit Product',
@@ -5562,12 +5562,14 @@ $(function () {
         var snackbar = {
             show: $.noop,
             hide: $.noop,
-            showK: function (key) {
+            showK: function (key, config) {
                 var gets = GLOBAL_CONFIG.snackbar.messages[key];
                 if (angular.isUndefined(gets)) {
                     gets = key;
                 }
-                return snackbar.show(gets);
+                return snackbar.show($.extend({
+                    message: gets
+                }, config));
             }
         };
         if (GLOBAL_CONFIG.debug) {
@@ -9338,11 +9340,6 @@ $(function () {
                         info.config.ui.attrs['msd-elastic'] = '';
                     }
                     return 'text';
-                },
-                SuperDateTimeProperty: function (info) {
-                    info.config.ui.attrs['time-date-picker-dialog'] = '';
-                    info.config.ui.attrs.readonly = 'true';
-                    return 'string';
                 }
             });
         }));
@@ -10361,7 +10358,7 @@ $(function () {
                 SuperDateTimeProperty: function (info) {
                     info.config.ui.attrs['time-date-picker-dialog'] = '';
                     info.config.ui.attrs.readonly = 'true';
-                    return 'string';
+                    return 'datetime';
                 }
             });
 
@@ -10812,6 +10809,9 @@ $(function () {
                                             hideSave: true
                                         });
                                         $scope.close = function () {
+                                            if (!$scope.container.form.$dirty) {
+                                                return $scope.$close();
+                                            }
                                             var save = $scope.save();
                                             if (save) {
                                                 save.then(function () {
@@ -13022,6 +13022,10 @@ $(function () {
                     };
 
                     scope.backdropClose = function ($event) {
+                        console.log(scope.modalOption);
+                        if (scope.modalOptions.cantCloseWithBackdrop) {
+                            return;
+                        }
                         if ($event.target === $event.currentTarget) {
                             scope.$parent.close();
                         }
@@ -13149,6 +13153,7 @@ $(function () {
                 modal.scope.modalOptions = {
                     inDirection: modal.inDirection,
                     outDirection: modal.outDirection,
+                    cantCloseWithBackdrop: modal.cantCloseWithBackdrop,
                     popFrom: modal.popFrom,
                     fullScreen: modal.fullScreen,
                     noEscape: modal.noEscape,
@@ -13349,6 +13354,7 @@ $(function () {
                                 backdropClass: modalOptions.backdropClass,
                                 windowClass: modalOptions.windowClass,
                                 windowTemplateUrl: modalOptions.windowTemplateUrl,
+                                cantCloseWithBackdrop: modalOptions.cantCloseWithBackdrop,
                                 size: modalOptions.size,
                                 inDirection: modalOptions.inDirection,
                                 outDirection: modalOptions.outDirection,
@@ -13470,9 +13476,10 @@ $(function () {
                     fullScreen: false,
                     inDirection: false,
                     outDirection: false,
+                    cantCloseWithBackdrop: true,
                     templateUrl: 'core/misc/confirm.html',
                     controller: ng(function ($scope) {
-                        var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok ? extraConfig.ok : null));
+                        var callback = (angular.isFunction(extraConfig) ? extraConfig : (extraConfig.ok || null));
                         config.dismiss = function () {
                             var close = $scope.$close();
                             close.then(function () {
@@ -13521,6 +13528,7 @@ $(function () {
                     inDirection: false,
                     outDirection: false,
                     templateUrl: null,
+                    cantCloseWithBackdrop: true,
                     controller: ng(function ($scope) {
                         var sudoFields = modelsMeta.getActionArguments(entity.kind, 'sudo');
                         $scope.args = {};
@@ -14270,7 +14278,7 @@ $(function () {
                                                 field.ui.initialLabel = field.ui.label;
                                             }
                                             $scope.layouts.groups.push({
-                                                label: inflector((field.ui.initialLabel || field.code_name), 'humanize')
+                                                label: $filter('humanized')((field.ui.initialLabel || field.code_name))
                                             });
 
                                             field.ui.label = false;
@@ -14718,7 +14726,7 @@ $(function () {
                                                     $scope.dialog.toolbar = {
                                                         hideSave: true,
                                                         leftIcon: 'arrow_back',
-                                                        title: 'Log Entry'
+                                                        title: config.title + ' / History / Log Entry'
                                                     };
                                                 })
                                             });
@@ -16129,7 +16137,7 @@ angular.module('app')
 
             $scope.login = function (type) {
                 endpoint.removeCache('currentAccount');
-                window.location.href = $scope.authorization_urls[type];
+                window.location.replace($scope.authorization_urls[type]);
             };
 
         })).controller('AccountManagementController', ng(function ($scope, currentAccount, models, modelsUtil) {
@@ -16149,7 +16157,7 @@ angular.module('app')
                 }
                 return out;
             };
-        })).run(ng(function (modelsConfig, channelApi, channelNotifications, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
+        })).run(ng(function (modelsConfig, channelApi, channelNotifications, currentAccount, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
                 return ident.identity.split('-')[1];
@@ -16370,13 +16378,12 @@ angular.module('app')
                     },
                     logout: function (accountKey) {
                         var that = this;
-                        modals.confirm('maybeLogout', function () {
-                            that.actions.logout({
-                                key: accountKey
-                            }).then(function (response) {
-                                endpoint.removeCache();
-                                $window.location.reload(false);
-                            });
+                        that.actions.logout({
+                            key: accountKey
+                        }).then(function (response) {
+                            endpoint.removeCache();
+                            $.extend(currentAccount, response.data.entity);
+                            $state.go('home');
                         });
 
                     }
@@ -17489,8 +17496,8 @@ angular.module('app')
                             fields: _.toArray(fields),
                             toolbar: {
                                 templateActionsUrl: (isNew ? false : 'catalog/manage_actions.html'),
-                                titleEdit: 'seller.edit31',
-                                titleAdd: 'seller.add31'
+                                titleEdit: 'edit31',
+                                titleAdd: 'add31'
                             },
                             afterSave: afterSave,
                             afterSaveError: afterSave,
@@ -18374,8 +18381,19 @@ angular.module('app')
                                 });
                             },
                             view: function (seller, $event) {
-                                this.close().then(function () {
-                                    $state.go('seller-info', {key: seller.parent.key});
+                                models['23'].viewProfileModal(seller.parent.key, {
+                                    popFrom: helpers.clicks.realEventTarget($event.target),
+                                    inDirection: false,
+                                    sellerDetails: {
+                                        removedOrAdded: function (updatedCollection, inCollection) {
+                                            if (!inCollection) {
+                                                seller._state = 'deleted';
+                                            } else {
+                                                seller._state = null;
+                                            }
+                                        }
+                                    },
+                                    outDirection: false
                                 });
                             },
                             layouts: {
@@ -18404,9 +18422,9 @@ angular.module('app')
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
         .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout) {
             return {
-                priority: 3333,
                 link: function (scope, element, attrs) {
                     element.on('click', function () {
+                        console.log(scope.site.toolbar.menu.close);
                         $timeout(scope.site.toolbar.menu.close, 200, 0);
                     });
                 }
@@ -18550,10 +18568,11 @@ angular.module('app')
             if ($state.current.name === 'following') {
                 promise = models['18'].current();
                 promise.then(function (response) {
-                    $scope.search.pagination.args.search.filters = [{
+                    var sids = response.data.entity.sellers;
+                    args.search.filters = [{
                         field: 'ancestor',
                         operator: 'IN',
-                        value: response.data.entity.sellers
+                        value: sids.length ? sids : ['nothing']
                     }];
                 });
             } else {
@@ -19023,6 +19042,7 @@ angular.module('app')
                                                 fullScreen: false,
                                                 inDirection: false,
                                                 outDirection: false,
+                                                cantCloseWithBackdrop: true,
                                                 templateUrl: 'order/leave_feedback.html',
                                                 controller: ng(function ($scope) {
                                                     $scope.config = {};
@@ -19070,6 +19090,7 @@ angular.module('app')
                                                 fullScreen: false,
                                                 inDirection: false,
                                                 outDirection: false,
+                                                cantCloseWithBackdrop: true,
                                                 templateUrl: 'order/seller_feedback.html',
                                                 controller: ng(function ($scope) {
                                                     $scope.config = {};
@@ -19349,8 +19370,10 @@ angular.module('app')
             }
         };
 
-        $scope.create = function () {
-            models['31'].manageModal(undefined, newEntity);
+        $scope.create = function ($event) {
+            models['31'].manageModal(undefined, newEntity, {
+                popFrom: helpers.clicks.realEventTarget($event.target)
+            });
         };
 
         $scope.preview = function (key, $event) {
@@ -19569,6 +19592,7 @@ angular.module('app')
                                         templateBodyUrl: 'seller/help/plugins.html',
                                         toolbar: {
                                             hideSave: true,
+                                            leftIcon: 'arrow_back',
                                             title: helpers.toolbar.title('seller.settings.aboutRules')
                                         }
                                     };
@@ -19867,7 +19891,7 @@ angular.module('app')
                                             }
                                             if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                                 $scope.layouts.groups.push({
-                                                    label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                    label: $filter('humanized')((field.ui.label || field.code_name)),
                                                     disabled: false,
                                                     open: false
                                                 });
@@ -19924,6 +19948,9 @@ angular.module('app')
 
                                     }
                                     $scope.close = function () {
+                                        if (!$scope.container.form.$dirty) {
+                                            return $scope.$close();
+                                        }
                                         var save = $scope.save();
                                         if (save) {
                                             save.then(function () {
@@ -20318,7 +20345,7 @@ angular.module('app')
                             };
                             $scope.hideClose = config.hideClose;
                             $scope.seller = seller;
-                            $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller);
+                            $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller, config.sellerDetails);
                             $scope.search = {
                                 results: [],
                                 pagination: models['31'].paginate({

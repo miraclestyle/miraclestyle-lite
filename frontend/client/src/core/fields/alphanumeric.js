@@ -377,11 +377,6 @@
                         info.config.ui.attrs['msd-elastic'] = '';
                     }
                     return 'text';
-                },
-                SuperDateTimeProperty: function (info) {
-                    info.config.ui.attrs['time-date-picker-dialog'] = '';
-                    info.config.ui.attrs.readonly = 'true';
-                    return 'string';
                 }
             });
         }));

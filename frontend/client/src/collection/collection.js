@@ -124,8 +124,19 @@
                                 });
                             },
                             view: function (seller, $event) {
-                                this.close().then(function () {
-                                    $state.go('seller-info', {key: seller.parent.key});
+                                models['23'].viewProfileModal(seller.parent.key, {
+                                    popFrom: helpers.clicks.realEventTarget($event.target),
+                                    inDirection: false,
+                                    sellerDetails: {
+                                        removedOrAdded: function (updatedCollection, inCollection) {
+                                            if (!inCollection) {
+                                                seller._state = 'deleted';
+                                            } else {
+                                                seller._state = null;
+                                            }
+                                        }
+                                    },
+                                    outDirection: false
                                 });
                             },
                             layouts: {

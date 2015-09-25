@@ -37,6 +37,7 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                         (r'/sell/catalogs', base.AngularBlank),
                         (r'/sell/orders', base.AngularBlank),
                         (r'/sell/carts', base.AngularBlank),
+                        (r'/following', base.AngularBlank),
 
                         # static pages
                         (r'/about', AboutPage, 'about'),

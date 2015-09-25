@@ -2,7 +2,7 @@
 <% if (config.ui.specifics.cards) { %>
   <div class="clearfix button-set list-row-single-line list-content-tile">
     <div class="pull-right">
-      <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create()">
+      <md-button loading="!<%= config.ui.writableCompiled %>" type="button" class="md-raised" ng-click="config.ui.specifics.create(undefined, undefined, $event)">
         <%=config.ui.specifics.addText %>
       </md-button>
     </div>
@@ -25,6 +25,7 @@
            ui-sortable="config.ui.specifics.sortableOptions" 
            <% } %> 
     autoload-on-vertical-scroll-end="{loader: config.ui.specifics.reader}"
+    ng-hide="helpers.models.isEntityListEmpty(config.ui.specifics.parentArgs) && (!config.ui.specifics.reader || config.ui.specifics.reader.loaded)"
     ng-model="config.ui.specifics.parentArgs" ng-class="{'structured-field-no-items': config.ui.specifics.isEmptyList()}" class="<% if (config.ui.specifics.cards) { %>cards<% } else { %>list<% }%>">
 
 

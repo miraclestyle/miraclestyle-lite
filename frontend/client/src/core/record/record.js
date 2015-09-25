@@ -55,7 +55,7 @@
                                                     $scope.dialog.toolbar = {
                                                         hideSave: true,
                                                         leftIcon: 'arrow_back',
-                                                        title: 'Log Entry'
+                                                        title: config.title + ' / History / Log Entry'
                                                     };
                                                 })
                                             });

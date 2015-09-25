@@ -819,8 +819,8 @@
                             fields: _.toArray(fields),
                             toolbar: {
                                 templateActionsUrl: (isNew ? false : 'catalog/manage_actions.html'),
-                                titleEdit: 'seller.edit31',
-                                titleAdd: 'seller.add31'
+                                titleEdit: 'edit31',
+                                titleAdd: 'add31'
                             },
                             afterSave: afterSave,
                             afterSaveError: afterSave,

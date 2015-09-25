@@ -12,6 +12,7 @@
                     inDirection: false,
                     outDirection: false,
                     templateUrl: null,
+                    cantCloseWithBackdrop: true,
                     controller: ng(function ($scope) {
                         var sudoFields = modelsMeta.getActionArguments(entity.kind, 'sudo');
                         $scope.args = {};
@@ -761,7 +762,7 @@
                                                 field.ui.initialLabel = field.ui.label;
                                             }
                                             $scope.layouts.groups.push({
-                                                label: inflector((field.ui.initialLabel || field.code_name), 'humanize')
+                                                label: $filter('humanized')((field.ui.initialLabel || field.code_name))
                                             });
 
                                             field.ui.label = false;

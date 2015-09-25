@@ -82,7 +82,7 @@ a.sort-handle {
 
 .field-grouping md-input-container {
     padding: 0px;
-    padding-left: 16px;
+    padding-left: 8px;
 }
 
 .fields-grouping [ng-messages] {
@@ -144,4 +144,8 @@ a.sort-handle {
 
 .uploaded-image .upload {
     height: 100px;
+}
+.field-grouping-wrapper {
+    padding-right: 16px;
+    padding-left: 8px;
 }

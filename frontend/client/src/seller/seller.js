@@ -69,8 +69,10 @@
             }
         };
 
-        $scope.create = function () {
-            models['31'].manageModal(undefined, newEntity);
+        $scope.create = function ($event) {
+            models['31'].manageModal(undefined, newEntity, {
+                popFrom: helpers.clicks.realEventTarget($event.target)
+            });
         };
 
         $scope.preview = function (key, $event) {
@@ -289,6 +291,7 @@
                                         templateBodyUrl: 'seller/help/plugins.html',
                                         toolbar: {
                                             hideSave: true,
+                                            leftIcon: 'arrow_back',
                                             title: helpers.toolbar.title('seller.settings.aboutRules')
                                         }
                                     };
@@ -587,7 +590,7 @@
                                             }
                                             if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                                 $scope.layouts.groups.push({
-                                                    label: inflector((field.ui.label || field.code_name), 'humanize'),
+                                                    label: $filter('humanized')((field.ui.label || field.code_name)),
                                                     disabled: false,
                                                     open: false
                                                 });
@@ -644,6 +647,9 @@
 
                                     }
                                     $scope.close = function () {
+                                        if (!$scope.container.form.$dirty) {
+                                            return $scope.$close();
+                                        }
                                         var save = $scope.save();
                                         if (save) {
                                             save.then(function () {
@@ -1038,7 +1044,7 @@
                             };
                             $scope.hideClose = config.hideClose;
                             $scope.seller = seller;
-                            $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller);
+                            $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller, config.sellerDetails);
                             $scope.search = {
                                 results: [],
                                 pagination: models['31'].paginate({

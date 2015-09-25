@@ -384,8 +384,8 @@
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
             seller: 'Seller',
-            edit31: 'Edit Catalog',
-            add31: 'Create Catalog',
+            edit31: 'Catalog',
+            add31: 'Catalog',
             viewImages: 'Images',
             viewProducts: 'Products',
             editProduct: 'Edit Product',

@@ -69,7 +69,7 @@
 
 .time-date {
     width: 300px;
-    min-height: 504px;
+    min-height: 492px; /*504px*/
     padding-top: 12px;
     padding-bottom: 12px;
 }

@@ -4,12 +4,14 @@
         var snackbar = {
             show: $.noop,
             hide: $.noop,
-            showK: function (key) {
+            showK: function (key, config) {
                 var gets = GLOBAL_CONFIG.snackbar.messages[key];
                 if (angular.isUndefined(gets)) {
                     gets = key;
                 }
-                return snackbar.show(gets);
+                return snackbar.show($.extend({
+                    message: gets
+                }, config));
             }
         };
         if (GLOBAL_CONFIG.debug) {
