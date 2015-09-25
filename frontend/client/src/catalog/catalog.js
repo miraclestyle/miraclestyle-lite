@@ -606,6 +606,7 @@
                                     });
                                 }
 
+
                                 $scope.$watch('product.id', function (neww, old) {
                                     shareWatch();
                                 });
@@ -1562,6 +1563,8 @@
                         models['23'].current().then(function (response) {
                             modelsEditor.create(config).prepare({}, {
                                 seller: response.data.entity.key
+                            }, {
+                                handleError: GLOBAL_CONFIG.backendErrorHandling.sellerProfileNotFound
                             });
                         });
 

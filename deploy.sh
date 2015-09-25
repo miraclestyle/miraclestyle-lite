@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+git pull
 sh build.sh
 git add -A
 git commit -m"deploy"

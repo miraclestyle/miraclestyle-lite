@@ -111,16 +111,9 @@
                 },
                 complete: function (response) {
                     var errors = response.data.errors;
-                    if (errors) {
-                        snackbar.showK('sellerProfileNotFound');
-                    } else {
-                        angular.forEach(_.range(1, 10), function (value, key) {
-                            // $scope.search.results.extend(response.data.entities);
-                        });
-
+                    if (!errors) {
                         $scope.search.results.extend(response.data.entities);
                     }
-
                     $scope.search.loaded = true;
                 }
             });
@@ -177,9 +170,7 @@
                 },
                 complete: function (response) {
                     var errors = response.data.errors;
-                    if (errors) {
-                        snackbar.showK('sellerProfileNotFound');
-                    } else {
+                    if (!errors) {
                         $scope.search.results.extend(response.data.entities);
                     }
 

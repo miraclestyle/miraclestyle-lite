@@ -106,7 +106,7 @@
             var triggeringElement = null;
             var promise = $q.when(true);
             var working = false;
-            var nothing = true;
+            var nothing = !scope.isOpen;
 
             var isLockedOpenParsed = $parse(attr.mdIsLockedOpen);
             var isLocked = function () {

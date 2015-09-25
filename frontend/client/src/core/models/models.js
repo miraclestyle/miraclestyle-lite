@@ -550,21 +550,21 @@
 
                     modelsEditorInstance = {
                         config: config,
-                        read: function (entity, args) {
+                        read: function (entity, args, httpConfig) {
                             if (args === undefined) {
                                 args = {
                                     key: entity.key
                                 };
                             }
                             var that = this;
-                            return models[config.kind].actions.read(args).then(function (response) {
+                            return models[config.kind].actions.read(args, httpConfig).then(function (response) {
                                 $.extend(entity, response.data.entity);
                                 return that.open(entity, args);
                             });
                         },
-                        prepare: function (entity, args) {
+                        prepare: function (entity, args, httpConfig) {
                             var that = this;
-                            return models[config.kind].actions.prepare(args).then(function (response) {
+                            return models[config.kind].actions.prepare(args, httpConfig).then(function (response) {
                                 $.extend(entity, response.data.entity);
                                 return that.open(entity, args);
                             });

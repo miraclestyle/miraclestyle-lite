@@ -1,33 +1,7 @@
 (function () {
     'use strict';
-    angular.module('app').factory('errorHandling', ng(function ($modal, modals) {
-        var translations = {
-                action_denied: function (reason) {
-                    return 'You do not have permission to perform this action.';
-                },
-                not_found: function (fields) {
-                    return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
-                },
-                invalid_image_type: 'You have supplied incorrect type of image format.',
-                invalid_model: 'You have requested access to resource that does not exist,',
-                invalid_action: 'You have requested access to the action that does not exist.',
-                required: function (fields) {
-                    return 'Some values are missing: ' + fields.join(', ') + '.';
-                },
-                traceback: function (trace) {
-                    var parse = $.parseHTML(trace);
-                    return $(parse).filter('pre').text();
-                },
-                transaction: function (reason) {
-                    if (reason === 'timeout') {
-                        return 'Transaction was not completed due timeout. Please try again.';
-                    }
-                    if (reason === 'failed') {
-                        return 'Transaction was not completed due failure. Please try again.';
-                    }
-                    return reason;
-                }
-            },
+    angular.module('app').factory('errorHandling', ng(function ($modal, snackbar, GLOBAL_CONFIG, modals) {
+        var translations = GLOBAL_CONFIG.backendErrorHandling,
             errorHandling = {
                 translate: function (k, v) {
                     var possible = translations[k];
@@ -54,6 +28,28 @@
                             return formatErrors;
                         }())
                     });
+                },
+                snackbar: function (errors, callback) {
+                    if (errors.traceback) {
+                        return errorHandling.modal(errors);
+                    }
+                    var messages = (function () {
+                            var formatErrors = [];
+                            angular.forEach(errors, function (error, key) {
+                                formatErrors.push([key, errorHandling.translate(key, error)]);
+                            });
+                            return formatErrors;
+                        }()).join('\n'),
+                        other;
+
+                    if (callback) {
+                        other = callback(errors);
+                        if (other !== false) {
+                            messages = other;
+                        }
+                    }
+
+                    snackbar.show(messages);
                 }
             };
 
@@ -435,16 +431,16 @@
                     if (!rejection.config.ignoreErrors) {
 
                         if (rejection.status > 200) {
-                            errorHandling.modal(angular.isString(rejection.data) ? {
+                            errorHandling.snackbar(angular.isString(rejection.data) ? {
                                 traceback: rejection.data
-                            } : rejection.data.errors);
+                            } : rejection.data.errors, rejection.config.handleError);
                             if (shouldDisable) {
                                 enableUI();
                             }
                             return $q.reject(rejection);
                         }
                         if (data && data.errors) {
-                            errorHandling.modal(rejection.data.errors);
+                            errorHandling.snackbar(rejection.data.errors, rejection.config.handleError);
                             reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
                             if (data.errors.action_denied) {
                                 reject = true;

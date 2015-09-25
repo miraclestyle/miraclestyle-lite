@@ -92,7 +92,8 @@
             howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
-                    'Remove the item by dragging it outside the left edge of the screen.'],
+                    'Remove the item by dragging it outside the left edge of the screen.'
+                ],
                 text: locals.gotit
             },
             howToDeleteDragging: {
@@ -188,7 +189,7 @@
 
         $.extend(GLOBAL_CONFIG.fields.label, {
             search: {
-                indexID: 'Search Options',
+                indexID: 'Search options',
                 ancestor: 'Ancestor',
                 operator: 'Operator'
             },
@@ -430,6 +431,43 @@
             editDocuments: 'Edit Content',
             editContent: false,
             sellerProfile: 'Seller Profile'
+        });
+
+        if (!GLOBAL_CONFIG.backendErrorHandling) {
+            GLOBAL_CONFIG.backendErrorHandling = {};
+        }
+        $.extend(GLOBAL_CONFIG.backendErrorHandling, {
+            sellerProfileNotFound: function (errors) {
+                if (errors.not_found && $.inArray('seller', errors.not_found) !== -1) {
+                    return GLOBAL_CONFIG.snackbar.messages.sellerProfileNotFound;
+                }
+                return false;
+            },
+            action_denied: function (reason) {
+                return 'You do not have permission to perform this action.';
+            },
+            not_found: function (fields) {
+                return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
+            },
+            invalid_image_type: 'You have supplied incorrect type of image format.',
+            invalid_model: 'You have requested access to resource that does not exist,',
+            invalid_action: 'You have requested access to the action that does not exist.',
+            required: function (fields) {
+                return 'Some values are missing: ' + fields.join(', ') + '.';
+            },
+            traceback: function (trace) {
+                var parse = $.parseHTML(trace);
+                return $(parse).filter('pre').text();
+            },
+            transaction: function (reason) {
+                if (reason === 'timeout') {
+                    return 'Transaction was not completed due timeout. Please try again.';
+                }
+                if (reason === 'failed') {
+                    return 'Transaction was not completed due failure. Please try again.';
+                }
+                return reason;
+            }
         });
 
     }));

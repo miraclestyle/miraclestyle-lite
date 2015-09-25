@@ -218,7 +218,6 @@
                     };
 
                     scope.backdropClose = function ($event) {
-                        console.log(scope.modalOption);
                         if (scope.modalOptions.cantCloseWithBackdrop) {
                             return;
                         }

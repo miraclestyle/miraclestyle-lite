@@ -290,7 +290,8 @@
 
                     maybeMore = function () {
                         $timeout(function () {
-                            var maybe = listen.get(0).scrollHeight <= listen.height(),
+                            var listenNode = listen.get(0),
+                                maybe = listenNode ? listenNode.scrollHeight <= listen.height() : false,
                                 promise;
                             if (maybe) {
                                 promise = loadMore({}, angular.noop);

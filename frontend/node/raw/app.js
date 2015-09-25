@@ -444,34 +444,8 @@ $(function () {
     });
 }());(function () {
     'use strict';
-    angular.module('app').factory('errorHandling', ng(function ($modal, modals) {
-        var translations = {
-                action_denied: function (reason) {
-                    return 'You do not have permission to perform this action.';
-                },
-                not_found: function (fields) {
-                    return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
-                },
-                invalid_image_type: 'You have supplied incorrect type of image format.',
-                invalid_model: 'You have requested access to resource that does not exist,',
-                invalid_action: 'You have requested access to the action that does not exist.',
-                required: function (fields) {
-                    return 'Some values are missing: ' + fields.join(', ') + '.';
-                },
-                traceback: function (trace) {
-                    var parse = $.parseHTML(trace);
-                    return $(parse).filter('pre').text();
-                },
-                transaction: function (reason) {
-                    if (reason === 'timeout') {
-                        return 'Transaction was not completed due timeout. Please try again.';
-                    }
-                    if (reason === 'failed') {
-                        return 'Transaction was not completed due failure. Please try again.';
-                    }
-                    return reason;
-                }
-            },
+    angular.module('app').factory('errorHandling', ng(function ($modal, snackbar, GLOBAL_CONFIG, modals) {
+        var translations = GLOBAL_CONFIG.backendErrorHandling,
             errorHandling = {
                 translate: function (k, v) {
                     var possible = translations[k];
@@ -498,6 +472,28 @@ $(function () {
                             return formatErrors;
                         }())
                     });
+                },
+                snackbar: function (errors, callback) {
+                    if (errors.traceback) {
+                        return errorHandling.modal(errors);
+                    }
+                    var messages = (function () {
+                            var formatErrors = [];
+                            angular.forEach(errors, function (error, key) {
+                                formatErrors.push([key, errorHandling.translate(key, error)]);
+                            });
+                            return formatErrors;
+                        }()).join('\n'),
+                        other;
+
+                    if (callback) {
+                        other = callback(errors);
+                        if (other !== false) {
+                            messages = other;
+                        }
+                    }
+
+                    snackbar.show(messages);
                 }
             };
 
@@ -879,16 +875,16 @@ $(function () {
                     if (!rejection.config.ignoreErrors) {
 
                         if (rejection.status > 200) {
-                            errorHandling.modal(angular.isString(rejection.data) ? {
+                            errorHandling.snackbar(angular.isString(rejection.data) ? {
                                 traceback: rejection.data
-                            } : rejection.data.errors);
+                            } : rejection.data.errors, rejection.config.handleError);
                             if (shouldDisable) {
                                 enableUI();
                             }
                             return $q.reject(rejection);
                         }
                         if (data && data.errors) {
-                            errorHandling.modal(rejection.data.errors);
+                            errorHandling.snackbar(rejection.data.errors, rejection.config.handleError);
                             reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
                             if (data.errors.action_denied) {
                                 reject = true;
@@ -1075,7 +1071,8 @@ $(function () {
             howToSort: {
                 title: 'How to use this action',
                 messages: ['Reorder the item by dragging it within its group.',
-                    'Remove the item by dragging it outside the left edge of the screen.'],
+                    'Remove the item by dragging it outside the left edge of the screen.'
+                ],
                 text: locals.gotit
             },
             howToDeleteDragging: {
@@ -1171,7 +1168,7 @@ $(function () {
 
         $.extend(GLOBAL_CONFIG.fields.label, {
             search: {
-                indexID: 'Search Options',
+                indexID: 'Search options',
                 ancestor: 'Ancestor',
                 operator: 'Operator'
             },
@@ -1413,6 +1410,43 @@ $(function () {
             editDocuments: 'Edit Content',
             editContent: false,
             sellerProfile: 'Seller Profile'
+        });
+
+        if (!GLOBAL_CONFIG.backendErrorHandling) {
+            GLOBAL_CONFIG.backendErrorHandling = {};
+        }
+        $.extend(GLOBAL_CONFIG.backendErrorHandling, {
+            sellerProfileNotFound: function (errors) {
+                if (errors.not_found && $.inArray('seller', errors.not_found) !== -1) {
+                    return GLOBAL_CONFIG.snackbar.messages.sellerProfileNotFound;
+                }
+                return false;
+            },
+            action_denied: function (reason) {
+                return 'You do not have permission to perform this action.';
+            },
+            not_found: function (fields) {
+                return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
+            },
+            invalid_image_type: 'You have supplied incorrect type of image format.',
+            invalid_model: 'You have requested access to resource that does not exist,',
+            invalid_action: 'You have requested access to the action that does not exist.',
+            required: function (fields) {
+                return 'Some values are missing: ' + fields.join(', ') + '.';
+            },
+            traceback: function (trace) {
+                var parse = $.parseHTML(trace);
+                return $(parse).filter('pre').text();
+            },
+            transaction: function (reason) {
+                if (reason === 'timeout') {
+                    return 'Transaction was not completed due timeout. Please try again.';
+                }
+                if (reason === 'failed') {
+                    return 'Transaction was not completed due failure. Please try again.';
+                }
+                return reason;
+            }
         });
 
     }));
@@ -4866,7 +4900,7 @@ $(function () {
             var triggeringElement = null;
             var promise = $q.when(true);
             var working = false;
-            var nothing = true;
+            var nothing = !scope.isOpen;
 
             var isLockedOpenParsed = $parse(attr.mdIsLockedOpen);
             var isLocked = function () {
@@ -11849,7 +11883,8 @@ $(function () {
 
                     maybeMore = function () {
                         $timeout(function () {
-                            var maybe = listen.get(0).scrollHeight <= listen.height(),
+                            var listenNode = listen.get(0),
+                                maybe = listenNode ? listenNode.scrollHeight <= listen.height() : false,
                                 promise;
                             if (maybe) {
                                 promise = loadMore({}, angular.noop);
@@ -13022,7 +13057,6 @@ $(function () {
                     };
 
                     scope.backdropClose = function ($event) {
-                        console.log(scope.modalOption);
                         if (scope.modalOptions.cantCloseWithBackdrop) {
                             return;
                         }
@@ -14066,21 +14100,21 @@ $(function () {
 
                     modelsEditorInstance = {
                         config: config,
-                        read: function (entity, args) {
+                        read: function (entity, args, httpConfig) {
                             if (args === undefined) {
                                 args = {
                                     key: entity.key
                                 };
                             }
                             var that = this;
-                            return models[config.kind].actions.read(args).then(function (response) {
+                            return models[config.kind].actions.read(args, httpConfig).then(function (response) {
                                 $.extend(entity, response.data.entity);
                                 return that.open(entity, args);
                             });
                         },
-                        prepare: function (entity, args) {
+                        prepare: function (entity, args, httpConfig) {
                             var that = this;
-                            return models[config.kind].actions.prepare(args).then(function (response) {
+                            return models[config.kind].actions.prepare(args, httpConfig).then(function (response) {
                                 $.extend(entity, response.data.entity);
                                 return that.open(entity, args);
                             });
@@ -17283,6 +17317,7 @@ angular.module('app')
                                     });
                                 }
 
+
                                 $scope.$watch('product.id', function (neww, old) {
                                     shareWatch();
                                 });
@@ -18239,6 +18274,8 @@ angular.module('app')
                         models['23'].current().then(function (response) {
                             modelsEditor.create(config).prepare({}, {
                                 seller: response.data.entity.key
+                            }, {
+                                handleError: GLOBAL_CONFIG.backendErrorHandling.sellerProfileNotFound
                             });
                         });
 
@@ -19412,16 +19449,9 @@ angular.module('app')
                 },
                 complete: function (response) {
                     var errors = response.data.errors;
-                    if (errors) {
-                        snackbar.showK('sellerProfileNotFound');
-                    } else {
-                        angular.forEach(_.range(1, 10), function (value, key) {
-                            // $scope.search.results.extend(response.data.entities);
-                        });
-
+                    if (!errors) {
                         $scope.search.results.extend(response.data.entities);
                     }
-
                     $scope.search.loaded = true;
                 }
             });
@@ -19478,9 +19508,7 @@ angular.module('app')
                 },
                 complete: function (response) {
                     var errors = response.data.errors;
-                    if (errors) {
-                        snackbar.showK('sellerProfileNotFound');
-                    } else {
+                    if (!errors) {
                         $scope.search.results.extend(response.data.entities);
                     }
 
