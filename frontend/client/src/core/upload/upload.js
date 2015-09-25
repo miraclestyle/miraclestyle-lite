@@ -239,15 +239,12 @@ angular.module('app')
                                 errorFn(scope, response);
                             }
                         }
-
-
-
                         $rootScope.$broadcast('disableUI', false);
 
                         if (noErrors) {
                             scope.$broadcast('ngUploadComplete', content);
                         } else {
-                            errorHandling.modal(content.errors);
+                            errorHandling.snackbar(content.errors);
                             scope.$broadcast('ngUploadCompleteError', content);
                         }
 

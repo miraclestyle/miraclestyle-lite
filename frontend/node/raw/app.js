@@ -480,7 +480,7 @@ $(function () {
                     var messages = (function () {
                             var formatErrors = [];
                             angular.forEach(errors, function (error, key) {
-                                formatErrors.push([key, errorHandling.translate(key, error)]);
+                                formatErrors.push(errorHandling.translate(key, error));
                             });
                             return formatErrors;
                         }()).join('\n'),
@@ -16072,15 +16072,12 @@ angular.module('app')
                                 errorFn(scope, response);
                             }
                         }
-
-
-
                         $rootScope.$broadcast('disableUI', false);
 
                         if (noErrors) {
                             scope.$broadcast('ngUploadComplete', content);
                         } else {
-                            errorHandling.modal(content.errors);
+                            errorHandling.snackbar(content.errors);
                             scope.$broadcast('ngUploadCompleteError', content);
                         }
 
@@ -19491,7 +19488,6 @@ angular.module('app')
                 kind: '34',
                 args: {
                     search: {
-                        // {field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}
                         filters: [{
                             field: 'seller_reference',
                             operator: '==',

@@ -153,7 +153,6 @@
                 kind: '34',
                 args: {
                     search: {
-                        // {field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}
                         filters: [{
                             field: 'seller_reference',
                             operator: '==',

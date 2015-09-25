@@ -36,7 +36,7 @@
                     var messages = (function () {
                             var formatErrors = [];
                             angular.forEach(errors, function (error, key) {
-                                formatErrors.push([key, errorHandling.translate(key, error)]);
+                                formatErrors.push(errorHandling.translate(key, error));
                             });
                             return formatErrors;
                         }()).join('\n'),
