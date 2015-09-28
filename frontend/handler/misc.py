@@ -9,11 +9,14 @@ import urllib
 
 from handler import base
 
+
 class AcceptableUsePolicyPage(base.SeoOrAngular):
   pass
 
+
 class TosPage(base.SeoOrAngular):
   pass
+
 
 class AboutPage(base.SeoOrAngular):
   pass

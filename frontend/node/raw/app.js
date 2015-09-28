@@ -1179,11 +1179,13 @@ $(function () {
                 uom: 'Unit of measurement',
                 weight_uom: 'Weight unit of measurement',
                 volume_uom: 'Volume unit of measurement',
+                variant_options: 'Variant combinations'
             },
             '27': {
                 uom: 'Unit of measurement',
                 weight_uom: 'Weight unit of measurement',
                 volume_uom: 'Volume unit of measurement',
+                variant_options: 'Variant combinations'
             },
             '112': {
                 rules: 'Prices'
@@ -10882,7 +10884,6 @@ $(function () {
                                             needle,
                                             i;
                                         for (i = layout.length - 1; i >= 0; i--) {
-                                            console.log(field.code_name, layout[i].fields, $.inArray(field.code_name, layout[i].fields));
                                             if ($.inArray(field.code_name, layout[i].fields) !== -1) {
                                                 needle = i;
                                                 break;
@@ -18091,6 +18092,7 @@ angular.module('app')
                                                 path: ['_images', 'pricetags'],
                                                 specifics: {
                                                     layoutConfig: [{
+                                                        label: 'Variant combinations',
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',
@@ -19285,7 +19287,7 @@ angular.module('app')
                                 };
 
                                 (function () {
-                                    if ($scope.order.state === 'checkout' || $scope.order.state === 'completed') {
+                                    if ($scope.order.state === 'checkout' || $scope.order.state === 'canceled' || $scope.order.state === 'completed') {
                                         $scope.stage.out.extend([1, 2, 3]);
                                         $scope.stage.current = 4;
                                         $scope.stage.checkout = 1;
