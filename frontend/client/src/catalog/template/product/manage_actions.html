@@ -3,16 +3,16 @@
         <list-button 
             class="first" 
             ng-if="parent.args.key" 
-            loading="!parent.entity.ui.rule.field._images.pricetags.writable" 
-            type="button" 
-            ng-click="parent.config.ui.specifics.remove(parent.args, parent.close)">Remove</list-button>
-
-        <list-button 
-            class="first" 
-            ng-if="parent.args.key" 
             loading="!parent.entity.ui.rule.action.catalog_pricetag_duplicate.executable" 
             type="button" 
             ng-click="parent.config.ui.specifics.duplicate(parent.args, parent.close)">Duplicate</list-button>
+            
+        <list-button 
+            class="first" 
+            ng-if="parent.args.key" 
+            loading="!parent.entity.ui.rule.field._images.pricetags.writable" 
+            type="button" 
+            ng-click="parent.config.ui.specifics.remove(parent.args, parent.close)">Remove</list-button>
             
     </action-dropdown-list>
 </simple-dialog>
