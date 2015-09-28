@@ -625,7 +625,7 @@
                                 };
 
                                 (function () {
-                                    if ($scope.order.state === 'checkout' || $scope.order.state === 'completed') {
+                                    if ($scope.order.state === 'checkout' || $scope.order.state === 'canceled' || $scope.order.state === 'completed') {
                                         $scope.stage.out.extend([1, 2, 3]);
                                         $scope.stage.current = 4;
                                         $scope.stage.checkout = 1;

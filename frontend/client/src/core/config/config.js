@@ -200,11 +200,13 @@
                 uom: 'Unit of measurement',
                 weight_uom: 'Weight unit of measurement',
                 volume_uom: 'Volume unit of measurement',
+                variant_options: 'Variant combinations'
             },
             '27': {
                 uom: 'Unit of measurement',
                 weight_uom: 'Weight unit of measurement',
                 volume_uom: 'Volume unit of measurement',
+                variant_options: 'Variant combinations'
             },
             '112': {
                 rules: 'Prices'

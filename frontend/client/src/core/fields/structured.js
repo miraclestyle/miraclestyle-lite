@@ -482,7 +482,6 @@
                                             needle,
                                             i;
                                         for (i = layout.length - 1; i >= 0; i--) {
-                                            console.log(field.code_name, layout[i].fields, $.inArray(field.code_name, layout[i].fields));
                                             if ($.inArray(field.code_name, layout[i].fields) !== -1) {
                                                 needle = i;
                                                 break;

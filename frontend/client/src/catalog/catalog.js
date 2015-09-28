@@ -1380,6 +1380,7 @@
                                                 path: ['_images', 'pricetags'],
                                                 specifics: {
                                                     layoutConfig: [{
+                                                        label: 'Variant combinations',
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',
