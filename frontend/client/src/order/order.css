@@ -33,7 +33,10 @@
     padding: 0px;
     margin: 0px;
     text-align: center;
-    width: 100%;
+    width: auto;
+    margin: auto;
+    margin-top: 16px;
+    margin-bottom: 16px;
 }
 
 .order-next-stage-inner {
@@ -42,6 +45,8 @@
     margin-left: auto;
     margin-right: auto;
     display: block;
+    padding-top:8px;
+    padding-bottom: 8px;
 }
 
 .order-reset-button-text {
