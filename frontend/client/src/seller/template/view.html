@@ -8,20 +8,8 @@
         </div>
         <div ng-class="{'seam-bottom': sellerDetails.seller._content.documents.length}" class="list list-padding">
             <div class="list-row list-content-tile list-row-large-multiline">
-                <span class="display1">{{sellerDetails.seller.name}}</span>
-            </div>
-            <div class="list-row list-content-tile list-row-large-multiline">
-                <div ng-if="sellerDetails.chartConfig" resize-chart google-chart chart="sellerDetails.chartConfig"></div>
-                <div ng-if="!sellerDetails.chartConfig">
-                    <h1 class="no-things-available">No feedback stats available</h1>
-                </div>
-            </div>
-
-            <div class="list-row list-content-tile list-row-two-lines">
-                <div class="feedback-stats">
-                    <span class="first">Positive feedback: {{sellerDetails.feedbackStats[3]}}%</span>
-                    <span class="second">{{sellerDetails.feedbackStats[1]}} positive feedbacks, of {{sellerDetails.feedbackStats[2]}} total feedbacks.</span>
-                </div>
+                <span class="headline">{{sellerDetails.seller.name}}</span>
+                <span class="second">{{sellerDetails.feedbackStats[3]}}% of positive feedbacks, of {{sellerDetails.feedbackStats[2]}} total feedbacks in the past 12 months.</span>
             </div>
  
           <md-input-container class="padding-0">

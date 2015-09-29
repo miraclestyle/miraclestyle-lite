@@ -89,11 +89,7 @@
                     }
 
                     models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
-
-                        if (angular.isUndefined(seller)) {
-                            seller = response.data.entity._seller;
-                        }
-
+                        seller = response.data.entity._seller;
                         var modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {

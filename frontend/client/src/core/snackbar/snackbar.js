@@ -36,7 +36,9 @@
             priority: 100,
             link: function (scope, element, attr) {
                 var kill = function () {
-                    snackbar.hide();
+                    if (!snackbar.animating) {
+                        snackbar.hide();
+                    }
                 };
                 element.on('click', kill);
                 scope.$on('$destroy', function () {
@@ -59,6 +61,8 @@
                 $scope.message = '';
                 $scope.size = 1;
                 $scope.element = null;
+
+                snackbar.animating = false;
                 snackbar.hide = function () {
                     var defer = $q.defer();
                     $scope.element.removeClass('in');
@@ -79,17 +83,22 @@
                         };
                     }
                     $scope.message = config.message;
-                    if (!config.size) {
-                        config.size = 1;
-                    }
                     if (!config.hideAfter) {
                         config.hideAfter = (($scope.message.length / 16) * 1000) + 500;
                     }
                     $scope.size = config.size;
+                    $scope.calculateSize = function () {
+                        if (!$scope.size) {
+                            return $scope.element.find('.brief').height() > 16 ? 2 : 1;
+                        }
+                        return $scope.size;
+                    };
                     digest();
+                    snackbar.animating = true;
                     return snackbar.hide().then(function () {
                         $animate.removeClass($scope.element, 'out');
                         return $animate.addClass($scope.element, 'in').then(function () {
+                            snackbar.animating = false;
                             if (config.hideAfter) {
                                 if (timer) {
                                     clearTimeout(timer);

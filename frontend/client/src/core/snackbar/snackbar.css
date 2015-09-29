@@ -28,7 +28,9 @@
     padding-bottom: 24px;
 
 }
-
+.snackbar.brief {
+    word-wrap: break-word;
+}
 
 
 .snackbar.slide.out {

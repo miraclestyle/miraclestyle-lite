@@ -246,6 +246,13 @@
             billing: 'Billing',
             shipping: 'Shipping'
         };
+        locals.conditionTypeSpec = {
+            weight: 'weight multiplied by',
+            quantity: 'quantity multiplied by',
+            'weight*volume': 'weight multiplied by volume multiplied by',
+            volume: 'volume multiplied by',
+            price: 'price multiplied by'
+        };
         $.extend(GLOBAL_CONFIG.fields.translateChoices, {
             '107': {
                 address_type: locals.addressTypeSpec
@@ -259,13 +266,12 @@
             },
             '111': {
                 condition_operator: locals.conditionOperatorSpec,
-                price_operator: {
-                    weight: 'weight multiplied by',
-                    quantity: 'quantity multiplied by',
-                    'weight*volume': 'weight multiplied by volume multiplied by',
-                    volume: 'volume multiplied by',
-                    price: 'price multiplied by'
-                },
+                condition_type: locals.conditionTypeSpec,
+                price_operator: locals.conditionTypeSpec,
+                price_type: {
+                    variable: 'varied by',
+                    fixed: 'fixed'
+                }
             },
             '124': {
                 condition_operator: locals.conditionOperatorSpec

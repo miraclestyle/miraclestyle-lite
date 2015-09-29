@@ -2,7 +2,7 @@
 <simple-dialog>
 <% } %>
     <md-content ng-class="{'has-search': select.search}">
-          <ul ng-if="select.hasGrouping" ng-class="{'seam-bottom' : !$last}" ng-repeat="group in select.grouping" class="list list-padding-one-line">
+          <ul ng-if="select.hasGrouping" ng-class="{'seam-bottom' : !$last}" ng-repeat="group in select.grouping" class="list list-padding-one-line-subheader">
             <li>
               <div class="list-subheader subheader">{{group.label}}</div>
             </li>

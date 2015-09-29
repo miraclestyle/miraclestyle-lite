@@ -79,6 +79,7 @@
     padding-left: 24px;
     padding-top: 12px;
     padding-bottom: 12px;
+    height: 276px;
 }
 
 .date-control .selected {
@@ -141,4 +142,8 @@ span.first.month-part {
 
 .datepicker-pop .modal-dialog {
     width: auto;
+}
+
+.title-above .pager button .md-icon {
+    display:block;
 }

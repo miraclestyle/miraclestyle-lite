@@ -501,7 +501,6 @@
                                 }),
                                 controller: ng(function ($scope, modelsUtil) {
                                     var getTitle,
-                                        inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
                                             $scope.layouts = {
                                                 groups: [{
@@ -945,12 +944,12 @@
                                 } else {
                                     score = 0;
                                 }
-                                values[0] = positive_count;
-                                values[1] = neutral_count;
-                                values[2] = negative_count;
-                                values[3] = positive_average;
-                                values[4] = negative_average;
-                                values[5] = neutral_average;
+                                values[0] = isNaN(positive_count) ? 0 : positive_count;
+                                values[1] = isNaN(neutral_count) ? 0 : neutral_count;
+                                values[2] = isNaN(negative_count) ? 0 : negative_count;
+                                values[3] = isNaN(positive_average) ? 0 : positive_average;
+                                values[4] = isNaN(negative_average) ? 0 : negative_average;
+                                values[5] = isNaN(neutral_average) ? 0 : neutral_average;
                                 values[6] = score;
                                 return values;
                             }());
