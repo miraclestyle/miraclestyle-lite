@@ -994,6 +994,7 @@
                                     more: canLoadMore(config.next),
                                     config: config,
                                     loaded: false,
+                                    previous: null,
                                     state: function (config) {
                                         this.next = config.next;
                                         if (angular.isDefined(config.access)) {
@@ -1015,14 +1016,16 @@
                                         init(access);
                                         this.more = canLoadMore(this.next);
                                     },
-                                    load: function () {
-                                        if (this.more === false || this.loading) {
+                                    load: function (loadConfig) {
+                                        loadConfig = helpers.alwaysObject(loadConfig);
+                                        if (angular.isUndefined(loadConfig.runLast) && (this.more === false || this.loading)) {
                                             return false;
                                         }
                                         var that = this,
                                             next = that.next,
                                             promise,
-                                            oldNext;
+                                            oldNext,
+                                            readArgsRpc;
 
                                         if (!next) {
                                             next = angular.copy(config.next);
@@ -1040,16 +1043,28 @@
                                             next = oldNext;
                                         }
 
-                                        this.loading = true;
-
-                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read({
+                                        if (!loadConfig.hideLoading) {
+                                            this.loading = true;
+                                        }
+                                        readArgsRpc = {
                                             key: config.key,
                                             read_arguments: next
-                                        }));
+                                        };
+
+                                        if (loadConfig.runLast) {
+                                            readArgsRpc = reader.previous || readArgsRpc;
+                                        }
+
+                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc));
+
+                                        reader.previous = readArgsRpc;
 
                                         promise['finally'](function () {
                                             reader.loading = false;
                                             reader.loaded = true;
+                                            if (loadConfig.runLastFinally) {
+                                                loadConfig.runLastFinally();
+                                            }
                                         });
 
                                         return promise.then(function (response) {
@@ -1063,6 +1078,11 @@
                                                 getAccess.push(part);
                                             });
                                             items = helpers.getProperty(response.data.entity, getAccess);
+
+                                            if (loadConfig.runLast) {
+                                                loadConfig.runLast(items);
+                                                return response;
+                                            }
 
                                             if (angular.isFunction(config.complete)) {
                                                 config.complete(items);

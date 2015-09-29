@@ -304,22 +304,6 @@
                                         }];
                                     }
 
-                                    if (config.code_name === 'weight_uom') {
-                                        argument.filters.push({
-                                            value: 'Weight',
-                                            field: 'measurement',
-                                            operator: '=='
-                                        });
-                                    }
-
-                                    if (config.code_name === 'volume_uom') {
-                                        argument.filters.push({
-                                            value: 'Volume',
-                                            field: 'measurement',
-                                            operator: '=='
-                                        });
-                                    }
-
                                     return searchDefaults;
 
                                 },

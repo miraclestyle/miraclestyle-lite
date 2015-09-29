@@ -52,9 +52,7 @@ class OrderProduct(orm.BaseExpando):
 
   _expando_fields = {
       'weight': orm.SuperDecimalProperty('9'),
-      'weight_uom': orm.SuperLocalStructuredProperty('17', '10'),
-      'volume': orm.SuperDecimalProperty('11'),
-      'volume_uom': orm.SuperLocalStructuredProperty('17', '12')
+      'volume': orm.SuperDecimalProperty('10')
   }
 
   _virtual_fields = {
@@ -320,8 +318,7 @@ class Order(orm.BaseExpando):
       orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
                                     '_lines.product.category', '_lines.product.name', '_lines.product.uom',
                                     '_lines.product.code', '_lines.product.unit_price', '_lines.product.variant_signature',
-                                    '_lines.product.weight', '_lines.product.weight_uom', '_lines.product.volume',
-                                    '_lines.product.volume_uom'), condition_update_and_view_order)
+                                    '_lines.product.weight', '_lines.product.volume'), condition_update_and_view_order)
   ]
 
   def old(self):

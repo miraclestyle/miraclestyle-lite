@@ -142,16 +142,9 @@ class CatalogProductInstance(orm.BaseExpando):
       'unit_price': orm.SuperDecimalProperty('5'),
       'availability': orm.SuperStringProperty('6', default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder')),
       'weight': orm.SuperDecimalProperty('7', default=decimal.Decimal('0')),
-      'weight_uom': orm.SuperKeyProperty('8', kind='17', default=Unit.build_key('pound')),
-      'volume': orm.SuperDecimalProperty('9', default=decimal.Decimal('0')),
-      'volume_uom': orm.SuperKeyProperty('11', kind='17', default=Unit.build_key('gallon')),
-      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '12', repeated=True),
-      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True)
-  }
-
-  _virtual_fields = {
-      '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
-      '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom')
+      'volume': orm.SuperDecimalProperty('8', default=decimal.Decimal('0')),
+      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '9', repeated=True),
+      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '10', repeated=True)
   }
 
   @classmethod
@@ -199,12 +192,10 @@ class CatalogProduct(orm.BaseExpando):
 
   _expando_fields = {
       'weight': orm.SuperDecimalProperty('8', default=decimal.Decimal('0')),
-      'weight_uom': orm.SuperKeyProperty('9', kind='17', default=Unit.build_key('pound')),
-      'volume': orm.SuperDecimalProperty('10', default=decimal.Decimal('0')),
-      'volume_uom': orm.SuperKeyProperty('11', kind='17', default=Unit.build_key('gallon')),
-      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '12', repeated=True),
-      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '13', repeated=True),
-      'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '14', repeated=True)
+      'volume': orm.SuperDecimalProperty('9', default=decimal.Decimal('0')),
+      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '10', repeated=True),
+      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '11', repeated=True),
+      'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '12', repeated=True)
   }
 
   _virtual_fields = {  # sorting must be done by code?
@@ -217,9 +208,7 @@ class CatalogProduct(orm.BaseExpando):
                                                                       {'ancestor': True, 'filters': [], 'orders': [('sequence', ['desc'])]}],
                                                       }}),
       '_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='category'),
-      '_uom': orm.SuperReferenceStructuredProperty('17', target_field='uom', autoload=True),
-      '_weight_uom': orm.SuperReferenceStructuredProperty('17', target_field='weight_uom'),
-      '_volume_uom': orm.SuperReferenceStructuredProperty('17', target_field='volume_uom'),
+      '_uom': orm.SuperReferenceStructuredProperty('17', target_field='uom', autoload=True)
   }
 
   def prepare(self, **kwargs):

@@ -336,6 +336,55 @@
                                     }),
                                     toggling: false,
                                     open: false,
+                                    sync: {
+                                        timer: null,
+                                        active: false,
+                                        stop: function () {
+                                            this.active = false;
+                                            clearTimeout(this.timer);
+                                        },
+                                        start: function () {
+                                            this.active = true;
+                                            this.run();
+                                        },
+                                        toggle: function (what) {
+                                            if (what) {
+                                                this.start();
+                                            } else {
+                                                this.stop();
+                                            }
+                                        },
+                                        loading: false,
+                                        run: function () {
+                                            var sync = this;
+                                            if (this.loading || !this.active) {
+                                                return;
+                                            }
+                                            clearTimeout(this.timer);
+                                            this.loading = true;
+                                            this.timer = setTimeout(function () {
+                                                $scope.messages.reader.load({
+                                                    hideLoading: true,
+                                                    runLastFinally: function () {
+                                                        sync.loading = false;
+                                                        sync.timer = null;
+                                                        sync.run();
+                                                    },
+                                                    runLast: function (items) {
+                                                        var map = {};
+                                                        angular.forEach($scope.order._messages, function (value, key) {
+                                                            map[value.key] = 1;
+                                                        });
+                                                        angular.forEach(items, function (value, key) {
+                                                            if (!map[value.key]) {
+                                                                $scope.order._messages.push(value);
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            }, 2000);
+                                        },
+                                    },
                                     draft: {
                                         message: null,
                                         key: $scope.order.key
@@ -378,9 +427,10 @@
                                             it[isOpen ? 'close' : 'open']().then(function () {
                                                 $scope.messages.toggling = false;
                                                 $scope.messages.open = !isOpen;
+                                                $scope.messages.sync.toggle($scope.messages.open);
                                             });
                                         });
-                                    },
+                                    }
                                 };
 
                                 $scope.feedback = {
@@ -648,6 +698,10 @@
                                     key: $scope.order.key
                                 }, {
                                     absolute: true
+                                });
+
+                                $scope.$on('$destroy', function () {
+                                    $scope.messages.sync.stop();
                                 });
 
                                 openDefer.resolve($scope.order);

@@ -136,22 +136,16 @@ class OrderUpdateLine(orm.BaseModel):
         if hasattr(product_instance, 'code') and product_instance.code is not None:
           order_product.code = product_instance.code
       order_product.weight = None
-      order_product.weight_uom = None
       order_product.volume = None
-      order_product.volume_uom = None
-      if product.weight is not None and product.weight_uom is not None:
+      if product.weight is not None:
         order_product.weight = product.weight
-        order_product.weight_uom = copy.deepcopy(product.weight_uom.get())
-      if product.volume is not None and product.volume_uom is not None:
+      if product.volume is not None:
         order_product.volume = product.volume
-        order_product.volume_uom = copy.deepcopy(product.volume_uom.get())
       if product_instance is not None:
-        if hasattr(product_instance, 'weight') and product_instance.weight is not None and product_instance.weight_uom is not None:
+        if hasattr(product_instance, 'weight') and product_instance.weight is not None:
           order_product.weight = product_instance.weight
-          order_product.weight_uom = copy.deepcopy(product_instance.weight_uom.get())
-        if hasattr(product_instance, 'volume') and product_instance.volume is not None and product_instance.volume_uom is not None:
+        if hasattr(product_instance, 'volume') and product_instance.volume is not None:
           order_product.volume = product_instance.volume
-          order_product.volume_uom = copy.deepcopy(product_instance.volume_uom.get())
       order_product.quantity = tools.format_value(quantity, order_product.uom.value)
       new_line.product = order_product
       new_line.discount = tools.format_value('0', Unit(digits=2))
@@ -183,9 +177,9 @@ class OrderProductSpecsFormat(orm.BaseModel):
         continue
       product = line.product.value
       if product.weight is not None:
-        total_weight = total_weight + (tools.convert_value(product.weight, product.weight_uom.value, weight_uom) * product.quantity)
+        total_weight = total_weight + (product.weight * product.quantity)
       if product.volume is not None:
-        total_volume = total_volume + (tools.convert_value(product.volume, product.volume_uom.value, volume_uom) * product.quantity)
+        total_volume = total_volume + (product.volume * product.quantity)
       total_quantity = total_quantity + tools.convert_value(product.quantity, product.uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume

@@ -62,6 +62,9 @@
         $scope.setPageToolbarTitle('seller.catalogs');
 
         var newEntity = function (entity) {
+            if (!entity.key) {
+                return;
+            }
             if (!_.findWhere($scope.search.results, {
                     key: entity.key
                 })) {

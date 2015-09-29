@@ -140,6 +140,11 @@
             }
         });
 
+        locals.fieldhelpForProduct = {
+            weight: 'Product weight, expressed in kilograms, per unit of measurement. This field is used by the Carrier rule for calculating delivery costs.',
+            volume: 'Product volume, expressed in liters, per unit of measurement. This field is used by the Carrier rule for calculating delivery costs.'
+        };
+
         $.extend(GLOBAL_CONFIG.fields.help, {
             '124-update': {
                 condition_type: 'Condition under which this line applies.',
@@ -176,6 +181,8 @@
             '107': {
                 address_type: 'Buyer address type this rule applies to.'
             },
+            '27': locals.fieldhelpForProduct,
+            '28': locals.fieldhelpForProduct,
             '31-update': {
                 discontinue_date: 'Date when this catalog will be automatically discontinued and become unavailable to the general public.'
             },
@@ -198,15 +205,15 @@
             },
             '28': {
                 uom: 'Unit of measurement',
-                weight_uom: 'Weight unit of measurement',
-                volume_uom: 'Volume unit of measurement',
-                variant_options: 'Variant combinations'
+                variant_options: 'Variant combinations',
+                weight: 'Weight (kilogram)',
+                volume: 'Volume (liter)'
             },
             '27': {
                 uom: 'Unit of measurement',
-                weight_uom: 'Weight unit of measurement',
-                volume_uom: 'Volume unit of measurement',
-                variant_options: 'Variant combinations'
+                variant_options: 'Variant combinations',
+                weight: 'Weight (kilogram)',
+                volume: 'Volume (liter)'
             },
             '112': {
                 rules: 'Prices'

@@ -809,6 +809,7 @@
                         },
                         afterComplete = function ($scope) {
                             $scope.setAction('update');
+                            callback($scope.entity);
                         },
                         noComplete = function ($scope) {
                             afterComplete($scope);
@@ -932,28 +933,6 @@
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
                                                 setupCurrentPricetag,
-                                                groupWeightAndVolume = function (fields) {
-                                                    fields.weight.ui = {
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
-                                                    };
-                                                    fields.weight_uom.ui = {
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
-                                                    };
-                                                    fields.volume.ui = {
-                                                        groupBy: 'volume',
-                                                        groupLabel: 'Volume'
-                                                    };
-                                                    fields.volume_uom.ui = {
-                                                        groupBy: 'volume',
-                                                        groupLabel: 'Volume'
-                                                    };
-                                                    fields.weight.ui.label = false;
-                                                    fields.weight_uom.ui.label = false;
-                                                    fields.volume.ui.label = false;
-                                                    fields.volume_uom.ui.label = false;
-                                                },
                                                 variantOptions,
                                                 getTitle = function () {
                                                     return 'viewProducts';
@@ -1372,8 +1351,6 @@
                                                 }
                                             };
 
-                                            groupWeightAndVolume($scope.fieldProduct.modelclass);
-                                            groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);
 
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
                                                 label: GLOBAL_CONFIG.subheaders.productInstances,
@@ -1384,7 +1361,7 @@
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',
-                                                        fields: ["code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "_weight_uom", "_volume_uom"]
+                                                        fields: ["code", "description", "unit_price", "availability", "weight", "volume"]
                                                     }, {
                                                         fields: ["images"]
                                                     }, {
