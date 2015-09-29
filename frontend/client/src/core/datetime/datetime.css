@@ -144,6 +144,7 @@ span.first.month-part {
     width: auto;
 }
 
-.title-above .pager button .md-icon {
+.title-above .pager button .md-icon,
+.time-inputs .choicer .time-control button .md-icon {
     display:block;
 }
