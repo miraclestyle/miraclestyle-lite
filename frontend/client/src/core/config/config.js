@@ -244,21 +244,21 @@
         locals.conditionOperatorSpec = {
             '==': 'equals to',
             '!=': 'is not equal to',
-            '<': 'is less than',
             '>': 'is greater than',
-            '<=': 'is less than or equal to',
-            '>=': 'is greater than or equal to'
+            '<': 'is less than',
+            '>=': 'is greater than or equal to',
+            '<=': 'is less than or equal to'
         };
         locals.addressTypeSpec = {
             billing: 'Billing',
             shipping: 'Shipping'
         };
         locals.conditionTypeSpec = {
-            weight: 'weight multiplied by',
-            quantity: 'quantity multiplied by',
-            'weight*volume': 'weight multiplied by volume multiplied by',
-            volume: 'volume multiplied by',
-            price: 'price multiplied by'
+            weight: 'weight',
+            volume: 'volume',
+            'weight*volume': 'weight multiplied by volume',
+            price: 'price',
+            quantity: 'quantity'
         };
         $.extend(GLOBAL_CONFIG.fields.translateChoices, {
             '107': {
@@ -272,13 +272,19 @@
                 }
             },
             '111': {
-                condition_operator: locals.conditionOperatorSpec,
                 condition_type: locals.conditionTypeSpec,
-                price_operator: locals.conditionTypeSpec,
+                condition_operator: locals.conditionOperatorSpec,
                 price_type: {
-                    variable: 'varied by',
-                    fixed: 'fixed'
-                }
+                    fixed: 'fixed',
+                    variable: 'varied by'
+                },
+                price_operator: {
+                     weight: 'weight multiplied by',
+                     volume: 'volume multiplied by',
+                     'weight*volume': 'weight multiplied by volume multiplied by',
+                     price: 'price multiplied by',
+                     quantity: 'quantity multiplied by'
+                 }
             },
             '124': {
                 condition_operator: locals.conditionOperatorSpec
