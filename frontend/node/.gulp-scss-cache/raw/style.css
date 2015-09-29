@@ -919,6 +919,10 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
   padding-top: 12px;
   padding-bottom: 12px; }
 
+.modal-medium .list-padding-one-line-subheader {
+  padding-top: 8px;
+  padding-bottom: 12px; }
+
 .modal-medium-simple .list-row-one-line.list-row-has-primary .avatar {
   padding: 4px 12px 4px 20px; }
 
@@ -947,6 +951,9 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 .snackbar-inner.multiline {
   padding-top: 24px;
   padding-bottom: 24px; }
+
+.snackbar.brief {
+  word-wrap: break-word; }
 
 .snackbar.slide.out {
   animation-name: bottom-slide-out; }
@@ -1124,7 +1131,8 @@ md-toolbar {
   padding-right: 24px;
   padding-left: 24px;
   padding-top: 12px;
-  padding-bottom: 12px; }
+  padding-bottom: 12px;
+  height: 276px; }
 
 .date-control .selected {
   background: rgba(0, 0, 0, 0.54);
@@ -1176,6 +1184,9 @@ span.first.month-part {
 
 .datepicker-pop .modal-dialog {
   width: auto; }
+
+.title-above .pager button .md-icon {
+  display: block; }
 
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
   border-color: rgba(255, 0, 0, 0.87); }

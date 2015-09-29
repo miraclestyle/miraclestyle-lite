@@ -2,7 +2,7 @@
     <form name="container.form" ng-submit="save()">
         <div ng-include="config.ui.specifics.templateToolbarUrl"></div>
         <div class="modal-body">
-            <div class="fixed-height relative has-toolbar overflow-y">
+            <div class="fixed-height relative has-toolbar overflow-auto-y">
                 <div class="modal-body-inner">
                     <div ng-class="{'seam-bottom': layouts.groups.length > 1 && !$last}" class="list list-padding" ng-if="formBuilder[$index].length || layout.include" ng-repeat="layout in layouts.groups" action="layout.action">
                         <div ng-if="layout.label && !layout.include" class="list-subheader subheader">{{layout.label}}</div>

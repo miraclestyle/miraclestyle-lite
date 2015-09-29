@@ -11,7 +11,7 @@
             <input type="hidden" compatibility-maker="sendRootArgs" name="__body__" />
         <% } %>
         <div class="modal-body">
-            <div class="fixed-height relative has-toolbar overflow-y">
+            <div class="fixed-height relative has-toolbar overflow-auto-y">
                 <div class="modal-body-inner">
                     <div ng-repeat="layout in layouts.groups">
                         <div ng-class="{'seam-bottom': layouts.groups.length > 1 && !$last}" class="list list-padding" ng-if="formBuilder[$index].length && !layout.include">

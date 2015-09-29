@@ -6,7 +6,6 @@
             return {
                 link: function (scope, element, attrs) {
                     element.on('click', function () {
-                        console.log(scope.site.toolbar.menu.close);
                         $timeout(scope.site.toolbar.menu.close, 200, 0);
                     });
                 }

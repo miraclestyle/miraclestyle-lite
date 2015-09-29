@@ -29,7 +29,7 @@
                         <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
                         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
-                        <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
+                        <div ng-if="!stage.checkout" class="order-stage seam-bottom fixed-height" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
                           <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
                           <div ng-if="order.ui.rule.action.update.executable && !helpers.models.isEntityListEmpty(order._lines)" class="list">
 
@@ -45,7 +45,7 @@
                           </div>
                           <div ng-if="helpers.models.isEntityListEmpty(order._lines)" help-render="GLOBAL_CONFIG.emptyHelp.cart"></div>
                         </div>
-                        <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
+                        <div ng-if="!stage.checkout" class="order-stage seam-bottom fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
                             <div class="list list-padding seam-bottom">
                               <div class="list-subheader subheader">Billing info</div>
                               <button md-ink-ripple-list
@@ -104,7 +104,7 @@
  
                             
                         </div>
-                        <div ng-if="!stage.checkout" class="order-stage fixed-height" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
+                        <div ng-if="!stage.checkout" class="order-stage seam-bottom fixed-height" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
                               <div ng-form="carrier.form" class="list list-padding seam-bottom">
                                 <div class="list-subheader subheader">Delivery methods</div>
                                      <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
@@ -137,7 +137,7 @@
                             </div>
  
                         </div>
-                        <div class="order-stage fixed-height" ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
+                        <div class="order-stage seam-bottom fixed-height" ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
                             <div ng-include="'order/lines.html'"></div>
                             <div ng-if="stage.canShowPay()" class="list">
 

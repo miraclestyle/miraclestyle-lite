@@ -1225,6 +1225,13 @@ $(function () {
             billing: 'Billing',
             shipping: 'Shipping'
         };
+        locals.conditionTypeSpec = {
+            weight: 'weight multiplied by',
+            quantity: 'quantity multiplied by',
+            'weight*volume': 'weight multiplied by volume multiplied by',
+            volume: 'volume multiplied by',
+            price: 'price multiplied by'
+        };
         $.extend(GLOBAL_CONFIG.fields.translateChoices, {
             '107': {
                 address_type: locals.addressTypeSpec
@@ -1238,13 +1245,12 @@ $(function () {
             },
             '111': {
                 condition_operator: locals.conditionOperatorSpec,
-                price_operator: {
-                    weight: 'weight multiplied by',
-                    quantity: 'quantity multiplied by',
-                    'weight*volume': 'weight multiplied by volume multiplied by',
-                    volume: 'volume multiplied by',
-                    price: 'price multiplied by'
-                },
+                condition_type: locals.conditionTypeSpec,
+                price_operator: locals.conditionTypeSpec,
+                price_type: {
+                    variable: 'varied by',
+                    fixed: 'fixed'
+                }
             },
             '124': {
                 condition_operator: locals.conditionOperatorSpec
@@ -5630,7 +5636,9 @@ $(function () {
             priority: 100,
             link: function (scope, element, attr) {
                 var kill = function () {
-                    snackbar.hide();
+                    if (!snackbar.animating) {
+                        snackbar.hide();
+                    }
                 };
                 element.on('click', kill);
                 scope.$on('$destroy', function () {
@@ -5653,6 +5661,8 @@ $(function () {
                 $scope.message = '';
                 $scope.size = 1;
                 $scope.element = null;
+
+                snackbar.animating = false;
                 snackbar.hide = function () {
                     var defer = $q.defer();
                     $scope.element.removeClass('in');
@@ -5673,17 +5683,22 @@ $(function () {
                         };
                     }
                     $scope.message = config.message;
-                    if (!config.size) {
-                        config.size = 1;
-                    }
                     if (!config.hideAfter) {
                         config.hideAfter = (($scope.message.length / 16) * 1000) + 500;
                     }
                     $scope.size = config.size;
+                    $scope.calculateSize = function () {
+                        if (!$scope.size) {
+                            return $scope.element.find('.brief').height() > 16 ? 2 : 1;
+                        }
+                        return $scope.size;
+                    };
                     digest();
+                    snackbar.animating = true;
                     return snackbar.hide().then(function () {
                         $animate.removeClass($scope.element, 'out');
                         return $animate.addClass($scope.element, 'in').then(function () {
+                            snackbar.animating = false;
                             if (config.hideAfter) {
                                 if (timer) {
                                     clearTimeout(timer);
@@ -18463,7 +18478,6 @@ angular.module('app')
             return {
                 link: function (scope, element, attrs) {
                     element.on('click', function () {
-                        console.log(scope.site.toolbar.menu.close);
                         $timeout(scope.site.toolbar.menu.close, 200, 0);
                     });
                 }
@@ -18751,11 +18765,7 @@ angular.module('app')
                     }
 
                     models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
-
-                        if (angular.isUndefined(seller)) {
-                            seller = response.data.entity._seller;
-                        }
-
+                        seller = response.data.entity._seller;
                         var modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
@@ -19841,7 +19851,6 @@ angular.module('app')
                                 }),
                                 controller: ng(function ($scope, modelsUtil) {
                                     var getTitle,
-                                        inflector = $filter('inflector'),
                                         resetFormBuilder = function () {
                                             $scope.layouts = {
                                                 groups: [{
@@ -20285,12 +20294,12 @@ angular.module('app')
                                 } else {
                                     score = 0;
                                 }
-                                values[0] = positive_count;
-                                values[1] = neutral_count;
-                                values[2] = negative_count;
-                                values[3] = positive_average;
-                                values[4] = negative_average;
-                                values[5] = neutral_average;
+                                values[0] = isNaN(positive_count) ? 0 : positive_count;
+                                values[1] = isNaN(neutral_count) ? 0 : neutral_count;
+                                values[2] = isNaN(negative_count) ? 0 : negative_count;
+                                values[3] = isNaN(positive_average) ? 0 : positive_average;
+                                values[4] = isNaN(negative_average) ? 0 : negative_average;
+                                values[5] = isNaN(neutral_average) ? 0 : neutral_average;
                                 values[6] = score;
                                 return values;
                             }());
