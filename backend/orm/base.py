@@ -773,7 +773,9 @@ class _BaseModel(object):
           continue
         except IndexError as e:
           break
-      if (current_field_value is None and not current_field.can_be_none) or (hasattr(current_field, '_updateable') and (not current_field._updateable and not current_field._deleteable)):
+      if (current_field_value is None and not current_field.can_be_none) \
+          or (hasattr(current_field, '_updateable') and (not current_field._updateable and not current_field._deleteable)) \
+          or (hasattr(current_field, '_auto_now') and current_field._auto_now):
         current_field_key = None
         continue
       if (current_field_key in current_permissions):
