@@ -1119,6 +1119,11 @@ $(function () {
             }
         });
 
+        locals.fieldhelpForProduct = {
+            weight: 'Product weight, expressed in kilograms, per unit of measurement. This field is used by the Carrier rule for calculating delivery costs.',
+            volume: 'Product volume, expressed in liters, per unit of measurement. This field is used by the Carrier rule for calculating delivery costs.'
+        };
+
         $.extend(GLOBAL_CONFIG.fields.help, {
             '124-update': {
                 condition_type: 'Condition under which this line applies.',
@@ -1155,6 +1160,8 @@ $(function () {
             '107': {
                 address_type: 'Buyer address type this rule applies to.'
             },
+            '27': locals.fieldhelpForProduct,
+            '28': locals.fieldhelpForProduct,
             '31-update': {
                 discontinue_date: 'Date when this catalog will be automatically discontinued and become unavailable to the general public.'
             },
@@ -1177,15 +1184,15 @@ $(function () {
             },
             '28': {
                 uom: 'Unit of measurement',
-                weight_uom: 'Weight unit of measurement',
-                volume_uom: 'Volume unit of measurement',
-                variant_options: 'Variant combinations'
+                variant_options: 'Variant combinations',
+                weight: 'Weight (kilogram)',
+                volume: 'Volume (liter)'
             },
             '27': {
                 uom: 'Unit of measurement',
-                weight_uom: 'Weight unit of measurement',
-                volume_uom: 'Volume unit of measurement',
-                variant_options: 'Variant combinations'
+                variant_options: 'Variant combinations',
+                weight: 'Weight (kilogram)',
+                volume: 'Volume (liter)'
             },
             '112': {
                 rules: 'Prices'
@@ -1216,21 +1223,21 @@ $(function () {
         locals.conditionOperatorSpec = {
             '==': 'equals to',
             '!=': 'is not equal to',
-            '<': 'is less than',
             '>': 'is greater than',
-            '<=': 'is less than or equal to',
-            '>=': 'is greater than or equal to'
+            '<': 'is less than',
+            '>=': 'is greater than or equal to',
+            '<=': 'is less than or equal to'
         };
         locals.addressTypeSpec = {
             billing: 'Billing',
             shipping: 'Shipping'
         };
         locals.conditionTypeSpec = {
-            weight: 'weight multiplied by',
-            quantity: 'quantity multiplied by',
-            'weight*volume': 'weight multiplied by volume multiplied by',
-            volume: 'volume multiplied by',
-            price: 'price multiplied by'
+            weight: 'weight',
+            volume: 'volume',
+            'weight*volume': 'weight multiplied by volume',
+            price: 'price',
+            quantity: 'quantity'
         };
         $.extend(GLOBAL_CONFIG.fields.translateChoices, {
             '107': {
@@ -1244,13 +1251,19 @@ $(function () {
                 }
             },
             '111': {
-                condition_operator: locals.conditionOperatorSpec,
                 condition_type: locals.conditionTypeSpec,
-                price_operator: locals.conditionTypeSpec,
+                condition_operator: locals.conditionOperatorSpec,
                 price_type: {
-                    variable: 'varied by',
-                    fixed: 'fixed'
-                }
+                    fixed: 'fixed',
+                    variable: 'varied by'
+                },
+                price_operator: {
+                     weight: 'weight multiplied by',
+                     volume: 'volume multiplied by',
+                     'weight*volume': 'weight multiplied by volume multiplied by',
+                     price: 'price multiplied by',
+                     quantity: 'quantity multiplied by'
+                 }
             },
             '124': {
                 condition_operator: locals.conditionOperatorSpec
@@ -10109,22 +10122,6 @@ $(function () {
                                         }];
                                     }
 
-                                    if (config.code_name === 'weight_uom') {
-                                        argument.filters.push({
-                                            value: 'Weight',
-                                            field: 'measurement',
-                                            operator: '=='
-                                        });
-                                    }
-
-                                    if (config.code_name === 'volume_uom') {
-                                        argument.filters.push({
-                                            value: 'Volume',
-                                            field: 'measurement',
-                                            operator: '=='
-                                        });
-                                    }
-
                                     return searchDefaults;
 
                                 },
@@ -14563,6 +14560,7 @@ $(function () {
                                     more: canLoadMore(config.next),
                                     config: config,
                                     loaded: false,
+                                    previous: null,
                                     state: function (config) {
                                         this.next = config.next;
                                         if (angular.isDefined(config.access)) {
@@ -14584,14 +14582,16 @@ $(function () {
                                         init(access);
                                         this.more = canLoadMore(this.next);
                                     },
-                                    load: function () {
-                                        if (this.more === false || this.loading) {
+                                    load: function (loadConfig) {
+                                        loadConfig = helpers.alwaysObject(loadConfig);
+                                        if (angular.isUndefined(loadConfig.runLast) && (this.more === false || this.loading)) {
                                             return false;
                                         }
                                         var that = this,
                                             next = that.next,
                                             promise,
-                                            oldNext;
+                                            oldNext,
+                                            readArgsRpc;
 
                                         if (!next) {
                                             next = angular.copy(config.next);
@@ -14609,16 +14609,28 @@ $(function () {
                                             next = oldNext;
                                         }
 
-                                        this.loading = true;
-
-                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read({
+                                        if (!loadConfig.hideLoading) {
+                                            this.loading = true;
+                                        }
+                                        readArgsRpc = {
                                             key: config.key,
                                             read_arguments: next
-                                        }));
+                                        };
+
+                                        if (loadConfig.runLast) {
+                                            readArgsRpc = reader.previous || readArgsRpc;
+                                        }
+
+                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc));
+
+                                        reader.previous = readArgsRpc;
 
                                         promise['finally'](function () {
                                             reader.loading = false;
                                             reader.loaded = true;
+                                            if (loadConfig.runLastFinally) {
+                                                loadConfig.runLastFinally();
+                                            }
                                         });
 
                                         return promise.then(function (response) {
@@ -14632,6 +14644,11 @@ $(function () {
                                                 getAccess.push(part);
                                             });
                                             items = helpers.getProperty(response.data.entity, getAccess);
+
+                                            if (loadConfig.runLast) {
+                                                loadConfig.runLast(items);
+                                                return response;
+                                            }
 
                                             if (angular.isFunction(config.complete)) {
                                                 config.complete(items);
@@ -17536,6 +17553,7 @@ angular.module('app')
                         },
                         afterComplete = function ($scope) {
                             $scope.setAction('update');
+                            callback($scope.entity);
                         },
                         noComplete = function ($scope) {
                             afterComplete($scope);
@@ -17659,28 +17677,6 @@ angular.module('app')
                                             var accessImages = angular.copy(parentScope.args.ui.access),
                                                 imagesReader,
                                                 setupCurrentPricetag,
-                                                groupWeightAndVolume = function (fields) {
-                                                    fields.weight.ui = {
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
-                                                    };
-                                                    fields.weight_uom.ui = {
-                                                        groupBy: 'weight',
-                                                        groupLabel: 'Weight'
-                                                    };
-                                                    fields.volume.ui = {
-                                                        groupBy: 'volume',
-                                                        groupLabel: 'Volume'
-                                                    };
-                                                    fields.volume_uom.ui = {
-                                                        groupBy: 'volume',
-                                                        groupLabel: 'Volume'
-                                                    };
-                                                    fields.weight.ui.label = false;
-                                                    fields.weight_uom.ui.label = false;
-                                                    fields.volume.ui.label = false;
-                                                    fields.volume_uom.ui.label = false;
-                                                },
                                                 variantOptions,
                                                 getTitle = function () {
                                                     return 'viewProducts';
@@ -18099,8 +18095,6 @@ angular.module('app')
                                                 }
                                             };
 
-                                            groupWeightAndVolume($scope.fieldProduct.modelclass);
-                                            groupWeightAndVolume($scope.fieldProduct.modelclass._instances.modelclass);
 
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {
                                                 label: GLOBAL_CONFIG.subheaders.productInstances,
@@ -18111,7 +18105,7 @@ angular.module('app')
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',
-                                                        fields: ["code", "description", "unit_price", "availability", "weight", "weight_uom", "volume", "volume_uom", "_weight_uom", "_volume_uom"]
+                                                        fields: ["code", "description", "unit_price", "availability", "weight", "volume"]
                                                     }, {
                                                         fields: ["images"]
                                                     }, {
@@ -19012,6 +19006,55 @@ angular.module('app')
                                     }),
                                     toggling: false,
                                     open: false,
+                                    sync: {
+                                        timer: null,
+                                        active: false,
+                                        stop: function () {
+                                            this.active = false;
+                                            clearTimeout(this.timer);
+                                        },
+                                        start: function () {
+                                            this.active = true;
+                                            this.run();
+                                        },
+                                        toggle: function (what) {
+                                            if (what) {
+                                                this.start();
+                                            } else {
+                                                this.stop();
+                                            }
+                                        },
+                                        loading: false,
+                                        run: function () {
+                                            var sync = this;
+                                            if (this.loading || !this.active) {
+                                                return;
+                                            }
+                                            clearTimeout(this.timer);
+                                            this.loading = true;
+                                            this.timer = setTimeout(function () {
+                                                $scope.messages.reader.load({
+                                                    hideLoading: true,
+                                                    runLastFinally: function () {
+                                                        sync.loading = false;
+                                                        sync.timer = null;
+                                                        sync.run();
+                                                    },
+                                                    runLast: function (items) {
+                                                        var map = {};
+                                                        angular.forEach($scope.order._messages, function (value, key) {
+                                                            map[value.key] = 1;
+                                                        });
+                                                        angular.forEach(items, function (value, key) {
+                                                            if (!map[value.key]) {
+                                                                $scope.order._messages.push(value);
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            }, 2000);
+                                        },
+                                    },
                                     draft: {
                                         message: null,
                                         key: $scope.order.key
@@ -19054,9 +19097,10 @@ angular.module('app')
                                             it[isOpen ? 'close' : 'open']().then(function () {
                                                 $scope.messages.toggling = false;
                                                 $scope.messages.open = !isOpen;
+                                                $scope.messages.sync.toggle($scope.messages.open);
                                             });
                                         });
-                                    },
+                                    }
                                 };
 
                                 $scope.feedback = {
@@ -19326,6 +19370,10 @@ angular.module('app')
                                     absolute: true
                                 });
 
+                                $scope.$on('$destroy', function () {
+                                    $scope.messages.sync.stop();
+                                });
+
                                 openDefer.resolve($scope.order);
 
                             })
@@ -19412,6 +19460,9 @@ angular.module('app')
         $scope.setPageToolbarTitle('seller.catalogs');
 
         var newEntity = function (entity) {
+            if (!entity.key) {
+                return;
+            }
             if (!_.findWhere($scope.search.results, {
                     key: entity.key
                 })) {

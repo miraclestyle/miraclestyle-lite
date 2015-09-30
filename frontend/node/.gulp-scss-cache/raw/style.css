@@ -950,7 +950,9 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 
 .snackbar-inner.multiline {
   padding-top: 24px;
-  padding-bottom: 24px; }
+  padding-bottom: 24px;
+  padding-left: 24px;
+  padding-right: 24px; }
 
 .snackbar.brief {
   word-wrap: break-word; }
@@ -1185,7 +1187,8 @@ span.first.month-part {
 .datepicker-pop .modal-dialog {
   width: auto; }
 
-.title-above .pager button .md-icon {
+.title-above .pager button .md-icon,
+.time-inputs .choicer .time-control button .md-icon {
   display: block; }
 
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
@@ -1489,6 +1492,9 @@ body .mb15 {
 .padding-top-bottom-16 {
   padding-bottom: 16px;
   padding-top: 16px; }
+
+.padding-top-12 {
+  padding-top: 12px; }
 
 .padding-top-bottom-12 {
   padding-bottom: 12px;
@@ -2894,14 +2900,19 @@ body, html {
   padding: 0px;
   margin: 0px;
   text-align: center;
-  width: 100%; }
+  width: auto;
+  margin: auto;
+  margin-top: 16px;
+  margin-bottom: 16px; }
 
 .order-next-stage-inner {
   padding: 24px;
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  display: block; }
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px; }
 
 .order-reset-button-text {
   padding: 12px 8px; }
