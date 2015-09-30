@@ -14622,7 +14622,7 @@ $(function () {
                                             readArgsRpc = reader.previous || readArgsRpc;
                                         }
 
-                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc));
+                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc, loadConfig.rpcOptions));
 
                                         reader.previous = readArgsRpc;
 
@@ -19036,6 +19036,9 @@ angular.module('app')
                                             this.loading = true;
                                             this.timer = setTimeout(function () {
                                                 $scope.messages.reader.load({
+                                                    rpcOptions: {
+                                                        disableUI: false
+                                                    },
                                                     hideLoading: true,
                                                     runLastFinally: function () {
                                                         sync.loading = false;

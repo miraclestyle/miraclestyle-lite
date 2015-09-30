@@ -1055,7 +1055,7 @@
                                             readArgsRpc = reader.previous || readArgsRpc;
                                         }
 
-                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc));
+                                        promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc, loadConfig.rpcOptions));
 
                                         reader.previous = readArgsRpc;
 

@@ -364,6 +364,9 @@
                                             this.loading = true;
                                             this.timer = setTimeout(function () {
                                                 $scope.messages.reader.load({
+                                                    rpcOptions: {
+                                                        disableUI: false
+                                                    },
                                                     hideLoading: true,
                                                     runLastFinally: function () {
                                                         sync.loading = false;
