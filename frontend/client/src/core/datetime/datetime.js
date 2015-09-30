@@ -432,6 +432,7 @@
                                 inDirection: false,
                                 outDirection: false,
                                 fullScreen: false,
+                                cantCloseWithBackdrop: true,
                                 templateUrl: 'core/datetime/popup.html',
                                 controller: ng(function ($scope) {
                                     $scope.date = ngModel.$modelValue;
