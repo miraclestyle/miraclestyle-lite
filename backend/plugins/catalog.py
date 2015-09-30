@@ -92,7 +92,9 @@ class CatalogProcessCoverSet(orm.BaseModel):
     catalog_images = context._catalog._images.value
     if catalog_images and len(catalog_images) < 2:
       CatalogImage = context.models['30']
-      catalog_images = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).fetch(1)
+      catalog_images_datastore = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).fetch(1)
+      if catalog_images_datastore and catalog_images_datastore[0].key == catalog_images[0].key:
+        catalog_images = catalog_images_datastore
       # use query only when user is not uploading new images
     catalog_cover = context._catalog.cover.value
     if catalog_images:
