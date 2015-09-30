@@ -15248,6 +15248,7 @@ $(function () {
                     };
 
                     select.isChecked = function (item) {
+                        return false;
                         return select.multipleSelection[select.getHash(item)];
                     };
                     select.select = function (item) {
