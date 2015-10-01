@@ -3,7 +3,7 @@
 {% block body %}
 <span>
   Seller reported {{entity.feedback}} feedback that you have left on your purchase order
-  "<a href="https://www.miraclestyle.com/order/{{entity.key_urlsafe}}">#{{entity.key_id}}</a>"
+  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>"
   to the Miraclestyle app administrators.
 </span><br/>
 <span>

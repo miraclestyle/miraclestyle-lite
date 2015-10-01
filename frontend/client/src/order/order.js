@@ -336,11 +336,15 @@
                                     }),
                                     toggling: false,
                                     open: false,
+                                    stateChanged: function (state) {
+                                        $scope.messages.sync.toggle(state);
+                                    },
                                     sync: {
                                         timer: null,
                                         active: false,
                                         stop: function () {
                                             this.active = false;
+                                            this.loading = false;
                                             clearTimeout(this.timer);
                                         },
                                         start: function () {
@@ -430,7 +434,6 @@
                                             it[isOpen ? 'close' : 'open']().then(function () {
                                                 $scope.messages.toggling = false;
                                                 $scope.messages.open = !isOpen;
-                                                $scope.messages.sync.toggle($scope.messages.open);
                                             });
                                         });
                                     }

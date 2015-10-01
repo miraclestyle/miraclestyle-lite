@@ -3,7 +3,7 @@
 {% block body %}
 <span>
   Your catalog
-  "<a href="https://www.miraclestyle.com/catalog/{{entity.key_urlsafe}}">{{entity.name|safe}}</a>"
+  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
   was successfully published.
 </span><br/>
 <span>

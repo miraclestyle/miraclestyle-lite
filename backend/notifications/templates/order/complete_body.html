@@ -3,7 +3,7 @@
 {% block body %}
 <span>
   Your order
-  "<a href="https://www.miraclestyle.com/order/{{entity.key_urlsafe}}">#{{entity.key_id}}</a>"
+  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>"
   was settled.
 </span><br/>
 <span>

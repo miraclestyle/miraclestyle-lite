@@ -4904,7 +4904,8 @@ $(function () {
             restrict: 'E',
             scope: {
                 isOpen: '=?mdIsOpen',
-                componentID: '=?mdComponentId'
+                componentID: '=?mdComponentId',
+                stateChanged: '=?mdStateChanged'
             },
             controller: '$mdSidenavController',
             compile: function (element) {
@@ -5008,6 +5009,9 @@ $(function () {
                             element.focus();
                         }
                         working = false;
+                        if (scope.stateChanged) {
+                            scope.stateChanged(scope.isOpen);
+                        }
                     },
                     backdropComplete = function () {
                         // If we opened, and haven't closed again before the animation finished
@@ -19008,11 +19012,15 @@ angular.module('app')
                                     }),
                                     toggling: false,
                                     open: false,
+                                    stateChanged: function (state) {
+                                        $scope.messages.sync.toggle(state);
+                                    },
                                     sync: {
                                         timer: null,
                                         active: false,
                                         stop: function () {
                                             this.active = false;
+                                            this.loading = false;
                                             clearTimeout(this.timer);
                                         },
                                         start: function () {
@@ -19102,7 +19110,6 @@ angular.module('app')
                                             it[isOpen ? 'close' : 'open']().then(function () {
                                                 $scope.messages.toggling = false;
                                                 $scope.messages.open = !isOpen;
-                                                $scope.messages.sync.toggle($scope.messages.open);
                                             });
                                         });
                                     }

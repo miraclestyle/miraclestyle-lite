@@ -89,7 +89,8 @@
             restrict: 'E',
             scope: {
                 isOpen: '=?mdIsOpen',
-                componentID: '=?mdComponentId'
+                componentID: '=?mdComponentId',
+                stateChanged: '=?mdStateChanged'
             },
             controller: '$mdSidenavController',
             compile: function (element) {
@@ -193,6 +194,9 @@
                             element.focus();
                         }
                         working = false;
+                        if (scope.stateChanged) {
+                            scope.stateChanged(scope.isOpen);
+                        }
                     },
                     backdropComplete = function () {
                         // If we opened, and haven't closed again before the animation finished

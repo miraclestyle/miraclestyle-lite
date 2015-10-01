@@ -4,22 +4,26 @@
 <span>
   Here is the list of recently published catalogs from the sellers that you are following:
 </span><br/>
+{% for entity in published_catalogs.catalogs %}
 <span>
-  "<a href="https://www.miraclestyle.com/catalog/{{entity.key_urlsafe}}">{{entity.name|safe}}</a>"
-  published by "<a href="https://www.miraclestyle.com/seller/{{entity.key_parent.key_urlsafe}}">{{entity._seller.name|safe}}</a>."
+  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
+  published by "<a href="{{absolute_url('seller/%s' % entity.key_parent.key_urlsafe)}}">{{entity._seller.name|safe}}</a>."
 </span><br/>
+{% endfor %}
 <span>
   Here is the list of recently discontinued catalogs from the sellers that you are following:
 </span><br/>
+{% for entity in discontinued_catalogs.catalogs %}
 <span>
-  "<a href="https://www.miraclestyle.com/catalog/{{entity.key_urlsafe}}">{{entity.name|safe}}</a>"
-  discontinued by "<a href="https://www.miraclestyle.com/seller/{{entity.key_parent.key_urlsafe}}">{{entity._seller.name|safe}}</a>."
+  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
+  discontinued by "<a href="{{absolute_url('seller/%s' % entity.key_parent.key_urlsafe)}}">{{entity._seller.name|safe}}</a>."
 </span><br/>
+{% endfor %}
 <span>
   You received this message because you have opted to receive emails
   when catalogs are published or discontinued by the sellers that you are following.</span><br/>
   <span>To stop receiving this message in the future follow these steps:</span><br/>
-  <span>- navigate to the "Buyer / Following" section of the <a href="https://www.miraclestyle.com/">Miraclestyle app</a>;</span><br/>
+  <span>- navigate to the "Buyer / Following" section of the <a href="{{absolute_url('')}}">Miraclestyle app</a>;</span><br/>
   <span>- uncheck the checkbox
   "Receive email notifications when a catalog is published or discontinued by the seller that you are following."
 </span><br/>

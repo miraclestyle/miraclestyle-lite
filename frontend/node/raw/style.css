@@ -3419,6 +3419,30 @@ button.product-quantity-button {
     bottom: 0px;
     z-index: 11;
 }
+
+.catalog-draft-state {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    position: absolute;
+    background-color: rgba(255, 0, 0, 0.16);
+    min-width: 180px;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    margin:0px;
+    padding:0px;
+}
+
+.catalog-draft-state .display2 {
+    color: rgba(255, 0, 0, 0.87);
+    transform: rotate(-45deg);
+}
+}
 .logo img {
     width: auto;
     height: 100%;
