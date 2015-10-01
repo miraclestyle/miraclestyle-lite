@@ -475,7 +475,8 @@ $(function () {
                 },
                 snackbar: function (errors, callback) {
                     if (errors.traceback) {
-                        return errorHandling.modal(errors);
+                        return snackbar.showK('errorWithTraceback');
+                        //return errorHandling.modal(errors);
                     }
                     var messages = (function () {
                             var formatErrors = [];
@@ -1380,7 +1381,8 @@ $(function () {
             noBuyer: 'No buyer address. You did not provide any buyer information.',
             sellerProfileNotFound: 'Navigate to the "Seller / Settings" to configure seller profile first.',
             productDuplicated: 'Product duplicated.',
-            catalogDuplicated: 'Catalog duplicated.'
+            catalogDuplicated: 'Catalog duplicated.',
+            errorWithTraceback: 'Server errored with traceback.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -11703,6 +11705,9 @@ $(function () {
             return {
                 link: function (scope, element, attrs) {
                     var scroller = element.parents('.overflow-y:first');
+                    if (!scroller.length) {
+                        scroller = element.parents('.overflow-auto-y:first');
+                    }
                     scope.$on('modalResize', function () {
                         var height = element.height(),
                             scrollHeight = scroller.height(),
@@ -11882,8 +11887,7 @@ $(function () {
                         loadMore,
                         steady,
                         steadyOpts,
-                        maybeMore,
-                        attempts = 0;
+                        maybeMore;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
                     if (!attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
                         return;
@@ -11892,8 +11896,15 @@ $(function () {
                         var listener = config.listen;
                         if (!listener) {
                             listener = element.parents('md-content[md-scroll-y]:first');
-                            if (!listener.length) {
-                                listener = element.parents('.overflow-y:first');
+                            if (element.hasClass('overflow-y') || element.hasClass('overflow-auto-y')) {
+                                listener = element;
+                            } else {
+                                if (!listener.length) {
+                                    listener = element.parents('.overflow-y:first');
+                                }
+                                if (!listener.length) {
+                                    listener = element.parents('.overflow-auto-y:first');
+                                }
                             }
                         } else {
                             listener = $(config.listen || window);
@@ -11905,13 +11916,15 @@ $(function () {
                     maybeMore = function () {
                         $timeout(function () {
                             var listenNode = listen.get(0),
-                                maybe = listenNode ? listenNode.scrollHeight <= listen.height() : false,
+                                maybe = config.reverse ? true : listenNode ? listenNode.scrollHeight <= listen.height() : false,
                                 promise;
                             if (maybe) {
                                 promise = loadMore({}, angular.noop);
                                 if (promise) {
                                     promise.then(function () {
-                                        maybeMore();
+                                        if (!config.reverse) {
+                                            maybeMore();
+                                        }
                                     });
                                 }
                             }
@@ -11939,7 +11952,16 @@ $(function () {
                         throttle: 100,
                         handler: loadMore
                     };
+                    if (config.reverse) {
+                        delete steadyOpts.conditions;
+                    }
                     steady = new Steady(steadyOpts);
+                    if (config.reverse) {
+                        steady.addTracker('checkTop', function () {
+                            return listen.scrollTop() < 100;
+                        });
+                        steady.addCondition('checkTop', true);
+                    }
                     scope.$on('$destroy', function () {
                         steady.stop();
                         steady = undefined;
@@ -18685,7 +18707,7 @@ angular.module('app')
 
                 scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
                     if (neww !== old) {
-                        cb();
+                        $timeout(cb, 100, 0);
                     }
                 });
             }
@@ -18836,7 +18858,8 @@ angular.module('app')
                                     placeholder: 'Type message here',
                                     attrs: {
                                         'native-placeholder': '',
-                                        'class': 'primary'
+                                        'class': 'primary',
+                                        'min-length': '1'
                                     }
                                 });
 
@@ -19043,27 +19066,33 @@ angular.module('app')
                                             clearTimeout(this.timer);
                                             this.loading = true;
                                             this.timer = setTimeout(function () {
-                                                $scope.messages.reader.load({
-                                                    rpcOptions: {
-                                                        disableUI: false
-                                                    },
-                                                    hideLoading: true,
-                                                    runLastFinally: function () {
-                                                        sync.loading = false;
-                                                        sync.timer = null;
-                                                        sync.run();
-                                                    },
-                                                    runLast: function (items) {
-                                                        var map = {};
-                                                        angular.forEach($scope.order._messages, function (value, key) {
-                                                            map[value.key] = 1;
-                                                        });
-                                                        angular.forEach(items, function (value, key) {
-                                                            if (!map[value.key]) {
-                                                                $scope.order._messages.push(value);
-                                                            }
-                                                        });
+                                                models['34'].actions.read({
+                                                    key: $scope.order.key,
+                                                    read_arguments: {
+                                                        _messages: {
+                                                            _agent: {}
+                                                        }
                                                     }
+                                                }, {
+                                                    disableUI: false
+                                                }).then(function (response) {
+                                                    var map = {}, changed = false, items = response.data.entity._messages;
+                                                    angular.forEach($scope.order._messages, function (value, key) {
+                                                        map[value.key] = 1;
+                                                    });
+                                                    angular.forEach(items, function (value) {
+                                                        if (!map[value.key]) {
+                                                            $scope.order._messages.push(value);
+                                                            changed = true;
+                                                        }
+                                                    });
+                                                    if (changed) {
+                                                        $scope.messages.forceReflow();
+                                                    }
+                                                })['finally'](function () {
+                                                    sync.loading = false;
+                                                    sync.timer = null;
+                                                    sync.run();
                                                 });
                                             }, 2000);
                                         },
@@ -19078,16 +19107,27 @@ angular.module('app')
                                     },
                                     sent: false,
                                     send: function (action) {
-                                        models['34'].actions[action]($scope.messages.draft).then(function (response) {
+                                        return models['34'].actions[action]($scope.messages.draft).then(function (response) {
                                             $scope.messages.draft.message = '';
-                                            $scope.messages.sent = !$scope.messages.sent;
+                                            $scope.messages.forceReflow();
                                             $scope.order._messages.push(response.data.entity._messages[0]);
                                             locals.reactOnStateChange(response);
+                                            return response;
                                         });
+                                    },
+                                    forceReflow: function () {
+                                        $scope.messages.sent = !$scope.messages.sent;
                                     },
                                     sidebarID: 'messages' + _.uniqueId(),
                                     logMessage: function () {
-                                        return this.send('log_message');
+                                        if ($scope.container.messages.$valid) {
+                                            return this.send('log_message').then(function (response) {
+                                                $scope.container.messages.$setSubmitted(true);
+                                                $scope.container.messages.$setPristine(true);
+                                                return response;
+                                            });
+                                        }
+                                        helpers.form.wakeUp($scope.container.messages);
                                     },
                                     close: function () {
                                         return $scope.message.toggle(true);
