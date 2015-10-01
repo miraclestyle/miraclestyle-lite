@@ -176,8 +176,9 @@
                     <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
                 </button>
             </div>
-            <div always-scroll-to-bottom="['messages.open', 'messages.sent']" class="messages overflow-auto-y">
-                <div load-more-button="messages.reader"></div>
+            <div autoload-on-vertical-scroll-end="{loader: messages.reader, reverse: true}"
+                 always-scroll-to-bottom="['messages.open', 'messages.sent']"
+                 class="messages overflow-auto-y">
                 <div class="messages-list">
                     <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="isYou = message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
@@ -209,13 +210,13 @@
                 </div>
             </div>
 
-            <div class="clearfix messages-box">
+            <div ng-form name="container.messages" class="clearfix messages-box">
                 <div class="messages-send">
-                    <button md-ink-ripple-action loading type="button" class="button-transparent button-square" loading="!container.messages.$valid" ng-click="messages.logMessage()">
-                        <icon type="send"></icon>
-                    </button>
+                      <button md-ink-ripple-action loading type="button" ng-click="messages.logMessage()" class="button-transparent button-square" loading="!container.messages.$valid">
+                          <icon type="send"></icon>
+                      </button>
                 </div>
-                <div class="messages-send-wrapper relative" ng-form name="container.messages">
+                <div class="messages-send-wrapper relative">
                     <div form-input="messages.field"></div>
                 </div>
             </div>

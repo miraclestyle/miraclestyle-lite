@@ -31,7 +31,8 @@
                 },
                 snackbar: function (errors, callback) {
                     if (errors.traceback) {
-                        return errorHandling.modal(errors);
+                        return snackbar.showK('errorWithTraceback');
+                        //return errorHandling.modal(errors);
                     }
                     var messages = (function () {
                             var formatErrors = [];

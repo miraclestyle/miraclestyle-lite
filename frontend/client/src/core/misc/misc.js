@@ -89,6 +89,9 @@
             return {
                 link: function (scope, element, attrs) {
                     var scroller = element.parents('.overflow-y:first');
+                    if (!scroller.length) {
+                        scroller = element.parents('.overflow-auto-y:first');
+                    }
                     scope.$on('modalResize', function () {
                         var height = element.height(),
                             scrollHeight = scroller.height(),
@@ -268,8 +271,7 @@
                         loadMore,
                         steady,
                         steadyOpts,
-                        maybeMore,
-                        attempts = 0;
+                        maybeMore;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
                     if (!attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
                         return;
@@ -278,8 +280,15 @@
                         var listener = config.listen;
                         if (!listener) {
                             listener = element.parents('md-content[md-scroll-y]:first');
-                            if (!listener.length) {
-                                listener = element.parents('.overflow-y:first');
+                            if (element.hasClass('overflow-y') || element.hasClass('overflow-auto-y')) {
+                                listener = element;
+                            } else {
+                                if (!listener.length) {
+                                    listener = element.parents('.overflow-y:first');
+                                }
+                                if (!listener.length) {
+                                    listener = element.parents('.overflow-auto-y:first');
+                                }
                             }
                         } else {
                             listener = $(config.listen || window);
@@ -291,13 +300,15 @@
                     maybeMore = function () {
                         $timeout(function () {
                             var listenNode = listen.get(0),
-                                maybe = listenNode ? listenNode.scrollHeight <= listen.height() : false,
+                                maybe = config.reverse ? true : listenNode ? listenNode.scrollHeight <= listen.height() : false,
                                 promise;
                             if (maybe) {
                                 promise = loadMore({}, angular.noop);
                                 if (promise) {
                                     promise.then(function () {
-                                        maybeMore();
+                                        if (!config.reverse) {
+                                            maybeMore();
+                                        }
                                     });
                                 }
                             }
@@ -325,7 +336,16 @@
                         throttle: 100,
                         handler: loadMore
                     };
+                    if (config.reverse) {
+                        delete steadyOpts.conditions;
+                    }
                     steady = new Steady(steadyOpts);
+                    if (config.reverse) {
+                        steady.addTracker('checkTop', function () {
+                            return listen.scrollTop() < 100;
+                        });
+                        steady.addCondition('checkTop', true);
+                    }
                     scope.$on('$destroy', function () {
                         steady.stop();
                         steady = undefined;

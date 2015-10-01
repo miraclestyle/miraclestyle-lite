@@ -401,7 +401,8 @@
             noBuyer: 'No buyer address. You did not provide any buyer information.',
             sellerProfileNotFound: 'Navigate to the "Seller / Settings" to configure seller profile first.',
             productDuplicated: 'Product duplicated.',
-            catalogDuplicated: 'Catalog duplicated.'
+            catalogDuplicated: 'Catalog duplicated.',
+            errorWithTraceback: 'Server errored with traceback.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

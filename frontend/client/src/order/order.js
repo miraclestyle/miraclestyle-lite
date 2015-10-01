@@ -9,7 +9,7 @@
 
                 scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
                     if (neww !== old) {
-                        cb();
+                        $timeout(cb, 100, 0);
                     }
                 });
             }
@@ -160,7 +160,8 @@
                                     placeholder: 'Type message here',
                                     attrs: {
                                         'native-placeholder': '',
-                                        'class': 'primary'
+                                        'class': 'primary',
+                                        'min-length': '1'
                                     }
                                 });
 
@@ -367,27 +368,33 @@
                                             clearTimeout(this.timer);
                                             this.loading = true;
                                             this.timer = setTimeout(function () {
-                                                $scope.messages.reader.load({
-                                                    rpcOptions: {
-                                                        disableUI: false
-                                                    },
-                                                    hideLoading: true,
-                                                    runLastFinally: function () {
-                                                        sync.loading = false;
-                                                        sync.timer = null;
-                                                        sync.run();
-                                                    },
-                                                    runLast: function (items) {
-                                                        var map = {};
-                                                        angular.forEach($scope.order._messages, function (value, key) {
-                                                            map[value.key] = 1;
-                                                        });
-                                                        angular.forEach(items, function (value, key) {
-                                                            if (!map[value.key]) {
-                                                                $scope.order._messages.push(value);
-                                                            }
-                                                        });
+                                                models['34'].actions.read({
+                                                    key: $scope.order.key,
+                                                    read_arguments: {
+                                                        _messages: {
+                                                            _agent: {}
+                                                        }
                                                     }
+                                                }, {
+                                                    disableUI: false
+                                                }).then(function (response) {
+                                                    var map = {}, changed = false, items = response.data.entity._messages;
+                                                    angular.forEach($scope.order._messages, function (value, key) {
+                                                        map[value.key] = 1;
+                                                    });
+                                                    angular.forEach(items, function (value) {
+                                                        if (!map[value.key]) {
+                                                            $scope.order._messages.push(value);
+                                                            changed = true;
+                                                        }
+                                                    });
+                                                    if (changed) {
+                                                        $scope.messages.forceReflow();
+                                                    }
+                                                })['finally'](function () {
+                                                    sync.loading = false;
+                                                    sync.timer = null;
+                                                    sync.run();
                                                 });
                                             }, 2000);
                                         },
@@ -402,16 +409,27 @@
                                     },
                                     sent: false,
                                     send: function (action) {
-                                        models['34'].actions[action]($scope.messages.draft).then(function (response) {
+                                        return models['34'].actions[action]($scope.messages.draft).then(function (response) {
                                             $scope.messages.draft.message = '';
-                                            $scope.messages.sent = !$scope.messages.sent;
+                                            $scope.messages.forceReflow();
                                             $scope.order._messages.push(response.data.entity._messages[0]);
                                             locals.reactOnStateChange(response);
+                                            return response;
                                         });
+                                    },
+                                    forceReflow: function () {
+                                        $scope.messages.sent = !$scope.messages.sent;
                                     },
                                     sidebarID: 'messages' + _.uniqueId(),
                                     logMessage: function () {
-                                        return this.send('log_message');
+                                        if ($scope.container.messages.$valid) {
+                                            return this.send('log_message').then(function (response) {
+                                                $scope.container.messages.$setSubmitted(true);
+                                                $scope.container.messages.$setPristine(true);
+                                                return response;
+                                            });
+                                        }
+                                        helpers.form.wakeUp($scope.container.messages);
                                     },
                                     close: function () {
                                         return $scope.message.toggle(true);
