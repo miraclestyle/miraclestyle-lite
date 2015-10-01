@@ -5,7 +5,7 @@
   {% if account._root_admin %}
   Administrator left you the following message:
   {% endif %}
-  {% if not account._root_admin and account.key == entity._root %}
+  {% if not account._root_admin and account.key == entity.key._root %}
   Buyer left you the following message:
   {% endif %}
   {% if not account._root_admin and account.key == entity.seller_reference._root %}
