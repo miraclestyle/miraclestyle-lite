@@ -3,7 +3,7 @@
 {% block body %}
 <span>
   Administrative action was taken against your catalog
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>".
+  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>."
 </span><br/>
 <span>
   The catalog is {{entity.state}} {% if input.index_state == "index" %}and set to be indexed on the Miraclestyle app{% else %}
