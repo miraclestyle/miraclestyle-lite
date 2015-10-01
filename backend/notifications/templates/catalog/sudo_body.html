@@ -4,14 +4,14 @@
 <span>
   Administrative action was taken against your catalog
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>."
-</span><br/>
+</span><br/><br/>
 <span>
   The catalog is {{entity.state}} {% if input.index_state == "index" %}and set to be indexed on the Miraclestyle app{% else %}
   and set to be unindexed from the Miraclestyle app{% endif %}.
-</span><br/>
+</span><br/><br/>
 <span>
   Administrator left you the following message:
-</span><br/>
+</span><br/><br/>
 <span>
   {{input.message|safe|nl2br}}
 </span>
