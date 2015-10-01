@@ -5,33 +5,33 @@
   Your catalog
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
   was successfully published.
-</span><br/>
+</span><br/><br/>
 <span>
   The catalog is set to expire on {{entity.discontinue_date|safe}}
   when it will be automatically discontinued.
-</span><br/>
+</span><br/><br/>
 <span>
   Note that you can always manually discontinue your published catalog.
-</span><br/>
+</span><br/><br/>
 <span>
   Here are few reminders to be aware of:
-</span><br/>
+</span><br/><br/>
 <span>
   When created, a catalog initially assumes draft state and is not accessible to the general public.
   While in draft state, a catalog can be edited.
-</span><br/>
+</span><br/><br/>
 <span>
   A published catalog is accessible to the general public
   and can be shared and embedded to third party websites.
   With an exception of a product "Availability" field, a published catalog cannot be edited.
   However, a published catalog can be duplicated,
   and the duplicate is ready for editing.
-</span><br/>
+</span><br/><br/>
 <span>
   A discontinued catalog is not accessible to the general public
   and is eventually entirely removed from the Miraclestyle app.
   However, products of a discontinued catalog remain
   accessible for the 180 days to those who have purchased them.
   A discontinued catalog cannot be edited or duplicated.
-</span><br/>
+</span>
 {% endblock %}
