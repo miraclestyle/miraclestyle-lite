@@ -5,10 +5,10 @@
   Seller reported {{entity.feedback}} feedback that you have left on your purchase order
   "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>"
   to the Miraclestyle app administrators.
-</span><br/>
+</span><br/><br/>
 <span>
   Seller left the following comment:
-</span><br/>
+</span><br/><br/>
 <span>
   {{input.message|safe|nl2br}}
 </span>
