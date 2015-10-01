@@ -4,13 +4,13 @@
 <span>
   Administrative action was taken against your order
   "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>."
-</span><br/>
+</span><br/><br/>
 <span>
   The order is set to {{entity.feedback}} feedback.
-</span><br/>
+</span><br/><br/>
 <span>
   Administrator left the following comment:
-</span><br/>
+</span><br/><br/>
 <span>
   {{input.message|safe|nl2br}}
 </span>
