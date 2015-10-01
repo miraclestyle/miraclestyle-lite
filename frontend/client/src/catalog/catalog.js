@@ -484,7 +484,7 @@
                                 loadProductInstance = function (response) {
                                     var product,
                                         productInstance,
-                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
+                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
                                             'description', 'contents', 'availability'
                                         ];
                                     try {
@@ -498,7 +498,7 @@
                                         $scope.productInstance = productInstance;
                                         angular.forEach(toUpdate, function (field) {
                                             var next = productInstance[field];
-                                            if (next !== null && next.length) {
+                                            if (next !== null && next.length && next !== undefined) {
                                                 $scope.product[field] = next;
                                             }
                                         });
