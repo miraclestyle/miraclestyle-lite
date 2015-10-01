@@ -3,32 +3,33 @@
 {% block body %}
 <span>
   Here is the list of recently published catalogs from the sellers that you are following:
-</span><br/>
+</span><br/><br/>
 {% for seller_key in published_catalogs %}
 {% for entity in published_catalogs[seller_key].catalogs %}
 <span>
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
   published by "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{published_catalogs[seller_key].seller.name|safe}}</a>."
-</span><br/>
+</span><br/><br/>
 {% endfor %}
 {% endfor %}
 <span>
   Here is the list of recently discontinued catalogs from the sellers that you are following:
-</span><br/>
+</span><br/><br/>
 {% for seller_key in discontinued_catalogs %}
 {% for entity in discontinued_catalogs[seller_key].catalogs %}
 <span>
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
   discontinued by "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{discontinued_catalogs[seller_key].seller.name|safe}}</a>."
-</span><br/>
+</span><br/><br/>
 {% endfor %}
 {% endfor %}
 <span>
   You received this message because you have opted to receive emails
-  when catalogs are published or discontinued by the sellers that you are following.</span><br/>
-  <span>To stop receiving this message in the future follow these steps:</span><br/>
-  <span>- navigate to the "Buyer / Following" section of the <a href="{{absolute_url('')}}">Miraclestyle app</a>;</span><br/>
-  <span>- uncheck the checkbox
-  "Receive email notifications when a catalog is published or discontinued by the seller that you are following."
-</span><br/>
+  when catalogs are published or discontinued by the sellers that you are following.
+</span><br/><br/>
+<span>To stop receiving this message in the future follow these steps:</span><br/><br/>
+<span>- navigate to the "Buyer / Following" section of the <a href="{{absolute_url('')}}">Miraclestyle app</a>;</span><br/>
+<span>
+  - uncheck the checkbox "Receive email notifications when a catalog is published or discontinued by the seller that you are following."
+</span>
 {% endblock %}
