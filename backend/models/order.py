@@ -622,7 +622,12 @@ class Order(orm.BaseExpando):
                                   's': {'sender': settings.NOTIFY_EMAIL,
                                         'subject': notifications.ORDER_COMPLETE_SUBJECT,
                                         'body': notifications.ORDER_COMPLETE_BODY},
-                                  'd': {'recipient': '_order.seller_and_buyer_emails'}})
+                                  'd': {'recipient': '_order.buyer_email'}}),
+                      Notify(cfg={'condition': 'entity.state == "completed"',
+                                  's': {'sender': settings.NOTIFY_EMAIL,
+                                        'subject': notifications.ORDER_COMPLETE_SELLER_SUBJECT,
+                                        'body': notifications.ORDER_COMPLETE_SELLER_BODY},
+                                  'd': {'recipient': '_order.seller_email'}})
                   ]
               )
           ]
@@ -782,12 +787,12 @@ class Order(orm.BaseExpando):
                                         'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                         'body': notifications.ORDER_LOG_MESSAGE_BODY},
                                   'd': {'recipient': '_order.seller_and_buyer_emails'}}),
-                      Notify(cfg={'condition': lambda account, entity, **kwargs: not account._root_admin and account.key == entity._root,
+                      Notify(cfg={'condition': lambda account, entity, **kwargs: account.key == entity.key._root and not account._root_admin,
                                   's': {'sender': settings.NOTIFY_EMAIL,
                                         'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                         'body': notifications.ORDER_LOG_MESSAGE_BODY},
                                   'd': {'recipient': '_order.seller_email'}}),
-                      Notify(cfg={'condition': lambda account, entity, **kwargs: not account._root_admin and account.key == entity.seller_reference._root,
+                      Notify(cfg={'condition': lambda account, entity, **kwargs: account.key == entity.seller_reference._root and not account._root_admin,
                                   's': {'sender': settings.NOTIFY_EMAIL,
                                         'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                         'body': notifications.ORDER_LOG_MESSAGE_BODY},
@@ -801,11 +806,15 @@ class Order(orm.BaseExpando):
 
   @property
   def buyer_email(self):
-    return self.root_entity._primary_email
+    account = self.root_entity
+    account.read()
+    return account._primary_email
 
   @property
   def seller_email(self):
-    return self.seller_reference._root.entity._primary_email
+    account = self.seller_reference._root.entity
+    account.read()
+    return account._primary_email
 
   @property
   def seller_and_buyer_emails(self):

@@ -4,21 +4,31 @@
 <span>
   Here is the list of recently published catalogs from the sellers that you are following:
 </span><br/>
-{% for entity in published_catalogs.catalogs %}
+{% for seller_key in published_catalogs %}
 <span>
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
-  published by "<a href="{{absolute_url('seller/%s' % entity.key_parent.key_urlsafe)}}">{{entity._seller.name|safe}}</a>."
+published by "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{published_catalogs[seller_key].seller.name|safe}}</a>."
 </span><br/>
+  {% for entity in published_catalogs[seller_key].catalogs %}
+  <span>
+      <a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>
+  </span><br/>
+  {% endfor %}
 {% endfor %}
+
 <span>
   Here is the list of recently discontinued catalogs from the sellers that you are following:
 </span><br/>
-{% for entity in discontinued_catalogs.catalogs %}
+{% for seller_key in discontinued_catalogs %}
 <span>
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
-  discontinued by "<a href="{{absolute_url('seller/%s' % entity.key_parent.key_urlsafe)}}">{{entity._seller.name|safe}}</a>."
+published by "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{discontinued_catalogs[seller_key].seller.name|safe}}</a>."
 </span><br/>
+  {% for entity in discontinued_catalogs[seller_key].catalogs %}
+  <span>
+      <a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>
+  </span><br/>
+  {% endfor %}
 {% endfor %}
+
 <span>
   You received this message because you have opted to receive emails
   when catalogs are published or discontinued by the sellers that you are following.</span><br/>

@@ -366,6 +366,7 @@ class Notify(orm.BaseModel):
     values.update(static_values)
     for key, value in dynamic_values.iteritems():
       values[key] = tools.get_attr(context, value)
+    print(condition is None or condition(**values), condition)
     if condition is None or condition(**values):
       if 'mail' in method:
         tools.mail_send(values)

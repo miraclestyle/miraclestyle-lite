@@ -55,7 +55,7 @@ class CollectionCronNotify(orm.BaseModel):
 
       get_results(published_catalogs)
       get_results(discontinued_catalogs)
-
+      
       context._published_catalogs = published_catalogs
       context._discontinued_catalogs = discontinued_catalogs
 

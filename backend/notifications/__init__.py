@@ -18,7 +18,7 @@ def template(path):
   try:
     return codecs.open(os.path.join(os.path.dirname(__file__), 'templates', path), 'r', 'utf-8').read()
   except IOError as e:
-    return 'text'
+    return 'Notification template not created at path %s' % path
 
 
 ACCOUNT_SUDO_SUBJECT = template('account/sudo_subject.html')
@@ -53,3 +53,6 @@ ORDER_LOG_MESSAGE_BODY = template('order/log_message_body.html')
 
 ORDER_COMPLETE_SUBJECT = template('order/complete_subject.html')
 ORDER_COMPLETE_BODY = template('order/complete_body.html')
+
+ORDER_COMPLETE_SELLER_SUBJECT = template('order/complete_seller_subject.html')
+ORDER_COMPLETE_SELLER_BODY = template('order/complete_seller_body.html')

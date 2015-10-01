@@ -154,11 +154,13 @@ def mail_send(data):
   message_sender = data.get('sender', None)
   if not message_sender:
     raise ValueError('`sender` not found in data')
+  body = render_template(data['body'], data).strip()
+  subject = render_template(data['subject'], data).strip()
   message = mail.EmailMessage()
   message.sender = message_sender
   message.bcc = data['recipient']
-  message.subject = render_template(data['subject'], data).strip()
-  message.html = render_template(data['body'], data).strip()
+  message.subject = subject
+  message.html = body
   message.body = message.html
   message.check_initialized()
   message.send()
