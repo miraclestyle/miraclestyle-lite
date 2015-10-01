@@ -3,13 +3,13 @@
 {% block body %}
 <span>
   Administrative action was taken against your account ID# {{entity.key_id}}.
-</span><br/>
+</span><br/><br/>
 <span>
   The account is {% if entity.state == "suspended" %}suspended{% else %}active{% endif %}.
-</span><br/>
+</span><br/><br/>
 <span>
   Administrator left you the following message:
-</span><br/>
+</span><br/><br/>
 <span>
   {{input.message|safe|nl2br}}
 </span>
