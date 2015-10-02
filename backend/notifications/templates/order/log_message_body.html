@@ -3,13 +3,25 @@
 {% block body %}
 <span>
   {% if account._root_admin %}
-  Administrator left you the following message:
+  Administrator left the following message on your order
+  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
   {% endif %}
   {% if not account._root_admin and account.key == entity.key._root %}
-  Buyer left you the following message:
+  Buyer "ID{{entity.key._root}}" left the following message on your order
+  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
   {% endif %}
   {% if not account._root_admin and account.key == entity.seller_reference._root %}
-  Seller left you the following message:
+  {% if entity.state == 'cart' %}
+  Seller
+  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.name|safe}}</a>."
+  left the following message on your cart:
+  {% endif %}
+  {% if entity.state != 'cart' %}
+  Seller
+  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.name|safe}}</a>."
+  left the following message on your order
+  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
+  {% endif %}
   {% endif %}
 </span><br/><br/>
 <span>
