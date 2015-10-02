@@ -1,1 +1,14 @@
-You have a new message.
+{% if account._root_admin %}
+  Administrator left a message on your order "#{{entity.key_id}}"
+  {% endif %}
+  {% if not account._root_admin and account.key == entity.key._root %}
+  Buyer left a message on your order "#{{entity.key_id}}"
+  {% endif %}
+  {% if not account._root_admin and account.key == entity.seller_reference._root %}
+  {% if entity.state == 'cart' %}
+  Seller "{{entity._seller.value.name|safe}}" left a message on your cart
+  {% endif %}
+  {% if entity.state != 'cart' %}
+  Seller "{{entity._seller.value.name|safe}}" left a message on your order "#{{entity.key_id}}":
+  {% endif %}
+{% endif %}
