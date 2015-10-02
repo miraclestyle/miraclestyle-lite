@@ -1,4 +1,4 @@
-{% if entity.state == 'cart' %}
+{% if account.key == entity.seller_reference._root and entity.state == 'cart' %}
 You have a new message from seller "{{entity._seller.value.name|safe}}."
 {% endif %}
 {% if entity.state != 'cart' %}
