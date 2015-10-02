@@ -7,7 +7,7 @@
   "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
   {% endif %}
   {% if not account._root_admin and account.key == entity.key._root %}
-  Buyer "ID{{entity.key._root}}" left the following message on your order
+  Buyer "ID{{entity.key._root._id}}" left the following message on your order
   "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
   {% endif %}
   {% if not account._root_admin and account.key == entity.seller_reference._root %}
