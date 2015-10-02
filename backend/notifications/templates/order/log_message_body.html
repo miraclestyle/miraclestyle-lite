@@ -13,13 +13,13 @@
   {% if not account._root_admin and account.key == entity.seller_reference._root %}
   {% if entity.state == 'cart' %}
   Seller
-  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name|safe}}</a>."
+  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name|safe}}</a>"
   left the following message on your
   <a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">cart</a>:
   {% endif %}
   {% if entity.state != 'cart' %}
   Seller
-  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name|safe}}</a>."
+  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name|safe}}</a>"
   left the following message on your order
   "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
   {% endif %}
