@@ -3,9 +3,11 @@
 {% block body %}
 
 {% for seller_key in published_catalogs %}
+{% if published_catalogs[seller_key].catalogs %}
 <span>
   Seller "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{published_catalogs[seller_key].seller.name|safe}}</a>" recently published these catalogs:
 </span><br/><br/>
+{% endif %}
 {% for entity in published_catalogs[seller_key].catalogs %}
 <span>
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
@@ -14,9 +16,11 @@
 {% endfor %}
 
 {% for seller_key in discontinued_catalogs %}
+{% if discontinued_catalogs[seller_key].catalogs %}
 <span>
   Seller "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{discontinued_catalogs[seller_key].seller.name|safe}}</a>" recently discontinued these catalogs:
 </span><br/><br/>
+{% endif %}
 {% for entity in discontinued_catalogs[seller_key].catalogs %}
 <span>
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
