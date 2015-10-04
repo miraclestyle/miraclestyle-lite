@@ -243,7 +243,7 @@ class Account(orm.BaseExpando):
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
                                          {'account': '_account.key_urlsafe', 'entity': '_account'},
-                                         lambda: account, entity, **kwargs: entity.state == 'suspended')])
+                                         lambda account, entity, **kwargs: entity.state == 'suspended')])
                       # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
                   ]
               )
