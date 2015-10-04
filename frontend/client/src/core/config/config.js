@@ -423,7 +423,7 @@
             about: 'About',
             acceptable_use_policy: 'Acceptable Use Policy',
             tos: 'Terms of Service',
-            copyright_policy: 'Copyright Policy',
+            copyright_policy: 'Copyright & Trademark',
             privacy_policy: 'Privacy Policy',
             buyer: 'Buyer',
             carts: 'Carts',
