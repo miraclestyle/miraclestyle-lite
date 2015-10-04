@@ -1,25 +1,25 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<span>
-  Here is the list of recently published catalogs from the sellers that you are following:
-</span><br/><br/>
+
 {% for seller_key in published_catalogs %}
+<span>
+  Seller "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{published_catalogs[seller_key].seller.name|safe}}</a>" recently published these catalogs:
+</span><br/><br/>
 {% for entity in published_catalogs[seller_key].catalogs %}
 <span>
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
-  published by "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{published_catalogs[seller_key].seller.name|safe}}</a>."
 </span><br/><br/>
 {% endfor %}
 {% endfor %}
-<span>
-  Here is the list of recently discontinued catalogs from the sellers that you are following:
-</span><br/><br/>
+
 {% for seller_key in discontinued_catalogs %}
+<span>
+  Seller "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{discontinued_catalogs[seller_key].seller.name|safe}}</a>" recently discontinued these catalogs:
+</span><br/><br/>
 {% for entity in discontinued_catalogs[seller_key].catalogs %}
 <span>
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
-  discontinued by "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{discontinued_catalogs[seller_key].seller.name|safe}}</a>."
 </span><br/><br/>
 {% endfor %}
 {% endfor %}
