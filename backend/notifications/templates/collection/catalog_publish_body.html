@@ -6,6 +6,7 @@
 </span><br/><br/>
 {% for seller_key in published_catalogs %}
 {% for entity in published_catalogs[seller_key].catalogs %}
+{{entity.cover.read()}}
 <div>
   <a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}" style="display: block;">
     <img class="image" src="{{entity.cover.value.serving_url}}" alt="{{entity.name|safe}}"
