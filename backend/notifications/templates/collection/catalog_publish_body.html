@@ -1,32 +1,24 @@
 {% extends 'base.html' %}
 
 {% block body %}
-
+<span>
+  Here is the list of recently published catalogs from the sellers that you are following:
+</span><br/><br/>
 {% for seller_key in published_catalogs %}
-{% if published_catalogs[seller_key].catalogs %}
-<span>
-  Seller "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{published_catalogs[seller_key].seller.name|safe}}</a>" recently published these catalogs:
-</span><br/><br/>
-{% endif %}
 {% for entity in published_catalogs[seller_key].catalogs %}
-<span>
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
-</span><br/><br/>
+<div>
+  <a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}" style="display: block;">
+    <img class="image" src="{{entity.cover}}"
+    style="display: block; position: relative; box-sizing: border-box; margin: 0px; padding: 0px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width:240px; height: 240px;">
+  </a>
+  <a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}" style="display: block;">
+    <img class="image" src="{{entity.seller_logo}}"
+    style="display: block; position: relative; box-sizing: border-box; margin: 0px; padding: 0px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width:240px; height: 100px;">
+  </a>
+</div>
 {% endfor %}
 {% endfor %}
-
-{% for seller_key in discontinued_catalogs %}
-{% if discontinued_catalogs[seller_key].catalogs %}
-<span>
-  Seller "<a href="{{absolute_url('seller/%s' % seller_key.urlsafe())}}">{{discontinued_catalogs[seller_key].seller.name|safe}}</a>" recently discontinued these catalogs:
-</span><br/><br/>
-{% endif %}
-{% for entity in discontinued_catalogs[seller_key].catalogs %}
-<span>
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
-</span><br/><br/>
-{% endfor %}
-{% endfor %}
+<br/><br/>
 <span>
   You received this message because you have opted to receive emails
   when catalogs are published or discontinued by the sellers that you are following.
