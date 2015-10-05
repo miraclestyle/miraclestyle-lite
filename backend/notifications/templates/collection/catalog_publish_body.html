@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<div style="display: flex; position: relative; box-sizing: border-box; margin: 0px; padding: 1px; padding-bottom: 40px; justify-content: flex-start; align-items: stretch; align-content: flex-start; flex-direction: row; flex-wrap: wrap;">
+<div style="display: flex; position: relative; box-sizing: border-box; justify-content: flex-start; align-items: stretch; align-content: flex-start; flex-direction: row; flex-wrap: wrap; margin: 0px; padding: 1px; padding-bottom: 40px;">
   {% for seller_key in published_catalogs %}
   {% for entity in published_catalogs[seller_key].catalogs %}
   <div style="padding: 1px;">
