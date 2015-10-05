@@ -52,6 +52,8 @@ class CollectionCronNotify(orm.BaseModel):
       def get_results(catalogs):
         for key, value in catalogs.iteritems():
           value['catalogs'] = value['catalogs'].get_result()
+          for catalog in value['catalogs']:
+            catalog.read()
 
       get_results(published_catalogs)
       get_results(discontinued_catalogs)
