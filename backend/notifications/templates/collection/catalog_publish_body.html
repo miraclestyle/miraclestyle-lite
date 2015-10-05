@@ -1,20 +1,9 @@
 {% extends 'base.html' %}
 
 {% block body %}
-{% for seller_key in published_catalogs %}
-{% for entity in published_catalogs[seller_key].catalogs %}
-<div
-style="display: flex;
-position: relative;
-box-sizing: border-box;
-margin: 0px;
-padding: 1px;
-justify-content: flex-start;
-align-items: stretch;
-align-content: flex-start;
-flex-direction: row;
-flex-wrap: wrap;
-">
+<div style="display: flex; position: relative; box-sizing: border-box; margin: 0px; padding: 1px; padding-bottom: 40px; justify-content: flex-start; align-items: stretch; align-content: flex-start; flex-direction: row; flex-wrap: wrap;">
+  {% for seller_key in published_catalogs %}
+  {% for entity in published_catalogs[seller_key].catalogs %}
   <div>
     <a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}" style="display: block;">
       <img class="image" src="{{entity.cover.value.serving_url}}" alt="{{entity.name|safe}}"
@@ -25,10 +14,9 @@ flex-wrap: wrap;
       style="display: block; position: relative; box-sizing: border-box; margin: 0px; padding: 0px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width:240px; height: 100px;">
     </a>
   </div>
+  {% endfor %}
+  {% endfor %}
 </div>
-{% endfor %}
-{% endfor %}
-<br/><br/>
 <span>
   You received this message because you have opted to receive emails
   when catalogs are published or discontinued by the sellers that you are following.
