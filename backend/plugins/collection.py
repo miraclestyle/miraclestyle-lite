@@ -4,6 +4,7 @@ Created on Sep 16, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
+from google.appengine.datastore.datastore_query import Cursor
 
 import datetime
 import collections
@@ -23,7 +24,7 @@ class CollectionCronNotify(orm.BaseModel):
     age = self.cfg.get('age', 7)
     Collection = context.models['18']
     Catalog = context.models['31']
-    result = Collection.query(Collection.notify == True).fetch_page(1, start_cursor=context.input.get('cursor'))
+    result = Collection.query(Collection.notify == True).fetch_page(1, start_cursor=Cursor(urlsafe=context.input.get('cursor')))
     collection = None
     if len(result) and len(result[0]):
       collection = result[0][0]
@@ -61,8 +62,12 @@ class CollectionCronNotify(orm.BaseModel):
       context._published_catalogs = published_catalogs
       context._discontinued_catalogs = discontinued_catalogs
 
+    cursor = None
+    if result[1]:
+      cursor = result[1].urlsafe()
+
     if result[2] and result[1]:  # if result.more and result.cursor
       data = {'action_id': 'cron_notify',
               'action_model': '18',
-              'cursor': result[1]}
+              'cursor': cursor}
       context._callbacks.append(('callback', data))
