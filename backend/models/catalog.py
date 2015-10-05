@@ -341,9 +341,7 @@ class Catalog(orm.BaseExpando):
         and entity._original.state == "published"
 
   def condition_publish(account, entity, **kwargs):
-    return (account._is_taskqueue or account._root_admin or
-            (not account._is_guest and entity._original.key_root == account.key)) \
-        and entity._original.state != "published"
+    return account._is_taskqueue and entity._original.state != "published"
 
   def condition_discontinue(account, entity, **kwargs):
     return account._is_taskqueue and entity._original.state != "discontinued"
@@ -377,7 +375,7 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('read', condition_published_or_discontinued),
       orm.ExecuteActionPermission('update', condition_update),
-      orm.ExecuteActionPermission(('catalog_upload_images', 'product_upload_images',
+      orm.ExecuteActionPermission(('publish', 'catalog_upload_images', 'product_upload_images',
                                    'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
       orm.ExecuteActionPermission(('discontinue', 'catalog_duplicate'), condition_not_guest_and_owner_and_published),
       orm.ExecuteActionPermission('publish', condition_publish),
