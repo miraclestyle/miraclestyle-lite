@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<table style="position: relative; box-sizing: border-box; margin: 0px; padding: 1px; padding-bottom: 40px; border-collapse: collapse; border: 0px; border-spacing: 0px;">
+<table style="position: relative; box-sizing: border-box; margin: 0px; padding: 1px; padding-bottom: 40px; border: 0px; border-spacing: 0px;">
   <tbody>
   {% for seller_key in published_catalogs %}
     {% for entity_sublist in published_catalogs[seller_key].catalogs|slice(2) %}
