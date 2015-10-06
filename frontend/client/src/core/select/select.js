@@ -11,15 +11,14 @@
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
                         listView = scope.$eval(attrs.listView),
+                        search = scope.$eval(attrs.search),
                         select = scope.$eval(attrs.select),
                         init = (select && select.init ? select.init : null);
-                    ngModel.$formatters.push(function (value) {
-                        select.item = select.find(value);
-                        return value;
-                    });
+
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
+                    select.search = search;
                     select.anyItems = 0;
                     select.async = true;
                     select.loading = false;
@@ -164,9 +163,6 @@
                         if (select.search) {
                             select.search.query = {};
                         }
-                        select.multipleSelection = {};
-                        select.collectActive();
-
                         var attachTo = element.parents('.modal:first').find('.modal-dialog:first'),
                             choices;
 
