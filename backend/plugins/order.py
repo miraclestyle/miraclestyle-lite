@@ -804,7 +804,8 @@ class OrderCarrierPlugin(orm.BaseModel):
           if price.evaluate_condition(condition_data):
             price_data = {
                 'weight': order._total_weight,
-                'volume': order._total_volume
+                'volume': order._total_volume,
+                'price': order.total_amount
             }
             line_prices.append(price.calculate_price(price_data))
       else:
