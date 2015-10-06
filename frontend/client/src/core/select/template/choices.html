@@ -15,7 +15,7 @@
                 ng-repeat="item in group.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                 tabindex="{{$index + 2}}">
                   <div class="list-content-tile list-content-tile-one-line first">
-                        <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+                        <strong class="first"><span ng-bind-html="select.view(item)"></span></strong>
                   </div>
             </li>
           </ul>
@@ -31,7 +31,7 @@
                 ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                 tabindex="{{$index + 2}}">
                   <div class="list-content-tile list-content-tile-one-line first">
-                        <strong class="first"><span ng-bind-html="select.view(item)<% if (select.search) { %> | highlight: <%= select.search.model %><% } %>"></span></strong>
+                        <strong class="first"><span ng-bind-html="select.view(item)"></span></strong>
                   </div>
             </li>
           </ul>
