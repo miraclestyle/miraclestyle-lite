@@ -10129,6 +10129,14 @@ $(function () {
                                         }];
                                     }
 
+                                    if (config.code_name === 'currency') {
+                                        argument.filters.push({
+                                            value: 'Currency',
+                                            field: 'measurement',
+                                            operator: '=='
+                                        });
+                                    }
+
                                     return searchDefaults;
 
                                 },
@@ -10319,6 +10327,9 @@ $(function () {
                                     children: [],
                                     mapped: {},
                                     top: [],
+                                    isLeaf: function (item) {
+                                        return $.inArray('visible', item.state) !== -1;
+                                    },
                                     resetToTop: function () {
                                         select.product_categories.children = [];
                                         select.product_categories.mapped = {};
@@ -10624,6 +10635,7 @@ $(function () {
                             var dirty;
                             angular.forEach(config.ui.specifics.parentArgs,
                                 function (ent, i) {
+                                    i = ((config.ui.specifics.parentArgs.length - 1) - i);
                                     if (ent._state === 'deleted' || ent._sequence !== i) {
                                         dirty = true;
                                     }
@@ -14852,15 +14864,14 @@ $(function () {
                         items = scope.$eval(attrs.items),
                         view = scope.$eval(attrs.view),
                         listView = scope.$eval(attrs.listView),
+                        search = scope.$eval(attrs.search),
                         select = scope.$eval(attrs.select),
                         init = (select && select.init ? select.init : null);
-                    ngModel.$formatters.push(function (value) {
-                        select.item = select.find(value);
-                        return value;
-                    });
+
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
+                    select.search = search;
                     select.anyItems = 0;
                     select.async = true;
                     select.loading = false;
@@ -15005,9 +15016,6 @@ $(function () {
                         if (select.search) {
                             select.search.query = {};
                         }
-                        select.multipleSelection = {};
-                        select.collectActive();
-
                         var attachTo = element.parents('.modal:first').find('.modal-dialog:first'),
                             choices;
 

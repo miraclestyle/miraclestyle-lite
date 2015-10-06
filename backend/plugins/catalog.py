@@ -38,7 +38,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
     structure = collections.OrderedDict()
     for i, item in enumerate(categories):
       if i == 100:  # all instances now only import 100 items
-        break # break
+        break
       full_path = item.split(' > ')
       current_structure = structure
       for path in full_path:
@@ -69,7 +69,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
           category['name'] = ' / '.join(current)
           category['state'] = ['indexable']
           if len(value) < 2:
-            category['state'].append('visible')  # leafs
+            category['state'].append('visible')  # marks the category as leaf
           category = Category(**category)
           category._use_rule_engine = False
           category._use_record_engine = False
@@ -78,7 +78,6 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
             # roots
             next_args.append(value.iteritems())
         current_structure = None
-
     parse_structure(structure.iteritems())
     tools.log.debug('Writing %s categories' % len(put_entities))
     for entity in put_entities:

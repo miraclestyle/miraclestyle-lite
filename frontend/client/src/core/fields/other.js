@@ -502,6 +502,9 @@
                                     children: [],
                                     mapped: {},
                                     top: [],
+                                    isLeaf: function (item) {
+                                        return $.inArray('visible', item.state) !== -1;
+                                    },
                                     resetToTop: function () {
                                         select.product_categories.children = [];
                                         select.product_categories.mapped = {};

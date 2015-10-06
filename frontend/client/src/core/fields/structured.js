@@ -203,6 +203,7 @@
                             var dirty;
                             angular.forEach(config.ui.specifics.parentArgs,
                                 function (ent, i) {
+                                    i = ((config.ui.specifics.parentArgs.length - 1) - i);
                                     if (ent._state === 'deleted' || ent._sequence !== i) {
                                         dirty = true;
                                     }
