@@ -1403,7 +1403,7 @@ $(function () {
             about: 'About',
             acceptable_use_policy: 'Acceptable Use Policy',
             tos: 'Terms of Service',
-            copyright_policy: 'Copyright Policy',
+            copyright_policy: 'Copyright & Trademark',
             privacy_policy: 'Privacy Policy',
             buyer: 'Buyer',
             carts: 'Carts',
@@ -17256,7 +17256,7 @@ angular.module('app')
                                 loadProductInstance = function (response) {
                                     var product,
                                         productInstance,
-                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'weight_uom', 'volume', 'volume_uom',
+                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
                                             'description', 'contents', 'availability'
                                         ];
                                     try {
@@ -17270,7 +17270,7 @@ angular.module('app')
                                         $scope.productInstance = productInstance;
                                         angular.forEach(toUpdate, function (field) {
                                             var next = productInstance[field];
-                                            if (next !== null && next.length) {
+                                            if (next !== null && next.length && next !== undefined) {
                                                 $scope.product[field] = next;
                                             }
                                         });

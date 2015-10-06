@@ -699,11 +699,11 @@ class OrderCarrierLinePrice(orm.BaseModel):
 
   _use_rule_engine = False
 
-  condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
+  condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price'), indexed=False)
   condition_operator = orm.SuperStringProperty('2', required=True, default='==', choices=('==', '!=', '>', '<', '>=', '<='), indexed=False)
   condition_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
   price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=('fixed', 'variable'), indexed=False)
-  price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price', 'quantity'), indexed=False)
+  price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price'), indexed=False)
   price_value = orm.SuperDecimalProperty('6', required=True, indexed=False)
 
   def evaluate_condition(self, data):
@@ -790,36 +790,27 @@ class OrderCarrierPlugin(orm.BaseModel):
   def calculate_price(self, valid_lines, order):
     if not order._lines.value:
       return Decimal('0')  # if no lines are present return 0
-    total = Decimal('0')
-    for line in order._lines.value:
-      if line._state == 'deleted':
-        continue
-      product = line.product.value
-      prices = []
-      for carrier_line in valid_lines:
-        line_prices = []
-        carrier_line_prices = carrier_line.prices.value
-        if carrier_line_prices:
-          for price in carrier_line_prices:
-            condition_data = {
+    prices = []
+    for carrier_line in valid_lines:
+      line_prices = []
+      carrier_line_prices = carrier_line.prices.value
+      if carrier_line_prices:
+        for price in carrier_line_prices:
+          condition_data = {
+              'weight': order._total_weight,
+              'volume': order._total_volume,
+              'price': order.total_amount
+          }
+          if price.evaluate_condition(condition_data):
+            price_data = {
                 'weight': order._total_weight,
-                'volume': order._total_volume,
-                'price': order.total_amount,
-                'quantity': order._total_quantity,
+                'volume': order._total_volume
             }
-            if price.evaluate_condition(condition_data):
-              price_data = {
-                  'weight': product.weight * product.quantity,
-                  'volume': product.volume * product.quantity,
-                  'quantity': product.quantity
-              }
-              price = price.calculate_price(price_data)
-              line_prices.append(price)
-        else:
-          line_prices.append(Decimal('0'))
-        prices.append(min(line_prices))
-      total = total + min(prices)  # Return the lowest price possible of all lines!
-    return total
+            line_prices.append(price.calculate_price(price_data))
+      else:
+        line_prices.append(Decimal('0'))
+      prices.append(min(line_prices))
+    return min(prices)
 
   def validate_line(self, carrier_line, order):
     address = getattr(order, 'shipping_address')
