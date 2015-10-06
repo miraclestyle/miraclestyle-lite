@@ -144,9 +144,23 @@ class SellerSetupDefaults(orm.BaseModel):
       else:
         plugin_group.plugins = plugins
     else:
-      default_currency_find = filter(lambda x: x.get_kind() == '117', plugin_group.plugins)
-      default_carrier_find = filter(lambda x: x.get_kind() == '113', plugin_group.plugins)
-      default_paypal_payment_find = filter(lambda x: x.get_kind() == '108', plugin_group.plugins)
+      default_currency_find = filter(lambda x: x.get_kind() == OrderCurrencyPlugin.get_kind(), plugin_group.plugins)
+      default_addresses = filter(lambda x: x.get_kind() == OrderAddressPlugin.get_kind(), plugin_group.plugins)
+      default_carrier_find = filter(lambda x: x.get_kind() == OrderCarrierPlugin.get_kind(), plugin_group.plugins)
+      default_paypal_payment_find = filter(lambda x: x.get_kind() == OrderPayPalPaymentPlugin.get_kind(), plugin_group.plugins)
+      if not default_addresses:
+        plugin_group.plugins.extend([default_address_billing, default_address_shipping])
+      else:
+        if len(default_addresses) < 2:
+          address = default_addresses[0]
+          address.active = True # active always
+          if address.address_type == 'shipping':
+            plugin_group.plugins.append(default_address_billing)
+          if address.address_type == 'billing':
+            plugin_group.plugins.append(default_address_shipping)
+        else:
+          for address in default_addresses:
+            address.active = True # active always
       if not default_currency_find:
         plugin_group.plugins.append(default_currency)
       else:
