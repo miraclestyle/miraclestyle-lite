@@ -881,6 +881,7 @@ class OrderDiscountLine(orm.BaseModel):
 
   def evaluate_condition(self, data):
     value = data[self.condition_type]
+    op = self.condition_operator
     if op == '==':
       return value == self.condition_value
     elif op == '!=':
