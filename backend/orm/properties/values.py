@@ -372,7 +372,6 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             if hasattr(entity, '_original'):
               self._property_value[i] = copy.deepcopy(entity._original)
       else:
-        #print(self._property_value)
         if hasattr(self._property_value, 'prepare'):
           self._property_value.prepare(parent=self._entity.key)
         collect_structured(self._property_value)

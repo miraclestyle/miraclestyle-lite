@@ -432,10 +432,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
         if hasattr(field, 'is_structured') and field.is_structured:
           sub_value = getattr(v, field_key)
           sub_value.read()
-          print(sub_value.value, sub_value.has_value())
-          print("running preupdate")
           sub_value.pre_update()
-          print('after preupdate', sub_value.value)
     return super(SuperPluginStorageProperty, self)._set_value(entity, value)
 
   def _convert_value(self, value, path=None):
