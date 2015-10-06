@@ -333,6 +333,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
       def delete_structured(entity):
         for value in self._structured_values:
           repeated = value._property._repeated
+          _value = value
           value = value.read()  # read and mark for delete
           if value is not None:
             if not repeated:
@@ -340,6 +341,13 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             for v in value:
               if entity.key == v.key.parent():
                 v._state = 'deleted'
+          if hasattr(_value, 'pre_update'):
+            _value.pre_update()
+
+      def substructured_pre_update():
+        for value in self._structured_values:
+          if hasattr(value, 'pre_update'):
+            value.pre_update()
 
       if self._property._repeated:
         delete_entities = []
@@ -354,6 +362,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             delete_entities.append(entity)
             if entity._state == 'deleted':
               delete_structured(entity)
+          substructured_pre_update()
 
         for delete_entity in delete_entities:
           self._property_value.remove(delete_entity)
@@ -363,6 +372,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             if hasattr(entity, '_original'):
               self._property_value[i] = copy.deepcopy(entity._original)
       else:
+        #print(self._property_value)
         if hasattr(self._property_value, 'prepare'):
           self._property_value.prepare(parent=self._entity.key)
         collect_structured(self._property_value)
