@@ -103,6 +103,10 @@
                                 <td class="secondary info">Quantity ({{line.product.uom.symbol}})</td>
                                 <td class="secondary">{{line.product.quantity}}</td>
                             </tr>
+                            <tr ng-show="line.discount > 0">
+                                <td class="secondary info">Discount (%)</td>
+                                <td class="secondary">{{line.discount}}</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
