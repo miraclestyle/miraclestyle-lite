@@ -157,5 +157,3 @@ class SellerSetupDefaults(orm.BaseModel):
         default_carrier_find[0].active = True
       if not default_paypal_payment_find:
         plugin_group.plugins.append(default_paypal_payment)
-      else:
-        default_paypal_payment_find[0].active = True
