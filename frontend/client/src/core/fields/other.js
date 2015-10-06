@@ -304,6 +304,14 @@
                                         }];
                                     }
 
+                                    if (config.code_name === 'currency') {
+                                        argument.filters.push({
+                                            value: 'Currency',
+                                            field: 'measurement',
+                                            operator: '=='
+                                        });
+                                    }
+
                                     return searchDefaults;
 
                                 },
