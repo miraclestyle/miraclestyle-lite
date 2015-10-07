@@ -25,8 +25,7 @@
                         modalConfig = {};
                     }
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
-                        config,
-                        that = this;
+                        config;
                     config = {
                         kind: this.kind,
                         action: 'update',
@@ -43,6 +42,13 @@
                                 if (neww !== old) {
                                     $scope.save().then(function () {
                                         snackbar.showK('changesSaved');
+                                        $scope.entity._sellers.iremove(function (seller) {
+                                            return $.inArray(seller.key, $scope.entity.sellers) === -1;
+                                        });
+                                        models['18'].current().then(function (response) {
+                                            $.extend(response.data.entity, $scope.entity);
+                                            console.log(response.data.entity.notify, $scope.entity.notify);
+                                        });
                                     });
                                 }
                             });
@@ -94,14 +100,6 @@
                                     }
                                 }
                             };
-                        },
-                        afterComplete: function ($scope) {
-                            $scope.entity._sellers.iremove(function (seller) {
-                                return $.inArray(seller.key, $scope.entity.sellers) === -1;
-                            });
-                            that.current().then(function (response) {
-                                $.extend(response.data.entity, $scope.entity);
-                            });
                         },
                         scope: {
                             remove: function (seller) {
