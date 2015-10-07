@@ -90,7 +90,7 @@ class Account(orm.BaseExpando):
       orm.ReadFieldPermission(('created', 'updated', 'state', 'identities', 'sessions', '_primary_email',
                                'ip_address', '_records'), condition_root),
       orm.WriteFieldPermission(('identities', 'sessions', '_primary_email', '_records'), condition_not_guest_and_owner),
-      orm.WriteFieldPermission(('state', '_records'), condition_sudo_action_and_root)
+      orm.WriteFieldPermission(('state', 'sessions', '_records'), condition_sudo_action_and_root)
   ]
 
   _actions = [
