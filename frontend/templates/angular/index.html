@@ -58,9 +58,8 @@
                 <img src="/client/dist/static/logo_720x300.png" />
             </div>
             <div class="list list-padding seam-bottom">
-                <div class="list-subheader subheader">Explore</div>
-                <sidenav-item close-master-menu ui-sref="home">All</sidenav-item>
-                <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Following</sidenav-item>
+                <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Home</sidenav-item>
+                <sidenav-item close-master-menu ui-sref="home">Explore</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
@@ -97,7 +96,6 @@
               <div class="list list-padding">
                 <div class="list-subheader subheader">Support</div>
                 <sidenav-item close-master-menu ui-sref="about">About</sidenav-item>
-                <sidenav-item close-master-menu ui-sref="tour">Tour</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="tos">Terms</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="privacy_policy">Privacy</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="support">Support</sidenav-item>
