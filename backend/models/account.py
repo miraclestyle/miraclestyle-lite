@@ -242,8 +242,8 @@ class Account(orm.BaseExpando):
                                   'd': {'recipient': '_account._primary_email'}}),
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
-                                         {'account': '_account.key_urlsafe', 'entity': '_account'},
-                                         lambda account, entity, **kwargs: entity.state == 'suspended')])
+                                         {'account': '_account.key_urlsafe', 'account_state': '_account.state'},
+                                         lambda account, account_state, **kwargs: account_state == 'suspended')])
                       # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
                   ]
               )
