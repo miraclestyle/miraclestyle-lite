@@ -173,7 +173,7 @@
             },
             '23-update': {
                 name: 'Name of the brand, company, or store that you represent.',
-                logo: 'Click on the logo above to upload logo image of the brand, company, or store that you represent. Logo must be of 2.4:1 aspect ratio, preferably 2400 pixels wide and 1000 pixels high.'
+                logo: 'Click on the logo above to upload logo image of the brand, company, or store that you represent. Logo must be of 2.4:1 aspect ratio, preferably 720 pixels wide and 300 pixels high.'
             },
             '14': {
                 name: 'Recipient\'s full name or business name.'
