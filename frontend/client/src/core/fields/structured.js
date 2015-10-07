@@ -207,7 +207,6 @@
                                     if (ent._state === 'deleted' || ent._sequence !== i) {
                                         dirty = true;
                                     }
-                                    i = ((config.ui.specifics.parentArgs.length - 1) - i);
                                     ent._sequence = i;
                                     ent.ui.access[ent.ui.access.length - 1] = i;
                                 });

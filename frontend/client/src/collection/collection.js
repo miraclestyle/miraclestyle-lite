@@ -99,11 +99,9 @@
                             $scope.entity._sellers.iremove(function (seller) {
                                 return $.inArray(seller.key, $scope.entity.sellers) === -1;
                             });
-                            if (that.getCache('current')) {
-                                that.current().then(function (response) {
-                                    $.extend(response.data.entity, $scope.entity);
-                                });
-                            }
+                            that.current().then(function (response) {
+                                $.extend(response.data.entity, $scope.entity);
+                            });
                         },
                         scope: {
                             remove: function (seller) {

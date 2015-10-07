@@ -10639,7 +10639,6 @@ $(function () {
                                     if (ent._state === 'deleted' || ent._sequence !== i) {
                                         dirty = true;
                                     }
-                                    i = ((config.ui.specifics.parentArgs.length - 1) - i);
                                     ent._sequence = i;
                                     ent.ui.access[ent.ui.access.length - 1] = i;
                                 });
@@ -18440,11 +18439,9 @@ angular.module('app')
                             $scope.entity._sellers.iremove(function (seller) {
                                 return $.inArray(seller.key, $scope.entity.sellers) === -1;
                             });
-                            if (that.getCache('current')) {
-                                that.current().then(function (response) {
-                                    $.extend(response.data.entity, $scope.entity);
-                                });
-                            }
+                            that.current().then(function (response) {
+                                $.extend(response.data.entity, $scope.entity);
+                            });
                         },
                         scope: {
                             remove: function (seller) {
