@@ -148,6 +148,13 @@ class SellerSetupDefaults(orm.BaseModel):
       default_addresses = filter(lambda x: x.get_kind() == OrderAddressPlugin.get_kind(), plugin_group.plugins)
       default_carrier_find = filter(lambda x: x.get_kind() == OrderCarrierPlugin.get_kind(), plugin_group.plugins)
       default_paypal_payment_find = filter(lambda x: x.get_kind() == OrderPayPalPaymentPlugin.get_kind(), plugin_group.plugins)
+
+      def always_active(entities):
+        if len(entities):
+          actives = filter(lambda x: x.active == True, entities)
+          if not actives:
+            entities[0].active = True
+
       if not default_addresses:
         plugin_group.plugins.extend([default_address_billing, default_address_shipping])
       else:
@@ -164,10 +171,10 @@ class SellerSetupDefaults(orm.BaseModel):
       if not default_currency_find:
         plugin_group.plugins.append(default_currency)
       else:
-        default_currency_find[0].active = True
+        always_active(default_currency_find)
       if not default_carrier_find:
         plugin_group.plugins.append(default_carrier)
-      elif len(default_carrier_find) == 1:
-        default_carrier_find[0].active = True
+      else:
+        always_active(default_carrier_find)
       if not default_paypal_payment_find:
         plugin_group.plugins.append(default_paypal_payment)
