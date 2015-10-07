@@ -47,7 +47,6 @@
                                         });
                                         models['18'].current().then(function (response) {
                                             $.extend(response.data.entity, $scope.entity);
-                                            console.log(response.data.entity.notify, $scope.entity.notify);
                                         });
                                     });
                                 }

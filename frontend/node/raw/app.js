@@ -14150,8 +14150,6 @@ $(function () {
                         config.keyedFields[field.code_name] = field;
                     });
 
-                    console.log('modelsEditor.config', config);
-
                     modelsEditorInstance = {
                         config: config,
                         read: function (entity, args, httpConfig) {
@@ -14294,7 +14292,6 @@ $(function () {
                                     }
                                     $scope.formSetPristine();
                                     snackbar.showK('changesSaved');
-                                    console.log('modelsEditor.complete', $scope);
 
                                 };
 
@@ -14424,7 +14421,6 @@ $(function () {
                                 // call config constructor, needed for posible after variable setup configurations
                                 config.defaultInit($scope);
                                 config.init($scope);
-                                console.log('modelsEditor.scope', $scope);
                                 makeHistory();
 
                                 $scope.$on('$destroy', function () {
@@ -18387,7 +18383,6 @@ angular.module('app')
                                         });
                                         models['18'].current().then(function (response) {
                                             $.extend(response.data.entity, $scope.entity);
-                                            console.log(response.data.entity.notify, $scope.entity.notify);
                                         });
                                     });
                                 }

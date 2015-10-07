@@ -546,8 +546,6 @@
                         config.keyedFields[field.code_name] = field;
                     });
 
-                    console.log('modelsEditor.config', config);
-
                     modelsEditorInstance = {
                         config: config,
                         read: function (entity, args, httpConfig) {
@@ -690,7 +688,6 @@
                                     }
                                     $scope.formSetPristine();
                                     snackbar.showK('changesSaved');
-                                    console.log('modelsEditor.complete', $scope);
 
                                 };
 
@@ -820,7 +817,6 @@
                                 // call config constructor, needed for posible after variable setup configurations
                                 config.defaultInit($scope);
                                 config.init($scope);
-                                console.log('modelsEditor.scope', $scope);
                                 makeHistory();
 
                                 $scope.$on('$destroy', function () {
