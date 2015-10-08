@@ -139,3 +139,4 @@ class AccountUpdateSet(orm.BaseModel):
           break
     if no_identity:
       context._account.state = 'suspended'
+      tools.del_attr(context, '_account.sessions')
