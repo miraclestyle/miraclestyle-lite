@@ -402,7 +402,8 @@
             sellerProfileNotFound: 'Navigate to the "Seller / Settings" to configure seller profile first.',
             productDuplicated: 'Product duplicated.',
             catalogDuplicated: 'Catalog duplicated.',
-            errorWithTraceback: 'Server errored with traceback.'
+            errorWithTraceback: 'Server errored with traceback.',
+            actionFailedCheckForm: 'Action failed! Inspect the form for errors.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

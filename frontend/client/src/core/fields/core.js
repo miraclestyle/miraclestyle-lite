@@ -9,7 +9,7 @@
                 return _.string.capitalize(human);
             };
         }))
-        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
+        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG, snackbar) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -142,6 +142,7 @@
                     if (!form.$valid) {
                         helpers.form.wakeUp(form);
                         this.$broadcast('invalidForm');
+                        snackbar.showK('actionFailedCheckForm');
                         return false;
                     }
                     return true;

@@ -357,7 +357,7 @@ if (!Array.prototype.indexOf) {
                 alerts: {}
             },
             defaultImage: 'http://placehold.it/240x100',
-            defaultLogo: 'http://placehold.it/240x100',
+            defaultLogo: '/client/dist/static/720x300_placeholder.png',
             defaultCatalogCover: 'http://placehold.it/240x240',
             grid: {
                 maxWidth: 240,
@@ -1153,7 +1153,7 @@ $(function () {
             },
             '23-update': {
                 name: 'Name of the brand, company, or store that you represent.',
-                logo: 'Click on the logo above to upload logo image of the brand, company, or store that you represent. Logo must be of 2.4:1 aspect ratio, preferably 2400 pixels wide and 1000 pixels high.'
+                logo: 'Click on the logo above to upload logo image of the brand, company, or store that you represent. Logo must be of 2.4:1 aspect ratio, preferably 720 pixels wide and 300 pixels high.'
             },
             '14': {
                 name: 'Recipient\'s full name or business name.'
@@ -1382,7 +1382,8 @@ $(function () {
             sellerProfileNotFound: 'Navigate to the "Seller / Settings" to configure seller profile first.',
             productDuplicated: 'Product duplicated.',
             catalogDuplicated: 'Catalog duplicated.',
-            errorWithTraceback: 'Server errored with traceback.'
+            errorWithTraceback: 'Server errored with traceback.',
+            actionFailedCheckForm: 'Action failed! Inspect the form for errors.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -9426,7 +9427,7 @@ $(function () {
                 return _.string.capitalize(human);
             };
         }))
-        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
+        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG, snackbar) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -9559,6 +9560,7 @@ $(function () {
                     if (!form.$valid) {
                         helpers.form.wakeUp(form);
                         this.$broadcast('invalidForm');
+                        snackbar.showK('actionFailedCheckForm');
                         return false;
                     }
                     return true;
@@ -15053,6 +15055,7 @@ $(function () {
                     select.view = view;
                     select.listView = listView || view;
                     ngModel.$formatters.push(function (value) {
+                        select.collectActive();
                         select.item = select.find(value);
                         return value;
                     });
@@ -15278,7 +15281,6 @@ $(function () {
 
                     select.isChecked = function (item) {
                         return false;
-                        return select.multipleSelection[select.getHash(item)];
                     };
                     select.select = function (item) {
                         var val = select.getHash(item);
@@ -20548,7 +20550,8 @@ angular.module('app')
 
                     fields.logo.ui.specifics = {
                         displayImageConfig: {
-                            size: 240
+                            size: 240,
+                            defaultImage: 'defaultLogo'
                         }
                     };
                     fields._plugin_group.ui.label = false;
