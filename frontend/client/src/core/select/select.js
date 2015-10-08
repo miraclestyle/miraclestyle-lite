@@ -205,6 +205,7 @@
                     select.view = view;
                     select.listView = listView || view;
                     ngModel.$formatters.push(function (value) {
+                        select.collectActive();
                         select.item = select.find(value);
                         return value;
                     });
@@ -430,7 +431,6 @@
 
                     select.isChecked = function (item) {
                         return false;
-                        return select.multipleSelection[select.getHash(item)];
                     };
                     select.select = function (item) {
                         var val = select.getHash(item);

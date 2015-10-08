@@ -784,8 +784,9 @@ class OrderCarrierPlugin(orm.BaseModel):
                                          'key': self.key})
 
   def calculate_price(self, valid_lines, order):
+    zero = Decimal('0')
     if not order._lines.value:
-      return Decimal('0')  # if no lines are present return 0
+      return zero  # if no lines are present return 0
     prices = []
     for carrier_line in valid_lines:
       line_prices = []
@@ -807,6 +808,8 @@ class OrderCarrierPlugin(orm.BaseModel):
       else:
         line_prices.append(Decimal('0'))
       prices.append(min(line_prices))
+    if not prices:
+      return zero
     return min(prices)
 
   def validate_line(self, carrier_line, order):
