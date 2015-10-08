@@ -845,8 +845,7 @@ class OrderCarrierPlugin(orm.BaseModel):
           condition_data = {
               'weight': order._total_weight,
               'volume': order._total_volume,
-              'price': order.total_amount,
-              'quantity': order._total_quantity,
+              'price': order.total_amount
           }
           if price.evaluate_condition(condition_data):
             allowed = True
