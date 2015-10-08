@@ -170,7 +170,6 @@ class OrderProductSpecsFormat(orm.BaseModel):
     unit_uom = Unit.build_key('unit').get()
     total_weight = tools.format_value('0', weight_uom)
     total_volume = tools.format_value('0', volume_uom)
-    total_quantity = tools.format_value('0', unit_uom)
     for line in order._lines.value:
       if line._state == 'deleted':
         continue
@@ -179,10 +178,8 @@ class OrderProductSpecsFormat(orm.BaseModel):
         total_weight = total_weight + (product.weight * product.quantity)
       if product.volume is not None:
         total_volume = total_volume + (product.volume * product.quantity)
-      total_quantity = total_quantity + tools.convert_value(product.quantity, product.uom.value, unit_uom)
     order._total_weight = total_weight
     order._total_volume = total_volume
-    order._total_quantity = total_quantity
 
 
 # This is system plugin, which means end user can not use it!
