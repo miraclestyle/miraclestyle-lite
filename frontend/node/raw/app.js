@@ -12390,8 +12390,26 @@ $(function () {
         }).factory('outputTypes', ng(function (dateFilter, GLOBAL_CONFIG, modelsMeta) {
             var outputTypes = {
                 SuperDateTimeProperty: function (input, field) {
-                    var date = new Date(input);
-                    return dateFilter(date, GLOBAL_CONFIG.date.format);
+                    var date = new Date(input),
+                        now = new Date(),
+                        thisyear = now.getYear() === date.getYear(),
+                        thismonth = false,
+                        today = false,
+                        tz = ' UTC+1:00',
+                        format = GLOBAL_CONFIG.date.format;
+                    // for reference https://docs.angularjs.org/api/ng/filter/date
+                    if (!thisyear) {
+                        format = 'M MMM yyyy, HH:mm';
+                    }
+                    if (thisyear) {
+                        thismonth = true;
+                        format = 'M MMM, HH:mm';
+                    }
+                    if (thismonth && thisyear && date.getDay() === now.getDay()) {
+                        today = true;
+                        format = 'HH:mm';
+                    }
+                    return dateFilter(date, format) + tz;
                 }
             };
             return outputTypes;
