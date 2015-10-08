@@ -780,7 +780,7 @@
                         today = true;
                         format = 'HH:mm';
                     }
-                    return dateFilter(date, format) + tz;
+                    return dateFilter(date, format);
                 }
             };
             return outputTypes;
