@@ -157,6 +157,16 @@ class SellerSetupDefaults(orm.BaseModel):
       if not default_addresses:
         plugin_group.plugins.extend([default_address_billing, default_address_shipping])
       else:
+        default_addresses_shipping = filter(lambda x: x.get_kind() == OrderAddressPlugin.get_kind() and x.address_type == 'shipping', plugin_group.plugins)
+        default_addresses_billing = filter(lambda x: x.get_kind() == OrderAddressPlugin.get_kind() and x.address_type == 'billing', plugin_group.plugins)
+        if not default_addresses_billing:
+          plugin_group.plugins.append(default_address_billing)
+        else:
+          always_active(default_addresses_billing)
+        if not default_addresses_shipping:
+          plugin_group.plugins.append(default_address_shipping)
+        else:
+          always_active(default_addresses_shipping)
         if len(default_addresses) < 2:
           address = default_addresses[0]
           address.active = True # active always

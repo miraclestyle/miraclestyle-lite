@@ -1148,7 +1148,9 @@ class _BaseModel(object):
             except IndexError as e:
               break
           if hasattr(current_field, 'is_structured') and current_field.is_structured and hasattr(current_value, 'has_value') and current_value.has_value():
-            next_args.append((current_value.value, current_field_key, current_field, current_original.value))
+            if current_original is not None:
+              current_original = current_original.value
+            next_args.append((current_value.value, current_field_key, current_field, current_original))
           elif isinstance(current_value, list):
             for value in current_value:
               if not isinstance(value, Model):
