@@ -1100,7 +1100,8 @@
 
                     fields.logo.ui.specifics = {
                         displayImageConfig: {
-                            size: 240
+                            size: 240,
+                            defaultImage: 'defaultLogo'
                         }
                     };
                     fields._plugin_group.ui.label = false;

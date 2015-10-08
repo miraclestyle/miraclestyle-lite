@@ -357,7 +357,7 @@ if (!Array.prototype.indexOf) {
                 alerts: {}
             },
             defaultImage: 'http://placehold.it/240x100',
-            defaultLogo: 'http://placehold.it/240x100',
+            defaultLogo: '/client/dist/static/720x300_placeholder.png',
             defaultCatalogCover: 'http://placehold.it/240x240',
             grid: {
                 maxWidth: 240,
