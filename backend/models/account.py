@@ -240,7 +240,7 @@ class Account(orm.BaseExpando):
                   plugins=[
                       Write(),
                       Set(cfg={'d': {'output.entity': '_account'}}),
-                      Notify(cfg={'condition': lambda account, **kwargs: account.identities,
+                      Notify(cfg={'condition': lambda account, **kwargs: account.identities.value,
                                   's': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
                                         'body': notifications.ACCOUNT_SUDO_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
