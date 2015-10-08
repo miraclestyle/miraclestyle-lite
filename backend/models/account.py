@@ -79,6 +79,10 @@ class Account(orm.BaseExpando):
 
   def condition_sudo_action_and_root(account, action, **kwargs):
     return action.key_id_str == "sudo" and account._root_admin
+  
+  def condition_account_has_identities(account, **kwargs):
+    account.identities.read()
+    return account.identities.value
 
   _permissions = [
       orm.ExecuteActionPermission('login', condition_guest_and_active),
@@ -240,7 +244,7 @@ class Account(orm.BaseExpando):
                   plugins=[
                       Write(),
                       Set(cfg={'d': {'output.entity': '_account'}}),
-                      Notify(cfg={'condition': lambda account, **kwargs: account.identities.value,
+                      Notify(cfg={'condition': condition_account_has_identities,
                                   's': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
                                         'body': notifications.ACCOUNT_SUDO_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
