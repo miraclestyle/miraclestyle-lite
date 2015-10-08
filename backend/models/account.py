@@ -82,7 +82,8 @@ class Account(orm.BaseExpando):
   
   def condition_account_has_identities(account, **kwargs):
     account.identities.read()
-    return account.identities.value
+    if not account.identities.value:
+      return False
 
   _permissions = [
       orm.ExecuteActionPermission('login', condition_guest_and_active),
