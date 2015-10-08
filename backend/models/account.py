@@ -174,7 +174,11 @@ class Account(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
-                      Set(cfg={'d': {'output.entity': '_account'}})
+                      Set(cfg={'d': {'output.entity': '_account'}}),
+                      CallbackExec(cfg=[('callback',
+                                         {'action_id': 'account_discontinue', 'action_model': '31'},
+                                         {'account': '_account.key_urlsafe', 'account_state': '_account.state'},
+                                         lambda account, account_state, **kwargs: account_state == 'suspended')])
                   ]
               )
           ]
@@ -245,7 +249,6 @@ class Account(orm.BaseExpando):
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
                                          {'account': '_account.key_urlsafe', 'account_state': '_account.state'},
                                          lambda account, account_state, **kwargs: account_state == 'suspended')])
-                      # account discontinue callback is missing, it has to have condition if the entity.state == 'suspended'
                   ]
               )
           ]
