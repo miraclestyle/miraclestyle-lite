@@ -167,7 +167,6 @@ class OrderProductSpecsFormat(orm.BaseModel):
     order = context._order
     weight_uom = Unit.build_key('kilogram').get()
     volume_uom = Unit.build_key('liter').get()
-    unit_uom = Unit.build_key('unit').get()
     total_weight = tools.format_value('0', weight_uom)
     total_volume = tools.format_value('0', volume_uom)
     for line in order._lines.value:
