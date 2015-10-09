@@ -223,7 +223,7 @@
                 product_categories: 'Product categories'
             },
             '31-update': {
-                discontinue_date: 'Expiration Date'
+                discontinue_date: 'Expiration date'
             },
             '124-update': {
                 condition_type: 'Condition',
