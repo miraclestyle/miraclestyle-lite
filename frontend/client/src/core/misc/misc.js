@@ -270,6 +270,8 @@
                         listen,
                         loadMore,
                         steady,
+                        intervalid,
+                        waitinterval = false,
                         steadyOpts,
                         maybeMore;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
@@ -300,21 +302,34 @@
                     maybeMore = function () {
                         $timeout(function () {
                             var listenNode = listen.get(0),
-                                maybe = config.reverse ? true : listenNode ? listenNode.scrollHeight <= listen.height() : false,
+                                listenHeight = listen.height(),
+                                maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
                                 promise;
                             if (maybe) {
                                 promise = loadMore({}, angular.noop);
                                 if (promise) {
                                     promise.then(function () {
+                                        waitinterval = false;
                                         if (!config.reverse) {
                                             maybeMore();
                                         }
                                     });
                                 }
+                            } else {
+                                waitinterval = false;
                             }
+
                         }, 1000, false);
 
                     };
+
+                    intervalid = setInterval(function () {
+                        if (waitinterval) {
+                            return true;
+                        }
+                        waitinterval = true;
+                        maybeMore();
+                    }, 2000);
 
                     loadMore = function (values, done) {
                         var promise = config.loader.load();
@@ -349,6 +364,7 @@
                     scope.$on('$destroy', function () {
                         steady.stop();
                         steady = undefined;
+                        clearInterval(intervalid);
                     });
 
                     maybeMore();
