@@ -50,7 +50,7 @@
 
                 angular.forEach(images, function (image) {
                     image.width = (height * image.proportion);
-                    image.height = (height);
+                    image.height = height;
                 });
 
             },

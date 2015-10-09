@@ -1077,6 +1077,9 @@
                                                             pricetag._state = null;
                                                             if (!exists) {
                                                                 newPricetag = angular.copy(pricetag);
+                                                                if (pricetag._image) {
+                                                                    image = pricetag._image;
+                                                                }
                                                                 newPricetag._image = image;
                                                                 newImage.pricetags.push(newPricetag);
                                                                 pricetag._state = 'deleted';
