@@ -23,14 +23,14 @@
               ng-repeat="image in args._images track by $index" 
               class="image-slider-item"
               drop="true"
-              jqyoui-options="{accept: '.catalog-new-pricetag'}"
+              jqyoui-options="droppableOptions"
               jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
               >
            <img class="not-pointable" slider-image="image" /> 
            <div ng-repeat="pricetag in image.pricetags track by $index"
                 ng-model="image.pricetags"
                 ng-hide="pricetag._state == 'deleted' || !pricetag.key"
-                jqyoui-options="{containment : 'parent', distance: 10}"
+                jqyoui-options="draggableOptions"
                 jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
                 drag="entity.ui.rule.field._images.pricetags.writable" 
                 class="catalog-pricetag"

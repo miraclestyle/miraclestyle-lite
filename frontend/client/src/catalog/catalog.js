@@ -632,7 +632,7 @@
                     }).then(function (response) {
                         var entity = response.data.entity;
                         if (!entity._images.length) {
-                            modals.alert('noImagesInCatalog');
+                            snackbar.showK('noImagesInCatalog');
                             return;
                         }
                         $modal.open({
@@ -1092,6 +1092,13 @@
                                                 fn();
 
                                             };
+
+                                            $scope.droppableOptions = {
+                                                accept: '.catalog-new-pricetag',
+                                                tolerance: 'pointer'
+                                            };
+
+                                            $scope.draggableOptions = {containment : 'parent', distance: 10};
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
                                                 if (pricetag._state === 'deleted') {
