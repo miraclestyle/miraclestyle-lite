@@ -97,6 +97,11 @@
                 controller: 'BuyOrdersController',
                 templateUrl: 'buyer/carts.html'
             })
+            .state('order-view', {
+                url: '/order/:key',
+                controller: 'OrderViewController',
+                template: ''
+            })
             .state('login-status', {
                 url: '/login/status',
                 template: '',
