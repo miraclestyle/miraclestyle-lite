@@ -1203,7 +1203,7 @@ $(function () {
                 product_categories: 'Product categories'
             },
             '31-update': {
-                discontinue_date: 'Expiration Date'
+                discontinue_date: 'Expiration date'
             },
             '124-update': {
                 condition_type: 'Condition',
@@ -11398,7 +11398,7 @@ $(function () {
 
                 angular.forEach(images, function (image) {
                     image.width = (height * image.proportion);
-                    image.height = (height);
+                    image.height = height;
                 });
 
             },
@@ -11903,6 +11903,8 @@ $(function () {
                         listen,
                         loadMore,
                         steady,
+                        intervalid,
+                        waitinterval = false,
                         steadyOpts,
                         maybeMore;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
@@ -11933,21 +11935,34 @@ $(function () {
                     maybeMore = function () {
                         $timeout(function () {
                             var listenNode = listen.get(0),
-                                maybe = config.reverse ? true : listenNode ? listenNode.scrollHeight <= listen.height() : false,
+                                listenHeight = listen.height(),
+                                maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
                                 promise;
                             if (maybe) {
                                 promise = loadMore({}, angular.noop);
                                 if (promise) {
                                     promise.then(function () {
+                                        waitinterval = false;
                                         if (!config.reverse) {
                                             maybeMore();
                                         }
                                     });
                                 }
+                            } else {
+                                waitinterval = false;
                             }
+
                         }, 1000, false);
 
                     };
+
+                    intervalid = setInterval(function () {
+                        if (waitinterval) {
+                            return true;
+                        }
+                        waitinterval = true;
+                        maybeMore();
+                    }, 2000);
 
                     loadMore = function (values, done) {
                         var promise = config.loader.load();
@@ -11982,6 +11997,7 @@ $(function () {
                     scope.$on('$destroy', function () {
                         steady.stop();
                         steady = undefined;
+                        clearInterval(intervalid);
                     });
 
                     maybeMore();
@@ -17431,7 +17447,7 @@ angular.module('app')
                     }).then(function (response) {
                         var entity = response.data.entity;
                         if (!entity._images.length) {
-                            modals.alert('noImagesInCatalog');
+                            snackbar.showK('noImagesInCatalog');
                             return;
                         }
                         $modal.open({
@@ -17876,6 +17892,9 @@ angular.module('app')
                                                             pricetag._state = null;
                                                             if (!exists) {
                                                                 newPricetag = angular.copy(pricetag);
+                                                                if (pricetag._image) {
+                                                                    image = pricetag._image;
+                                                                }
                                                                 newPricetag._image = image;
                                                                 newImage.pricetags.push(newPricetag);
                                                                 pricetag._state = 'deleted';
@@ -17891,6 +17910,13 @@ angular.module('app')
                                                 fn();
 
                                             };
+
+                                            $scope.droppableOptions = {
+                                                accept: '.catalog-new-pricetag',
+                                                tolerance: 'pointer'
+                                            };
+
+                                            $scope.draggableOptions = {containment : 'parent', distance: 10};
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
                                                 if (pricetag._state === 'deleted') {
