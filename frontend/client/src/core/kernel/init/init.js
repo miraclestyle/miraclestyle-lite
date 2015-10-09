@@ -150,11 +150,14 @@
                 controller: 'AdminListController'
             });
 
-    })).run(ng(function ($rootScope, modelsInfo, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
         $rootScope.$on('$stateChangeSuccess',
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {
                     $rootScope.setPageToolbarTitle(toState.title);
+                }
+                if (window.ga) {
+                    window.ga('send', 'pageview', $state.href(toState, toParams));
                 }
             });
         $.extend(modelsInfo, window.MODELS_META);
