@@ -37,7 +37,7 @@
                     tick = $timeout(function () {
                         models['34'].actions.read({
                             key: $state.params.key
-                        }).then(function (response) {
+                        }, {disableUI: false}).then(function (response) {
                             if (gorder) {
                                 helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'feedback_adjustment', 'feedback', 'ui']);
                             }
@@ -64,7 +64,7 @@
                 viewThen = function (order) {
                     gorder = order;
                     if (isOrderPaymentCanceled) {
-                        snackbar.showK('orderPaymentCanceled');
+                        snackbar.showK('orderPaymentSuccessProgresscanceled');
                     } else {
                         snackbar.showK('orderPaymentSuccessProgress');
                         scheduleTick();

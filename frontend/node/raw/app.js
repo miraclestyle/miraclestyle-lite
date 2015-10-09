@@ -1383,7 +1383,11 @@ $(function () {
             productDuplicated: 'Product duplicated.',
             catalogDuplicated: 'Catalog duplicated.',
             errorWithTraceback: 'Server errored with traceback.',
-            actionFailedCheckForm: 'Action failed! Inspect the form for errors.'
+            actionFailedCheckForm: 'Action failed! Inspect the form for errors.',
+            orderPaymentSuccessProgress: 'Order processing is in pogress.',
+            orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
+            orderPaymentSuccessProgresscompleted: 'Order payment is completed.'
+
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -16551,7 +16555,7 @@ angular.module('app')
                     tick = $timeout(function () {
                         models['34'].actions.read({
                             key: $state.params.key
-                        }).then(function (response) {
+                        }, {disableUI: false}).then(function (response) {
                             if (gorder) {
                                 helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'feedback_adjustment', 'feedback', 'ui']);
                             }
@@ -16578,7 +16582,7 @@ angular.module('app')
                 viewThen = function (order) {
                     gorder = order;
                     if (isOrderPaymentCanceled) {
-                        snackbar.showK('orderPaymentCanceled');
+                        snackbar.showK('orderPaymentSuccessProgresscanceled');
                     } else {
                         snackbar.showK('orderPaymentSuccessProgress');
                         scheduleTick();
