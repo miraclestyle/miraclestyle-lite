@@ -18,7 +18,7 @@
     </div>
  
   <div class="image-slider-outer">
-     <div image-slider-load-more="loadMoreImages(callback)" image-slider-manage-products="true" image-slider="args._images" class="image-slider unselectable"> 
+     <div ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider-manage-products="true" image-slider="args._images" class="image-slider unselectable swoop-from-left"> 
          <div ng-hide="image._state == 'deleted'"
               ng-repeat="image in args._images track by $index" 
               class="image-slider-item"

@@ -15,14 +15,12 @@ div.catalog-pricetag, li.catalog-new-pricetag {
     transition-property: box-shadow, background;
 }
 
-div.catalog-pricetag:active, 
-li.catalog-new-pricetag:active {
-  box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26);
+div.catalog-pricetag:active, li.catalog-new-pricetag:active {
+    box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26);
 }
 
-a.catalog-pricetag-link,
-div.catalog-pricetag-link {
-  cursor: move;
+a.catalog-pricetag-link, div.catalog-pricetag-link {
+    cursor: move;
 }
 
 li.catalog-new-pricetag {
@@ -136,8 +134,7 @@ button.product-quantity-button {
     margin: 0px;
 }
 
-.product-quantity-controls {
-}
+.product-quantity-controls {}
 
 .product-quantifier label {
     padding-left: 16px;
@@ -221,11 +218,23 @@ button.product-quantity-button {
     left: 0px;
     right: 0px;
     bottom: 0px;
-    margin:0px;
-    padding:0px;
+    margin: 0px;
+    padding: 0px;
 }
 
 .catalog-draft-state .display2 {
     color: rgba(255, 0, 0, 0.87);
     transform: rotate(-45deg);
+}
+
+.swoop-from-left {
+    transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
+    transition-property: left;
+    transition-duration: 300ms;
+    transition-delay: 400ms;
+    left: 100%;
+}
+
+.swoop-from-left-finish {
+    left: 0%;
 }

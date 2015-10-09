@@ -17,7 +17,7 @@
       </div>
  
       <div ng-if="modalOptions.opened" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
-         <div image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider"> 
+         <div ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider swoop-from-left"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 
                <div ng-repeat="pricetag in image.pricetags track by $index"
