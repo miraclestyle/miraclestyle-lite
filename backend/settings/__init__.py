@@ -63,7 +63,7 @@ PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 # BLOB Handling
 BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 # Cloud storage path settings.
-BUCKET_PATH = 'universal-trail-608.appspot.com'
+BUCKET_PATH = 'x-arcanum-801.appspot.com'
 
 OAUTH2_REDIRECT_URI = HOST_URL
 if DEVELOPMENT_SERVER:
