@@ -674,6 +674,10 @@
                                         $scope.catalog._images.extend(items);
                                     }
                                 });
+
+                                $scope.imagesReader = imagesReader;
+                                imagesReader.showLoaderAlways = true;
+
                                 $scope.socialMeta = {
                                     facebook: {
                                         'p[url]': catalogUrl,
@@ -1149,6 +1153,10 @@
                                                 vdom.appendTo(target_drop);
                                                 $scope.createProduct(image, newPricetagConfig, vdom);
                                             };
+
+                                            $scope.imagesReader = imagesReader;
+
+                                            imagesReader.showLoaderAlways = true;
 
                                             $scope.loadMoreImages = function (callback) {
                                                 var promise = imagesReader.load();

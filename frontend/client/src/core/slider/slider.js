@@ -21,14 +21,15 @@
                         });
                     },
                     measure = function () {
-                        var tw = 0;
-                        element.find('.image-slider-item').filter(function () {
-                            return $(this).css('display') !== 'none';
-                        }).each(function () {
+                        var tw = 0,
+                            notDisplayNone = function () {
+                                return $(this).css('display') !== 'none';
+                            };
+                        element.find('.image-slider-item').filter(notDisplayNone).each(function () {
                             tw += $(this).width();
                         });
 
-                        element.width(Math.ceil(tw));
+                        element.width(Math.ceil(tw) + element.find('.vertical-loader').filter(notDisplayNone).width());
                     },
                     resize = function () {
                         var height = parent.parents('.fixed-height:first').height(),
