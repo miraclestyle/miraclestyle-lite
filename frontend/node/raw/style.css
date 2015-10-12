@@ -2668,9 +2668,10 @@ img.auto-width, .auto-width {
     z-index: 1;
 }
 .with-icon .select-icon {
-       bottom: 28px;
+    bottom: 28px;
     right: 16px
-}.modal-open {
+}
+.modal-open {
     overflow: hidden;
 }
 
@@ -3053,7 +3054,7 @@ li .ui-select-highlight {
 
 }.progress-wrapper.progress.circular {
     cursor: default;
-    padding: 4px 0px;
+    padding: 8px 0px;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
@@ -3211,7 +3212,20 @@ li .ui-select-highlight {
     box-sizing: border-box;
     z-index: 500;
 }
-div.catalog-pricetag, li.catalog-new-pricetag {
+
+
+.vertical-loader .progress-wrapper.progress.circular {
+    height: 100%;
+    padding: 0px 8px;
+    position: absolute;
+}
+
+.vertical-loader {
+    float: left;
+    width: 56px;
+    height: 100%;
+    display: block;
+}div.catalog-pricetag, li.catalog-new-pricetag {
     position: absolute;
     top: 20%;
     left: 20px;

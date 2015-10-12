@@ -2532,7 +2532,7 @@ li .ui-select-highlight {
     visibility: visible; } }
 .progress-wrapper.progress.circular {
   cursor: default;
-  padding: 4px 0px;
+  padding: 8px 0px;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -2650,6 +2650,17 @@ li .ui-select-highlight {
   border-radius: 50%;
   box-sizing: border-box;
   z-index: 500; }
+
+.vertical-loader .progress-wrapper.progress.circular {
+  height: 100%;
+  padding: 0px 8px;
+  position: absolute; }
+
+.vertical-loader {
+  float: left;
+  width: 56px;
+  height: 100%;
+  display: block; }
 
 div.catalog-pricetag, li.catalog-new-pricetag {
   position: absolute;

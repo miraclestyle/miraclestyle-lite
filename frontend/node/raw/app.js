@@ -335,7 +335,7 @@ if (!Array.prototype.indexOf) {
                 modelsMeta: '/api/model_meta'
             },
             date: {
-                format: 'yyyy-MM-dd HH:mm:ss'
+                format: 'M MMM yyyy, HH:mm'
             },
             toolbar: {
                 titles: {}
@@ -15657,14 +15657,15 @@ $(function () {
                         });
                     },
                     measure = function () {
-                        var tw = 0;
-                        element.find('.image-slider-item').filter(function () {
-                            return $(this).css('display') !== 'none';
-                        }).each(function () {
+                        var tw = 0,
+                            notDisplayNone = function () {
+                                return $(this).css('display') !== 'none';
+                            };
+                        element.find('.image-slider-item').filter(notDisplayNone).each(function () {
                             tw += $(this).width();
                         });
 
-                        element.width(Math.ceil(tw));
+                        element.width(Math.ceil(tw) + element.find('.vertical-loader').filter(notDisplayNone).width());
                     },
                     resize = function () {
                         var height = parent.parents('.fixed-height:first').height(),
@@ -17489,6 +17490,10 @@ angular.module('app')
                                         $scope.catalog._images.extend(items);
                                     }
                                 });
+
+                                $scope.imagesReader = imagesReader;
+                                imagesReader.showLoaderAlways = true;
+
                                 $scope.socialMeta = {
                                     facebook: {
                                         'p[url]': catalogUrl,
@@ -17916,7 +17921,7 @@ angular.module('app')
                                                 tolerance: 'pointer'
                                             };
 
-                                            $scope.draggableOptions = {containment : 'parent', distance: 10};
+                                            $scope.draggableOptions = {containment : '.image-slider-outer', distance: 10};
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
                                                 if (pricetag._state === 'deleted') {
@@ -17964,6 +17969,10 @@ angular.module('app')
                                                 vdom.appendTo(target_drop);
                                                 $scope.createProduct(image, newPricetagConfig, vdom);
                                             };
+
+                                            $scope.imagesReader = imagesReader;
+
+                                            imagesReader.showLoaderAlways = true;
 
                                             $scope.loadMoreImages = function (callback) {
                                                 var promise = imagesReader.load();
