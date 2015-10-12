@@ -1105,7 +1105,7 @@
                                                 tolerance: 'pointer'
                                             };
 
-                                            $scope.draggableOptions = {containment : 'parent', distance: 10};
+                                            $scope.draggableOptions = {containment : '.image-slider-outer', distance: 10};
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
                                                 if (pricetag._state === 'deleted') {
