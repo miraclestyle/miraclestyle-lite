@@ -16,7 +16,7 @@ SITE_META_TITLE = 'Miraclestyle.com'
 SITE_META_DESCRIPTION = 'Description'
 SITE_META_KEYWORDS = 'miraclestyle,thing'
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
-DEBUG_HOST_NAMES = ['localhost', 'universal-trail-608.appspot.com']
+DEBUG_HOST_NAMES = ['localhost:9982', 'universal-trail-608.appspot.com']
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
