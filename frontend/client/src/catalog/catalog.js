@@ -1088,7 +1088,6 @@
                                                             }
                                                         }
                                                     }
-                                                    console.log(newPositionLeft, cwidth, left, helper.width());
                                                     if (newImage) {
                                                         pricetag._state = 'deleted';
                                                         exists = _.findWhere(newImage.pricetags, {
@@ -1119,21 +1118,19 @@
                                                 pricetag.position_left = ui.position.left;
                                                 pricetag.image_width = target.width();
                                                 pricetag.image_height = target.height();
-
                                                 pricetag._position_top = pricetag.position_top;
                                                 pricetag._position_left = pricetag.position_left;
 
                                                 $scope.formSetDirty();
 
                                                 if ((tolerance + width) < 3.3) {
-                                                    console.log('must go to next image');
-                                                    // yeah but which image?
+                                                    //console.log('must go to next image');
                                                     extract(true);
                                                 } else if (left < -8.5) {
-                                                    console.log('must go to the previous image');
+                                                    //console.log('must go to the previous image');
                                                     extract();
                                                 } else {
-                                                    console.log('stays');
+                                                    //console.log('stays');
                                                 }
 
                                                 if (!$scope.$$phase) {
@@ -1152,7 +1149,7 @@
                                                     newPricetagConfig = {
                                                         position_top: rtop,
                                                         position_left: rleft,
-                                                        _image: image,
+                                                        _image: $scope.args._images.indexOf(image),
                                                         image_width: target_drop.width(),
                                                         image_height: target_drop.height()
                                                     };
