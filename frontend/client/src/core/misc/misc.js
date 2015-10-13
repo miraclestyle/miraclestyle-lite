@@ -786,11 +786,11 @@
                         format = GLOBAL_CONFIG.date.format;
                     // for reference https://docs.angularjs.org/api/ng/filter/date
                     if (!thisyear) {
-                        format = 'M MMM yyyy, HH:mm';
+                        format = 'd MMM yyyy, HH:mm';
                     }
                     if (thisyear) {
                         thismonth = true;
-                        format = 'M MMM, HH:mm';
+                        format = 'd MMM, HH:mm';
                     }
                     if (thismonth && thisyear && date.getDay() === now.getDay()) {
                         today = true;

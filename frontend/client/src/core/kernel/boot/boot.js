@@ -335,7 +335,7 @@ if (!Array.prototype.indexOf) {
                 modelsMeta: '/api/model_meta'
             },
             date: {
-                format: 'M MMM yyyy, HH:mm'
+                format: 'd MMM yyyy, HH:mm'
             },
             toolbar: {
                 titles: {}
