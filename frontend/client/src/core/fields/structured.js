@@ -855,6 +855,7 @@
 
                         info.scope.$on('$destroy', function () {
                             config.ui.specifics.create = undefined;
+                            config.ui.specifics.sortableOptions = {};
                         });
 
                     }

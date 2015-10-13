@@ -1103,13 +1103,14 @@
                                                         pricetag._position_left = newPositionLeft;
                                                         pricetag._position_top = currentTop;
                                                         pricetag._state = null;
-                                                        if (!exists) {
+                                                        if (angular.isUndefined(exists)) {
                                                             newPricetag = angular.copy(pricetag);
                                                             if (angular.isUndefined(pricetag._image)) {
                                                                 newPricetag._image = i;
                                                             }
                                                             newImage.pricetags.push(newPricetag);
                                                             pricetag._state = 'deleted';
+                                                            pricetagElement.addClass('ng-hide');
                                                         }
                                                     }
                                                 };
