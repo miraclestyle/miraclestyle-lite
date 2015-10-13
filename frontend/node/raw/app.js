@@ -11293,6 +11293,7 @@ $(function () {
 
                         info.scope.$on('$destroy', function () {
                             config.ui.specifics.create = undefined;
+                            config.ui.specifics.sortableOptions = {};
                         });
 
                     }
@@ -17831,90 +17832,12 @@ angular.module('app')
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
                                                 $(ui.helper).find('a').addClass('dragged');
+                                                if (angular.isUndefined(pricetag._image)) {
+                                                    pricetag._image = $scope.args._images.indexOf(image);
+                                                }
                                             };
 
-                                            $scope.onDrag = function (event, ui, image, pricetag) {
-                                                var fn = function () {
-                                                    var helper = $(ui.helper),
-                                                        parent = helper.parents('.image-slider-item:first'),
-                                                        helperW = helper.outerWidth(),
-                                                        parentW = parent.width(),
-                                                        nextParent = parent.next(),
-                                                        prevParent = parent.prev(),
-                                                        newParent,
-                                                        newPositionLeft,
-                                                        currentTop = parseInt(helper.css('top'), 10),
-                                                        newImage,
-                                                        currentLeft = parseInt(helper.css('left'), 10),
-                                                        left,
-                                                        moveLeft = true,
-                                                        index = $scope.args._images.indexOf(image),
-                                                        pass = false,
-                                                        exists = false,
-                                                        newPricetag;
-
-                                                    if (!parent.length || !helperW) {
-                                                        return; // jquery ui callback fallthrough
-                                                    }
-
-                                                    if (currentLeft === 0) {
-                                                        left = 0;
-                                                    } else {
-                                                        left = (parentW - (currentLeft + helperW));
-                                                        moveLeft = false;
-                                                    }
-                                                    if (left === 0 && moveLeft) {
-                                                        // go to left
-                                                        index -= 1;
-                                                        pass = true;
-                                                        newParent = prevParent;
-                                                        newPositionLeft = (prevParent.width() - helperW) - 5;
-
-                                                    } else if (left === 0 && !moveLeft) {
-                                                        // go to right
-                                                        index += 1;
-                                                        pass = true;
-                                                        newParent = nextParent;
-                                                        newPositionLeft = 5;
-                                                    }
-
-                                                    if (index !== -1 && pass) {
-                                                        newImage = $scope.args._images[index];
-                                                        if (angular.isDefined(newImage)) {
-                                                            pricetag._state = 'deleted';
-                                                            exists = _.findWhere(newImage.pricetags, {
-                                                                key: pricetag.key
-                                                            });
-                                                            if (exists) {
-                                                                pricetag = exists;
-                                                            }
-                                                            pricetag.image_width = newParent.width();
-                                                            pricetag.image_height = newParent.height();
-                                                            pricetag.position_left = newPositionLeft;
-                                                            pricetag.position_top = currentTop;
-                                                            pricetag._position_left = newPositionLeft;
-                                                            pricetag._position_top = currentTop;
-                                                            pricetag._state = null;
-                                                            if (!exists) {
-                                                                newPricetag = angular.copy(pricetag);
-                                                                if (pricetag._image) {
-                                                                    image = pricetag._image;
-                                                                }
-                                                                newPricetag._image = image;
-                                                                newImage.pricetags.push(newPricetag);
-                                                                pricetag._state = 'deleted';
-                                                            }
-
-                                                            if (!$scope.$$phase) {
-                                                                $scope.$digest();
-                                                            }
-
-                                                        }
-                                                    }
-                                                };
-                                                fn();
-
-                                            };
+                                            $scope.onDrag = function (event, ui, image, pricetag) {};
 
                                             $scope.droppableOptions = {
                                                 accept: '.catalog-new-pricetag',
@@ -17928,17 +17851,105 @@ angular.module('app')
                                                     return;
                                                 }
 
-                                                var target = $(event.target).parents('.image-slider-item:first');
+                                                var target = $(event.target).parents('.image-slider-item:first'),
+                                                    pricetagElement = $(event.target),
+                                                    left = parseFloat(pricetagElement.css('left'), 10),
+                                                    width = pricetagElement.width(),
+                                                    targetWidth = target.width(),
+                                                    tolerance = targetWidth - (width + left),
+                                                    i = $scope.args._images.indexOf(image),
+                                                    cwidth = 0,
+                                                    pwidth = 0,
+                                                    helper = $(ui.helper),
+                                                    next,
+                                                    extract;
+                                                extract = function (what) {
+                                                    var newImage,
+                                                        exists,
+                                                        newParent,
+                                                        newPricetag,
+                                                        newPositionLeft,
+                                                        ocw = 0,
+                                                        currentTop = parseFloat($(ui.helper).css('top'), 10);
+                                                    next = target;
+                                                    cwidth = what ? targetWidth : 0;
+                                                    while (true) {
+                                                        if (what) {
+                                                            i += 1;
+                                                            next = next.next();
+                                                            cwidth += next.width();
+                                                            if (cwidth > left) {
+                                                                newParent = next;
+                                                                newImage = $scope.args._images[i];
+                                                                newPositionLeft = left - (pwidth || targetWidth);
+                                                                break;
+                                                            }
+                                                            if (i > 10000) {
+                                                                break;
+                                                            }
+
+                                                            pwidth = cwidth;
+                                                        } else {
+                                                            i -= 1;
+                                                            next = next.prev();
+                                                            ocw += next.width();
+                                                            cwidth -= next.width();
+                                                            if (cwidth < left) {
+                                                                newParent = next;
+                                                                newImage = $scope.args._images[i];
+                                                                newPositionLeft = ocw + left;
+                                                                break;
+                                                            }
+                                                            if (i < 0) {
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    if (newImage) {
+                                                        pricetag._state = 'deleted';
+                                                        exists = _.findWhere(newImage.pricetags, {
+                                                            key: pricetag.key
+                                                        });
+                                                        if (exists) {
+                                                            pricetag = exists;
+                                                        }
+                                                        pricetag.image_width = newParent.width();
+                                                        pricetag.image_height = newParent.height();
+                                                        pricetag.position_left = newPositionLeft;
+                                                        pricetag.position_top = currentTop;
+                                                        pricetag._position_left = newPositionLeft;
+                                                        pricetag._position_top = currentTop;
+                                                        pricetag._state = null;
+                                                        if (angular.isUndefined(exists)) {
+                                                            newPricetag = angular.copy(pricetag);
+                                                            if (angular.isUndefined(pricetag._image)) {
+                                                                newPricetag._image = i;
+                                                            }
+                                                            newImage.pricetags.push(newPricetag);
+                                                            pricetag._state = 'deleted';
+                                                            pricetagElement.addClass('ng-hide');
+                                                        }
+                                                    }
+                                                };
 
                                                 pricetag.position_top = ui.position.top;
                                                 pricetag.position_left = ui.position.left;
                                                 pricetag.image_width = target.width();
                                                 pricetag.image_height = target.height();
-
                                                 pricetag._position_top = pricetag.position_top;
                                                 pricetag._position_left = pricetag.position_left;
 
                                                 $scope.formSetDirty();
+
+                                                if ((tolerance + width) < 3.3) {
+                                                    //console.log('must go to next image');
+                                                    extract(true);
+                                                } else if (left < -8.5) {
+                                                    //console.log('must go to the previous image');
+                                                    extract();
+                                                } else {
+                                                    //console.log('stays');
+                                                }
 
                                                 if (!$scope.$$phase) {
                                                     $scope.$digest();
@@ -17956,6 +17967,7 @@ angular.module('app')
                                                     newPricetagConfig = {
                                                         position_top: rtop,
                                                         position_left: rleft,
+                                                        _image: $scope.args._images.indexOf(image),
                                                         image_width: target_drop.width(),
                                                         image_height: target_drop.height()
                                                     };
@@ -17994,7 +18006,7 @@ angular.module('app')
 
                                             $scope.manageProduct = function (image, pricetag, $event) {
                                                 if (pricetag._image) {
-                                                    image = pricetag._image;
+                                                    image = $scope.args._images[pricetag._image];
                                                 }
                                                 if ($scope.loadingManageProduct) {
                                                     return;
@@ -18317,6 +18329,7 @@ angular.module('app')
 
                                             $scope.save = function () {
                                                 var promise;
+
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
