@@ -1619,7 +1619,7 @@ img.vertical, .vertical {
     position: relative;
 }
 .grid-generator .button-block {
-    width: 100%;
+    margin:auto;
 }
 .image-slider-outer {
     overflow: hidden;

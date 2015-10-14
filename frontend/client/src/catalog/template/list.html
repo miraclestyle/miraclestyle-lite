@@ -12,13 +12,15 @@
                     <div ng-if="result.state == 'draft'" class="catalog-draft-state">
                         <span class="display2">DRAFT</span>
                     </div>
-                    <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
+                    <img class="not-pointable" 
+                         display-image="result.cover"
+                         display-image-config="{defaultImage: 'defaultCatalogCover', size:360}" />
+                    <div class="bottom-right-floating">
+                        <button md-ink-ripple-action ripple-light loading class="button-transparent bottom-right-floating-action button-square" ng-click="preview(result.key, $event)">
+                            <icon color="white" type="view_carousel"></icon>
+                        </button>
+                    </div>
                 </button>
-                <div class="bottom-right-floating">
-                    <button md-ink-ripple-action ripple-light loading class="button-transparent bottom-right-floating-action button-square" ng-click="preview(result.key, $event)">
-                        <icon color="white" type="view_carousel"></icon>
-                    </button>
-                </div>
             </div>
         </div>
 
