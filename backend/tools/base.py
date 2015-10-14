@@ -11,6 +11,7 @@ import os
 import urllib
 import urlparse
 import webapp2
+import datetime
 
 from google.appengine.ext import blobstore
 from google.appengine.api import taskqueue, mail, urlfetch, channel
@@ -137,8 +138,16 @@ def nl2br(eval_ctx, value):
     result = Markup(result)
   return result
 
+@evalcontextfilter
+def format_date(eval_ctx, value):
+  if not value:
+    return value
+  return value.strftime('%-d %b %Y, %H:%M')
+
 JINJA_ENV.filters['nl2br'] = nl2br
 JINJA_ENV.globals['absolute_url'] = absolute_url
+JINJA_ENV.globals['datetime_now'] = lambda: datetime.datetime.now()
+JINJA_ENV.filters['format_date'] = format_date
 
 def render_template(string_template, values={}):
   template = JINJA_ENV.from_string(string_template)

@@ -3,11 +3,11 @@
 {% block body %}
 <span>
   Your catalog
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
+  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name}}</a>"
   was successfully published.
 </span><br/><br/>
 <span>
-  The catalog is set to expire on {{entity.discontinue_date|safe}}
+  The catalog is set to expire on {{entity.discontinue_date|format_date}}
   when it will be automatically discontinued.
 </span><br/><br/>
 <span>

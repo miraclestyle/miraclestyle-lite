@@ -3,13 +3,13 @@
 {% block body %}
 <span>
   Your catalog
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name|safe}}</a>"
+  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name}}</a>"
   was successfully discontinued.
 </span><br/><br/>
 {% if account._is_taskqueue %}
 <span>
   The catalog was automatically discontinued based on the "Expiration date" setting
-  that was set to {{entity.discontinue_date|safe}}.
+  that was set to {{entity.discontinue_date|format_date}}.
 </span><br/><br/>
 {% else %}
 <span>
