@@ -2668,7 +2668,7 @@ img.auto-width, .auto-width {
     z-index: 1;
 }
 .with-icon .select-icon {
-    bottom: 28px;
+    top: 28px;
     right: 16px
 }
 .modal-open {
