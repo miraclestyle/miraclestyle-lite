@@ -1366,7 +1366,7 @@ img.vertical, .vertical {
   position: relative; }
 
 .grid-generator .button-block {
-  display: block; }
+  width: 100%; }
 
 .image-slider-outer {
   overflow: hidden;
