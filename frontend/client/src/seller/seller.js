@@ -300,60 +300,62 @@
                                 })
                             });
                         },
-                        sortableOptions: {
-                            disabled: false,
-                            start: function (e, ui) {
-                                info.scope.$broadcast('itemOrderStarted');
-                            },
-                            axis: false,
-                            containment: false,
-                            whatSortMeans: function () {
-                                modals.alert('howToSort');
-                            },
-                            handle: '.sort-handle',
-                            tolerance: 'pointer',
-                            helper: 'clone',
-                            sort: function (e, ui) {
-                                var deleteMode,
-                                    division,
-                                    helperWidth = ui.helper.width(),
-                                    itemScope = ui.item.scope(),
-                                    item = itemScope.$eval(ui.item.attr('current-item'));
-                                division = ui.offset.left + helperWidth;
-                                if (division < (helperWidth / 2)) {
-                                    deleteMode = true;
-                                }
-                                if (item) {
-                                    if (deleteMode) {
-                                        ui.helper.addClass('about-to-delete');
-                                        item._state = 'deleted';
-                                        info.scope.formSetDirty();
-                                    } else {
-                                        ui.helper.removeClass('about-to-delete');
-                                        item._state = null;
+                        setupSortableOptions: function () {
+                            return {
+                                disabled: false,
+                                start: function (e, ui) {
+                                    info.scope.$broadcast('itemOrderStarted');
+                                },
+                                axis: false,
+                                containment: false,
+                                whatSortMeans: function () {
+                                    modals.alert('howToSort');
+                                },
+                                handle: '.sort-handle',
+                                tolerance: 'pointer',
+                                helper: 'clone',
+                                sort: function (e, ui) {
+                                    var deleteMode,
+                                        division,
+                                        helperWidth = ui.helper.width(),
+                                        itemScope = ui.item.scope(),
+                                        item = itemScope.$eval(ui.item.attr('current-item'));
+                                    division = ui.offset.left + helperWidth;
+                                    if (division < (helperWidth / 2)) {
+                                        deleteMode = true;
                                     }
-                                }
-                                info.scope.$broadcast('itemOrderSorting');
-                            },
-                            stop: function (e, ui) {
-                                var dirty;
-                                angular.forEach(config.ui.specifics.parentArgs,
-                                    function (ent, i) {
-                                        i = ((config.ui.specifics.parentArgs.length - 1) - i);
-                                        if (ent._sequence !== i || ent._state === 'deleted') {
-                                            dirty = true;
+                                    if (item) {
+                                        if (deleteMode) {
+                                            ui.helper.addClass('about-to-delete');
+                                            item._state = 'deleted';
+                                            info.scope.formSetDirty();
+                                        } else {
+                                            ui.helper.removeClass('about-to-delete');
+                                            item._state = null;
                                         }
-                                        ent._sequence = i;
-                                        if (ent.ui) {
-                                            ent.ui.access[ent.ui.access.length - 1] = i;
-                                        }
-                                    });
-                                if (dirty) {
-                                    info.scope.formSetDirty();
+                                    }
+                                    info.scope.$broadcast('itemOrderSorting');
+                                },
+                                stop: function (e, ui) {
+                                    var dirty;
+                                    angular.forEach(config.ui.specifics.parentArgs,
+                                        function (ent, i) {
+                                            i = ((config.ui.specifics.parentArgs.length - 1) - i);
+                                            if (ent._sequence !== i || ent._state === 'deleted') {
+                                                dirty = true;
+                                            }
+                                            ent._sequence = i;
+                                            if (ent.ui) {
+                                                ent.ui.access[ent.ui.access.length - 1] = i;
+                                            }
+                                        });
+                                    if (dirty) {
+                                        info.scope.formSetDirty();
+                                    }
+                                    info.scope.$broadcast('itemOrderChanged');
+                                    info.scope.$apply();
                                 }
-                                info.scope.$broadcast('itemOrderChanged');
-                                info.scope.$apply();
-                            }
+                            };
                         },
                         pluginFieldOverrides: {
                             '113': {

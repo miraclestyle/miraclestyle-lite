@@ -835,14 +835,13 @@
                             afterCompleteError: afterComplete,
                             init: function ($scope) {
 
-                                $scope.$watch(function () {
-                                    return true;
-                                }, function () {
-                                    $.extend(fields._images.ui, {
-                                        label: false,
-                                        specifics: {
-                                            sortableOptions: {
+                                $.extend(fields._images.ui, {
+                                    label: false,
+                                    specifics: {
+                                        setupSortableOptions: function () {
+                                            return {
                                                 stop: function () {
+                                                    console.log(this);
                                                     if (fields._images.ui.specifics.parentArgs.length) {
                                                         var total = fields._images.ui.specifics.parentArgs[0].sequence,
                                                             dirty,
@@ -865,9 +864,9 @@
 
                                                     }
                                                 }
-                                            }
+                                            };
                                         }
-                                    });
+                                    }
                                 });
 
                                 var updateFields = ['state', 'ui.rule', 'created', 'updated'],
@@ -1423,31 +1422,33 @@
                                                     noComplete: function (fieldScope) {
                                                         fieldScope.setAction('update');
                                                     },
-                                                    sortableOptions: {
-                                                        forcePlaceholderSize: true,
-                                                        stop: function () {
-                                                            var field = $scope.fieldProduct.modelclass._instances,
-                                                                total,
-                                                                dirty,
-                                                                scope = field.ui.directiveScope();
-                                                            if (field.ui.specifics.parentArgs.length) {
-                                                                total = field.ui.specifics.parentArgs[0].sequence;
-                                                                angular.forEach(field.ui.specifics.parentArgs,
-                                                                    function (ent, i) {
-                                                                        i = (total - i);
-                                                                        if (ent.sequence !== i || ent._state === 'deleted') {
-                                                                            dirty = true;
-                                                                        }
-                                                                        ent.sequence = i;
-                                                                        ent.ui.access[ent.ui.access.length - 1] = i;
-                                                                    });
-                                                                if (dirty) {
-                                                                    scope.formSetDirty();
+                                                    setupSortableOptions: function () {
+                                                        return {
+                                                            forcePlaceholderSize: true,
+                                                            stop: function () {
+                                                                var field = $scope.fieldProduct.modelclass._instances,
+                                                                    total,
+                                                                    dirty,
+                                                                    scope = field.ui.directiveScope();
+                                                                if (field.ui.specifics.parentArgs.length) {
+                                                                    total = field.ui.specifics.parentArgs[0].sequence;
+                                                                    angular.forEach(field.ui.specifics.parentArgs,
+                                                                        function (ent, i) {
+                                                                            i = (total - i);
+                                                                            if (ent.sequence !== i || ent._state === 'deleted') {
+                                                                                dirty = true;
+                                                                            }
+                                                                            ent.sequence = i;
+                                                                            ent.ui.access[ent.ui.access.length - 1] = i;
+                                                                        });
+                                                                    if (dirty) {
+                                                                        scope.formSetDirty();
+                                                                    }
+                                                                    scope.$broadcast('itemOrderChanged');
+                                                                    scope.$apply();
                                                                 }
-                                                                scope.$broadcast('itemOrderChanged');
-                                                                scope.$apply();
                                                             }
-                                                        }
+                                                        };
                                                     },
                                                     canOpen: function () {
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
