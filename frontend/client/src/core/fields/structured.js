@@ -220,7 +220,6 @@
                     if (config.ui.specifics.setupSortableOptions) {
                         config.ui.specifics.sortableOptions = config.ui.specifics.setupSortableOptions();
                     }
-                    console.log(config.ui.specifics.sortableOptions);
                     // add default sorting config
                     $.extend(defaultSortable, config.ui.specifics.sortableOptions);
                     config.ui.specifics.sortableOptions = defaultSortable;
