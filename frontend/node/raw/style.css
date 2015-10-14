@@ -3280,6 +3280,10 @@ div.catalog-pricetag:active, li.catalog-new-pricetag:active {
     cursor: pointer;
 }
 
+.images-manage div.catalog-pricetag {
+    max-width: 280px;
+}
+
 
 li.catalog-new-pricetag {
     position: static;

@@ -2696,6 +2696,9 @@ div.catalog-pricetag:active, li.catalog-new-pricetag:active {
 .touch div.catalog-pricetag, .touch li.catalog-new-pricetag {
   cursor: pointer; }
 
+.images-manage div.catalog-pricetag {
+  max-width: 280px; }
+
 li.catalog-new-pricetag {
   position: static;
   left: auto;
