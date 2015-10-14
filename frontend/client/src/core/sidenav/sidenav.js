@@ -141,6 +141,10 @@
 
             resize();
 
+            resize = _.throttle(resize, 100);
+
+            $(window).bind('resize', resize);
+
             scope.$watch(isLocked, updateIsLocked);
             scope.$watch('isOpen', updateIsOpen);
             scope.$on('$destroy', function () {

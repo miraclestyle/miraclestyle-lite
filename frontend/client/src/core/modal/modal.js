@@ -142,7 +142,7 @@
                             modal = element.find('.modal-dialog');
                             iwidth = modal.width();
                             iheight = modal.height();
-                            scope.modalOptions.resize = function () {
+                            scope.modalOptions.resize = _.throttle(function () {
                                 var wwidth = $(window).width() - 40 * 2,
                                     wheight = $(window).height() - 24 * 2,
                                     maxHeight,
@@ -163,7 +163,7 @@
                                 }
                                 modal.css('max-height', maxHeight);
                                 modal.css('max-width', maxWidth);
-                            };
+                            }, 100);
                             scope.modalOptions.resize();
                             $(window).on('resize', scope.modalOptions.resize);
                         }
@@ -612,6 +612,8 @@
                             scope.$broadcast('modalResize');
                         }, 50);
                     };
+
+                fn = _.throttle(fn, 100);
 
                 $(window).bind('resize modal.open', fn);
                 scope.$on('$destroy', function () {

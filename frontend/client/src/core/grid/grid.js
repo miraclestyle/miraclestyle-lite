@@ -122,6 +122,8 @@
                     }, 50);
                 };
 
+                resize = _.throttle(resize, 100);
+
                 scope.$on('modalResize', resize);
                 scope.$on('itemOrderChanged', resize);
                 scope.$on('itemOrderSorting', resize);
@@ -185,6 +187,8 @@
 
                         }
                     };
+
+                resize = _.throttle(resize, 100);
 
                 $(window).bind('resize', resize);
                 scope.$on('ngRepeatEnd', resize);
@@ -251,6 +255,8 @@
                         }
                     });
                 };
+
+                that.resize = _.throttle(that.resize, 100);
 
                 $(window).on('resize', that.resize);
 

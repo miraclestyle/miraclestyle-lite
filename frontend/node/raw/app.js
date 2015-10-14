@@ -4963,6 +4963,10 @@ $(function () {
 
             resize();
 
+            resize = _.throttle(resize, 100);
+
+            $(window).bind('resize', resize);
+
             scope.$watch(isLocked, updateIsLocked);
             scope.$watch('isOpen', updateIsOpen);
             scope.$on('$destroy', function () {
@@ -11471,6 +11475,8 @@ $(function () {
                     }, 50);
                 };
 
+                resize = _.throttle(resize, 100);
+
                 scope.$on('modalResize', resize);
                 scope.$on('itemOrderChanged', resize);
                 scope.$on('itemOrderSorting', resize);
@@ -11534,6 +11540,8 @@ $(function () {
 
                         }
                     };
+
+                resize = _.throttle(resize, 100);
 
                 $(window).bind('resize', resize);
                 scope.$on('ngRepeatEnd', resize);
@@ -11600,6 +11608,8 @@ $(function () {
                         }
                     });
                 };
+
+                that.resize = _.throttle(that.resize, 100);
 
                 $(window).on('resize', that.resize);
 
@@ -11722,11 +11732,11 @@ $(function () {
         .directive('fillEmptySpace', function () {
             return {
                 link: function (scope, element, attrs) {
-                    var scroller = element.parents('.overflow-y:first');
+                    var scroller = element.parents('.overflow-y:first'), resize;
                     if (!scroller.length) {
                         scroller = element.parents('.overflow-auto-y:first');
                     }
-                    scope.$on('modalResize', function () {
+                    resize = function () {
                         var height = element.height(),
                             scrollHeight = scroller.height(),
                             lastLi = element.find('.list:last'),
@@ -11735,7 +11745,9 @@ $(function () {
                             lastLi.css('min-height', lastLiHeight + (scrollHeight - height));
                         }
 
-                    });
+                    };
+                    resize = _.throttle(resize, 100);
+                    scope.$on('modalResize', resize);
                 }
             };
         })
@@ -13076,7 +13088,7 @@ $(function () {
                             modal = element.find('.modal-dialog');
                             iwidth = modal.width();
                             iheight = modal.height();
-                            scope.modalOptions.resize = function () {
+                            scope.modalOptions.resize = _.throttle(function () {
                                 var wwidth = $(window).width() - 40 * 2,
                                     wheight = $(window).height() - 24 * 2,
                                     maxHeight,
@@ -13097,7 +13109,7 @@ $(function () {
                                 }
                                 modal.css('max-height', maxHeight);
                                 modal.css('max-width', maxWidth);
-                            };
+                            }, 100);
                             scope.modalOptions.resize();
                             $(window).on('resize', scope.modalOptions.resize);
                         }
@@ -13546,6 +13558,8 @@ $(function () {
                             scope.$broadcast('modalResize');
                         }, 50);
                     };
+
+                fn = _.throttle(fn, 100);
 
                 $(window).bind('resize modal.open', fn);
                 scope.$on('$destroy', function () {
@@ -15681,6 +15695,7 @@ $(function () {
                     };
 
                 resize();
+                resize = _.throttle(resize, 100);
                 scope.$on('modalResize', resize);
                 scope.$on('reMeasureImageSlider', function () {
                     resize();
@@ -16955,6 +16970,7 @@ angular.module('app')
                             visibility: 'visible'
                         });
                     };
+                resize = _.throttle(resize, 100);
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
@@ -17651,34 +17667,39 @@ angular.module('app')
                             afterCompleteError: afterComplete,
                             init: function ($scope) {
 
-                                $.extend(fields._images.ui, {
-                                    label: false,
-                                    specifics: {
-                                        sortableOptions: {
-                                            stop: function () {
-                                                if (fields._images.ui.specifics.parentArgs.length) {
-                                                    var total = fields._images.ui.specifics.parentArgs[0].sequence,
-                                                        dirty,
-                                                        scope = fields._images.ui.directiveScope();
-                                                    angular.forEach(fields._images.ui.specifics.parentArgs,
-                                                        function (ent, i) {
-                                                            i = (total - i);
-                                                            if (ent.sequence !== i || ent._state === 'deleted') {
-                                                                dirty = true;
-                                                            }
-                                                            ent.sequence = i;
-                                                            ent.ui.access[ent.ui.access.length - 1] = i;
-                                                        });
+                                $scope.$watch(function () {
+                                    return true;
+                                }, function () {
+                                    $.extend(fields._images.ui, {
+                                        label: false,
+                                        specifics: {
+                                            sortableOptions: {
+                                                stop: function () {
+                                                    if (fields._images.ui.specifics.parentArgs.length) {
+                                                        var total = fields._images.ui.specifics.parentArgs[0].sequence,
+                                                            dirty,
+                                                            scope = fields._images.ui.directiveScope();
+                                                        angular.forEach(fields._images.ui.specifics.parentArgs,
+                                                            function (ent, i) {
+                                                                i = (total - i);
+                                                                if (ent.sequence !== i || ent._state === 'deleted') {
+                                                                    dirty = true;
+                                                                }
+                                                                ent.sequence = i;
+                                                                ent.ui.access[ent.ui.access.length - 1] = i;
+                                                            });
 
-                                                    if (dirty) {
-                                                        scope.formSetDirty();
+                                                        if (dirty) {
+                                                            scope.formSetDirty();
+                                                        }
+                                                        scope.$broadcast('itemOrderChanged');
+                                                        scope.$apply();
+
                                                     }
-                                                    scope.$broadcast('itemOrderChanged');
-
                                                 }
                                             }
                                         }
-                                    }
+                                    });
                                 });
 
                                 var updateFields = ['state', 'ui.rule', 'created', 'updated'],

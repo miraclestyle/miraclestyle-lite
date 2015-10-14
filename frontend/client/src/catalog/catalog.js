@@ -138,6 +138,7 @@
                             visibility: 'visible'
                         });
                     };
+                resize = _.throttle(resize, 100);
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
                 scope.$watch(attr.catalogPricetagPosition + '._state', resize);
@@ -834,34 +835,39 @@
                             afterCompleteError: afterComplete,
                             init: function ($scope) {
 
-                                $.extend(fields._images.ui, {
-                                    label: false,
-                                    specifics: {
-                                        sortableOptions: {
-                                            stop: function () {
-                                                if (fields._images.ui.specifics.parentArgs.length) {
-                                                    var total = fields._images.ui.specifics.parentArgs[0].sequence,
-                                                        dirty,
-                                                        scope = fields._images.ui.directiveScope();
-                                                    angular.forEach(fields._images.ui.specifics.parentArgs,
-                                                        function (ent, i) {
-                                                            i = (total - i);
-                                                            if (ent.sequence !== i || ent._state === 'deleted') {
-                                                                dirty = true;
-                                                            }
-                                                            ent.sequence = i;
-                                                            ent.ui.access[ent.ui.access.length - 1] = i;
-                                                        });
+                                $scope.$watch(function () {
+                                    return true;
+                                }, function () {
+                                    $.extend(fields._images.ui, {
+                                        label: false,
+                                        specifics: {
+                                            sortableOptions: {
+                                                stop: function () {
+                                                    if (fields._images.ui.specifics.parentArgs.length) {
+                                                        var total = fields._images.ui.specifics.parentArgs[0].sequence,
+                                                            dirty,
+                                                            scope = fields._images.ui.directiveScope();
+                                                        angular.forEach(fields._images.ui.specifics.parentArgs,
+                                                            function (ent, i) {
+                                                                i = (total - i);
+                                                                if (ent.sequence !== i || ent._state === 'deleted') {
+                                                                    dirty = true;
+                                                                }
+                                                                ent.sequence = i;
+                                                                ent.ui.access[ent.ui.access.length - 1] = i;
+                                                            });
 
-                                                    if (dirty) {
-                                                        scope.formSetDirty();
+                                                        if (dirty) {
+                                                            scope.formSetDirty();
+                                                        }
+                                                        scope.$broadcast('itemOrderChanged');
+                                                        scope.$apply();
+
                                                     }
-                                                    scope.$broadcast('itemOrderChanged');
-
                                                 }
                                             }
                                         }
-                                    }
+                                    });
                                 });
 
                                 var updateFields = ['state', 'ui.rule', 'created', 'updated'],

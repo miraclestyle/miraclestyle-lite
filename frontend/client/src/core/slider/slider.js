@@ -44,6 +44,7 @@
                     };
 
                 resize();
+                resize = _.throttle(resize, 100);
                 scope.$on('modalResize', resize);
                 scope.$on('reMeasureImageSlider', function () {
                     resize();

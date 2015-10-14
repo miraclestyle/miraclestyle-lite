@@ -88,11 +88,11 @@
         .directive('fillEmptySpace', function () {
             return {
                 link: function (scope, element, attrs) {
-                    var scroller = element.parents('.overflow-y:first');
+                    var scroller = element.parents('.overflow-y:first'), resize;
                     if (!scroller.length) {
                         scroller = element.parents('.overflow-auto-y:first');
                     }
-                    scope.$on('modalResize', function () {
+                    resize = function () {
                         var height = element.height(),
                             scrollHeight = scroller.height(),
                             lastLi = element.find('.list:last'),
@@ -101,7 +101,9 @@
                             lastLi.css('min-height', lastLiHeight + (scrollHeight - height));
                         }
 
-                    });
+                    };
+                    resize = _.throttle(resize, 100);
+                    scope.$on('modalResize', resize);
                 }
             };
         })
