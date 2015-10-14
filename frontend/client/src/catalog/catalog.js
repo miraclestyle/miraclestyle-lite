@@ -950,6 +950,7 @@
                                                 templateBodyUrl: 'catalog/manage_products.html',
                                                 toolbar: {}
                                             };
+                                            $scope.imagesLoaded = false;
                                             $scope.container = {};
                                             $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
                                             $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
@@ -976,6 +977,9 @@
                                                 access: accessImages,
                                                 complete: function (items) {
                                                     $scope.args._images.extend(items);
+                                                    $timeout(function () {
+                                                        $scope.imagesLoaded = true;
+                                                    }, 300);
                                                 }
                                             });
                                             variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
