@@ -117,6 +117,14 @@ class Write(orm.BaseModel):
     static_record_arguments = self.cfg.get('sra', {})
     dynamic_record_arguments = self.cfg.get('dra', {})
     entity = tools.get_attr(context, entity_path)
+    condition = self.cfg.get('condition', None)
+    condition_kwargs = self.cfg.get('condition_kwargs', {})
+    if condition:
+      default_condition_kwargs = {'entity': entity}
+      for key, value in condition_kwargs.iteritems():
+        default_condition_kwargs[key] = tools.get_attr(context, value)
+      if not condition(**default_condition_kwargs):
+        return # skip run if condition does not satisfy
     if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.account.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)

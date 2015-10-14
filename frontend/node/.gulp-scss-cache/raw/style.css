@@ -2687,7 +2687,7 @@ div.catalog-pricetag:active, li.catalog-new-pricetag:active {
 .no-touch a.catalog-pricetag-link, .no-touch div.catalog-pricetag-link {
   cursor: move; }
 
-html:not(.no-touch) div.catalog-pricetag, html:not(.no-touch) li.catalog-new-pricetag {
+.touch div.catalog-pricetag, .touch li.catalog-new-pricetag {
   cursor: pointer; }
 
 li.catalog-new-pricetag {

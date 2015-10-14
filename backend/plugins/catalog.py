@@ -87,21 +87,26 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
 class CatalogProcessCoverSet(orm.BaseModel):
 
   def run(self, context):
+    uploading = context.action.key.id() == 'catalog_upload_images'
     catalog_image = None
     catalog_images = context._catalog._images.value
-    if catalog_images and len(catalog_images) < 2:
-      CatalogImage = context.models['30']
-      catalog_images_datastore = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).fetch(1)
-      if catalog_images_datastore and catalog_images_datastore[0].key == catalog_images[0].key:
-        catalog_images = catalog_images_datastore
-      # use query only when user is not uploading new images
+    catalog_images_active = filter(lambda x: x._state != 'deleted', context._catalog._images.value)
+    total_catalog_images_active = len(catalog_images_active)
+    total_catalog_images = len(catalog_images)
     catalog_cover = context._catalog.cover.value
-    if catalog_images:
-      for catalog_image in catalog_images:
-        if catalog_image._state == 'deleted':
-          catalog_image = None
-        else:
-          break
+    if uploading:
+      if total_catalog_images_active:
+        catalog_image = catalog_images_active[0] # when uploading always select first image and set it as cover
+    elif total_catalog_images > 1: # this is update that sent images for reordering
+      try:
+        catalog_image = catalog_images_active[0] # when upading always get first image
+      except IndexError as e: # means that catalog_images_active is empty and user deleted all images, so we have to remove cover as well
+        catalog_image = None
+    elif catalog_images[0]._state == 'deleted':
+        catalog_image = None # in case the user has only 1 image and he requested that it gets deleted, catalog cover must be deleted too
+    else:
+      # if user is sending 1 image, which is usually when he edits catalog products, do nothing
+      return
     if catalog_image:
       if not catalog_cover or catalog_cover.gs_object_name[:-6] != catalog_image.gs_object_name:
         context._catalog.cover = copy.deepcopy(catalog_image)
@@ -109,6 +114,23 @@ class CatalogProcessCoverSet(orm.BaseModel):
         context._catalog.cover.process()
     elif catalog_cover:
       catalog_cover._state = 'deleted'
+
+
+    '''
+    CatalogImage = context.models['30']
+    context._allow_write = False
+    first_catalog_image = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).get()
+    catalog_cover = context._catalog.cover.value
+    if first_catalog_image:
+      if not catalog_cover or catalog_cover.gs_object_name[:-6] != first_catalog_image.gs_object_name:
+        context._catalog.cover = copy.deepcopy(first_catalog_image)
+        context._catalog.cover.value.sequence = 0
+        context._catalog.cover.process()
+        context._allow_write = True
+    elif catalog_cover:
+      catalog_cover._state = 'deleted'
+      context._allow_write = True
+    '''
 
 
 class CatalogDiscontinue(orm.BaseModel):

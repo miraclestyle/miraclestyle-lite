@@ -297,6 +297,17 @@ class BaseTestHandler(RequestHandler):
     self.response.write(sp * a)
 
 
+class TestingConcurency(BaseTestHandler):
+
+  autoload_current_account = False
+
+  @tools.profile(HTTP_PERFORMANCE_TEXT)
+  def respond(self):
+      if not tools.mem_temp_get('TestingConcurency'):
+        print('no value')
+        tools.mem_temp_set('TestingConcurency', 1)
+
+
 class Reset(BaseTestHandler):
 
   def respond(self):
@@ -352,79 +363,6 @@ class Reset(BaseTestHandler):
       tools.mem_flush_all()
 
 
-class BeginMemTest(BaseTestHandler):
-
-  def respond(self):
-    items = []
-    self.response.headers['Content-Type'] = 'text/html'
-    for i in xrange(1, 100):
-      items.append('<script src="http://127.0.0.1:9982/api/tests/AssertTest?v=%s"></script>' % i)
-    return self.response.write('\n'.join(items))
-    ctx = orm.get_context()
-    i = 0
-    while True:
-      i += 1
-      if i == 200:
-        break
-      ctx.urlfetch('http://127.0.0.1:9982/api/tests/AssertTest')
-
-
-class MemTest(BaseTestHandler):
-
-  def respond(self):
-    tools.mem_temp_set('cuser', 1)
-
-
-import threading
-import time
-
-lock = threading.RLock()
-
-class basec:
-  initilized = False
-
-  @classmethod
-  def init(cls):
-    if not cls.initilized:
-      cls.should = 1
-      time.sleep(0.1)
-      cls.initilized = True
-
-class c1(basec):
-  pass
-class c2(basec):
-  pass
-class c3(basec):
-  pass
-class c4(basec):
-  pass
-class c5(basec):
-  pass
-class c6(basec):
-  pass
-
-
-classes = [c1, c2, c3, c4, c5, c6]
-
-def init():
-    for c in classes:
-      c.init()
-
-class AssertTest(BaseTestHandler):
-
-  def respond(self):
-    init()
-
-    print 'c1', c1.should
-    print 'c2', c2.should
-    print 'c3', c3.should
-    print 'c4', c4.should
-    print 'c5', c5.should
-    print 'c6', c6.should
-
-    return ''
-
-
 class LoginAs(BaseTestHandler):
 
   def respond(self):
@@ -444,6 +382,7 @@ class LoginAs(BaseTestHandler):
 
 for k, o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):
+    print('/api/tests/%s' % o.__name__)
     ROUTES.append(('/api/tests/%s' % o.__name__, o))
 
 # due development server bug, make additional routing with proxy prefix

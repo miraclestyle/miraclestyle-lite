@@ -23,7 +23,7 @@ div.catalog-pricetag:active, li.catalog-new-pricetag:active {
     cursor: move;
 }
 
-html:not(.no-touch) div.catalog-pricetag, html:not(.no-touch) li.catalog-new-pricetag {
+.touch div.catalog-pricetag, .touch li.catalog-new-pricetag {
     cursor: pointer;
 }
 
