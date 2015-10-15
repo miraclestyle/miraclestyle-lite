@@ -2690,7 +2690,7 @@ div.catalog-pricetag, li.catalog-new-pricetag {
 div.catalog-pricetag:active, li.catalog-new-pricetag:active {
   box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26); }
 
-.no-touch a.catalog-pricetag-link, .no-touch div.catalog-pricetag-link {
+.no-touch .catalog-pricetag-link, .no-touch .catalog-pricetag-link {
   cursor: move; }
 
 .touch div.catalog-pricetag, .touch li.catalog-new-pricetag {
