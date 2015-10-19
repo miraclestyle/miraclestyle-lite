@@ -211,7 +211,6 @@
             },
             '27': {
                 uom: 'Unit of measurement',
-                variant_options: 'Variant combinations (select all variant options you want this configuration to be matched with)',
                 weight: 'Weight (kilogram)',
                 volume: 'Volume (liter)'
             },

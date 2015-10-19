@@ -324,5 +324,5 @@ class CatalogPricetagSetDuplicatedPosition(orm.BaseModel):
     if pricetags:
       for pricetag in pricetags:
         if pricetag._state == 'duplicated':
-          pricetag.position_left += 20
-          pricetag.position_top += 20
+          pricetag.position_left += 32
+          pricetag.position_top += 48
