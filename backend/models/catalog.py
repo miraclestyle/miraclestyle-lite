@@ -191,8 +191,8 @@ class CatalogProduct(orm.BaseExpando):
   _default_indexed = False
 
   _expando_fields = {
-      'weight': orm.SuperDecimalProperty('8', default=decimal.Decimal('0')),
-      'volume': orm.SuperDecimalProperty('9', default=decimal.Decimal('0')),
+      'weight': orm.SuperDecimalProperty('8'),
+      'volume': orm.SuperDecimalProperty('9'),
       'images': orm.SuperImageLocalStructuredProperty(orm.Image, '10', repeated=True),
       'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '11', repeated=True),
       'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '12', repeated=True)
