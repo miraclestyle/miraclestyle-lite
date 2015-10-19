@@ -594,7 +594,7 @@
                                             }
                                             if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
                                                 $scope.layouts.groups.push({
-                                                    label: $filter('humanized')((field.ui.label || field.code_name)),
+                                                    label: field.ui.label ? field.ui.label : $filter('humanized')(field.code_name),
                                                     disabled: false,
                                                     open: false
                                                 });
