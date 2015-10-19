@@ -84,11 +84,17 @@ class SuperDecimalProperty(SuperStringProperty):
       return search.NumberField(name=self.search_document_field_name, value=value)
 
   def _validate(self, value):
+    if not self._required and value is None:
+      return value
     if not isinstance(value, Decimal):
       raise ValueError('expected_decimal')
 
   def _to_base_type(self, value):
+    if not self._required and value is None:
+      return value
     return str(value)
 
   def _from_base_type(self, value):
+    if not self._required and value is None:
+      return value
     return Decimal(value)

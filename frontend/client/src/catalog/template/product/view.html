@@ -43,7 +43,7 @@
                                       <h1 ng-bind="product.name" class="headline"></h1>
                                       <!-- <span class="second">{{product._category.name}}</span> -->
                                       <span ng-bind="product.code" class="second padding-bottom-16"></span>
-                                      <span ng-bind="product.description|autobr" class="body1"></span>
+                                      <span ng-bind-html="product.description | escape | autobr" class="body1"></span>
                                     </div>
                                   </div>
                                 </div>

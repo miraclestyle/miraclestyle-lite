@@ -105,9 +105,9 @@
                         return any;
                     };
                     select.multipleSelection = {};
-                    select.multipleSelect = function (item) {
+                    select.multipleSelect = function (item, nocheck) {
                         var hash = select.getHash(item),
-                            hasIt = !select.multipleSelection[hash],
+                            hasIt = nocheck ? select.multipleSelection[hash] : !select.multipleSelection[hash],
                             already = ngModel.$modelValue || [],
                             selected = $.inArray(hash, ngModel.$modelValue) !== -1;
                         select.multipleSelection[hash] = hasIt;
@@ -128,6 +128,12 @@
                         ngModel.$setViewValue(already);
                         formCtrl.$setDirty();
                         select.close();
+                    };
+
+                    select.commitMultipleSelect = function (item) {
+                        $timeout(function () {
+                            select.multipleSelect(item, true);
+                        }, 100);
                     };
 
                     select.collectActive = function () {

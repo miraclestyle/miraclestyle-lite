@@ -1185,15 +1185,18 @@ $(function () {
             },
             '28': {
                 uom: 'Unit of measurement',
-                variant_options: 'Variant combinations',
+                variant_options: 'Variant combinations (select all variant options you want this configuration to be matched with)',
                 weight: 'Weight (kilogram)',
                 volume: 'Volume (liter)'
             },
             '27': {
                 uom: 'Unit of measurement',
-                variant_options: 'Variant combinations',
+                variant_options: 'Variant combinations (select all variant options you want this configuration to be matched with)',
                 weight: 'Weight (kilogram)',
                 volume: 'Volume (liter)'
+            },
+            '109': {
+                carriers: 'Carriers (this rule applies to)'
             },
             '112': {
                 rules: 'Prices'
@@ -15007,9 +15010,9 @@ $(function () {
                         return any;
                     };
                     select.multipleSelection = {};
-                    select.multipleSelect = function (item) {
+                    select.multipleSelect = function (item, nocheck) {
                         var hash = select.getHash(item),
-                            hasIt = !select.multipleSelection[hash],
+                            hasIt = nocheck ? select.multipleSelection[hash] : !select.multipleSelection[hash],
                             already = ngModel.$modelValue || [],
                             selected = $.inArray(hash, ngModel.$modelValue) !== -1;
                         select.multipleSelection[hash] = hasIt;
@@ -15030,6 +15033,12 @@ $(function () {
                         ngModel.$setViewValue(already);
                         formCtrl.$setDirty();
                         select.close();
+                    };
+
+                    select.commitMultipleSelect = function (item) {
+                        $timeout(function () {
+                            select.multipleSelect(item, true);
+                        }, 100);
                     };
 
                     select.collectActive = function () {
@@ -17829,6 +17838,10 @@ angular.module('app')
                                                 }
                                             });
                                             variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
+                                            if (!variantOptions.ui.specifics) {
+                                                variantOptions.ui.specifics = {};
+                                            }
+                                            variantOptions.ui.specifics.checkboxes = true;
                                             variantOptions.ui.fieldset = true;
                                             if (!variantOptions.ui.specifics) {
                                                 variantOptions.ui.specifics = {};
@@ -17904,6 +17917,10 @@ angular.module('app')
                                             $scope.draggableOptions = {containment : '.image-slider-outer', distance: 10};
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
+                                                setTimeout(function () {
+                                                    $(ui.helper).removeClass('dragged');
+                                                    $(ui.helper).find('a').removeClass('dragged');
+                                                }, 350);
                                                 if (pricetag._state === 'deleted') {
                                                     return;
                                                 }
@@ -18260,7 +18277,7 @@ angular.module('app')
                                                 path: ['_images', 'pricetags'],
                                                 specifics: {
                                                     layoutConfig: [{
-                                                        label: 'Variant combinations',
+                                                        label: GLOBAL_CONFIG.fields.label['28'].variant_options,
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',
@@ -20047,6 +20064,7 @@ angular.module('app')
                                 carriers: {
                                     ui: {
                                         specifics: {
+                                            checkboxes: true,
                                             entities: function () {
                                                 if (!config.ui.specifics.parentArgs) {
                                                     return [];

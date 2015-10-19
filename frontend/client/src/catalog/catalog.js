@@ -998,6 +998,10 @@
                                                 }
                                             });
                                             variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
+                                            if (!variantOptions.ui.specifics) {
+                                                variantOptions.ui.specifics = {};
+                                            }
+                                            variantOptions.ui.specifics.checkboxes = true;
                                             variantOptions.ui.fieldset = true;
                                             if (!variantOptions.ui.specifics) {
                                                 variantOptions.ui.specifics = {};
@@ -1073,6 +1077,10 @@
                                             $scope.draggableOptions = {containment : '.image-slider-outer', distance: 10};
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
+                                                setTimeout(function () {
+                                                    $(ui.helper).removeClass('dragged');
+                                                    $(ui.helper).find('a').removeClass('dragged');
+                                                }, 350);
                                                 if (pricetag._state === 'deleted') {
                                                     return;
                                                 }
@@ -1429,7 +1437,7 @@
                                                 path: ['_images', 'pricetags'],
                                                 specifics: {
                                                     layoutConfig: [{
-                                                        label: 'Variant combinations',
+                                                        label: GLOBAL_CONFIG.fields.label['28'].variant_options,
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',

@@ -441,6 +441,7 @@
                                 carriers: {
                                     ui: {
                                         specifics: {
+                                            checkboxes: true,
                                             entities: function () {
                                                 if (!config.ui.specifics.parentArgs) {
                                                     return [];

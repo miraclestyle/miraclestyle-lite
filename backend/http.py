@@ -382,7 +382,6 @@ class LoginAs(BaseTestHandler):
 
 for k, o in globals().items():
   if inspect.isclass(o) and issubclass(o, BaseTestHandler):
-    print('/api/tests/%s' % o.__name__)
     ROUTES.append(('/api/tests/%s' % o.__name__, o))
 
 # due development server bug, make additional routing with proxy prefix

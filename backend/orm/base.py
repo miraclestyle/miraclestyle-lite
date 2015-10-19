@@ -1477,7 +1477,8 @@ class BaseExpando(_BaseModel, Expando):
             # prop._delete_value(self)
             #del self._properties[prop._name]
             pass
-          return
+          if not prop._get_value(self):
+            return
         self._properties[prop._name] = prop
         prop._set_value(self, value)
         return prop
