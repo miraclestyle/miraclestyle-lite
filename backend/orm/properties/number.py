@@ -56,10 +56,16 @@ class SuperDecimalProperty(SuperStringProperty):
       try:
         out = []
         for i, v in enumerate(value):
-          out.append(Decimal(v))
+          if v == '':
+            v = None
+          else:
+            v = Decimal(v)
+          out.append(v)
       except:
         raise FormatError('invalid_number_on_sequence_%s' % i)
     else:
+      if value == '':
+        return None
       try:
         out = Decimal(value)
       except:

@@ -90,7 +90,9 @@ class CatalogProcessCoverSet(orm.BaseModel):
     uploading = context.action.key.id() == 'catalog_upload_images'
     catalog_image = None
     catalog_images = context._catalog._images.value
-    catalog_images_active = filter(lambda x: x._state != 'deleted', context._catalog._images.value)
+    if catalog_images is None:
+      catalog_images = []
+    catalog_images_active = filter(lambda x: x._state != 'deleted', catalog_images)
     total_catalog_images_active = len(catalog_images_active)
     total_catalog_images = len(catalog_images)
     catalog_cover = context._catalog.cover.value
@@ -102,7 +104,7 @@ class CatalogProcessCoverSet(orm.BaseModel):
         catalog_image = catalog_images_active[0] # when upading always get first image
       except IndexError as e: # means that catalog_images_active is empty and user deleted all images, so we have to remove cover as well
         catalog_image = None
-    elif catalog_images[0]._state == 'deleted':
+    elif catalog_images and catalog_images[0]._state == 'deleted':
         catalog_image = None # in case the user has only 1 image and he requested that it gets deleted, catalog cover must be deleted too
     else:
       # if user is sending 1 image, which is usually when he edits catalog products, do nothing

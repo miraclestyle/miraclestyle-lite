@@ -183,9 +183,6 @@ md-backdrop.md-opaque {
 .card .card-inner.menu-item {
   background: white; }
 
-.cards .ui-sortable-placeholder {
-  display: none; }
-
 .card .pull-right td {
   text-align: right; }
 
@@ -2225,6 +2222,9 @@ img.auto-width, .auto-width {
   top: 28px;
   right: 16px; }
 
+.height100 {
+  height: 100%; }
+
 .modal-open {
   overflow: hidden; }
 
@@ -2690,7 +2690,7 @@ div.catalog-pricetag, li.catalog-new-pricetag {
 div.catalog-pricetag:active, li.catalog-new-pricetag:active {
   box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26); }
 
-.no-touch .catalog-pricetag-link, .no-touch .catalog-pricetag-link {
+.no-touch .images-manage .catalog-pricetag-link, .no-touch .images-manage .catalog-pricetag-link {
   cursor: move; }
 
 .touch div.catalog-pricetag, .touch li.catalog-new-pricetag {

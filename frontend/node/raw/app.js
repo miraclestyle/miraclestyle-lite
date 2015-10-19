@@ -11062,7 +11062,7 @@ $(function () {
                                                     readRootArgs.read_arguments = readArgs;
                                                     angular.forEach(parentArgsPath, function (part, i) {
                                                         // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
-                                                        // properties in datastore that begin with an number, which we do not
+                                                        // properties in datastore that begin with an number
                                                         if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
                                                             readArgs[part] = {
                                                                 config: {}
@@ -11152,7 +11152,6 @@ $(function () {
                                                 }
 
                                             }, function (response) {
-                                                // here handle error...
                                                 if (angular.isDefined(config.ui.specifics.afterSaveError)) {
                                                     config.ui.specifics.afterSaveError($scope, response);
                                                 }
@@ -12199,9 +12198,6 @@ $(function () {
                     return data;
                 }
                 return data.replace(/\n\r?/g, '<br />');
-            };
-            return function (str) {
-                return helpers.splitLines(str).join("<br />");
             };
 
         })).filter('formatCurrency', ['$injector', '$locale', function ($injector, $locale) {
@@ -16954,15 +16950,25 @@ angular.module('app')
                 var pricetag = scope.$eval(attr.catalogPricetagPosition),
                     resize = function (justElement) {
                         var pa = $(element).parents('.image-slider-item:first'),
-                            sizes;
+                            sizes,
+                            containerh = pa.height(),
+                            pricetagHeight = 36;
                         sizes = models['31'].calculatePricetagPosition(
                             pricetag.position_top,
                             pricetag.position_left,
                             pricetag.image_width,
                             pricetag.image_height,
                             pa.width(),
-                            pa.height()
+                            containerh
                         );
+
+                        if (sizes[0] < 0) {
+                            sizes[0] = 0;
+                        } else {
+                            if (sizes[0] > containerh - pricetagHeight) {
+                                sizes[0] = containerh - pricetagHeight;
+                            }
+                        }
 
                         pricetag._position_top = sizes[0];
                         pricetag._position_left = sizes[1];
@@ -16976,7 +16982,7 @@ angular.module('app')
                 resize = _.throttle(resize, 100);
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
-                scope.$watch(attr.catalogPricetagPosition + '._state', resize);
+                scope.$watch([attr.catalogPricetagPosition + '._state', attr.catalogPricetagPosition + '.key'], resize);
             }
         };
     })).directive('productInstanceCardView', ng(function ($compile) {
@@ -17259,14 +17265,14 @@ angular.module('app')
                                 };
 
                                 $scope.resetVariation = function () {
-                                    this.resetVariantProduct();
+                                    $scope.resetVariantProduct();
                                     $scope.variationApplied = false;
                                     angular.forEach($scope.variants, function (v) {
                                         v.option = null;
                                     });
                                 };
                                 $scope.resetVariantProduct = function () {
-                                    $.extend(this.product, this.originalProduct);
+                                    $.extend($scope.product, $scope.originalProduct);
                                     $scope.productInstance = null;
                                 };
                                 $scope.variationApplied = false;
@@ -17330,6 +17336,7 @@ angular.module('app')
                                     if (product) {
                                         productInstance = product._instances[0];
                                     }
+                                    $scope.resetVariantProduct();
                                     if (productInstance) {
                                         $scope.productInstance = productInstance;
                                         angular.forEach(toUpdate, function (field) {
@@ -17338,10 +17345,7 @@ angular.module('app')
                                                 $scope.product[field] = next;
                                             }
                                         });
-                                    } else {
-                                        $scope.resetVariantProduct();
                                     }
-
                                     $scope.variationApplied = true;
                                 };
 
@@ -17357,7 +17361,7 @@ angular.module('app')
 
                                 $scope.changeVariation = function () {
                                     // rpc to check the instance
-                                    this.changeVariationPromise()
+                                    $scope.changeVariationPromise()
                                         .then(loadProductInstance)
                                         .then($scope.cartProductQuantity);
                                 };
@@ -17778,6 +17782,8 @@ angular.module('app')
                                                 imagesReader,
                                                 setupCurrentPricetag,
                                                 variantOptions,
+                                                addNewPricetag,
+                                                removePricetag,
                                                 getTitle = function () {
                                                     return 'viewProducts';
                                                 };
@@ -17852,6 +17858,30 @@ angular.module('app')
                                                     });
                                                 });
                                                 return list;
+                                            };
+
+                                            addNewPricetag = function (image, pricetag) {
+                                                image.pricetags.push(pricetag);
+                                                var existing = _.findWhere($scope.rootScope.args._images, {
+                                                    key: image.key
+                                                });
+                                                if (!existing) {
+                                                    return;
+                                                }
+                                                existing.pricetags.push(pricetag);
+                                            };
+
+                                            removePricetag = function (image, pricetag) {
+                                                image.pricetags.remove(pricetag);
+                                                var existing = _.findWhere($scope.rootScope.args._images, {
+                                                    key: image.key
+                                                });
+                                                if (!existing) {
+                                                    return;
+                                                }
+                                                existing.pricetags.iremove(function (ipricetag) {
+                                                    return ipricetag.key === pricetag.key;
+                                                });
                                             };
 
                                             imagesReader.load();
@@ -17952,7 +17982,7 @@ angular.module('app')
                                                             if (angular.isUndefined(pricetag._image)) {
                                                                 newPricetag._image = i;
                                                             }
-                                                            newImage.pricetags.push(newPricetag);
+                                                            addNewPricetag(newImage, newPricetag);
                                                             pricetag._state = 'deleted';
                                                             pricetagElement.addClass('ng-hide');
                                                         }
@@ -18096,7 +18126,7 @@ angular.module('app')
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]
                                                         }
                                                     };
-                                                image.pricetags.push(newPricetag); // append new pricetag to image
+                                                addNewPricetag(image, newPricetag); // append new pricetag to image
                                                 setupCurrentPricetag(image, newPricetag); // set current
                                                 $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = false;
                                                 $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product']; // set correct pathing for the new product
@@ -18141,7 +18171,7 @@ angular.module('app')
                                                         // after close hook
                                                         $scope.pricetag._product = null;
                                                         if (!fieldProductScope.args.key) {
-                                                            $scope.image.pricetags.remove($scope.pricetag); // remove the pricetag if we did not commit the product
+                                                            removePricetag($scope.image, $scope.pricetag); // remove the pricetag if we did not commit the product
                                                         }
                                                     },
                                                     afterSave: function (fieldScope) {
@@ -18181,7 +18211,7 @@ angular.module('app')
                                                                                 if (response.image_key === image.key) {
                                                                                     pricetag.ui.access[1] = i;
                                                                                     pricetag.ui.access[3] = image.pricetags.length;
-                                                                                    image.pricetags.push(pricetag);
+                                                                                    addNewPricetag(image, pricetag);
                                                                                 }
                                                                             });
                                                                             snackbar.showK('productDuplicated');
@@ -18364,8 +18394,8 @@ angular.module('app')
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);
                                                     var newArgs = $scope.rootScope.config.argumentLoader($scope);
-                                                    parentScope.args = angular.copy(newArgs);
-                                                    $scope.args = angular.copy(newArgs);
+                                                    $.extend(parentScope.args, angular.copy(newArgs));
+                                                    $.extend($scope.args, angular.copy(newArgs));
                                                     $scope.formSetPristine();
                                                     snackbar.showK('changesSaved');
                                                 });

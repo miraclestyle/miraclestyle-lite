@@ -76,10 +76,6 @@
     background: white;
 }
 
-.cards .ui-sortable-placeholder {
-    display: none;
-}
-
 .card .pull-right td {
     text-align:right;
 }

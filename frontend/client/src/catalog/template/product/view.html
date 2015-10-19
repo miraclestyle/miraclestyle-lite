@@ -40,10 +40,10 @@
                                   <div ng-include="'catalog/quick_info.html'"></div>
                                   <div class="list-row list-row-three-line list-row-large-multiline">
                                     <div class="list-content-tile">
-                                      <h1 class="headline">{{product.name}}</h1>
+                                      <h1 ng-bind="product.name" class="headline"></h1>
                                       <!-- <span class="second">{{product._category.name}}</span> -->
-                                      <span class="second padding-bottom-16">{{product.code}}</span>
-                                      <span class="body1">{{product.description}}</span>
+                                      <span ng-bind="product.code" class="second padding-bottom-16"></span>
+                                      <span ng-bind="product.description|autobr" class="body1"></span>
                                     </div>
                                   </div>
                                 </div>
@@ -53,21 +53,23 @@
                                     </div>
                                     <div ng-if="product.contents.length" ng-repeat="content in product.contents track by content.key" class="list-row list-row-one-line no-padding">
                                         <list-button ng-click="viewContent(content)">
-                                            <strong class="first ellipsis-text">{{content.title}}</strong>
+                                            <strong ng-bind="content.title" class="first ellipsis-text"></strong>
                                         </list-button>
                                     </div>
                                 </div>
                                 <div class="list list-padding">
                                 <div class="product-price list-row list-row-two-lines">
                                     <div class="list-content-tile">
-                                        <span class="first">{{product.unit_price|formatCurrency:catalog._seller._currency}} ({{catalog._seller._currency.code}})</span>
-                                        <span class="second">{{product.availability}}</span>
+                                        <span class="first">
+                                          <span ng-bind="product.unit_price|formatCurrency:catalog._seller._currency"></span> 
+                                          <span ng-bind="catalog._seller._currency.code">()</span>
+                                        </span>
+                                        <span ng-bind="product.availability" class="second"></span>
                                     </div>
                                 </div>
                                 <div class="product-variant-selection" ng-if="variantSelection.length && false">
                                     <div form-builder="variantSelection"></div>
                                 </div>
-
 
                                     <div ng-repeat="variant in variants" class="list-row list-row-two-lines no-padding">
                                         <button md-ink-ripple loading ng-click="setupVariantChooser(variant, $index)" type="button" class="list-row menu-item list-content-tile list-row-is-clickable">
@@ -80,7 +82,7 @@
                                 <div class="product-quantifier">
                                     <md-input-container>
                                         <label>
-                                            Quantity ({{product._uom.name}})
+                                            Quantity (<span ng-bind="product._uom.name"></span>)
                                         </label>
                                         <div class="product-quantity-controls clearfix">
                                             <div class="product-quantity-control">

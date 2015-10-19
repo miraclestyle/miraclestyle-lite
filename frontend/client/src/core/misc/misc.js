@@ -553,9 +553,6 @@
                 }
                 return data.replace(/\n\r?/g, '<br />');
             };
-            return function (str) {
-                return helpers.splitLines(str).join("<br />");
-            };
 
         })).filter('formatCurrency', ['$injector', '$locale', function ($injector, $locale) {
             var $filter = $injector.get('$filter'),

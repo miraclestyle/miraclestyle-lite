@@ -6,10 +6,10 @@
                 </button>
         </div>
         <div class="fixed-height relative overflow-auto-y">
-            <div class="modal-body-inner list-padding padding-top-64">
-                <div class="modal-body-inner multiline">
-                    <div ng-if="plainText" class="body1" ng-bind-html="content.body | escape | autobr"></div>
-                    <div ng-if="markDown" class="body1" btf-markdown="content.body"></div>
+            <div class="modal-body-inner list-padding padding-top-64 height100">
+                <div class="modal-body-inner multiline height100">
+                    <div ng-if="plainText" class="body1 height100" ng-bind-html="content.body | escape | autobr"></div>
+                    <div ng-if="markDown" class="body1 height100" btf-markdown="content.body"></div>
                 </div>
             </div>
         </div>

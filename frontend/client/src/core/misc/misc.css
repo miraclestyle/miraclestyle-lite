@@ -1028,3 +1028,7 @@ img.auto-width, .auto-width {
     top: 28px;
     right: 16px
 }
+
+.height100 {
+    height: 100%;
+}

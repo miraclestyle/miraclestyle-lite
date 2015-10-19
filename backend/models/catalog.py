@@ -141,8 +141,8 @@ class CatalogProductInstance(orm.BaseExpando):
       'description': orm.SuperTextProperty('4'),
       'unit_price': orm.SuperDecimalProperty('5'),
       'availability': orm.SuperStringProperty('6', default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder')),
-      'weight': orm.SuperDecimalProperty('7', default=decimal.Decimal('0')),
-      'volume': orm.SuperDecimalProperty('8', default=decimal.Decimal('0')),
+      'weight': orm.SuperDecimalProperty('7'),
+      'volume': orm.SuperDecimalProperty('8'),
       'images': orm.SuperImageLocalStructuredProperty(orm.Image, '9', repeated=True),
       'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '10', repeated=True)
   }

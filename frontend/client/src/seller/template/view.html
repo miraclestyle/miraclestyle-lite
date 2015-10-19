@@ -25,22 +25,24 @@
                 role="checkbox">
                   <strong class="first">Follow</strong>
                   <span class="second">
-                    {{sellerDetails.globalSellerStack.follower_count|number}} Followers
+                    <span ng-bind="sellerDetails.globalSellerStack.follower_count|number"></span> Followers
                   </span>
                   </md-checkbox>
           </div>
           </md-input-container>
 
         </div>
-        <div ng-if="sellerDetails.seller._content.documents.length" class="list list-padding">
+        <div  class="list list-padding">
              <list-button ng-click="sellerDetails.displayShare()">
                   <strong class="first">Share</strong>
              </list-button>
-             <div ng-repeat="content in sellerDetails.seller._content.documents track by content.key" class="list-row no-padding">
-               <list-button ng-click="sellerDetails.viewContent(content)">
-                  <strong class="first ellipsis-text">{{content.title}}</strong>
-               </list-button>
-            </div>
+             <div ng-if="sellerDetails.seller._content.documents.length">
+               <div ng-repeat="content in sellerDetails.seller._content.documents track by content.key" class="list-row no-padding">
+                 <list-button ng-click="sellerDetails.viewContent(content)">
+                    <strong class="first ellipsis-text" ng-bind="content.title"></strong>
+                 </list-button>
+              </div>
+             </div>
         </div>
       </div>
     </md-content>

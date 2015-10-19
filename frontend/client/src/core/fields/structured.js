@@ -620,7 +620,7 @@
                                                     readRootArgs.read_arguments = readArgs;
                                                     angular.forEach(parentArgsPath, function (part, i) {
                                                         // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
-                                                        // properties in datastore that begin with an number, which we do not
+                                                        // properties in datastore that begin with an number
                                                         if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
                                                             readArgs[part] = {
                                                                 config: {}
@@ -710,7 +710,6 @@
                                                 }
 
                                             }, function (response) {
-                                                // here handle error...
                                                 if (angular.isDefined(config.ui.specifics.afterSaveError)) {
                                                     config.ui.specifics.afterSaveError($scope, response);
                                                 }
