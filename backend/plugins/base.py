@@ -161,8 +161,6 @@ class Duplicate(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
-    import time
-    time.sleep(10)
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
