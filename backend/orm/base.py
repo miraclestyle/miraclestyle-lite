@@ -1465,6 +1465,7 @@ class BaseExpando(_BaseModel, Expando):
     if expando_fields:
       prop = expando_fields.get(name)
       if prop:
+        '''
         if value is None:
           self._clone_properties()
           # @note setattr invokes del keyword here which deletes the entity
@@ -1477,8 +1478,7 @@ class BaseExpando(_BaseModel, Expando):
             # prop._delete_value(self)
             #del self._properties[prop._name]
             pass
-          if not prop._get_value(self):
-            return
+        '''
         self._properties[prop._name] = prop
         prop._set_value(self, value)
         return prop
