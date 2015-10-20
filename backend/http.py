@@ -376,7 +376,7 @@ class LoginAs(BaseTestHandler):
         account._use_rule_engine = False
         account.put()
         Account.set_current_account(account, session)
-        self.response.set_cookie(settings.COOKIE_AUTH_KEY, '%s|%s' % (account.key_urlsafe, session.session_id), httponly=True)
+        self.secure_cookie_set(settings.COOKIE_AUTH_KEY, '%s|%s' % (account.key_urlsafe, session.session_id), httponly=True)
         self.redirect('/')
 
 
