@@ -18,7 +18,7 @@ class HomeView(base.SeoOrAngular):
         if 'seo' in self.request.cookies:
             self.response.delete_cookie('seo')
         else:
-            self.response.set_cookie('seo', '1', max_age=360)
+            self.response.set_cookie('seo', '1', max_age=86400*30)
     return super(HomeView, self).respond(*args, **kwargs)
 
   def respond_seo(self, *args, **kwargs):

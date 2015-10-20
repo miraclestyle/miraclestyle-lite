@@ -2491,7 +2491,11 @@ li .ui-select-highlight {
 
 .social-grid-item-line {
   line-height: 0;
-  padding-top: 8px; }
+  padding-top: 8px;
+  padding-bottom: 8px; }
+
+.social-grid-item-line.with-text {
+  padding-bottom: 0px; }
 
 .social-grid-text {
   line-height: 16px;
@@ -2748,7 +2752,7 @@ li.catalog-new-pricetag {
   display: block; }
 
 .seller-logo {
-  width: 280px;
+  width: 560px;
   height: auto;
   display: block; }
 

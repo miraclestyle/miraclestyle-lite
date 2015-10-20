@@ -17495,7 +17495,9 @@ angular.module('app')
                                 helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
                                 $scope.catalog = entity;
                                 $scope.catalog.action_model = '31';
-                                $scope.logoImageConfig = {};
+                                $scope.logoImageConfig = {
+                                    size: 560
+                                };
                                 var imagesReader,
                                     accessImages,
                                     loadProduct,

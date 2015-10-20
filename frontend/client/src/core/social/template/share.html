@@ -2,7 +2,7 @@
     <div ng-form="container.form" class="modal-body">
         <div class="top-close">
                 <button md-ink-ripple-action loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
-                    <icon color="white" type="close"></icon>
+                    <icon type="close"></icon>
                 </button>
         </div>
         <div class="fixed-height relative overflow-auto-y">
@@ -13,9 +13,6 @@
                         <button ng-click="share(soc)" type="button" ng-repeat="soc in socials" class="social-grid-item" md-ink-ripple>
                             <div class="social-grid-item-line">
                                 <img class="social-icon" ng-src="{{getIcon(soc)}}">
-                            </div>
-                            <div class="social-grid-item-line">
-                                <span class="secondary social-grid-text" ng-bind="soc.name"></span>
                             </div>
                         </button>
                     </div>
