@@ -20597,6 +20597,7 @@ angular.module('app')
 
                         $scope.toggleCollection = function () {
                             if (currentAccount._is_guest) {
+                                models['11'].login($state.href('home'));
                                 return;
                             }
                             $scope.loadedCollection.then(function (collection) {
