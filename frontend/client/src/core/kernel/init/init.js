@@ -33,6 +33,11 @@
                 controller: 'CatalogProductAddToCartController',
                 template: ''
             })
+            .state('embed-catalog-product-add-to-cart', {
+                url: '/embed/catalog/:key/product-add-to-cart/:image_id/:pricetag_id/:variant/:quantity',
+                controller: 'CatalogProductAddToCartController',
+                template: ''
+            })
             .state('catalog-product-view', {
                 url: '/catalog/:key/product/:image_id/:pricetag_id',
                 controller: 'CatalogProductViewController',

@@ -61,6 +61,7 @@
             popFrom: undefined,
             inDirection: false,
             outDirection: false,
+            hideClose: $state.current.name === 'embed-catalog-product-add-to-cart',
             variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
             autoAddToCartQuantity: $state.params.quantity,
             afterClose: function () {
@@ -558,7 +559,7 @@
 
                                 $scope.addToCart = function () {
                                     if (currentAccount._is_guest) {
-                                        models['11'].login($state.href('catalog-product-add-to-cart', {
+                                        models['11'].login($state.href($scope.hideClose ? 'embed-' : '' + 'catalog-product-add-to-cart', {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,

@@ -975,7 +975,7 @@
 
                         $scope.toggleCollection = function () {
                             if (currentAccount._is_guest) {
-                                models['11'].login($state.href('home'));
+                                models['11'].login($state.href('home')); // must redirect to actual follow button >_>
                                 return;
                             }
                             $scope.loadedCollection.then(function (collection) {
