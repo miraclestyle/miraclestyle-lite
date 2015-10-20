@@ -1380,19 +1380,25 @@
                                                                                     config: {
                                                                                         keys: [response.image_key]
                                                                                     },
-                                                                                    pricetags: {}
+                                                                                    pricetags: {
+                                                                                        config: {
+                                                                                            keys: [response.pricetag_key]
+                                                                                        }
+                                                                                    }
                                                                                 }
                                                                             }
                                                                         }).then(function (response2) {
-                                                                            var pricetag = response2.data.entity._images[0].pricetags[0];
 
-                                                                            angular.forEach($scope.args._images, function (image, i) {
-                                                                                if (response.image_key === image.key) {
-                                                                                    pricetag.ui.access[1] = i;
-                                                                                    pricetag.ui.access[3] = image.pricetags.length;
-                                                                                    addNewPricetag(image, pricetag);
-                                                                                }
+                                                                            var image = _.findWhere($scope.args._images, {
+                                                                                key: response.image_key
                                                                             });
+                                                                            if (image) {
+                                                                                angular.forEach(response2.data.entity._images[0].pricetags, function (value, key) {
+                                                                                    if (!_.findWhere(image.pricetags, {key: response.pricetag_key})) {
+                                                                                        image.pricetags.push(value);
+                                                                                    }
+                                                                                });
+                                                                            }
                                                                             snackbar.showK('productDuplicated');
                                                                         });
                                                                     }

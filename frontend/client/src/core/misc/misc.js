@@ -1210,36 +1210,27 @@
                 instances: {},
                 create: function (token, callback) {
                     var out;
-                    if (!channelNotifications.instances[token]) {
-                        out = channelApi.create(token);
-                        channelNotifications.instances[token] = out;
-                        out.open({
-                            onclose: function () {
-                                console.log('channel closed');
-                                delete channelNotifications.instances[token];
-                            },
-                            onmessage: function (message, destroy) {
-                                console.log('channel got message');
-                                destroy();
-                                if (angular.isObject(message) && message.data) {
-                                    try {
-                                        var response = angular.fromJson(message.data);
-                                        if (callback) {
-                                            callback(response);
-                                        } else {
-                                            snackbar.show(response.body);
-                                        }
-                                    } catch (ignore) {
-                                        console.warn('channel callback could not execute, got error', ignore, 'with data', message);
+                    out = channelApi.create(token);
+                    //channelNotifications.instances[token] = out;
+                    out.open({
+                        onmessage: function (message, destroy) {
+                            destroy();
+                            if (angular.isObject(message) && message.data) {
+                                try {
+                                    var response = angular.fromJson(message.data);
+                                    if (callback) {
+                                        callback(response);
+                                    } else {
+                                        snackbar.show(response.body);
                                     }
-                                } else {
-                                    console.warn('channel returned no parsable data, got', message);
+                                } catch (ignore) {
+                                    console.warn('channel callback could not execute, got error', ignore, 'with data', message);
                                 }
+                            } else {
+                                console.warn('channel returned no parsable data, got', message);
                             }
-                        });
-                    } else {
-                        out = channelNotifications.instances[token];
-                    }
+                        }
+                    });
                     return out;
                 }
             };

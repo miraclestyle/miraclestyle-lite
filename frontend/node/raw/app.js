@@ -12858,36 +12858,27 @@ $(function () {
                 instances: {},
                 create: function (token, callback) {
                     var out;
-                    if (!channelNotifications.instances[token]) {
-                        out = channelApi.create(token);
-                        channelNotifications.instances[token] = out;
-                        out.open({
-                            onclose: function () {
-                                console.log('channel closed');
-                                delete channelNotifications.instances[token];
-                            },
-                            onmessage: function (message, destroy) {
-                                console.log('channel got message');
-                                destroy();
-                                if (angular.isObject(message) && message.data) {
-                                    try {
-                                        var response = angular.fromJson(message.data);
-                                        if (callback) {
-                                            callback(response);
-                                        } else {
-                                            snackbar.show(response.body);
-                                        }
-                                    } catch (ignore) {
-                                        console.warn('channel callback could not execute, got error', ignore, 'with data', message);
+                    out = channelApi.create(token);
+                    //channelNotifications.instances[token] = out;
+                    out.open({
+                        onmessage: function (message, destroy) {
+                            destroy();
+                            if (angular.isObject(message) && message.data) {
+                                try {
+                                    var response = angular.fromJson(message.data);
+                                    if (callback) {
+                                        callback(response);
+                                    } else {
+                                        snackbar.show(response.body);
                                     }
-                                } else {
-                                    console.warn('channel returned no parsable data, got', message);
+                                } catch (ignore) {
+                                    console.warn('channel callback could not execute, got error', ignore, 'with data', message);
                                 }
+                            } else {
+                                console.warn('channel returned no parsable data, got', message);
                             }
-                        });
-                    } else {
-                        out = channelNotifications.instances[token];
-                    }
+                        }
+                    });
                     return out;
                 }
             };
@@ -16347,12 +16338,10 @@ angular.module('app')
                         });
                     },
                     channelNotifications: function (config) {
-                        console.log('begin channel notification');
                         config = helpers.alwaysObject(config);
                         var promise = this.channel();
                         return promise.then(function (response) {
                             var token = response.token;
-                            console.log('create channel notification handler with config', config, 'token', token);
                             return {
                                 token: token,
                                 channel: channelNotifications.create(token, config.callback)
@@ -18227,19 +18216,25 @@ angular.module('app')
                                                                                     config: {
                                                                                         keys: [response.image_key]
                                                                                     },
-                                                                                    pricetags: {}
+                                                                                    pricetags: {
+                                                                                        config: {
+                                                                                            keys: [response.pricetag_key]
+                                                                                        }
+                                                                                    }
                                                                                 }
                                                                             }
                                                                         }).then(function (response2) {
-                                                                            var pricetag = response2.data.entity._images[0].pricetags[0];
 
-                                                                            angular.forEach($scope.args._images, function (image, i) {
-                                                                                if (response.image_key === image.key) {
-                                                                                    pricetag.ui.access[1] = i;
-                                                                                    pricetag.ui.access[3] = image.pricetags.length;
-                                                                                    addNewPricetag(image, pricetag);
-                                                                                }
+                                                                            var image = _.findWhere($scope.args._images, {
+                                                                                key: response.image_key
                                                                             });
+                                                                            if (image) {
+                                                                                angular.forEach(response2.data.entity._images[0].pricetags, function (value, key) {
+                                                                                    if (!_.findWhere(image.pricetags, {key: response.pricetag_key})) {
+                                                                                        image.pricetags.push(value);
+                                                                                    }
+                                                                                });
+                                                                            }
                                                                             snackbar.showK('productDuplicated');
                                                                         });
                                                                     }

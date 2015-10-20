@@ -1024,6 +1024,7 @@ class Catalog(orm.BaseExpando):
                       Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': 'input.channel',
                                         'catalog_key': '_catalog.key_urlsafe',
+                                        'pricetag_key': 'duplicated_entity.key_urlsafe',
                                         'image_key': '_catalog._images.value.0.key_urlsafe'},
                                   'method': 'channel'})
                   ]

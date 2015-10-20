@@ -96,12 +96,10 @@
                         });
                     },
                     channelNotifications: function (config) {
-                        console.log('begin channel notification');
                         config = helpers.alwaysObject(config);
                         var promise = this.channel();
                         return promise.then(function (response) {
                             var token = response.token;
-                            console.log('create channel notification handler with config', config, 'token', token);
                             return {
                                 token: token,
                                 channel: channelNotifications.create(token, config.callback)

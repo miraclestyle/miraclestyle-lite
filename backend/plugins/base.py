@@ -161,6 +161,8 @@ class Duplicate(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
+    import time
+    time.sleep(10)
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     entity_path = self.cfg.get('source', '_' + context.model.__name__.lower())
@@ -172,6 +174,7 @@ class Duplicate(orm.BaseModel):
       split_duplicate_path = duplicate_path.split('.')
       child_entity = tools.get_attr(entity, duplicate_path)
       duplicated_child_entity = child_entity.duplicate()
+      context.duplicated_entity = duplicated_child_entity
       duplicate_entity = entity
       # gets _images.value.0.pricetags
       child_entity_path = ".".join(split_duplicate_path[:-2])
@@ -188,6 +191,7 @@ class Duplicate(orm.BaseModel):
     else:
       if entity and isinstance(entity, orm.Model):
         duplicate_entity = entity.duplicate()
+        context.duplicated_entity = duplicate_entity
     tools.set_attr(context, save_path, duplicate_entity)
 
 
