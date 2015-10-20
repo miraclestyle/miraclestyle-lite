@@ -566,7 +566,7 @@ class SeoOrAngular(AngularBlank):
     agent = self.request.headers.get('User-Agent')
     if agent:
       general_match = re.search('(bot|crawl|slurp|spider|facebook|twitter|pinterest|linkedin)', agent)
-      manual_debug = self.request.cookies.get('seo') == '1'
+      manual_debug = self.request.cookies.get('seo') == '1' or self.request.get('__seo') == '1'
       return  general_match or manual_debug or agent in KNOWN_BOT_AGENTS
     return False
 
