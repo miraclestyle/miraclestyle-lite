@@ -2,7 +2,7 @@
 
 {% block meta %}
 
-<title>{{title}}</title>
+<title>Product {{title}}</title>
 
 <meta name="keywords" content="{{product.name|keywords}}" />
 <meta name="description" content="{{description}}" />
@@ -59,6 +59,11 @@
   <a href="{{uri_for('home')}}" itemprop="url">
     <span itemprop="title">Home</span>
   </a> ›
+  <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+    <a href="{{uri_for('home')}}" itemprop="url">
+      <span itemprop="title">Catalogs</span>
+    </a>
+  </div> ›
   <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
     <a href="{{uri_for('catalog.view', key=catalog.key)}}" itemprop="url">
       <span itemprop="title">{{catalog.name}}</span>

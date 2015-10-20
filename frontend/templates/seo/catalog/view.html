@@ -4,7 +4,7 @@
 
 
 
-<title>{{title}}</title>
+<title>Catalog {{title}}</title>
 
 
 {#
@@ -74,6 +74,11 @@ facebook, pinterest and google + uses these
   <a href="{{uri_for('home')}}" itemprop="url">
     <span itemprop="title">Home</span>
   </a> ›
+  <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+    <a href="{{uri_for('home')}}" itemprop="url">
+      <span itemprop="title">Catalogs</span>
+    </a>
+  </div> ›
   <div itemprop="child" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
     <a href="{{path}}" itemprop="url">
       <span itemprop="title">{{catalog.name}}</span>
