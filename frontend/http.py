@@ -11,7 +11,7 @@ import settings
 from jinja2 import FileSystemLoader
 
 
-TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
+TEMPLATE_DIRS = (os.path.join(settings.ROOT_DIR, 'templates'),)
 TEMPLATE_LOADER = FileSystemLoader(TEMPLATE_DIRS)
 
 

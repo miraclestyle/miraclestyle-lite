@@ -15,23 +15,37 @@ class AcceptableUsePolicyPage(base.SeoOrAngular):
 
 
 class TosPage(base.SeoOrAngular):
-  pass
+  
+  def respond_seo(self):
+    self.render('seo/misc/tos.html', {'route_name': 'tos', 'page_title': 'Terms of service'})
 
 
 class AboutPage(base.SeoOrAngular):
-  pass
+  
+  def respond_seo(self):
+    self.render('seo/misc/about.html', {'route_name': 'about', 'page_title': 'About'})
 
 
 class PrivacyPage(base.SeoOrAngular):
-  pass
+
+  def respond_seo(self):
+    self.render('seo/misc/privacy_policy.html', {'route_name': 'about', 'page_title': 'Privacy'})
 
 
 class CopyrightPage(base.SeoOrAngular):
-  pass
 
+  def respond_seo(self):
+    self.render('seo/misc/copyright_policy.html', {'route_name': 'about', 'page_title': 'Copyright'})
+
+class AcceptableUsePolicyPage(base.SeoOrAngular):
+
+  def respond_seo(self):
+    self.render('seo/misc/acceptable_use_policy.html', {'route_name': 'about', 'page_title': 'Acceptable use policy'})
 
 class SupportPage(base.SeoOrAngular):
-  pass
+
+  def respond_seo(self):
+    pass
 
 
 settings.ROUTES.extend(((r'/collections', base.AngularBlank),
@@ -45,10 +59,10 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                         # static pages
                         (r'/about', AboutPage, 'about'),
                         (r'/support', SupportPage, 'support'),
-                        (r'/acceptable_use_policy', AcceptableUsePolicyPage),
-                        (r'/tos', TosPage),
-                        (r'/privacy_policy', PrivacyPage),
-                        (r'/copyright_policy', CopyrightPage),
+                        (r'/acceptable_use_policy', AcceptableUsePolicyPage, 'acceptable_use_policy'),
+                        (r'/tos', TosPage, 'tos'),
+                        (r'/privacy_policy', PrivacyPage, 'privacy'),
+                        (r'/copyright_policy', CopyrightPage, 'copyright'),
 
                         # other
                         (r'/login/status', base.AngularBlank),
