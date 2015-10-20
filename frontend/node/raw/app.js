@@ -12863,9 +12863,11 @@ $(function () {
                         channelNotifications.instances[token] = out;
                         out.open({
                             onclose: function () {
+                                console.log('channel closed');
                                 delete channelNotifications.instances[token];
                             },
                             onmessage: function (message, destroy) {
+                                console.log('channel got message');
                                 destroy();
                                 if (angular.isObject(message) && message.data) {
                                     try {
@@ -12875,7 +12877,11 @@ $(function () {
                                         } else {
                                             snackbar.show(response.body);
                                         }
-                                    } catch (ignore) {}
+                                    } catch (ignore) {
+                                        console.warn('channel callback could not execute, got error', ignore, 'with data', message);
+                                    }
+                                } else {
+                                    console.warn('channel returned no parsable data, got', message);
                                 }
                             }
                         });
@@ -16341,10 +16347,12 @@ angular.module('app')
                         });
                     },
                     channelNotifications: function (config) {
+                        console.log('begin channel notification');
                         config = helpers.alwaysObject(config);
                         var promise = this.channel();
                         return promise.then(function (response) {
                             var token = response.token;
+                            console.log('create channel notification handler with config', config, 'token', token);
                             return {
                                 token: token,
                                 channel: channelNotifications.create(token, config.callback)

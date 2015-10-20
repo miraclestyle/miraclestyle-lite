@@ -1215,9 +1215,11 @@
                         channelNotifications.instances[token] = out;
                         out.open({
                             onclose: function () {
+                                console.log('channel closed');
                                 delete channelNotifications.instances[token];
                             },
                             onmessage: function (message, destroy) {
+                                console.log('channel got message');
                                 destroy();
                                 if (angular.isObject(message) && message.data) {
                                     try {
@@ -1227,7 +1229,11 @@
                                         } else {
                                             snackbar.show(response.body);
                                         }
-                                    } catch (ignore) {}
+                                    } catch (ignore) {
+                                        console.warn('channel callback could not execute, got error', ignore, 'with data', message);
+                                    }
+                                } else {
+                                    console.warn('channel returned no parsable data, got', message);
                                 }
                             }
                         });
