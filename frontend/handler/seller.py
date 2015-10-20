@@ -20,7 +20,7 @@ class SellerView(base.SeoOrAngular):
     catalogs = self.api_endpoint(payload=catalogs)
     seller = data['entity']
     tpl = {'seller': seller,
-           'title': seller['name'],
+           'title': 'Seller %s' % seller['name'],
            'image': '%s=s360' % seller['logo']['serving_url'],
            'path': self.uri_for('seller.view', _full=True, key=seller['key']),
            'catalogs': catalogs['entities'],
