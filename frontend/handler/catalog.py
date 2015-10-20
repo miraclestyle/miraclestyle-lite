@@ -20,7 +20,7 @@ class CatalogView(base.SeoOrAngular):
     catalog = data['entity']
     tpl = {'catalog': catalog,
            'title': catalog['name'],
-           'image': '%s=360' % catalog['_images'][0]['serving_url'],
+           'image': '%s=s360' % catalog['_images'][0]['serving_url'],
            'path': self.uri_for('catalog.view', _full=True, key=catalog['key'])
            }
     self.render('seo/catalog/view.html', tpl)
