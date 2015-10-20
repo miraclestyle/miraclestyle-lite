@@ -324,5 +324,5 @@ class CatalogPricetagSetDuplicatedPosition(orm.BaseModel):
     if pricetags:
       for pricetag in pricetags:
         if pricetag._state == 'duplicated':
-          pricetag.position_left += 32
-          pricetag.position_top += 48
+          pricetag.position_left = pricetag.image_width / 2 - (64 / 2) # this math cant be improved because we do not know pricetag width, we only know it's height
+          pricetag.position_top = pricetag.image_height / 2 - 36 # but we assume anyways that it's gonna have minimum width of 64 and height 36
