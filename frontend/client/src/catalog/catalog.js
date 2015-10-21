@@ -167,7 +167,17 @@
                 resize = _.throttle(resize, 100);
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
-                scope.$on('resizePricetags', resize);
+                scope.$on('resizePricetags', function (event, tpricetag) {
+                    if (tpricetag) {
+                        if (tpricetag.key === pricetag.key) {
+                            pricetag.position_top = tpricetag.position_top;
+                            pricetag.position_left = tpricetag.position_left;
+                            resize();
+                        }
+                    } else {
+                        resize();
+                    }
+                });
                 angular.forEach(['state', 'key', 'position_left', 'position_top', '_position_left', '_position_top'], function (value) {
                     track.push(attr.catalogPricetagPosition + '.' + value);
                 });
@@ -1247,8 +1257,7 @@
                                                 if (!$scope.$$phase) {
                                                     $scope.$apply();
                                                 }
-
-                                                $scope.$broadcast('resizePricetags');
+                                                $scope.$broadcast('resizePricetags', pricetag);
 
                                             };
 
