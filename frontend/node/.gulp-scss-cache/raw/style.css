@@ -1392,7 +1392,8 @@ img.vertical, .vertical {
   display: block;
   margin: auto;
   position: relative;
-  padding: 0px; }
+  padding: 0px;
+  max-width: 240px; }
 
 .clearfix:before, .clearfix:after {
   display: table;

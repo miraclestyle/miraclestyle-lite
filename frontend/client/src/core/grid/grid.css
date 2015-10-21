@@ -94,4 +94,5 @@ img.vertical, .vertical {
     margin: auto;
     position: relative;
     padding: 0px;
+    max-width: 240px;
 }
