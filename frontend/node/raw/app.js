@@ -11963,6 +11963,7 @@ $(function () {
                                     listenHeight = listen.height(),
                                     maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
                                     promise;
+                                console.log(maybe, listenHeight, listenNode.scrollHeight);
                                 if (maybe) {
                                     promise = loadMore({}, angular.noop);
                                     if (promise) {
