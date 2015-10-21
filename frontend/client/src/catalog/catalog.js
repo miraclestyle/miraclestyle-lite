@@ -1,16 +1,5 @@
 (function () {
     'use strict';
-    var makeAfterClose = function (embed, $state) {
-        return (embed ? function () {
-            $state.go('embed-catalog-view', {
-                key: $state.params.key
-            });
-        } : function () {
-            $state.go('catalog-view', {
-                key: $state.params.key
-            });
-        });
-    };
     angular.module('app').directive('trackIfProductView', ng(function ($timeout) {
         return {
             restrict: 'A',
@@ -1249,8 +1238,8 @@
                                                 var target_drop = $(event.target),
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
-                                                    rtop = posi2.top - posi.top,
-                                                    rleft = posi2.left - posi.left,
+                                                    rtop = posi2.top - posi.top + 5,
+                                                    rleft = posi2.left - posi.left + 4,
                                                     vdom = $('<div style="visibility:hidden;"></div>'),
                                                     newPricetagConfig = {
                                                         position_top: rtop,
