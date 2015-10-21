@@ -4831,7 +4831,7 @@ $(function () {
         .factory('$mdSidenav', SidenavService)
         .directive('mdSidenav', SidenavDirective)
         .controller('$mdSidenavController', SidenavController)
-        .run(ng(function (helpers, $mdSidenav, $timeout) {
+        .run(ng(function (helpers, $mdSidenav, $timeout, $q) {
             if (!helpers.sideNav) {
                 helpers.sideNav = {};
             }
@@ -4850,12 +4850,15 @@ $(function () {
                     return menu.toggle(undefined, 'open');
                 };
                 menu.toggle = function ($event, dowhat) {
-                    if (menu.toggling) {
-                        return;
-                    }
                     var it = $mdSidenav(menu.id),
                         check = false,
+                        defer = $q.defer(),
+                        promise = defer.promise,
                         target;
+                    if (menu.toggling) {
+                        defer.resolve();
+                        return promise;
+                    }
                     if ($event && $event.target) {
                         target = $($event.target);
                         angular.forEach(menu.notRipplable, function (skip) {
@@ -4864,15 +4867,19 @@ $(function () {
                             }
                         });
                         if (check) {
-                            return;
+                            defer.resolve();
+                            return promise;
                         }
                     }
                     menu.toggling = true;
                     $timeout(function () {
                         it[dowhat || (it.isOpen() ? 'close' : 'open')]().then(function () {
                             menu.toggling = false;
+                            defer.resolve();
                         });
                     });
+
+                    return promise;
                 };
             };
         }));
@@ -13053,8 +13060,8 @@ $(function () {
                 }, 0, false);
             }
         };
-    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator',
-        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, animationGenerator) {
+    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator', '$rootScope',
+        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, animationGenerator, $rootScope) {
             return {
                 restrict: 'EA',
                 scope: {
@@ -13068,6 +13075,7 @@ $(function () {
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
+                    $rootScope.$broadcast('disableUI', true);
                     var clickElement = getClickElement(scope.modalOptions),
                         ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
@@ -13148,6 +13156,7 @@ $(function () {
                             $(window).triggerHandler('modal.visible', [element]);
                             scope.modalOptions.opened = true;
                             scope.$apply();
+                            $rootScope.$broadcast('disableUI', false);
                         });
 
                         $(window).triggerHandler('modal.open', [element]);
@@ -13160,18 +13169,6 @@ $(function () {
                             $timeout(ready, 50, false);
                         }
                     });
-
-                    scope.close2 = function (evt) {
-                        var modal = $modalStack.getTop(),
-                            defer = $q.defer();
-                        defer.resolve();
-                        if (modal && modal.value.backdrop && modal.value.backdrop !== 'static' && (evt.target === evt.currentTarget)) {
-                            evt.preventDefault();
-                            evt.stopPropagation();
-                            return $modalStack.dismiss(modal.key, 'backdrop click');
-                        }
-                        return defer.promise;
-                    };
 
                     scope.backdropClose = function ($event) {
                         if (scope.modalOptions.cantCloseWithBackdrop) {
@@ -18725,11 +18722,26 @@ angular.module('app')
     'use strict';
     angular.module('app')
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
-        .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout) {
+        .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout, $parse) {
             return {
                 link: function (scope, element, attrs) {
+                    var callback = $parse(attrs.closeMasterMenu);
                     element.on('click', function () {
-                        $timeout(scope.site.toolbar.menu.close, 200, 0);
+                        scope.site.toolbar.menu.close().then(function () {
+                            if (callback) {
+                                if (scope.$$phase) {
+                                    callback(scope, {
+                                        $event: event
+                                    });
+                                } else {
+                                    scope.$apply(function () {
+                                        callback(scope, {
+                                            $event: event
+                                        });
+                                    });
+                                }
+                            }
+                        });
                     });
                 }
             };
@@ -20460,6 +20472,10 @@ angular.module('app')
                         config.ui.specifics[k] = v;
                     }
                 });
+
+                if (config.ui.specifics.setupSortableOptions) {
+                    config.ui.specifics.sortableOptions = config.ui.specifics.setupSortableOptions();
+                }
 
                 return 'plugins';
             };

@@ -2,11 +2,26 @@
     'use strict';
     angular.module('app')
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
-        .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout) {
+        .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout, $parse) {
             return {
                 link: function (scope, element, attrs) {
+                    var callback = $parse(attrs.closeMasterMenu);
                     element.on('click', function () {
-                        $timeout(scope.site.toolbar.menu.close, 200, 0);
+                        scope.site.toolbar.menu.close().then(function () {
+                            if (callback) {
+                                if (scope.$$phase) {
+                                    callback(scope, {
+                                        $event: event
+                                    });
+                                } else {
+                                    scope.$apply(function () {
+                                        callback(scope, {
+                                            $event: event
+                                        });
+                                    });
+                                }
+                            }
+                        });
                     });
                 }
             };

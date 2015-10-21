@@ -754,6 +754,10 @@
                     }
                 });
 
+                if (config.ui.specifics.setupSortableOptions) {
+                    config.ui.specifics.sortableOptions = config.ui.specifics.setupSortableOptions();
+                }
+
                 return 'plugins';
             };
         });

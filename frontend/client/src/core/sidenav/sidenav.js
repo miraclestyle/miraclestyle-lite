@@ -7,7 +7,7 @@
         .factory('$mdSidenav', SidenavService)
         .directive('mdSidenav', SidenavDirective)
         .controller('$mdSidenavController', SidenavController)
-        .run(ng(function (helpers, $mdSidenav, $timeout) {
+        .run(ng(function (helpers, $mdSidenav, $timeout, $q) {
             if (!helpers.sideNav) {
                 helpers.sideNav = {};
             }
@@ -26,12 +26,15 @@
                     return menu.toggle(undefined, 'open');
                 };
                 menu.toggle = function ($event, dowhat) {
-                    if (menu.toggling) {
-                        return;
-                    }
                     var it = $mdSidenav(menu.id),
                         check = false,
+                        defer = $q.defer(),
+                        promise = defer.promise,
                         target;
+                    if (menu.toggling) {
+                        defer.resolve();
+                        return promise;
+                    }
                     if ($event && $event.target) {
                         target = $($event.target);
                         angular.forEach(menu.notRipplable, function (skip) {
@@ -40,15 +43,19 @@
                             }
                         });
                         if (check) {
-                            return;
+                            defer.resolve();
+                            return promise;
                         }
                     }
                     menu.toggling = true;
                     $timeout(function () {
                         it[dowhat || (it.isOpen() ? 'close' : 'open')]().then(function () {
                             menu.toggling = false;
+                            defer.resolve();
                         });
                     });
+
+                    return promise;
                 };
             };
         }));

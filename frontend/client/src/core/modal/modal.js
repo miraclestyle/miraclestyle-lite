@@ -97,8 +97,8 @@
                 }, 0, false);
             }
         };
-    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator',
-        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, animationGenerator) {
+    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator', '$rootScope',
+        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, animationGenerator, $rootScope) {
             return {
                 restrict: 'EA',
                 scope: {
@@ -112,6 +112,7 @@
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
+                    $rootScope.$broadcast('disableUI', true);
                     var clickElement = getClickElement(scope.modalOptions),
                         ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
@@ -192,6 +193,7 @@
                             $(window).triggerHandler('modal.visible', [element]);
                             scope.modalOptions.opened = true;
                             scope.$apply();
+                            $rootScope.$broadcast('disableUI', false);
                         });
 
                         $(window).triggerHandler('modal.open', [element]);
@@ -204,18 +206,6 @@
                             $timeout(ready, 50, false);
                         }
                     });
-
-                    scope.close2 = function (evt) {
-                        var modal = $modalStack.getTop(),
-                            defer = $q.defer();
-                        defer.resolve();
-                        if (modal && modal.value.backdrop && modal.value.backdrop !== 'static' && (evt.target === evt.currentTarget)) {
-                            evt.preventDefault();
-                            evt.stopPropagation();
-                            return $modalStack.dismiss(modal.key, 'backdrop click');
-                        }
-                        return defer.promise;
-                    };
 
                     scope.backdropClose = function ($event) {
                         if (scope.modalOptions.cantCloseWithBackdrop) {
