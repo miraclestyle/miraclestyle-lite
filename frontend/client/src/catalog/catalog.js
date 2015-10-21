@@ -1,5 +1,16 @@
 (function () {
     'use strict';
+    var makeAfterClose = function (embed, $state) {
+        return (embed ? function () {
+            $state.go('embed-catalog-view', {
+                key: $state.params.key
+            });
+        } : function () {
+            $state.go('catalog-view', {
+                key: $state.params.key
+            });
+        });
+    };
     angular.module('app').directive('trackIfProductView', ng(function ($timeout) {
         return {
             restrict: 'A',
@@ -56,17 +67,19 @@
         });
 
     })).controller('CatalogProductAddToCartController', ng(function ($scope, $state, helpers, models) {
+        var embed = $state.current.name === 'embed-catalog-product-add-to-cart';
         $scope.site.toolbar.hidden = true;
         models['31'].viewModal($state.params.key, {
             popFrom: undefined,
             inDirection: false,
             outDirection: false,
-            hideClose: $state.current.name === 'embed-catalog-product-add-to-cart',
-            variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
-            autoAddToCartQuantity: $state.params.quantity,
-            afterClose: function () {
+            hideClose: embed,
+            noEscape: embed,
+            afterClose: embed ? undefined : function () {
                 $state.go('home');
             },
+            variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
+            autoAddToCartQuantity: $state.params.quantity,
             loadProduct: {
                 image: $state.params.image_id,
                 id: $state.params.pricetag_id
@@ -86,6 +99,18 @@
                 image: $state.params.image_id,
                 id: $state.params.pricetag_id
             }
+        });
+
+    })).controller('CatalogOrderViewController', ng(function ($scope, $state, models) {
+        var embed = $state.current.name === 'embed-catalog-order-view';
+        $scope.site.toolbar.hidden = true;
+        models['31'].viewModal($state.params.key, {
+            popFrom: undefined,
+            inDirection: false,
+            outDirection: false,
+            openCart: true,
+            hideClose: embed,
+            noEscape: embed
         });
 
     })).controller('EmbedCatalogViewController', ng(function ($scope, $state, models) {
@@ -559,7 +584,7 @@
 
                                 $scope.addToCart = function () {
                                     if (currentAccount._is_guest) {
-                                        models['11'].login($state.href($scope.hideClose ? 'embed-' : '' + 'catalog-product-add-to-cart', {
+                                        models['11'].login($state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,
@@ -615,6 +640,14 @@
                                         config.autoAddToCart = false;
                                     });
                                 }
+
+                                $scope.close = function () {
+                                    $scope.$close().then(function () {
+                                        if (config.afterClose) {
+                                            config.afterClose();
+                                        }
+                                    });
+                                };
 
 
                                 $scope.$watch('product.id', function (neww, old) {
@@ -742,12 +775,24 @@
                                 };
 
                                 $scope.displayCart = function () {
+                                    if (currentAccount._is_guest) {
+                                        models['11'].login($state.href((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
+                                            key: $scope.catalog.key
+                                        }));
+                                        return;
+                                    }
                                     models['19'].current().then(function (response) {
                                         models['34'].manageModal(undefined, $scope.catalog._seller, response.data.entity, {
                                             cartMode: true
                                         });
                                     });
                                 };
+
+                                if (config.openCart) {
+                                    $timeout(function () {
+                                        $scope.displayCart();
+                                    });
+                                }
 
                                 // cache current user's cart
                                 if (!currentAccount._is_guest) {
@@ -763,9 +808,12 @@
                                     that.viewProductModal($scope.catalog.key, image.key, pricetag.key, config.variantSignatureAsDicts, {
                                         popFrom: target,
                                         hideClose: config.hideCloseOnProduct,
+                                        hideCloseCatalog: config.hideClose,
+                                        noEscapeCatalog: config.noEscape,
                                         noEscape: config.noEscapeOnProduct,
                                         autoAddToCart: config.variantSignatureAsDicts ? true : false,
-                                        autoAddToCartQuantity: config.autoAddToCartQuantity
+                                        autoAddToCartQuantity: config.autoAddToCartQuantity,
+                                        afterClose: config.afterCloseProduct
                                     });
 
                                     config.variantSignatureAsDicts = null;
@@ -1077,7 +1125,10 @@
                                                 tolerance: 'pointer'
                                             };
 
-                                            $scope.draggableOptions = {containment : '.image-slider-outer', distance: 10};
+                                            $scope.draggableOptions = {
+                                                containment: '.image-slider-outer',
+                                                distance: 10
+                                            };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
                                                 setTimeout(function () {
@@ -1395,7 +1446,9 @@
                                                                             });
                                                                             if (image) {
                                                                                 angular.forEach(response2.data.entity._images[0].pricetags, function (value, key) {
-                                                                                    if (!_.findWhere(image.pricetags, {key: response.pricetag_key})) {
+                                                                                    if (!_.findWhere(image.pricetags, {
+                                                                                            key: response.pricetag_key
+                                                                                        })) {
                                                                                         image.pricetags.push(value);
                                                                                     }
                                                                                 });

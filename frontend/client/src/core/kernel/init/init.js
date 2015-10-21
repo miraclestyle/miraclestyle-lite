@@ -38,6 +38,16 @@
                 controller: 'CatalogProductAddToCartController',
                 template: ''
             })
+            .state('catalog-order-view', {
+                url: '/catalog/:key/order/view',
+                controller: 'CatalogOrderViewController',
+                template: ''
+            })
+            .state('embed-catalog-order-view', {
+                url: '/embed/catalog/:key/order/view',
+                controller: 'CatalogOrderViewController',
+                template: ''
+            })
             .state('catalog-product-view', {
                 url: '/catalog/:key/product/:image_id/:pricetag_id',
                 controller: 'CatalogProductViewController',
