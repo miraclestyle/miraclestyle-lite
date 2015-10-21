@@ -59,7 +59,7 @@ class CatalogProductCategory(orm.BaseModel):
                       RulePrepare(),
                       RuleExec(),
                       CatalogProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE,
-                                                             'prod_env': settings.DEVELOPMENT_SERVER})
+                                                             'debug_environment': settings.DEBUG})
                   ]
               )
           ]

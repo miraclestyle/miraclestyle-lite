@@ -18110,8 +18110,8 @@ angular.module('app')
                                                 var target_drop = $(event.target),
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
-                                                    rtop = posi2.top - posi.top + 5,
-                                                    rleft = posi2.left - posi.left + 5,
+                                                    rtop = posi2.top - posi.top + 6,
+                                                    rleft = posi2.left - posi.left + 4,
                                                     vdom = $('<div style="visibility:hidden;"></div>'),
                                                     newPricetagConfig = {
                                                         position_top: rtop,

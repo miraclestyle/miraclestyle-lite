@@ -25,7 +25,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
-    production_environment = self.cfg.get('prod_env', False)
+    debug_environment = self.cfg.get('debug_environment', False)
     if not update_file_path:
       raise orm.TerminateAction()
     Category = context.models['24']
@@ -37,7 +37,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
     put_entities = []
     structure = collections.OrderedDict()
     for i, item in enumerate(categories):
-      if i == 100:  # all instances now only import 100 items
+      if i == 100 and debug_environment:  # all instances now only import 100 items
         break
       full_path = item.split(' > ')
       current_structure = structure
