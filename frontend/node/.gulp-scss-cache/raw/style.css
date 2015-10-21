@@ -2752,12 +2752,9 @@ li.catalog-new-pricetag {
   display: block; }
 
 .seller-logo {
-  width: 280px;
+  width: 100%;
   height: auto;
   display: block; }
-
-.wide-sidenav .seller-logo {
-  width: 560px; }
 
 .full-logo img {
   width: 100%;
