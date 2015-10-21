@@ -18,6 +18,8 @@ SITE_META_KEYWORDS = 'miraclestyle,thing'
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
 DEBUG_HOST_NAMES = ['localhost:9982', 'universal-trail-608.appspot.com']
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+if HOST_NAME in DEBUG_HOST_NAMES:
+  DEBUG = True
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
@@ -28,10 +30,6 @@ DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 ACTIVE_HANDLERS = ('misc', 'seller', 'catalog', 'home', 'builder')
 
 HOST_URL = None
-if DEVELOPMENT_SERVER:
-  #HOST_URL = 'http://128.65.105.64:9982'
-  pass
-
 if HOST_URL is None:
   def __discover_host_url():
     http = 'http://'
@@ -51,8 +49,6 @@ JINJA_FILTERS = {}
 DEBUG = False
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
-if HOST_NAME in DEBUG_HOST_NAMES:
-  DEBUG = True
 
 
 def env(dev, production=None):

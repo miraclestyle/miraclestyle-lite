@@ -14,11 +14,14 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input an
 
 # Server side config
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-DEBUG = True
+DEBUG = False
 DO_LOGS = True  # logging on application level
 PROFILING = False  # profiling of every function call using cProfile. Debug must be on
 PROFILING_SORT = ('cumulative', )  # 'time'
-
+DEBUG_HOST_NAMES = ['localhost:9982', 'universal-trail-608.appspot.com']
+HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+if HOST_NAME in DEBUG_HOST_NAMES:
+  DEBUG = True
 # Notify
 NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 
@@ -40,10 +43,6 @@ FEEDBACK_ALLOWED_DAYS = 7
 MAX_MESSAGE_SIZE = 1024
 
 HOST_URL = None
-if DEVELOPMENT_SERVER:
-  pass
-  #HOST_URL = 'http://128.65.105.64:9982'
-
 if HOST_URL is None:
   def __discover_host_url():
     http = 'http://'
