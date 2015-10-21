@@ -32,7 +32,6 @@ div.catalog-pricetag:active, li.catalog-new-pricetag:active {
     min-width: 64px;
 }
 
-
 li.catalog-new-pricetag {
     position: static;
     left: auto;
@@ -96,7 +95,6 @@ li.catalog-new-pricetag {
     display: block;
 }
 
-
 .full-logo img {
     width: 100%;
     display: block;
@@ -145,7 +143,9 @@ button.product-quantity-button {
     margin: 0px;
 }
 
-.product-quantity-controls {}
+.product-quantity-controls .md-icon {
+    display: block;
+}
 
 .product-quantifier label {
     padding-left: 16px;

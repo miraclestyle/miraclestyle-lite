@@ -262,6 +262,7 @@
                                             $scope.stage.current = 1;
                                         }
                                     };
+                                    $scope.logoImageConfig = {size: 280};
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;

@@ -162,11 +162,18 @@
                             left: pricetag._position_left,
                             visibility: 'visible'
                         });
-                    };
+                    },
+                    track = [];
                 resize = _.throttle(resize, 100);
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
-                scope.$watch([attr.catalogPricetagPosition + '._state', attr.catalogPricetagPosition + '.key'], resize);
+                scope.$on('resizePricetags', resize);
+                angular.forEach(['state', 'key', 'position_left', 'position_top', '_position_left', '_position_top'], function (value) {
+                    track.push(attr.catalogPricetagPosition + '.' + value);
+                });
+                scope.$watch(function () {
+                    return true;
+                }, resize);
             }
         };
     })).directive('productInstanceCardView', ng(function ($compile) {
@@ -889,7 +896,6 @@
                                         setupSortableOptions: function () {
                                             return {
                                                 stop: function () {
-                                                    console.log(this);
                                                     if (fields._images.ui.specifics.parentArgs.length) {
                                                         var total = fields._images.ui.specifics.parentArgs[0].sequence,
                                                             dirty,
@@ -1024,6 +1030,13 @@
                                             $scope.fieldProduct._title_ = fields._images._title_.concat();
                                             $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
 
+                                            $scope.trackPricetags = function (pricetag) {
+                                                if (pricetag.key) {
+                                                    return pricetag.key;
+                                                }
+                                                return 'new' + _.uniqueId();
+                                            };
+
                                             imagesReader = models['31'].reader({
                                                 key: $scope.args.key,
                                                 next: {
@@ -1085,6 +1098,9 @@
                                             };
 
                                             removePricetag = function (image, pricetag) {
+                                                if (angular.isDefined(pricetag._destroy)) {
+                                                    pricetag._destroy();
+                                                }
                                                 image.pricetags.remove(pricetag);
                                                 var existing = _.findWhere($scope.rootScope.args._images, {
                                                     key: image.key
@@ -1137,7 +1153,6 @@
                                                     i = $scope.args._images.indexOf(image),
                                                     cwidth = 0,
                                                     pwidth = 0,
-                                                    helper = $(ui.helper),
                                                     next,
                                                     extract;
                                                 extract = function (what) {
@@ -1184,6 +1199,7 @@
                                                     }
                                                     if (newImage) {
                                                         pricetag._state = 'deleted';
+                                                        pricetagElement.addClass('ng-hide');
                                                         exists = _.findWhere(newImage.pricetags, {
                                                             key: pricetag.key
                                                         });
@@ -1196,15 +1212,15 @@
                                                         pricetag.position_top = currentTop;
                                                         pricetag._position_left = newPositionLeft;
                                                         pricetag._position_top = currentTop;
-                                                        pricetag._state = null;
                                                         if (angular.isUndefined(exists)) {
                                                             newPricetag = angular.copy(pricetag);
+                                                            newPricetag._state = null;
                                                             if (angular.isUndefined(pricetag._image)) {
                                                                 newPricetag._image = i;
                                                             }
                                                             addNewPricetag(newImage, newPricetag);
-                                                            pricetag._state = 'deleted';
-                                                            pricetagElement.addClass('ng-hide');
+                                                        } else {
+                                                            exists._state = null;
                                                         }
                                                     }
                                                 };
@@ -1229,8 +1245,10 @@
                                                 }
 
                                                 if (!$scope.$$phase) {
-                                                    $scope.$digest();
+                                                    $scope.$apply();
                                                 }
+
+                                                $scope.$broadcast('resizePricetags');
 
                                             };
 
@@ -1239,7 +1257,7 @@
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
                                                     rtop = posi2.top - posi.top + 5,
-                                                    rleft = posi2.left - posi.left + 4,
+                                                    rleft = posi2.left - posi.left + 5,
                                                     vdom = $('<div style="visibility:hidden;"></div>'),
                                                     newPricetagConfig = {
                                                         position_top: rtop,
@@ -1256,6 +1274,11 @@
                                                     height: ui.draggable.height()
                                                 });
                                                 vdom.appendTo(target_drop);
+                                                newPricetagConfig._destroy = function () {
+                                                    $timeout(function () {
+                                                        vdom.remove();
+                                                    }, 2000, false);
+                                                };
                                                 $scope.createProduct(image, newPricetagConfig, vdom);
                                             };
 
@@ -1282,7 +1305,7 @@
                                             $scope.loadingManageProduct = false;
 
                                             $scope.manageProduct = function (image, pricetag, $event) {
-                                                if (pricetag._image) {
+                                                if (angular.isDefined(pricetag._image)) {
                                                     image = $scope.args._images[pricetag._image];
                                                 }
                                                 if ($scope.loadingManageProduct) {
@@ -1341,6 +1364,7 @@
                                                         _position_left: config.position_left,
                                                         _position_top: config.position_top,
                                                         value: {},
+                                                        _destroy: config._destroy,
                                                         _product: {},
                                                         ui: {
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]

@@ -27,7 +27,7 @@
               jqyoui-droppable="{multiple:true, onDrop: 'onDrop(image)'}"
               >
            <img class="not-pointable" slider-image="image" /> 
-           <div ng-repeat="pricetag in image.pricetags track by pricetag.key"
+           <div ng-repeat="pricetag in image.pricetags track by trackPricetags(pricetag)"
                 ng-model="image.pricetags"
                 ng-hide="pricetag._state == 'deleted' || !pricetag.key"
                 jqyoui-options="draggableOptions"

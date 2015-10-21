@@ -274,102 +274,114 @@
                         steady,
                         intervalid,
                         waitinterval = false,
+                        loaded = false,
                         steadyOpts,
-                        maybeMore;
+                        maybeMore,
+                        run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
-                    if (!attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
-                        return;
-                    }
-                    listen = (function () {
-                        var listener = config.listen;
-                        if (!listener) {
-                            listener = element.parents('md-content[md-scroll-y]:first');
-                            if (element.hasClass('overflow-y') || element.hasClass('overflow-auto-y')) {
-                                listener = element;
-                            } else {
-                                if (!listener.length) {
-                                    listener = element.parents('.overflow-y:first');
-                                }
-                                if (!listener.length) {
-                                    listener = element.parents('.overflow-auto-y:first');
-                                }
-                            }
-                        } else {
-                            listener = $(config.listen || window);
-                        }
-                        return listener;
-                    }());
 
-
-                    maybeMore = function () {
-                        $timeout(function () {
-                            var listenNode = listen.get(0),
-                                listenHeight = listen.height(),
-                                maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
-                                promise;
-                            if (maybe) {
-                                promise = loadMore({}, angular.noop);
-                                if (promise) {
-                                    promise.then(function () {
-                                        waitinterval = false;
-                                        if (!config.reverse) {
-                                            maybeMore();
-                                        }
-                                    });
+                    run = function () {
+                        listen = (function () {
+                            var listener = config.listen;
+                            if (!listener) {
+                                listener = element.parents('md-content[md-scroll-y]:first');
+                                if (element.hasClass('overflow-y') || element.hasClass('overflow-auto-y')) {
+                                    listener = element;
+                                } else {
+                                    if (!listener.length) {
+                                        listener = element.parents('.overflow-y:first');
+                                    }
+                                    if (!listener.length) {
+                                        listener = element.parents('.overflow-auto-y:first');
+                                    }
                                 }
                             } else {
-                                waitinterval = false;
+                                listener = $(config.listen || window);
                             }
+                            return listener;
+                        }());
 
-                        }, 1000, false);
 
-                    };
+                        maybeMore = function () {
+                            $timeout(function () {
+                                var listenNode = listen.get(0),
+                                    listenHeight = listen.height(),
+                                    maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
+                                    promise;
+                                if (maybe) {
+                                    promise = loadMore({}, angular.noop);
+                                    if (promise) {
+                                        promise.then(function () {
+                                            waitinterval = false;
+                                            if (!config.reverse) {
+                                                maybeMore();
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    waitinterval = false;
+                                }
 
-                    intervalid = setInterval(function () {
-                        if (waitinterval) {
-                            return true;
+                            }, 1000, false);
+
+                        };
+
+                        intervalid = setInterval(function () {
+                            if (waitinterval) {
+                                return true;
+                            }
+                            waitinterval = true;
+                            maybeMore();
+                        }, 2000);
+
+                        loadMore = function (values, done) {
+                            var promise = config.loader.load();
+                            if (!promise) {
+                                done();
+                                return false;
+                            }
+                            promise.then(function () {
+                                done();
+                            });
+
+                            return promise;
+                        };
+                        steadyOpts = {
+                            conditions: {
+                                'max-bottom': config.bottom || 40
+                            },
+                            scrollElement: listen.get(0),
+                            throttle: 100,
+                            handler: loadMore
+                        };
+                        if (config.reverse) {
+                            delete steadyOpts.conditions;
                         }
-                        waitinterval = true;
+                        steady = new Steady(steadyOpts);
+                        if (config.reverse) {
+                            steady.addTracker('checkTop', function () {
+                                return listen.scrollTop() < 100;
+                            });
+                            steady.addCondition('checkTop', true);
+                        }
+                        scope.$on('$destroy', function () {
+                            steady.stop();
+                            steady = undefined;
+                            clearInterval(intervalid);
+                        });
+
                         maybeMore();
-                    }, 2000);
+                    };
 
-                    loadMore = function (values, done) {
-                        var promise = config.loader.load();
-                        if (!promise) {
-                            done();
-                            return false;
+                    scope.$watch(function () {
+                        return attrs.autoloadOnVerticalScrollEnd && config && config.loader;
+                    }, function (old, neww) {
+                        if (loaded || !attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
+                            return;
                         }
-                        promise.then(function () {
-                            done();
-                        });
-
-                        return promise;
-                    };
-                    steadyOpts = {
-                        conditions: {
-                            'max-bottom': config.bottom || 40
-                        },
-                        scrollElement: listen.get(0),
-                        throttle: 100,
-                        handler: loadMore
-                    };
-                    if (config.reverse) {
-                        delete steadyOpts.conditions;
-                    }
-                    steady = new Steady(steadyOpts);
-                    if (config.reverse) {
-                        steady.addTracker('checkTop', function () {
-                            return listen.scrollTop() < 100;
-                        });
-                        steady.addCondition('checkTop', true);
-                    }
-                    scope.$on('$destroy', function () {
-                        steady.stop();
-                        steady = undefined;
-                        clearInterval(intervalid);
+                        loaded = true;
+                        run();
                     });
-
-                    maybeMore();
 
                 }
             };

@@ -11922,102 +11922,114 @@ $(function () {
                         steady,
                         intervalid,
                         waitinterval = false,
+                        loaded = false,
                         steadyOpts,
-                        maybeMore;
+                        maybeMore,
+                        run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
-                    if (!attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
-                        return;
-                    }
-                    listen = (function () {
-                        var listener = config.listen;
-                        if (!listener) {
-                            listener = element.parents('md-content[md-scroll-y]:first');
-                            if (element.hasClass('overflow-y') || element.hasClass('overflow-auto-y')) {
-                                listener = element;
-                            } else {
-                                if (!listener.length) {
-                                    listener = element.parents('.overflow-y:first');
-                                }
-                                if (!listener.length) {
-                                    listener = element.parents('.overflow-auto-y:first');
-                                }
-                            }
-                        } else {
-                            listener = $(config.listen || window);
-                        }
-                        return listener;
-                    }());
 
-
-                    maybeMore = function () {
-                        $timeout(function () {
-                            var listenNode = listen.get(0),
-                                listenHeight = listen.height(),
-                                maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
-                                promise;
-                            if (maybe) {
-                                promise = loadMore({}, angular.noop);
-                                if (promise) {
-                                    promise.then(function () {
-                                        waitinterval = false;
-                                        if (!config.reverse) {
-                                            maybeMore();
-                                        }
-                                    });
+                    run = function () {
+                        listen = (function () {
+                            var listener = config.listen;
+                            if (!listener) {
+                                listener = element.parents('md-content[md-scroll-y]:first');
+                                if (element.hasClass('overflow-y') || element.hasClass('overflow-auto-y')) {
+                                    listener = element;
+                                } else {
+                                    if (!listener.length) {
+                                        listener = element.parents('.overflow-y:first');
+                                    }
+                                    if (!listener.length) {
+                                        listener = element.parents('.overflow-auto-y:first');
+                                    }
                                 }
                             } else {
-                                waitinterval = false;
+                                listener = $(config.listen || window);
                             }
+                            return listener;
+                        }());
 
-                        }, 1000, false);
 
-                    };
+                        maybeMore = function () {
+                            $timeout(function () {
+                                var listenNode = listen.get(0),
+                                    listenHeight = listen.height(),
+                                    maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
+                                    promise;
+                                if (maybe) {
+                                    promise = loadMore({}, angular.noop);
+                                    if (promise) {
+                                        promise.then(function () {
+                                            waitinterval = false;
+                                            if (!config.reverse) {
+                                                maybeMore();
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    waitinterval = false;
+                                }
 
-                    intervalid = setInterval(function () {
-                        if (waitinterval) {
-                            return true;
+                            }, 1000, false);
+
+                        };
+
+                        intervalid = setInterval(function () {
+                            if (waitinterval) {
+                                return true;
+                            }
+                            waitinterval = true;
+                            maybeMore();
+                        }, 2000);
+
+                        loadMore = function (values, done) {
+                            var promise = config.loader.load();
+                            if (!promise) {
+                                done();
+                                return false;
+                            }
+                            promise.then(function () {
+                                done();
+                            });
+
+                            return promise;
+                        };
+                        steadyOpts = {
+                            conditions: {
+                                'max-bottom': config.bottom || 40
+                            },
+                            scrollElement: listen.get(0),
+                            throttle: 100,
+                            handler: loadMore
+                        };
+                        if (config.reverse) {
+                            delete steadyOpts.conditions;
                         }
-                        waitinterval = true;
+                        steady = new Steady(steadyOpts);
+                        if (config.reverse) {
+                            steady.addTracker('checkTop', function () {
+                                return listen.scrollTop() < 100;
+                            });
+                            steady.addCondition('checkTop', true);
+                        }
+                        scope.$on('$destroy', function () {
+                            steady.stop();
+                            steady = undefined;
+                            clearInterval(intervalid);
+                        });
+
                         maybeMore();
-                    }, 2000);
+                    };
 
-                    loadMore = function (values, done) {
-                        var promise = config.loader.load();
-                        if (!promise) {
-                            done();
-                            return false;
+                    scope.$watch(function () {
+                        return attrs.autoloadOnVerticalScrollEnd && config && config.loader;
+                    }, function (old, neww) {
+                        if (loaded || !attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
+                            return;
                         }
-                        promise.then(function () {
-                            done();
-                        });
-
-                        return promise;
-                    };
-                    steadyOpts = {
-                        conditions: {
-                            'max-bottom': config.bottom || 40
-                        },
-                        scrollElement: listen.get(0),
-                        throttle: 100,
-                        handler: loadMore
-                    };
-                    if (config.reverse) {
-                        delete steadyOpts.conditions;
-                    }
-                    steady = new Steady(steadyOpts);
-                    if (config.reverse) {
-                        steady.addTracker('checkTop', function () {
-                            return listen.scrollTop() < 100;
-                        });
-                        steady.addCondition('checkTop', true);
-                    }
-                    scope.$on('$destroy', function () {
-                        steady.stop();
-                        steady = undefined;
-                        clearInterval(intervalid);
+                        loaded = true;
+                        run();
                     });
-
-                    maybeMore();
 
                 }
             };
@@ -16998,11 +17010,18 @@ angular.module('app')
                             left: pricetag._position_left,
                             visibility: 'visible'
                         });
-                    };
+                    },
+                    track = [];
                 resize = _.throttle(resize, 100);
                 $timeout(resize, 0, false);
                 scope.$on('modalResize', resize);
-                scope.$watch([attr.catalogPricetagPosition + '._state', attr.catalogPricetagPosition + '.key'], resize);
+                scope.$on('resizePricetags', resize);
+                angular.forEach(['state', 'key', 'position_left', 'position_top', '_position_left', '_position_top'], function (value) {
+                    track.push(attr.catalogPricetagPosition + '.' + value);
+                });
+                scope.$watch(function () {
+                    return true;
+                }, resize);
             }
         };
     })).directive('productInstanceCardView', ng(function ($compile) {
@@ -17725,7 +17744,6 @@ angular.module('app')
                                         setupSortableOptions: function () {
                                             return {
                                                 stop: function () {
-                                                    console.log(this);
                                                     if (fields._images.ui.specifics.parentArgs.length) {
                                                         var total = fields._images.ui.specifics.parentArgs[0].sequence,
                                                             dirty,
@@ -17860,6 +17878,13 @@ angular.module('app')
                                             $scope.fieldProduct._title_ = fields._images._title_.concat();
                                             $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
 
+                                            $scope.trackPricetags = function (pricetag) {
+                                                if (pricetag.key) {
+                                                    return pricetag.key;
+                                                }
+                                                return 'new' + _.uniqueId();
+                                            };
+
                                             imagesReader = models['31'].reader({
                                                 key: $scope.args.key,
                                                 next: {
@@ -17921,6 +17946,9 @@ angular.module('app')
                                             };
 
                                             removePricetag = function (image, pricetag) {
+                                                if (angular.isDefined(pricetag._destroy)) {
+                                                    pricetag._destroy();
+                                                }
                                                 image.pricetags.remove(pricetag);
                                                 var existing = _.findWhere($scope.rootScope.args._images, {
                                                     key: image.key
@@ -17973,7 +18001,6 @@ angular.module('app')
                                                     i = $scope.args._images.indexOf(image),
                                                     cwidth = 0,
                                                     pwidth = 0,
-                                                    helper = $(ui.helper),
                                                     next,
                                                     extract;
                                                 extract = function (what) {
@@ -18020,6 +18047,7 @@ angular.module('app')
                                                     }
                                                     if (newImage) {
                                                         pricetag._state = 'deleted';
+                                                        pricetagElement.addClass('ng-hide');
                                                         exists = _.findWhere(newImage.pricetags, {
                                                             key: pricetag.key
                                                         });
@@ -18032,15 +18060,15 @@ angular.module('app')
                                                         pricetag.position_top = currentTop;
                                                         pricetag._position_left = newPositionLeft;
                                                         pricetag._position_top = currentTop;
-                                                        pricetag._state = null;
                                                         if (angular.isUndefined(exists)) {
                                                             newPricetag = angular.copy(pricetag);
+                                                            newPricetag._state = null;
                                                             if (angular.isUndefined(pricetag._image)) {
                                                                 newPricetag._image = i;
                                                             }
                                                             addNewPricetag(newImage, newPricetag);
-                                                            pricetag._state = 'deleted';
-                                                            pricetagElement.addClass('ng-hide');
+                                                        } else {
+                                                            exists._state = null;
                                                         }
                                                     }
                                                 };
@@ -18065,8 +18093,10 @@ angular.module('app')
                                                 }
 
                                                 if (!$scope.$$phase) {
-                                                    $scope.$digest();
+                                                    $scope.$apply();
                                                 }
+
+                                                $scope.$broadcast('resizePricetags');
 
                                             };
 
@@ -18075,7 +18105,7 @@ angular.module('app')
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
                                                     rtop = posi2.top - posi.top + 5,
-                                                    rleft = posi2.left - posi.left + 4,
+                                                    rleft = posi2.left - posi.left + 5,
                                                     vdom = $('<div style="visibility:hidden;"></div>'),
                                                     newPricetagConfig = {
                                                         position_top: rtop,
@@ -18092,6 +18122,11 @@ angular.module('app')
                                                     height: ui.draggable.height()
                                                 });
                                                 vdom.appendTo(target_drop);
+                                                newPricetagConfig._destroy = function () {
+                                                    $timeout(function () {
+                                                        vdom.remove();
+                                                    }, 2000, false);
+                                                };
                                                 $scope.createProduct(image, newPricetagConfig, vdom);
                                             };
 
@@ -18118,7 +18153,7 @@ angular.module('app')
                                             $scope.loadingManageProduct = false;
 
                                             $scope.manageProduct = function (image, pricetag, $event) {
-                                                if (pricetag._image) {
+                                                if (angular.isDefined(pricetag._image)) {
                                                     image = $scope.args._images[pricetag._image];
                                                 }
                                                 if ($scope.loadingManageProduct) {
@@ -18177,6 +18212,7 @@ angular.module('app')
                                                         _position_left: config.position_left,
                                                         _position_top: config.position_top,
                                                         value: {},
+                                                        _destroy: config._destroy,
                                                         _product: {},
                                                         ui: {
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]
@@ -19153,6 +19189,7 @@ angular.module('app')
                                             $scope.stage.current = 1;
                                         }
                                     };
+                                    $scope.logoImageConfig = {size: 280};
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;

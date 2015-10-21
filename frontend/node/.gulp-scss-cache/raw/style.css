@@ -2206,7 +2206,8 @@ button::-moz-focus-inner {
 
 .no-things-available {
   text-align: center;
-  margin-top: 72px; }
+  padding-top: 88px 40px 32px;
+  margin: 0px; }
 
 img.auto-width, .auto-width {
   width: 100%;
@@ -2796,6 +2797,9 @@ md-input-container .product-quantity-input {
 button.product-quantity-button {
   min-width: initial;
   margin: 0px; }
+
+.product-quantity-controls .md-icon {
+  display: block; }
 
 .product-quantifier label {
   padding-left: 16px;
