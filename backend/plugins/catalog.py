@@ -73,6 +73,8 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
           category = Category(**category)
           category._use_rule_engine = False
           category._use_record_engine = False
+          category._use_memcache = False
+          category._use_cache = False
           put_entities.append(category)
           if len(value) > 1:
             # roots
@@ -80,8 +82,11 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
         current_structure = None
     parse_structure(structure.iteritems())
     tools.log.debug('Writing %s categories' % len(put_entities))
-    for entity in put_entities:
-      entity.write()
+    for partition in tools.partition_list(put_entities, 20):
+      for entity in partition:
+        entity.write()
+        entity = None
+      partition = None
 
 
 class CatalogProcessCoverSet(orm.BaseModel):

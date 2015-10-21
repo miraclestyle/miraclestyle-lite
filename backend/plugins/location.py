@@ -8,6 +8,7 @@ Created on May 13, 2014
 from xml.etree import ElementTree
 
 import orm
+import tools
 
 
 class CountryUpdateWrite(orm.BaseModel):
@@ -58,6 +59,9 @@ class CountryUpdateWrite(orm.BaseModel):
             dic[name] = sub_child.text
         country = Country(name=dic['name'], id=dic['id'], code=dic['code'], active=True)
         country._use_rule_engine = False
+        country._use_record_engine = False
+        country._use_memcache = False
+        country._use_cache = False
         put_entities.append(country)
       processed_keys = {}
       processed_ids = {}
@@ -82,6 +86,10 @@ class CountryUpdateWrite(orm.BaseModel):
           if parent:
             country_sub_division_values['parent_record'] = parent.key
         country_sub_division = CountrySubdivision(**country_sub_division_values)
+        country_sub_division._use_cache = False
+        country_sub_division._use_rule_engine = False
+        country_sub_division._use_record_engine = False
+        country_sub_division._use_memcache = False
         country_sub_division.complete_name = ''
         if 'parent' in dic:
           country_sub_division.complete_name = make_complete_name_for_subdivision(country_sub_division, dic['parent'], processed_keys)
@@ -91,4 +99,5 @@ class CountryUpdateWrite(orm.BaseModel):
         put_entities.append(country_sub_division)
         if i == 100 and debug_environment:  # all instances nowonly import 100 items
           break
-      orm.put_multi(put_entities)
+      for puts in tools.partition_list(put_entities, 50):
+        orm.put_multi(puts)
