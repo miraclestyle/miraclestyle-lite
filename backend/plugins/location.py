@@ -18,7 +18,7 @@ class CountryUpdateWrite(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
-    production_environment = self.cfg.get('prod_env', False)
+    debug_environment = self.cfg.get('debug_environment', False)
     if not update_file_path:
       raise orm.TerminateAction()
     Country = context.models['12']
@@ -89,6 +89,6 @@ class CountryUpdateWrite(orm.BaseModel):
         processed_ids[dic['id']] = country_sub_division
         country_sub_division._use_rule_engine = False
         put_entities.append(country_sub_division)
-        if i == 100:  # all instances nowonly import 100 items
+        if i == 100 and debug_environment:  # all instances nowonly import 100 items
           break
       orm.put_multi(put_entities)

@@ -12808,6 +12808,7 @@ $(function () {
                                     return that;
                                 }
                                 that.socket = that.channel.open(that.events);
+                                console.log('socket.open', that.socket);
                                 that.socket.onclose = function () {
                                     angular.forEach(that.afterOnclose, function (cb) {
                                         cb();
