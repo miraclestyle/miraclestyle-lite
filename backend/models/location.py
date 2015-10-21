@@ -53,7 +53,7 @@ class Country(orm.BaseModel):
                       RulePrepare(),
                       RuleExec(),
                       CountryUpdateWrite(cfg={'file': settings.LOCATION_DATA_FILE,
-                                              'prod_env': settings.DEVELOPMENT_SERVER})
+                                              'debug_environment': settings.DEBUG})
                   ]
               )
           ]
