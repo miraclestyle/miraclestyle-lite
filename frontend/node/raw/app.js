@@ -10413,6 +10413,7 @@ $(function () {
 
                                 models['24'].actions.search({
                                     search: {
+                                        options: {limit: 10000},
                                         orders: [{
                                             operator: 'asc',
                                             field: 'name'
