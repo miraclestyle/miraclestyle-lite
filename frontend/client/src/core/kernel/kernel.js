@@ -419,6 +419,8 @@
 
                 var handleResponse = function (rejection) {
 
+                    console.log(rejection);
+
                     var data = rejection.data,
                         normalizeEntity = (rejection.config.normalizeEntity === undefined || rejection.config.normalizeEntity),
                         errorHandling = $injector.get('errorHandling'),

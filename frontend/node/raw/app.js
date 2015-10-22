@@ -863,6 +863,8 @@ $(function () {
 
                 var handleResponse = function (rejection) {
 
+                    console.log(rejection);
+
                     var data = rejection.data,
                         normalizeEntity = (rejection.config.normalizeEntity === undefined || rejection.config.normalizeEntity),
                         errorHandling = $injector.get('errorHandling'),
@@ -11997,7 +11999,6 @@ $(function () {
                         }, 2000);
 
                         loadMore = function (values, done) {
-                            console.log(values);
                             var promise = config.loader.load();
                             if (!promise) {
                                 done();

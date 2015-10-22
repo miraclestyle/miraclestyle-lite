@@ -340,7 +340,6 @@
                         }, 2000);
 
                         loadMore = function (values, done) {
-                            console.log(values);
                             var promise = config.loader.load();
                             if (!promise) {
                                 done();
