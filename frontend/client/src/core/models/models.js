@@ -1064,6 +1064,10 @@
                                         });
 
                                         return promise.then(function (response) {
+                                            if (response.data.errors) {
+                                                that.more = false;
+                                                return response;
+                                            }
                                             var getAccess = [],
                                                 items,
                                                 loadedNext;
