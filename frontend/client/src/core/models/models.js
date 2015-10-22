@@ -70,13 +70,17 @@
                 helpers.models = {};
             }
             $.extend(helpers.models, {
-                isEntityListEmpty: function (entities) {
+                isEntityListEmpty: function (entities, also) {
                     var empty = (!entities || entities.length === 0),
                         emptyFactory;
                     if (!empty) {
                         emptyFactory = 0;
                         angular.forEach(entities, function (value) {
-                            if (value._state === 'deleted') {
+                            var maybe = false;
+                            if (also) {
+                                maybe = $.inArray(value._state, also);
+                            }
+                            if (value._state === 'deleted' || maybe) {
                                 emptyFactory += 1;
                             }
                         });

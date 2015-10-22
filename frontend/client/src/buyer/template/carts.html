@@ -20,7 +20,7 @@
         </div>
     </div>
     <!-- help -->
-    <div ng-if="helpers.models.isEntityListEmpty(search.results) && search.loaded" 
+    <div ng-if="helpers.models.isEntityListEmpty(search.results, ['canceled']) && search.loaded" 
          help-render="listHelp"></div>
     <!-- end help -->
     <div load-more-button="search.pagination"></div>
