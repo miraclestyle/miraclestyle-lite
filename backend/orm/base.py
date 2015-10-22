@@ -275,9 +275,18 @@ def write_multi(entities, record_arguments=None):
       record_arguments_config = record_arguments
     entity._record_arguments = record_arguments_config
   put_multi(entities)
+  document_map = {}
   for entity in entities:
-    entity.index_search_documents()
-    entity.unindex_search_documents()
+    kind = entity._root.key_kind
+    namespace = entity._root.key_namespace
+    if namespace not in document_map:
+      document_map[namespace] = {}
+    if kind not in document_map[namespace]:
+      document_map[namespace][kind] = []
+    document_map[namespace][kind].append(entity.get_search_document())
+  for namespace, kinds in document_map.iteritems():
+    for kind, documents in kinds.iteritems():
+      entity.update_search_index('index', documents, kind, namespace)
 
 
 def allowed_state(_state):

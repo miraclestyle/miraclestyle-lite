@@ -22,6 +22,19 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
 
   def run(self, context):
     # This code builds leaf categories for selection with complete names, 3.8k of them.
+    def delete_all_in_index(index_name):
+        """Delete all the docs in the given index."""
+        doc_index = search.Index(name=index_name)
+        # looping because get_range by default returns up to 100 documents at a time
+        while True:
+            # Get a list of documents populating only the doc_id field and extract the ids.
+            document_ids = [document.doc_id
+                            for document in doc_index.get_range(ids_only=True)]
+            if not document_ids:
+                break
+            # Delete the documents for the given ids from the Index.
+            doc_index.delete(document_ids)
+    delete_all_in_index('24')
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
@@ -30,63 +43,51 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
       raise orm.TerminateAction()
     Category = context.models['24']
     categories = []
+    put_entities = []
+    structure = {}
     with file(update_file_path) as f:
       for line in f:
         if not line.startswith('#'):
-          categories.append(line.replace('\n', ''))
-    put_entities = []
-    structure = collections.OrderedDict()
+          item = line.replace('\n', '')
+          categories.append(item)
+          full_path = item.split(' > ')
+          current_structure = structure
+          for xi, path in enumerate(full_path):
+            if path not in current_structure:
+              current_structure[path] = {}
+            current_structure = current_structure[path]
+
     for i, item in enumerate(categories):
-      if i == 100 and debug_environment:  # all instances now only import 100 items
+      if i == 113 and debug_environment:
         break
       full_path = item.split(' > ')
-      current_structure = structure
+      path_map = structure
+      current = full_path
+      parent = current[:-1]
+      category = {}
+      category['id'] = hashlib.md5(''.join(current)).hexdigest()
+      if parent:
+        category['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
+      else:
+        category['parent_record'] = None
+      category['name'] = ' / '.join(current)
+      category['state'] = ['indexable']
+      leaf = False
       for path in full_path:
-        if path not in current_structure:
-          current_structure[path] = collections.OrderedDict([('path', full_path)])
-        current_structure = current_structure[path]
-
-    def parse_structure(structure):
-      current_structure = structure
-      next_args = []
-      while True:
-        if not current_structure:
-          try:
-            current_structure = next_args.pop()
-            continue
-          except IndexError as e:
-            break
-        for key, value in current_structure:
-          if not hasattr(value, 'iteritems'):
-            continue
-          current = value.get('path')
-          current_total = len(current) - 1
-          parent = current[:-1]
-          category = {}
-          category['id'] = hashlib.md5(''.join(current)).hexdigest()
-          if parent:
-            category['parent_record'] = Category.build_key(hashlib.md5(''.join(parent)).hexdigest())
-          category['name'] = ' / '.join(current)
-          category['state'] = ['indexable']
-          if len(value) < 2:
-            category['state'].append('visible')  # marks the category as leaf
-          category = Category(**category)
-          category._use_rule_engine = False
-          category._use_record_engine = False
-          category._use_memcache = False
-          category._use_cache = False
-          put_entities.append(category)
-          if len(value) > 1:
-            # roots
-            next_args.append(value.iteritems())
-        current_structure = None
-    parse_structure(structure.iteritems())
+        if path in path_map:
+          path_map = path_map[path]
+        if not len(path_map):
+          leaf = True
+      if leaf:
+        category['state'].append('visible')  # marks the category as leaf
+      category = Category(**category)
+      category._use_rule_engine = False
+      category._use_record_engine = False
+      category._use_memcache = False
+      category._use_cache = False
+      put_entities.append(category)
     tools.log.debug('Writing %s categories' % len(put_entities))
-    for partition in tools.partition_list(put_entities, 20):
-      for entity in partition:
-        entity.write()
-        entity = None
-      partition = None
+    orm.write_multi(put_entities)
 
 
 class CatalogProcessCoverSet(orm.BaseModel):
@@ -121,23 +122,6 @@ class CatalogProcessCoverSet(orm.BaseModel):
         context._catalog.cover.process()
     elif catalog_cover:
       catalog_cover._state = 'deleted'
-
-
-    '''
-    CatalogImage = context.models['30']
-    context._allow_write = False
-    first_catalog_image = CatalogImage.query(ancestor=context._catalog.key).order(-CatalogImage.sequence).get()
-    catalog_cover = context._catalog.cover.value
-    if first_catalog_image:
-      if not catalog_cover or catalog_cover.gs_object_name[:-6] != first_catalog_image.gs_object_name:
-        context._catalog.cover = copy.deepcopy(first_catalog_image)
-        context._catalog.cover.value.sequence = 0
-        context._catalog.cover.process()
-        context._allow_write = True
-    elif catalog_cover:
-      catalog_cover._state = 'deleted'
-      context._allow_write = True
-    '''
 
 
 class CatalogDiscontinue(orm.BaseModel):

@@ -99,5 +99,4 @@ class CountryUpdateWrite(orm.BaseModel):
         put_entities.append(country_sub_division)
         if i == 100 and debug_environment:  # all instances nowonly import 100 items
           break
-      for puts in tools.partition_list(put_entities, 50):
-        orm.put_multi(puts)
+      orm.put_multi(put_entities)

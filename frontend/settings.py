@@ -18,6 +18,7 @@ SITE_META_KEYWORDS = 'miraclestyle,thing'
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
 DEBUG_HOST_NAMES = ['localhost:9982', 'universal-trail-608.appspot.com']
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+DEBUG = False
 if HOST_NAME in DEBUG_HOST_NAMES:
   DEBUG = True
 
@@ -46,7 +47,6 @@ ROUTES = []
 JINJA_GLOBALS = {}
 JINJA_FILTERS = {}
 
-DEBUG = False
 TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
