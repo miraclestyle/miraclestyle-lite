@@ -512,7 +512,7 @@
                                     next: function (item) {
                                         var newFilter = {
                                             search: {
-                                                options: {limit: 10000},
+                                                options: {limit: 1000},
                                                 orders: [{
                                                     operator: 'asc',
                                                     field: 'name'
@@ -569,7 +569,7 @@
 
                                 models['24'].actions.search({
                                     search: {
-                                        options: {limit: 10000},
+                                        options: {limit: 1000},
                                         orders: [{
                                             operator: 'asc',
                                             field: 'name'

@@ -71,7 +71,7 @@ class CatalogProductCategory(orm.BaseModel):
                   default={'filters': [{'field': 'state', 'value': 'indexable visible', 'operator': '=='}],
                            'orders': [{'field': 'name', 'operator': 'asc'}]},
                   cfg={
-                      'search_arguments': {'kind': '24', 'options': {'limit': settings.SEARCH_PAGE}},
+                      'search_arguments': {'kind': '24', 'options': {'limit': 1000}},
                       'search_by_keys': True,
                       'use_search_engine': True,
                       'filters': {'name': orm.SuperStringProperty(),
