@@ -284,6 +284,10 @@
                         listen = (function () {
                             var listener = config.listen;
                             if (!listener) {
+                                listener = element.parents('.ui-view-wrapper:first');
+                                if (listener.length) {
+                                    return listener;
+                                }
                                 listener = element.parents('md-content[md-scroll-y]:first');
                                 if (element.hasClass('overflow-y') || element.hasClass('overflow-auto-y')) {
                                     listener = element;
@@ -305,8 +309,9 @@
                         maybeMore = function () {
                             $timeout(function () {
                                 var listenNode = listen.get(0),
-                                    listenHeight = listen.height(),
-                                    maybe = config.reverse ? true : listenNode ? (listenNode.scrollHeight <= listenHeight || listenHeight > listenNode.scrollHeight) : false,
+                                    listenScrollHeight = listenNode.scrollHeight,
+                                    viewport = $(window).height() - 56,
+                                    maybe = config.reverse ? true : listenNode ? (viewport >= listenScrollHeight) : false,
                                     promise;
                                 if (maybe) {
                                     promise = loadMore({}, angular.noop);
@@ -335,6 +340,7 @@
                         }, 2000);
 
                         loadMore = function (values, done) {
+                            console.log(values);
                             var promise = config.loader.load();
                             if (!promise) {
                                 done();
