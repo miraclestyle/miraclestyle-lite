@@ -915,7 +915,7 @@
                                             promise.then(function (response) {
                                                 if (response.data.errors) {
                                                     paginate.more = false;
-                                                    return response;
+                                                    return config.complete.call(this, response);
                                                 }
                                                 paginate.more = response.data.more;
                                                 paginate.cursor = response.data.cursor;
