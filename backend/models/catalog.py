@@ -357,6 +357,7 @@ class Catalog(orm.BaseExpando):
 
   def condition_write_images(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
+        and entity._original.state == "draft" \
         and action.key_id_str \
         in ("read", "catalog_upload_images", "product_upload_images", "product_instance_upload_images", "prepare")
 
