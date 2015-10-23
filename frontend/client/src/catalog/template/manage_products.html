@@ -29,7 +29,7 @@
            <img class="not-pointable" slider-image="image" /> 
            <div ng-repeat="pricetag in image.pricetags track by trackPricetags(pricetag)"
                 ng-model="image.pricetags"
-                ng-hide="pricetag._state == 'deleted' || !pricetag.key"
+                ng-hide="pricetag._state == 'deleted' || !pricetag.key || pricetag._hidden"
                 jqyoui-options="draggableOptions"
                 jqyoui-draggable="{index: $index, onStart: 'onStart(image, pricetag)', onDrag: 'onDrag(image, pricetag)', onStop: 'onStop(image, pricetag)'}"
                 drag="entity.ui.rule.field._images.pricetags.writable" 

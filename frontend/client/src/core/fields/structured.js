@@ -113,6 +113,10 @@
                         config.ui.specifics.toolbar = {};
                     }
 
+                    if (!config.ui.specifics.remoteOpts) {
+                        config.ui.specifics.remoteOpts = {};
+                    }
+
                     config.ui.specifics.sortMode = true;
                     defaultFields = defaultFields.sort(helpers.fields.sorter);
 
@@ -606,11 +610,17 @@
                                                         readRootArgsAsList,
                                                         parentArgsPath = $scope.args.ui.access,
                                                         fieldList,
-                                                        traceDeep;
+                                                        traceDeep,
+                                                        lastPart = [];
                                                     // set this args as single item in array
                                                     // delete all remote structured property from rpc data
                                                     readRootArgs = angular.copy(readRootArgs);
                                                     helpers.setProperty(readRootArgs, parentArgsPath, $scope.args);
+                                                    if (config.ui.additionalRealPaths) {
+                                                        angular.forEach(config.ui.additionalRealPaths, function (path) {
+                                                            helpers.setProperty(readRootArgs, path, $scope.args);
+                                                        });
+                                                    }
                                                     $scope.sendRootArgs = readRootArgs;
                                                     angular.forEach($scope.rootScope.config.fields, function (field) {
                                                         if (_.string.contains(field.type, 'RemoteStructured') && field.code_name !== $scope.args.ui.access[0]) {
@@ -626,15 +636,28 @@
                                                                 config: {}
                                                             };
                                                             readArgs = readArgs[part];
+                                                            lastPart.push(part);
                                                         }
                                                         // produce read path for the rpc
                                                         readRootArgs = readRootArgs[part];
                                                         if (angular.isArray(readRootArgs)) {
                                                             readRootArgsAsList = readRootArgs;
                                                         } else {
+                                                            var extraReadPath = lastPart.join('.'),
+                                                                extraRead,
+                                                                extraReadClone;
+                                                            if (config.ui.specifics.remoteOpts.read && config.ui.specifics.remoteOpts.read[extraReadPath]) {
+                                                                extraRead = config.ui.specifics.remoteOpts.read[extraReadPath];
+                                                            }
                                                             if (angular.isDefined(readRootArgsAsList)) {
+                                                                extraReadClone = readRootArgsAsList.concat();
                                                                 readRootArgsAsList.empty();
                                                                 readRootArgsAsList.push(readRootArgs);
+                                                                if (extraRead) {
+                                                                    extraRead(extraReadClone, readRootArgsAsList);
+                                                                }
+                                                                extraReadClone = null;
+
                                                                 readRootArgsAsList = undefined;
                                                             }
                                                             if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
@@ -688,8 +711,13 @@
                                             promise.then(function (response) {
                                                 $scope.response = response;
                                                 var keepAccess = angular.copy($scope.args.ui.access),
-                                                    // set zero-in access path, example _images.0.pricetags.0._products.0._instances.0
+                                                    // set zero-in access path, example _images.0.pricetags.0._product.0._instances.0
+                                                    value;
+                                                if (config.ui.specifics.remoteOpts.response) {
+                                                    value = config.ui.specifics.remoteOpts.response(response);
+                                                } else {
                                                     value = getResult(response, keepAccess);
+                                                }
                                                 $.extend($scope.args, value); // modify current args
                                                 $scope.args.ui.access = keepAccess; // reference back original access path
                                                 if ($scope.isNew) {
@@ -845,6 +873,8 @@
 
                                     $scope.$on('$destroy', function () {
                                         config._title_.remove(getTitle);
+                                        config.ui.specifics.remoteOpts = null;
+                                        config.ui.additionalRealPaths = null;
                                     });
 
                                 })

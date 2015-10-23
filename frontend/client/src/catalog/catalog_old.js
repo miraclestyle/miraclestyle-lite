@@ -1314,9 +1314,10 @@
 
                                             $scope.loadingManageProduct = false;
 
-                                            $scope.manageProduct = function (image, pricetag, $event) {
+                                            $scope.manageProduct2 = function (image, pricetag, $event) {
                                                 if (pricetag._must_save) {
                                                     return $scope.save(true).then(function () {
+                                                        pricetag._must_save = false;
                                                         image = _.findWhere($scope.args._images, {key: image.key});
                                                         pricetag = _.findWhere(image.pricetags, {key: pricetag.key});
                                                         return $scope.realManageProduct(image, pricetag, $event);
@@ -1325,9 +1326,13 @@
                                                 return $scope.realManageProduct(image, pricetag, $event);
                                             };
 
-                                            $scope.realManageProduct = function (image, pricetag, $event) {
+                                            $scope.manageProduct = function (image, pricetag, $event) {
                                                 if ($scope.loadingManageProduct) {
                                                     return;
+                                                }
+                                                var originalImage = image;
+                                                if (pricetag._image) {
+                                                    image = $scope.args._images[pricetag._image];
                                                 }
                                                 $scope.loadingManageProduct = true;
                                                 setupCurrentPricetag(image, pricetag);
@@ -1358,10 +1363,29 @@
                                                     if (!$scope.fieldProduct.ui.specifics.toolbar) {
                                                         $scope.fieldProduct.ui.specifics.toolbar = {};
                                                     }
+                                                    $scope.fieldProduct.ui.specifics.remoteOpts = {
+                                                        read: {
+                                                            _images: function (shallowCopy, theList) {
+                                                                var include = _.findWhere(shallowCopy, {key: image.key});
+                                                                if (include) {
+                                                                    include.pricetags.empty();
+                                                                    include.pricetags.push(pricetag);
+                                                                    theList.push(include);
+                                                                }
+                                                            }
+                                                        },
+                                                        response: function (response) {
+                                                            var findImage = _.findWhere(response.data.entity._images, {key: originalImage.key}),
+                                                                findPricetag = _.findWhere(findImage.pricetags, {key: pricetag.key});
+                                                            return findPricetag._product;
+                                                        }
+                                                    };
                                                     $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
                                                     pricetag._product = product;
+                                                    image.pricetags[oldPricetagIndex]._product = product;
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
+                                                    $scope.fieldProduct.ui.additionalRealPaths = [['_images', $scope.args._images.indexOf(originalImage), 'pricetags', originalImage.pricetags.indexOf(pricetag), '_product']];
                                                     recomputeRealPath($scope.fieldProduct);
                                                     $scope.fieldProduct.ui.specifics.manage(product, undefined, $event); // fire up modal dialog
 
