@@ -164,7 +164,7 @@
                             </tr>
                             <tr>
                                 <td class="secondary info">Net total</td>
-                                <td class="secondary">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
+                                <td class="secondary">{{cmd.order.showNetTotalAmount()|formatCurrency:order.currency}}</td>
                             </tr>
                             <tr>
                                 <td class="secondary info">Taxes</td>
@@ -173,7 +173,7 @@
                             </tr>
                             <tr>
                                 <td class="secondary info">Total</td>
-                                <td class="secondary">{{order.total_amount|formatCurrency:order.currency}}</td>
+                                <td class="secondary">{{cmd.order.showTotalAmount()|formatCurrency:order.currency}}</td>
                             </tr>
                             <tr>
                                 <td class="secondary info">Currency</td>

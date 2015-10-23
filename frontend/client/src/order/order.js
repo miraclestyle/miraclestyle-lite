@@ -656,6 +656,29 @@
                                                 return response;
                                             });
                                         },
+                                        showNetTotalAmount: function () {
+                                            var untaxed = parseFloat($scope.order.untaxed_amount, 10);
+                                            if ($scope.stage.current === 1) {
+                                                if ($scope.order.carrier && $scope.order.carrier.subtotal) {
+                                                    untaxed -= parseFloat($scope.order.carrier.subtotal, 10);
+                                                }
+                                                return untaxed;
+                                            }
+                                            return untaxed;
+                                        },
+                                        showTotalAmount: function () {
+                                            var total = parseFloat($scope.order.total_amount, 10);
+                                            if ($scope.stage.current === 1) {
+                                                if ($scope.order.carrier && $scope.order.carrier.subtotal) {
+                                                    total -= parseFloat($scope.order.carrier.subtotal, 10);
+                                                }
+                                                if ($scope.order.tax_amount) {
+                                                    total -= parseFloat($scope.order.tax_amount, 10);
+                                                }
+                                                return total;
+                                            }
+                                            return total;
+                                        },
                                         cancel: function () {
                                             if ($scope.order.state === 'checkout') {
                                                 modals.confirm('cancelOrder', function () {
