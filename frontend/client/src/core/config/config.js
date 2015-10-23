@@ -385,6 +385,7 @@
             cartBuyerList: 'buyer/help/carts.html',
             catalogList: 'catalog/help/list.html',
             cart: 'order/help/empty.html',
+            cartMessages: 'order/help/messages.html',
             following: 'collection/help/sellers.html',
             sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
@@ -415,8 +416,8 @@
             actionFailedCheckForm: 'Action failed! Inspect the form for errors.',
             orderPaymentSuccessProgress: 'Order processing is in pogress.',
             orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
-            orderPaymentSuccessProgresscompleted: 'Order payment is completed.'
-
+            orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
+            sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

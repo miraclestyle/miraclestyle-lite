@@ -180,9 +180,11 @@
                  always-scroll-to-bottom="['messages.open', 'messages.sent']"
                  class="messages overflow-auto-y">
                 <div class="messages-list">
+                    <div ng-if="helpers.models.isEntityListEmpty(order._messages)" help-render="GLOBAL_CONFIG.emptyHelp.cartMessages"></div>
                     <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="isYou = message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
                           isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
+                          isToday = today.getDay() === message.created.getDay() && today.getMonth() === message.created.getMonth()
                           " ng-class="{'leftside': isYou, 'rightside': !isYou}">
                         <div class="message">
                             <div class="message-inner">
@@ -195,7 +197,7 @@
                                   <span ng-if="message._action === 'report_feedback'">Feedback reported on</span>
                                   <span ng-if="message._action === 'sudo_feedback'">Feedback administered on</span>
                                   <span ng-if="message._action === 'complete'">Payment completed on</span>
-                                  <span ng-if="message._action === 'log_message'">Message left on</span>
+                                  <span ng-if="message._action === 'log_message'">Message left <span ng-if="!isToday">on</span> <span ng-if="isToday">at</span> </span>
                                     {{message|output:'created'}}
                                 </div>
                             </div>

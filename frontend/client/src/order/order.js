@@ -5,7 +5,9 @@
 
             var entity = false;
 
-            models['34'].manageModal({key: $state.params.key}, undefined, undefined, {
+            models['34'].manageModal({
+                key: $state.params.key
+            }, undefined, undefined, {
                 inDirection: false,
                 outDirection: false,
                 afterClose: function () {
@@ -181,8 +183,8 @@
                                         label: false,
                                         args: 'messages.draft.message',
                                         parentArgs: 'messages.draft',
-                                        writable: 'order.ui.rule.action.log_message.executable',
-                                        placeholder: 'Type message here',
+                                        writable: 'order.ui.rule.action.log_message.executable || !order.id',
+                                        placeholder: 'Type a message here',
                                         attrs: {
                                             'native-placeholder': '',
                                             'class': 'primary',
@@ -203,6 +205,8 @@
                                         }
                                         $scope.dialog.toolbar.title = title;
                                     });
+
+                                    $scope.today = new Date();
 
                                     $scope.stage = {
                                         checkout: null,
@@ -230,7 +234,10 @@
                                                 addressing.shipping_address = $scope.addresses.billing;
                                             }
                                             if (valid) {
-                                                $scope.cmd.order.update(addressing).then(function () {
+                                                $scope.cmd.order.update(addressing).then(function (response) {
+                                                    if (response.data.errors) {
+                                                        return;
+                                                    }
                                                     $scope.stage.out.push(2);
                                                     $scope.stage.current = 3;
                                                 });
@@ -262,7 +269,9 @@
                                             $scope.stage.current = 1;
                                         }
                                     };
-                                    $scope.logoImageConfig = {size: 280};
+                                    $scope.logoImageConfig = {
+                                        size: 280
+                                    };
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;
@@ -303,6 +312,9 @@
                                                                 models['19'].current().then(function (response) {
                                                                     $scope.addresses = response.data.entity.addresses;
                                                                 });
+                                                            }, {
+                                                                inDirection: false,
+                                                                outDirection: false
                                                             });
                                                         };
                                                     })
@@ -351,7 +363,7 @@
                                     }
 
                                     $scope.messages = {
-                                        reader: models['34'].reader({
+                                        reader: $scope.order.id ? models['34'].reader({
                                             key: $scope.order.key,
                                             next: {
                                                 _messages: angular.copy($scope.order._next_read_arguments._messages)
@@ -360,7 +372,7 @@
                                             complete: function (items) {
                                                 $scope.order._messages.prepend(items);
                                             }
-                                        }),
+                                        }) : {},
                                         toggling: false,
                                         open: false,
                                         stateChanged: function (state) {
@@ -375,6 +387,9 @@
                                                 clearTimeout(this.timer);
                                             },
                                             start: function () {
+                                                if (!$scope.order.id || !$scope.order._lines.length) {
+                                                    return;
+                                                }
                                                 this.active = true;
                                                 this.run();
                                             },
@@ -450,6 +465,10 @@
                                         },
                                         sidebarID: 'messages' + _.uniqueId(),
                                         logMessage: function () {
+                                            if (!$scope.order._lines.length) {
+                                                snackbar.showK('messangerDisabledWhenEmpty');
+                                                return;
+                                            }
                                             if ($scope.container.messages.$valid) {
                                                 return this.send('log_message').then(function (response) {
                                                     $scope.container.messages.$setSubmitted(true);
@@ -465,7 +484,6 @@
                                         toggle: function (close) {
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
-                                                return;
                                             }
                                             if ($scope.messages.toggling) {
                                                 return;
@@ -621,11 +639,21 @@
                                                 _lines: $scope.order._lines
                                             };
                                             $.extend(data, extra);
-                                            return models['34'].actions.update(data).then(function (response) {
+                                            return models['34'].actions.update(data, {
+                                                ignoreErrors: true
+                                            }).then(function (response) {
+                                                var errors = response.data.errors;
+                                                if (errors) {
+                                                    if (errors.plugin_error && $.inArray('invalid_address', errors.plugin_error) !== -1) {
+                                                        snackbar.showK('sellerProhibtsAddress');
+                                                    }
+                                                    return response;
+                                                }
                                                 locals.updateLiveEntity(response);
                                                 locals.reactOnUpdate();
                                                 $scope.carrier.available = response.data.carriers;
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
+                                                return response;
                                             });
                                         },
                                         cancel: function () {

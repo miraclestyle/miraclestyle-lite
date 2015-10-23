@@ -277,6 +277,7 @@
                         loaded = false,
                         steadyOpts,
                         maybeMore,
+                        timeoutid,
                         run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
 
@@ -307,12 +308,15 @@
 
 
                         maybeMore = function () {
-                            $timeout(function () {
+                            timeoutid = $timeout(function () {
                                 var listenNode = listen.get(0),
                                     listenScrollHeight = listenNode.scrollHeight,
                                     viewport = $(window).height() - 56,
                                     maybe = config.reverse ? true : listenNode ? (viewport >= listenScrollHeight) : false,
                                     promise;
+                                if (!listen.length || !listenNode) {
+                                    return;
+                                }
                                 if (maybe) {
                                     promise = loadMore({}, angular.noop);
                                     if (promise) {
@@ -340,6 +344,9 @@
                         }, 2000);
 
                         loadMore = function (values, done) {
+                            if (!config.loader) {
+                                return;
+                            }
                             var promise = config.loader.load();
                             if (!promise) {
                                 done();
@@ -373,6 +380,7 @@
                             steady.stop();
                             steady = undefined;
                             clearInterval(intervalid);
+                            $timeout.cancel(timeoutid);
                         });
 
                         maybeMore();

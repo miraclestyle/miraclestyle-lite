@@ -78,7 +78,7 @@
                         angular.forEach(entities, function (value) {
                             var maybe = false;
                             if (also) {
-                                maybe = $.inArray(value._state, also);
+                                maybe = $.inArray(value._state, also) !== -1;
                             }
                             if (value._state === 'deleted' || maybe) {
                                 emptyFactory += 1;

@@ -1582,6 +1582,7 @@ $(function () {
             cartBuyerList: 'buyer/help/carts.html',
             catalogList: 'catalog/help/list.html',
             cart: 'order/help/empty.html',
+            cartMessages: 'order/help/messages.html',
             following: 'collection/help/sellers.html',
             sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
@@ -1612,8 +1613,8 @@ $(function () {
             actionFailedCheckForm: 'Action failed! Inspect the form for errors.',
             orderPaymentSuccessProgress: 'Order processing is in pogress.',
             orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
-            orderPaymentSuccessProgresscompleted: 'Order payment is completed.'
-
+            orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
+            sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -12286,6 +12287,7 @@ $(function () {
                         loaded = false,
                         steadyOpts,
                         maybeMore,
+                        timeoutid,
                         run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
 
@@ -12316,12 +12318,15 @@ $(function () {
 
 
                         maybeMore = function () {
-                            $timeout(function () {
+                            timeoutid = $timeout(function () {
                                 var listenNode = listen.get(0),
                                     listenScrollHeight = listenNode.scrollHeight,
                                     viewport = $(window).height() - 56,
                                     maybe = config.reverse ? true : listenNode ? (viewport >= listenScrollHeight) : false,
                                     promise;
+                                if (!listen.length || !listenNode) {
+                                    return;
+                                }
                                 if (maybe) {
                                     promise = loadMore({}, angular.noop);
                                     if (promise) {
@@ -12349,6 +12354,9 @@ $(function () {
                         }, 2000);
 
                         loadMore = function (values, done) {
+                            if (!config.loader) {
+                                return;
+                            }
                             var promise = config.loader.load();
                             if (!promise) {
                                 done();
@@ -12382,6 +12390,7 @@ $(function () {
                             steady.stop();
                             steady = undefined;
                             clearInterval(intervalid);
+                            $timeout.cancel(timeoutid);
                         });
 
                         maybeMore();
@@ -14104,7 +14113,7 @@ $(function () {
                         angular.forEach(entities, function (value) {
                             var maybe = false;
                             if (also) {
-                                maybe = $.inArray(value._state, also);
+                                maybe = $.inArray(value._state, also) !== -1;
                             }
                             if (value._state === 'deleted' || maybe) {
                                 emptyFactory += 1;
@@ -19362,7 +19371,9 @@ angular.module('app')
 
             var entity = false;
 
-            models['34'].manageModal({key: $state.params.key}, undefined, undefined, {
+            models['34'].manageModal({
+                key: $state.params.key
+            }, undefined, undefined, {
                 inDirection: false,
                 outDirection: false,
                 afterClose: function () {
@@ -19538,8 +19549,8 @@ angular.module('app')
                                         label: false,
                                         args: 'messages.draft.message',
                                         parentArgs: 'messages.draft',
-                                        writable: 'order.ui.rule.action.log_message.executable',
-                                        placeholder: 'Type message here',
+                                        writable: 'order.ui.rule.action.log_message.executable || !order.id',
+                                        placeholder: 'Type a message here',
                                         attrs: {
                                             'native-placeholder': '',
                                             'class': 'primary',
@@ -19560,6 +19571,8 @@ angular.module('app')
                                         }
                                         $scope.dialog.toolbar.title = title;
                                     });
+
+                                    $scope.today = new Date();
 
                                     $scope.stage = {
                                         checkout: null,
@@ -19587,7 +19600,10 @@ angular.module('app')
                                                 addressing.shipping_address = $scope.addresses.billing;
                                             }
                                             if (valid) {
-                                                $scope.cmd.order.update(addressing).then(function () {
+                                                $scope.cmd.order.update(addressing).then(function (response) {
+                                                    if (response.data.errors) {
+                                                        return;
+                                                    }
                                                     $scope.stage.out.push(2);
                                                     $scope.stage.current = 3;
                                                 });
@@ -19619,7 +19635,9 @@ angular.module('app')
                                             $scope.stage.current = 1;
                                         }
                                     };
-                                    $scope.logoImageConfig = {size: 280};
+                                    $scope.logoImageConfig = {
+                                        size: 280
+                                    };
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;
@@ -19660,6 +19678,9 @@ angular.module('app')
                                                                 models['19'].current().then(function (response) {
                                                                     $scope.addresses = response.data.entity.addresses;
                                                                 });
+                                                            }, {
+                                                                inDirection: false,
+                                                                outDirection: false
                                                             });
                                                         };
                                                     })
@@ -19708,7 +19729,7 @@ angular.module('app')
                                     }
 
                                     $scope.messages = {
-                                        reader: models['34'].reader({
+                                        reader: $scope.order.id ? models['34'].reader({
                                             key: $scope.order.key,
                                             next: {
                                                 _messages: angular.copy($scope.order._next_read_arguments._messages)
@@ -19717,7 +19738,7 @@ angular.module('app')
                                             complete: function (items) {
                                                 $scope.order._messages.prepend(items);
                                             }
-                                        }),
+                                        }) : {},
                                         toggling: false,
                                         open: false,
                                         stateChanged: function (state) {
@@ -19732,6 +19753,9 @@ angular.module('app')
                                                 clearTimeout(this.timer);
                                             },
                                             start: function () {
+                                                if (!$scope.order.id || !$scope.order._lines.length) {
+                                                    return;
+                                                }
                                                 this.active = true;
                                                 this.run();
                                             },
@@ -19807,6 +19831,10 @@ angular.module('app')
                                         },
                                         sidebarID: 'messages' + _.uniqueId(),
                                         logMessage: function () {
+                                            if (!$scope.order._lines.length) {
+                                                snackbar.showK('messangerDisabledWhenEmpty');
+                                                return;
+                                            }
                                             if ($scope.container.messages.$valid) {
                                                 return this.send('log_message').then(function (response) {
                                                     $scope.container.messages.$setSubmitted(true);
@@ -19822,7 +19850,6 @@ angular.module('app')
                                         toggle: function (close) {
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
-                                                return;
                                             }
                                             if ($scope.messages.toggling) {
                                                 return;
@@ -19978,11 +20005,21 @@ angular.module('app')
                                                 _lines: $scope.order._lines
                                             };
                                             $.extend(data, extra);
-                                            return models['34'].actions.update(data).then(function (response) {
+                                            return models['34'].actions.update(data, {
+                                                ignoreErrors: true
+                                            }).then(function (response) {
+                                                var errors = response.data.errors;
+                                                if (errors) {
+                                                    if (errors.plugin_error && $.inArray('invalid_address', errors.plugin_error) !== -1) {
+                                                        snackbar.showK('sellerProhibtsAddress');
+                                                    }
+                                                    return response;
+                                                }
                                                 locals.updateLiveEntity(response);
                                                 locals.reactOnUpdate();
                                                 $scope.carrier.available = response.data.carriers;
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
+                                                return response;
                                             });
                                         },
                                         cancel: function () {
