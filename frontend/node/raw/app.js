@@ -1216,6 +1216,13 @@ $(function () {
                     primary: 'Disconnect'
                 }
             },
+            removePricetagConfirm: {
+                title: 'Remove the product?',
+                message: 'The product will be permanently removed from the catalog! You will be notified once this action is completed.',
+                text: {
+                    primary: 'Remove'
+                }
+            },
             connectSignInMethod: {
                 title: 'Connect the identity?',
                 message: 'If this sign in identity is already connected to another Miraclestyle account, you will have to disconnect it before you proceed with this action!',
@@ -2815,139 +2822,192 @@ $(function () {
 
     (function (jQuery) {
         'use strict';
-
         var HANDLERS = {};
+
         /* The state of the current 'pointer'
          * The pointer represents the state of the current touch.
          * It contains normalized x and y coordinates from DOM events,
          * as well as other information abstracted from the DOM.
          */
+         
         var pointer, lastPointer, forceSkipClickHijack = false;
+
+        /**
+         * The position of the most recent click if that click was on a label element.
+         * @type {{x: number, y: number}?}
+         */
+        var lastLabelClickPos = null;
 
         // Used to attach event listeners once when multiple ng-apps are running.
         var isInitialized = false;
 
         angular
-            .module('material.core.gestures', [])
-            .provider('$mdGesture', MdGestureProvider)
-            .factory('$$MdGestureHandler', ['$$rAF', MdGestureHandler])
-            .run(["$mdGesture", "$$MdGestureHandler", attachToDocument]);
+          .module('material.core.gestures', [ ])
+          .provider('$mdGesture', MdGestureProvider)
+          .factory('$$MdGestureHandler', MdGestureHandler)
+          .run( attachToDocument );
 
         /**
-         * @ngdoc service
-         * @name $mdGestureProvider
-         * @module material.core.gestures
-         *
-         * @description
-         * In some scenarios on Mobile devices (without jQuery), the click events should NOT be hijacked.
-         * `$mdGestureProvider` is used to configure the Gesture module to ignore or skip click hijacking on mobile
-         * devices.
-         *
-         * <hljs lang="js">
-         *   app.config(function($mdGestureProvider) {
-         *
-         *     // For mobile devices without jQuery loaded, do not
-         *     // intercept click events during the capture phase.
-         *     $mdGestureProvider.skipClickHijack();
-         *
-         *   });
-         * </hljs>
-         *
-         */
-        function MdGestureProvider() {}
+           * @ngdoc service
+           * @name $mdGestureProvider
+           * @module material.core.gestures
+           *
+           * @description
+           * In some scenarios on Mobile devices (without jQuery), the click events should NOT be hijacked.
+           * `$mdGestureProvider` is used to configure the Gesture module to ignore or skip click hijacking on mobile
+           * devices.
+           *
+           * <hljs lang="js">
+           *   app.config(function($mdGestureProvider) {
+           *
+           *     // For mobile devices without jQuery loaded, do not
+           *     // intercept click events during the capture phase.
+           *     $mdGestureProvider.skipClickHijack();
+           *
+           *   });
+           * </hljs>
+           *
+           */
+        function MdGestureProvider() { }
 
         MdGestureProvider.prototype = {
 
-            // Publish access to setter to configure a variable  BEFORE the
-            // $mdGesture service is instantiated...
-            skipClickHijack: function () {
-                return forceSkipClickHijack = true;
-            },
+          // Publish access to setter to configure a variable  BEFORE the
+          // $mdGesture service is instantiated...
+          skipClickHijack: function() {
+            return forceSkipClickHijack = true;
+          },
 
-            // $get is used to build an instance of $mdGesture 
-            $get: ['$$MdGestureHandler', '$$rAF', '$timeout', function ($$MdGestureHandler, $$rAF, $timeout) {
-                return new MdGesture($$MdGestureHandler, $$rAF, $timeout);
-            }]
+          /**
+           * $get is used to build an instance of $mdGesture
+           * ngInject
+           */
+          $get : ["$$MdGestureHandler", "$$rAF", "$timeout", function($$MdGestureHandler, $$rAF, $timeout) {
+               return new MdGesture($$MdGestureHandler, $$rAF, $timeout);
+          }]
         };
 
 
 
         /**
          * MdGesture factory construction function
+         * ngInject
          */
         function MdGesture($$MdGestureHandler, $$rAF, $timeout) {
-            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            var isIos = userAgent.match(/ipad|iphone|ipod/i);
-            var isAndroid = userAgent.match(/android/i);
+          var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+          var isIos = userAgent.match(/ipad|iphone|ipod/i);
+          var isAndroid = userAgent.match(/android/i);
+          var hasJQuery =  (typeof window.jQuery !== 'undefined') && (angular.element === window.jQuery);
 
-            var self = {
-                handler: addHandler,
-                register: register,
-                // On mobile w/out jQuery, we normally intercept clicks. Should we skip that?
-                isHijackingClicks: (isIos || isAndroid) && !jQuery && !forceSkipClickHijack
-            };
+          var self = {
+            handler: addHandler,
+            register: register,
+            // On mobile w/out jQuery, we normally intercept clicks. Should we skip that?
+            isHijackingClicks: (isIos || isAndroid) && !hasJQuery && !forceSkipClickHijack
+          };
 
-            if (self.isHijackingClicks) {
-                self.handler('click', {
-                    options: {
-                        maxDistance: 6
-                    },
-                    onEnd: function (ev, pointer) {
-                        if (pointer.distance < this.state.options.maxDistance) {
-                            this.dispatchEvent(ev, 'click');
-                        }
-                    }
-                });
-            }
+          if (self.isHijackingClicks) {
+            var maxClickDistance = 6;
+            self.handler('click', {
+              options: {
+                maxDistance: maxClickDistance
+              },
+              onEnd: checkDistanceAndEmit('click')
+            });
 
-            /*
-             * Register an element to listen for a handler.
-             * This allows an element to override the default options for a handler.
-             * Additionally, some handlers like drag and hold only dispatch events if
-             * the domEvent happens inside an element that's registered to listen for these events.
-             *
-             * @see GestureHandler for how overriding of default options works.
-             * @example $mdGesture.register(myElement, 'drag', { minDistance: 20, horziontal: false })
-             */
-            function register(element, handlerName, options) {
-                var handler = HANDLERS[handlerName.replace(/^\$md./, '')];
-                if (!handler) {
-                    throw new Error('Failed to register element with handler ' + handlerName + '. ' +
-                        'Available handlers: ' + Object.keys(HANDLERS).join(', '));
+            self.handler('focus', {
+              options: {
+                maxDistance: maxClickDistance
+              },
+              onEnd: function(ev, pointer) {
+                if (pointer.distance < this.state.options.maxDistance) {
+                  if (canFocus(ev.target)) {
+                    this.dispatchEvent(ev, 'focus', pointer);
+                    ev.target.focus();
+                  }
                 }
-                return handler.registerElement(element, options);
+
+                function canFocus(element) {
+                  var focusableElements = ['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA', 'VIDEO', 'AUDIO'];
+
+                  return (element.getAttribute('tabindex') != '-1') &&
+                      !element.hasAttribute('DISABLED') &&
+                      (element.hasAttribute('tabindex') || element.hasAttribute('href') ||
+                      (focusableElements.indexOf(element.nodeName) != -1));
+                }
+              }
+            });
+
+            self.handler('mouseup', {
+              options: {
+                maxDistance: maxClickDistance
+              },
+              onEnd: checkDistanceAndEmit('mouseup')
+            });
+
+            self.handler('mousedown', {
+              onStart: function(ev) {
+                this.dispatchEvent(ev, 'mousedown');
+              }
+            });
+          }
+
+          function checkDistanceAndEmit(eventName) {
+            return function(ev, pointer) {
+              if (pointer.distance < this.state.options.maxDistance) {
+                this.dispatchEvent(ev, eventName, pointer);
+              }
+            };
+          }
+
+          /*
+           * Register an element to listen for a handler.
+           * This allows an element to override the default options for a handler.
+           * Additionally, some handlers like drag and hold only dispatch events if
+           * the domEvent happens inside an element that's registered to listen for these events.
+           *
+           * @see GestureHandler for how overriding of default options works.
+           * @example $mdGesture.register(myElement, 'drag', { minDistance: 20, horziontal: false })
+           */
+          function register(element, handlerName, options) {
+            var handler = HANDLERS[handlerName.replace(/^\$md./, '')];
+            if (!handler) {
+              throw new Error('Failed to register element with handler ' + handlerName + '. ' +
+              'Available handlers: ' + Object.keys(HANDLERS).join(', '));
             }
+            return handler.registerElement(element, options);
+          }
 
+          /*
+           * add a handler to $mdGesture. see below.
+           */
+          function addHandler(name, definition) {
+            var handler = new $$MdGestureHandler(name);
+            angular.extend(handler, definition);
+            HANDLERS[name] = handler;
+
+            return self;
+          }
+
+          /*
+           * Register handlers. These listen to touch/start/move events, interpret them,
+           * and dispatch gesture events depending on options & conditions. These are all
+           * instances of GestureHandler.
+           * @see GestureHandler 
+           */
+          return self
             /*
-             * add a handler to $mdGesture. see below.
+             * The press handler dispatches an event on touchdown/touchend.
+             * It's a simple abstraction of touch/mouse/pointer start and end.
              */
-            function addHandler(name, definition) {
-                var handler = new $$MdGestureHandler(name);
-                angular.extend(handler, definition);
-                HANDLERS[name] = handler;
-
-                return self;
-            }
-
-            /*
-             * Register handlers. These listen to touch/start/move events, interpret them,
-             * and dispatch gesture events depending on options & conditions. These are all
-             * instances of GestureHandler.
-             * @see GestureHandler 
-             */
-            return self
-                /*
-                 * The press handler dispatches an event on touchdown/touchend.
-                 * It's a simple abstraction of touch/mouse/pointer start and end.
-                 */
-                .handler('press', {
-                    onStart: function (ev, pointer) {
-                        this.dispatchEvent(ev, '$md.pressdown');
-                    },
-                    onEnd: function (ev, pointer) {
-                        this.dispatchEvent(ev, '$md.pressup');
-                    }
-                })
+            .handler('press', {
+              onStart: function (ev, pointer) {
+                this.dispatchEvent(ev, '$md.pressdown');
+              },
+              onEnd: function (ev, pointer) {
+                this.dispatchEvent(ev, '$md.pressup');
+              }
+            })
 
             /*
              * The hold handler dispatches an event if the user keeps their finger within
@@ -2956,45 +3016,42 @@ $(function () {
              * to listen for hold events through $mdGesture.register()
              */
             .handler('hold', {
-                options: {
-                    maxDistance: 6,
-                    delay: 500
-                },
-                onCancel: function () {
-                    $timeout.cancel(this.state.timeout);
-                },
-                onStart: function (ev, pointer) {
-                    // For hold, require a parent to be registered with $mdGesture.register()
-                    // Because we prevent scroll events, this is necessary.
-                    if (!this.state.registeredParent) return this.cancel();
+              options: {
+                maxDistance: 6,
+                delay: 500
+              },
+              onCancel: function () {
+                $timeout.cancel(this.state.timeout);
+              },
+              onStart: function (ev, pointer) {
+                // For hold, require a parent to be registered with $mdGesture.register()
+                // Because we prevent scroll events, this is necessary.
+                if (!this.state.registeredParent) return this.cancel();
 
-                    this.state.pos = {
-                        x: pointer.x,
-                        y: pointer.y
-                    };
-                    this.state.timeout = $timeout(angular.bind(this, function holdDelayFn() {
-                        this.dispatchEvent(ev, '$md.hold');
-                        this.cancel(); //we're done!
-                    }), this.state.options.delay, false);
-                },
-                onMove: function (ev, pointer) {
-                    // Don't scroll while waiting for hold.
-                    // If we don't preventDefault touchmove events here, Android will assume we don't
-                    // want to listen to anymore touch events. It will start scrolling and stop sending
-                    // touchmove events.
-                    ev.preventDefault();
+                this.state.pos = {x: pointer.x, y: pointer.y};
+                this.state.timeout = $timeout(angular.bind(this, function holdDelayFn() {
+                  this.dispatchEvent(ev, '$md.hold');
+                  this.cancel(); //we're done!
+                }), this.state.options.delay, false);
+              },
+              onMove: function (ev, pointer) {
+                // Don't scroll while waiting for hold.
+                // If we don't preventDefault touchmove events here, Android will assume we don't
+                // want to listen to anymore touch events. It will start scrolling and stop sending
+                // touchmove events.
+                ev.preventDefault();
 
-                    // If the user moves greater than <maxDistance> pixels, stop the hold timer
-                    // set in onStart
-                    var dx = this.state.pos.x - pointer.x;
-                    var dy = this.state.pos.y - pointer.y;
-                    if (Math.sqrt(dx * dx + dy * dy) > this.options.maxDistance) {
-                        this.cancel();
-                    }
-                },
-                onEnd: function () {
-                    this.onCancel();
+                // If the user moves greater than <maxDistance> pixels, stop the hold timer
+                // set in onStart
+                var dx = this.state.pos.x - pointer.x;
+                var dy = this.state.pos.y - pointer.y;
+                if (Math.sqrt(dx * dx + dy * dy) > this.options.maxDistance) {
+                  this.cancel();
                 }
+              },
+              onEnd: function () {
+                this.onCancel();
+              }
             })
 
             /*
@@ -3005,59 +3062,59 @@ $(function () {
              * pixels vertically, this handler won't consider the move part of a drag.
              */
             .handler('drag', {
-                options: {
-                    minDistance: 6,
-                    horizontal: true,
-                    cancelMultiplier: 1.5
-                },
-                onStart: function (ev) {
-                    // For drag, require a parent to be registered with $mdGesture.register()
-                    if (!this.state.registeredParent) this.cancel();
-                },
-                onMove: function (ev, pointer) {
-                    var shouldStartDrag, shouldCancel;
-                    // Don't scroll while deciding if this touchmove qualifies as a drag event.
-                    // If we don't preventDefault touchmove events here, Android will assume we don't
-                    // want to listen to anymore touch events. It will start scrolling and stop sending
-                    // touchmove events.
-                    ev.preventDefault();
+              options: {
+                minDistance: 6,
+                horizontal: true,
+                cancelMultiplier: 1.5
+              },
+              onStart: function (ev) {
+                // For drag, require a parent to be registered with $mdGesture.register()
+                if (!this.state.registeredParent) this.cancel();
+              },
+              onMove: function (ev, pointer) {
+                var shouldStartDrag, shouldCancel;
+                // Don't scroll while deciding if this touchmove qualifies as a drag event.
+                // If we don't preventDefault touchmove events here, Android will assume we don't
+                // want to listen to anymore touch events. It will start scrolling and stop sending
+                // touchmove events.
+                ev.preventDefault();
 
-                    if (!this.state.dragPointer) {
-                        if (this.state.options.horizontal) {
-                            shouldStartDrag = Math.abs(pointer.distanceX) > this.state.options.minDistance;
-                            shouldCancel = Math.abs(pointer.distanceY) > this.state.options.minDistance * this.state.options.cancelMultiplier;
-                        } else {
-                            shouldStartDrag = Math.abs(pointer.distanceY) > this.state.options.minDistance;
-                            shouldCancel = Math.abs(pointer.distanceX) > this.state.options.minDistance * this.state.options.cancelMultiplier;
-                        }
+                if (!this.state.dragPointer) {
+                  if (this.state.options.horizontal) {
+                    shouldStartDrag = Math.abs(pointer.distanceX) > this.state.options.minDistance;
+                    shouldCancel = Math.abs(pointer.distanceY) > this.state.options.minDistance * this.state.options.cancelMultiplier;
+                  } else {
+                    shouldStartDrag = Math.abs(pointer.distanceY) > this.state.options.minDistance;
+                    shouldCancel = Math.abs(pointer.distanceX) > this.state.options.minDistance * this.state.options.cancelMultiplier;
+                  }
 
-                        if (shouldStartDrag) {
-                            // Create a new pointer representing this drag, starting at this point where the drag started.
-                            this.state.dragPointer = makeStartPointer(ev);
-                            updatePointerState(ev, this.state.dragPointer);
-                            this.dispatchEvent(ev, '$md.dragstart', this.state.dragPointer);
+                  if (shouldStartDrag) {
+                    // Create a new pointer representing this drag, starting at this point where the drag started.
+                    this.state.dragPointer = makeStartPointer(ev);
+                    updatePointerState(ev, this.state.dragPointer);
+                    this.dispatchEvent(ev, '$md.dragstart', this.state.dragPointer);
 
-                        } else if (shouldCancel) {
-                            this.cancel();
-                        }
-                    } else {
-                        this.dispatchDragMove(ev);
-                    }
-                },
-                // Only dispatch dragmove events every frame; any more is unnecessray
-                dispatchDragMove: $$rAF.throttle(function (ev) {
-                    // Make sure the drag didn't stop while waiting for the next frame
-                    if (this.state.isRunning) {
-                        updatePointerState(ev, this.state.dragPointer);
-                        this.dispatchEvent(ev, '$md.drag', this.state.dragPointer);
-                    }
-                }),
-                onEnd: function (ev, pointer) {
-                    if (this.state.dragPointer) {
-                        updatePointerState(ev, this.state.dragPointer);
-                        this.dispatchEvent(ev, '$md.dragend', this.state.dragPointer);
-                    }
+                  } else if (shouldCancel) {
+                    this.cancel();
+                  }
+                } else {
+                  this.dispatchDragMove(ev);
                 }
+              },
+              // Only dispatch dragmove events every frame; any more is unnecessray
+              dispatchDragMove: $$rAF.throttle(function (ev) {
+                // Make sure the drag didn't stop while waiting for the next frame
+                if (this.state.isRunning) {
+                  updatePointerState(ev, this.state.dragPointer);
+                  this.dispatchEvent(ev, '$md.drag', this.state.dragPointer);
+                }
+              }),
+              onEnd: function (ev, pointer) {
+                if (this.state.dragPointer) {
+                  updatePointerState(ev, this.state.dragPointer);
+                  this.dispatchEvent(ev, '$md.dragend', this.state.dragPointer);
+                }
+              }
             })
 
             /*
@@ -3066,20 +3123,21 @@ $(function () {
              * TODO: add vertical swiping with a `horizontal` option similar to the drag handler.
              */
             .handler('swipe', {
-                options: {
-                    minVelocity: 0.65,
-                    minDistance: 10
-                },
-                onEnd: function (ev, pointer) {
-                    if (Math.abs(pointer.velocityX) > this.state.options.minVelocity &&
-                        Math.abs(pointer.distanceX) > this.state.options.minDistance) {
-                        var eventType = pointer.directionX == 'left' ? '$md.swipeleft' : '$md.swiperight';
-                        this.dispatchEvent(ev, eventType);
-                    }
+              options: {
+                minVelocity: 0.65,
+                minDistance: 10
+              },
+              onEnd: function (ev, pointer) {
+                if (Math.abs(pointer.velocityX) > this.state.options.minVelocity &&
+                  Math.abs(pointer.distanceX) > this.state.options.minDistance) {
+                  var eventType = pointer.directionX == 'left' ? '$md.swipeleft' : '$md.swiperight';
+                  this.dispatchEvent(ev, eventType);
                 }
+              }
             });
 
         }
+        MdGesture.$inject = ["$$MdGestureHandler", "$$rAF", "$timeout"];
 
         /**
          * MdGestureHandler
@@ -3092,269 +3150,294 @@ $(function () {
          * A gesture has the concept of 'options' (eg a swipe's required velocity), which can be
          * overridden by elements registering through $mdGesture.register()
          */
-        function GestureHandler(name) {
-            this.name = name;
-            this.state = {};
+        function GestureHandler (name) {
+          this.name = name;
+          this.state = {};
         }
 
-        function MdGestureHandler($$rAF) {
-            var hasJQuery = typeof jQuery !== 'undefined' && angular.element === jQuery;
+        function MdGestureHandler() {
+          var hasJQuery =  (typeof window.jQuery !== 'undefined') && (angular.element === window.jQuery);
 
-            GestureHandler.prototype = {
-                options: {},
-                // jQuery listeners don't work with custom DOMEvents, so we have to dispatch events
-                // differently when jQuery is loaded
-                dispatchEvent: hasJQuery ? jQueryDispatchEvent : nativeDispatchEvent,
+          GestureHandler.prototype = {
+            options: {},
+            // jQuery listeners don't work with custom DOMEvents, so we have to dispatch events
+            // differently when jQuery is loaded
+            dispatchEvent: hasJQuery ?  jQueryDispatchEvent : nativeDispatchEvent,
 
-                // These are overridden by the registered handler
-                onStart: angular.noop,
-                onMove: angular.noop,
-                onEnd: angular.noop,
-                onCancel: angular.noop,
+            // These are overridden by the registered handler
+            onStart: angular.noop,
+            onMove: angular.noop,
+            onEnd: angular.noop,
+            onCancel: angular.noop,
 
-                // onStart sets up a new state for the handler, which includes options from the
-                // nearest registered parent element of ev.target.
-                start: function (ev, pointer) {
-                    if (this.state.isRunning) return;
-                    var parentTarget = this.getNearestParent(ev.target);
-                    // Get the options from the nearest registered parent
-                    var parentTargetOptions = parentTarget && parentTarget.$mdGesture[this.name] || {};
+            // onStart sets up a new state for the handler, which includes options from the
+            // nearest registered parent element of ev.target.
+            start: function (ev, pointer) {
+              if (this.state.isRunning) return;
+              var parentTarget = this.getNearestParent(ev.target);
+              // Get the options from the nearest registered parent
+              var parentTargetOptions = parentTarget && parentTarget.$mdGesture[this.name] || {};
 
-                    this.state = {
-                        isRunning: true,
-                        // Override the default options with the nearest registered parent's options
-                        options: angular.extend({}, this.options, parentTargetOptions),
-                        // Pass in the registered parent node to the state so the onStart listener can use
-                        registeredParent: parentTarget
-                    };
-                    this.onStart(ev, pointer);
-                },
-                move: function (ev, pointer) {
-                    if (!this.state.isRunning) return;
-                    this.onMove(ev, pointer);
-                },
-                end: function (ev, pointer) {
-                    if (!this.state.isRunning) return;
-                    this.onEnd(ev, pointer);
-                    this.state.isRunning = false;
-                },
-                cancel: function (ev, pointer) {
-                    this.onCancel(ev, pointer);
-                    this.state = {};
-                },
+              this.state = {
+                isRunning: true,
+                // Override the default options with the nearest registered parent's options
+                options: angular.extend({}, this.options, parentTargetOptions),
+                // Pass in the registered parent node to the state so the onStart listener can use
+                registeredParent: parentTarget
+              };
+              this.onStart(ev, pointer);
+            },
+            move: function (ev, pointer) {
+              if (!this.state.isRunning) return;
+              this.onMove(ev, pointer);
+            },
+            end: function (ev, pointer) {
+              if (!this.state.isRunning) return;
+              this.onEnd(ev, pointer);
+              this.state.isRunning = false;
+            },
+            cancel: function (ev, pointer) {
+              this.onCancel(ev, pointer);
+              this.state = {};
+            },
 
-                // Find and return the nearest parent element that has been registered to
-                // listen for this handler via $mdGesture.register(element, 'handlerName').
-                getNearestParent: function (node) {
-                    var current = node;
-                    while (current) {
-                        if ((current.$mdGesture || {})[this.name]) {
-                            return current;
-                        }
-                        current = current.parentNode;
-                    }
-                    return null;
-                },
-
-                // Called from $mdGesture.register when an element reigsters itself with a handler.
-                // Store the options the user gave on the DOMElement itself. These options will
-                // be retrieved with getNearestParent when the handler starts.
-                registerElement: function (element, options) {
-                    var self = this;
-                    element[0].$mdGesture = element[0].$mdGesture || {};
-                    element[0].$mdGesture[this.name] = options || {};
-                    element.on('$destroy', onDestroy);
-
-                    return onDestroy;
-
-                    function onDestroy() {
-                        delete element[0].$mdGesture[self.name];
-                        element.off('$destroy', onDestroy);
-                    }
+            // Find and return the nearest parent element that has been registered to
+            // listen for this handler via $mdGesture.register(element, 'handlerName').
+            getNearestParent: function (node) {
+              var current = node;
+              while (current) {
+                if ((current.$mdGesture || {})[this.name]) {
+                  return current;
                 }
-            };
+                current = current.parentNode;
+              }
+              return null;
+            },
 
-            return GestureHandler;
+            // Called from $mdGesture.register when an element reigsters itself with a handler.
+            // Store the options the user gave on the DOMElement itself. These options will
+            // be retrieved with getNearestParent when the handler starts.
+            registerElement: function (element, options) {
+              var self = this;
+              element[0].$mdGesture = element[0].$mdGesture || {};
+              element[0].$mdGesture[this.name] = options || {};
+              element.on('$destroy', onDestroy);
 
-            /*
-             * Dispatch an event with jQuery
-             * TODO: Make sure this sends bubbling events
-             *
-             * @param srcEvent the original DOM touch event that started this.
-             * @param eventType the name of the custom event to send (eg 'click' or '$md.drag')
-             * @param eventPointer the pointer object that matches this event.
-             */
-            function jQueryDispatchEvent(srcEvent, eventType, eventPointer) {
-                eventPointer = eventPointer || pointer;
-                var eventObj = new angular.element.Event(eventType);
+              return onDestroy;
 
-                eventObj.$material = true;
-                eventObj.pointer = eventPointer;
-                eventObj.srcEvent = srcEvent;
-
-                angular.extend(eventObj, {
-                    clientX: eventPointer.x,
-                    clientY: eventPointer.y,
-                    screenX: eventPointer.x,
-                    screenY: eventPointer.y,
-                    pageX: eventPointer.x,
-                    pageY: eventPointer.y,
-                    ctrlKey: srcEvent.ctrlKey,
-                    altKey: srcEvent.altKey,
-                    shiftKey: srcEvent.shiftKey,
-                    metaKey: srcEvent.metaKey
-                });
-                angular.element(eventPointer.target).trigger(eventObj);
+              function onDestroy() {
+                delete element[0].$mdGesture[self.name];
+                element.off('$destroy', onDestroy);
+              }
             }
+          };
 
-            /*
-             * NOTE: nativeDispatchEvent is very performance sensitive.
-             * @param srcEvent the original DOM touch event that started this.
-             * @param eventType the name of the custom event to send (eg 'click' or '$md.drag')
-             * @param eventPointer the pointer object that matches this event.
-             */
-            function nativeDispatchEvent(srcEvent, eventType, eventPointer) {
-                eventPointer = eventPointer || pointer;
-                var eventObj;
+          return GestureHandler;
 
-                if (eventType === 'click') {
-                    eventObj = document.createEvent('MouseEvents');
-                    eventObj.initMouseEvent(
-                        'click', true, true, window, srcEvent.detail,
-                        eventPointer.x, eventPointer.y, eventPointer.x, eventPointer.y,
-                        srcEvent.ctrlKey, srcEvent.altKey, srcEvent.shiftKey, srcEvent.metaKey,
-                        srcEvent.button, srcEvent.relatedTarget || null
-                    );
+          /*
+           * Dispatch an event with jQuery
+           * TODO: Make sure this sends bubbling events
+           *
+           * @param srcEvent the original DOM touch event that started this.
+           * @param eventType the name of the custom event to send (eg 'click' or '$md.drag')
+           * @param eventPointer the pointer object that matches this event.
+           */
+          function jQueryDispatchEvent(srcEvent, eventType, eventPointer) {
+            eventPointer = eventPointer || pointer;
+            var eventObj = new angular.element.Event(eventType);
 
-                } else {
-                    eventObj = document.createEvent('CustomEvent');
-                    eventObj.initCustomEvent(eventType, true, true, {});
-                }
-                eventObj.$material = true;
-                eventObj.pointer = eventPointer;
-                eventObj.srcEvent = srcEvent;
-                eventPointer.target.dispatchEvent(eventObj);
+            eventObj.$material = true;
+            eventObj.pointer = eventPointer;
+            eventObj.srcEvent = srcEvent;
+
+            angular.extend(eventObj, {
+              clientX: eventPointer.x,
+              clientY: eventPointer.y,
+              screenX: eventPointer.x,
+              screenY: eventPointer.y,
+              pageX: eventPointer.x,
+              pageY: eventPointer.y,
+              ctrlKey: srcEvent.ctrlKey,
+              altKey: srcEvent.altKey,
+              shiftKey: srcEvent.shiftKey,
+              metaKey: srcEvent.metaKey
+            });
+            angular.element(eventPointer.target).trigger(eventObj);
+          }
+
+          /*
+           * NOTE: nativeDispatchEvent is very performance sensitive.
+           * @param srcEvent the original DOM touch event that started this.
+           * @param eventType the name of the custom event to send (eg 'click' or '$md.drag')
+           * @param eventPointer the pointer object that matches this event.
+           */
+          function nativeDispatchEvent(srcEvent, eventType, eventPointer) {
+            eventPointer = eventPointer || pointer;
+            var eventObj;
+
+            if (eventType === 'click' || eventType == 'mouseup' || eventType == 'mousedown' ) {
+              eventObj = document.createEvent('MouseEvents');
+              eventObj.initMouseEvent(
+                eventType, true, true, window, srcEvent.detail,
+                eventPointer.x, eventPointer.y, eventPointer.x, eventPointer.y,
+                srcEvent.ctrlKey, srcEvent.altKey, srcEvent.shiftKey, srcEvent.metaKey,
+                srcEvent.button, srcEvent.relatedTarget || null
+              );
+
+            } else {
+              eventObj = document.createEvent('CustomEvent');
+              eventObj.initCustomEvent(eventType, true, true, {});
             }
+            eventObj.$material = true;
+            eventObj.pointer = eventPointer;
+            eventObj.srcEvent = srcEvent;
+            eventPointer.target.dispatchEvent(eventObj);
+          }
 
         }
 
         /**
          * Attach Gestures: hook document and check shouldHijack clicks
+         * ngInject
          */
-        function attachToDocument($mdGesture, $$MdGestureHandler) {
+        function attachToDocument( $mdGesture, $$MdGestureHandler ) {
 
-            // Polyfill document.contains for IE11.
-            // TODO: move to util
-            document.contains || (document.contains = function (node) {
-                return document.body.contains(node);
+          // Polyfill document.contains for IE11.
+          // TODO: move to util
+          document.contains || (document.contains = function (node) {
+            return document.body.contains(node);
+          });
+
+          if (!isInitialized && $mdGesture.isHijackingClicks ) {
+            /*
+             * If hijack clicks is true, we preventDefault any click that wasn't
+             * sent by ngMaterial. This is because on older Android & iOS, a false, or 'ghost',
+             * click event will be sent ~400ms after a touchend event happens.
+             * The only way to know if this click is real is to prevent any normal
+             * click events, and add a flag to events sent by material so we know not to prevent those.
+             * 
+             * Two exceptions to click events that should be prevented are:
+             *  - click events sent by the keyboard (eg form submit)
+             *  - events that originate from an Ionic app
+             */
+            document.addEventListener('click'    , clickHijacker     , true);
+            document.addEventListener('mouseup'  , mouseInputHijacker, true);
+            document.addEventListener('mousedown', mouseInputHijacker, true);
+            document.addEventListener('focus'    , mouseInputHijacker, true);
+
+            isInitialized = true;
+          }
+
+          function mouseInputHijacker(ev) {
+            var isKeyClick = !ev.clientX && !ev.clientY;
+            if (!isKeyClick && !ev.$material && !ev.isIonicTap
+              && !isInputEventFromLabelClick(ev)) {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }
+          }
+
+          function clickHijacker(ev) {
+            var isKeyClick = ev.clientX === 0 && ev.clientY === 0;
+            if (!isKeyClick && !ev.$material && !ev.isIonicTap
+              && !isInputEventFromLabelClick(ev)) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              lastLabelClickPos = null;
+            } else {
+              lastLabelClickPos = null;
+              if (ev.target.tagName.toLowerCase() == 'label') {
+                lastLabelClickPos = {x: ev.x, y: ev.y};
+              }
+            }
+          }
+
+
+          // Listen to all events to cover all platforms.
+          var START_EVENTS = 'mousedown touchstart pointerdown';
+          var MOVE_EVENTS = 'mousemove touchmove pointermove';
+          var END_EVENTS = 'mouseup mouseleave touchend touchcancel pointerup pointercancel';
+
+          angular.element(document)
+            .on(START_EVENTS, gestureStart)
+            .on(MOVE_EVENTS, gestureMove)
+            .on(END_EVENTS, gestureEnd)
+            // For testing
+            .on('$$mdGestureReset', function gestureClearCache () {
+              lastPointer = pointer = null;
             });
 
-            if (!isInitialized && $mdGesture.isHijackingClicks) {
-                /*
-                 * If hijack clicks is true, we preventDefault any click that wasn't
-                 * sent by ngMaterial. This is because on older Android & iOS, a false, or 'ghost',
-                 * click event will be sent ~400ms after a touchend event happens.
-                 * The only way to know if this click is real is to prevent any normal
-                 * click events, and add a flag to events sent by material so we know not to prevent those.
-                 * 
-                 * One exception to click events that should be prevented is click events sent by the
-                 * keyboard (eg form submit). 
-                 */
-                document.addEventListener('click', function clickHijacker(ev) {
-                    var isKeyClick = ev.clientX === 0 && ev.clientY === 0;
-                    if (!isKeyClick && !ev.$material) {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                    }
-                }, true);
+          /*
+           * When a DOM event happens, run all registered gesture handlers' lifecycle
+           * methods which match the DOM event.
+           * Eg when a 'touchstart' event happens, runHandlers('start') will call and
+           * run `handler.cancel()` and `handler.start()` on all registered handlers.
+           */
+          function runHandlers(handlerEvent, event) {
+            var handler;
+            for (var name in HANDLERS) {
+              handler = HANDLERS[name];
+              if( handler instanceof $$MdGestureHandler ) {
 
-                isInitialized = true;
+                if (handlerEvent === 'start') {
+                  // Run cancel to reset any handlers' state
+                  handler.cancel();
+                }
+                handler[handlerEvent](event, pointer);
+
+              }
+            }
+          }
+
+          /*
+           * gestureStart vets if a start event is legitimate (and not part of a 'ghost click' from iOS/Android)
+           * If it is legitimate, we initiate the pointer state and mark the current pointer's type
+           * For example, for a touchstart event, mark the current pointer as a 'touch' pointer, so mouse events
+           * won't effect it.
+           */
+          function gestureStart(ev) {
+            // If we're already touched down, abort
+            if (pointer) return;
+
+            var now = +Date.now();
+
+            // iOS & old android bug: after a touch event, a click event is sent 350 ms later.
+            // If <400ms have passed, don't allow an event of a different type than the previous event
+            if (lastPointer && !typesMatch(ev, lastPointer) && (now - lastPointer.endTime < 1500)) {
+              return;
             }
 
-            // Listen to all events to cover all platforms.
-            var START_EVENTS = 'mousedown touchstart pointerdown';
-            var MOVE_EVENTS = 'mousemove touchmove pointermove';
-            var END_EVENTS = 'mouseup mouseleave touchend touchcancel pointerup pointercancel';
+            pointer = makeStartPointer(ev);
 
-            angular.element(document)
-                .on(START_EVENTS, gestureStart)
-                .on(MOVE_EVENTS, gestureMove)
-                .on(END_EVENTS, gestureEnd)
-                // For testing
-                .on('$$mdGestureReset', function gestureClearCache() {
-                    lastPointer = pointer = null;
-                });
+            runHandlers('start', ev);
+          }
+          /*
+           * If a move event happens of the right type, update the pointer and run all the move handlers.
+           * "of the right type": if a mousemove happens but our pointer started with a touch event, do nothing.
+           */
+          function gestureMove(ev) {
+            if (!pointer || !typesMatch(ev, pointer)) return;
 
-            /*
-             * When a DOM event happens, run all registered gesture handlers' lifecycle
-             * methods which match the DOM event.
-             * Eg when a 'touchstart' event happens, runHandlers('start') will call and
-             * run `handler.cancel()` and `handler.start()` on all registered handlers.
-             */
-            function runHandlers(handlerEvent, event) {
-                var handler;
-                for (var name in HANDLERS) {
-                    handler = HANDLERS[name];
-                    if (handler instanceof $$MdGestureHandler) {
+            updatePointerState(ev, pointer);
+            runHandlers('move', ev);
+          }
+          /*
+           * If an end event happens of the right type, update the pointer, run endHandlers, and save the pointer as 'lastPointer'
+           */
+          function gestureEnd(ev) {
+            if (!pointer || !typesMatch(ev, pointer)) return;
 
-                        if (handlerEvent === 'start') {
-                            // Run cancel to reset any handlers' state
-                            handler.cancel();
-                        }
-                        handler[handlerEvent](event, pointer);
+            updatePointerState(ev, pointer);
+            pointer.endTime = +Date.now();
 
-                    }
-                }
-            }
+            runHandlers('end', ev);
 
-            /*
-             * gestureStart vets if a start event is legitimate (and not part of a 'ghost click' from iOS/Android)
-             * If it is legitimate, we initiate the pointer state and mark the current pointer's type
-             * For example, for a touchstart event, mark the current pointer as a 'touch' pointer, so mouse events
-             * won't effect it.
-             */
-            function gestureStart(ev) {
-                    // If we're already touched down, abort
-                    if (pointer) return;
-
-                    var now = +Date.now();
-
-                    // iOS & old android bug: after a touch event, a click event is sent 350 ms later.
-                    // If <400ms have passed, don't allow an event of a different type than the previous event
-                    if (lastPointer && !typesMatch(ev, lastPointer) && (now - lastPointer.endTime < 1500)) {
-                        return;
-                    }
-
-                    pointer = makeStartPointer(ev);
-
-                    runHandlers('start', ev);
-                }
-                /*
-                 * If a move event happens of the right type, update the pointer and run all the move handlers.
-                 * "of the right type": if a mousemove happens but our pointer started with a touch event, do nothing.
-                 */
-            function gestureMove(ev) {
-                    if (!pointer || !typesMatch(ev, pointer)) return;
-
-                    updatePointerState(ev, pointer);
-                    runHandlers('move', ev);
-                }
-                /*
-                 * If an end event happens of the right type, update the pointer, run endHandlers, and save the pointer as 'lastPointer'
-                 */
-            function gestureEnd(ev) {
-                if (!pointer || !typesMatch(ev, pointer)) return;
-
-                updatePointerState(ev, pointer);
-                pointer.endTime = +Date.now();
-
-                runHandlers('end', ev);
-
-                lastPointer = pointer;
-                pointer = null;
-            }
+            lastPointer = pointer;
+            pointer = null;
+          }
 
         }
+        attachToDocument.$inject = ["$mdGesture", "$$MdGestureHandler"];
 
         // ********************
         // Module Functions
@@ -3364,16 +3447,16 @@ $(function () {
          * Initiate the pointer. x, y, and the pointer's type.
          */
         function makeStartPointer(ev) {
-            var point = getEventPoint(ev);
-            var startPointer = {
-                startTime: +Date.now(),
-                target: ev.target,
-                // 'p' for pointer events, 'm' for mouse, 't' for touch
-                type: ev.type.charAt(0)
-            };
-            startPointer.startX = startPointer.x = point.pageX;
-            startPointer.startY = startPointer.y = point.pageY;
-            return startPointer;
+          var point = getEventPoint(ev);
+          var startPointer = {
+            startTime: +Date.now(),
+            target: ev.target,
+            // 'p' for pointer events, 'm' for mouse, 't' for touch
+            type: ev.type.charAt(0)
+          };
+          startPointer.startX = startPointer.x = point.pageX;
+          startPointer.startY = startPointer.y = point.pageY;
+          return startPointer;
         }
 
         /*
@@ -3381,7 +3464,29 @@ $(function () {
          * Eg if a touch event happens but the pointer has a mouse type, return false.
          */
         function typesMatch(ev, pointer) {
-            return ev && pointer && ev.type.charAt(0) === pointer.type;
+          return ev && pointer && ev.type.charAt(0) === pointer.type;
+        }
+
+        /**
+         * Gets whether the given event is an input event that was caused by clicking on an
+         * associated label element.
+         *
+         * This is necessary because the browser will, upon clicking on a label element, fire an
+         * *extra* click event on its associated input (if any). mdGesture is able to flag the label
+         * click as with `$material` correctly, but not the second input click.
+         *
+         * In order to determine whether an input event is from a label click, we compare the (x, y) for
+         * the event to the (x, y) for the most recent label click (which is cleared whenever a non-label
+         * click occurs). Unfortunately, there are no event properties that tie the input and the label
+         * together (such as relatedTarget).
+         *
+         * @param {MouseEvent} event
+         * @returns {boolean}
+         */
+        function isInputEventFromLabelClick(event) {
+          return lastLabelClickPos
+              && lastLabelClickPos.x == event.x
+              && lastLabelClickPos.y == event.y;
         }
 
         /*
@@ -3389,22 +3494,22 @@ $(function () {
          * Distance, velocity, direction, duration, etc
          */
         function updatePointerState(ev, pointer) {
-            var point = getEventPoint(ev);
-            var x = pointer.x = point.pageX;
-            var y = pointer.y = point.pageY;
+          var point = getEventPoint(ev);
+          var x = pointer.x = point.pageX;
+          var y = pointer.y = point.pageY;
 
-            pointer.distanceX = x - pointer.startX;
-            pointer.distanceY = y - pointer.startY;
-            pointer.distance = Math.sqrt(
-                pointer.distanceX * pointer.distanceX + pointer.distanceY * pointer.distanceY
-            );
+          pointer.distanceX = x - pointer.startX;
+          pointer.distanceY = y - pointer.startY;
+          pointer.distance = Math.sqrt(
+            pointer.distanceX * pointer.distanceX + pointer.distanceY * pointer.distanceY
+          );
 
-            pointer.directionX = pointer.distanceX > 0 ? 'right' : pointer.distanceX < 0 ? 'left' : '';
-            pointer.directionY = pointer.distanceY > 0 ? 'up' : pointer.distanceY < 0 ? 'down' : '';
+          pointer.directionX = pointer.distanceX > 0 ? 'right' : pointer.distanceX < 0 ? 'left' : '';
+          pointer.directionY = pointer.distanceY > 0 ? 'up' : pointer.distanceY < 0 ? 'down' : '';
 
-            pointer.duration = +Date.now() - pointer.startTime;
-            pointer.velocityX = pointer.distanceX / pointer.duration;
-            pointer.velocityY = pointer.distanceY / pointer.duration;
+          pointer.duration = +Date.now() - pointer.startTime;
+          pointer.velocityX = pointer.distanceX / pointer.duration;
+          pointer.velocityY = pointer.distanceY / pointer.duration;
         }
 
         /*
@@ -3412,10 +3517,10 @@ $(function () {
          * @returns point event obj with pageX and pageY on it.
          */
         function getEventPoint(ev) {
-            ev = ev.originalEvent || ev; // support jQuery events
-            return (ev.touches && ev.touches[0]) ||
-                (ev.changedTouches && ev.changedTouches[0]) ||
-                ev;
+          ev = ev.originalEvent || ev; // support jQuery events
+          return (ev.touches && ev.touches[0]) ||
+            (ev.changedTouches && ev.changedTouches[0]) ||
+            ev;
         }
 
     })(window.jQuery);
@@ -11543,7 +11648,7 @@ $(function () {
 
                                     $scope.$on('$destroy', function () {
                                         config._title_.remove(getTitle);
-                                        config.ui.specifics.remoteOpts = null;
+                                        config.ui.specifics.remoteOpts = {};
                                         config.ui.additionalRealPaths = null;
                                     });
 
@@ -18127,7 +18232,9 @@ angular.module('app')
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.dialog = {
                                                 templateBodyUrl: 'catalog/manage_products.html',
-                                                toolbar: {}
+                                                toolbar: {
+                                                    hideSave: true
+                                                }
                                             };
                                             $scope.imagesLoaded = false;
                                             $scope.container = {};
@@ -18366,6 +18473,7 @@ angular.module('app')
                                                 if (!$scope.$$phase) {
                                                     $scope.$apply();
                                                 }
+                                                $scope.sync();
                                                 $scope.$broadcast('resizePricetags', pricetag);
 
                                             };
@@ -18421,12 +18529,16 @@ angular.module('app')
                                             };
 
                                             $scope.loadingManageProduct = false;
-
                                             $scope.manageProduct = function (image, pricetag, $event) {
                                                 if (pricetag._must_save) {
+                                                    clearTimeout($scope.syncID);
                                                     return $scope.save(true).then(function () {
-                                                        image = _.findWhere($scope.args._images, {key: image.key});
-                                                        pricetag = _.findWhere(image.pricetags, {key: pricetag.key});
+                                                        image = _.findWhere($scope.args._images, {
+                                                            key: image.key
+                                                        });
+                                                        pricetag = _.findWhere(image.pricetags, {
+                                                            key: pricetag.key
+                                                        });
                                                         return $scope.realManageProduct(image, pricetag, $event);
                                                     });
                                                 }
@@ -18510,14 +18622,6 @@ angular.module('app')
                                             };
 
                                             $.extend($scope.fieldProduct.ui, {
-                                                init: function (field) {
-                                                    field.config.ui.specifics.remove = function (product, close) {
-                                                        // removing the actual product removes the pricetag actually
-                                                        $scope.pricetag._state = 'deleted';
-                                                        $scope.formSetDirty();
-                                                        close();
-                                                    };
-                                                },
                                                 args: 'pricetag._product',
                                                 parentArgs: 'pricetag',
                                                 path: ['_images', 'pricetags', '_product'],
@@ -18526,6 +18630,12 @@ angular.module('app')
                                                 specifics: {
                                                     remoteAutoload: false,
                                                     modal: true,
+                                                    removeConfirm: function (arg, close) {
+                                                        modals.confirm('removePricetagConfirm', function () {
+                                                            $scope.pricetag._state = 'deleted';
+                                                            $scope.save().then(close);
+                                                        });
+                                                    },
                                                     beforeSave: function (fieldScope) {
                                                         fieldScope.setAction('update');
                                                         // before saving entity, set the name and unit price for the pricetag.
@@ -18767,10 +18877,15 @@ angular.module('app')
                                                 return grouped;
                                             };
 
+                                            $scope.loadingSave = false;
+
                                             $scope.save = function (hideSnackbar) {
                                                 var promise;
-
+                                                if ($scope.loadingSave) {
+                                                    return;
+                                                }
                                                 $scope.rootScope.config.prepareReadArguments($scope);
+                                                $scope.loadingSave = true;
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);
@@ -18781,1778 +18896,25 @@ angular.module('app')
                                                     if (!hideSnackbar) {
                                                         snackbar.showK('changesSaved');
                                                     }
-                                                });
-                                                return promise;
-                                            };
-
-                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                                $scope.$close();
-                                            });
-                                        })
-                                    });
-
-                                },
-                                layouts: {
-                                    groups: [{
-                                        label: false,
-                                        fields: ['name', 'discontinue_date'],
-                                    }, {
-                                        label: GLOBAL_CONFIG.subheaders.catalogImages,
-                                        include: 'core/misc/action.html',
-                                        action: function () {
-                                            var scope = config.getScope();
-                                            helpers.form.wakeUp(scope.container.form);
-                                            if (!scope.container.form.$valid) {
-                                                snackbar.showK('provideProperValues');
-                                                return;
-                                            }
-                                            modals.fields.remote(config.getScope(), fields._images);
-                                        }
-                                    }, {
-                                        label: GLOBAL_CONFIG.subheaders.catalogProducts,
-                                        include: 'core/misc/action.html',
-                                        action: function () {
-                                            var scope = config.getScope();
-
-                                            if (!scope.entity.cover) {
-                                                snackbar.showK('uploadImagesFirst');
-                                                return;
-                                            }
-                                            config.getScope().addProducts();
-                                        }
-                                    }]
-                                }
-                            }
-                        };
-
-                    if (isNew) {
-                        // get current seller
-                        models['23'].current().then(function (response) {
-                            modelsEditor.create(config).prepare({}, {
-                                seller: response.data.entity.key
-                            }, {
-                                handleError: GLOBAL_CONFIG.backendErrorHandling.sellerProfileNotFound
-                            });
-                        });
-
-                    } else {
-                        modelsEditor.create(config).read(catalog, {
-                            key: catalog.key
-                        });
-
-                    }
-
-                }
-            });
-
-        });
-    }));
-}());(function () {
-    'use strict';
-    angular.module('app').directive('trackIfProductView', ng(function ($timeout) {
-        return {
-            restrict: 'A',
-            link: function (scope, element, attrs) {
-                var fired;
-                scope.$watch(attrs.trackIfProductView, function (neww, old) {
-                    if (fired) {
-                        return;
-                    }
-                    if (angular.isObject(neww)) {
-                        $timeout(function () {
-                            element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]').click();
-                            fired = true;
-                        }, 100);
-                    }
-                });
-            }
-        };
-    })).directive('catalogNewPricetag', ng(function ($parse) {
-        return {
-            restrict: 'A',
-            link: function (scope, element, attrs) {
-                var callback = $parse(attrs.catalogNewPricetag);
-                element.on('click', function (event) {
-                    var offset = element.offset(),
-                        x = event.pageX - offset.left,
-                        y = event.pageY - offset.top,
-                        parent = element.parents('.image-slider-item:first'),
-                        width = parent.width(),
-                        height = parent.height();
-
-                    scope.$apply(function () {
-                        callback(scope, {
-                            config: {
-                                position_left: x,
-                                position_top: y,
-                                image_width: width,
-                                image_height: height
-                            }
-                        });
-                    });
-                });
-            }
-        };
-    })).controller('CatalogViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            afterClose: function () {
-                $state.go('home');
-            }
-        });
-
-    })).controller('CatalogProductAddToCartController', ng(function ($scope, $state, helpers, models) {
-        var embed = $state.current.name === 'embed-catalog-product-add-to-cart';
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            hideClose: embed,
-            noEscape: embed,
-            afterClose: embed ? undefined : function () {
-                $state.go('home');
-            },
-            variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
-            autoAddToCartQuantity: $state.params.quantity,
-            loadProduct: {
-                image: $state.params.image_id,
-                id: $state.params.pricetag_id
-            }
-        });
-
-    })).controller('CatalogProductViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            afterClose: function () {
-                $state.go('home');
-            },
-            loadProduct: {
-                image: $state.params.image_id,
-                id: $state.params.pricetag_id
-            }
-        });
-
-    })).controller('CatalogOrderViewController', ng(function ($scope, $state, models) {
-        var embed = $state.current.name === 'embed-catalog-order-view';
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            openCart: true,
-            hideClose: embed,
-            noEscape: embed
-        });
-
-    })).controller('EmbedCatalogViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            noEscape: true,
-            hideClose: true
-        });
-
-    })).controller('EmbedCatalogProductViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            hideClose: true,
-            noEscape: true,
-            noEscapeOnProduct: true,
-            inDirection: false,
-            outDirection: false,
-            loadProduct: {
-                image: $state.params.image_id,
-                id: $state.params.pricetag_id
-            }
-        });
-
-    })).directive('catalogPricetagPosition', ng(function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
-        return {
-            link: function (scope, element, attr) {
-
-                var pricetag = scope.$eval(attr.catalogPricetagPosition),
-                    resize = function (justElement) {
-                        var pa = $(element).parents('.image-slider-item:first'),
-                            sizes,
-                            containerh = pa.height(),
-                            pricetagHeight = 36;
-                        sizes = models['31'].calculatePricetagPosition(
-                            pricetag.position_top,
-                            pricetag.position_left,
-                            pricetag.image_width,
-                            pricetag.image_height,
-                            pa.width(),
-                            containerh
-                        );
-
-                        if (sizes[0] < 0) {
-                            sizes[0] = 0;
-                        } else {
-                            if (sizes[0] > containerh - pricetagHeight) {
-                                sizes[0] = containerh - pricetagHeight;
-                            }
-                        }
-
-                        pricetag._position_top = sizes[0];
-                        pricetag._position_left = sizes[1];
-
-                        $(element).css({
-                            top: pricetag._position_top,
-                            left: pricetag._position_left,
-                            visibility: 'visible'
-                        });
-                    },
-                    track = [];
-                resize = _.throttle(resize, 100);
-                $timeout(resize, 0, false);
-                scope.$on('modalResize', resize);
-                scope.$on('resizePricetags', function (event, tpricetag) {
-                    if (tpricetag) {
-                        if (tpricetag.key === pricetag.key) {
-                            pricetag.position_top = tpricetag.position_top;
-                            pricetag.position_left = tpricetag.position_left;
-                            resize();
-                        }
-                    } else {
-                        resize();
-                    }
-                });
-                angular.forEach(['state', 'key', 'position_left', 'position_top', '_position_left', '_position_top'], function (value) {
-                    track.push(attr.catalogPricetagPosition + '.' + value);
-                });
-                scope.$watch(function () {
-                    return true;
-                }, resize);
-            }
-        };
-    })).directive('productInstanceCardView', ng(function ($compile) {
-        return {
-            scope: {
-                val: '=productInstanceCardView'
-            },
-            templateUrl: 'catalog/product/product_instance_card_view.html',
-            link: function (scope) {
-                scope.showVariantLabel = function (variant) {
-                    return variant.split(':')[0];
-                };
-                scope.showVariantValue = function (variant) {
-                    var splitOpen = variant.split(':');
-                    return splitOpen.slice(1, splitOpen.length).join(':');
-                };
-            }
-        };
-    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, currentAccount, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
-
-        modelsConfig(function (models) {
-            var doNotRipple = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'],
-                recomputeRealPath = function (field1, level) {
-                    if (!level) {
-                        level = 0;
-                    }
-                    var field2 = field1.modelclass;
-                    angular.forEach(field2, function (value) {
-                        if (value.ui.realPath) {
-                            var con = field1.ui.realPath.concat();
-                            con.push(value.code_name);
-                            value.ui.realPath = con;
-                            value.ui.initialRealPath = con;
-                            if (value.modelclass) {
-                                recomputeRealPath(value, level + 1);
-                            }
-                        }
-                    });
-                };
-            $.extend(models['31'], {
-                formatPublicSearchResults: function (results) {
-                    angular.forEach(results, function (result) {
-                        result._cover = {
-                            serving_url: result.cover,
-                            proportion: result.cover_proportion
-                        };
-                        result._seller_logo = {
-                            serving_url: result.seller_logo,
-                            proportion: 2.4
-                        };
-                    });
-                },
-                calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
-                    /*  
-                    ihp - Initial Horizontal Price Tag Position 
-                    ivp - Initial Vertical Price Tag Position 
-                    iiw - Initial Image Width  
-                    iih - Initial Image Height  
-
-                    ciw - Current Image Width  
-                    cih - Current Image Height  
-                    chp - Current Horizontal Price Tag Position  
-                    cvp - Current Vertical Price Tag Position  
-                    */
-                    var chp = (ihp / iiw) * ciw,
-                        cvp = (ivp / iih) * cih;
-                    return [chp, cvp];
-                },
-                previewModal: function (key, config) {
-                    config = helpers.alwaysObject(config);
-                    config.hideAddToCart = true;
-                    return this.viewModal(key, config);
-                },
-                viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts, config) {
-                    var readArguments = {
-                        _seller: {},
-                        _images: {
-                            config: {
-                                keys: [imageKey]
-                            },
-                            pricetags: {
-                                config: {
-                                    keys: [pricetagKey]
-                                },
-                                _product: {
-                                    _category: {}
-                                }
-                            }
-                        }
-                    };
-                    config = helpers.alwaysObject(config);
-                    this.actions.read({
-                        key: catalogKey,
-                        read_arguments: readArguments
-                    }).then(function (response) {
-                        var catalog = response.data.entity,
-                            fakeScope = (function () {
-                                var $scope = {};
-                                $scope.product = catalog._images[0].pricetags[0]._product;
-                                $scope.originalProduct = angular.copy($scope.product);
-                                $scope.catalog = catalog;
-                                $scope.variants = [];
-                                $scope.variantSelection = [];
-                                $scope.hideAddToCart = false;
-                                $scope.hideClose = config ? config.hideClose : false;
-                                $scope.currentVariation = [];
-                                angular.forEach($scope.product.variants, function (v, i) {
-
-                                    $scope.variants.push({
-                                        name: v.name,
-                                        options: v.options,
-                                        option: (variantSignatureAsDicts ? variantSignatureAsDicts[i][v.name] : v.options[0]),
-                                        description: v.description,
-                                        allow_custom_value: v.allow_custom_value
-                                    });
-
-                                    $scope.variantSelection.push({
-                                        type: 'SuperStringProperty',
-                                        choices: (v.allow_custom_value ? null : v.options),
-                                        code_name: 'option_' + i,
-                                        ui: {
-                                            //help: v.description,
-                                            label: (v.allow_custom_value ? false : v.name),
-                                            writable: true,
-                                            attrs: {
-                                                'ng-change': 'delayedChangeVariation()'
-                                            },
-                                            args: 'variants[' + i + '].option'
-                                        }
-                                    });
-
-                                });
-
-                                $scope.changeVariationPromise = function () {
-                                    var buildVariantSignature = [],
-                                        skip = false,
-                                        promise;
-
-                                    $scope.currentVariation.splice(0, $scope.currentVariation.length);
-
-                                    angular.forEach($scope.variants, function (v) {
-                                        var d = {};
-                                        if (v.option === null) {
-                                            skip = true;
-                                        }
-                                        if ( /*!v.allow_custom_value*/ 1) {
-                                            buildVariantSignature.push(v.name + ': ' + v.option);
-                                            d[v.name] = v.option;
-                                            $scope.currentVariation.push(d);
-                                        }
-                                    });
-
-                                    if (skip) {
-                                        promise = $q.defer().promise;
-                                        promise.resolve();
-                                        return promise;
-                                    }
-                                    // rpc to check the instance
-                                    return models['31'].actions.read({
-                                        key: this.catalog.key,
-                                        // 4 rpcs
-                                        read_arguments: {
-                                            _images: {
-                                                config: {
-                                                    keys: [imageKey]
-                                                },
-                                                pricetags: {
-                                                    config: {
-                                                        keys: [pricetagKey]
-                                                    },
-                                                    _product: {
-                                                        _instances: {
-                                                            config: {
-                                                                search: {
-                                                                    filters: [{
-                                                                        field: 'variant_options',
-                                                                        operator: 'ALL_IN',
-                                                                        value: buildVariantSignature
-                                                                    }]
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-                                };
-
-                                return $scope;
-                            }());
-                        $modal.open({
-                            resolve: {
-                                productInstanceResponse: function () {
-                                    return fakeScope.changeVariationPromise().then(function (response) {
-                                        return response;
-                                    });
-                                }
-                            },
-                            templateUrl: 'catalog/product/view.html',
-                            windowClass: 'no-overflow',
-                            popFrom: config.popFrom,
-                            noEscape: config.noEscape,
-                            controller: ng(function ($scope, productInstanceResponse) {
-                                var loadProductInstance, sellerKey, shareWatch, timer;
-                                $scope.variantMenu = {};
-                                $scope.productMenu = {};
-                                helpers.sideNav.setup($scope.productMenu, 'right_product_sidenav', doNotRipple);
-                                helpers.sideNav.setup($scope.variantMenu, 'right_variantMenu_sidenav', doNotRipple);
-
-                                $.extend($scope, fakeScope);
-
-                                shareWatch = function () {
-                                    if (!$scope.product) {
-                                        $scope.socialMeta = {};
-                                        return;
-                                    }
-                                    var productUrl = $state.href('catalog-product-view', {
-                                            key: $scope.catalog.key,
-                                            image_id: $scope.catalog._images[0].id,
-                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id
-                                        }, {
-                                            absolute: true
-                                        }),
-                                        image = function (size) {
-                                            if ($scope.product.images && $scope.product.images.length) {
-                                                return $scope.product.images[0].serving_url + '=s' + (size || '600');
-                                            }
-                                            return undefined;
-                                        };
-                                    $scope.socialMeta = {
-                                        facebook: {
-                                            'p[url]': productUrl,
-                                            'p[images][0]': image(600),
-                                            'p[title]': $scope.product.name
-                                        },
-                                        twitter: {
-                                            url: productUrl,
-                                            text: 'Product - ' + $scope.product.name
-                                        },
-                                        pinterest: {
-                                            url: productUrl,
-                                            media: image(600),
-                                            description: 'Share on pinterest'
-                                        },
-                                        googleplus: {
-                                            url: productUrl
-                                        },
-                                        reddit: {
-                                            url: productUrl,
-                                            title: $scope.product.name
-                                        },
-                                        linkedin: {
-                                            url: productUrl,
-                                            title: $scope.product.name
-                                        },
-                                        tumblr: {
-                                            url: productUrl,
-                                            name: $scope.product.name
-                                        }
-                                    };
-                                };
-
-                                $scope.displayShare = function () {
-                                    return social.share($scope.socialMeta, false);
-                                };
-
-                                $scope.variantChooser = {};
-
-                                $scope.setupVariantChooser = function (variant, indice) {
-                                    variant.indice = indice;
-                                    $scope.variantChooser = variant;
-                                    $scope.variantMenu.open();
-                                };
-
-                                $scope.completeVariantChooser = function (option) {
-                                    $scope.variantChooser.option = option;
-                                    $scope.variantMenu.close();
-                                    $scope.changeVariation();
-                                };
-
-                                $scope.resetVariation = function () {
-                                    $scope.resetVariantProduct();
-                                    $scope.variationApplied = false;
-                                    angular.forEach($scope.variants, function (v) {
-                                        v.option = null;
-                                    });
-                                };
-                                $scope.resetVariantProduct = function () {
-                                    $.extend($scope.product, $scope.originalProduct);
-                                    $scope.productInstance = null;
-                                };
-                                $scope.variationApplied = false;
-                                $scope.viewContent = function (content) {
-                                    $modal.open({
-                                        templateUrl: 'core/misc/content_view.html',
-                                        controller: ng(function ($scope) {
-                                            $scope.markDown = true;
-                                            $scope.content = content;
-                                        })
-                                    });
-                                };
-                                $scope.canAddToCart = true;
-                                $scope.hasThisProduct = false;
-                                $scope.disableUpdateCart = false;
-                                $scope.productQuantity = 0;
-
-                                sellerKey = $scope.catalog._seller.key;
-                                $scope.cartProductQuantity = function () {
-                                    $scope.productQuantity = 0;
-                                    $scope.hasThisProduct = false;
-                                    $scope.disableUpdateCart = false;
-                                    if (!currentAccount._is_guest) {
-                                        models['34'].current(sellerKey).then(function (response) {
-                                            var order = response.data.entity;
-                                            if (order.id) {
-                                                angular.forEach(order._lines, function (line) {
-                                                    if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
-                                                        $scope.productQuantity = parseInt(line.product.quantity, 10);
-                                                        if ($scope.productQuantity > 0) {
-                                                            $scope.hasThisProduct = true;
-                                                            $scope.disableUpdateCart = true;
-                                                        }
-                                                    }
-                                                });
-                                                $scope.canAddToCart = order.ui.rule.action.update_line.executable;
-                                            } else {
-                                                $scope.canAddToCart = true;
-                                            }
-
-                                            if (!$scope.productQuantity) {
-                                                $scope.productQuantity = 1;
-                                            }
-
-                                        });
-                                    } else {
-                                        $scope.productQuantity = 1;
-                                    }
-                                };
-
-                                loadProductInstance = function (response) {
-                                    var product,
-                                        productInstance,
-                                        toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
-                                            'description', 'contents', 'availability'
-                                        ];
-                                    try {
-                                        product = response.data.entity._images[0].pricetags[0]._product;
-                                    } catch (ignore) {}
-
-                                    if (product) {
-                                        productInstance = product._instances[0];
-                                    }
-                                    $scope.resetVariantProduct();
-                                    if (productInstance) {
-                                        $scope.productInstance = productInstance;
-                                        angular.forEach(toUpdate, function (field) {
-                                            var next = productInstance[field];
-                                            if (next !== null && next.length && next !== undefined) {
-                                                $scope.product[field] = next;
-                                            }
-                                        });
-                                    }
-                                    $scope.variationApplied = true;
-                                };
-
-                                $scope.delayedChangeVariation = function () {
-                                    if (timer) {
-                                        $timeout.cancel(timer);
-                                    }
-                                    timer = $timeout(function () {
-                                        timer = null;
-                                        $scope.changeVariation();
-                                    }, 500, false);
-                                };
-
-                                $scope.changeVariation = function () {
-                                    // rpc to check the instance
-                                    $scope.changeVariationPromise()
-                                        .then(loadProductInstance)
-                                        .then($scope.cartProductQuantity);
-                                };
-
-                                loadProductInstance(productInstanceResponse);
-
-                                $scope.cartProductQuantity();
-
-                                $scope.increaseQuantity = function () {
-                                    $scope.disableUpdateCart = false;
-                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) + 1;
-                                };
-
-                                $scope.decreaseQuantity = function () {
-                                    if (parseInt($scope.productQuantity, 10) === 0) {
-                                        return;
-                                    }
-                                    $scope.disableUpdateCart = false;
-                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) - 1;
-                                };
-
-                                $scope.changedQuantity = function () {
-                                    $scope.disableUpdateCart = false;
-                                };
-
-                                $scope.addToCart = function () {
-                                    if (currentAccount._is_guest) {
-                                        models['11'].login($state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
-                                            key: $scope.catalog.key,
-                                            image_id: $scope.catalog._images[0].id,
-                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id,
-                                            variant: helpers.url.jsonToUrlsafe($scope.currentVariation),
-                                            quantity: $scope.productQuantity
-                                        }));
-                                        return;
-                                    }
-                                    if (config.autoAddToCart) {
-                                        $scope.productQuantity = config.autoAddToCartQuantity;
-                                    }
-                                    if (!$scope.hasThisProduct && $scope.productQuantity < 1) {
-                                        $scope.container.form.$setDirty();
-                                        var productQuantityField = $scope.container.form.productQuantity;
-                                        productQuantityField.$setViewValue(productQuantityField.$viewValue !== undefined ? productQuantityField.$viewValue : '');
-                                        productQuantityField.$setDirty();
-                                        productQuantityField.$setValidity('required', false);
-                                        return;
-                                    }
-                                    models['19'].current().then(function (response) {
-                                        return models['34'].actions.update_line({
-                                            buyer: response.data.entity.key,
-                                            product: $scope.product.key,
-                                            image: imageKey,
-                                            quantity: $scope.productQuantity,
-                                            variant_signature: $scope.currentVariation
-                                        });
-                                    }).then(function (response) {
-                                        if (config.events && config.events.addToCart) {
-                                            config.events.addToCart.call(this, response);
-                                        }
-                                        if (models['34'].getCache('current' + sellerKey)) {
-                                            models['34'].current(sellerKey).then(function (cached) {
-                                                $.extend(cached.data.entity, response.data.entity);
-                                            });
-                                        }
-
-                                        if ($scope.productQuantity < 1) {
-                                            $scope.hasThisProduct = false;
-                                            $scope.productQuantity = 1;
-                                        } else {
-                                            $scope.hasThisProduct = true;
-                                            $scope.disableUpdateCart = true;
-                                        }
-
-                                        snackbar.showK('cartUpdated');
-                                    });
-                                };
-
-                                if (config.autoAddToCart) {
-                                    $timeout(function () {
-                                        $scope.addToCart();
-                                        config.autoAddToCart = false;
-                                    });
-                                }
-
-                                $scope.close = function () {
-                                    $scope.$close().then(function () {
-                                        if (config.afterClose) {
-                                            config.afterClose();
-                                        }
-                                    });
-                                };
-
-
-                                $scope.$watch('product.id', function (neww, old) {
-                                    shareWatch();
-                                });
-
-                            })
-                        });
-                    });
-                },
-                viewModal: function (key, config) {
-                    var that = this;
-                    that.actions.read({
-                        key: key,
-                        // 5 rpcs
-                        read_arguments: {
-                            _seller: {
-                                _content: {},
-                                _feedback: {}
-                            },
-                            _images: {
-                                pricetags: {}
-                            }
-                        }
-                    }).then(function (response) {
-                        var entity = response.data.entity;
-                        if (!entity._images.length) {
-                            snackbar.showK('noImagesInCatalog');
-                            return;
-                        }
-                        $modal.open({
-                            templateUrl: 'catalog/view.html',
-                            windowClass: 'no-overflow',
-                            popFrom: config.popFrom,
-                            inDirection: config.inDirection,
-                            outDirection: config.outDirection,
-                            noEscape: config.noEscape,
-                            controller: ng(function ($scope) {
-                                $scope.catalogMenu = {};
-                                helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
-                                $scope.catalog = entity;
-                                $scope.catalog.action_model = '31';
-                                $scope.logoImageConfig = {
-                                    size: 560
-                                };
-                                var imagesReader,
-                                    accessImages,
-                                    loadProduct,
-                                    catalogUrl = $state.href('catalog-view', {
-                                        key: $scope.catalog.key
-                                    }, {
-                                        absolute: true
-                                    }),
-                                    embedCatalogUrl = $state.href('embed-catalog-view', {
-                                        key: $scope.catalog.key
-                                    }, {
-                                        absolute: true
-                                    });
-                                accessImages = angular.copy($scope.catalog.ui.access);
-                                accessImages.push('_images');
-
-                                imagesReader = models['31'].reader({
-                                    key: $scope.catalog.key,
-                                    next: {
-                                        _images: $scope.catalog._next_read_arguments._images
-                                    },
-                                    access: accessImages,
-                                    complete: function (items) {
-                                        $scope.catalog._images.extend(items);
-                                    }
-                                });
-
-                                $scope.imagesReader = imagesReader;
-                                imagesReader.showLoaderAlways = true;
-
-                                $scope.socialMeta = {
-                                    facebook: {
-                                        'p[url]': catalogUrl,
-                                        'p[images][0]': $scope.catalog._images[0].serving_url + '=s600',
-                                        'p[title]': $scope.catalog.name
-                                    },
-                                    twitter: {
-                                        url: catalogUrl,
-                                        text: 'Catalog - ' + $scope.catalog.name
-                                    },
-                                    pinterest: {
-                                        url: catalogUrl,
-                                        media: $scope.catalog._images[0].serving_url + '=s600',
-                                        description: 'Share on pinterest'
-                                    },
-                                    googleplus: {
-                                        url: catalogUrl
-                                    },
-                                    reddit: {
-                                        url: catalogUrl,
-                                        title: $scope.catalog.name
-                                    },
-                                    linkedin: {
-                                        url: catalogUrl,
-                                        title: $scope.catalog.name
-                                    },
-                                    tumblr: {
-                                        url: catalogUrl,
-                                        name: $scope.catalog.name
-                                    }
-                                };
-
-                                $scope.displayShare = function () {
-                                    return social.share($scope.socialMeta, {
-                                        src: embedCatalogUrl
-                                    });
-                                };
-
-                                $scope.hideClose = config.hideClose;
-
-                                $scope.loadMoreImages = function (callback) {
-                                    var promise = imagesReader.load();
-                                    if (promise) {
-                                        promise.then(function () {
-                                            callback.call(this, response, imagesReader.more);
-                                        });
-                                    } else {
-                                        callback.call(this, undefined, imagesReader.more);
-                                    }
-                                };
-
-                                $scope.displayCart = function () {
-                                    if (currentAccount._is_guest) {
-                                        models['11'].login($state.href((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
-                                            key: $scope.catalog.key
-                                        }));
-                                        return;
-                                    }
-                                    models['19'].current().then(function (response) {
-                                        models['34'].manageModal(undefined, $scope.catalog._seller, response.data.entity, {
-                                            cartMode: true
-                                        });
-                                    });
-                                };
-
-                                if (config.openCart) {
-                                    $timeout(function () {
-                                        $scope.displayCart();
-                                    });
-                                }
-
-                                // cache current user's cart
-                                if (!currentAccount._is_guest) {
-                                    models['34'].current($scope.catalog._seller.key);
-                                }
-
-                                $scope.viewProduct = function (image, pricetag, $event) {
-                                    var target = $event.target,
-                                        theTarget = $(target).parents('.catalog-pricetag:first');
-                                    if (theTarget.length) {
-                                        target = theTarget.get(0);
-                                    }
-                                    that.viewProductModal($scope.catalog.key, image.key, pricetag.key, config.variantSignatureAsDicts, {
-                                        popFrom: target,
-                                        hideClose: config.hideCloseOnProduct,
-                                        hideCloseCatalog: config.hideClose,
-                                        noEscapeCatalog: config.noEscape,
-                                        noEscape: config.noEscapeOnProduct,
-                                        autoAddToCart: config.variantSignatureAsDicts ? true : false,
-                                        autoAddToCartQuantity: config.autoAddToCartQuantity,
-                                        afterClose: config.afterCloseProduct
-                                    });
-
-                                    config.variantSignatureAsDicts = null;
-                                };
-
-                                $scope.openSellerDetails = function () {
-                                    $scope.sellerDetails.menu.open();
-                                };
-
-                                $scope.maybeLoadProduct = null;
-
-                                if (config.loadProduct) {
-                                    loadProduct = function () {
-                                        angular.forEach($scope.catalog._images, function (image) {
-                                            if (image.id.toString() === config.loadProduct.image.toString()) {
-                                                $scope.maybeLoadProduct = config.loadProduct;
-                                            }
-                                        });
-                                        if (!$scope.maybeLoadProduct) {
-                                            //return;
-                                            var promise = imagesReader.load();
-                                            if (promise) {
-                                                promise.then(loadProduct);
-                                            }
-                                        }
-                                    };
-
-                                    loadProduct();
-                                }
-
-                                $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
-
-                                $scope.close = function () {
-                                    $scope.$close().then(function () {
-                                        if (config.afterClose) {
-                                            config.afterClose();
-                                        }
-                                    });
-                                };
-                            })
-                        });
-                    });
-                },
-                adminManageModal: function (account, extraConfig) {
-                    return this.manageModal(account, undefined, extraConfig);
-                },
-                manageModal: function (catalog, callback, modalConfig) { // modal dialog for managing the catalog
-
-                    modalConfig = helpers.alwaysObject(modalConfig);
-
-                    var fields = modelsMeta.getActionArguments('31', 'update'),
-                        isNew = !angular.isDefined(catalog),
-                        afterSave = function ($scope) {
-                            $scope.setAction('catalog_upload_images');
-                            $scope.dialog.toolbar.templateActionsUrl = 'catalog/manage_actions.html';
-                            callback($scope.entity);
-                        },
-                        afterComplete = function ($scope) {
-                            $scope.setAction('update');
-                            callback($scope.entity);
-                        },
-                        noComplete = function ($scope) {
-                            afterComplete($scope);
-                        },
-                        config = {
-                            kind: this.kind,
-                            action: (isNew ? 'create' : 'update'),
-                            modalConfig: modalConfig,
-                            fields: _.toArray(fields),
-                            toolbar: {
-                                templateActionsUrl: (isNew ? false : 'catalog/manage_actions.html'),
-                                titleEdit: 'edit31',
-                                titleAdd: 'add31'
-                            },
-                            afterSave: afterSave,
-                            afterSaveError: afterSave,
-                            afterComplete: afterComplete,
-                            afterCompleteError: afterComplete,
-                            init: function ($scope) {
-
-                                $.extend(fields._images.ui, {
-                                    label: false,
-                                    specifics: {
-                                        setupSortableOptions: function () {
-                                            return {
-                                                stop: function () {
-                                                    if (fields._images.ui.specifics.parentArgs.length) {
-                                                        var total = fields._images.ui.specifics.parentArgs[0].sequence,
-                                                            dirty,
-                                                            scope = fields._images.ui.directiveScope();
-                                                        angular.forEach(fields._images.ui.specifics.parentArgs,
-                                                            function (ent, i) {
-                                                                i = (total - i);
-                                                                if (ent.sequence !== i || ent._state === 'deleted') {
-                                                                    dirty = true;
-                                                                }
-                                                                ent.sequence = i;
-                                                                ent.ui.access[ent.ui.access.length - 1] = i;
-                                                            });
-
-                                                        if (dirty) {
-                                                            scope.formSetDirty();
-                                                        }
-                                                        scope.$broadcast('itemOrderChanged');
-                                                        scope.$apply();
-
-                                                    }
-                                                }
-                                            };
-                                        }
-                                    }
-                                });
-
-                                var updateFields = ['state', 'ui.rule', 'created', 'updated'],
-                                    updateState = function (newArgs) {
-                                        angular.forEach(['args', 'entity'], function (p) {
-                                            helpers.update($scope[p], newArgs, updateFields);
-                                        });
-                                    };
-
-                                $scope.actions = {
-                                    publish: function () {
-                                        modals.confirm('publishCatalog',
-                                            function () {
-                                                models['31'].actions.publish({
-                                                    key: $scope.entity.key
-                                                }).then(function (response) {
-                                                    snackbar.showK('catalogPublished');
-                                                    updateState(response.data.entity);
-                                                });
-                                            });
-                                    },
-                                    discontinue: function () {
-                                        modals.confirm('discontinueCatalog',
-                                            function () {
-                                                models['31'].actions.discontinue({
-                                                    key: $scope.entity.key
-                                                }).then(function (response) {
-                                                    snackbar.showK('catalogDiscontinued');
-                                                    updateState(response.data.entity);
-                                                });
-                                            });
-                                    },
-                                    duplicate: function () {
-                                        modals.confirm('duplicateCatalog',
-                                            function () {
-                                                models['11'].channelNotifications({
-                                                    callback: function (response) {
-                                                        models['31'].actions.read({
-                                                            key: response.catalog_key,
-                                                            read_arguments: {
-                                                                cover: {}
-                                                            }
-                                                        }).then(function (response) {
-                                                            snackbar.showK('catalogDuplicated');
-                                                            callback(response.data.entity);
-                                                        });
-                                                    }
-                                                }).then(function (response) {
-                                                    models['31'].actions.catalog_duplicate({
-                                                        key: $scope.entity.key,
-                                                        channel: response.token
-                                                    });
-                                                });
-                                            });
-                                    },
-                                    sudo: function () {
-                                        modals.models.sudo($scope.entity, {
-                                            templateUrl: 'catalog/administer.html',
-                                            onConfirm: updateState
-                                        });
-                                    }
-                                };
-                            },
-                            noComplete: noComplete,
-                            scope: {
-                                historyConfig: true,
-                                addProducts: function () {
-                                    var parentScope = this;
-                                    $modal.open({
-                                        templateUrl: 'core/models/manage.html',
-                                        windowClass: 'no-overflow',
-                                        controller: ng(function ($scope, $timeout) {
-                                            var accessImages = angular.copy(parentScope.args.ui.access),
-                                                imagesReader,
-                                                setupCurrentPricetag,
-                                                variantOptions,
-                                                addNewPricetag,
-                                                removePricetag,
-                                                getTitle = function () {
-                                                    return 'viewProducts';
-                                                };
-                                            accessImages.push(fields._images.code_name);
-                                            $scope.rootScope = parentScope.rootScope; // pass the rootScope
-                                            $scope.config = parentScope.rootScope.config;
-                                            $scope.entity = parentScope.entity;
-                                            $scope.args = angular.copy(parentScope.args);
-                                            $scope.dialog = {
-                                                templateBodyUrl: 'catalog/manage_products.html',
-                                                toolbar: {}
-                                            };
-                                            $scope.imagesLoaded = false;
-                                            $scope.container = {};
-                                            $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-                                            $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
-                                            $scope.validateForm = angular.bind($scope, helpers.form.validate);
-                                            $scope.fieldProduct = fields._images.modelclass.pricetags.modelclass._product;
-                                            $scope.args._images = [];
-                                            $scope.config._title_.push(getTitle);
-                                            $scope.$on('$destroy', function () {
-                                                $scope.config._title_.remove(getTitle);
-                                                fields._images._title_.remove(getTitle);
-                                                fields._images.modelclass.pricetags._title_.remove(getTitle);
-                                                fields._images.modelclass.pricetags.modelclass._product._title_.remove(getTitle);
-                                            });
-                                            fields._images._title_ = $scope.config._title_.concat();
-                                            fields._images.modelclass.pricetags._title_ = fields._images._title_.concat();
-                                            $scope.fieldProduct._title_ = fields._images._title_.concat();
-                                            $scope.dialog.toolbar.title = helpers.toolbar.buildTitle($scope.config._title_);
-
-                                            $scope.trackPricetags = function (pricetag) {
-                                                if (pricetag.key) {
-                                                    return pricetag.key;
-                                                }
-                                                return 'new' + _.uniqueId();
-                                            };
-
-                                            imagesReader = models['31'].reader({
-                                                key: $scope.args.key,
-                                                next: {
-                                                    _images: {}
-                                                },
-                                                access: accessImages,
-                                                complete: function (items) {
-                                                    $scope.args._images.extend(items);
-                                                    $timeout(function () {
-                                                        $scope.imagesLoaded = true;
-                                                    }, 300);
-                                                }
-                                            });
-                                            variantOptions = $scope.fieldProduct.modelclass._instances.modelclass.variant_options;
-                                            if (!variantOptions.ui.specifics) {
-                                                variantOptions.ui.specifics = {};
-                                            }
-                                            variantOptions.ui.specifics.checkboxes = true;
-                                            variantOptions.ui.fieldset = true;
-                                            if (!variantOptions.ui.specifics) {
-                                                variantOptions.ui.specifics = {};
-                                            }
-                                            variantOptions.ui.specifics.listView = function (item) {
-                                                return angular.isObject(item) ? item.full : item;
-                                            };
-                                            variantOptions.ui.specifics.grouping = function (items) {
-                                                var list = [],
-                                                    map = {};
-                                                angular.forEach(items, function (value) {
-                                                    var split = value.split(': '),
-                                                        obj = map[split[0]];
-                                                    if (!obj) {
-                                                        obj = {
-                                                            label: split[0],
-                                                            items: []
-                                                        };
-                                                        map[split[0]] = obj;
-                                                        list.push(obj);
-                                                    }
-
-                                                    obj.items.push({
-                                                        name: split[1],
-                                                        key: value,
-                                                        full: value
-                                                    });
-                                                });
-                                                return list;
-                                            };
-
-                                            addNewPricetag = function (image, pricetag) {
-                                                image.pricetags.push(pricetag);
-                                                var existing = _.findWhere($scope.rootScope.args._images, {
-                                                    key: image.key
-                                                });
-                                                if (!existing) {
-                                                    return;
-                                                }
-                                                existing.pricetags.push(pricetag);
-                                            };
-
-                                            removePricetag = function (image, pricetag) {
-                                                if (angular.isDefined(pricetag._destroy)) {
-                                                    pricetag._destroy();
-                                                }
-                                                image.pricetags.remove(pricetag);
-                                                var existing = _.findWhere($scope.rootScope.args._images, {
-                                                    key: image.key
-                                                });
-                                                if (!existing) {
-                                                    return;
-                                                }
-                                                existing.pricetags.iremove(function (ipricetag) {
-                                                    return ipricetag.key === pricetag.key;
-                                                });
-                                            };
-
-                                            imagesReader.load();
-
-                                            $scope.onStart = function (event, ui, image, pricetag) {
-                                                $(ui.helper).addClass('dragged');
-                                                $(ui.helper).find('a').addClass('dragged');
-                                                if (angular.isUndefined(pricetag._image)) {
-                                                    pricetag._image = $scope.args._images.indexOf(image);
-                                                }
-                                            };
-
-                                            $scope.onDrag = function (event, ui, image, pricetag) {};
-
-                                            $scope.droppableOptions = {
-                                                accept: '.catalog-new-pricetag',
-                                                tolerance: 'pointer'
-                                            };
-
-                                            $scope.draggableOptions = {
-                                                containment: '.image-slider-outer',
-                                                distance: 10
-                                            };
-
-                                            $scope.onStop = function (event, ui, image, pricetag) {
-                                                setTimeout(function () {
-                                                    $(ui.helper).removeClass('dragged');
-                                                    $(ui.helper).find('a').removeClass('dragged');
-                                                }, 350);
-                                                if (pricetag._state === 'deleted') {
-                                                    return;
-                                                }
-
-                                                var target = $(event.target).parents('.image-slider-item:first'),
-                                                    pricetagElement = $(event.target),
-                                                    left = parseFloat(pricetagElement.css('left'), 10),
-                                                    width = pricetagElement.width(),
-                                                    targetWidth = target.width(),
-                                                    tolerance = targetWidth - (width + left),
-                                                    i = $scope.args._images.indexOf(image),
-                                                    cwidth = 0,
-                                                    pwidth = 0,
-                                                    next,
-                                                    extract;
-                                                extract = function (what) {
-                                                    var newImage,
-                                                        exists,
-                                                        newParent,
-                                                        newPricetag,
-                                                        newPositionLeft,
-                                                        ocw = 0,
-                                                        currentTop = parseFloat($(ui.helper).css('top'), 10);
-                                                    next = target;
-                                                    cwidth = what ? targetWidth : 0;
-                                                    while (true) {
-                                                        if (what) {
-                                                            i += 1;
-                                                            next = next.next();
-                                                            cwidth += next.width();
-                                                            if (cwidth > left) {
-                                                                newParent = next;
-                                                                newImage = $scope.args._images[i];
-                                                                newPositionLeft = left - (pwidth || targetWidth);
-                                                                break;
-                                                            }
-                                                            if (i > 10000) {
-                                                                break;
-                                                            }
-
-                                                            pwidth = cwidth;
-                                                        } else {
-                                                            i -= 1;
-                                                            next = next.prev();
-                                                            ocw += next.width();
-                                                            cwidth -= next.width();
-                                                            if (cwidth < left) {
-                                                                newParent = next;
-                                                                newImage = $scope.args._images[i];
-                                                                newPositionLeft = ocw + left;
-                                                                break;
-                                                            }
-                                                            if (i < 0) {
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                    if (newImage) {
-                                                        pricetag._state = 'deleted';
-                                                        pricetagElement.addClass('ng-hide');
-                                                        exists = _.findWhere(newImage.pricetags, {
-                                                            key: pricetag.key
-                                                        });
-                                                        if (exists) {
-                                                            pricetag = exists;
-                                                        }
-                                                        pricetag.image_width = newParent.width();
-                                                        pricetag.image_height = newParent.height();
-                                                        pricetag.position_left = newPositionLeft;
-                                                        pricetag.position_top = currentTop;
-                                                        pricetag._position_left = newPositionLeft;
-                                                        pricetag._position_top = currentTop;
-                                                        if (angular.isUndefined(exists)) {
-                                                            newPricetag = angular.copy(pricetag);
-                                                            newPricetag._state = null;
-                                                            newPricetag._must_save = true;
-                                                            if (angular.isUndefined(pricetag._image)) {
-                                                                newPricetag._image = i;
-                                                            }
-                                                            addNewPricetag(newImage, newPricetag);
-                                                        } else {
-                                                            exists._state = null;
-                                                        }
-                                                    }
-                                                };
-
-                                                pricetag.position_top = ui.position.top;
-                                                pricetag.position_left = ui.position.left;
-                                                pricetag.image_width = target.width();
-                                                pricetag.image_height = target.height();
-                                                pricetag._position_top = pricetag.position_top;
-                                                pricetag._position_left = pricetag.position_left;
-
-                                                $scope.formSetDirty();
-
-                                                if ((tolerance + width) < 3.3) {
-                                                    //console.log('must go to next image');
-                                                    extract(true);
-                                                } else if (left < -8.5) {
-                                                    //console.log('must go to the previous image');
-                                                    extract();
-                                                } else {
-                                                    //console.log('stays');
-                                                }
-
-                                                if (!$scope.$$phase) {
-                                                    $scope.$apply();
-                                                }
-                                                $scope.$broadcast('resizePricetags', pricetag);
-
-                                            };
-
-                                            $scope.onDrop = function (event, ui, image) {
-                                                var target_drop = $(event.target),
-                                                    posi = target_drop.offset(),
-                                                    posi2 = ui.offset,
-                                                    rtop = posi2.top - posi.top + 6,
-                                                    rleft = posi2.left - posi.left + 4,
-                                                    vdom = $('<div style="visibility:hidden;"></div>'),
-                                                    newPricetagConfig = {
-                                                        position_top: rtop,
-                                                        position_left: rleft,
-                                                        _image: $scope.args._images.indexOf(image),
-                                                        image_width: target_drop.width(),
-                                                        image_height: target_drop.height()
-                                                    };
-                                                vdom.css({
-                                                    top: rtop,
-                                                    position: 'absolute',
-                                                    left: rleft,
-                                                    width: ui.draggable.width(),
-                                                    height: ui.draggable.height()
-                                                });
-                                                vdom.appendTo(target_drop);
-                                                newPricetagConfig._destroy = function () {
-                                                    $timeout(function () {
-                                                        vdom.remove();
-                                                    }, 2000, false);
-                                                };
-                                                $scope.createProduct(image, newPricetagConfig, vdom);
-                                            };
-
-                                            $scope.imagesReader = imagesReader;
-
-                                            imagesReader.showLoaderAlways = true;
-
-                                            $scope.loadMoreImages = function (callback) {
-                                                var promise = imagesReader.load();
-                                                if (promise) {
-                                                    promise.then(function (response) {
-                                                        callback.call(this, response, imagesReader.more);
-                                                    });
-                                                } else {
-                                                    callback.call(this, undefined, imagesReader.more);
-                                                }
-                                            };
-
-                                            setupCurrentPricetag = function (image, pricetag) {
-                                                $scope.image = image;
-                                                $scope.pricetag = pricetag;
-                                            };
-
-                                            $scope.loadingManageProduct = false;
-
-                                            $scope.manageProduct2 = function (image, pricetag, $event) {
-                                                if (pricetag._must_save) {
-                                                    return $scope.save(true).then(function () {
-                                                        pricetag._must_save = false;
-                                                        image = _.findWhere($scope.args._images, {key: image.key});
-                                                        pricetag = _.findWhere(image.pricetags, {key: pricetag.key});
-                                                        return $scope.realManageProduct(image, pricetag, $event);
-                                                    });
-                                                }
-                                                return $scope.realManageProduct(image, pricetag, $event);
-                                            };
-
-                                            $scope.manageProduct = function (image, pricetag, $event) {
-                                                if ($scope.loadingManageProduct) {
-                                                    return;
-                                                }
-                                                var originalImage = image;
-                                                if (pricetag._image) {
-                                                    image = $scope.args._images[pricetag._image];
-                                                }
-                                                $scope.loadingManageProduct = true;
-                                                setupCurrentPricetag(image, pricetag);
-                                                // perform read catalog.images.0.pricetags.0._product
-                                                models['31'].actions.read({
-                                                    key: $scope.entity.key,
-                                                    read_arguments: {
-                                                        _images: {
-                                                            config: {
-                                                                keys: [image.key]
-                                                            },
-                                                            pricetags: {
-                                                                config: {
-                                                                    keys: [pricetag.key],
-                                                                },
-                                                                _product: {}
-                                                            }
-                                                        }
-                                                    }
-                                                }).then(function (response) {
-                                                    var responseEntity = response.data.entity,
-                                                        ii = $scope.args._images.indexOf(image),
-                                                        product = responseEntity._images[0].pricetags[0]._product,
-                                                        oldPricetagIndex = _.findIndex(image.pricetags, function (ipricetag) {
-                                                            return ipricetag.key === pricetag.key;
-                                                        }),
-                                                        realPath = ['_images', ii, 'pricetags', oldPricetagIndex, '_product'];
-                                                    if (!$scope.fieldProduct.ui.specifics.toolbar) {
-                                                        $scope.fieldProduct.ui.specifics.toolbar = {};
-                                                    }
-                                                    $scope.fieldProduct.ui.specifics.remoteOpts = {
-                                                        read: {
-                                                            _images: function (shallowCopy, theList) {
-                                                                var include = _.findWhere(shallowCopy, {key: image.key});
-                                                                if (include) {
-                                                                    include.pricetags.empty();
-                                                                    include.pricetags.push(pricetag);
-                                                                    theList.push(include);
-                                                                }
-                                                            }
-                                                        },
-                                                        response: function (response) {
-                                                            var findImage = _.findWhere(response.data.entity._images, {key: originalImage.key}),
-                                                                findPricetag = _.findWhere(findImage.pricetags, {key: pricetag.key});
-                                                            return findPricetag._product;
-                                                        }
-                                                    };
-                                                    $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
-                                                    pricetag._product = product;
-                                                    image.pricetags[oldPricetagIndex]._product = product;
-                                                    product.ui.access = realPath; // override normalizeEntity auto generated path
-                                                    $scope.fieldProduct.ui.realPath = realPath; // set same path
-                                                    $scope.fieldProduct.ui.additionalRealPaths = [['_images', $scope.args._images.indexOf(originalImage), 'pricetags', originalImage.pricetags.indexOf(pricetag), '_product']];
-                                                    recomputeRealPath($scope.fieldProduct);
-                                                    $scope.fieldProduct.ui.specifics.manage(product, undefined, $event); // fire up modal dialog
-
                                                 })['finally'](function () {
-                                                    $scope.loadingManageProduct = false;
-                                                });
-                                            };
-
-                                            $scope.howToDrag = function ($event) {
-                                                modals.alert('howToDropPricetag');
-                                            };
-
-                                            $scope.createProduct = function (image, config, target) {
-                                                var ii = $scope.args._images.indexOf(image),
-                                                    newPricetag = {
-                                                        _sequence: image.pricetags.length,
-                                                        image_height: config.image_height,
-                                                        image_width: config.image_width,
-                                                        position_left: config.position_left,
-                                                        position_top: config.position_top,
-                                                        _position_left: config.position_left,
-                                                        _position_top: config.position_top,
-                                                        value: {},
-                                                        _destroy: config._destroy,
-                                                        _product: {},
-                                                        ui: {
-                                                            access: ['_images', ii, 'pricetags', image.pricetags.length]
-                                                        }
-                                                    };
-                                                addNewPricetag(image, newPricetag); // append new pricetag to image
-                                                setupCurrentPricetag(image, newPricetag); // set current
-                                                $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = false;
-                                                $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product']; // set correct pathing for the new product
-                                                recomputeRealPath($scope.fieldProduct);
-                                                $scope.fieldProduct.ui.specifics.create(undefined, undefined, {
-                                                    target: target
-                                                });
-                                            };
-
-                                            $.extend($scope.fieldProduct.ui, {
-                                                init: function (field) {
-                                                    field.config.ui.specifics.remove = function (product, close) {
-                                                        // removing the actual product removes the pricetag actually
-                                                        $scope.pricetag._state = 'deleted';
-                                                        $scope.formSetDirty();
-                                                        close();
-                                                    };
-                                                },
-                                                args: 'pricetag._product',
-                                                parentArgs: 'pricetag',
-                                                path: ['_images', 'pricetags', '_product'],
-                                                render: false,
-                                                label: false,
-                                                specifics: {
-                                                    remoteAutoload: false,
-                                                    modal: true,
-                                                    beforeSave: function (fieldScope) {
-                                                        fieldScope.setAction('update');
-                                                        // before saving entity, set the name and unit price for the pricetag.
-                                                        var findPricetag = _.last(fieldScope.sendRootArgs._images[0].pricetags);
-                                                        findPricetag.value = {
-                                                            name: fieldScope.args.name,
-                                                            price: fieldScope.args.unit_price
-                                                        };
-                                                    },
-                                                    templateFooterUrl: 'catalog/product/manage_footer.html',
-                                                    getRootArgs: function () {
-                                                        // root args is data that gets sent with rpc
-                                                        return $scope.args;
-                                                    },
-                                                    afterClose: function (fieldProductScope) {
-                                                        // after close hook
-                                                        $scope.pricetag._product = null;
-                                                        if (!fieldProductScope.args.key) {
-                                                            removePricetag($scope.image, $scope.pricetag); // remove the pricetag if we did not commit the product
-                                                        }
-                                                    },
-                                                    afterSave: function (fieldScope) {
-                                                        // after save hook
-                                                        fieldScope.setAction('product_upload_images');
-                                                        var updatedPricetag = fieldScope.response.data.entity._images[0].pricetags[0];
-                                                        $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
-                                                        $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
-                                                    },
-                                                    afterComplete: function (fieldScope) {
-                                                        // after complete hook
-                                                        fieldScope.setAction('update');
-                                                    },
-                                                    noComplete: function (fieldScope) {
-                                                        // hook for no complete event - complete event only fires if there are images to be uploaded
-                                                        fieldScope.setAction('update');
-                                                    },
-                                                    duplicate: function () {
-                                                        modals.confirm('duplicateCatalogPricetag',
-                                                            function () {
-                                                                models['11'].channelNotifications({
-                                                                    callback: function (response) {
-                                                                        models['31'].actions.read({
-                                                                            key: response.catalog_key,
-                                                                            read_arguments: {
-                                                                                _images: {
-                                                                                    config: {
-                                                                                        keys: [response.image_key]
-                                                                                    },
-                                                                                    pricetags: {
-                                                                                        config: {
-                                                                                            keys: [response.pricetag_key]
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }).then(function (response2) {
-
-                                                                            var image = _.findWhere($scope.args._images, {
-                                                                                key: response.image_key
-                                                                            });
-                                                                            if (image) {
-                                                                                angular.forEach(response2.data.entity._images[0].pricetags, function (value, key) {
-                                                                                    if (!_.findWhere(image.pricetags, {
-                                                                                            key: response.pricetag_key
-                                                                                        })) {
-                                                                                        image.pricetags.push(value);
-                                                                                    }
-                                                                                });
-                                                                            }
-                                                                            snackbar.showK('productDuplicated');
-                                                                        });
-                                                                    }
-                                                                }).then(function (response) {
-                                                                    models['31'].actions.catalog_pricetag_duplicate({
-                                                                        key: $scope.entity.key,
-                                                                        channel: response.token,
-                                                                        read_arguments: {
-                                                                            _images: {
-                                                                                config: {
-                                                                                    keys: [$scope.image.key]
-                                                                                },
-                                                                                pricetags: {
-                                                                                    config: {
-                                                                                        keys: [$scope.pricetag.key]
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    });
-                                                                });
-                                                            });
-                                                    }
-                                                }
-                                            });
-
-                                            $.extend($scope.fieldProduct.modelclass.images.ui, {
-                                                name: 'images'
-                                            });
-
-                                            $.extend($scope.fieldProduct.modelclass._instances.modelclass.images.ui, {
-                                                name: 'images'
-                                            });
-
-                                            $scope.fieldProduct.modelclass.category.ui.specifics = {
-                                                search: {
-                                                    enabled: true
-                                                }
-                                            };
-
-
-                                            $.extend($scope.fieldProduct.modelclass._instances.ui, {
-                                                label: GLOBAL_CONFIG.subheaders.productInstances,
-                                                path: ['_images', 'pricetags'],
-                                                specifics: {
-                                                    layoutConfig: [{
-                                                        label: GLOBAL_CONFIG.fields.label['28'].variant_options,
-                                                        fields: ["variant_options"]
-                                                    }, {
-                                                        label: 'Details',
-                                                        fields: ["code", "description", "unit_price", "availability", "weight", "volume"]
-                                                    }, {
-                                                        fields: ["images"]
-                                                    }, {
-                                                        fields: ["contents"]
-                                                    }],
-                                                    cards: true,
-                                                    cardView: 'product-instance-card-view',
-                                                    getRootArgs: function () {
-                                                        return $scope.args;
-                                                    },
-                                                    beforeSave: function (fieldScope) {
-                                                        fieldScope.setAction('update');
-                                                    },
-                                                    afterSave: function (fieldScope) {
-                                                        fieldScope.setAction('product_instance_upload_images');
-                                                    },
-                                                    afterComplete: function (fieldScope) {
-                                                        fieldScope.setAction('update');
-                                                    },
-                                                    noComplete: function (fieldScope) {
-                                                        fieldScope.setAction('update');
-                                                    },
-                                                    setupSortableOptions: function () {
-                                                        return {
-                                                            forcePlaceholderSize: true,
-                                                            stop: function () {
-                                                                var field = $scope.fieldProduct.modelclass._instances,
-                                                                    total,
-                                                                    dirty,
-                                                                    scope = field.ui.directiveScope();
-                                                                if (field.ui.specifics.parentArgs.length) {
-                                                                    total = field.ui.specifics.parentArgs[0].sequence;
-                                                                    angular.forEach(field.ui.specifics.parentArgs,
-                                                                        function (ent, i) {
-                                                                            i = (total - i);
-                                                                            if (ent.sequence !== i || ent._state === 'deleted') {
-                                                                                dirty = true;
-                                                                            }
-                                                                            ent.sequence = i;
-                                                                            ent.ui.access[ent.ui.access.length - 1] = i;
-                                                                        });
-                                                                    if (dirty) {
-                                                                        scope.formSetDirty();
-                                                                    }
-                                                                    scope.$broadcast('itemOrderChanged');
-                                                                    scope.$apply();
-                                                                }
-                                                            }
-                                                        };
-                                                    },
-                                                    canOpen: function () {
-                                                        var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
-                                                            currentArgs = currentFieldScope.args;
-                                                        if (!currentArgs.id) {
-                                                            snackbar.showK('saveProductFirst');
-                                                            return false;
-                                                        }
-                                                        if (!currentArgs.variants.length) {
-                                                            snackbar.showK('createVariantsFirst');
-                                                            return false;
-                                                        }
-                                                        return true;
-                                                    },
-                                                    init: function () {
-                                                        var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
-                                                            currentArgs = currentFieldScope.args,
-                                                            choices = [];
-
-                                                        angular.forEach(currentArgs.variants, function (variant) {
-                                                            if (variant.allow_custom_value) {
-                                                                return;
-                                                            }
-                                                            angular.forEach(variant.options, function (variantOpt) {
-                                                                choices.push(variant.name + ': ' + variantOpt);
-                                                            });
-                                                        });
-
-                                                        variantOptions.choices = choices;
-                                                    },
-                                                    excludeFields: ['created', 'sequence']
-                                                }
-                                            });
-
-                                            $.extend($scope.fieldProduct.modelclass.contents.ui, {
-                                                specifics: {}
-                                            });
-
-                                            $.extend($scope.fieldProduct.modelclass.images.ui, {
-                                                name: 'images',
-                                                specifics: {}
-                                            });
-
-                                            $.extend($scope.fieldProduct.modelclass.variants.ui, {
-                                                specifics: {}
-                                            });
-
-                                            if (!$scope.fieldProduct.modelclass.uom.ui.specifics) {
-                                                $scope.fieldProduct.modelclass.uom.ui.specifics = {};
-                                            }
-
-                                            $scope.fieldProduct.modelclass.uom.ui.specifics.grouping = function (items) {
-                                                var grouped = [],
-                                                    current;
-                                                angular.forEach(items, function (item) {
-                                                    if (current && current.label !== item.measurement) {
-                                                        current = null;
-                                                    }
-                                                    if (!current) {
-                                                        current = {
-                                                            label: item.measurement,
-                                                            items: []
-                                                        };
-                                                        grouped.push(current);
-                                                    }
-
-                                                    current.items.push(item);
-                                                });
-
-                                                return grouped;
-                                            };
-
-                                            $scope.save = function (hideSnackbar) {
-                                                var promise;
-
-                                                $scope.rootScope.config.prepareReadArguments($scope);
-                                                promise = models['31'].actions[$scope.args.action_id]($scope.args);
-                                                promise.then(function (response) {
-                                                    $.extend($scope.entity, response.data.entity);
-                                                    var newArgs = $scope.rootScope.config.argumentLoader($scope);
-                                                    $.extend(parentScope.args, angular.copy(newArgs));
-                                                    $.extend($scope.args, angular.copy(newArgs));
-                                                    $scope.formSetPristine();
-                                                    if (!hideSnackbar) {
-                                                        snackbar.showK('changesSaved');
-                                                    }
+                                                    $scope.loadingSave = false;
                                                 });
                                                 return promise;
                                             };
 
-                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                                $scope.$close();
-                                            });
+                                            $scope.syncID = null;
+                                            $scope.sync = function (hideSnackbar) {
+                                                var defer = $q.defer(),
+                                                    promise = defer.promise;
+                                                clearTimeout($scope.syncID);
+                                                $scope.syncID = setTimeout(function () {
+                                                    $scope.save(hideSnackbar).then(function (response) {
+                                                        defer.resolve(response);
+                                                        return response;
+                                                    });
+                                                }, 1000);
+                                                return promise;
+                                            };
                                         })
                                     });
 
@@ -20612,7 +18974,8 @@ angular.module('app')
 
         });
     }));
-}());(function () {
+}());
+(function () {
     'use strict';
     angular.module('app').run(ng(function (modelsConfig, endpoint, $state, modals, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
         modelsConfig(function (models) {

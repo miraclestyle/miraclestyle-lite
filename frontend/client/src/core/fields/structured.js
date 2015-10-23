@@ -873,7 +873,7 @@
 
                                     $scope.$on('$destroy', function () {
                                         config._title_.remove(getTitle);
-                                        config.ui.specifics.remoteOpts = null;
+                                        config.ui.specifics.remoteOpts = {};
                                         config.ui.additionalRealPaths = null;
                                     });
 

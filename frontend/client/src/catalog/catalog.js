@@ -1019,7 +1019,9 @@
                                             $scope.args = angular.copy(parentScope.args);
                                             $scope.dialog = {
                                                 templateBodyUrl: 'catalog/manage_products.html',
-                                                toolbar: {}
+                                                toolbar: {
+                                                    hideSave: true
+                                                }
                                             };
                                             $scope.imagesLoaded = false;
                                             $scope.container = {};
@@ -1258,6 +1260,7 @@
                                                 if (!$scope.$$phase) {
                                                     $scope.$apply();
                                                 }
+                                                $scope.sync();
                                                 $scope.$broadcast('resizePricetags', pricetag);
 
                                             };
@@ -1313,12 +1316,16 @@
                                             };
 
                                             $scope.loadingManageProduct = false;
-
                                             $scope.manageProduct = function (image, pricetag, $event) {
                                                 if (pricetag._must_save) {
+                                                    clearTimeout($scope.syncID);
                                                     return $scope.save(true).then(function () {
-                                                        image = _.findWhere($scope.args._images, {key: image.key});
-                                                        pricetag = _.findWhere(image.pricetags, {key: pricetag.key});
+                                                        image = _.findWhere($scope.args._images, {
+                                                            key: image.key
+                                                        });
+                                                        pricetag = _.findWhere(image.pricetags, {
+                                                            key: pricetag.key
+                                                        });
                                                         return $scope.realManageProduct(image, pricetag, $event);
                                                     });
                                                 }
@@ -1402,14 +1409,6 @@
                                             };
 
                                             $.extend($scope.fieldProduct.ui, {
-                                                init: function (field) {
-                                                    field.config.ui.specifics.remove = function (product, close) {
-                                                        // removing the actual product removes the pricetag actually
-                                                        $scope.pricetag._state = 'deleted';
-                                                        $scope.formSetDirty();
-                                                        close();
-                                                    };
-                                                },
                                                 args: 'pricetag._product',
                                                 parentArgs: 'pricetag',
                                                 path: ['_images', 'pricetags', '_product'],
@@ -1418,6 +1417,12 @@
                                                 specifics: {
                                                     remoteAutoload: false,
                                                     modal: true,
+                                                    removeConfirm: function (arg, close) {
+                                                        modals.confirm('removePricetagConfirm', function () {
+                                                            $scope.pricetag._state = 'deleted';
+                                                            $scope.save().then(close);
+                                                        });
+                                                    },
                                                     beforeSave: function (fieldScope) {
                                                         fieldScope.setAction('update');
                                                         // before saving entity, set the name and unit price for the pricetag.
@@ -1659,10 +1664,15 @@
                                                 return grouped;
                                             };
 
+                                            $scope.loadingSave = false;
+
                                             $scope.save = function (hideSnackbar) {
                                                 var promise;
-
+                                                if ($scope.loadingSave) {
+                                                    return;
+                                                }
                                                 $scope.rootScope.config.prepareReadArguments($scope);
+                                                $scope.loadingSave = true;
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     $.extend($scope.entity, response.data.entity);
@@ -1673,13 +1683,25 @@
                                                     if (!hideSnackbar) {
                                                         snackbar.showK('changesSaved');
                                                     }
+                                                })['finally'](function () {
+                                                    $scope.loadingSave = false;
                                                 });
                                                 return promise;
                                             };
 
-                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                                $scope.$close();
-                                            });
+                                            $scope.syncID = null;
+                                            $scope.sync = function (hideSnackbar) {
+                                                var defer = $q.defer(),
+                                                    promise = defer.promise;
+                                                clearTimeout($scope.syncID);
+                                                $scope.syncID = setTimeout(function () {
+                                                    $scope.save(hideSnackbar).then(function (response) {
+                                                        defer.resolve(response);
+                                                        return response;
+                                                    });
+                                                }, 1000);
+                                                return promise;
+                                            };
                                         })
                                     });
 

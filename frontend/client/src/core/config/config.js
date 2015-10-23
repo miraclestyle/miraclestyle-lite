@@ -19,6 +19,13 @@
                     primary: 'Disconnect'
                 }
             },
+            removePricetagConfirm: {
+                title: 'Remove the product?',
+                message: 'The product will be permanently removed from the catalog! You will be notified once this action is completed.',
+                text: {
+                    primary: 'Remove'
+                }
+            },
             connectSignInMethod: {
                 title: 'Connect the identity?',
                 message: 'If this sign in identity is already connected to another Miraclestyle account, you will have to disconnect it before you proceed with this action!',
