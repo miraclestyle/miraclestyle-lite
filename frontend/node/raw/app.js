@@ -14939,11 +14939,16 @@ $(function () {
                                             this.loading = true;
                                             promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
                                             promise.then(function (response) {
+                                                if (response.data.errors) {
+                                                    paginate.more = false;
+                                                    return response;
+                                                }
                                                 paginate.more = response.data.more;
                                                 paginate.cursor = response.data.cursor;
                                                 if (angular.isFunction(config.complete)) {
-                                                    config.complete.call(this, response);
+                                                    return config.complete.call(this, response);
                                                 }
+                                                return response;
                                             })['finally'](function () {
                                                 paginate.loading = false;
                                             });
