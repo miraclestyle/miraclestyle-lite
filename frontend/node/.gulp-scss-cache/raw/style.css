@@ -2001,7 +2001,7 @@ body {
   z-index: 11; }
 
 .messages {
-  top: 117px;
+  top: 0px;
   bottom: 57px;
   display: block;
   position: absolute;

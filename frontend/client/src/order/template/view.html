@@ -171,14 +171,15 @@
 <md-sidenav md-state-changed="messages.stateChanged" md-swipe-right="messages.close()" layout="column" class="right md-closed" md-component-id="messages.sidebarID">
     <md-content>
         <div class="list">
-            <div class="sidebar-seller-logo">
-                <button md-ink-ripple ripple-light type="button" class="button-transparent" loading ng-click="cmd.seller.view()">
-                    <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
-                </button>
-            </div>
             <div autoload-on-vertical-scroll-end="{loader: messages.reader, reverse: true}"
                  always-scroll-to-bottom="['messages.open', 'messages.sent']"
                  class="messages overflow-auto-y">
+                
+              <div class="sidebar-seller-logo">
+                  <button md-ink-ripple ripple-light type="button" class="button-transparent" loading ng-click="cmd.seller.view()">
+                      <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
+                  </button>
+              </div>
                 <div class="messages-list">
                     <div ng-if="helpers.models.isEntityListEmpty(order._messages)" help-render="GLOBAL_CONFIG.emptyHelp.cartMessages"></div>
                     <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="isYou = message._agent.key === currentAccount.key;

@@ -1358,6 +1358,7 @@
                                                     var responseEntity = response.data.entity,
                                                         ii = $scope.args._images.indexOf(image),
                                                         product = responseEntity._images[0].pricetags[0]._product,
+                                                        shouldAppearDropdown = false,
                                                         oldPricetagIndex = _.findIndex(image.pricetags, function (ipricetag) {
                                                             return ipricetag.key === pricetag.key;
                                                         }),
@@ -1365,7 +1366,8 @@
                                                     if (!$scope.fieldProduct.ui.specifics.toolbar) {
                                                         $scope.fieldProduct.ui.specifics.toolbar = {};
                                                     }
-                                                    $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
+                                                    shouldAppearDropdown = $scope.entity.ui.rule.action.catalog_pricetag_duplicate.executable || $scope.entity.ui.rule.field._images.pricetags.writable;
+                                                    $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
                                                     pricetag._product = product;
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
