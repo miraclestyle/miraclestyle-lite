@@ -367,8 +367,8 @@ class Catalog(orm.BaseExpando):
         or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
         or (action.key_id_str == "sudo" and entity.state != "draft")
 
-  def condition_duplicate(action, **kwargs):
-    return action.key_id_str in ("catalog_process_duplicate", "catalog_pricetag_process_duplicate")
+  def condition_duplicate(action, entity, **kwargs):
+    return action.key_id_str in ("catalog_process_duplicate", "catalog_pricetag_process_duplicate") and entity._original.state == "draft"
 
   _permissions = [
       orm.ExecuteActionPermission('prepare', condition_not_guest),
