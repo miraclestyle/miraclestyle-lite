@@ -353,7 +353,7 @@
                                 inDirection: modalSettings.inDirection,
                                 outDirection: modalSettings.outDirection,
                                 controller: ng(function ($scope, modelsUtil) {
-                                    var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
+                                    var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
                                         formBuilder = {
                                             '0': []
                                         },
@@ -568,7 +568,7 @@
                                                 group.include = 'core/misc/action.html';
                                                 group.action = function () {
                                                     var test = true;
-                                                    if (field.ui.specifics.canOpen) {
+                                                    if (field.ui.specifics && field.ui.specifics.canOpen) {
                                                         test = field.ui.specifics.canOpen();
                                                     }
                                                     if (test) {

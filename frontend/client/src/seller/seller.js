@@ -1093,6 +1093,7 @@
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config;
                     fields._content.ui.label = false;
+                    fields._plugin_group.ui.label = false;
                     $.extend(fields._content.modelclass.documents.ui, {
                         label: false,
                         specifics: {
@@ -1105,14 +1106,12 @@
                     $.extend(fields._plugin_group.modelclass.plugins.ui, {
                         label: false
                     });
-
                     fields.logo.ui.specifics = {
                         displayImageConfig: {
                             size: 240,
                             defaultImage: 'defaultLogo'
                         }
                     };
-                    fields._plugin_group.ui.label = false;
                     config = {
                         kind: this.kind,
                         action: 'update',

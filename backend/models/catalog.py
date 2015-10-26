@@ -125,6 +125,25 @@ class CatalogProductVariant(orm.BaseModel):
   allow_custom_value = orm.SuperBooleanProperty('4', required=True, indexed=False, default=False)
 
 
+class CatalogProductStock(orm.BaseModel):
+
+  _kind = 133
+
+  _use_rule_engine = False
+
+  variant_signature = orm.SuperJsonProperty('1', required=True, default={}, indexed=False)
+  availability = orm.SuperStringProperty('2', required=True, indexed=False, default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder'))
+
+
+class CatalogProductStockContainer(orm.BaseModel):
+
+  _kind = 134
+
+  _use_rule_engine = False
+
+  stocks = orm.SuperLocalStructuredProperty(CatalogProductStock, '1', repeated=True, indexed=False)
+
+
 class CatalogProductInstance(orm.BaseExpando):
 
   _kind = 27
@@ -140,11 +159,10 @@ class CatalogProductInstance(orm.BaseExpando):
       'code': orm.SuperStringProperty('3'),
       'description': orm.SuperTextProperty('4'),
       'unit_price': orm.SuperDecimalProperty('5'),
-      'availability': orm.SuperStringProperty('6', default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder')),
-      'weight': orm.SuperDecimalProperty('7'),
-      'volume': orm.SuperDecimalProperty('8'),
-      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '9', repeated=True),
-      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '10', repeated=True)
+      'weight': orm.SuperDecimalProperty('6'),
+      'volume': orm.SuperDecimalProperty('7'),
+      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '8', repeated=True),
+      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '9', repeated=True)
   }
 
   @classmethod
@@ -186,19 +204,19 @@ class CatalogProduct(orm.BaseExpando):
   code = orm.SuperStringProperty('4', required=True, indexed=False, searchable=True)
   description = orm.SuperTextProperty('5', required=True, searchable=True)  # Soft limit 64kb.
   unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  availability = orm.SuperStringProperty('7', required=True, indexed=False, default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder'))
 
   _default_indexed = False
 
   _expando_fields = {
-      'weight': orm.SuperDecimalProperty('8'),
-      'volume': orm.SuperDecimalProperty('9'),
-      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '10', repeated=True),
-      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '11', repeated=True),
-      'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '12', repeated=True)
+      'weight': orm.SuperDecimalProperty('7'),
+      'volume': orm.SuperDecimalProperty('8'),
+      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '9', repeated=True),
+      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '10', repeated=True),
+      'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '11', repeated=True)
   }
 
   _virtual_fields = {  # sorting must be done by code?
+      '_stock': orm.SuperRemoteStructuredProperty(CatalogProductStockContainer),
       '_instances': orm.SuperRemoteStructuredProperty('27',
                                                       repeated=True,
                                                       search={'default': {'filters': [], 'orders': [{'field': 'sequence', 'operator': 'desc'}]},

@@ -1369,6 +1369,9 @@
                                                     shouldAppearDropdown = $scope.entity.ui.rule.action.catalog_pricetag_duplicate.executable || $scope.entity.ui.rule.field._images.pricetags.writable;
                                                     $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
                                                     pricetag._product = product;
+                                                    if (!product._stock) {
+                                                        product._stock = {stocks: []};
+                                                    }
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     recomputeRealPath($scope.fieldProduct);
@@ -1395,7 +1398,11 @@
                                                         _position_top: config.position_top,
                                                         value: {},
                                                         _destroy: config._destroy,
-                                                        _product: {},
+                                                        _product: {
+                                                            _stock: {
+                                                                stocks: []
+                                                            }
+                                                        },
                                                         ui: {
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]
                                                         }
@@ -1640,6 +1647,7 @@
                                             $.extend($scope.fieldProduct.modelclass.variants.ui, {
                                                 specifics: {}
                                             });
+
 
                                             if (!$scope.fieldProduct.modelclass.uom.ui.specifics) {
                                                 $scope.fieldProduct.modelclass.uom.ui.specifics = {};

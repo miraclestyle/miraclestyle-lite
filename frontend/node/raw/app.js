@@ -11129,7 +11129,7 @@ $(function () {
                                 inDirection: modalSettings.inDirection,
                                 outDirection: modalSettings.outDirection,
                                 controller: ng(function ($scope, modelsUtil) {
-                                    var length = (config.ui.specifics.modal ? 0 : config.ui.specifics.parentArgs.length),
+                                    var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
                                         formBuilder = {
                                             '0': []
                                         },
@@ -11344,7 +11344,7 @@ $(function () {
                                                 group.include = 'core/misc/action.html';
                                                 group.action = function () {
                                                     var test = true;
-                                                    if (field.ui.specifics.canOpen) {
+                                                    if (field.ui.specifics && field.ui.specifics.canOpen) {
                                                         test = field.ui.specifics.canOpen();
                                                     }
                                                     if (test) {
@@ -18613,6 +18613,9 @@ angular.module('app')
                                                     shouldAppearDropdown = $scope.entity.ui.rule.action.catalog_pricetag_duplicate.executable || $scope.entity.ui.rule.field._images.pricetags.writable;
                                                     $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
                                                     pricetag._product = product;
+                                                    if (!product._stock) {
+                                                        product._stock = {stocks: []};
+                                                    }
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
                                                     recomputeRealPath($scope.fieldProduct);
@@ -18639,7 +18642,11 @@ angular.module('app')
                                                         _position_top: config.position_top,
                                                         value: {},
                                                         _destroy: config._destroy,
-                                                        _product: {},
+                                                        _product: {
+                                                            _stock: {
+                                                                stocks: []
+                                                            }
+                                                        },
                                                         ui: {
                                                             access: ['_images', ii, 'pricetags', image.pricetags.length]
                                                         }
@@ -18884,6 +18891,7 @@ angular.module('app')
                                             $.extend($scope.fieldProduct.modelclass.variants.ui, {
                                                 specifics: {}
                                             });
+
 
                                             if (!$scope.fieldProduct.modelclass.uom.ui.specifics) {
                                                 $scope.fieldProduct.modelclass.uom.ui.specifics = {};
@@ -21318,6 +21326,7 @@ angular.module('app')
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config;
                     fields._content.ui.label = false;
+                    fields._plugin_group.ui.label = false;
                     $.extend(fields._content.modelclass.documents.ui, {
                         label: false,
                         specifics: {
@@ -21330,14 +21339,12 @@ angular.module('app')
                     $.extend(fields._plugin_group.modelclass.plugins.ui, {
                         label: false
                     });
-
                     fields.logo.ui.specifics = {
                         displayImageConfig: {
                             size: 240,
                             defaultImage: 'defaultLogo'
                         }
                     };
-                    fields._plugin_group.ui.label = false;
                     config = {
                         kind: this.kind,
                         action: 'update',
