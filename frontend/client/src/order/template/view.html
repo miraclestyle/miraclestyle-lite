@@ -180,18 +180,18 @@
                       <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="seller.logo" />
                   </button>
               </div>
+                <div ng-if="helpers.models.isEntityListEmpty(order._messages)" help-render="GLOBAL_CONFIG.emptyHelp.cartMessages"></div>
                 <div class="messages-list">
-                    <div ng-if="helpers.models.isEntityListEmpty(order._messages)" help-render="GLOBAL_CONFIG.emptyHelp.cartMessages"></div>
-                    <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="isYou = message._agent.key === currentAccount.key;
+                    
+                    <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="
+                          isYou = !message._agent || message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
                           isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
                           isToday = today.getDay() === message.created.getDay() && today.getMonth() === message.created.getMonth()
                           " ng-class="{'leftside': isYou, 'rightside': !isYou}">
                         <div class="message">
                             <div class="message-inner">
-                                <div class="message-body second">
-                                    {{message.body}}
-                                </div>
+                                <div ng-bind-html="message.body | escape | autobr" class="message-body second"></div>
                                 <div class="message-footer helper">
                                   <span ng-if="message._action === 'leave_feedback'">Feedback left on</span>
                                   <span ng-if="message._action === 'review_feedback'">Feedback reviewed on</span>
@@ -199,7 +199,8 @@
                                   <span ng-if="message._action === 'sudo_feedback'">Feedback administered on</span>
                                   <span ng-if="message._action === 'complete'">Payment completed on</span>
                                   <span ng-if="message._action === 'log_message'">Message left <span ng-if="!isToday">on</span> <span ng-if="isToday">at</span> </span>
-                                    {{message|output:'created'}}
+                                  <span ng-if="!message._action">Sending message...</span>
+                                    <span ng-if="message.created">{{message|output:'created'}}</span>
                                 </div>
                             </div>
                             <div class="message-author secondary">

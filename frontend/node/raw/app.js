@@ -12117,6 +12117,23 @@ $(function () {
                 }
             };
         })
+        .directive('onEnter', ng(function ($parse, helpers, $mdConstant) {
+            return {
+                link: function (scope, element, attrs) {
+                    var callback = $parse(attrs.onEnter);
+                    element.on('keydown', function (e) {
+                        if (helpers.responsive.isMobile() || helpers.responsive.isTablet()) {
+                            return;
+                        }
+                        if (e.keyCode === $mdConstant.KEY_CODE.ENTER && !e.shiftKey) {
+                            e.preventDefault();
+                            callback(scope, {$event: e});
+                            $(this).val('');
+                        }
+                    });
+                }
+            };
+        }))
         .directive('helpRender', function () {
             return {
                 scope: {
@@ -19556,7 +19573,8 @@ angular.module('app')
                                         attrs: {
                                             'native-placeholder': '',
                                             'class': 'primary',
-                                            'min-length': '1'
+                                            'min-length': '1',
+                                            'on-enter': 'messages.logMessage()'
                                         }
                                     });
 
@@ -19820,10 +19838,17 @@ angular.module('app')
                                         },
                                         sent: false,
                                         send: function (action) {
-                                            return models['34'].actions[action]($scope.messages.draft).then(function (response) {
+                                            var newMessage = {
+                                                body: $scope.messages.draft.message
+                                            };
+                                            $scope.order._messages.push(newMessage);
+                                            return models['34'].actions[action]($scope.messages.draft, {
+                                                disableUI: false
+                                            }).then(function (response) {
                                                 $scope.messages.draft.message = '';
                                                 $scope.messages.forceReflow();
-                                                $scope.order._messages.push(response.data.entity._messages[0]);
+                                                //$scope.order._messages.push(response.data.entity._messages[0]);
+                                                $.extend(newMessage, response.data.entity._messages[0]);
                                                 locals.reactOnStateChange(response);
                                                 return response;
                                             });
@@ -19852,6 +19877,7 @@ angular.module('app')
                                         toggle: function (close) {
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
+                                                return;
                                             }
                                             if ($scope.messages.toggling) {
                                                 return;

@@ -107,6 +107,23 @@
                 }
             };
         })
+        .directive('onEnter', ng(function ($parse, helpers, $mdConstant) {
+            return {
+                link: function (scope, element, attrs) {
+                    var callback = $parse(attrs.onEnter);
+                    element.on('keydown', function (e) {
+                        if (helpers.responsive.isMobile() || helpers.responsive.isTablet()) {
+                            return;
+                        }
+                        if (e.keyCode === $mdConstant.KEY_CODE.ENTER && !e.shiftKey) {
+                            e.preventDefault();
+                            callback(scope, {$event: e});
+                            $(this).val('');
+                        }
+                    });
+                }
+            };
+        }))
         .directive('helpRender', function () {
             return {
                 scope: {

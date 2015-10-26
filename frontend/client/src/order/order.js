@@ -188,7 +188,8 @@
                                         attrs: {
                                             'native-placeholder': '',
                                             'class': 'primary',
-                                            'min-length': '1'
+                                            'min-length': '1',
+                                            'on-enter': 'messages.logMessage()'
                                         }
                                     });
 
@@ -452,10 +453,17 @@
                                         },
                                         sent: false,
                                         send: function (action) {
-                                            return models['34'].actions[action]($scope.messages.draft).then(function (response) {
+                                            var newMessage = {
+                                                body: $scope.messages.draft.message
+                                            };
+                                            $scope.order._messages.push(newMessage);
+                                            return models['34'].actions[action]($scope.messages.draft, {
+                                                disableUI: false
+                                            }).then(function (response) {
                                                 $scope.messages.draft.message = '';
                                                 $scope.messages.forceReflow();
-                                                $scope.order._messages.push(response.data.entity._messages[0]);
+                                                //$scope.order._messages.push(response.data.entity._messages[0]);
+                                                $.extend(newMessage, response.data.entity._messages[0]);
                                                 locals.reactOnStateChange(response);
                                                 return response;
                                             });
@@ -484,6 +492,7 @@
                                         toggle: function (close) {
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
+                                                return;
                                             }
                                             if ($scope.messages.toggling) {
                                                 return;
