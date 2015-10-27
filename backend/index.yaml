@@ -162,15 +162,28 @@ indexes:
   - name: '1'
     direction: desc
 
-# User state and order by created ASC
+# Account state and order by created ASC
 - kind: '11'
   properties:
-  - name: '5'
+  - name: '3'
   - name: '1'
 
-# User state and order by created DESC
+# Account state and order by created DESC
 - kind: '11'
   properties:
-  - name: '5'
+  - name: '3'
   - name: '1'
+    direction: desc
+
+# Account state and order by updated ASC
+- kind: '11'
+  properties:
+  - name: '3'
+  - name: '2'
+
+# Account state and order by updated DESC
+- kind: '11'
+  properties:
+  - name: '3'
+  - name: '2'
     direction: desc
