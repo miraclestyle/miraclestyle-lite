@@ -6,6 +6,8 @@ Created on May 6, 2014
 '''
 
 import datetime
+import json
+import hashlib
 
 import decimal
 import orm
@@ -131,8 +133,19 @@ class CatalogProductStock(orm.BaseModel):
 
   _use_rule_engine = False
 
-  variant_signature = orm.SuperJsonProperty('1', required=True, default={}, indexed=False)
+  variant_signature = orm.SuperJsonProperty('1', required=True, default=[], indexed=False)
   availability = orm.SuperStringProperty('2', required=True, indexed=False, default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder'))
+
+  @classmethod
+  def hash_signature(cls, variant_signature):
+    return hashlib.md5(json.dumps(variant_signature)).hexdigest()
+
+  @classmethod
+  def prepare_key(cls, input, **kwargs):
+    return cls.build_key(cls.hash_signature(input.get('variant_signature')), parent=kwargs.get('parent'))
+
+  def prepare(self, **kwargs):
+    self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=kwargs.get('parent')) # we always no matter what set the id to this
 
 
 class CatalogProductStockContainer(orm.BaseModel):
@@ -216,8 +229,8 @@ class CatalogProduct(orm.BaseExpando):
   }
 
   _virtual_fields = {  # sorting must be done by code?
-      '_stock': orm.SuperRemoteStructuredProperty(CatalogProductStockContainer),
       '_instances': orm.SuperRemoteStructuredProperty('27',
+                                                      name='12',
                                                       repeated=True,
                                                       search={'default': {'filters': [], 'orders': [{'field': 'sequence', 'operator': 'desc'}]},
                                                               'cfg': {
@@ -225,6 +238,7 @@ class CatalogProduct(orm.BaseExpando):
                                                           'indexes': [{'ancestor': True, 'filters': [('variant_options', ['ALL_IN'])], 'orders': [('sequence', ['desc'])]},
                                                                       {'ancestor': True, 'filters': [], 'orders': [('sequence', ['desc'])]}],
                                                       }}),
+      '_stock': orm.SuperRemoteStructuredProperty(CatalogProductStockContainer, name='13', autoload=True),
       '_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='category'),
       '_uom': orm.SuperReferenceStructuredProperty('17', target_field='uom', autoload=True)
   }

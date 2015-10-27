@@ -1411,7 +1411,8 @@ $(function () {
                 uom: 'Unit of measurement',
                 variant_options: 'Select all variant options you want this configuration to be matched with',
                 weight: 'Weight (kilogram)',
-                volume: 'Volume (liter)'
+                volume: 'Volume (liter)',
+                _stock: 'Stock Configurations'
             },
             '27': {
                 uom: 'Unit of measurement',
@@ -1470,6 +1471,14 @@ $(function () {
             '107': {
                 address_type: locals.addressTypeSpec
             },
+            '133': {
+                availability: {
+                    'in stock': 'In stock',
+                    'out of stock': 'Out of stock',
+                    'preorder': 'Preorder',
+                    'available for order': 'Available for order'
+                }
+            },
             '109': {
                 address_type: locals.addressTypeSpec,
                 type: {
@@ -1485,12 +1494,12 @@ $(function () {
                     variable: 'varied by'
                 },
                 price_operator: {
-                     weight: 'weight multiplied by',
-                     volume: 'volume multiplied by',
-                     'weight*volume': 'weight multiplied by volume multiplied by',
-                     price: 'price multiplied by',
-                     quantity: 'quantity multiplied by'
-                 }
+                    weight: 'weight multiplied by',
+                    volume: 'volume multiplied by',
+                    'weight*volume': 'weight multiplied by volume multiplied by',
+                    price: 'price multiplied by',
+                    quantity: 'quantity multiplied by'
+                }
             },
             '124': {
                 condition_operator: locals.conditionOperatorSpec
@@ -1614,7 +1623,8 @@ $(function () {
             orderPaymentSuccessProgress: 'Order processing is in pogress.',
             orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
             orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
-            sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.'
+            sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
+            productOutOfStock: 'Product out of stock.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -1626,6 +1636,10 @@ $(function () {
             editProduct: 'Edit Product',
             addProduct: 'Add Product',
             editPluginGroup: false,
+            viewStock: 'Stock Configurations',
+            editStock: false,
+            editStocks: 'Edit Stock Configuration',
+            addStocks: 'Add Stock Configuration',
             settings: 'Settings',
             addPlugins: 'Add Rule',
             editPlugins: 'Edit Rule',
@@ -1674,6 +1688,12 @@ $(function () {
             sellerProfileNotFound: function (errors) {
                 if (errors.not_found && $.inArray('seller', errors.not_found) !== -1) {
                     return GLOBAL_CONFIG.snackbar.messages.sellerProfileNotFound;
+                }
+                return false;
+            },
+            productOutOfStock: function (errors) {
+                if (errors.plugin_error && $.inArray('product_out_of_stock', errors.plugin_error) !== -1) {
+                    return GLOBAL_CONFIG.snackbar.messages.productOutOfStock;
                 }
                 return false;
             },
@@ -9672,12 +9692,13 @@ $(function () {
                             // @todo this might cause problems when config.choices = some other list is applied trough the lifecycle
                             // the choices will not be re-parsed to translatedChoices
                             // this code will only run upon directive initilization
-                            var hasit = helpers.getProperty(GLOBAL_CONFIG.fields.translateChoices, [info.config._maker_, info.config.code_name, value]);
+                            var isobj = angular.isObject(value);
+                            var hasit = helpers.getProperty(GLOBAL_CONFIG.fields.translateChoices, [info.config._maker_, info.config.code_name, isobj ? value.name : value]);
                             if (angular.isUndefined(hasit)) {
-                                hasit = value;
+                                hasit = isobj ? value.name : value;
                             }
                             info.config.ui.specifics.translatedChoices.push({
-                                key: value,
+                                key: isobj ? value.key : value,
                                 name: hasit
                             });
                         });
@@ -11211,7 +11232,8 @@ $(function () {
                                     $scope.container = {
                                         action: endpoint.url
                                     };
-                                    $scope.args = angular.copy(arg);
+                                    $scope.liveArg = arg;
+                                    $scope.args = angular.copy($scope.liveArg);
                                     $scope.parentArgs = config.ui.specifics.parentArgs;
                                     $scope.rootScope = config.ui.specifics.rootScope;
                                     $scope.entity = config.ui.specifics.entity;
@@ -11582,7 +11604,7 @@ $(function () {
                                                                 item.sequence = i;
                                                             });
                                                         } else {
-                                                            $.extend(arg, $scope.args);
+                                                            $.extend($scope.liveArg, $scope.args);
                                                         }
                                                     }
 
@@ -17430,12 +17452,12 @@ angular.module('app')
                 }, resize);
             }
         };
-    })).directive('productInstanceCardView', ng(function ($compile) {
+    })).directive('productInstanceCardView', ng(function (GLOBAL_CONFIG) {
         return {
             scope: {
                 val: '=productInstanceCardView'
             },
-            templateUrl: 'catalog/product/product_instance_card_view.html',
+            templateUrl: 'catalog/product/instance_card_view.html',
             link: function (scope) {
                 scope.showVariantLabel = function (variant) {
                     return variant.split(':')[0];
@@ -17443,6 +17465,28 @@ angular.module('app')
                 scope.showVariantValue = function (variant) {
                     var splitOpen = variant.split(':');
                     return splitOpen.slice(1, splitOpen.length).join(':');
+                };
+            }
+        };
+    })).directive('productStockConfigurationCardView', ng(function (GLOBAL_CONFIG) {
+        return {
+            scope: {
+                val: '=productStockConfigurationCardView'
+            },
+            templateUrl: 'catalog/product/stock_configuration_card_view.html',
+            link: function (scope) {
+                scope.showVariantLabel = function (signature) {
+                    return _.keys(signature)[0];
+                };
+                scope.showVariantValue = function (signature) {
+                    var val = _.values(signature)[0];
+                    if (val === '***Any***') {
+                        return 'Any';
+                    }
+                    return val;
+                };
+                scope.showMainLabel = function (k) {
+                    return GLOBAL_CONFIG.fields.translateChoices['133'].availability[k];
                 };
             }
         };
@@ -17573,11 +17617,9 @@ angular.module('app')
                                         if (v.option === null) {
                                             skip = true;
                                         }
-                                        if ( /*!v.allow_custom_value*/ 1) {
-                                            buildVariantSignature.push(v.name + ': ' + v.option);
-                                            d[v.name] = v.option;
-                                            $scope.currentVariation.push(d);
-                                        }
+                                        buildVariantSignature.push(v.name + ': ' + v.option);
+                                        d[v.name] = v.option;
+                                        $scope.currentVariation.push(d);
                                     });
 
                                     if (skip) {
@@ -17745,7 +17787,9 @@ angular.module('app')
                                             var order = response.data.entity;
                                             if (order.id) {
                                                 angular.forEach(order._lines, function (line) {
-                                                    if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
+                                                    if (line.product._reference.parent.id === $scope.product.parent.id
+                                                            && line.product._reference.id === $scope.product.id
+                                                            && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
                                                         $scope.productQuantity = parseInt(line.product.quantity, 10);
                                                         if ($scope.productQuantity > 0) {
                                                             $scope.hasThisProduct = true;
@@ -17861,6 +17905,8 @@ angular.module('app')
                                             image: imageKey,
                                             quantity: $scope.productQuantity,
                                             variant_signature: $scope.currentVariation
+                                        }, {
+                                            handleError: GLOBAL_CONFIG.backendErrorHandling.productOutOfStock
                                         });
                                     }).then(function (response) {
                                         if (config.events && config.events.addToCart) {
@@ -18656,7 +18702,7 @@ angular.module('app')
                                                 $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = false;
                                                 $scope.fieldProduct.ui.realPath = ['_images', ii, 'pricetags', image.pricetags.length - 1, '_product']; // set correct pathing for the new product
                                                 recomputeRealPath($scope.fieldProduct);
-                                                $scope.fieldProduct.ui.specifics.create(undefined, undefined, {
+                                                $scope.fieldProduct.ui.specifics.create(undefined, newPricetag._product, {
                                                     target: target
                                                 });
                                             };
@@ -18784,6 +18830,106 @@ angular.module('app')
                                                     enabled: true
                                                 }
                                             };
+
+                                            $.extend($scope.fieldProduct.modelclass._stock.ui, {
+                                                specifics: {},
+                                                init: function (config) {
+                                                    $scope.fieldProduct.modelclass._stock.ui.specifics.variants = config.scope.args.variants;
+                                                }
+                                            });
+
+
+                                            $.extend($scope.fieldProduct.modelclass._stock.modelclass.stocks.ui, {
+                                                specifics: {
+                                                    cards: true,
+                                                    cardView: 'product-stock-configuration-card-view',
+                                                    init: function (fieldScope) {
+                                                        var variants = $scope.fieldProduct.modelclass._stock.ui.specifics.variants,
+                                                            availability = fieldScope.formBuilder[0].pop(),
+                                                            swichables = [],
+                                                            save;
+                                                        fieldScope.formBuilder[0].empty();
+                                                        fieldScope.variantCombination = {};
+                                                        angular.forEach(variants, function (value, i) {
+                                                            if (value.allow_custom_value) {
+                                                                return;
+                                                            }
+                                                            try {
+                                                                fieldScope.variantCombination[i] = _.values(fieldScope.args.variant_signature[i])[0];
+                                                            } catch (ignore) {}
+                                                            var computeWritable = (function () {
+                                                                var t = [];
+                                                                angular.forEach(fieldScope.args.ui.access, function (value, key) {
+                                                                    if (!angular.isNumber(value)) {
+                                                                        t.push("['" + value + "']");
+                                                                    }
+                                                                });
+                                                                return t.join('');
+                                                            }()), field = {
+                                                                type: 'SuperStringProperty',
+                                                                choices: (function () {
+                                                                    var list = value.options.concat(),
+                                                                        values = [{
+                                                                            key: '***Any***',
+                                                                            name: 'Any'
+                                                                        }];
+                                                                    angular.forEach(list, function (v) {
+                                                                        values.push({
+                                                                            key: v,
+                                                                            name: v
+                                                                        });
+                                                                    });
+                                                                    return values;
+                                                                }()),
+                                                                code_name: 'variant_choice_' + i,
+                                                                required: false,
+                                                                ui: {
+                                                                    writable: 'entity.ui.rule.field' + computeWritable + '.variant_signature.writable',
+                                                                    label: value.name,
+                                                                    help: value.description,
+                                                                    args: 'variantCombination[' + i + ']',
+                                                                    attrs: {
+                                                                        'ng-change': 'changeVariantCommit()'
+                                                                    }
+                                                                }
+                                                            };
+                                                            swichables.push(field);
+                                                            fieldScope.formBuilder[0].push(field);
+                                                        });
+                                                        fieldScope.formBuilder[0].push(availability);
+                                                        fieldScope.changeVariantCommit = function () {
+                                                            angular.forEach(variants, function (value, i) {
+                                                                var d = {};
+                                                                d[value.name] = fieldScope.variantCombination[i];
+                                                                if (angular.isDefined(fieldScope.args.variant_signature[i])) {
+                                                                    fieldScope.args.variant_signature[i] = d;
+                                                                } else {
+                                                                    fieldScope.args.variant_signature.push(d);
+                                                                }
+                                                            });
+                                                        };
+
+                                                        save = fieldScope.save;
+
+                                                        fieldScope.save = function () {
+                                                            var match,
+                                                                matchStr = JSON.stringify(fieldScope.args.variant_signature);
+                                                            angular.forEach(fieldScope.parentArgs, function (value, key) {
+                                                                if (JSON.stringify(value.variant_signature) === matchStr) {
+                                                                    match = value;
+                                                                }
+                                                            });
+                                                            if (match) {
+                                                                $.extend(match, fieldScope.args);
+                                                                fieldScope.isNew = false;
+                                                                fieldScope.liveArg = match;
+                                                            }
+                                                            return save();
+                                                        };
+                                                    }
+                                                }
+                                            });
+
 
 
                                             $.extend($scope.fieldProduct.modelclass._instances.ui, {

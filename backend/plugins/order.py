@@ -114,6 +114,31 @@ class OrderUpdateLine(orm.BaseModel):
       product_instance = None
       product.read({'_category': {}})  # more fields probably need to be specified
       if variant_signature:
+        if product._stock.value and product._stock.value.stocks.value:
+          out_of_stock = False
+          skip_additional_stock_checks = False
+          stocks = product._stock.value.stocks.value
+          for stock in stocks:
+            if stock.variant_signature == variant_signature:
+              out_of_stock = stock.availability == 'out of stock'
+              skip_additional_stock_checks = True
+              break # we found complete match, this product combination is definitely out of stock
+          if not out_of_stock and not skip_additional_stock_checks: # no matches for out of stock found
+            # try to find those with ***Any*** because they might match out of stock
+            for stock in stocks:
+              maybe = []
+              for i, part in enumerate(variant_signature): # [{'Color': 'Red'}, {'Size': 'XL'}]
+                part = part.iteritems().next() # ('Color', 'Red')
+                item = stock.variant_signature[i].iteritems().next() # ('Color', 'Red')
+                if item == part or item[1] == '***Any***':
+                  maybe.append(True)
+                else:
+                  maybe.append(False)
+              if all(maybe) and stock.availability == 'out of stock':
+                out_of_stock = True
+                break
+          if out_of_stock:
+            raise PluginError('product_out_of_stock')
         q = ProductInstance.query()
         for variant in variant_signature:
           item = variant.iteritems().next()

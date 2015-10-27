@@ -1,0 +1,11 @@
+<h1 class="headline padding-bottom-16" ng-bind="showMainLabel(val.availability)"></h1>
+<table class="card-table">
+    <tbody>
+        <tr ng-repeat="variant in val.variant_signature">
+            <td class="secondary info">{{showVariantLabel(variant)}}</td>
+            <td class="secondary">
+                {{showVariantValue(variant)}}
+            </td>
+        </tr>
+    </tbody>
+</table>

@@ -435,7 +435,8 @@
                                     $scope.container = {
                                         action: endpoint.url
                                     };
-                                    $scope.args = angular.copy(arg);
+                                    $scope.liveArg = arg;
+                                    $scope.args = angular.copy($scope.liveArg);
                                     $scope.parentArgs = config.ui.specifics.parentArgs;
                                     $scope.rootScope = config.ui.specifics.rootScope;
                                     $scope.entity = config.ui.specifics.entity;
@@ -806,7 +807,7 @@
                                                                 item.sequence = i;
                                                             });
                                                         } else {
-                                                            $.extend(arg, $scope.args);
+                                                            $.extend($scope.liveArg, $scope.args);
                                                         }
                                                     }
 

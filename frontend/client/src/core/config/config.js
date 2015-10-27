@@ -214,7 +214,8 @@
                 uom: 'Unit of measurement',
                 variant_options: 'Select all variant options you want this configuration to be matched with',
                 weight: 'Weight (kilogram)',
-                volume: 'Volume (liter)'
+                volume: 'Volume (liter)',
+                _stock: 'Stock Configurations'
             },
             '27': {
                 uom: 'Unit of measurement',
@@ -273,6 +274,14 @@
             '107': {
                 address_type: locals.addressTypeSpec
             },
+            '133': {
+                availability: {
+                    'in stock': 'In stock',
+                    'out of stock': 'Out of stock',
+                    'preorder': 'Preorder',
+                    'available for order': 'Available for order'
+                }
+            },
             '109': {
                 address_type: locals.addressTypeSpec,
                 type: {
@@ -288,12 +297,12 @@
                     variable: 'varied by'
                 },
                 price_operator: {
-                     weight: 'weight multiplied by',
-                     volume: 'volume multiplied by',
-                     'weight*volume': 'weight multiplied by volume multiplied by',
-                     price: 'price multiplied by',
-                     quantity: 'quantity multiplied by'
-                 }
+                    weight: 'weight multiplied by',
+                    volume: 'volume multiplied by',
+                    'weight*volume': 'weight multiplied by volume multiplied by',
+                    price: 'price multiplied by',
+                    quantity: 'quantity multiplied by'
+                }
             },
             '124': {
                 condition_operator: locals.conditionOperatorSpec
@@ -417,7 +426,8 @@
             orderPaymentSuccessProgress: 'Order processing is in pogress.',
             orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
             orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
-            sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.'
+            sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
+            productOutOfStock: 'Product out of stock.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -429,6 +439,10 @@
             editProduct: 'Edit Product',
             addProduct: 'Add Product',
             editPluginGroup: false,
+            viewStock: 'Stock Configurations',
+            editStock: false,
+            editStocks: 'Edit Stock Configuration',
+            addStocks: 'Add Stock Configuration',
             settings: 'Settings',
             addPlugins: 'Add Rule',
             editPlugins: 'Edit Rule',
@@ -477,6 +491,12 @@
             sellerProfileNotFound: function (errors) {
                 if (errors.not_found && $.inArray('seller', errors.not_found) !== -1) {
                     return GLOBAL_CONFIG.snackbar.messages.sellerProfileNotFound;
+                }
+                return false;
+            },
+            productOutOfStock: function (errors) {
+                if (errors.plugin_error && $.inArray('product_out_of_stock', errors.plugin_error) !== -1) {
+                    return GLOBAL_CONFIG.snackbar.messages.productOutOfStock;
                 }
                 return false;
             },

@@ -351,6 +351,7 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
 
       if self._property._repeated:
         delete_entities = []
+        seen = set() # do not allow ever - same key id's in local structured data
         for entity in self._property_value:
           if hasattr(entity, 'prepare'):
             entity.prepare(parent=self._entity.key)
@@ -362,6 +363,10 @@ class LocalStructuredPropertyValue(StructuredPropertyValue):
             delete_entities.append(entity)
             if entity._state == 'deleted':
               delete_structured(entity)
+          if entity.key in seen:
+            delete_entities.append(entity)
+          else:
+            seen.add(entity.key)
           substructured_pre_update()
 
         for delete_entity in delete_entities:

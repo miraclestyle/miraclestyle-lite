@@ -297,12 +297,13 @@
                             // @todo this might cause problems when config.choices = some other list is applied trough the lifecycle
                             // the choices will not be re-parsed to translatedChoices
                             // this code will only run upon directive initilization
-                            var hasit = helpers.getProperty(GLOBAL_CONFIG.fields.translateChoices, [info.config._maker_, info.config.code_name, value]);
+                            var isobj = angular.isObject(value);
+                            var hasit = helpers.getProperty(GLOBAL_CONFIG.fields.translateChoices, [info.config._maker_, info.config.code_name, isobj ? value.name : value]);
                             if (angular.isUndefined(hasit)) {
-                                hasit = value;
+                                hasit = isobj ? value.name : value;
                             }
                             info.config.ui.specifics.translatedChoices.push({
-                                key: value,
+                                key: isobj ? value.key : value,
                                 name: hasit
                             });
                         });
