@@ -345,6 +345,9 @@
             '126': {
                 lines: 'seller/help/discount_lines.html'
             },
+            '134': {
+                stocks: 'catalog/product/help/stock_configurations.html',
+            },
             '107': {
                 locations: 'seller/help/locations.html'
             },

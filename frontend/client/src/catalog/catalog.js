@@ -1614,9 +1614,20 @@
                                             };
 
                                             $.extend($scope.fieldProduct.modelclass._stock.ui, {
-                                                specifics: {},
-                                                init: function (config) {
-                                                    $scope.fieldProduct.modelclass._stock.ui.specifics.variants = config.scope.args.variants;
+                                                specifics: {
+                                                    canOpen: function () {
+                                                        var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
+                                                            currentArgs = currentFieldScope.args;
+                                                        if (!currentArgs.id) {
+                                                            snackbar.showK('saveProductFirst');
+                                                            return false;
+                                                        }
+                                                        if (!currentArgs.variants.length) {
+                                                            snackbar.showK('createVariantsFirst');
+                                                            return false;
+                                                        }
+                                                        return true;
+                                                    }
                                                 }
                                             });
 
@@ -1626,7 +1637,7 @@
                                                     cards: true,
                                                     cardView: 'product-stock-configuration-card-view',
                                                     init: function (fieldScope) {
-                                                        var variants = $scope.fieldProduct.modelclass._stock.ui.specifics.variants,
+                                                        var variants = $scope.fieldProduct.ui.specifics.getScope().args.variants,
                                                             availability = fieldScope.formBuilder[0].pop(),
                                                             swichables = [],
                                                             save;
@@ -1664,7 +1675,7 @@
                                                                     return values;
                                                                 }()),
                                                                 code_name: 'variant_choice_' + i,
-                                                                required: false,
+                                                                required: true,
                                                                 ui: {
                                                                     writable: 'entity.ui.rule.field' + computeWritable + '.variant_signature.writable',
                                                                     label: value.name,
