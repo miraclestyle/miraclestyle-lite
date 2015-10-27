@@ -131,10 +131,11 @@ class OrderUpdateLine(orm.BaseModel):
                 part = part.iteritems().next() # ('Color', 'Red')
                 try:
                   item = stock.variant_signature[i].iteritems().next() # ('Color', 'Red')
+                  passes = item == part or item[1] == '***Any***'
                 except IndexError as e:
                   # this is when user did not configure stock improperly
-                  break
-                if item == part or item[1] == '***Any***':
+                  passes = False
+                if passes:
                   maybe.append(True)
                 else:
                   maybe.append(False)
