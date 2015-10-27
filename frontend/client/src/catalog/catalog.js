@@ -628,8 +628,13 @@
                                         angular.forEach(stock.stocks, function (st) {
                                             var matching = [];
                                             angular.forEach($scope.currentVariation, function (part, i) {
-                                                var sig = st.variant_signature[i],
+                                                var partst, sig;
+                                                try {
+                                                    sig = st.variant_signature[i];
                                                     partst = JSON.stringify(sig);
+                                                } catch (ignore) {
+                                                    return; // exit if user did not configure the configuration properly
+                                                }
                                                 part = JSON.stringify(part);
                                                 if (part === partst || _.values(sig)[0] === '***Any***') {
                                                     matching.push(true);
