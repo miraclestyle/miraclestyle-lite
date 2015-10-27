@@ -17876,6 +17876,50 @@ angular.module('app')
                                     $scope.disableUpdateCart = false;
                                 };
 
+                                $scope.getAvailability = function (isInStock) {
+                                    var stock = $scope.product._stock,
+                                        match = 'in stock',
+                                        stop,
+                                        currentVariationStr = JSON.stringify($scope.currentVariation);
+                                    if (!stock || !stock.stocks.length) {
+                                        return GLOBAL_CONFIG.fields.translateChoices['133'].availability[match];
+                                    }
+                                    angular.forEach(stock.stocks, function (st) {
+                                        if (!stop && currentVariationStr === JSON.stringify(st.variant_signature)) {
+                                            match = st.availability;
+                                            stop = true;
+                                        }
+                                    });
+                                    if (!stop) { // did not find any matches, try finding it manually
+                                        angular.forEach(stock.stocks, function (st) {
+                                            var matching = [];
+                                            angular.forEach($scope.currentVariation, function (part, i) {
+                                                var partst, sig, passes;
+                                                try {
+                                                    sig = st.variant_signature[i];
+                                                    partst = JSON.stringify(sig);
+                                                    passes = part === partst || _.values(sig)[0] === '***Any***';
+                                                } catch (ignore) {
+                                                    return; // exit if user did not configure the configuration properly
+                                                }
+                                                part = JSON.stringify(part);
+                                                if (passes) {
+                                                    matching.push(true);
+                                                } else {
+                                                    matching.push(false);
+                                                }
+                                            });
+                                            if (!_.without(matching, true).length) { // remove all "true" values from list, if list is empty than we have a match
+                                                match = st.availability;
+                                            }
+                                        });
+                                    }
+                                    if (isInStock) {
+                                        return match !== 'out of stock';
+                                    }
+                                    return GLOBAL_CONFIG.fields.translateChoices['133'].availability[match];
+                                };
+
                                 $scope.addToCart = function () {
                                     if (currentAccount._is_guest) {
                                         models['11'].login($state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
@@ -17885,6 +17929,10 @@ angular.module('app')
                                             variant: helpers.url.jsonToUrlsafe($scope.currentVariation),
                                             quantity: $scope.productQuantity
                                         }));
+                                        return;
+                                    }
+                                    if (!$scope.getAvailability(true)) {
+                                        snackbar.showK('productOutOfStock');
                                         return;
                                     }
                                     if (config.autoAddToCart) {
