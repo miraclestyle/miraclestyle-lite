@@ -833,7 +833,7 @@
                         thismonth = date.getMonth() === now.getMonth();
                         format = 'd MMM, HH:mm';
                     }
-                    if (thismonth && thisyear && date.getDay() === now.getDay()) {
+                    if (thismonth && thisyear && date.getDate() === now.getDate()) {
                         today = true;
                         format = 'HH:mm';
                     }
