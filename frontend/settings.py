@@ -199,7 +199,7 @@ def _empty_dir(d):
 
 def build(templates=True, statics=True, js_and_css=True, write=False, inform=True):
   dist = os.path.join(CLIENT_DIR, 'dist')
-  node = os.path.join(ROOT_DIR, 'node', 'raw')
+  node = os.path.join(ROOT_DIR, '.node', 'raw')
   paths = {}
   buff = {}
 
