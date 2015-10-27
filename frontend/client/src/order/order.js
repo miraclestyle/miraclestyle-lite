@@ -236,7 +236,7 @@
                                             }
                                             if (valid) {
                                                 $scope.cmd.order.update(addressing).then(function (response) {
-                                                    if (response.data.errors) {
+                                                    if (helpers.endpoint.isResponseError(response)) {
                                                         return;
                                                     }
                                                     $scope.stage.out.push(2);
@@ -649,7 +649,7 @@
                                             };
                                             $.extend(data, extra);
                                             return models['34'].actions.update(data, {
-                                                ignoreErrors: true
+                                                ignoreErrors: 2
                                             }).then(function (response) {
                                                 var errors = response.data.errors;
                                                 if (errors) {

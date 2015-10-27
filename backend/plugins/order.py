@@ -113,11 +113,13 @@ class OrderUpdateLine(orm.BaseModel):
       product = product_key.get()
       product_instance = None
       product.read({'_category': {}})  # more fields probably need to be specified
+      stocks = None
+      out_of_stock = False
+      if product._stock.value and product._stock.value.stocks.value: # if user defined any stocks
+        stocks = product._stock.value.stocks.value
       if variant_signature:
-        if product._stock.value and product._stock.value.stocks.value:
-          out_of_stock = False
+        if stocks:
           skip_additional_stock_checks = False
-          stocks = product._stock.value.stocks.value
           for stock in stocks:
             if stock.variant_signature == variant_signature:
               out_of_stock = stock.availability == 'out of stock'
@@ -142,13 +144,19 @@ class OrderUpdateLine(orm.BaseModel):
               if all(maybe) and stock.availability == 'out of stock':
                 out_of_stock = True
                 break
-          if out_of_stock:
-            raise PluginError('product_out_of_stock')
+        if out_of_stock:
+          raise PluginError('product_out_of_stock') # stop the code so it doesnt issue another query for no reason
         q = ProductInstance.query()
         for variant in variant_signature:
           item = variant.iteritems().next()
           q = q.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
         product_instance = q.get()
+      else: # if the product did not specify any product signature, find stock without variant_signature and see if there's any that has no stock
+        for stock in stocks:
+          if not stock.variant_signature and stock.availability == 'out of stock':
+            out_of_stock = True
+      if out_of_stock:
+        raise PluginError('product_out_of_stock')
       new_line = Line()
       order_product = OrderProduct()
       order_product.name = product.name

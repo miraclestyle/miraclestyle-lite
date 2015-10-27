@@ -619,7 +619,13 @@
                                         return GLOBAL_CONFIG.fields.translateChoices['133'].availability[match];
                                     }
                                     angular.forEach(stock.stocks, function (st) {
-                                        if (!stop && currentVariationStr === JSON.stringify(st.variant_signature)) {
+                                        var findMatch = false;
+                                        if ($scope.currentVariation.length) {
+                                            findMatch = currentVariationStr === JSON.stringify(st.variant_signature);
+                                        } else {
+                                            findMatch = !st.variant_signature.length;
+                                        }
+                                        if (!stop && findMatch) {
                                             match = st.availability;
                                             stop = true;
                                         }
@@ -1620,10 +1626,6 @@
                                                             currentArgs = currentFieldScope.args;
                                                         if (!currentArgs.id) {
                                                             snackbar.showK('saveProductFirst');
-                                                            return false;
-                                                        }
-                                                        if (!currentArgs.variants.length) {
-                                                            snackbar.showK('createVariantsFirst');
                                                             return false;
                                                         }
                                                         return true;

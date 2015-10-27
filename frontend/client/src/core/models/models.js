@@ -912,8 +912,10 @@
                                             theConfig.args.search.options.start_cursor = this.cursor;
                                             this.loading = true;
                                             promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
-                                            promise.then(function (response) {
-                                                if (response.data.errors) {
+                                            promise.error(function (response) {
+                                                paginate.more = false;
+                                            }).then(function (response) {
+                                                if (helpers.endpoint.isResponseError(response)) {
                                                     paginate.more = false;
                                                     return config.complete.call(this, response);
                                                 }
@@ -1071,9 +1073,12 @@
                                                 loadConfig.runLastFinally();
                                             }
                                         });
+                                        promise.error(function () {
+                                            that.more = false;
+                                        });
 
                                         return promise.then(function (response) {
-                                            if (response.data.errors) {
+                                            if (helpers.endpoint.isResponseError(response)) {
                                                 that.more = false;
                                                 return response;
                                             }

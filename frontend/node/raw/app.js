@@ -725,6 +725,14 @@ $(function () {
                 }
                 return angular.noop;
             },
+            endpoint: {
+                isResponseError: function (response) {
+                    return angular.isString(response) || (response.status !== 200 || response.data.errors);
+                },
+                isResponseHttpError: function (response) {
+                    return angular.isString(response) || response.status !== 200;
+                }
+            },
             alwaysObject: function (obj) {
                 if (!angular.isObject(obj)) {
                     return {};
@@ -1090,9 +1098,9 @@ $(function () {
                         reject,
                         shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
 
-                    if (!rejection.config.ignoreErrors) {
+                    if (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1) {
 
-                        if (rejection.status > 200) {
+                        if (rejection.status > 200 && rejection.config.ignoreErrors === 2) {
                             errorHandling.snackbar(angular.isString(rejection.data) ? {
                                 traceback: rejection.data
                             } : rejection.data.errors, rejection.config.handleError);
@@ -1101,7 +1109,7 @@ $(function () {
                             }
                             return $q.reject(rejection);
                         }
-                        if (data && data.errors) {
+                        if (data && data.errors && rejection.config.ignoreErrors > 2) {
                             errorHandling.snackbar(rejection.data.errors, rejection.config.handleError);
                             reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
                             if (data.errors.action_denied) {
@@ -14992,8 +15000,10 @@ $(function () {
                                             theConfig.args.search.options.start_cursor = this.cursor;
                                             this.loading = true;
                                             promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
-                                            promise.then(function (response) {
-                                                if (response.data.errors) {
+                                            promise.error(function (response) {
+                                                paginate.more = false;
+                                            }).then(function (response) {
+                                                if (helpers.endpoint.isResponseError(response)) {
                                                     paginate.more = false;
                                                     return config.complete.call(this, response);
                                                 }
@@ -15151,9 +15161,12 @@ $(function () {
                                                 loadConfig.runLastFinally();
                                             }
                                         });
+                                        promise.error(function () {
+                                            that.more = false;
+                                        });
 
                                         return promise.then(function (response) {
-                                            if (response.data.errors) {
+                                            if (helpers.endpoint.isResponseError(response)) {
                                                 that.more = false;
                                                 return response;
                                             }
@@ -17128,7 +17141,7 @@ angular.module('app')
                         }
                     },
                     config: {
-                        ignoreErrors: true
+                        ignoreErrors: 2
                     },
                     complete: function (response) {
                         var errors = response.data.errors;
@@ -17891,7 +17904,13 @@ angular.module('app')
                                         return GLOBAL_CONFIG.fields.translateChoices['133'].availability[match];
                                     }
                                     angular.forEach(stock.stocks, function (st) {
-                                        if (!stop && currentVariationStr === JSON.stringify(st.variant_signature)) {
+                                        var findMatch = false;
+                                        if ($scope.currentVariation.length) {
+                                            findMatch = currentVariationStr === JSON.stringify(st.variant_signature);
+                                        } else {
+                                            findMatch = !st.variant_signature.length;
+                                        }
+                                        if (!stop && findMatch) {
                                             match = st.availability;
                                             stop = true;
                                         }
@@ -18894,10 +18913,6 @@ angular.module('app')
                                                             snackbar.showK('saveProductFirst');
                                                             return false;
                                                         }
-                                                        if (!currentArgs.variants.length) {
-                                                            snackbar.showK('createVariantsFirst');
-                                                            return false;
-                                                        }
                                                         return true;
                                                     }
                                                 }
@@ -19840,7 +19855,7 @@ angular.module('app')
                                             }
                                             if (valid) {
                                                 $scope.cmd.order.update(addressing).then(function (response) {
-                                                    if (response.data.errors) {
+                                                    if (helpers.endpoint.isResponseError(response)) {
                                                         return;
                                                     }
                                                     $scope.stage.out.push(2);
@@ -20253,7 +20268,7 @@ angular.module('app')
                                             };
                                             $.extend(data, extra);
                                             return models['34'].actions.update(data, {
-                                                ignoreErrors: true
+                                                ignoreErrors: 2
                                             }).then(function (response) {
                                                 var errors = response.data.errors;
                                                 if (errors) {
@@ -20550,11 +20565,24 @@ angular.module('app')
                 kind: '31',
                 args: {
                     search: {
-                        ancestor: sellerEntity.key
+                        ancestor: sellerEntity.key,
+                        /*
+                        // this kind of query causes
+                        // BadArgumentError: _MultiQuery with cursors requires __key__ order
+                        filters: [{
+                            field: 'state',
+                            operator: '!=',
+                            value: 'discontinued'
+                        }],
+                         */
+                        orders: [{
+                            field: 'created',
+                            operator: 'desc'
+                        }]
                     }
                 },
                 config: {
-                    ignoreErrors: true
+                    ignoreErrors: 2
                 },
                 complete: function (response) {
                     var errors = response.data.errors;
@@ -20612,7 +20640,7 @@ angular.module('app')
                     }
                 },
                 config: {
-                    ignoreErrors: true
+                    ignoreErrors: 2
                 },
                 complete: function (response) {
                     var errors = response.data.errors;

@@ -106,11 +106,24 @@
                 kind: '31',
                 args: {
                     search: {
-                        ancestor: sellerEntity.key
+                        ancestor: sellerEntity.key,
+                        /*
+                        // this kind of query causes
+                        // BadArgumentError: _MultiQuery with cursors requires __key__ order
+                        filters: [{
+                            field: 'state',
+                            operator: '!=',
+                            value: 'discontinued'
+                        }],
+                         */
+                        orders: [{
+                            field: 'created',
+                            operator: 'desc'
+                        }]
                     }
                 },
                 config: {
-                    ignoreErrors: true
+                    ignoreErrors: 2
                 },
                 complete: function (response) {
                     var errors = response.data.errors;
@@ -168,7 +181,7 @@
                     }
                 },
                 config: {
-                    ignoreErrors: true
+                    ignoreErrors: 2
                 },
                 complete: function (response) {
                     var errors = response.data.errors;

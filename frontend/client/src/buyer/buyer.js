@@ -137,7 +137,7 @@
                         }
                     },
                     config: {
-                        ignoreErrors: true
+                        ignoreErrors: 2
                     },
                     complete: function (response) {
                         var errors = response.data.errors;

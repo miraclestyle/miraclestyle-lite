@@ -64,6 +64,14 @@
                 }
                 return angular.noop;
             },
+            endpoint: {
+                isResponseError: function (response) {
+                    return angular.isString(response) || (response.status !== 200 || response.data.errors);
+                },
+                isResponseHttpError: function (response) {
+                    return angular.isString(response) || response.status !== 200;
+                }
+            },
             alwaysObject: function (obj) {
                 if (!angular.isObject(obj)) {
                     return {};
@@ -429,9 +437,9 @@
                         reject,
                         shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
 
-                    if (!rejection.config.ignoreErrors) {
+                    if (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1) {
 
-                        if (rejection.status > 200) {
+                        if (rejection.status > 200 && rejection.config.ignoreErrors === 2) {
                             errorHandling.snackbar(angular.isString(rejection.data) ? {
                                 traceback: rejection.data
                             } : rejection.data.errors, rejection.config.handleError);
@@ -440,7 +448,7 @@
                             }
                             return $q.reject(rejection);
                         }
-                        if (data && data.errors) {
+                        if (data && data.errors && rejection.config.ignoreErrors > 2) {
                             errorHandling.snackbar(rejection.data.errors, rejection.config.handleError);
                             reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
                             if (data.errors.action_denied) {
