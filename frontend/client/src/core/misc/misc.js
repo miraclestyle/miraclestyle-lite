@@ -830,7 +830,7 @@
                         format = 'd MMM yyyy, HH:mm';
                     }
                     if (thisyear) {
-                        thismonth = true;
+                        thismonth = date.getMonth() === now.getMonth();
                         format = 'd MMM, HH:mm';
                     }
                     if (thismonth && thisyear && date.getDay() === now.getDay()) {
