@@ -1260,7 +1260,7 @@ $(function () {
             },
             publishCatalog: {
                 title: 'Publish the catalog?',
-                message: 'A published catalog is accessible to the general public and can be shared and embedded to third party websites. With an exception of a product "Availability" field, a published catalog cannot be edited. However, a published catalog can be duplicated, and the duplicate is ready for editing. You will be notified once this action is completed.',
+                message: 'A published catalog is accessible to the general public and can be shared and embedded to third party websites. With an exception of a product "Stock configurations", a published catalog cannot be edited. However, a published catalog can be duplicated, and the duplicate is ready for editing. You will be notified once this action is completed.',
                 text: {
                     primary: 'Publish'
                 }
@@ -1542,6 +1542,9 @@ $(function () {
             '126': {
                 lines: 'seller/help/discount_lines.html'
             },
+            '134': {
+                stocks: 'catalog/product/help/stock_configurations.html',
+            },
             '107': {
                 locations: 'seller/help/locations.html'
             },
@@ -1696,6 +1699,9 @@ $(function () {
                     return GLOBAL_CONFIG.snackbar.messages.productOutOfStock;
                 }
                 return false;
+            },
+            internal_server_error: function (errors) {
+                return 'Error occurred on the server.';
             },
             action_denied: function (reason) {
                 return 'You do not have permission to perform this action.';
@@ -17816,7 +17822,7 @@ angular.module('app')
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
-                                            'description', 'contents', 'availability'
+                                            'description', 'contents',
                                         ];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
@@ -18880,9 +18886,20 @@ angular.module('app')
                                             };
 
                                             $.extend($scope.fieldProduct.modelclass._stock.ui, {
-                                                specifics: {},
-                                                init: function (config) {
-                                                    $scope.fieldProduct.modelclass._stock.ui.specifics.variants = config.scope.args.variants;
+                                                specifics: {
+                                                    canOpen: function () {
+                                                        var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
+                                                            currentArgs = currentFieldScope.args;
+                                                        if (!currentArgs.id) {
+                                                            snackbar.showK('saveProductFirst');
+                                                            return false;
+                                                        }
+                                                        if (!currentArgs.variants.length) {
+                                                            snackbar.showK('createVariantsFirst');
+                                                            return false;
+                                                        }
+                                                        return true;
+                                                    }
                                                 }
                                             });
 
@@ -18892,7 +18909,7 @@ angular.module('app')
                                                     cards: true,
                                                     cardView: 'product-stock-configuration-card-view',
                                                     init: function (fieldScope) {
-                                                        var variants = $scope.fieldProduct.modelclass._stock.ui.specifics.variants,
+                                                        var variants = $scope.fieldProduct.ui.specifics.getScope().args.variants,
                                                             availability = fieldScope.formBuilder[0].pop(),
                                                             swichables = [],
                                                             save;
@@ -18930,7 +18947,7 @@ angular.module('app')
                                                                     return values;
                                                                 }()),
                                                                 code_name: 'variant_choice_' + i,
-                                                                required: false,
+                                                                required: true,
                                                                 ui: {
                                                                     writable: 'entity.ui.rule.field' + computeWritable + '.variant_signature.writable',
                                                                     label: value.name,
@@ -18989,7 +19006,7 @@ angular.module('app')
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',
-                                                        fields: ["code", "description", "unit_price", "availability", "weight", "volume"]
+                                                        fields: ["code", "description", "unit_price", "weight", "volume"]
                                                     }, {
                                                         fields: ["images"]
                                                     }, {
@@ -21625,6 +21642,7 @@ angular.module('app')
             $scope.search = searchBuilder.create();
             $.extend($scope.search, {
                 doSearch: function () {
+                    this.send.t = new Date().getTime();
                     $state.go('admin-list', {
                         kind: this.kind,
                         query: helpers.url.jsonToUrlsafe({

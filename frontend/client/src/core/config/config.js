@@ -503,6 +503,9 @@
                 }
                 return false;
             },
+            internal_server_error: function (errors) {
+                return 'Error occurred on the server.';
+            },
             action_denied: function (reason) {
                 return 'You do not have permission to perform this action.';
             },
