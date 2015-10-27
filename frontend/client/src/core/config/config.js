@@ -63,7 +63,7 @@
             },
             publishCatalog: {
                 title: 'Publish the catalog?',
-                message: 'A published catalog is accessible to the general public and can be shared and embedded to third party websites. With an exception of a product "Availability" field, a published catalog cannot be edited. However, a published catalog can be duplicated, and the duplicate is ready for editing. You will be notified once this action is completed.',
+                message: 'A published catalog is accessible to the general public and can be shared and embedded to third party websites. With an exception of a product "Stock configurations", a published catalog cannot be edited. However, a published catalog can be duplicated, and the duplicate is ready for editing. You will be notified once this action is completed.',
                 text: {
                     primary: 'Publish'
                 }
