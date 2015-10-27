@@ -743,8 +743,10 @@ class Catalog(orm.BaseExpando):
                                   {'ancestor': True, 'filters': [('state', ['==', '!='])], 'orders': [('created', ['asc', 'desc'])]},
                                   {'orders': [('created', ['asc', 'desc'])]},
                                   {'orders': [('updated', ['asc', 'desc'])]},
-                                  {'filters': [('state', ['==', '!='])],
+                                  {'filters': [('state', ['=='])],
                                    'orders': [('created', ['asc', 'desc'])]},
+                                  {'filters': [('state', ['=='])],
+                                   'orders': [('updated', ['asc', 'desc'])]},
                                   {'filters': [('key', ['=='])]}]
                   }
               )
