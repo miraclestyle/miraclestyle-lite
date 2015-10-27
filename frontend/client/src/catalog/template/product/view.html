@@ -64,7 +64,7 @@
                                           <span ng-bind="product.unit_price|formatCurrency:catalog._seller._currency"></span> 
                                           <span ng-bind="catalog._seller._currency.code">()</span>
                                         </span>
-                                        <span ng-bind="product.availability" class="second"></span>
+                                        <span ng-bind="getAvailability()" class="second"></span>
                                     </div>
                                 </div>
                                 <div class="product-variant-selection" ng-if="variantSelection.length && false">
