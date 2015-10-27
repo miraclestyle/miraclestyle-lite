@@ -49,7 +49,7 @@ class Account(orm.BaseExpando):
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  state = orm.SuperStringProperty('3', required=True, default='active', choices=('active', 'suspended', 'su_suspended'))
+  state = orm.SuperStringProperty('3', required=True, default='active', choices=('active', 'suspended'))
   identities = orm.SuperStructuredProperty(AccountIdentity, '4', repeated=True)  # Soft limit 100 instances.
   sessions = orm.SuperLocalStructuredProperty(AccountSession, '5', repeated=True)  # Soft limit 100 instances.
 
@@ -198,12 +198,12 @@ class Account(orm.BaseExpando):
                   cfg={
                       'search_arguments': {'kind': '11', 'options': {'limit': settings.SEARCH_PAGE}},
                       'filters': {'key': orm.SuperVirtualKeyProperty(kind='11', searchable=False),
-                                  'state': orm.SuperStringProperty(choices=('active', 'suspended', 'su_suspended')),
+                                  'state': orm.SuperStringProperty(choices=('active', 'suspended')),
                                   'identities.email': orm.SuperStringProperty(searchable=False)},
                       'indexes': [{'orders': [('created', ['asc', 'desc'])]},
                                   {'orders': [('updated', ['asc', 'desc'])]},
-                                  {'filters': [('key', ['==', '!='])]},
-                                  {'filters': [('identities.email', ['==', '!='])]},
+                                  {'filters': [('key', ['=='])]},
+                                  {'filters': [('identities.email', ['=='])]},
                                   {'filters': [('state', ['==', '!='])], 'orders': [('created', ['asc', 'desc'])]}]
                   }
               )
