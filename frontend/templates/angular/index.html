@@ -61,15 +61,15 @@
                 <img src="/client/dist/static/logo_720x300.png" />
             </div>
             <div class="list list-padding seam-bottom">
-                <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Home</sidenav-item>
-                <sidenav-item close-master-menu ui-sref="home">Explore</sidenav-item>
+                <!-- <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Home</sidenav-item> -->
+                <sidenav-item close-master-menu ui-sref="home">Home</sidenav-item>
             </div>
 
             <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
                 <div class="list-subheader subheader">Buyer</div>
                 <sidenav-item close-master-menu ui-sref="buy-carts">Carts</sidenav-item>
                 <sidenav-item close-master-menu ui-sref="buy-orders">Orders</sidenav-item>
-                <sidenav-item close-master-menu="manageCollection()">Following</sidenav-item>
+                <!-- <sidenav-item close-master-menu="manageCollection()">Following</sidenav-item> -->
                 <sidenav-item close-master-menu="settings()">Addresses</sidenav-item>
             </div>
 

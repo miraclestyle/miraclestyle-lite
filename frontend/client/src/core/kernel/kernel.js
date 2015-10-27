@@ -448,7 +448,7 @@
                             }
                             return $q.reject(rejection);
                         }
-                        if (data && data.errors && rejection.config.ignoreErrors > 2) {
+                        if (data && data.errors && (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 2)) {
                             errorHandling.snackbar(rejection.data.errors, rejection.config.handleError);
                             reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
                             if (data.errors.action_denied) {
