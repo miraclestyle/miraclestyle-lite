@@ -550,7 +550,7 @@
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
-                                            'description', 'contents', 'availability'
+                                            'description', 'contents',
                                         ];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
@@ -1734,7 +1734,7 @@
                                                         fields: ["variant_options"]
                                                     }, {
                                                         label: 'Details',
-                                                        fields: ["code", "description", "unit_price", "availability", "weight", "volume"]
+                                                        fields: ["code", "description", "unit_price", "weight", "volume"]
                                                     }, {
                                                         fields: ["images"]
                                                     }, {

@@ -30,6 +30,7 @@
             $scope.search = searchBuilder.create();
             $.extend($scope.search, {
                 doSearch: function () {
+                    this.send.t = new Date().getTime();
                     $state.go('admin-list', {
                         kind: this.kind,
                         query: helpers.url.jsonToUrlsafe({
