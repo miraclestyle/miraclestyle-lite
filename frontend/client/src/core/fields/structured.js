@@ -450,7 +450,7 @@
 
                                     } else {
                                         $.extend(config.ui.specifics.toolbar, {
-                                            leftIcon: 'arrow_back',
+                                            leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
                                             hideSave: true
                                         });
                                         $scope.close = function () {

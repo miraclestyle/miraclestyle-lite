@@ -134,7 +134,7 @@ class CatalogProductStock(orm.BaseModel):
   _use_rule_engine = False
 
   variant_signature = orm.SuperJsonProperty('1', required=True, default=[], indexed=False)
-  availability = orm.SuperStringProperty('2', required=True, indexed=False, default='in stock', choices=('in stock', 'available for order', 'out of stock', 'preorder'))
+  availability = orm.SuperStringProperty('2', required=True, indexed=False, choices=('in stock', 'available for order', 'out of stock', 'preorder'))
 
   @classmethod
   def hash_signature(cls, variant_signature):
