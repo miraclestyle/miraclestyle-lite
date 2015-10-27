@@ -204,7 +204,8 @@ class Account(orm.BaseExpando):
                                   {'orders': [('updated', ['asc', 'desc'])]},
                                   {'filters': [('key', ['=='])]},
                                   {'filters': [('identities.email', ['=='])]},
-                                  {'filters': [('state', ['=='])], 'orders': [('created', ['asc', 'desc']), ('updated', ['asc', 'desc'])]}]
+                                  {'filters': [('state', ['=='])], 'orders': [('created', ['asc', 'desc'])]},
+                                  {'filters': [('state', ['=='])], 'orders': [('updated', ['asc', 'desc'])]}]
                   }
               )
           },
