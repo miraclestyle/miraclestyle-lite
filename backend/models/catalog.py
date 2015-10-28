@@ -678,7 +678,7 @@ class Catalog(orm.BaseExpando):
                       'filters': {'name': orm.SuperStringProperty(),
                                   'key': orm.SuperVirtualKeyProperty(kind='31', searchable=False),
                                   'state': orm.SuperStringProperty(choices=('published', 'indexed', 'discontinued', 'draft'))},
-                      'indexes': [{'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
+                      'indexes': [{'ancestor': True, 'orders': [('created', ['desc'])]},
                                   {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('created', ['desc']), ('key', ['desc'])]},
                                   {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('published_date', ['desc']), ('key', ['desc'])]},
                                   {'orders': [('created', ['asc', 'desc'])]},
