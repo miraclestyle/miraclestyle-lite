@@ -55,7 +55,7 @@ indexes:
   - name: '__key__'
     direction: desc
 
-# Catalog state and order by published_date, key -- home page
+# Catalog state and order by published_date -- home page
 - kind: '31'
   properties:
   - name: '6'
@@ -70,15 +70,6 @@ indexes:
   - name: '4'
     direction: desc
   - name: '__key__'
-    direction: desc
-
-
-# Catalog ancestor, state, published_date DESC
-- kind: '31'
-  ancestor: yes
-  properties:
-  - name: '6'
-  - name: '4'
     direction: desc
 
 # Unit active and order by name ASC
@@ -197,7 +188,7 @@ indexes:
   - name: '1'
   - name: '3'
   - name: '2'
-  
+
 # CatalogProductCategory state and name order by ASC
 - kind: '24'
   properties:
