@@ -87,7 +87,7 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
       category._use_cache = False
       put_entities.append(category)
     tools.log.debug('Writing %s categories' % len(put_entities))
-    orm.write_multi(put_entities)
+    orm.put_multi(put_entities)
 
 
 class CatalogProcessCoverSet(orm.BaseModel):
