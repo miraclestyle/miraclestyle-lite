@@ -392,10 +392,10 @@ class Catalog(orm.BaseExpando):
         and entity._original.state in ("published", "indexed")
 
   def condition_publish(account, entity, **kwargs):
-    return account._is_taskqueue and entity._original.state == "draft"
+    return account._is_taskqueue and entity._original.state not in ("published", "indexed")
 
   def condition_discontinue(account, entity, **kwargs):
-    return account._is_taskqueue and entity._original.state in ("published", "indexed")
+    return account._is_taskqueue and entity._original.state != "discontinued"
 
   def condition_root(account, **kwargs):
     return account._root_admin
