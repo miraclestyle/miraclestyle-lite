@@ -1100,7 +1100,7 @@ $(function () {
 
                     if (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1) {
 
-                        if (rejection.status > 200 && rejection.config.ignoreErrors === 2) {
+                        if (rejection.status > 200 && (!rejection.config.ignoreErrors || rejection.config.ignoreErrors === 2)) {
                             errorHandling.snackbar(angular.isString(rejection.data) ? {
                                 traceback: rejection.data
                             } : rejection.data.errors, rejection.config.handleError);
@@ -15002,9 +15002,16 @@ $(function () {
                                             promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
+                                                if (config.error) {
+                                                    config.error(response);
+                                                }
+                                                return response;
                                             }).then(function (response) {
                                                 if (helpers.endpoint.isResponseError(response)) {
                                                     paginate.more = false;
+                                                    if (config.error) {
+                                                        config.error(response);
+                                                    }
                                                     return config.complete.call(this, response);
                                                 }
                                                 paginate.more = response.data.more;
@@ -15161,13 +15168,19 @@ $(function () {
                                                 loadConfig.runLastFinally();
                                             }
                                         });
-                                        promise.error(function () {
+                                        promise.error(function (response) {
                                             that.more = false;
+                                            if (config.error) {
+                                                config.error(response);
+                                            }
                                         });
 
                                         return promise.then(function (response) {
                                             if (helpers.endpoint.isResponseError(response)) {
                                                 that.more = false;
+                                                if (config.error) {
+                                                    config.error(response);
+                                                }
                                                 return response;
                                             }
                                             var getAccess = [],
@@ -20566,29 +20579,22 @@ angular.module('app')
                 args: {
                     search: {
                         ancestor: sellerEntity.key,
-                        /*
-                        // this kind of query causes
-                        // BadArgumentError: _MultiQuery with cursors requires __key__ order
                         filters: [{
                             field: 'state',
                             operator: '!=',
                             value: 'discontinued'
                         }],
-                         */
                         orders: [{
                             field: 'created',
                             operator: 'desc'
                         }]
                     }
                 },
-                config: {
-                    ignoreErrors: 2
+                error: function (response) {
+                    $scope.search.loaded = true;
                 },
                 complete: function (response) {
-                    var errors = response.data.errors;
-                    if (!errors) {
-                        $scope.search.results.extend(response.data.entities);
-                    }
+                    $scope.search.results.extend(response.data.entities);
                     $scope.search.loaded = true;
                 }
             });
