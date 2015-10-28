@@ -359,15 +359,15 @@ class Catalog(orm.BaseExpando):
           field = _filters[0]['field']
           op = _filters[0]['operator']
           value = _filters[0]['value']
-          if field == 'state':
-            if op == '==' and value == 'indexed':
+          if field == 'state' and op == 'IN':
+            if value == ['indexed']: # home page
               return True
             else:
               if _ancestor:
-                if op == '!=' and value == 'discontinued':
+                if 'discontinued' not in value: # seller catalogs view
                   if _ancestor._root == account.key:
                     return True
-                elif op == 'IN' and ('published' in value or 'indexed' in value):
+                elif value == ['published', 'indexed']: # seller profile view
                   return True
       return False
     return not account._is_guest and (account._root_admin or valid_search())
@@ -677,7 +677,7 @@ class Catalog(orm.BaseExpando):
                       'search_by_keys': True,
                       'filters': {'name': orm.SuperStringProperty(),
                                   'key': orm.SuperVirtualKeyProperty(kind='31', searchable=False),
-                                  'state': orm.SuperStringProperty(choices=('published', 'indexed', 'discontinued', 'draft'))},
+                                  'state': orm.SuperStringProperty(repeated=True, choices=('published', 'indexed', 'discontinued', 'draft'))},
                       'indexes': [{'ancestor': True, 'orders': [('created', ['desc'])]},
                                   {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('created', ['desc']), ('key', ['desc'])]},
                                   {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('published_date', ['desc']), ('key', ['desc'])]},
@@ -685,7 +685,7 @@ class Catalog(orm.BaseExpando):
                                   {'orders': [('updated', ['asc', 'desc'])]},
                                   {'orders': [('published_date', ['asc', 'desc'])]},
                                   {'orders': [('discontinue_date', ['asc', 'desc'])]},
-                                  {'filters': [('state', ['=='])],
+                                  {'filters': [('state', ['IN'])],
                                    'orders': [('published_date', ['desc'])]},
                                   {'filters': [('key', ['=='])]}]
                   }
