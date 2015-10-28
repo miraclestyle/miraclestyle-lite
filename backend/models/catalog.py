@@ -821,15 +821,7 @@ class Catalog(orm.BaseExpando):
                       # use 1 notify plugin with dynamic email
                       Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
                                         'body': notifications.CATALOG_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
-                                  'd': {'recipient': '_catalog.root_entity._primary_email'}}),
-                      CallbackExec(cfg=[('callback',
-                                         {'action_model': '31', 'action_id': 'index'},
-                                         {'key': '_catalog.key_urlsafe', 'entity_state': '_catalog.state'},
-                                         lambda entity_state, **kwargs: entity_state == 'indexed')]),
-                      CallbackExec(cfg=[('callback',
-                                         {'action_model': '31', 'action_id': 'unindex'},
-                                         {'key': '_catalog.key_urlsafe', 'entity_state': '_catalog.state'},
-                                         lambda entity_state, **kwargs: entity_state in ('published', 'discontinued'))])
+                                  'd': {'recipient': '_catalog.root_entity._primary_email'}})
                   ]
               )
           ]
