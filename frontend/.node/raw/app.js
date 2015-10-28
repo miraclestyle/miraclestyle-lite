@@ -20585,7 +20585,13 @@ angular.module('app')
                             value: 'discontinued'
                         }],
                         orders: [{
+                            field: 'state',
+                            operator: 'desc'
+                        }, {
                             field: 'created',
+                            operator: 'desc'
+                        }, {
+                            field: 'key',
                             operator: 'desc'
                         }]
                     }
