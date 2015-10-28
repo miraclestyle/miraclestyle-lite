@@ -679,13 +679,16 @@ class Catalog(orm.BaseExpando):
                                   'key': orm.SuperVirtualKeyProperty(kind='31', searchable=False),
                                   'state': orm.SuperStringProperty(choices=('published', 'indexed', 'discontinued', 'draft'))},
                       'indexes': [{'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
-                                  {'ancestor': True, 'filters': [('state', ['==', '!='])], 'orders': [('created', ['asc', 'desc'])]},
+                                  {'ancestor': True, 'filters': [('state', ['!='])], 'orders': [('created', ['asc', 'desc']), ('key', ['asc', 'desc'])]},
+                                  {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('published_date', ['asc', 'desc']), ('key', ['asc', 'desc'])]},
                                   {'orders': [('created', ['asc', 'desc'])]},
                                   {'orders': [('updated', ['asc', 'desc'])]},
+                                  {'orders': [('published_date', ['asc', 'desc'])]},
+                                  {'orders': [('discontinue_date', ['asc', 'desc'])]},
                                   {'filters': [('state', ['=='])],
-                                   'orders': [('created', ['asc', 'desc'])]},
+                                   'orders': [('published_date', ['asc', 'desc'])]},
                                   {'filters': [('state', ['=='])],
-                                   'orders': [('updated', ['asc', 'desc'])]},
+                                   'orders': [('discontinue_date', ['asc', 'desc'])]},
                                   {'filters': [('key', ['=='])]}]
                   }
               )
