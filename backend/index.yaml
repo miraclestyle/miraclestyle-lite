@@ -38,45 +38,42 @@ indexes:
   - name: '7'
     direction: desc
 
-# Catalog ancestor and order by created ASC
-- kind: '31'
-  ancestor: yes
-  properties:
-  - name: '1'
-
 # Catalog ancestor and order by created DESC
 - kind: '31'
   ancestor: yes
   properties:
   - name: '1'
     direction: desc
-
-# Catalog state and order by created ASC
+    
+# Catalog ancestor, state, and order by created DESC
 - kind: '31'
+  ancestor: yes
   properties:
   - name: '6'
-  - name: '1'
-
-# Catalog state and order by created DESC
-- kind: '31'
-  properties:
-  - name: '6'
+    direction: desc
   - name: '1'
     direction: desc
+  - name: '__key__'
+    direction: desc
 
-# Catalog ancestor, state, published_date
+# Catalog ancestor, state, and order by published_date DESC
+- kind: '31'
+  ancestor: yes
+  properties:
+  - name: '6'
+    direction: desc
+  - name: '4'
+    direction: desc
+  - name: '__key__'
+    direction: desc
+
+# Catalog ancestor, state, published_date DESC
 - kind: '31'
   ancestor: yes
   properties:
   - name: '6'
   - name: '4'
-
-# Catalog ancestor, state, updated
-- kind: '31'
-  ancestor: yes
-  properties:
-  - name: '6'
-  - name: '2'
+    direction: desc
 
 # Unit active and order by name ASC
 - kind: '17'
