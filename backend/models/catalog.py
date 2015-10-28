@@ -351,8 +351,8 @@ class Catalog(orm.BaseExpando):
   def condition_search(account, entity, action, input, **kwargs):
     def valid_search():
       if action.key_id == 'search':
-        _ancestor = input['search']['ancestor']
-        _filters = input['search']['filters']
+        _ancestor = input['search'].get('ancestor')
+        _filters = input['search'].get('filters')
         if _filters:
           field = _filters[0]['field']
           op = _filters[0]['operator']
