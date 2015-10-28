@@ -518,11 +518,11 @@
                                                     field: 'name'
                                                 }],
                                                 filters: [{
-                                                    value: 'indexable',
-                                                    operator: '==',
+                                                    value: ['indexable'],
+                                                    operator: 'ALL_IN',
                                                     field: 'state'
                                                 }, {
-                                                    value: 'None',
+                                                    value: null,
                                                     operator: '==',
                                                     field: 'parent_record'
                                                 }]
@@ -575,11 +575,11 @@
                                             field: 'name'
                                         }],
                                         filters: [{
-                                            value: 'indexable',
-                                            operator: '==',
+                                            value: ['indexable'],
+                                            operator: 'ALL_IN',
                                             field: 'state'
                                         }, {
-                                            value: 'None',
+                                            value: null,
                                             operator: '==',
                                             field: 'parent_record'
                                         }]

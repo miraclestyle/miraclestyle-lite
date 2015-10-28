@@ -120,7 +120,17 @@
         }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {
-                    search: {}
+                    search: {
+                        filters: [{
+                            field: 'state',
+                            operator: 'IN',
+                            value: ['indexed']
+                        }],
+                        orders: [{
+                            field: 'published_date',
+                            operator: 'desc'
+                        }]
+                    }
                 },
                 defer = $q.defer(),
                 promise = defer.promise;
@@ -182,10 +192,9 @@
                     config: {
                         normalizeEntity: false
                     },
-                    action: 'public_search',
+                    action: 'search',
                     complete: function (response) {
                         var results = response.data.entities;
-                        models['31'].formatPublicSearchResults(results);
                         $scope.search.results.extend(results);
                     }
                 })

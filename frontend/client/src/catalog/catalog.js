@@ -246,18 +246,6 @@
                     });
                 };
             $.extend(models['31'], {
-                formatPublicSearchResults: function (results) {
-                    angular.forEach(results, function (result) {
-                        result._cover = {
-                            serving_url: result.cover,
-                            proportion: result.cover_proportion
-                        };
-                        result._seller_logo = {
-                            serving_url: result.seller_logo,
-                            proportion: 2.4
-                        };
-                    });
-                },
                 calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
                     /*  
                     ihp - Initial Horizontal Price Tag Position 

@@ -10720,11 +10720,11 @@ $(function () {
                                                     field: 'name'
                                                 }],
                                                 filters: [{
-                                                    value: 'indexable',
-                                                    operator: '==',
+                                                    value: ['indexable'],
+                                                    operator: 'ALL_IN',
                                                     field: 'state'
                                                 }, {
-                                                    value: 'None',
+                                                    value: null,
                                                     operator: '==',
                                                     field: 'parent_record'
                                                 }]
@@ -10777,11 +10777,11 @@ $(function () {
                                             field: 'name'
                                         }],
                                         filters: [{
-                                            value: 'indexable',
-                                            operator: '==',
+                                            value: ['indexable'],
+                                            operator: 'ALL_IN',
                                             field: 'state'
                                         }, {
-                                            value: 'None',
+                                            value: null,
                                             operator: '==',
                                             field: 'parent_record'
                                         }]
@@ -17544,18 +17544,6 @@ angular.module('app')
                     });
                 };
             $.extend(models['31'], {
-                formatPublicSearchResults: function (results) {
-                    angular.forEach(results, function (result) {
-                        result._cover = {
-                            serving_url: result.cover,
-                            proportion: result.cover_proportion
-                        };
-                        result._seller_logo = {
-                            serving_url: result.seller_logo,
-                            proportion: 2.4
-                        };
-                    });
-                },
                 calculatePricetagPosition: function (ihp, ivp, iiw, iih, ciw, cih) {
                     /*  
                     ihp - Initial Horizontal Price Tag Position 
@@ -19533,7 +19521,17 @@ angular.module('app')
         }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {
-                    search: {}
+                    search: {
+                        filters: [{
+                            field: 'state',
+                            operator: 'IN',
+                            value: ['indexed']
+                        }],
+                        orders: [{
+                            field: 'published_date',
+                            operator: 'desc'
+                        }]
+                    }
                 },
                 defer = $q.defer(),
                 promise = defer.promise;
@@ -19595,10 +19593,9 @@ angular.module('app')
                     config: {
                         normalizeEntity: false
                     },
-                    action: 'public_search',
+                    action: 'search',
                     complete: function (response) {
                         var results = response.data.entities;
-                        models['31'].formatPublicSearchResults(results);
                         $scope.search.results.extend(results);
                     }
                 })
@@ -20581,13 +20578,10 @@ angular.module('app')
                         ancestor: sellerEntity.key,
                         filters: [{
                             field: 'state',
-                            operator: '!=',
-                            value: 'discontinued'
+                            operator: 'IN',
+                            value: ['draft', 'published', 'indexed']
                         }],
                         orders: [{
-                            field: 'state',
-                            operator: 'desc'
-                        }, {
                             field: 'created',
                             operator: 'desc'
                         }, {
@@ -21544,20 +21538,27 @@ angular.module('app')
                                     kind: '31',
                                     args: {
                                         search: {
+                                            ancestor: $scope.seller.key,
                                             filters: [{
-                                                field: 'seller_account_key',
+                                                field: 'state',
                                                 operator: 'IN',
-                                                value: accountKey
+                                                value: ['published', 'indexed']
+                                            }],
+                                            orders: [{
+                                                field: 'published_date',
+                                                operator: 'desc'
+                                            }, {
+                                                field: 'key',
+                                                operator: 'desc'
                                             }]
                                         }
                                     },
                                     config: {
                                         normalizeEntity: false
                                     },
-                                    action: 'public_search',
+                                    action: 'search',
                                     complete: function (response) {
                                         var results = response.data.entities;
-                                        models['31'].formatPublicSearchResults(results);
                                         $scope.search.results.extend(results);
                                     }
                                 })

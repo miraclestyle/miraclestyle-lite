@@ -44,28 +44,34 @@ indexes:
   properties:
   - name: '1'
     direction: desc
-    
-# Catalog ancestor, state, and order by created DESC
+
+# Catalog ancestor, state and order by created and key desc -- seller catalog
 - kind: '31'
   ancestor: yes
   properties:
   - name: '6'
-    direction: desc
   - name: '1'
     direction: desc
   - name: '__key__'
     direction: desc
 
-# Catalog ancestor, state, and order by published_date DESC
+# Catalog state and order by published_date, key -- home page
+- kind: '31'
+  properties:
+  - name: '6'
+  - name: '4'
+    direction: desc
+
+# Catalog ancestor, state and order by published_date, key -- seller profile
 - kind: '31'
   ancestor: yes
   properties:
   - name: '6'
-    direction: desc
   - name: '4'
     direction: desc
   - name: '__key__'
     direction: desc
+
 
 # Catalog ancestor, state, published_date DESC
 - kind: '31'
@@ -184,3 +190,16 @@ indexes:
   - name: '3'
   - name: '2'
     direction: desc
+
+# CatalogProductCategory parent_record, state and name order by ASC
+- kind: '24'
+  properties:
+  - name: '1'
+  - name: '3'
+  - name: '2'
+  
+# CatalogProductCategory state and name order by ASC
+- kind: '24'
+  properties:
+  - name: '3'
+  - name: '2'

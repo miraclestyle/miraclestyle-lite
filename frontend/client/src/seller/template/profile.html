@@ -21,7 +21,7 @@
                         <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = 240" grid-scale="{maxHeight: maxHeight}" ng-show="search.results.length" class="grid-wrapper clearfix">
                             <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
                                 <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
-                                    <img class="not-pointable" display-image="result._cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:240}" />
+                                    <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:240}" />
                                 </button>
                             </div>
                         </div>

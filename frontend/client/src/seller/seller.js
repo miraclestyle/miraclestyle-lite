@@ -109,13 +109,10 @@
                         ancestor: sellerEntity.key,
                         filters: [{
                             field: 'state',
-                            operator: '!=',
-                            value: 'discontinued'
+                            operator: 'IN',
+                            value: ['draft', 'published', 'indexed']
                         }],
                         orders: [{
-                            field: 'state',
-                            operator: 'desc'
-                        }, {
                             field: 'created',
                             operator: 'desc'
                         }, {
@@ -1072,20 +1069,27 @@
                                     kind: '31',
                                     args: {
                                         search: {
+                                            ancestor: $scope.seller.key,
                                             filters: [{
-                                                field: 'seller_account_key',
+                                                field: 'state',
                                                 operator: 'IN',
-                                                value: accountKey
+                                                value: ['published', 'indexed']
+                                            }],
+                                            orders: [{
+                                                field: 'published_date',
+                                                operator: 'desc'
+                                            }, {
+                                                field: 'key',
+                                                operator: 'desc'
                                             }]
                                         }
                                     },
                                     config: {
                                         normalizeEntity: false
                                     },
-                                    action: 'public_search',
+                                    action: 'search',
                                     complete: function (response) {
                                         var results = response.data.entities;
-                                        models['31'].formatPublicSearchResults(results);
                                         $scope.search.results.extend(results);
                                     }
                                 })

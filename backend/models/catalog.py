@@ -28,11 +28,10 @@ class CatalogProductCategory(orm.BaseModel):
   _kind = 24
 
   _use_record_engine = False
-  _use_search_engine = True
 
-  parent_record = orm.SuperKeyProperty('1', kind='24', searchable=True, indexed=False)
-  name = orm.SuperStringProperty('2', searchable=True, indexed=False, required=True)
-  state = orm.SuperStringProperty('3', searchable=True, indexed=False, repeated=True)
+  parent_record = orm.SuperKeyProperty('1', kind='24')
+  name = orm.SuperStringProperty('2', required=True)
+  state = orm.SuperStringProperty('3', repeated=True)
 
   def condition_root_or_taskqueue(account, **kwargs):
     return account._root_admin or account._is_taskqueue
@@ -70,18 +69,17 @@ class CatalogProductCategory(orm.BaseModel):
           id='search',
           arguments={
               'search': orm.SuperSearchProperty(
-                  default={'filters': [{'field': 'state', 'value': 'indexable visible', 'operator': '=='}],
+                  default={'filters': [{'field': 'state', 'value': ['indexable', 'visible'], 'operator': 'ALL_IN'}],
                            'orders': [{'field': 'name', 'operator': 'asc'}]},
                   cfg={
                       'search_arguments': {'kind': '24', 'options': {'limit': 1000}},
                       'search_by_keys': True,
-                      'use_search_engine': True,
                       'filters': {'name': orm.SuperStringProperty(),
-                                  'state': orm.SuperStringProperty(choices=('indexable visible', 'indexable')),
-                                  'parent_record': orm.SuperStringProperty()},
-                      'indexes': [{'filters': [('state', ['==']), ('parent_record', ['==', '!='])],
+                                  'state': orm.SuperStringProperty(repeated=True, choices=('indexable', 'visible')),
+                                  'parent_record': orm.SuperVirtualKeyProperty(kind='24')},
+                      'indexes': [{'filters': [('state', ['ALL_IN']), ('parent_record', ['=='])],
                                    'orders': [('name', ['asc', 'desc'])]},
-                                   {'filters': [('state', ['=='])],
+                                   {'filters': [('state', ['ALL_IN'])],
                                    'orders': [('name', ['asc', 'desc'])]}]
                   }
               )
@@ -340,7 +338,7 @@ class Catalog(orm.BaseExpando):
                                                                 }],
                                                             }
                                                         }),
-      '_seller': orm.SuperReferenceStructuredProperty('23', callback=lambda self: self.key.parent().get_async()),
+      '_seller': orm.SuperReferenceStructuredProperty('23', autoload=True, callback=lambda self: self.key.parent().get_async()),
       '_records': orm.SuperRecordProperty('31')
   }
 
@@ -406,6 +404,9 @@ class Catalog(orm.BaseExpando):
   def condition_true(**kwargs):
     return True
 
+  def condition_false(**kwargs):
+    return False
+
   def condition_write_images(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "draft" \
@@ -436,7 +437,7 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('sudo', condition_root),
       orm.ExecuteActionPermission(('catalog_process_duplicate', 'catalog_pricetag_process_duplicate',
                                    'delete', 'index', 'unindex', 'cron'), condition_taskqueue),
-      orm.ExecuteActionPermission('public_search', condition_true),
+      orm.ExecuteActionPermission('public_search', condition_false),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
@@ -823,12 +824,12 @@ class Catalog(orm.BaseExpando):
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
                       CallbackExec(cfg=[('callback',
                                          {'action_model': '31', 'action_id': 'index'},
-                                         {'key': '_catalog.key_urlsafe'},
-                                         lambda entity: entity.state == 'indexed')]),
+                                         {'key': '_catalog.key_urlsafe', 'entity_state': '_catalog.state'},
+                                         lambda entity_state, **kwargs: entity_state == 'indexed')]),
                       CallbackExec(cfg=[('callback',
                                          {'action_model': '31', 'action_id': 'unindex'},
-                                         {'key': '_catalog.key_urlsafe'},
-                                         lambda entity: entity.state in ('published', 'discontinued'))])
+                                         {'key': '_catalog.key_urlsafe', 'entity_state': '_catalog.state'},
+                                         lambda entity_state, **kwargs: entity_state in ('published', 'discontinued'))])
                   ]
               )
           ]
