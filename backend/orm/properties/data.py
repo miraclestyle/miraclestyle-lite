@@ -288,6 +288,8 @@ class SuperSearchProperty(SuperJsonProperty):
       elif op == '<=':
         filters.append(field <= value)
       elif op == 'IN':
+        if not isinstance(value, (list, tuple)):
+          value = [value]
         filters.append(field.IN(value))
       elif op == 'ALL_IN':
         for v in value:

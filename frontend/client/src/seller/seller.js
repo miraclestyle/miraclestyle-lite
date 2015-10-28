@@ -107,29 +107,22 @@
                 args: {
                     search: {
                         ancestor: sellerEntity.key,
-                        /*
-                        // this kind of query causes
-                        // BadArgumentError: _MultiQuery with cursors requires __key__ order
                         filters: [{
                             field: 'state',
                             operator: '!=',
                             value: 'discontinued'
                         }],
-                         */
                         orders: [{
                             field: 'created',
                             operator: 'desc'
                         }]
                     }
                 },
-                config: {
-                    ignoreErrors: 2
+                error: function (response) {
+                    $scope.search.loaded = true;
                 },
                 complete: function (response) {
-                    var errors = response.data.errors;
-                    if (!errors) {
-                        $scope.search.results.extend(response.data.entities);
-                    }
+                    $scope.search.results.extend(response.data.entities);
                     $scope.search.loaded = true;
                 }
             });

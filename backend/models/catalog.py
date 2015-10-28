@@ -352,22 +352,22 @@ class Catalog(orm.BaseExpando):
 
   def condition_search(account, entity, action, input, **kwargs):
     def valid_search():
-      if (action.key_id == "search"):
-        _ancestor = input["search"]["ancestor"]
-        _filters = input["search"]["filters"]
-        if (_filters):
-          field = _filters[0]["field"]
-          op = _filters[0]["operator"]
-          value = _filters[0]["value"]
-          if (field == "state"):
-            if (op == "==" and value == "indexed"):
+      if action.key_id == 'search':
+        _ancestor = input['search']['ancestor']
+        _filters = input['search']['filters']
+        if _filters:
+          field = _filters[0]['field']
+          op = _filters[0]['operator']
+          value = _filters[0]['value']
+          if field == 'state':
+            if op == '==' and value == 'indexed':
               return True
             else:
-              if (_ancestor):
-                if (op == "!=" and value == "discontinued"):
-                  if (_ancestor._root == account.key):
+              if _ancestor:
+                if op == '!=' and value == 'discontinued':
+                  if _ancestor._root == account.key:
                     return True
-                elif (op == IN and ("published" in value or "indexed" in value)):
+                elif op == 'IN' and ('published' in value or 'indexed' in value):
                   return True
       return False
     return not account._is_guest and (account._root_admin or valid_search())
@@ -463,86 +463,6 @@ class Catalog(orm.BaseExpando):
       orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                 'state', 'cover', 'cost', '_images'), condition_duplicate)
   ]
-  
-  def old(self):
-    '''
-    _global_role = orm.GlobalRole(
-        permissions=[
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'prepare')], True, 'not account._is_guest'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'create'),
-                                        orm.Action.build_key('31', 'read')], True,
-                                 'not account._is_guest and (entity._original.key_root == account.key or account._root_admin)'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'search')], True,
-                                 'account._root_admin or (not account._is_guest and (entity._original.key_root == account.key)) \
-                             or (action.key_id == "search" and input["search"]["ancestor"]._root == account.key)'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'read')], True,
-                                 'entity._original.state == "published" or entity._original.state == "discontinued"'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'update')], True,
-                                 'not account._is_guest and entity._original.key_root == account.key \
-                             and (entity._original.state == "draft" or entity._original.state == "published")'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'catalog_upload_images'),
-                                        orm.Action.build_key('31', 'product_upload_images'),
-                                        orm.Action.build_key('31', 'product_instance_upload_images'),
-                                        orm.Action.build_key('31', 'catalog_pricetag_duplicate')], True,
-                                 'not account._is_guest and entity._original.key_root == account.key \
-                             and entity._original.state == "draft"'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue'),
-                                        orm.Action.build_key('31', 'catalog_duplicate')], True,
-                                 'not account._is_guest and entity._original.key_root == account.key \
-                             and entity._original.state == "published"'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'publish')], True,
-                                 '(account._is_taskqueue or account._root_admin or \
-                             (not account._is_guest and entity._original.key_root == account.key)) \
-                             and entity._original.state != "published"'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'discontinue')], True,
-                                 'account._is_taskqueue and entity._original.state != "discontinued"'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'account_discontinue')], True, 'account._root_admin'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'sudo')], True, 'account._root_admin'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'catalog_process_duplicate'),
-                                        orm.Action.build_key('31', 'catalog_pricetag_process_duplicate'),
-                                        orm.Action.build_key('31', 'delete'),
-                                        orm.Action.build_key('31', 'index'),
-                                        orm.Action.build_key('31', 'unindex'),
-                                        orm.Action.build_key('31', 'cron')], True, 'account._is_taskqueue'),
-            orm.ActionPermission('31', [orm.Action.build_key('31', 'public_search')], True, 'True'),
-            # field permissions
-            orm.FieldPermission('31', ['created', 'updated', 'name', 'published_date', 'discontinue_date',
-                                       'state', 'cover', 'cost', '_images', '_records'], False, True,
-                                'account._is_taskqueue or account._root_admin or (not account._is_guest \
-                            and entity._original.key_root == account.key)'),
-            orm.FieldPermission('31', ['name', 'published_date', 'discontinue_date',
-                                       'cover', '_images', '_records'], True, True,
-                                'not account._is_guest and entity._original.key_root == account.key \
-                            and entity._original.state == "draft"'),
-            orm.FieldPermission('31', ['_images.pricetags._product.availability',
-                                       '_images.pricetags._product._instances.availability'], True, True,
-                                'not account._is_guest and entity._original.key_root == account.key \
-                            and entity._original.state == "published"'),
-            orm.FieldPermission('31', ['state'], True, True,
-                                '(action.key_id_str == "create" and entity.state == "draft") \
-                            or (action.key_id_str == "publish" and entity.state == "published") \
-                            or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
-                            or (action.key_id_str == "sudo" and entity.state != "draft")'),
-            orm.FieldPermission('31', ['name', 'published_date', 'discontinue_date',
-                                       'state', 'cover', '_images'], False, True,
-                                'entity._original.state == "published" or entity._original.state == "discontinued"'),
-            orm.FieldPermission('31', ['_records.note'], True, True, 'account._root_admin'),
-            orm.FieldPermission('31', ['_records.note'], False, False, 'not account._root_admin'),
-            orm.FieldPermission('31', ['_images.image', '_images.content_type', '_images.size', '_images.gs_object_name', '_images.serving_url',
-                                       '_images.pricetags._product.images.image', '_images.pricetags._product.images.content_type', '_images.pricetags._product.images.size', '_images.proportion',
-                                       '_images.pricetags._product.images.gs_object_name', '_images.pricetags._product.images.serving_url', '_images.pricetags._product.images.proportion',
-                                       '_images.pricetags._product._instances.images.image', '_images.pricetags._product._instances.images.content_type', '_images.pricetags._product._instances.images.size',
-                                       '_images.pricetags._product._instances.images.gs_object_name', '_images.pricetags._product._instances.images.serving_url', '_images.pricetags._product._instances.images.proportion'], False, None,
-                                '(action.key_id_str not in ["catalog_upload_images", "product_upload_images", \
-                            "product_instance_upload_images", "catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
-            orm.FieldPermission('31', ['created', 'updated', 'name', 'published_date', 'discontinue_date',
-                                       'state', 'cover', 'cost', '_images'], True, True,
-                                '(action.key_id_str in ["catalog_process_duplicate", "catalog_pricetag_process_duplicate"])'),
-            orm.FieldPermission('31', ['_seller'], False, True, 'True'),
-            orm.FieldPermission('31', ['_seller._plugin_group'], False, False, 'True'),
-        ]
-    )
-    '''
 
   _actions = [
       orm.Action(
@@ -757,7 +677,7 @@ class Catalog(orm.BaseExpando):
                       'search_by_keys': True,
                       'filters': {'name': orm.SuperStringProperty(),
                                   'key': orm.SuperVirtualKeyProperty(kind='31', searchable=False),
-                                  'state': orm.SuperStringProperty(choices=('published', 'discontinued', 'draft'))},
+                                  'state': orm.SuperStringProperty(choices=('published', 'indexed', 'discontinued', 'draft'))},
                       'indexes': [{'ancestor': True, 'orders': [('created', ['asc', 'desc'])]},
                                   {'ancestor': True, 'filters': [('state', ['==', '!='])], 'orders': [('created', ['asc', 'desc'])]},
                                   {'orders': [('created', ['asc', 'desc'])]},
@@ -876,8 +796,7 @@ class Catalog(orm.BaseExpando):
           id='sudo',
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True),
-              'state': orm.SuperStringProperty(required=True, choices=('published', 'discontinued')),
-              'index_state': orm.SuperStringProperty(choices=('index', 'unindex')),
+              'state': orm.SuperStringProperty(required=True, choices=('published', 'discontinued', 'indexed')),
               'message': orm.SuperTextProperty(required=True),
               'note': orm.SuperTextProperty(required=True)
           },
@@ -902,9 +821,13 @@ class Catalog(orm.BaseExpando):
                                         'body': notifications.CATALOG_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
                       CallbackExec(cfg=[('callback',
-                                         {'action_model': '31'},
-                                         {'action_id': 'input.index_state', 'key': '_catalog.key_urlsafe'},
-                                         None)])
+                                         {'action_model': '31', 'action_id': 'index'},
+                                         {'key': '_catalog.key_urlsafe'},
+                                         lambda entity: entity.state == 'indexed')]),
+                      CallbackExec(cfg=[('callback',
+                                         {'action_model': '31', 'action_id': 'unindex'},
+                                         {'key': '_catalog.key_urlsafe'},
+                                         lambda entity: entity.state in ('published', 'discontinued'))])
                   ]
               )
           ]

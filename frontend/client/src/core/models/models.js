@@ -914,9 +914,16 @@
                                             promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
+                                                if (config.error) {
+                                                    config.error(response);
+                                                }
+                                                return response;
                                             }).then(function (response) {
                                                 if (helpers.endpoint.isResponseError(response)) {
                                                     paginate.more = false;
+                                                    if (config.error) {
+                                                        config.error(response);
+                                                    }
                                                     return config.complete.call(this, response);
                                                 }
                                                 paginate.more = response.data.more;
@@ -1073,13 +1080,19 @@
                                                 loadConfig.runLastFinally();
                                             }
                                         });
-                                        promise.error(function () {
+                                        promise.error(function (response) {
                                             that.more = false;
+                                            if (config.error) {
+                                                config.error(response);
+                                            }
                                         });
 
                                         return promise.then(function (response) {
                                             if (helpers.endpoint.isResponseError(response)) {
                                                 that.more = false;
+                                                if (config.error) {
+                                                    config.error(response);
+                                                }
                                                 return response;
                                             }
                                             var getAccess = [],

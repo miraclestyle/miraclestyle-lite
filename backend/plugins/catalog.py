@@ -135,7 +135,7 @@ class CatalogDiscontinue(orm.BaseModel):
     account_key = context.input.get('account')
     account = account_key.get()
     if account is not None:
-      catalogs = Catalog.query(Catalog.state == 'published', ancestor=account.key).fetch(limit=4)
+      catalogs = Catalog.query(Catalog.state.IN(['published', 'indexed']), ancestor=account.key).fetch(limit=4)
     for catalog in catalogs:
       data = {'action_id': 'discontinue',
               'action_model': '31',
@@ -158,7 +158,7 @@ class CatalogCronDiscontinue(orm.BaseModel):
       self.cfg = {}
     limit = self.cfg.get('page', 10)
     Catalog = context.models['31']
-    catalogs = Catalog.query(Catalog.state == 'published',
+    catalogs = Catalog.query(Catalog.state.IN(['published', 'indexed']),
                              Catalog.discontinue_date <= datetime.datetime.now()).fetch(limit=limit)
     for catalog in catalogs:
       data = {'action_id': 'discontinue',

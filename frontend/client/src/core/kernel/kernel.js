@@ -439,7 +439,7 @@
 
                     if (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1) {
 
-                        if (rejection.status > 200 && rejection.config.ignoreErrors === 2) {
+                        if (rejection.status > 200 && (!rejection.config.ignoreErrors || rejection.config.ignoreErrors === 2)) {
                             errorHandling.snackbar(angular.isString(rejection.data) ? {
                                 traceback: rejection.data
                             } : rejection.data.errors, rejection.config.handleError);

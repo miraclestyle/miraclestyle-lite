@@ -4,7 +4,7 @@
                 <div ng-form="container.form">
                     <div form-input="fields.note" class="confirmation-textarea"></div>
                     <div form-input="fields.message" class="confirmation-textarea"></div>
-                    <div ng-repeat="thing in ['state', 'index_state']" ng-class="{'seam-bottom': !$last}" class="list padding-top-bottom-12">
+                    <div ng-repeat="thing in ['state']" ng-class="{'seam-bottom': !$last}" class="list padding-top-bottom-12">
                          <md-radio-group ng-model="args[thing]" class="list list-row-one-line list-row-has-primary">
                               <md-radio-button ng-repeat="state in fields[thing].choices" 
                                                md-ink-ripple

@@ -42,7 +42,7 @@ class CollectionCronNotify(orm.BaseModel):
       for seller in collection._sellers.value:
         published_catalogs[seller.key] = {'seller': seller}
         published_catalogs[seller.key]['catalogs'] = Catalog.query(Catalog.published_date > age,
-                                                                   Catalog.state == 'published', ancestor=seller.key).fetch_async(use_memcache=False, use_cache=False)
+                                                                   Catalog.state.IN(['published', 'indexed']), ancestor=seller.key).fetch_async(use_memcache=False, use_cache=False)
         discontinued_catalogs[seller.key] = {'seller': seller}
         discontinued_catalogs[seller.key]['catalogs'] = Catalog.query(Catalog.updated > age,
                                                                       Catalog.state == 'discontinued', ancestor=seller.key).fetch_async(use_memcache=False, use_cache=False)

@@ -6,7 +6,7 @@
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name}}</a>."
 </span><br/><br/>
 <span>
-  The catalog is {{entity.state}} {% if input.index_state == "index" %}and set to be indexed on the Miraclestyle app{% else %}
+  The catalog is {{entity.state}} {% if input.state == "indexed" %}and set to be indexed on the Miraclestyle app{% else %}
   and set to be unindexed from the Miraclestyle app{% endif %}.
 </span><br/><br/>
 <span>
