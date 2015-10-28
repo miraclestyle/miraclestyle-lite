@@ -363,12 +363,12 @@ class Catalog(orm.BaseExpando):
             else:
               if _ancestor:
                 if 'discontinued' not in value: # seller catalogs view
-                  if _ancestor._root == account.key:
+                  if not account._is_guest and _ancestor._root == account.key:
                     return True
                 elif value == ['published', 'indexed']: # seller profile view
                   return True
       return False
-    return not account._is_guest and (account._root_admin or valid_search())
+    return account._root_admin or valid_search()
 
   def condition_published_or_discontinued(entity, **kwargs):
     return entity._original.state in ("published", "discontinued", "indexed")
