@@ -209,11 +209,11 @@ class CatalogProduct(orm.BaseExpando):
 
   _use_rule_engine = False
 
-  category = orm.SuperKeyProperty('1', kind='24', required=True, indexed=False, searchable=True)
-  name = orm.SuperStringProperty('2', required=True, indexed=False, searchable=True)
+  category = orm.SuperKeyProperty('1', kind='24', required=True, indexed=False)
+  name = orm.SuperStringProperty('2', required=True, indexed=False)
   uom = orm.SuperKeyProperty('3', kind='17', default=Unit.build_key('unit'), required=True, indexed=False)
-  code = orm.SuperStringProperty('4', required=True, indexed=False, searchable=True)
-  description = orm.SuperTextProperty('5', required=True, searchable=True)  # Soft limit 64kb.
+  code = orm.SuperStringProperty('4', required=True, indexed=False)
+  description = orm.SuperTextProperty('5', required=True)  # Soft limit 64kb.
   unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
 
   _default_indexed = False
@@ -304,13 +304,13 @@ class Catalog(orm.BaseExpando):
 
   _kind = 31
 
-  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True, searchable=True)
-  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True, searchable=True)
-  name = orm.SuperStringProperty('3', required=True, searchable=True)
-  published_date = orm.SuperDateTimeProperty('4', required=False, searchable=True)
-  discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)
+  created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
+  updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
+  name = orm.SuperStringProperty('3', required=True)
+  published_date = orm.SuperDateTimeProperty('4', required=False)
+  discontinue_date = orm.SuperDateTimeProperty('5', required=True)
   state = orm.SuperStringProperty('6', required=True, default='draft',
-                                  choices=('draft', 'published', 'indexed', 'discontinued'), searchable=True)
+                                  choices=('draft', 'published', 'indexed', 'discontinued'))
 
   _default_indexed = False
 
@@ -365,7 +365,7 @@ class Catalog(orm.BaseExpando):
                 if 'discontinued' not in value: # seller catalogs view
                   if not account._is_guest and _ancestor._root == account.key:
                     return True
-                elif value == ['published', 'indexed']: # seller profile view
+                if value == ['published', 'indexed']: # seller profile view
                   return True
       return False
     return account._root_admin or valid_search()
@@ -798,7 +798,7 @@ class Catalog(orm.BaseExpando):
           id='sudo',
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True),
-              'state': orm.SuperStringProperty(required=True, choices=('published', 'discontinued', 'indexed')),
+              'state': orm.SuperStringProperty(required=True, choices=('published', 'indexed', 'discontinued')),
               'message': orm.SuperTextProperty(required=True),
               'note': orm.SuperTextProperty(required=True)
           },

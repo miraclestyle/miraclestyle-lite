@@ -1333,6 +1333,7 @@ $(function () {
             catalog: {
                 draft: 'Draft',
                 published: 'Published',
+                indexed: 'Indexed',
                 discontinued: 'Discontinued',
                 unindex: 'Unindex',
                 index: 'Index'
