@@ -312,7 +312,7 @@ class Catalog(orm.BaseExpando):
   published_date = orm.SuperDateTimeProperty('4', required=False, searchable=True)
   discontinue_date = orm.SuperDateTimeProperty('5', required=True, searchable=True)
   state = orm.SuperStringProperty('6', required=True, default='draft',
-                                  choices=('draft', 'published', 'discontinued'), searchable=True)
+                                  choices=('draft', 'published', 'indexed', 'discontinued'), searchable=True)
 
   _default_indexed = False
 
@@ -351,14 +351,33 @@ class Catalog(orm.BaseExpando):
     return not account._is_guest and (entity._original.key_root == account.key or account._root_admin)
 
   def condition_search(account, entity, action, input, **kwargs):
-    return not account._is_guest and (account._root_admin or (action.key_id == "search" and input["search"]["ancestor"]._root == account.key))
+    def valid_search():
+      if (action.key_id == "search"):
+        _ancestor = input["search"]["ancestor"]
+        _filters = input["search"]["filters"]
+        if (_filters):
+          field = _filters[0]["field"]
+          op = _filters[0]["operator"]
+          value = _filters[0]["value"]
+          if (field == "state"):
+            if (op == "==" and value == "indexed"):
+              return True
+            else:
+              if (_ancestor):
+                if (op == "!=" and value == "discontinued"):
+                  if (_ancestor._root == account.key):
+                    return True
+                elif (op == IN and ("published" in value or "indexed" in value)):
+                  return True
+      return False
+    return not account._is_guest and (account._root_admin or valid_search())
 
   def condition_published_or_discontinued(entity, **kwargs):
-    return entity._original.state == "published" or entity._original.state == "discontinued"
+    return entity._original.state in ("published", "discontinued", "indexed")
 
   def condition_update(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
-        and (entity._original.state in ("draft", "published"))
+        and (entity._original.state in ("draft", "published", "indexed"))
 
   def condition_not_guest_and_owner_and_draft(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -370,13 +389,13 @@ class Catalog(orm.BaseExpando):
 
   def condition_not_guest_and_owner_and_published(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
-        and entity._original.state == "published"
+        and entity._original.state in ("published", "indexed")
 
   def condition_publish(account, entity, **kwargs):
-    return account._is_taskqueue and entity._original.state != "published"
+    return account._is_taskqueue and entity._original.state == "draft"
 
   def condition_discontinue(account, entity, **kwargs):
-    return account._is_taskqueue and entity._original.state != "discontinued"
+    return account._is_taskqueue and entity._original.state in ("published", "indexed")
 
   def condition_root(account, **kwargs):
     return account._root_admin
