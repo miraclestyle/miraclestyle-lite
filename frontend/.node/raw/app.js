@@ -19219,7 +19219,7 @@ angular.module('app')
                                             $scope.close = function () {
                                                 if ($scope.container.form.$dirty) {
                                                     $scope.syncStop();
-                                                    return $scope.save(true, true).then(function () {
+                                                    return $scope.save(undefined, true).then(function () {
                                                         return $scope.$close();
                                                     });
                                                 }
@@ -19237,17 +19237,18 @@ angular.module('app')
                                                 clearTimeout($scope.syncID);
                                             };
                                             $scope.sync = function (hideSnackbar) {
-                                                if ($scope.syncStarted) {
-                                                    return;
-                                                }
                                                 var defer = $q.defer(),
                                                     promise = defer.promise;
+                                                if ($scope.syncStarted) {
+                                                    defer.resolve();
+                                                    return promise;
+                                                }
                                                 $scope.syncStarted = true;
                                                 $scope.syncSchedule();
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
                                                     $scope.save(hideSnackbar).then(function (response) {
-                                                        $scope.syncStarted  = false;
+                                                        $scope.syncStarted = false;
                                                         defer.resolve(response);
                                                         return response;
                                                     });
