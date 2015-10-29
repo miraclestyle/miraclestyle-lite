@@ -10837,7 +10837,7 @@ $(function () {
                                 $scope.container = {};
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope.formSetPristine();
-                                    $scope.$close();
+                                    return $scope.$close();
                                 });
                                 $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                 $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
@@ -11254,10 +11254,11 @@ $(function () {
                                     $scope.entity = config.ui.specifics.entity;
                                     if (config.ui.specifics.remote) {
                                         $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                            $scope.$close();
+                                            var promise = $scope.$close();
                                             if (config.ui.specifics.afterClose) {
                                                 config.ui.specifics.afterClose($scope);
                                             }
+                                            return promise;
                                         });
 
                                     } else {
@@ -11271,12 +11272,12 @@ $(function () {
                                             }
                                             var save = $scope.save();
                                             if (save) {
-                                                save.then(function () {
+                                                return save.then(function () {
                                                     $scope._close_ = undefined;
-                                                    $scope.$close();
+                                                    return $scope.$close();
                                                 });
                                             } else {
-                                                modals.confirm('discardWithFieldsRequired', $scope.$close);
+                                                return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                             }
                                         };
 
@@ -18013,11 +18014,13 @@ angular.module('app')
                                 }
 
                                 $scope.close = function () {
-                                    $scope.$close().then(function () {
+                                    var promise = $scope.$close();
+                                    promise.then(function () {
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
                                     });
+                                    return promise;
                                 };
 
 
@@ -18218,11 +18221,13 @@ angular.module('app')
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                                 $scope.close = function () {
-                                    $scope.$close().then(function () {
+                                    var promise = $scope.$close();
+                                    promise.then(function () {
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
                                     });
+                                    return promise;
                                 };
                             })
                         });
@@ -18498,6 +18503,7 @@ angular.module('app')
                                                 if (angular.isUndefined(pricetag._image)) {
                                                     pricetag._image = $scope.args._images.indexOf(image);
                                                 }
+                                                $scope.syncStop();
                                             };
 
                                             $scope.onDrag = function (event, ui, image, pricetag) {};
@@ -18683,7 +18689,7 @@ angular.module('app')
                                             $scope.loadingManageProduct = false;
                                             $scope.manageProduct = function (image, pricetag, $event) {
                                                 if (pricetag._must_save) {
-                                                    clearTimeout($scope.syncID);
+                                                    $scope.syncStop();
                                                     return $scope.save(true).then(function () {
                                                         image = _.findWhere($scope.args._images, {
                                                             key: image.key
@@ -18794,7 +18800,11 @@ angular.module('app')
                                                     removeConfirm: function (arg, close) {
                                                         modals.confirm('removePricetagConfirm', function () {
                                                             $scope.pricetag._state = 'deleted';
-                                                            $scope.save().then(close);
+                                                            $timeout(function () {
+                                                                close().then(function () {
+                                                                    $scope.save();
+                                                                });
+                                                            });
                                                         });
                                                     },
                                                     beforeSave: function (fieldScope) {
@@ -19151,7 +19161,7 @@ angular.module('app')
                                             $scope.save = function (hideSnackbar) {
                                                 var promise;
                                                 if ($scope.loadingSave) {
-                                                    return;
+                                                    //return;
                                                 }
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 $scope.loadingSave = true;
@@ -19171,11 +19181,29 @@ angular.module('app')
                                                 return promise;
                                             };
 
+                                            $scope.close = function () {
+                                                var defer = $q.defer(),
+                                                    promise = defer.promise;
+                                                defer.resolve();
+                                                if ($scope.loadingSave) {
+                                                    return promise;
+                                                }
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.syncStop();
+                                                    return $scope.save().then(function () {
+                                                        return $scope.$close();
+                                                    });
+                                                }
+                                                return $scope.$close();
+                                            };
                                             $scope.syncID = null;
+                                            $scope.syncStop = function () {
+                                                clearTimeout($scope.syncID);
+                                            };
                                             $scope.sync = function (hideSnackbar) {
                                                 var defer = $q.defer(),
                                                     promise = defer.promise;
-                                                clearTimeout($scope.syncID);
+                                                $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
                                                     $scope.save(hideSnackbar).then(function (response) {
                                                         defer.resolve(response);
@@ -20422,7 +20450,9 @@ angular.module('app')
 
 
                                     $scope.close = function () {
-                                        $scope.$close().then(config.afterClose || angular.noop);
+                                        var promise = $scope.$close();
+                                        promise.then(config.afterClose || angular.noop);
+                                        return promise;
                                     };
 
 
@@ -21135,12 +21165,12 @@ angular.module('app')
                                         }
                                         var save = $scope.save();
                                         if (save) {
-                                            save.then(function () {
+                                            return save.then(function () {
                                                 $scope._close_ = undefined;
-                                                $scope.$close();
+                                                return $scope.$close();
                                             });
                                         } else {
-                                            modals.confirm('discardWithFieldsRequired', $scope.$close);
+                                            return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                         }
                                     };
 
@@ -21569,7 +21599,9 @@ angular.module('app')
                             };
                             $scope.search.pagination.load();
                             $scope.close = function () {
-                                $scope.$close().then(config.afterClose || angular.noop);
+                                var promise = $scope.$close();
+                                promise.then(config.afterClose || angular.noop);
+                                return promise;
                             };
 
                         })
