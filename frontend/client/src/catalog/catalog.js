@@ -331,7 +331,8 @@
                                 $scope.changeVariationPromise = function (forceSkip) {
                                     var buildVariantSignature = [],
                                         skip = false,
-                                        promise;
+                                        promise,
+                                        qdefer;
 
                                     $scope.currentVariation.empty();
                                     $scope.currentVariationPure.empty();
@@ -350,8 +351,9 @@
                                     });
 
                                     if (skip || forceSkip) {
-                                        promise = $q.defer().promise;
-                                        promise.resolve();
+                                        qdefer = $q.defer();
+                                        promise = qdefer.promise;
+                                        qdefer.resolve();
                                         return promise;
                                     }
                                     // rpc to check the instance
@@ -637,11 +639,11 @@
                                                 try {
                                                     sig = st.variant_signature[i];
                                                     partst = JSON.stringify(sig);
+                                                    part = JSON.stringify(part);
                                                     passes = part === partst || _.values(sig)[0] === '***Any***';
                                                 } catch (ignore) {
                                                     return; // exit if user did not configure the configuration properly
                                                 }
-                                                part = JSON.stringify(part);
                                                 if (passes) {
                                                     matching.push(true);
                                                 } else {
@@ -1655,15 +1657,16 @@
                                                         var variants = $scope.fieldProduct.ui.specifics.getScope().args.variants,
                                                             availability = fieldScope.formBuilder[0].pop(),
                                                             swichables = [],
-                                                            save;
+                                                            save,
+                                                            i1 = 0;
                                                         fieldScope.formBuilder[0].empty();
                                                         fieldScope.variantCombination = {};
-                                                        angular.forEach(variants, function (value, i) {
+                                                        angular.forEach(variants, function (value) {
                                                             if (value.allow_custom_value) {
                                                                 return;
                                                             }
                                                             try {
-                                                                fieldScope.variantCombination[i] = _.values(fieldScope.args.variant_signature[i])[0];
+                                                                fieldScope.variantCombination[i1] = _.values(fieldScope.args.variant_signature[i1])[0];
                                                             } catch (ignore) {}
                                                             var computeWritable = (function () {
                                                                 var t = [];
@@ -1689,13 +1692,13 @@
                                                                     });
                                                                     return values;
                                                                 }()),
-                                                                code_name: 'variant_choice_' + i,
+                                                                code_name: 'variant_choice_' + i1,
                                                                 required: true,
                                                                 ui: {
                                                                     writable: 'entity.ui.rule.field' + computeWritable + '.variant_signature.writable',
                                                                     label: value.name,
                                                                     help: value.description,
-                                                                    args: 'variantCombination[' + i + ']',
+                                                                    args: 'variantCombination[' + i1 + ']',
                                                                     attrs: {
                                                                         'ng-change': 'changeVariantCommit()'
                                                                     }
@@ -1703,20 +1706,23 @@
                                                             };
                                                             swichables.push(field);
                                                             fieldScope.formBuilder[0].push(field);
+                                                            i1 += 1;
                                                         });
                                                         fieldScope.formBuilder[0].push(availability);
                                                         fieldScope.changeVariantCommit = function () {
-                                                            angular.forEach(variants, function (value, i) {
+                                                            var i2 = 0;
+                                                            angular.forEach(variants, function (value) {
                                                                 if (value.allow_custom_value) {
                                                                     return;
                                                                 }
                                                                 var d = {};
-                                                                d[value.name] = fieldScope.variantCombination[i];
-                                                                if (angular.isDefined(fieldScope.args.variant_signature[i])) {
-                                                                    fieldScope.args.variant_signature[i] = d;
+                                                                d[value.name] = fieldScope.variantCombination[i2];
+                                                                if (angular.isDefined(fieldScope.args.variant_signature[i2])) {
+                                                                    fieldScope.args.variant_signature[i2] = d;
                                                                 } else {
                                                                     fieldScope.args.variant_signature.push(d);
                                                                 }
+                                                                i2 += 1;
                                                             });
                                                         };
 
