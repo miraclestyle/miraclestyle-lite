@@ -17937,8 +17937,10 @@ angular.module('app')
                                     });
                                     if (!stop) { // did not find any matches, try finding it manually
                                         angular.forEach(stock.stocks, function (st) {
-                                            var matching = [],
-                                                stop = false;
+                                            if (stop) {
+                                                return;
+                                            }
+                                            var matching = [];
                                             angular.forEach($scope.currentVariationPure, function (part, i) {
                                                 if (stop) {
                                                     return;
