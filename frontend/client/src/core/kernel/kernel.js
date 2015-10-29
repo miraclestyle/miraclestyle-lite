@@ -437,6 +437,14 @@
                         reject,
                         shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
 
+                    if (rejection.status === -1) {
+                        errorHandling.snackbar({connection_refused: true});
+                        if (shouldDisable) {
+                            enableUI();
+                        }
+                        return $q.reject(rejection);
+                    }
+
                     if (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1) {
 
                         if (rejection.status > 200 && (!rejection.config.ignoreErrors || rejection.config.ignoreErrors === 2)) {

@@ -519,6 +519,9 @@
             required: function (fields) {
                 return 'Some values are missing: ' + fields.join(', ') + '.';
             },
+            connection_refused: function () {
+                return 'Failed to establish connection.';
+            },
             traceback: function (trace) {
                 var parse = $.parseHTML(trace);
                 return $(parse).filter('pre').text();
