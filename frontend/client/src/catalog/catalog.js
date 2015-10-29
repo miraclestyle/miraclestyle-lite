@@ -320,7 +320,7 @@
                                             label: v.name,
                                             writable: true,
                                             attrs: {
-                                                'ng-change': 'delayedChangeVariation()'
+                                                'ng-change': 'delayedChangeVariation(' + (v.allow_custom_value ? 'true' : 'false') + ')'
                                             },
                                             args: 'variants[' + i + '].option'
                                         }
@@ -328,7 +328,7 @@
 
                                 });
 
-                                $scope.changeVariationPromise = function () {
+                                $scope.changeVariationPromise = function (forceSkip) {
                                     var buildVariantSignature = [],
                                         skip = false,
                                         promise;
@@ -349,7 +349,7 @@
                                         $scope.currentVariation.push(d);
                                     });
 
-                                    if (skip) {
+                                    if (skip || forceSkip) {
                                         promise = $q.defer().promise;
                                         promise.resolve();
                                         return promise;
@@ -565,19 +565,19 @@
                                     $scope.variationApplied = true;
                                 };
 
-                                $scope.delayedChangeVariation = function () {
+                                $scope.delayedChangeVariation = function (forceSkip) {
                                     if (timer) {
                                         $timeout.cancel(timer);
                                     }
                                     timer = $timeout(function () {
                                         timer = null;
-                                        $scope.changeVariation();
+                                        $scope.changeVariation(forceSkip);
                                     }, 500, false);
                                 };
 
-                                $scope.changeVariation = function () {
+                                $scope.changeVariation = function (forceSkip) {
                                     // rpc to check the instance
-                                    $scope.changeVariationPromise()
+                                    $scope.changeVariationPromise(forceSkip)
                                         .then(loadProductInstance)
                                         .then($scope.cartProductQuantity);
                                 };
@@ -1926,12 +1926,12 @@
                                                 var defer = $q.defer(),
                                                     promise = defer.promise;
                                                 $scope.syncSchedule();
-                                                if ($scope.loadingSave) {
-                                                    defer.resolve();
-                                                    return promise;
-                                                }
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
+                                                    if ($scope.loadingSave) {
+                                                        defer.resolve();
+                                                        return promise;
+                                                    }
                                                     $scope.save(hideSnackbar).then(function (response) {
                                                         defer.resolve(response);
                                                         return response;
