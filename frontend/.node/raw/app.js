@@ -17611,6 +17611,7 @@ angular.module('app')
                                 $scope.hideAddToCart = false;
                                 $scope.hideClose = config ? config.hideClose : false;
                                 $scope.currentVariation = [];
+                                $scope.currentVariationPure = [];
                                 angular.forEach($scope.product.variants, function (v, i) {
 
                                     $scope.variants.push({
@@ -17643,15 +17644,19 @@ angular.module('app')
                                         skip = false,
                                         promise;
 
-                                    $scope.currentVariation.splice(0, $scope.currentVariation.length);
+                                    $scope.currentVariation.empty();
+                                    $scope.currentVariationPure.empty();
 
                                     angular.forEach($scope.variants, function (v) {
                                         var d = {};
                                         if (v.option === null) {
                                             skip = true;
                                         }
-                                        buildVariantSignature.push(v.name + ': ' + v.option);
                                         d[v.name] = v.option;
+                                        if (!v.allow_custom_value) {
+                                            buildVariantSignature.push(v.name + ': ' + v.option);
+                                            $scope.currentVariationPure.push(d);
+                                        }
                                         $scope.currentVariation.push(d);
                                     });
 
@@ -17913,13 +17918,13 @@ angular.module('app')
                                     var stock = $scope.product._stock,
                                         match = 'in stock',
                                         stop,
-                                        currentVariationStr = JSON.stringify($scope.currentVariation);
+                                        currentVariationStr = JSON.stringify($scope.currentVariationPure);
                                     if (!stock || !stock.stocks.length) {
                                         return GLOBAL_CONFIG.fields.translateChoices['133'].availability[match];
                                     }
                                     angular.forEach(stock.stocks, function (st) {
                                         var findMatch = false;
-                                        if ($scope.currentVariation.length) {
+                                        if ($scope.currentVariationPure.length) {
                                             findMatch = currentVariationStr === JSON.stringify(st.variant_signature);
                                         } else {
                                             findMatch = !st.variant_signature.length;
@@ -17932,7 +17937,7 @@ angular.module('app')
                                     if (!stop) { // did not find any matches, try finding it manually
                                         angular.forEach(stock.stocks, function (st) {
                                             var matching = [];
-                                            angular.forEach($scope.currentVariation, function (part, i) {
+                                            angular.forEach($scope.currentVariationPure, function (part, i) {
                                                 var partst, sig, passes;
                                                 try {
                                                     sig = st.variant_signature[i];
@@ -19171,18 +19176,23 @@ angular.module('app')
 
                                             $scope.save = function (hideSnackbar) {
                                                 var promise;
-                                                if ($scope.loadingSave) {
-                                                    //return;
-                                                }
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 $scope.loadingSave = true;
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
-                                                    $.extend($scope.entity, response.data.entity);
-                                                    var newArgs = $scope.rootScope.config.argumentLoader($scope);
-                                                    $.extend(parentScope.args, angular.copy(newArgs));
-                                                    $.extend($scope.args, angular.copy(newArgs));
-                                                    $scope.formSetPristine();
+                                                    if ($scope.syncScheduler.length < 2) {
+                                                        $.extend($scope.entity, response.data.entity);
+                                                        var newArgs = $scope.rootScope.config.argumentLoader($scope);
+                                                        $.extend(parentScope.args, angular.copy(newArgs));
+                                                        $.extend($scope.args, angular.copy(newArgs));
+                                                        $scope.formSetPristine();
+                                                        if ($scope.scheduledClick) {
+                                                            $scope.scheduledClick();
+                                                        }
+                                                    } else {
+                                                        $scope.syncScheduler = [];
+                                                        $scope.save();
+                                                    }
                                                     if (!hideSnackbar) {
                                                         snackbar.showK('changesSaved');
                                                     }
@@ -19208,12 +19218,23 @@ angular.module('app')
                                                 return $scope.$close();
                                             };
                                             $scope.syncID = null;
+                                            $scope.syncScheduler = [];
+                                            $scope.syncSchedule = function () {
+                                                var id = _.uniqueId();
+                                                $scope.syncScheduler.push(id);
+                                                return id;
+                                            };
                                             $scope.syncStop = function () {
                                                 clearTimeout($scope.syncID);
                                             };
                                             $scope.sync = function (hideSnackbar) {
                                                 var defer = $q.defer(),
                                                     promise = defer.promise;
+                                                $scope.syncSchedule();
+                                                if ($scope.loadingSave) {
+                                                    defer.resolve();
+                                                    return promise;
+                                                }
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
                                                     $scope.save(hideSnackbar).then(function (response) {

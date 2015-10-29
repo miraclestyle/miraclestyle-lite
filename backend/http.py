@@ -161,6 +161,8 @@ class RequestHandler(webapp2.RequestHandler):
   @orm.toplevel
   def dispatch(self):
     dispatch_time = tools.Profile()
+    if settings.LAG:
+      time.sleep(settings.LAG)
     self.load_current_account()
     self.load_csrf()
     self.validate_csrf()
@@ -177,8 +179,6 @@ class RequestHandler(webapp2.RequestHandler):
 class Endpoint(RequestHandler):
 
   def respond(self):
-    if settings.LAG:
-      time.sleep(settings.LAG)
     output = iom.Engine.run(self.get_input())
     self.send_json(output)
 
