@@ -714,11 +714,13 @@
                                 }
 
                                 $scope.close = function () {
-                                    $scope.$close().then(function () {
+                                    var promise = $scope.$close();
+                                    promise.then(function () {
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
                                     });
+                                    return promise;
                                 };
 
 
@@ -919,11 +921,13 @@
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                                 $scope.close = function () {
-                                    $scope.$close().then(function () {
+                                    var promise = $scope.$close();
+                                    promise.then(function () {
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
                                     });
+                                    return promise;
                                 };
                             })
                         });
@@ -1199,6 +1203,7 @@
                                                 if (angular.isUndefined(pricetag._image)) {
                                                     pricetag._image = $scope.args._images.indexOf(image);
                                                 }
+                                                $scope.syncStop();
                                             };
 
                                             $scope.onDrag = function (event, ui, image, pricetag) {};
@@ -1384,7 +1389,7 @@
                                             $scope.loadingManageProduct = false;
                                             $scope.manageProduct = function (image, pricetag, $event) {
                                                 if (pricetag._must_save) {
-                                                    clearTimeout($scope.syncID);
+                                                    $scope.syncStop();
                                                     return $scope.save(true).then(function () {
                                                         image = _.findWhere($scope.args._images, {
                                                             key: image.key
@@ -1495,7 +1500,11 @@
                                                     removeConfirm: function (arg, close) {
                                                         modals.confirm('removePricetagConfirm', function () {
                                                             $scope.pricetag._state = 'deleted';
-                                                            $scope.save().then(close);
+                                                            $timeout(function () {
+                                                                close().then(function () {
+                                                                    $scope.save();
+                                                                });
+                                                            });
                                                         });
                                                     },
                                                     beforeSave: function (fieldScope) {
@@ -1852,7 +1861,7 @@
                                             $scope.save = function (hideSnackbar) {
                                                 var promise;
                                                 if ($scope.loadingSave) {
-                                                    return;
+                                                    //return;
                                                 }
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 $scope.loadingSave = true;
@@ -1872,11 +1881,29 @@
                                                 return promise;
                                             };
 
+                                            $scope.close = function () {
+                                                var defer = $q.defer(),
+                                                    promise = defer.promise;
+                                                defer.resolve();
+                                                if ($scope.loadingSave) {
+                                                    return promise;
+                                                }
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.syncStop();
+                                                    return $scope.save().then(function () {
+                                                        return $scope.$close();
+                                                    });
+                                                }
+                                                return $scope.$close();
+                                            };
                                             $scope.syncID = null;
+                                            $scope.syncStop = function () {
+                                                clearTimeout($scope.syncID);
+                                            };
                                             $scope.sync = function (hideSnackbar) {
                                                 var defer = $q.defer(),
                                                     promise = defer.promise;
-                                                clearTimeout($scope.syncID);
+                                                $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
                                                     $scope.save(hideSnackbar).then(function (response) {
                                                         defer.resolve(response);

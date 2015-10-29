@@ -665,12 +665,12 @@
                                         }
                                         var save = $scope.save();
                                         if (save) {
-                                            save.then(function () {
+                                            return save.then(function () {
                                                 $scope._close_ = undefined;
-                                                $scope.$close();
+                                                return $scope.$close();
                                             });
                                         } else {
-                                            modals.confirm('discardWithFieldsRequired', $scope.$close);
+                                            return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                         }
                                     };
 
@@ -1099,7 +1099,9 @@
                             };
                             $scope.search.pagination.load();
                             $scope.close = function () {
-                                $scope.$close().then(config.afterClose || angular.noop);
+                                var promise = $scope.$close();
+                                promise.then(config.afterClose || angular.noop);
+                                return promise;
                             };
 
                         })

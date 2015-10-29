@@ -792,7 +792,9 @@
 
 
                                     $scope.close = function () {
-                                        $scope.$close().then(config.afterClose || angular.noop);
+                                        var promise = $scope.$close();
+                                        promise.then(config.afterClose || angular.noop);
+                                        return promise;
                                     };
 
 

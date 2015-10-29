@@ -25,7 +25,7 @@
                                 $scope.container = {};
                                 $scope.close = angular.bind($scope, helpers.form.leave, function () {
                                     $scope.formSetPristine();
-                                    $scope.$close();
+                                    return $scope.$close();
                                 });
                                 $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                 $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
@@ -442,10 +442,11 @@
                                     $scope.entity = config.ui.specifics.entity;
                                     if (config.ui.specifics.remote) {
                                         $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                            $scope.$close();
+                                            var promise = $scope.$close();
                                             if (config.ui.specifics.afterClose) {
                                                 config.ui.specifics.afterClose($scope);
                                             }
+                                            return promise;
                                         });
 
                                     } else {
@@ -459,12 +460,12 @@
                                             }
                                             var save = $scope.save();
                                             if (save) {
-                                                save.then(function () {
+                                                return save.then(function () {
                                                     $scope._close_ = undefined;
-                                                    $scope.$close();
+                                                    return $scope.$close();
                                                 });
                                             } else {
-                                                modals.confirm('discardWithFieldsRequired', $scope.$close);
+                                                return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                             }
                                         };
 
