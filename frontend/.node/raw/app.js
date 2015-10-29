@@ -1644,7 +1644,8 @@ $(function () {
             orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
             orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
-            productOutOfStock: 'Product out of stock.'
+            productOutOfStock: 'Product out of stock.',
+            saveInProgress: 'Save in progress. Please wait.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -18704,6 +18705,10 @@ angular.module('app')
 
                                             $scope.loadingManageProduct = false;
                                             $scope.manageProduct = function (image, pricetag, $event) {
+                                                if ($scope.loadingSave) {
+                                                    snackbar.showK('saveInProgress');
+                                                    return;
+                                                }
                                                 if (pricetag._must_save) {
                                                     $scope.syncStop();
                                                     return $scope.save(true).then(function () {
@@ -19186,9 +19191,6 @@ angular.module('app')
                                                         $.extend(parentScope.args, angular.copy(newArgs));
                                                         $.extend($scope.args, angular.copy(newArgs));
                                                         $scope.formSetPristine();
-                                                        if ($scope.scheduledClick) {
-                                                            $scope.scheduledClick();
-                                                        }
                                                     } else {
                                                         $scope.syncScheduler = [];
                                                         $scope.save();

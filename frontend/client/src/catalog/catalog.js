@@ -1393,6 +1393,10 @@
 
                                             $scope.loadingManageProduct = false;
                                             $scope.manageProduct = function (image, pricetag, $event) {
+                                                if ($scope.loadingSave) {
+                                                    snackbar.showK('saveInProgress');
+                                                    return;
+                                                }
                                                 if (pricetag._must_save) {
                                                     $scope.syncStop();
                                                     return $scope.save(true).then(function () {
@@ -1875,9 +1879,6 @@
                                                         $.extend(parentScope.args, angular.copy(newArgs));
                                                         $.extend($scope.args, angular.copy(newArgs));
                                                         $scope.formSetPristine();
-                                                        if ($scope.scheduledClick) {
-                                                            $scope.scheduledClick();
-                                                        }
                                                     } else {
                                                         $scope.syncScheduler = [];
                                                         $scope.save();

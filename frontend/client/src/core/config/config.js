@@ -431,7 +431,8 @@
             orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
             orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
-            productOutOfStock: 'Product out of stock.'
+            productOutOfStock: 'Product out of stock.',
+            saveInProgress: 'Save in progress. Please wait.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
