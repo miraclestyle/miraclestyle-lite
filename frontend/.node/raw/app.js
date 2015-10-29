@@ -573,9 +573,9 @@ if (!Array.prototype.indexOf) {
                 confirmations: {},
                 alerts: {}
             },
-            defaultImage: 'http://placehold.it/240x100',
+            defaultImage: '/client/dist/static/240x240_placeholder.png',
             defaultLogo: '/client/dist/static/720x300_placeholder.png',
-            defaultCatalogCover: 'http://placehold.it/240x240',
+            defaultCatalogCover: '/client/dist/static/240x240_placeholder.png',
             grid: {
                 maxWidth: 240,
                 minWidth: 180,
@@ -1097,6 +1097,14 @@ $(function () {
                         },
                         reject,
                         shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
+
+                    if (rejection.status === -1) {
+                        errorHandling.snackbar({connection_refused: true});
+                        if (shouldDisable) {
+                            enableUI();
+                        }
+                        return $q.reject(rejection);
+                    }
 
                     if (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1) {
 
@@ -1723,6 +1731,9 @@ $(function () {
             invalid_action: 'You have requested access to the action that does not exist.',
             required: function (fields) {
                 return 'Some values are missing: ' + fields.join(', ') + '.';
+            },
+            connection_refused: function () {
+                return 'Failed to establish connection.';
             },
             traceback: function (trace) {
                 var parse = $.parseHTML(trace);
