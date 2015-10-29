@@ -625,8 +625,12 @@
                                     });
                                     if (!stop) { // did not find any matches, try finding it manually
                                         angular.forEach(stock.stocks, function (st) {
-                                            var matching = [];
+                                            var matching = [],
+                                                stop = false;
                                             angular.forEach($scope.currentVariationPure, function (part, i) {
+                                                if (stop) {
+                                                    return;
+                                                }
                                                 var partst, sig, passes;
                                                 try {
                                                     sig = st.variant_signature[i];
@@ -644,6 +648,7 @@
                                             });
                                             if (!_.without(matching, true).length) { // remove all "true" values from list, if list is empty than we have a match
                                                 match = st.availability;
+                                                stop = true;
                                             }
                                         });
                                     }
