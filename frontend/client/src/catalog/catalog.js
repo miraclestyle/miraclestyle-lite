@@ -316,8 +316,8 @@
                                         choices: (v.allow_custom_value ? null : v.options),
                                         code_name: 'option_' + i,
                                         ui: {
-                                            //help: v.description,
-                                            label: (v.allow_custom_value ? false : v.name),
+                                            help: v.allow_custom_value ? v.description : undefined,
+                                            label: v.name,
                                             writable: true,
                                             attrs: {
                                                 'ng-change': 'delayedChangeVariation()'
@@ -1700,6 +1700,9 @@
                                                         fieldScope.formBuilder[0].push(availability);
                                                         fieldScope.changeVariantCommit = function () {
                                                             angular.forEach(variants, function (value, i) {
+                                                                if (value.allow_custom_value) {
+                                                                    return;
+                                                                }
                                                                 var d = {};
                                                                 d[value.name] = fieldScope.variantCombination[i];
                                                                 if (angular.isDefined(fieldScope.args.variant_signature[i])) {
@@ -1874,19 +1877,21 @@
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     if ($scope.syncScheduler.length < 2) {
+                                                        console.log('update');
                                                         $.extend($scope.entity, response.data.entity);
                                                         var newArgs = $scope.rootScope.config.argumentLoader($scope);
                                                         $.extend(parentScope.args, angular.copy(newArgs));
                                                         $.extend($scope.args, angular.copy(newArgs));
                                                         $scope.formSetPristine();
+                                                        if (!hideSnackbar) {
+                                                            snackbar.showK('changesSaved');
+                                                        }
                                                     } else {
                                                         $scope.syncScheduler = [];
                                                         $scope.save();
                                                     }
-                                                    if (!hideSnackbar) {
-                                                        snackbar.showK('changesSaved');
-                                                    }
-                                                })['finally'](function () {
+                                                });
+                                                promise['finally'](function () {
                                                     $scope.loadingSave = false;
                                                 });
                                                 return promise;
