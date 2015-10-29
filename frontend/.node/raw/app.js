@@ -18657,7 +18657,6 @@ angular.module('app')
                                                 if (!$scope.$$phase) {
                                                     $scope.$apply();
                                                 }
-                                                $scope.sync();
                                                 $scope.$broadcast('resizePricetags', pricetag);
 
                                             };
@@ -18714,13 +18713,9 @@ angular.module('app')
 
                                             $scope.loadingManageProduct = false;
                                             $scope.manageProduct = function (image, pricetag, $event) {
-                                                if ($scope.loadingSave) {
-                                                    snackbar.showK('saveInProgress');
-                                                    return;
-                                                }
-                                                if (pricetag._must_save) {
+                                                if ($scope.container.form.$dirty) {
                                                     $scope.syncStop();
-                                                    return $scope.save(true).then(function () {
+                                                    return $scope.save(true, true).then(function () {
                                                         image = _.findWhere($scope.args._images, {
                                                             key: image.key
                                                         });
@@ -19195,48 +19190,42 @@ angular.module('app')
 
                                             $scope.loadingSave = false;
 
-                                            $scope.save = function (hideSnackbar) {
+                                            $scope.save = function (hideSnackbar, reusePromise) {
+                                                if (reusePromise && $scope.savePromise) {
+                                                    return $scope.savePromise;
+                                                }
                                                 var promise;
-                                                $scope.rootScope.config.prepareReadArguments($scope);
                                                 $scope.loadingSave = true;
+                                                $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
-                                                    if ($scope.syncScheduler.length < 2) {
-                                                        console.log('update');
-                                                        $.extend($scope.entity, response.data.entity);
-                                                        var newArgs = $scope.rootScope.config.argumentLoader($scope);
-                                                        $.extend(parentScope.args, angular.copy(newArgs));
-                                                        $.extend($scope.args, angular.copy(newArgs));
-                                                        $scope.formSetPristine();
-                                                        if (!hideSnackbar) {
-                                                            snackbar.showK('changesSaved');
-                                                        }
-                                                    } else {
-                                                        $scope.syncScheduler = [];
-                                                        $scope.save();
+                                                    $.extend($scope.entity, response.data.entity);
+                                                    var newArgs = $scope.rootScope.config.argumentLoader($scope);
+                                                    $.extend(parentScope.args, angular.copy(newArgs));
+                                                    $.extend($scope.args, angular.copy(newArgs));
+                                                    $scope.formSetPristine();
+                                                    if (!hideSnackbar) {
+                                                        snackbar.showK('changesSaved');
                                                     }
                                                 });
                                                 promise['finally'](function () {
                                                     $scope.loadingSave = false;
+                                                    $scope.savePromise = undefined;
                                                 });
+                                                $scope.savePromise = promise;
                                                 return promise;
                                             };
 
                                             $scope.close = function () {
-                                                var defer = $q.defer(),
-                                                    promise = defer.promise;
-                                                defer.resolve();
-                                                if ($scope.loadingSave) {
-                                                    return promise;
-                                                }
                                                 if ($scope.container.form.$dirty) {
                                                     $scope.syncStop();
-                                                    return $scope.save().then(function () {
+                                                    return $scope.save(true, true).then(function () {
                                                         return $scope.$close();
                                                     });
                                                 }
                                                 return $scope.$close();
                                             };
+                                            $scope.syncStarted = false;
                                             $scope.syncID = null;
                                             $scope.syncScheduler = [];
                                             $scope.syncSchedule = function () {
@@ -19248,16 +19237,17 @@ angular.module('app')
                                                 clearTimeout($scope.syncID);
                                             };
                                             $scope.sync = function (hideSnackbar) {
+                                                if ($scope.syncStarted) {
+                                                    return;
+                                                }
                                                 var defer = $q.defer(),
                                                     promise = defer.promise;
+                                                $scope.syncStarted = true;
                                                 $scope.syncSchedule();
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
-                                                    if ($scope.loadingSave) {
-                                                        defer.resolve();
-                                                        return promise;
-                                                    }
                                                     $scope.save(hideSnackbar).then(function (response) {
+                                                        $scope.syncStarted  = false;
                                                         defer.resolve(response);
                                                         return response;
                                                     });

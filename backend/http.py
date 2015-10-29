@@ -162,8 +162,7 @@ class RequestHandler(webapp2.RequestHandler):
   def dispatch(self):
     dispatch_time = tools.Profile()
     if settings.LAG:
-      #time.sleep(settings.LAG)
-      pass
+      time.sleep(settings.LAG)
     self.load_current_account()
     self.load_csrf()
     self.validate_csrf()
