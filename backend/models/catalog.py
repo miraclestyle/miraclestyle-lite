@@ -718,7 +718,9 @@ class Catalog(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      Set(cfg={'s': {'_catalog.state': 'published', '_catalog.published_date': datetime.datetime.now()}}),
+                      Set(cfg={'s': {'_catalog.state': 'published'},
+                               'f': {'_catalog.published_date': lambda: datetime.datetime.now()}
+                              }),
                       RulePrepare(),
                       RuleExec()
                   ]

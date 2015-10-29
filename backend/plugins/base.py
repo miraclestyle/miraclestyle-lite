@@ -42,7 +42,10 @@ class Set(orm.BaseModel):
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
     remove_values = self.cfg.get('rm', [])
+    function_values = self.cfg.get('f', {})
     remove_structured_values = self.cfg.get('rms', [])
+    for key, f in function_values.iteritems():
+      tools.set_attr(context, key, f())
     for key, value in static_values.iteritems():
       tools.set_attr(context, key, value)
     for key, value in dynamic_values.iteritems():
