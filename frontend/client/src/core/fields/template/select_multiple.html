@@ -46,6 +46,7 @@
                     <md-checkbox 
                         ng-repeat="item in config.ui.specifics.select.items"
                         md-ink-ripple
+                        ng-disabled="!<%=config.ui.writableCompiled %>"
                         class="list-content-tile list-row"
                         ng-model="config.ui.specifics.select.multipleSelection[config.ui.specifics.select.getHash(item)]"
                         ng-click="config.ui.specifics.select.commitMultipleSelect(item)"

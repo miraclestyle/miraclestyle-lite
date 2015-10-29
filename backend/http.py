@@ -10,6 +10,7 @@ import json
 import datetime
 import inspect
 import urllib
+import time
 
 import orm
 import iom
@@ -176,6 +177,8 @@ class RequestHandler(webapp2.RequestHandler):
 class Endpoint(RequestHandler):
 
   def respond(self):
+    if settings.LAG:
+      time.sleep(settings.LAG)
     output = iom.Engine.run(self.get_input())
     self.send_json(output)
 
