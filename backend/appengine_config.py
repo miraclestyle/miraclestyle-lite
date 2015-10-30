@@ -11,6 +11,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
 
 import cloudstorage
 
+appstats_MAX_STACK = 50
+
 
 def webapp_add_wsgi_middleware(app):
   from google.appengine.ext.appstats import recording
