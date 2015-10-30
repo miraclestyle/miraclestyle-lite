@@ -749,6 +749,8 @@
                                 });
 
                             })
+                        }).opened['catch'](function () {
+                            deferOpen.reject();
                         });
                     }, function () {
                         deferOpen.reject();
