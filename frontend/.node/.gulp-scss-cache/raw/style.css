@@ -111,7 +111,7 @@ md-backdrop.md-opaque {
   background-color: white; }
 
 .md-button[disabled], .md-button.md-raised[disabled] {
-  color: rgba(0, 0, 0, 0.26);
+  color: rgba(0, 0, 0, 0.38);
   cursor: not-allowed;
   background: white; }
 
@@ -223,6 +223,13 @@ md-checkbox .md-icon-check_box_outline_blank {
 
 .md-checked .md-icon-check_box_outline_blank {
   opacity: 0; }
+
+md-checkbox[disabled] {
+  color: rgba(0, 0, 0, 0.38);
+  cursor: not-allowed; }
+
+md-checkbox[disabled] .md-icon {
+  color: rgba(0, 0, 0, 0.38); }
 
 md-content {
   display: block;
@@ -358,7 +365,8 @@ input[type="reset"], input[type="submit"], html input[type="button"], button {
   -webkit-appearance: button; }
 
 input[type="reset"][disabled], input[type="submit"][disabled], html input[type="button"][disabled], button[disabled] {
-  cursor: default; }
+  cursor: not-allowed;
+  /* was default */ }
 
 textarea {
   vertical-align: top;
@@ -566,7 +574,7 @@ md-input-container .md-input, md-input-container .as-md-input {
   letter-spacing: 0.1px;
   text-align: left;
   text-transform: none;
-  color: rgba(0, 0, 0, 0.26); }
+  color: rgba(0, 0, 0, 0.38); }
 
 ::-webkit-input-placeholder {
   font-family: inherit;
@@ -577,7 +585,7 @@ md-input-container .md-input, md-input-container .as-md-input {
   letter-spacing: 0.1px;
   text-align: left;
   text-transform: none;
-  color: rgba(0, 0, 0, 0.26); }
+  color: rgba(0, 0, 0, 0.38); }
 
 *:-ms-input-placeholder, *:-moz-placeholder {
   font-family: inherit;
@@ -588,10 +596,10 @@ md-input-container .md-input, md-input-container .as-md-input {
   letter-spacing: 0.1px;
   text-align: left;
   text-transform: none;
-  color: rgba(0, 0, 0, 0.26); }
+  color: rgba(0, 0, 0, 0.38); }
 
 md-input-container label, md-input-container .md-placeholder {
-  color: rgba(0, 0, 0, 0.26); }
+  color: rgba(0, 0, 0, 0.38); }
 
 md-input-container:not(.md-input-invalid).md-input-has-value label {
   color: rgba(0, 0, 0, 0.54); }
@@ -603,7 +611,8 @@ md-input-container:not(.md-input-invalid).md-input-focused label {
   color: rgba(0, 0, 0, 0.54); }
 
 md-input-container .md-input[disabled], md-input-container .as-md-input[disabled] {
-  color: rgba(0, 0, 0, 0.26); }
+  color: rgba(0, 0, 0, 0.38);
+  cursor: not-allowed; }
 
 md-input-container.md-input-invalid .md-input, md-input-container.md-input-invalid .as-md-input {
   border-color: rgba(255, 0, 0, 0.87); }
@@ -1229,6 +1238,9 @@ a.sort-handle {
 [ui-sortable] > *:not(.no-move) {
   cursor: move; }
 
+.no-move {
+  cursor: not-allowed !important; }
+
 .delete-overlay {
   display: none;
   position: absolute;
@@ -1250,7 +1262,7 @@ a.sort-handle {
   position: static; }
 
 [ng-message="help"] {
-  color: rgba(0, 0, 0, 0.26); }
+  color: rgba(0, 0, 0, 0.38); }
 
 .field-grouping {
   float: left; }
@@ -1313,6 +1325,9 @@ a.sort-handle {
 .field-grouping-wrapper {
   padding-right: 16px;
   padding-left: 8px; }
+
+.color-child-when-disabled[disabled] .md-icon, .color-child-when-disabled[disabled] .first {
+  color: rgba(0, 0, 0, 0.38); }
 
 .image-image {
   display: block;
@@ -1753,7 +1768,7 @@ body {
   line-height: 14px; }
 
 .helper {
-  color: rgba(0, 0, 0, 0.26); }
+  color: rgba(0, 0, 0, 0.38); }
 
 .body1, .secondary, .brief {
   font-size: 14px;
@@ -2163,7 +2178,7 @@ button::-moz-focus-inner {
   padding: 24px 40px; }
 
 .help-item {
-  color: rgba(0, 0, 0, 0.26);
+  color: rgba(0, 0, 0, 0.38);
   font-size: 16px;
   font-weight: 400;
   line-height: 20px;
@@ -2459,6 +2474,9 @@ li .ui-select-highlight {
 .select-input md-input-container label {
   padding-right: 32px; }
 
+div[disabled] .select-box {
+  cursor: not-allowed; }
+
 .social-grid {
   display: flex;
   flex-direction: row;
@@ -2693,10 +2711,16 @@ div.catalog-pricetag, li.catalog-new-pricetag {
   transition-timing-function: linear;
   transition-property: box-shadow, background; }
 
+div.catalog-pricetag.ui-draggable-disabled {
+  cursor: pointer; }
+
+li.catalog-new-pricetag[disabled] {
+  cursor: default; }
+
 div.catalog-pricetag:active, li.catalog-new-pricetag:active {
   box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26); }
 
-.no-touch .images-manage .catalog-pricetag-link, .no-touch li.catalog-new-pricetag, .no-touch li.catalog-new-pricetag .catalog-pricetag-link {
+.no-touch .images-manage div.catalog-pricetag:not(.ui-draggable-disabled) .catalog-pricetag-link, .no-touch li.catalog-new-pricetag:not([disabled]), .no-touch li.catalog-new-pricetag:not([disabled]) .catalog-pricetag-link {
   cursor: move; }
 
 .touch div.catalog-pricetag, .touch li.catalog-new-pricetag {

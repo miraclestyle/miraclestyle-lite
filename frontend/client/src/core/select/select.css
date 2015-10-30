@@ -108,3 +108,7 @@ li .ui-select-highlight {
 .select-input md-input-container label {
     padding-right: 32px;
 }
+
+div[disabled] .select-box {
+    cursor:not-allowed;
+}

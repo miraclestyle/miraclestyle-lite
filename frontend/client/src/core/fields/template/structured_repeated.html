@@ -11,7 +11,7 @@
   <button loading="!<%= config.ui.writableCompiled %>" 
           md-ink-ripple-list ng-click="config.ui.specifics.create()" 
           type="button" 
-          class="list-row list-row-one-line list-row-avatar list-row-is-clickable list-row-has-primary menu-item">
+          class="list-row list-row-one-line list-row-avatar list-row-is-clickable list-row-has-primary menu-item color-child-when-disabled">
           <div class="list-content-tile">
             <div class="list-primary-tile">
               <div class="avatar"><icon type="add_circle"></icon></div>
@@ -58,9 +58,9 @@
                   <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
                      ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
                      loading="!<%= config.ui.writableCompiled %>" 
-                     draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)"
+                     draggable-click="!config.ui.specifics.sortableOptions.disabled && config.ui.specifics.sortableOptions.whatSortMeans($event)"
                      md-ink-ripple-action
-                     class="button-transparent button-square sort-handle">
+                     class="button-transparent button-square sort-handle color-child-when-disabled">
                       <icon type="reorder"></icon>
                   </a>
             </div>
@@ -91,9 +91,9 @@
                     <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
                        ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}"
                        loading="!<%= config.ui.writableCompiled %>" 
-                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)"
+                       draggable-click="!config.ui.specifics.sortableOptions.disabled && config.ui.specifics.sortableOptions.whatSortMeans($event)"
                        md-ink-ripple-action
-                       class="button-transparent button-square sort-handle"><icon type="reorder"></icon></a>
+                       class="button-transparent button-square sort-handle color-child-when-disabled"><icon type="reorder"></icon></a>
               </div>
       </div>
       <% } %>

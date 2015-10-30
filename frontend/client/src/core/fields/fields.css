@@ -47,6 +47,10 @@ a.sort-handle {
     cursor: move;
 }
 
+.no-move {
+    cursor: not-allowed !important;
+}
+
 .delete-overlay {
     display: none;
     position: absolute;
@@ -73,7 +77,7 @@ a.sort-handle {
 }
 
 [ng-message="help"] {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 .field-grouping {
@@ -134,18 +138,23 @@ a.sort-handle {
     padding-left: 16px;
     padding-right: 16px;
     letter-spacing: 0.2px;
-    display:block;
+    display: block;
 }
 
 .uploaded-image {
     padding: 0px;
-    display:block;
+    display: block;
 }
 
 .uploaded-image .upload {
     height: 100px;
 }
+
 .field-grouping-wrapper {
     padding-right: 16px;
     padding-left: 8px;
+}
+
+.color-child-when-disabled[disabled] .md-icon, .color-child-when-disabled[disabled] .first {
+    color: rgba(0, 0, 0, 0.38);
 }

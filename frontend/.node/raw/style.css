@@ -128,7 +128,7 @@ md-backdrop.md-opaque {
 }
 
 .md-button[disabled], .md-button.md-raised[disabled] {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
     cursor: not-allowed;
     background: rgba(255, 255, 255, 1);
 }
@@ -260,6 +260,15 @@ md-checkbox .md-icon-check_box_outline_blank {
 
 .md-checked .md-icon-check_box_outline_blank  {
     opacity:0;
+}
+
+md-checkbox[disabled] {
+    color: rgba(0, 0, 0, 0.38);
+    cursor: not-allowed;
+}
+
+md-checkbox[disabled] .md-icon {
+     color: rgba(0, 0, 0, 0.38);
 }md-content {
     display: block;
     position: relative;
@@ -426,7 +435,7 @@ input[type="reset"], input[type="submit"], html input[type="button"], button {
 }
 
 input[type="reset"][disabled], input[type="submit"][disabled], html input[type="button"][disabled], button[disabled] {
-    cursor: default;
+    cursor: not-allowed; /* was default */
 }
 
 textarea {
@@ -677,7 +686,7 @@ md-input-container .md-input, md-input-container .as-md-input {
     letter-spacing: 0.1px;
     text-align: left;
     text-transform: none;
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 ::-webkit-input-placeholder {
@@ -689,7 +698,7 @@ md-input-container .md-input, md-input-container .as-md-input {
     letter-spacing: 0.1px;
     text-align: left;
     text-transform: none;
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 *:-ms-input-placeholder, *:-moz-placeholder {
@@ -701,11 +710,11 @@ md-input-container .md-input, md-input-container .as-md-input {
     letter-spacing: 0.1px;
     text-align: left;
     text-transform: none;
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 md-input-container label, md-input-container .md-placeholder {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 md-input-container:not(.md-input-invalid).md-input-has-value label {
@@ -721,7 +730,8 @@ md-input-container:not(.md-input-invalid).md-input-focused label {
 }
 
 md-input-container .md-input[disabled], md-input-container .as-md-input[disabled] {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
+    cursor:not-allowed;
 }
 
 md-input-container.md-input-invalid .md-input, md-input-container.md-input-invalid .as-md-input {
@@ -1465,6 +1475,10 @@ a.sort-handle {
     cursor: move;
 }
 
+.no-move {
+    cursor: not-allowed !important;
+}
+
 .delete-overlay {
     display: none;
     position: absolute;
@@ -1491,7 +1505,7 @@ a.sort-handle {
 }
 
 [ng-message="help"] {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 .field-grouping {
@@ -1552,21 +1566,27 @@ a.sort-handle {
     padding-left: 16px;
     padding-right: 16px;
     letter-spacing: 0.2px;
-    display:block;
+    display: block;
 }
 
 .uploaded-image {
     padding: 0px;
-    display:block;
+    display: block;
 }
 
 .uploaded-image .upload {
     height: 100px;
 }
+
 .field-grouping-wrapper {
     padding-right: 16px;
     padding-left: 8px;
-}.image-image {
+}
+
+.color-child-when-disabled[disabled] .md-icon, .color-child-when-disabled[disabled] .first {
+    color: rgba(0, 0, 0, 0.38);
+}
+.image-image {
     display: block;
     position: relative;
     margin: 1px;
@@ -2117,7 +2137,7 @@ body {
 }
 
 .helper {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 .body1, .secondary, .brief {
@@ -2623,7 +2643,7 @@ button::-moz-focus-inner {
 }
 
 .help-item {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
     font-size: 16px;
     font-weight: 400;
     line-height: 20px;
@@ -2975,6 +2995,10 @@ li .ui-select-highlight {
 }
 .select-input md-input-container label {
     padding-right: 32px;
+}
+
+div[disabled] .select-box {
+    cursor:not-allowed;
 }.social-grid {
     display: flex;
     flex-direction: row;
@@ -3275,11 +3299,19 @@ li .ui-select-highlight {
     transition-property: box-shadow, background;
 }
 
+div.catalog-pricetag.ui-draggable-disabled {
+    cursor:pointer;
+}
+
+li.catalog-new-pricetag[disabled] {
+    cursor:default;
+}
+
 div.catalog-pricetag:active, li.catalog-new-pricetag:active {
     box-shadow: 0px 4px 8px 2px rgba(0, 0, 0, 0.26);
 }
 
-.no-touch .images-manage .catalog-pricetag-link, .no-touch li.catalog-new-pricetag, .no-touch li.catalog-new-pricetag .catalog-pricetag-link {
+.no-touch .images-manage div.catalog-pricetag:not(.ui-draggable-disabled) .catalog-pricetag-link, .no-touch li.catalog-new-pricetag:not([disabled]), .no-touch li.catalog-new-pricetag:not([disabled]) .catalog-pricetag-link {
     cursor: move;
 }
 

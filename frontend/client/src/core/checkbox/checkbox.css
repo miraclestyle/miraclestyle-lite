@@ -33,3 +33,12 @@ md-checkbox .md-icon-check_box_outline_blank {
 .md-checked .md-icon-check_box_outline_blank  {
     opacity:0;
 }
+
+md-checkbox[disabled] {
+    color: rgba(0, 0, 0, 0.38);
+    cursor: not-allowed;
+}
+
+md-checkbox[disabled] .md-icon {
+     color: rgba(0, 0, 0, 0.38);
+}

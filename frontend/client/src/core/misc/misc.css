@@ -451,7 +451,7 @@ body {
 }
 
 .helper {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
 }
 
 .body1, .secondary, .brief {
@@ -957,7 +957,7 @@ button::-moz-focus-inner {
 }
 
 .help-item {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
     font-size: 16px;
     font-weight: 400;
     line-height: 20px;

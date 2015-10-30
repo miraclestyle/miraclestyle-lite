@@ -4,7 +4,7 @@
        <div class="clearfix list-row-single-line button-set-square list-content-tile">
         <div class="pull-right">
            <span ng-include="config.ui.specifics.mainActionsLayout.before"></span>
-           <button md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent">
+           <button md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent color-child-when-disabled">
                <span><icon type="file_upload"></icon></span>
                <input ng-show="<%= config.ui.writableCompiled %>"
                       class="upload"
@@ -34,13 +34,13 @@
                 <div class="img spaceout">
                   <img class="not-pointable" display-image-config="config.ui.specifics.displayImageConfig" display-image="image" />
                 </div>
-                <div ng-show="!config.ui.specifics.sortableOptions.disabled" class="bottom-right-floating">
+                <div class="bottom-right-floating">
                     <a ng-show="(config.ui.specifics.sortable === undefined || config.ui.specifics.sortable)" 
                        ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" 
                        loading="!<%= config.ui.writableCompiled %>"
                        md-ink-ripple-action
                        ripple-light
-                       draggable-click="config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action button-square sort-handle">
+                       draggable-click="!config.ui.specifics.sortableOptions.disabled && config.ui.specifics.sortableOptions.whatSortMeans($event)" class="bottom-right-floating-action button-square sort-handle color-child-when-disabled">
                           <icon color="white" type="reorder"></icon>
                     </a>
                 </div>

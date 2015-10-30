@@ -34,7 +34,7 @@
                     $state.go('admin-list', {
                         kind: this.kind,
                         query: helpers.url.jsonToUrlsafe({
-                            search : this.send
+                            search: this.send
                         })
                     });
                 },
@@ -56,7 +56,9 @@
             if (query) {
                 $scope.search.setSearch(kind, query.search);
             }
-            $scope.scrollEnd = {loader: $scope.search.pagination};
+            $scope.scrollEnd = {
+                loader: $scope.search.pagination
+            };
             $scope.search.pagination.load();
 
 

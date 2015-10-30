@@ -140,7 +140,7 @@ input[type="reset"], input[type="submit"], html input[type="button"], button {
 }
 
 input[type="reset"][disabled], input[type="submit"][disabled], html input[type="button"][disabled], button[disabled] {
-    cursor: default;
+    cursor: not-allowed; /* was default */
 }
 
 textarea {

@@ -107,7 +107,7 @@
 }
 
 .md-button[disabled], .md-button.md-raised[disabled] {
-    color: rgba(0, 0, 0, 0.26);
+    color: rgba(0, 0, 0, 0.38);
     cursor: not-allowed;
     background: rgba(255, 255, 255, 1);
 }
