@@ -66,6 +66,8 @@ class Buyer(orm.BaseExpando):
 
   _kind = 19
 
+  _use_memcache = True
+
   addresses = orm.SuperLocalStructuredProperty(BuyerAddress, '1', repeated=True)
 
   _default_indexed = False

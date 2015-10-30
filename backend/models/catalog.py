@@ -28,6 +28,7 @@ class CatalogProductCategory(orm.BaseModel):
   _kind = 24
 
   _use_record_engine = False
+  _use_memcache = True
 
   parent_record = orm.SuperKeyProperty('1', kind='24')
   name = orm.SuperStringProperty('2', required=True)
@@ -151,6 +152,7 @@ class CatalogProductStockContainer(orm.BaseModel):
   _kind = 134
 
   _use_rule_engine = False
+  _use_memcache = True
 
   stocks = orm.SuperLocalStructuredProperty(CatalogProductStock, '1', repeated=True, indexed=False)
 
@@ -160,6 +162,7 @@ class CatalogProductInstance(orm.BaseExpando):
   _kind = 27
 
   _use_rule_engine = False
+  _use_memcache = True
 
   sequence = orm.SuperIntegerProperty('1', required=True, indexed=True)
   variant_options = orm.SuperStringProperty('2', repeated=True, indexed=True)
@@ -208,6 +211,7 @@ class CatalogProduct(orm.BaseExpando):
   _kind = 28
 
   _use_rule_engine = False
+  _use_memcache = True
 
   category = orm.SuperKeyProperty('1', kind='24', required=True, indexed=False)
   name = orm.SuperStringProperty('2', required=True, indexed=False)
@@ -279,6 +283,7 @@ class CatalogImage(orm.Image):
   _kind = 30
 
   _use_rule_engine = False
+  _use_memcache = True
 
   sequence = orm.SuperIntegerProperty('7', required=True, indexed=True)
   pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
@@ -303,6 +308,8 @@ class CatalogImage(orm.Image):
 class Catalog(orm.BaseExpando):
 
   _kind = 31
+
+  _use_memcache = True
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)

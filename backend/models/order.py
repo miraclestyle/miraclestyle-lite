@@ -145,6 +145,8 @@ class Order(orm.BaseExpando):
 
   _kind = 34
 
+  _use_memcache = True
+
   # key path account->buyer->order
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)

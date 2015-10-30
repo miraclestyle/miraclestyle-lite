@@ -33,6 +33,7 @@ class SellerContent(orm.BaseModel):
   _kind = 21
 
   _use_rule_engine = False
+  _use_memcache = True
 
   documents = orm.SuperLocalStructuredProperty(SellerContentDocument, '1', repeated=True)
 
@@ -63,6 +64,7 @@ class SellerFeedback(orm.BaseModel):
 
   _use_record_engine = False
   _use_rule_engine = False
+  _use_memcache = True
 
   feedbacks = orm.SuperLocalStructuredProperty(SellerFeedbackStats, '1', repeated=True)
 
@@ -79,6 +81,7 @@ class SellerPluginContainer(orm.BaseModel):
   _kind = 22
 
   _use_rule_engine = False
+  _use_memcache = True
 
   plugins = orm.SuperPluginStorageProperty(('107', '113', '117', '126', '108', '109'), '1', required=True, default=[], compressed=False)
 
