@@ -17410,6 +17410,9 @@ angular.module('app')
             inDirection: false,
             outDirection: false,
             openCart: true,
+            afterClose: function () {
+                $state.go('home');
+            },
             hideClose: embed,
             noEscape: embed
         });
