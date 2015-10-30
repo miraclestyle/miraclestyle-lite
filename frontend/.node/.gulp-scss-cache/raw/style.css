@@ -1235,7 +1235,7 @@ a.sort-handle {
   margin: 0px;
   line-height: initial; }
 
-[ui-sortable] > *:not(.no-move) {
+[ui-sortable] > a.sort-handle:not(.no-move) {
   cursor: move; }
 
 .no-move {

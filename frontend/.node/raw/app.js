@@ -17595,7 +17595,9 @@ angular.module('app')
                                 }
                             }
                         }
-                    }, deferOpen = $q.defer(), openPromise = deferOpen.promise;
+                    }, deferOpen = $q.defer(), openPromise = deferOpen.promise, failedOpen = function () {
+                        deferOpen.reject();
+                    };
                     config = helpers.alwaysObject(config);
                     this.actions.read({
                         key: catalogKey,
@@ -18061,10 +18063,8 @@ angular.module('app')
                                 });
 
                             })
-                        });
-                    }, function () {
-                        deferOpen.reject();
-                    });
+                        }).opened['catch'](failedOpen);
+                    }, failedOpen);
 
                     return openPromise;
                 },

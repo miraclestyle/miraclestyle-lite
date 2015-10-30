@@ -283,7 +283,9 @@
                                 }
                             }
                         }
-                    }, deferOpen = $q.defer(), openPromise = deferOpen.promise;
+                    }, deferOpen = $q.defer(), openPromise = deferOpen.promise, failedOpen = function () {
+                        deferOpen.reject();
+                    };
                     config = helpers.alwaysObject(config);
                     this.actions.read({
                         key: catalogKey,
@@ -749,12 +751,8 @@
                                 });
 
                             })
-                        }).opened['catch'](function () {
-                            deferOpen.reject();
-                        });
-                    }, function () {
-                        deferOpen.reject();
-                    });
+                        }).opened['catch'](failedOpen);
+                    }, failedOpen);
 
                     return openPromise;
                 },
