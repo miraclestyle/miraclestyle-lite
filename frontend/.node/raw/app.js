@@ -17595,7 +17595,7 @@ angular.module('app')
                                 }
                             }
                         }
-                    };
+                    }, deferOpen = $q.defer(), openPromise = deferOpen.promise;
                     config = helpers.alwaysObject(config);
                     this.actions.read({
                         key: catalogKey,
@@ -18054,9 +18054,19 @@ angular.module('app')
                                     shareWatch();
                                 });
 
+                                $scope.$watch('modalOptions.opened', function (neww, old) {
+                                    if (neww === true) {
+                                        deferOpen.resolve();
+                                    }
+                                });
+
                             })
                         });
+                    }, function () {
+                        deferOpen.reject();
                     });
+
+                    return openPromise;
                 },
                 viewModal: function (key, config) {
                     var that = this;
@@ -18199,12 +18209,15 @@ angular.module('app')
                                     models['34'].current($scope.catalog._seller.key);
                                 }
 
+                                $scope.loadingProduct = false;
+
                                 $scope.viewProduct = function (image, pricetag, $event) {
                                     var target = $event.target,
                                         theTarget = $(target).parents('.catalog-pricetag:first');
                                     if (theTarget.length) {
                                         target = theTarget.get(0);
                                     }
+                                    $scope.loadingProduct = true;
                                     that.viewProductModal($scope.catalog.key, image.key, pricetag.key, config.variantSignatureAsDicts, {
                                         popFrom: target,
                                         hideClose: config.hideCloseOnProduct,
@@ -18214,6 +18227,8 @@ angular.module('app')
                                         autoAddToCart: config.variantSignatureAsDicts ? true : false,
                                         autoAddToCartQuantity: config.autoAddToCartQuantity,
                                         afterClose: config.afterCloseProduct
+                                    })['finally'](function () {
+                                        $scope.loadingProduct = false;
                                     });
 
                                     config.variantSignatureAsDicts = null;

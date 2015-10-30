@@ -25,7 +25,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple type="button" class="button-transparent catalog-pricetag-link " loading ng-click="viewProduct(image, pricetag, $event)">
+                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple type="button" class="button-transparent catalog-pricetag-link " loading="loadingProduct" ng-click="viewProduct(image, pricetag, $event)">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>

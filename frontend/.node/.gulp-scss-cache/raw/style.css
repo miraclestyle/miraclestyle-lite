@@ -2221,7 +2221,8 @@ button::-moz-focus-inner {
 
 .no-things-available {
   text-align: center;
-  padding-top: 88px 40px 32px;
+  padding: 24px;
+  padding-top: 80px;
   margin: 0px; }
 
 img.auto-width, .auto-width {
