@@ -811,50 +811,40 @@ class OrderCarrierPlugin(orm.BaseModel):
     carrier = context.input.get('carrier')
     order = context._order
     order_carrier = order.carrier.value
-    valid_lines = []
     for carrier_line in self.lines.value:
       if not carrier_line.active:
         continue  # inactive carrier line
       if self.validate_line(carrier_line, order):
-        valid_lines.append(carrier_line)
-    if len(valid_lines):
-      carrier_price = self.calculate_price(valid_lines, order)
-      if not order_carrier or (carrier and carrier == self.key):
-        order.carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
-      if 'carriers' not in context.output:
-        context.output['carriers'] = []
-      context.output['carriers'].append({'name': self.name,
-                                         'price': carrier_price,
-                                         'key': self.key})
+        carrier_price = self.calculate_price(carrier_line, order)
+        if not order_carrier or (carrier and carrier == self.key):
+          order.carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
+        if 'carriers' not in context.output:
+          context.output['carriers'] = []
+        context.output['carriers'].append({'name': self.name,
+                                           'price': carrier_price,
+                                           'key': self.key})
+        break
 
-  def calculate_price(self, valid_lines, order):
+  def calculate_price(self, carrier_line, order):
     zero = Decimal('0')
     if not order._lines.value:
       return zero  # if no lines are present return 0
-    prices = []
-    for carrier_line in valid_lines:
-      line_prices = []
-      carrier_line_prices = carrier_line.prices.value
-      if carrier_line_prices:
-        for price in carrier_line_prices:
-          condition_data = {
-              'weight': order._total_weight,
-              'volume': order._total_volume,
-              'price': order.total_amount
-          }
-          if price.evaluate_condition(condition_data):
-            price_data = {
-                'weight': order._total_weight,
-                'volume': order._total_volume,
-                'price': order.total_amount
-            }
-            line_prices.append(price.calculate_price(price_data))
-      else:
-        line_prices.append(Decimal('0'))
-      prices.append(min(line_prices))
-    if not prices:
+    data = {
+        'weight': order._total_weight,
+        'volume': order._total_volume,
+        'price': order.total_amount
+    }
+    line_prices = []
+    carrier_line_prices = carrier_line.prices.value
+    if carrier_line_prices:
+      for price in carrier_line_prices:
+        if price.evaluate_condition(data):
+          line_prices.append(price.calculate_price(data))
+    else:
+      line_prices.append(Decimal('0'))
+    if not line_prices:
       return zero
-    return min(prices)
+    return min(line_prices)
 
   def validate_line(self, carrier_line, order):
     address = getattr(order, 'shipping_address')
