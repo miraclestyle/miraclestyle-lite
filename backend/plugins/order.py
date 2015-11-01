@@ -810,19 +810,21 @@ class OrderCarrierPlugin(orm.BaseModel):
     carrier = context.input.get('carrier')
     order = context._order
     order_carrier = order.carrier.value
-    for carrier_line in self.lines.value:
-      if not carrier_line.active:
-        continue  # inactive carrier line
-      if self.validate_line(carrier_line, order):
-        carrier_price = self.calculate_price(carrier_line, order)
-        if not order_carrier or (carrier and carrier == self.key):
-          order.carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
-        if 'carriers' not in context.output:
-          context.output['carriers'] = []
-        context.output['carriers'].append({'name': self.name,
-                                           'price': carrier_price,
-                                           'key': self.key})
-        break
+    carrier_price = Decimal('0')
+    if self.lines.value:
+      for carrier_line in self.lines.value:
+        if not carrier_line.active:
+          continue  # inactive carrier line
+        if self.validate_line(carrier_line, order):
+          carrier_price = self.calculate_price(carrier_line, order)
+          break
+    if not order_carrier or (carrier and carrier == self.key):
+      order.carrier = OrderCarrier(description=self.name, unit_price=carrier_price, reference=self.key)
+    if 'carriers' not in context.output:
+      context.output['carriers'] = []
+    context.output['carriers'].append({'name': self.name,
+                                       'price': carrier_price,
+                                       'key': self.key})
 
   def calculate_price(self, carrier_line, order):
     zero = Decimal('0')
@@ -839,8 +841,6 @@ class OrderCarrierPlugin(orm.BaseModel):
       for price in carrier_line_prices:
         if price.evaluate_condition(data):
           line_prices.append(price.calculate_price(data))
-    else:
-      line_prices.append(Decimal('0'))
     if not line_prices:
       return zero
     return min(line_prices)
