@@ -869,13 +869,13 @@ class OrderCarrierPlugin(orm.BaseModel):
     if allowed:
       allowed = False
       if carrier_line.prices.value:
+        data = {
+            'weight': order._total_weight,
+            'volume': order._total_volume,
+            'price': order.total_amount
+        }
         for price in carrier_line.prices.value:
-          condition_data = {
-              'weight': order._total_weight,
-              'volume': order._total_volume,
-              'price': order.total_amount
-          }
-          if price.evaluate_condition(condition_data):
+          if price.evaluate_condition(data):
             allowed = True
             break
       else:
