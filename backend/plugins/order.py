@@ -842,8 +842,6 @@ class OrderCarrierPlugin(orm.BaseModel):
           line_prices.append(price.calculate_price(data))
     else:
       line_prices.append(Decimal('0'))
-    if not line_prices:
-      return zero
     return min(line_prices)
 
   def validate_line(self, carrier_line, order):
