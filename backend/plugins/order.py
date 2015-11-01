@@ -806,7 +806,6 @@ class OrderCarrierPlugin(orm.BaseModel):
     if not self.active:
       return  # this is not active carrier
     self.read()  # read locals
-    ProductInstance = context.models['27']
     OrderCarrier = context.models['123']
     carrier = context.input.get('carrier')
     order = context._order
@@ -938,6 +937,8 @@ class OrderDiscountPlugin(orm.BaseModel):
           continue
         product = line.product.value
         for discount_line in self.lines.value:
+          if not discount_line.active:
+            continue  # inactive discount line
           validate = not discount_line.product_codes and not discount_line.product_categories
           if not validate:
             validate = product.category.value.key in discount_line.product_categories
