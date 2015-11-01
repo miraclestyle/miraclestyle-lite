@@ -441,8 +441,7 @@ class OrderAddressPlugin(orm.BaseModel):
       allowed = True
     for location in self.locations.value:
       validate = []
-      if location.country:
-        validate.append(address.country_code == location._country.code)
+      validate.append(address.country_code == location._country.code)
       if location.region:
         validate.append(address.region_code == location._region.code)
       if location.postal_codes:
