@@ -439,16 +439,17 @@ class OrderAddressPlugin(orm.BaseModel):
     else:
       # Shipping everywhere except at the following locations.
       allowed = True
-    for location in self.locations.value:
-      validate = []
-      validate.append(address.country_code == location._country.code)
-      if location.region:
-        validate.append(address.region_code == location._region.code)
-      if location.postal_codes:
-        validate.append(address.postal_code in location.postal_codes)
-      if all(validate):
-        allowed = self.exclusion
-        break
+    if self.locations.value:
+      for location in self.locations.value:
+        validate = []
+        validate.append(address.country_code == location._country.code)
+        if location.region:
+          validate.append(address.region_code == location._region.code)
+        if location.postal_codes:
+          validate.append(address.postal_code in location.postal_codes)
+        if all(validate):
+          allowed = self.exclusion
+          break
     return allowed
 
 
