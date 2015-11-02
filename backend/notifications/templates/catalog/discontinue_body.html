@@ -9,7 +9,7 @@
 {% if account._is_taskqueue %}
 <span>
   The catalog was automatically discontinued based on the "Expiration date" setting
-  that was set to {{entity.discontinue_date|format_date}}.
+  that was set to {{entity.discontinue_date|format_date}} UTC (Coordinated Universal Time).
 </span><br/><br/>
 {% else %}
 <span>
