@@ -10227,7 +10227,7 @@ $(function () {
                     var cb;
                     if (!windowBound) {
                         windowBound = true;
-                        $(window).bind('beforeunload', function () {
+                        window.onbeforeunload = function () {
                             var yes = false;
 
                             angular.forEach(callbacks, function (callback) {
@@ -10237,7 +10237,7 @@ $(function () {
                             if (yes) {
                                 return GLOBAL_CONFIG.misc.text.leaveUnsaved;
                             }
-                        });
+                        };
                     }
 
                     cb = function () {
@@ -20406,32 +20406,6 @@ angular.module('app')
 
                                     $scope.cmd.order = {
                                         scheduleUpdatePromise: null,
-                                        scheduleUpdate2: function (extra, config) {
-                                            var that = this;
-                                            if (that.scheduleUpdatePromise) {
-                                                return that.scheduleUpdatePromise.then(function () {
-                                                    var newPromise = that.update(extra, config);
-                                                    that.scheduleUpdatePromise = newPromise;
-                                                    return newPromise;
-                                                });
-                                            }
-                                            that.scheduleUpdatePromise = that.update(extra, config);
-                                            return that.scheduleUpdatePromise;
-                                        },
-                                        scheduleUpdateCount: 0,
-                                        scheduleUpdate3: function (extra, config) {
-                                            var that = this;
-                                            that.scheduleUpdateCount += 1;
-                                            if (that.scheduleUpdateCount > 1 && that.scheduleUpdatePromise) {
-                                                return that.scheduleUpdatePromise;
-                                            }
-                                            that.scheduleUpdatePromise = that.update(extra, config).then(function () {
-                                                that.scheduleUpdateCount -= 1;
-                                                if (that.scheduleUpdateCount > 1) {
-                                                    that.scheduleUpdate(extra, config);
-                                                }
-                                            });
-                                        },
                                         scheduleNext: true,
                                         scheduleLoading: false,
                                         scheduleUpdate: function (extra, config) {

@@ -414,7 +414,7 @@
                     var cb;
                     if (!windowBound) {
                         windowBound = true;
-                        $(window).bind('beforeunload', function () {
+                        window.onbeforeunload = function () {
                             var yes = false;
 
                             angular.forEach(callbacks, function (callback) {
@@ -424,7 +424,7 @@
                             if (yes) {
                                 return GLOBAL_CONFIG.misc.text.leaveUnsaved;
                             }
-                        });
+                        };
                     }
 
                     cb = function () {
