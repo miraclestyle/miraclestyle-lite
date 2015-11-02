@@ -122,10 +122,15 @@
                                 controller: ng(function ($scope) {
                                     var locals = {
                                         customPlaceholder: null,
-                                        updateLiveEntity: function (response) {
-                                            var messages = $scope.order._messages;
+                                        updateLiveEntity: function (response, config) {
+                                            var messages = $scope.order._messages,
+                                                lines = $scope.order._lines;
                                             $.extend($scope.order, response.data.entity);
                                             $scope.order._messages = messages;
+                                            if (config.noLines) {
+                                                $scope.order._lines = lines;
+                                            }
+                                            lines = null;
                                         },
                                         reactOnStateChange: function (response) {
                                             helpers.update($scope.order, response.data.entity, ['state', 'feedback_adjustment', 'feedback', 'ui']);
@@ -641,7 +646,54 @@
                                     };
 
                                     $scope.cmd.order = {
-                                        update: function (extra) {
+                                        scheduleUpdatePromise: null,
+                                        scheduleUpdate2: function (extra, config) {
+                                            var that = this;
+                                            if (that.scheduleUpdatePromise) {
+                                                return that.scheduleUpdatePromise.then(function () {
+                                                    var newPromise = that.update(extra, config);
+                                                    that.scheduleUpdatePromise = newPromise;
+                                                    return newPromise;
+                                                });
+                                            }
+                                            that.scheduleUpdatePromise = that.update(extra, config);
+                                            return that.scheduleUpdatePromise;
+                                        },
+                                        scheduleUpdateCount: 0,
+                                        scheduleUpdate3: function (extra, config) {
+                                            var that = this;
+                                            that.scheduleUpdateCount += 1;
+                                            if (that.scheduleUpdateCount > 1 && that.scheduleUpdatePromise) {
+                                                return that.scheduleUpdatePromise;
+                                            }
+                                            that.scheduleUpdatePromise = that.update(extra, config).then(function () {
+                                                that.scheduleUpdateCount -= 1;
+                                                if (that.scheduleUpdateCount > 1) {
+                                                    that.scheduleUpdate(extra, config);
+                                                }
+                                            });
+                                        },
+                                        scheduleNext: true,
+                                        scheduleLoading: false,
+                                        scheduleUpdate: function (extra, config) {
+                                            var that = this;
+                                            if (that.scheduleLoading) {
+                                                that.scheduleNext = [extra, config];
+                                            } else {
+                                                that.scheduleLoading = true;
+                                                that.scheduleNext = null;
+                                                that.scheduleUpdatePromise = that.update(extra, config).then(function (response) {
+                                                    that.scheduleLoading = false;
+                                                    if (that.scheduleNext) {
+                                                        return that.scheduleUpdate.apply(that, that.scheduleNext);
+                                                    }
+                                                    return response;
+                                                });
+                                            }
+                                            return that.scheduleUpdatePromise;
+                                        },
+                                        update: function (extra, config) {
+                                            config = helpers.alwaysObject(config);
                                             var data = {
                                                 key: $scope.order.key,
                                                 payment_method: $scope.payment.method,
@@ -658,7 +710,7 @@
                                                     }
                                                     return response;
                                                 }
-                                                locals.updateLiveEntity(response);
+                                                locals.updateLiveEntity(response, config);
                                                 locals.reactOnUpdate();
                                                 $scope.carrier.available = response.data.carriers;
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
@@ -768,9 +820,15 @@
                                                     left: (ui.helper.width() * 2) * -1
                                                 }, function () {
                                                     $timeout(function () {
-                                                        $scope.cmd.line.remove(line);
-                                                        $scope.cmd.order.update().then(function () {
-                                                            snackbar.showK('cartUpdated');
+                                                        line.product.quantity = '0';
+                                                        line._state = 'deleted';
+                                                        ui.helper.hide();
+                                                        $scope.cmd.order.scheduleUpdate(undefined, {
+                                                            noLines: true
+                                                        }).then(function (response) {
+                                                            if (!(response && response.then)) {
+                                                                snackbar.showK('cartUpdated');
+                                                            }
                                                         });
                                                     });
                                                 });

@@ -560,6 +560,9 @@ if (!Array.prototype.indexOf) {
             snackbar: {
                 messages: {}
             },
+            misc: {
+              text: {}
+            },
             subheaders: {},
             fields: {
                 help: {},

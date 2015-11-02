@@ -73,7 +73,6 @@ def blob_create_upload_url(upload_url, gs_bucket_name):
 
 JINJA_ENV = Environment(loader=FileSystemLoader([os.path.join(os.path.dirname(os.path.dirname(__file__)), 'notifications', 'templates')]))
 
-_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 def _urlunsplit(scheme=None, netloc=None, path=None, query=None,
                 fragment=None):
@@ -130,13 +129,15 @@ def absolute_url(path, query=None, kwargs=None):
     return _urlunsplit(scheme, netloc, path, query, anchor)
 
 
+_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+
 @evalcontextfilter
 def nl2br(eval_ctx, value):
-  result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n')
-                        for p in _paragraph_re.split(escape(value)))
-  if eval_ctx.autoescape:
-    result = Markup(result)
-  return result
+    result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', Markup('<br />\n'))
+                          for p in _paragraph_re.split(escape(value)))
+    if eval_ctx.autoescape:
+        result = Markup(result)
+    return result
 
 @evalcontextfilter
 def format_date(eval_ctx, value):
@@ -165,6 +166,8 @@ def mail_send(data):
     raise ValueError('`sender` not found in data')
   body = render_template(data['body'], data).strip()
   subject = render_template(data['subject'], data).strip()
+  if settings.DEBUG:
+    print(subject, body)
   message = mail.EmailMessage()
   message.sender = message_sender
   message.bcc = data['recipient']

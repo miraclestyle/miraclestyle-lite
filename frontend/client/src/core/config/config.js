@@ -379,6 +379,10 @@
             }
         });
 
+        $.extend(GLOBAL_CONFIG.misc.text, {
+            leaveUnsaved: 'You have unsaved changes.'
+        });
+
         $.extend(GLOBAL_CONFIG.subheaders, {
             loginMethods: 'Sign in identities',
             productInstances: 'Variant configurations',

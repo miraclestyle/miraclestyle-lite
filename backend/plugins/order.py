@@ -159,9 +159,10 @@ class OrderUpdateLine(orm.BaseModel):
           q = q.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
         product_instance = q.get()
       else: # if the product did not specify any product signature, find stock without variant_signature and see if there's any that has no stock
-        for stock in stocks:
-          if not stock.variant_signature and stock.availability == 'out of stock':
-            out_of_stock = True
+        if stocks:
+          for stock in stocks:
+            if not stock.variant_signature and stock.availability == 'out of stock':
+              out_of_stock = True
       if out_of_stock:
         raise PluginError('product_out_of_stock')
       new_line = Line()

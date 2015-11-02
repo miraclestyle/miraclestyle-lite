@@ -405,5 +405,38 @@
                     });
                 }
             };
+        })).directive('form', ng(function (GLOBAL_CONFIG) {
+            var windowBound = false,
+                callbacks = [];
+            return {
+                require: '^form',
+                link: function (scope, element, attrs, ngFormController) {
+                    var cb;
+                    if (!windowBound) {
+                        windowBound = true;
+                        $(window).bind('beforeunload', function () {
+                            var yes = false;
+
+                            angular.forEach(callbacks, function (callback) {
+                                yes = callback();
+                            });
+
+                            if (yes) {
+                                return GLOBAL_CONFIG.misc.text.leaveUnsaved;
+                            }
+                        });
+                    }
+
+                    cb = function () {
+                        return ngFormController.$dirty;
+                    };
+
+                    callbacks.push(cb);
+
+                    scope.$on('$destroy', function () {
+                        callbacks.remove(cb);
+                    });
+                }
+            };
         }));
 }());
