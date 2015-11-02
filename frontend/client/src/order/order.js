@@ -127,7 +127,7 @@
                                                 lines = $scope.order._lines;
                                             $.extend($scope.order, response.data.entity);
                                             $scope.order._messages = messages;
-                                            if (config.noLines) {
+                                            if (config && config.noLines) {
                                                 $scope.order._lines = lines;
                                             }
                                             lines = null;

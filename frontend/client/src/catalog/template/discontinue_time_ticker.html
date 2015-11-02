@@ -1,7 +1,6 @@
 <timer interval="2000" end-time="catalog.discontinue_date">
-    Expires in <span ng-show="minutes > 0">more than</span>
-    <span ng-show="years > 0">{{years}} year{{yearsS}}</span>
-    <span ng-show="days > 0 && years < 1">{{days}} day{{daysS}}</span>
+    Expires in 
+    <span ng-show="days > 0">{{days}} day{{daysS}}</span>
     <span ng-show="years < 1 && hours > 0 && days < 1">{{hours}} hour{{hoursS}}</span>
     <span ng-show="years < 1 && days < 1 && hours < 1 && minutes > 0">{{minutes}} minute{{minutesS}}</span>
     <span ng-if="minutes < 1 && hours < 1">{{seconds}} second{{secondsS}}</span>

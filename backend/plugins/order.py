@@ -125,6 +125,7 @@ class OrderUpdateLine(orm.BaseModel):
         for i, variant in enumerate(product.variants.value):
           if variant.allow_custom_value:
             plucked_variant_signature.remove(plucked_variant_signature_map[i])
+        print(plucked_variant_signature, variant_signature)
         if stocks:
           skip_additional_stock_checks = False
           for stock in stocks:
