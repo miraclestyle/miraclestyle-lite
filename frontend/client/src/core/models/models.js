@@ -578,8 +578,7 @@
                                 completePromise = defer.promise,
                                 ctrl;
                             ctrl = function ($scope) {
-                                var inflector = $filter('inflector'),
-                                    field,
+                                var field,
                                     done = {},
                                     rootTitle,
                                     madeHistory = false,

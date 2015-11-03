@@ -13953,6 +13953,25 @@ $(function () {
                             modalScope.$close = modalInstance.close;
                             modalScope.close = modalScope.$close;
                             modalScope.$dismiss = modalInstance.dismiss;
+                            modalScope.$state = {
+                                completed: false,
+                                complete: function () {
+                                    modalScope.$state.completed = true;
+                                },
+                                promise: function (promise, callback, failure) {
+                                    if (angular.isArray(promise)) {
+                                        promise = $q.all(promise);
+                                    }
+                                    return promise.then(function (response) {
+                                        console.log(response);
+                                        var promise = callback.call(modalScope, modalScope, response);
+                                        if (promise && promise.then) {
+                                            return promise.then(modalScope.$state.complete);
+                                        }
+                                        return modalScope.$state.complete();
+                                    }, failure);
+                                }
+                            };
 
                             var ctrlInstance, ctrlLocals = {};
                             var resolveIter = 1;
@@ -14010,7 +14029,8 @@ $(function () {
         return {
             link: function (scope, element, attrs) {
                 var time,
-                    fn = function (e) {
+                    fn,
+                    rawFn = function (e) {
                         if (time) {
                             clearTimeout(time);
                         }
@@ -14042,11 +14062,16 @@ $(function () {
                         }, 50);
                     };
 
-                fn = _.throttle(fn, 100);
+                fn = _.throttle(rawFn, 100);
 
                 $(window).bind('resize modal.open', fn);
                 scope.$on('$destroy', function () {
                     $(window).unbind('resize modal.open', fn);
+                });
+                scope.$watch('$state.completed', function (newValue, oldValue) {
+                    if (newValue === true && newValue !== oldValue) {
+                        rawFn();
+                    }
                 });
             }
         };
@@ -14137,7 +14162,11 @@ $(function () {
             window._modals = modals;
         }
         return modals;
-    }));
+    })).directive('modalLoading', function () {
+        return {
+            templateUrl: 'core/modal/loading.html'
+        };
+    });
 
 }());
 (function () {
@@ -14720,8 +14749,7 @@ $(function () {
                                 completePromise = defer.promise,
                                 ctrl;
                             ctrl = function ($scope) {
-                                var inflector = $filter('inflector'),
-                                    field,
+                                var field,
                                     done = {},
                                     rootTitle,
                                     madeHistory = false,
@@ -17412,133 +17440,145 @@ angular.module('app')
                                 }
                             }
                         },
+                        that = this,
                         deferOpen = $q.defer(),
                         openPromise = deferOpen.promise,
                         failedOpen = function () {
                             deferOpen.reject();
                         };
                     config = helpers.alwaysObject(config);
-                    this.actions.read({
-                        key: catalogKey,
-                        read_arguments: readArguments
-                    }).then(function (response) {
-                        var catalog = response.data.entity,
-                            fakeScope = (function () {
-                                var $scope = {};
-                                $scope.product = catalog._images[0].pricetags[0]._product;
-                                $scope.originalProduct = angular.copy($scope.product);
-                                $scope.catalog = catalog;
-                                $scope.variants = [];
-                                $scope.variantSelection = [];
-                                $scope.hideAddToCart = false;
-                                $scope.hideClose = config ? config.hideClose : false;
-                                $scope.currentVariation = [];
-                                $scope.currentVariationPure = [];
-                                angular.forEach($scope.product.variants, function (v, i) {
+                    $modal.open({
+                        templateUrl: 'catalog/product/view.html',
+                        windowClass: 'no-overflow',
+                        popFrom: config.popFrom,
+                        noEscape: config.noEscape,
+                        controller: ng(function ($scope) {
 
-                                    $scope.variants.push({
-                                        name: v.name,
-                                        options: v.options,
-                                        option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? variantSignatureAsDicts[i][v.name] : v.options[0]),
-                                        description: v.description,
-                                        allow_custom_value: v.allow_custom_value
-                                    });
+                            deferOpen.resolve();
 
-                                    $scope.variantSelection.push({
-                                        type: 'SuperStringProperty',
-                                        choices: (v.allow_custom_value ? null : v.options),
-                                        code_name: 'option_' + i,
-                                        ui: {
-                                            help: v.allow_custom_value ? v.description : undefined,
-                                            label: v.name,
-                                            writable: true,
-                                            attrs: {
-                                                'ng-change': 'delayedChangeVariation(' + (v.allow_custom_value ? 'true' : 'false') + ')'
-                                            },
-                                            args: 'variants[' + i + '].option'
-                                        }
-                                    });
+                            $scope.$state.promise(that.actions.read({
+                                key: catalogKey,
+                                read_arguments: readArguments
+                            }, {
+                                disableUI: false
+                            }).then(function (response) {
+                                var catalog = response.data.entity,
+                                    fakeScope = (function () {
+                                        var $scope = {};
+                                        $scope.product = catalog._images[0].pricetags[0]._product;
+                                        $scope.originalProduct = angular.copy($scope.product);
+                                        $scope.catalog = catalog;
+                                        $scope.variants = [];
+                                        $scope.variantSelection = [];
+                                        $scope.hideAddToCart = false;
+                                        $scope.hideClose = config ? config.hideClose : false;
+                                        $scope.currentVariation = [];
+                                        $scope.currentVariationPure = [];
+                                        angular.forEach($scope.product.variants, function (v, i) {
 
-                                });
+                                            $scope.variants.push({
+                                                name: v.name,
+                                                options: v.options,
+                                                option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? variantSignatureAsDicts[i][v.name] : v.options[0]),
+                                                description: v.description,
+                                                allow_custom_value: v.allow_custom_value
+                                            });
 
-                                $scope.changeVariationPromise = function (forceSkip) {
-                                    var buildVariantSignature = [],
-                                        skip = false,
-                                        promise,
-                                        qdefer;
-
-                                    $scope.currentVariation.empty();
-                                    $scope.currentVariationPure.empty();
-
-                                    angular.forEach($scope.variants, function (v) {
-                                        var d = {};
-                                        if (v.option === null) {
-                                            skip = true;
-                                        }
-                                        d[v.name] = v.option;
-                                        if (!v.allow_custom_value) {
-                                            buildVariantSignature.push(v.name + ': ' + v.option);
-                                            $scope.currentVariationPure.push(d);
-                                        } else if (!angular.isString(v.option) || !v.option.length) {
-                                            //return;
-                                        }
-                                        $scope.currentVariation.push(d);
-                                    });
-
-                                    if (skip || forceSkip) {
-                                        qdefer = $q.defer();
-                                        promise = qdefer.promise;
-                                        qdefer.resolve(forceSkip);
-                                        return promise;
-                                    }
-                                    // rpc to check the instance
-                                    return models['31'].actions.read({
-                                        key: this.catalog.key,
-                                        // 4 rpcs
-                                        read_arguments: {
-                                            _images: {
-                                                config: {
-                                                    keys: [imageKey]
-                                                },
-                                                pricetags: {
-                                                    config: {
-                                                        keys: [pricetagKey]
+                                            $scope.variantSelection.push({
+                                                type: 'SuperStringProperty',
+                                                choices: (v.allow_custom_value ? null : v.options),
+                                                code_name: 'option_' + i,
+                                                ui: {
+                                                    help: v.allow_custom_value ? v.description : undefined,
+                                                    label: v.name,
+                                                    writable: true,
+                                                    attrs: {
+                                                        'ng-change': 'delayedChangeVariation(' + (v.allow_custom_value ? 'true' : 'false') + ')'
                                                     },
-                                                    _product: {
-                                                        _instances: {
+                                                    args: 'variants[' + i + '].option'
+                                                }
+                                            });
+
+                                        });
+
+                                        $scope.changeVariationPromise = function (forceSkip, disableUI) {
+                                            var buildVariantSignature = [],
+                                                skip = false,
+                                                promise,
+                                                qdefer;
+
+                                            $scope.currentVariation.empty();
+                                            $scope.currentVariationPure.empty();
+
+                                            angular.forEach($scope.variants, function (v) {
+                                                var d = {};
+                                                if (v.option === null) {
+                                                    skip = true;
+                                                }
+                                                d[v.name] = v.option;
+                                                if (!v.allow_custom_value) {
+                                                    buildVariantSignature.push(v.name + ': ' + v.option);
+                                                    $scope.currentVariationPure.push(d);
+                                                } else if (!angular.isString(v.option) || !v.option.length) {
+                                                    //return;
+                                                }
+                                                $scope.currentVariation.push(d);
+                                            });
+
+                                            if (skip || forceSkip) {
+                                                qdefer = $q.defer();
+                                                promise = qdefer.promise;
+                                                qdefer.resolve(forceSkip);
+                                                return promise;
+                                            }
+                                            // rpc to check the instance
+                                            return models['31'].actions.read({
+                                                key: this.catalog.key,
+                                                // 4 rpcs
+                                                read_arguments: {
+                                                    _images: {
+                                                        config: {
+                                                            keys: [imageKey]
+                                                        },
+                                                        pricetags: {
                                                             config: {
-                                                                search: {
-                                                                    filters: [{
-                                                                        field: 'variant_options',
-                                                                        operator: 'ALL_IN',
-                                                                        value: buildVariantSignature
-                                                                    }]
+                                                                keys: [pricetagKey]
+                                                            },
+                                                            _product: {
+                                                                _instances: {
+                                                                    config: {
+                                                                        search: {
+                                                                            filters: [{
+                                                                                field: 'variant_options',
+                                                                                operator: 'ALL_IN',
+                                                                                value: buildVariantSignature
+                                                                            }]
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 }
-                                            }
-                                        }
-                                    });
-                                };
+                                            }, {
+                                                disableUI: disableUI === undefined ? true : disableUI
+                                            });
+                                        };
 
-                                return $scope;
-                            }());
-                        $modal.open({
-                            resolve: {
-                                productInstanceResponse: function () {
-                                    return fakeScope.changeVariationPromise().then(function (response) {
-                                        return response;
-                                    });
-                                }
-                            },
-                            templateUrl: 'catalog/product/view.html',
-                            windowClass: 'no-overflow',
-                            popFrom: config.popFrom,
-                            noEscape: config.noEscape,
-                            controller: ng(function ($scope, productInstanceResponse) {
-                                var loadProductInstance, sellerKey, shareWatch, timer;
+                                        return $scope;
+                                    }());
+
+                                return fakeScope.changeVariationPromise(undefined, false).then(function (productResponse) {
+                                    return {catalog: catalog, fakeScope: fakeScope, productResponse: productResponse, response: response};
+                                });
+
+                            }, failedOpen), function ($scope, response) {
+                                var loadProductInstance,
+                                    sellerKey,
+                                    shareWatch,
+                                    timer,
+                                    fakeScope = response.fakeScope,
+                                    productInstanceResponse = response.productResponse;
                                 $scope.variantMenu = {};
                                 $scope.productMenu = {};
                                 helpers.sideNav.setup($scope.productMenu, 'right_product_sidenav', doNotRipple);
@@ -17884,40 +17924,41 @@ angular.module('app')
                                     }
                                 });
 
-                            })
-                        }).opened['catch'](failedOpen);
-                    }, failedOpen);
+                            }, failedOpen);
+
+                        })
+                    }).opened['catch'](failedOpen);
 
                     return openPromise;
                 },
                 viewModal: function (key, config) {
                     var that = this;
-                    that.actions.read({
-                        key: key,
-                        // 5 rpcs
-                        read_arguments: {
-                            _seller: {
-                                _content: {},
-                                _feedback: {}
-                            },
-                            _images: {
-                                pricetags: {}
-                            }
-                        }
-                    }).then(function (response) {
-                        var entity = response.data.entity;
-                        if (!entity._images.length) {
-                            snackbar.showK('noImagesInCatalog');
-                            return;
-                        }
-                        $modal.open({
-                            templateUrl: 'catalog/view.html',
-                            windowClass: 'no-overflow',
-                            popFrom: config.popFrom,
-                            inDirection: config.inDirection,
-                            outDirection: config.outDirection,
-                            noEscape: config.noEscape,
-                            controller: ng(function ($scope) {
+
+                    $modal.open({
+                        templateUrl: 'catalog/view.html',
+                        windowClass: 'no-overflow',
+                        popFrom: config.popFrom,
+                        inDirection: config.inDirection,
+                        outDirection: config.outDirection,
+                        noEscape: config.noEscape,
+                        controller: ng(function ($scope) {
+                            $scope.$state.promise(that.actions.read({
+                                key: key,
+                                // 5 rpcs
+                                read_arguments: {
+                                    _seller: {
+                                        _content: {},
+                                        _feedback: {}
+                                    },
+                                    _images: {
+                                        pricetags: {}
+                                    }
+                                }
+                            }), function ($scope, response) {
+                                var entity = response.data.entity;
+                                if (!entity._images.length) {
+                                    snackbar.showK('noImagesInCatalog');
+                                }
                                 $scope.catalogMenu = {};
                                 helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
                                 $scope.catalog = entity;
@@ -18092,8 +18133,8 @@ angular.module('app')
                                     });
                                     return promise;
                                 };
-                            })
-                        });
+                            });
+                        })
                     });
                 },
                 adminManageModal: function (account, extraConfig) {

@@ -1,7 +1,10 @@
 <div class="fitter" fit-in-modal>
+
+<modal-loading></modal-loading>
+<div class="modal-body fixed-height relative">
 <form name="container.form" method="post" action="{{container.action}}">
  
-  <div class="modal-body fixed-height relative">
+
   <div class="clearfix">
 
       <div ng-hide="hideClose" class="top-close">
@@ -10,13 +13,13 @@
            </button>
       </div>
 
-      <div class="top-close top-close-right">
+      <div ng-if="$state.completed" class="top-close top-close-right">
            <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="catalogMenu.toggle()">
              <icon color="white" type="more_vert"></icon>
            </button>
       </div>
  
-      <div ng-if="modalOptions.opened" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
+      <div ng-if="modalOptions.opened && $state.completed" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
          <div ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider swoop-from-left"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 
@@ -38,7 +41,7 @@
          </div>
       </div>
 
-     <md-sidenav md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
+     <md-sidenav ng-if="$state.completed" md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
         <md-content>
             <div class="list">
                 <div class="sidebar-seller-logo">
@@ -64,6 +67,7 @@
       <div ng-include="'seller/view.html'"></div>
        
     </div>
-  </div> 
 </form>
+
+</div> 
 </div>

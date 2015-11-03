@@ -514,6 +514,25 @@
                             modalScope.$close = modalInstance.close;
                             modalScope.close = modalScope.$close;
                             modalScope.$dismiss = modalInstance.dismiss;
+                            modalScope.$state = {
+                                completed: false,
+                                complete: function () {
+                                    modalScope.$state.completed = true;
+                                },
+                                promise: function (promise, callback, failure) {
+                                    if (angular.isArray(promise)) {
+                                        promise = $q.all(promise);
+                                    }
+                                    return promise.then(function (response) {
+                                        console.log(response);
+                                        var promise = callback.call(modalScope, modalScope, response);
+                                        if (promise && promise.then) {
+                                            return promise.then(modalScope.$state.complete);
+                                        }
+                                        return modalScope.$state.complete();
+                                    }, failure);
+                                }
+                            };
 
                             var ctrlInstance, ctrlLocals = {};
                             var resolveIter = 1;
@@ -571,7 +590,8 @@
         return {
             link: function (scope, element, attrs) {
                 var time,
-                    fn = function (e) {
+                    fn,
+                    rawFn = function (e) {
                         if (time) {
                             clearTimeout(time);
                         }
@@ -603,11 +623,16 @@
                         }, 50);
                     };
 
-                fn = _.throttle(fn, 100);
+                fn = _.throttle(rawFn, 100);
 
                 $(window).bind('resize modal.open', fn);
                 scope.$on('$destroy', function () {
                     $(window).unbind('resize modal.open', fn);
+                });
+                scope.$watch('$state.completed', function (newValue, oldValue) {
+                    if (newValue === true && newValue !== oldValue) {
+                        rawFn();
+                    }
                 });
             }
         };
@@ -698,6 +723,10 @@
             window._modals = modals;
         }
         return modals;
-    }));
+    })).directive('modalLoading', function () {
+        return {
+            templateUrl: 'core/modal/loading.html'
+        };
+    });
 
 }());

@@ -165,3 +165,19 @@
     padding: 24px;
     padding-bottom: 16px;
 }
+
+modal-loading .progress-wrapper {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    height: calc(100% - 56px);
+    padding: 0px !important;
+    border-radius: inherit;
+}
+
+.modal-loading-wrapper {
+    width: 100%;
+    background: white;
+    height: 100%;
+    position: fixed;
+}
