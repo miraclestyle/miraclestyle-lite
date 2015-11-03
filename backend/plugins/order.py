@@ -175,6 +175,7 @@ class OrderUpdateLine(orm.BaseModel):
       order_product.code = product.code
       order_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
       order_product.uom = copy.deepcopy(product.uom.get())
+      print('product_instance', product_instance)
       if product_instance is not None:
         if hasattr(product_instance, 'unit_price') and product_instance.unit_price is not None:
           order_product.unit_price = product_instance.unit_price
