@@ -278,8 +278,12 @@
                 link: function (scope, element) {
                     scope.$watch('config.firstLoad', function (neww, old) {
                         if (neww === false || neww === true) {
-                            var spinner = element.parents('.modal:first').find('content-spinner').find(':first');
+                            var modal = element.parents('.modal:first'),
+                                spinner = modal.find('content-spinner').find(':first');
                             if (!spinner.length) {
+                                if (modal.length) {
+                                    return;
+                                }
                                 spinner = $('body content-spinner:first').find(':first');
                             }
                             if (neww === true) {

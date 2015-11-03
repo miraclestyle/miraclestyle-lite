@@ -64,7 +64,7 @@
     </md-sidenav>
        
 
-      <div ng-include="'seller/view.html'"></div>
+    <div ng-if="$state.isCompleted()" ng-include="'seller/view.html'"></div>
        
     </div>
 </form>
