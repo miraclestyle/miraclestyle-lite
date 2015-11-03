@@ -549,8 +549,9 @@
                                 };
 
                                 loadProductInstance = function (response) {
+                                    console.log(response);
                                     if (response === true) {
-                                        return;
+                                        return response;
                                     }
                                     var product,
                                         productInstance,

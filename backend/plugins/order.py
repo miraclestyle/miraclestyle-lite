@@ -153,7 +153,7 @@ class OrderUpdateLine(orm.BaseModel):
                 break
         if out_of_stock:
           raise PluginError('product_out_of_stock') # stop the code so it doesnt issue another query for no reason
-        q = ProductInstance.query()
+        q = ProductInstance.query(ancestor=product.key)
         for variant in plucked_variant_signature:
           item = variant.iteritems().next()
           q = q.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
