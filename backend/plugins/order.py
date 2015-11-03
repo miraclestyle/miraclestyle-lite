@@ -123,7 +123,7 @@ class OrderUpdateLine(orm.BaseModel):
         plucked_variant_signature_map = dict((i, v) for i, v in enumerate(plucked_variant_signature))
         # remove all allow_custom_value's from spec
         for i, variant in enumerate(product.variants.value):
-          if variant.allow_custom_value:
+          if variant.allow_custom_value and i in plucked_variant_signature_map:
             plucked_variant_signature.remove(plucked_variant_signature_map[i])
         if stocks:
           skip_additional_stock_checks = False

@@ -351,6 +351,8 @@
                                         if (!v.allow_custom_value) {
                                             buildVariantSignature.push(v.name + ': ' + v.option);
                                             $scope.currentVariationPure.push(d);
+                                        } else if (!angular.isString(v.option) || !v.option.length) {
+                                            return;
                                         }
                                         $scope.currentVariation.push(d);
                                     });
@@ -358,7 +360,7 @@
                                     if (skip || forceSkip) {
                                         qdefer = $q.defer();
                                         promise = qdefer.promise;
-                                        qdefer.resolve();
+                                        qdefer.resolve(forceSkip);
                                         return promise;
                                     }
                                     // rpc to check the instance
@@ -547,6 +549,9 @@
                                 };
 
                                 loadProductInstance = function (response) {
+                                    if (response === true) {
+                                        return;
+                                    }
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
