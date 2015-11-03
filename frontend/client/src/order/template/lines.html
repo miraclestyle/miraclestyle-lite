@@ -95,7 +95,7 @@
                                 <td class="secondary info">Unit price</td>
                                 <td class="secondary">{{line.product.unit_price|formatCurrency:order.currency}}</td>
                             </tr>
-                            <tr ng-repeat="variant in line.product.variant_signature track by $index">
+                            <tr ng-if="format.variantVisible(variant)" ng-repeat="variant in line.product.variant_signature track by $index">
                                 <td class="secondary info">{{format.variantLabel(variant)}}</td>
                                 <td class="secondary">{{format.variantValue(variant)}}</td>
                             </tr>

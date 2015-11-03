@@ -17704,7 +17704,7 @@ angular.module('app')
                                             buildVariantSignature.push(v.name + ': ' + v.option);
                                             $scope.currentVariationPure.push(d);
                                         } else if (!angular.isString(v.option) || !v.option.length) {
-                                            return;
+                                            //return;
                                         }
                                         $scope.currentVariation.push(d);
                                     });
@@ -20120,6 +20120,13 @@ angular.module('app')
                                     };
 
                                     $scope.format = {
+                                        variantVisible: function (variant) {
+                                            var value = $scope.format.variantValue(variant);
+                                            if (!angular.isString(value) || !value.length) {
+                                                return false;
+                                            }
+                                            return true;
+                                        },
                                         variantLabel: function (variant) {
                                             return Object.keys(variant)[0];
                                         },

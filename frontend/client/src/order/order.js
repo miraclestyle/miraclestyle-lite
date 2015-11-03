@@ -356,6 +356,13 @@
                                     };
 
                                     $scope.format = {
+                                        variantVisible: function (variant) {
+                                            var value = $scope.format.variantValue(variant);
+                                            if (!angular.isString(value) || !value.length) {
+                                                return false;
+                                            }
+                                            return true;
+                                        },
                                         variantLabel: function (variant) {
                                             return Object.keys(variant)[0];
                                         },

@@ -352,7 +352,7 @@
                                             buildVariantSignature.push(v.name + ': ' + v.option);
                                             $scope.currentVariationPure.push(d);
                                         } else if (!angular.isString(v.option) || !v.option.length) {
-                                            return;
+                                            //return;
                                         }
                                         $scope.currentVariation.push(d);
                                     });
