@@ -516,6 +516,7 @@
                             modalScope.$dismiss = modalInstance.dismiss;
                             modalScope.$state = {
                                 completed: false,
+                                errored: false,
                                 complete: function () {
                                     modalScope.$state.completed = true;
                                 },
@@ -524,10 +525,9 @@
                                         promise = $q.all(promise);
                                     }
                                     return promise.then(function (response) {
-                                        console.log(response);
                                         var promise = callback.call(modalScope, modalScope, response);
                                         if (promise && promise.then) {
-                                            return promise.then(modalScope.$state.complete);
+                                            return promise.then(modalScope.$state.complete, failure);
                                         }
                                         return modalScope.$state.complete();
                                     }, failure);
