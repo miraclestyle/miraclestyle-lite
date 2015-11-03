@@ -17352,234 +17352,7 @@ angular.module('app')
         }));
 }());(function () {
     'use strict';
-    angular.module('app').directive('trackIfProductView', ng(function ($timeout) {
-        return {
-            restrict: 'A',
-            link: function (scope, element, attrs) {
-                var fired;
-                scope.$watch(attrs.trackIfProductView, function (neww, old) {
-                    if (fired) {
-                        return;
-                    }
-                    if (angular.isObject(neww)) {
-                        $timeout(function () {
-                            element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]').click();
-                            fired = true;
-                        }, 100);
-                    }
-                });
-            }
-        };
-    })).directive('catalogNewPricetag', ng(function ($parse) {
-        return {
-            restrict: 'A',
-            link: function (scope, element, attrs) {
-                var callback = $parse(attrs.catalogNewPricetag);
-                element.on('click', function (event) {
-                    var offset = element.offset(),
-                        x = event.pageX - offset.left,
-                        y = event.pageY - offset.top,
-                        parent = element.parents('.image-slider-item:first'),
-                        width = parent.width(),
-                        height = parent.height();
-
-                    scope.$apply(function () {
-                        callback(scope, {
-                            config: {
-                                position_left: x,
-                                position_top: y,
-                                image_width: width,
-                                image_height: height
-                            }
-                        });
-                    });
-                });
-            }
-        };
-    })).controller('CatalogViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            afterClose: function () {
-                $state.go('home');
-            }
-        });
-
-    })).controller('CatalogProductAddToCartController', ng(function ($scope, $state, helpers, models) {
-        var embed = $state.current.name === 'embed-catalog-product-add-to-cart';
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            hideClose: embed,
-            noEscape: embed,
-            afterClose: embed ? undefined : function () {
-                $state.go('home');
-            },
-            variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
-            autoAddToCartQuantity: $state.params.quantity,
-            loadProduct: {
-                image: $state.params.image_id,
-                id: $state.params.pricetag_id
-            }
-        });
-
-    })).controller('CatalogProductViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            afterClose: function () {
-                $state.go('home');
-            },
-            loadProduct: {
-                image: $state.params.image_id,
-                id: $state.params.pricetag_id
-            }
-        });
-
-    })).controller('CatalogOrderViewController', ng(function ($scope, $state, models) {
-        var embed = $state.current.name === 'embed-catalog-order-view';
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            openCart: true,
-            afterClose: function () {
-                $state.go('home');
-            },
-            hideClose: embed,
-            noEscape: embed
-        });
-
-    })).controller('EmbedCatalogViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            inDirection: false,
-            outDirection: false,
-            noEscape: true,
-            hideClose: true
-        });
-
-    })).controller('EmbedCatalogProductViewController', ng(function ($scope, $state, models) {
-        $scope.site.toolbar.hidden = true;
-        models['31'].viewModal($state.params.key, {
-            popFrom: undefined,
-            hideClose: true,
-            noEscape: true,
-            noEscapeOnProduct: true,
-            inDirection: false,
-            outDirection: false,
-            loadProduct: {
-                image: $state.params.image_id,
-                id: $state.params.pricetag_id
-            }
-        });
-
-    })).directive('catalogPricetagPosition', ng(function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
-        return {
-            link: function (scope, element, attr) {
-
-                var pricetag = scope.$eval(attr.catalogPricetagPosition),
-                    resize = function (justElement) {
-                        var pa = $(element).parents('.image-slider-item:first'),
-                            sizes,
-                            containerh = pa.height(),
-                            pricetagHeight = 36;
-                        sizes = models['31'].calculatePricetagPosition(
-                            pricetag.position_top,
-                            pricetag.position_left,
-                            pricetag.image_width,
-                            pricetag.image_height,
-                            pa.width(),
-                            containerh
-                        );
-
-                        if (sizes[0] < 0) {
-                            sizes[0] = 0;
-                        } else {
-                            if (sizes[0] > containerh - pricetagHeight) {
-                                sizes[0] = containerh - pricetagHeight;
-                            }
-                        }
-
-                        pricetag._position_top = sizes[0];
-                        pricetag._position_left = sizes[1];
-
-                        $(element).css({
-                            top: pricetag._position_top,
-                            left: pricetag._position_left,
-                            visibility: 'visible'
-                        });
-                    },
-                    track = [];
-                resize = _.throttle(resize, 100);
-                $timeout(resize, 0, false);
-                scope.$on('modalResize', resize);
-                scope.$on('resizePricetags', function (event, tpricetag) {
-                    if (tpricetag) {
-                        if (tpricetag.key === pricetag.key) {
-                            pricetag.position_top = tpricetag.position_top;
-                            pricetag.position_left = tpricetag.position_left;
-                            resize();
-                        }
-                    } else {
-                        resize();
-                    }
-                });
-                angular.forEach(['state', 'key', 'position_left', 'position_top', '_position_left', '_position_top'], function (value) {
-                    track.push(attr.catalogPricetagPosition + '.' + value);
-                });
-                scope.$watch(function () {
-                    return true;
-                }, resize);
-            }
-        };
-    })).directive('productInstanceCardView', ng(function (GLOBAL_CONFIG) {
-        return {
-            scope: {
-                val: '=productInstanceCardView'
-            },
-            templateUrl: 'catalog/product/instance_card_view.html',
-            link: function (scope) {
-                scope.showVariantLabel = function (variant) {
-                    return variant.split(':')[0];
-                };
-                scope.showVariantValue = function (variant) {
-                    var splitOpen = variant.split(':');
-                    return splitOpen.slice(1, splitOpen.length).join(':');
-                };
-            }
-        };
-    })).directive('productStockConfigurationCardView', ng(function (GLOBAL_CONFIG) {
-        return {
-            scope: {
-                val: '=productStockConfigurationCardView'
-            },
-            templateUrl: 'catalog/product/stock_configuration_card_view.html',
-            link: function (scope) {
-                scope.showVariantLabel = function (signature) {
-                    return _.keys(signature)[0];
-                };
-                scope.showVariantValue = function (signature) {
-                    var val = _.values(signature)[0];
-                    if (val === '***Any***') {
-                        return 'Any';
-                    }
-                    return val;
-                };
-                scope.showMainLabel = function (k) {
-                    return GLOBAL_CONFIG.fields.translateChoices['133'].availability[k];
-                };
-            }
-        };
-    })).run(ng(function (modelsEditor, modelsMeta, modelsConfig, currentAccount, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
+    angular.module('app').run(ng(function (modelsEditor, modelsMeta, modelsConfig, currentAccount, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
 
         modelsConfig(function (models) {
             var doNotRipple = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'],
@@ -17624,23 +17397,26 @@ angular.module('app')
                 },
                 viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts, config) {
                     var readArguments = {
-                        _seller: {},
-                        _images: {
-                            config: {
-                                keys: [imageKey]
-                            },
-                            pricetags: {
+                            _seller: {},
+                            _images: {
                                 config: {
-                                    keys: [pricetagKey]
+                                    keys: [imageKey]
                                 },
-                                _product: {
-                                    _category: {}
+                                pricetags: {
+                                    config: {
+                                        keys: [pricetagKey]
+                                    },
+                                    _product: {
+                                        _category: {}
+                                    }
                                 }
                             }
-                        }
-                    }, deferOpen = $q.defer(), openPromise = deferOpen.promise, failedOpen = function () {
-                        deferOpen.reject();
-                    };
+                        },
+                        deferOpen = $q.defer(),
+                        openPromise = deferOpen.promise,
+                        failedOpen = function () {
+                            deferOpen.reject();
+                        };
                     config = helpers.alwaysObject(config);
                     this.actions.read({
                         key: catalogKey,
@@ -17663,7 +17439,7 @@ angular.module('app')
                                     $scope.variants.push({
                                         name: v.name,
                                         options: v.options,
-                                        option: (variantSignatureAsDicts && variantSignatureAsDicts[i]  ? variantSignatureAsDicts[i][v.name] : v.options[0]),
+                                        option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? variantSignatureAsDicts[i][v.name] : v.options[0]),
                                         description: v.description,
                                         allow_custom_value: v.allow_custom_value
                                     });
@@ -17875,9 +17651,7 @@ angular.module('app')
                                             var order = response.data.entity;
                                             if (order.id) {
                                                 angular.forEach(order._lines, function (line) {
-                                                    if (line.product._reference.parent.id === $scope.product.parent.id
-                                                            && line.product._reference.id === $scope.product.id
-                                                            && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
+                                                    if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
                                                         $scope.productQuantity = parseInt(line.product.quantity, 10);
                                                         if ($scope.productQuantity > 0) {
                                                             $scope.hasThisProduct = true;
@@ -17901,7 +17675,6 @@ angular.module('app')
                                 };
 
                                 loadProductInstance = function (response) {
-                                    console.log(response);
                                     if (response === true) {
                                         return response;
                                     }
@@ -18830,7 +18603,9 @@ angular.module('app')
                                                     $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
                                                     pricetag._product = product;
                                                     if (!product._stock) {
-                                                        product._stock = {stocks: []};
+                                                        product._stock = {
+                                                            stocks: []
+                                                        };
                                                     }
                                                     product.ui.access = realPath; // override normalizeEntity auto generated path
                                                     $scope.fieldProduct.ui.realPath = realPath; // set same path
@@ -19040,41 +18815,42 @@ angular.module('app')
                                                                 fieldScope.variantCombination[i1] = _.values(fieldScope.args.variant_signature[i1])[0];
                                                             } catch (ignore) {}
                                                             var computeWritable = (function () {
-                                                                var t = [];
-                                                                angular.forEach(fieldScope.args.ui.access, function (value, key) {
-                                                                    if (!angular.isNumber(value)) {
-                                                                        t.push("['" + value + "']");
-                                                                    }
-                                                                });
-                                                                return t.join('');
-                                                            }()), field = {
-                                                                type: 'SuperStringProperty',
-                                                                choices: (function () {
-                                                                    var list = value.options.concat(),
-                                                                        values = [{
-                                                                            key: '***Any***',
-                                                                            name: 'Any'
-                                                                        }];
-                                                                    angular.forEach(list, function (v) {
-                                                                        values.push({
-                                                                            key: v,
-                                                                            name: v
-                                                                        });
+                                                                    var t = [];
+                                                                    angular.forEach(fieldScope.args.ui.access, function (value, key) {
+                                                                        if (!angular.isNumber(value)) {
+                                                                            t.push("['" + value + "']");
+                                                                        }
                                                                     });
-                                                                    return values;
+                                                                    return t.join('');
                                                                 }()),
-                                                                code_name: 'variant_choice_' + i1,
-                                                                required: true,
-                                                                ui: {
-                                                                    writable: 'entity.ui.rule.field' + computeWritable + '.variant_signature.writable',
-                                                                    label: value.name,
-                                                                    help: value.description,
-                                                                    args: 'variantCombination[' + i1 + ']',
-                                                                    attrs: {
-                                                                        'ng-change': 'changeVariantCommit()'
+                                                                field = {
+                                                                    type: 'SuperStringProperty',
+                                                                    choices: (function () {
+                                                                        var list = value.options.concat(),
+                                                                            values = [{
+                                                                                key: '***Any***',
+                                                                                name: 'Any'
+                                                                            }];
+                                                                        angular.forEach(list, function (v) {
+                                                                            values.push({
+                                                                                key: v,
+                                                                                name: v
+                                                                            });
+                                                                        });
+                                                                        return values;
+                                                                    }()),
+                                                                    code_name: 'variant_choice_' + i1,
+                                                                    required: true,
+                                                                    ui: {
+                                                                        writable: 'entity.ui.rule.field' + computeWritable + '.variant_signature.writable',
+                                                                        label: value.name,
+                                                                        help: value.description,
+                                                                        args: 'variantCombination[' + i1 + ']',
+                                                                        attrs: {
+                                                                            'ng-change': 'changeVariantCommit()'
+                                                                        }
                                                                     }
-                                                                }
-                                                            };
+                                                                };
                                                             swichables.push(field);
                                                             fieldScope.formBuilder[0].push(field);
                                                             i1 += 1;
@@ -19378,6 +19154,244 @@ angular.module('app')
 
         });
     }));
+}());
+(function () {
+    'use strict';
+    angular.module('app')
+        .controller('CatalogViewController', ng(function ($scope, $state, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                inDirection: false,
+                outDirection: false,
+                afterClose: function () {
+                    $state.go('home');
+                }
+            });
+
+        })).controller('CatalogProductAddToCartController', ng(function ($scope, $state, helpers, models) {
+            var embed = $state.current.name === 'embed-catalog-product-add-to-cart';
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                inDirection: false,
+                outDirection: false,
+                hideClose: embed,
+                noEscape: embed,
+                afterClose: embed ? undefined : function () {
+                    $state.go('home');
+                },
+                variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
+                autoAddToCartQuantity: $state.params.quantity,
+                loadProduct: {
+                    image: $state.params.image_id,
+                    id: $state.params.pricetag_id
+                }
+            });
+
+        })).controller('CatalogProductViewController', ng(function ($scope, $state, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                inDirection: false,
+                outDirection: false,
+                afterClose: function () {
+                    $state.go('home');
+                },
+                loadProduct: {
+                    image: $state.params.image_id,
+                    id: $state.params.pricetag_id
+                }
+            });
+
+        })).controller('CatalogOrderViewController', ng(function ($scope, $state, models) {
+            var embed = $state.current.name === 'embed-catalog-order-view';
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                inDirection: false,
+                outDirection: false,
+                openCart: true,
+                afterClose: function () {
+                    $state.go('home');
+                },
+                hideClose: embed,
+                noEscape: embed
+            });
+
+        })).controller('EmbedCatalogViewController', ng(function ($scope, $state, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                inDirection: false,
+                outDirection: false,
+                noEscape: true,
+                hideClose: true
+            });
+
+        })).controller('EmbedCatalogProductViewController', ng(function ($scope, $state, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                hideClose: true,
+                noEscape: true,
+                noEscapeOnProduct: true,
+                inDirection: false,
+                outDirection: false,
+                loadProduct: {
+                    image: $state.params.image_id,
+                    id: $state.params.pricetag_id
+                }
+            });
+
+        }));
+
+}());
+(function () {
+    'use strict';
+    angular.module('app').directive('trackIfProductView', ng(function ($timeout) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                var fired;
+                scope.$watch(attrs.trackIfProductView, function (neww, old) {
+                    if (fired) {
+                        return;
+                    }
+                    if (angular.isObject(neww)) {
+                        $timeout(function () {
+                            element.find('[data-pricetag-id="' + neww.image + '-' + neww.id + '"]').click();
+                            fired = true;
+                        }, 100);
+                    }
+                });
+            }
+        };
+    })).directive('catalogNewPricetag', ng(function ($parse) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                var callback = $parse(attrs.catalogNewPricetag);
+                element.on('click', function (event) {
+                    var offset = element.offset(),
+                        x = event.pageX - offset.left,
+                        y = event.pageY - offset.top,
+                        parent = element.parents('.image-slider-item:first'),
+                        width = parent.width(),
+                        height = parent.height();
+
+                    scope.$apply(function () {
+                        callback(scope, {
+                            config: {
+                                position_left: x,
+                                position_top: y,
+                                image_width: width,
+                                image_height: height
+                            }
+                        });
+                    });
+                });
+            }
+        };
+    })).directive('catalogPricetagPosition', ng(function ($timeout, models) { // directives that are not used anywhere else other than this context are defined in their own context
+        return {
+            link: function (scope, element, attr) {
+
+                var pricetag = scope.$eval(attr.catalogPricetagPosition),
+                    resize = function (justElement) {
+                        var pa = $(element).parents('.image-slider-item:first'),
+                            sizes,
+                            containerh = pa.height(),
+                            pricetagHeight = 36;
+                        sizes = models['31'].calculatePricetagPosition(
+                            pricetag.position_top,
+                            pricetag.position_left,
+                            pricetag.image_width,
+                            pricetag.image_height,
+                            pa.width(),
+                            containerh
+                        );
+
+                        if (sizes[0] < 0) {
+                            sizes[0] = 0;
+                        } else {
+                            if (sizes[0] > containerh - pricetagHeight) {
+                                sizes[0] = containerh - pricetagHeight;
+                            }
+                        }
+
+                        pricetag._position_top = sizes[0];
+                        pricetag._position_left = sizes[1];
+
+                        $(element).css({
+                            top: pricetag._position_top,
+                            left: pricetag._position_left,
+                            visibility: 'visible'
+                        });
+                    },
+                    track = [];
+                resize = _.throttle(resize, 100);
+                $timeout(resize, 0, false);
+                scope.$on('modalResize', resize);
+                scope.$on('resizePricetags', function (event, tpricetag) {
+                    if (tpricetag) {
+                        if (tpricetag.key === pricetag.key) {
+                            pricetag.position_top = tpricetag.position_top;
+                            pricetag.position_left = tpricetag.position_left;
+                            resize();
+                        }
+                    } else {
+                        resize();
+                    }
+                });
+                angular.forEach(['state', 'key', 'position_left', 'position_top', '_position_left', '_position_top'], function (value) {
+                    track.push(attr.catalogPricetagPosition + '.' + value);
+                });
+                scope.$watch(function () {
+                    return true;
+                }, resize);
+            }
+        };
+    })).directive('productInstanceCardView', ng(function (GLOBAL_CONFIG) {
+        return {
+            scope: {
+                val: '=productInstanceCardView'
+            },
+            templateUrl: 'catalog/product/instance_card_view.html',
+            link: function (scope) {
+                scope.showVariantLabel = function (variant) {
+                    return variant.split(':')[0];
+                };
+                scope.showVariantValue = function (variant) {
+                    var splitOpen = variant.split(':');
+                    return splitOpen.slice(1, splitOpen.length).join(':');
+                };
+            }
+        };
+    })).directive('productStockConfigurationCardView', ng(function (GLOBAL_CONFIG) {
+        return {
+            scope: {
+                val: '=productStockConfigurationCardView'
+            },
+            templateUrl: 'catalog/product/stock_configuration_card_view.html',
+            link: function (scope) {
+                scope.showVariantLabel = function (signature) {
+                    return _.keys(signature)[0];
+                };
+                scope.showVariantValue = function (signature) {
+                    var val = _.values(signature)[0];
+                    if (val === '***Any***') {
+                        return 'Any';
+                    }
+                    return val;
+                };
+                scope.showMainLabel = function (k) {
+                    return GLOBAL_CONFIG.fields.translateChoices['133'].availability[k];
+                };
+            }
+        };
+    }));
+
 }());
 (function () {
     'use strict';
