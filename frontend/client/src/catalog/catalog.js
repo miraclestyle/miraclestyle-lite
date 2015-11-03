@@ -311,7 +311,7 @@
                                     $scope.variants.push({
                                         name: v.name,
                                         options: v.options,
-                                        option: (variantSignatureAsDicts ? variantSignatureAsDicts[i][v.name] : v.options[0]),
+                                        option: (variantSignatureAsDicts && variantSignatureAsDicts[i]  ? variantSignatureAsDicts[i][v.name] : v.options[0]),
                                         description: v.description,
                                         allow_custom_value: v.allow_custom_value
                                     });
