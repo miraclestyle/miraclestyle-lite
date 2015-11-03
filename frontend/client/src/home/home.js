@@ -51,6 +51,23 @@
                     menu: {}
                 }
             };
+            $rootScope.contentSpinner = {
+                hide: [],
+                show: [],
+                stop: function () {
+                    if (this.hide) {
+                        _.last(this.hide)();
+                    }
+                },
+                start: function () {
+                    angular.forEach(this.hide, function (cb) {
+                        cb();
+                    });
+                    if (this.show) {
+                        _.last(this.show)();
+                    }
+                }
+            };
             $rootScope.currentAccount = currentAccount;
             $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $rootScope.JSON = JSON;

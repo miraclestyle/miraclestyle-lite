@@ -88,22 +88,15 @@
         .directive('fillEmptySpace', function () {
             return {
                 link: function (scope, element, attrs) {
-                    var scroller = element.parents('.overflow-y:first'), resize;
-                    if (!scroller.length) {
-                        scroller = element.parents('.overflow-auto-y:first');
-                    }
-                    resize = function () {
-                        var height = element.height(),
-                            scrollHeight = scroller.height(),
-                            lastLi = element.find('.list:last'),
-                            lastLiHeight = lastLi.outerHeight();
-                        if (scrollHeight > height) {
-                            lastLi.css('min-height', lastLiHeight + (scrollHeight - height));
-                        }
-
+                    var resize = function () {
+                        var margintop = parseInt(element.css('marginTop'), 10);
+                        element.css('min-height', $(window).height() - margintop);
                     };
-                    resize = _.throttle(resize, 100);
-                    scope.$on('modalResize', resize);
+                    resize();
+                    $(window).resize(resize);
+                    scope.$on('$destroy', function () {
+                        $(window).unbind('resize', resize);
+                    });
                 }
             };
         })
@@ -117,7 +110,9 @@
                         }
                         if (e.keyCode === $mdConstant.KEY_CODE.ENTER && !e.shiftKey) {
                             e.preventDefault();
-                            callback(scope, {$event: e});
+                            callback(scope, {
+                                $event: e
+                            });
                             $(this).val('');
                         }
                     });
@@ -279,6 +274,21 @@
                 templateUrl: 'core/misc/load_more_button.html',
                 scope: {
                     config: '=loadMoreButton'
+                },
+                link: function (scope, element) {
+                    scope.$watch('config.firstLoad', function (neww, old) {
+                        if (neww === false || neww === true) {
+                            var spinner = element.parents('.modal:first').find('content-spinner').find(':first');
+                            if (!spinner.length) {
+                                spinner = $('body content-spinner:first').find(':first');
+                            }
+                            if (neww === true) {
+                                spinner.removeClass('ng-hide');
+                            } else if (neww === false) {
+                                spinner.addClass('ng-hide');
+                            }
+                        }
+                    });
                 }
             };
         })).directive('autoloadOnVerticalScrollEnd', ng(function ($timeout) {
@@ -1278,7 +1288,25 @@
                 }
             };
             return channelNotifications;
-        })).directive('collapse', ['$animate', function ($animate) {
+        })).directive('contentSpinner', function () {
+            return {
+                templateUrl: 'core/misc/content_spinner.html',
+                link: function (scope, element) {
+                    var hide = function () {
+                        element.find(':first').addClass('ng-hide');
+                    }, show = function () {
+                        element.find(':first').removeClass('ng-hide');
+                    };
+                    scope.contentSpinner.hide.push(hide);
+                    scope.contentSpinner.show.push(show);
+
+                    scope.$on('$destroy', function () {
+                        scope.contentSpinner.hide.remove(hide);
+                        scope.contentSpinner.show.remove(show);
+                    });
+                }
+            };
+        }).directive('collapse', ['$animate', function ($animate) {
 
             return {
                 link: function (scope, element, attrs) {

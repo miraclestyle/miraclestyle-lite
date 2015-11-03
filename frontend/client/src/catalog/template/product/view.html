@@ -12,7 +12,7 @@
                 </button>
            </div>
 
-           <div ng-if="$state.completed" class="top-close top-close-right">
+           <div ng-if="$state.isCompleted()" class="top-close top-close-right">
                <button md-ink-ripple-action
                        ripple-light
                        loading
@@ -23,7 +23,7 @@
                </button>
           </div>
 
-            <div ng-show="$state.completed" class="fixed-height relative overflow-x unselectable">
+            <div ng-show="$state.isCompleted()" class="fixed-height relative overflow-x unselectable">
                 <div ng-class="{'swoop-from-left-finish': true}" ng-if="product.images.length && modalOptions.opened" image-slider="product.images" class="image-slider swoop-from-left">
                     <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
                         <img class="not-pointable" slider-image="image" />
@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            <md-sidenav ng-if="$state.completed" md-is-open="true" md-swipe-right="productMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="productMenu.id">
+            <md-sidenav ng-if="$state.isCompleted()" md-is-open="true" md-swipe-right="productMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="productMenu.id">
                 <md-content>
                         <div class="product-detail-content">
                                 <div class="list seam-bottom list-padding">
@@ -122,7 +122,7 @@
             </md-sidenav>
 
  
-            <md-sidenav ng-if="$state.completed" md-swipe-right="variantMenu.close()" 
+            <md-sidenav ng-if="$state.isCompleted()" md-swipe-right="variantMenu.close()" 
                         layout="column" 
                         class="right md-closed variant-sidenav" 
                         md-component-id="variantMenu.id">

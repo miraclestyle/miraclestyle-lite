@@ -1,7 +1,8 @@
 <div fit-in-modal>
+    <modal-loading toolbar="true"></modal-loading>
     <form method="post" name="container.paypal" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
         <action-toolbar spec="dialog.toolbar"></action-toolbar>
-        <div class="modal-body">
+        <div ng-if="$state.isCompleted()" class="modal-body">
             <div class="fixed-height relative has-toolbar">
                 <div class="modal-body-inner">
                     <div class="order">
@@ -168,7 +169,7 @@
 </div>
 
 
-<md-sidenav md-state-changed="messages.stateChanged" md-swipe-right="messages.close()" layout="column" class="right md-closed" md-component-id="messages.sidebarID">
+<md-sidenav ng-if="$state.isCompleted()" md-state-changed="messages.stateChanged" md-swipe-right="messages.close()" layout="column" class="right md-closed" md-component-id="messages.sidebarID">
     <md-content>
         <div class="list">
             <div autoload-on-vertical-scroll-end="{loader: messages.reader, reverse: true}"
@@ -229,4 +230,4 @@
 </md-sidenav>
 
 
-<div ng-include="'seller/view.html'"></div>
+<div ng-if="$state.isCompleted()" ng-include="'seller/view.html'"></div>

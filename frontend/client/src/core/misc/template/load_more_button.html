@@ -1,14 +1,5 @@
 <!--<md-button ng-if="config.more" loading class="md-raised block load-more" type="button" ng-click="config.load()">Load More</md-button> -->
 
-<div ng-show="config.loading || config.showLoaderAlways" class="progress-wrapper progress circular">
-    <div class="progress circular">
-        <div class="spinner">
-            <div class="arc one"></div>
-            <div class="arc two"></div>
-            <div class="mask one"></div>
-            <div class="mask two"></div>
-            <div class="pin"></div>
-        </div>
-    </div>
-    <div class="clearfix"></div>
+<div ng-show="(config.loading || config.showLoaderAlways) && !config.firstLoad" class="progress-wrapper-loading">
+    <div ng-include="'core/spinner/spinner.html'"></div>
 </div>

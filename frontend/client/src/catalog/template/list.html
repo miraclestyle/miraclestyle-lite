@@ -1,4 +1,4 @@
-<md-content ui-view md-scroll-y flex>
+
     <div class="list list-padding">
         <div class="clearfix button-set list-row list-row-one-line list-content-tile">
             <div class="pull-right">
@@ -31,7 +31,8 @@
         <!-- help -->
         <div ng-if="helpers.models.isEntityListEmpty(search.results) && search.loaded" help-render="GLOBAL_CONFIG.emptyHelp.catalogList"></div>
         <!-- end help -->
-
-        <div load-more-button="search.pagination"></div>
+        
+        
+      <div load-more-button="search.pagination"></div>
+      
     </div>
-</md-content>

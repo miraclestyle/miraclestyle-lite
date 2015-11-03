@@ -1,4 +1,4 @@
-<md-content ui-view md-scroll-y flex>
+
     <div class="cards" autoload-on-vertical-scroll-end="scrollEnd">
         <div class="card" ng-repeat="order in search.results">
             <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="view(order, $event)">
@@ -42,4 +42,3 @@
          help-render="listHelp"></div>
     <!-- end help -->
     <div load-more-button="search.pagination"></div>
-</md-content>

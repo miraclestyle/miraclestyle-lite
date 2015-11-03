@@ -224,11 +224,14 @@
                                 query: {
                                     '24': true,
                                     '12': true,
-                                    '13': true
+                                    '13': true,
+                                    '17': true
                                 },
                                 type: {
                                     '12': 'local',
                                     '17': 'local',
+                                    '24': 'local',
+                                    '13': 'local',
                                     'default': 'memory'
                                 }
                             },
@@ -406,17 +409,18 @@
                     }
 
                     config.ui.specifics.search.ready = initialPromise;
+                    opts.cache = defaults.cache.query[config.kind];
+                    opts.cacheType = defaults.cache.type[config.kind] || defaults.cache.type['default'];
+                    if (override.cache && angular.isDefined(override.cache.query)) {
+                        opts.cache = override.cache.query;
+                    }
+                    if (override.cache && angular.isDefined(override.cache.type)) {
+                        opts.cacheType = override.cache.type;
+                    }
+
 
                     if (model && !config.ui.specifics.getEntities) {
                         if (model.actions.search) {
-                            opts.cache = defaults.cache.query[config.kind];
-                            opts.cacheType = defaults.cache.type[config.kind] || defaults.cache.type['default'];
-                            if (override.cache && angular.isDefined(override.cache.query)) {
-                                opts.cache = override.cache.query;
-                            }
-                            if (override.cache && angular.isDefined(override.cache.type)) {
-                                opts.cacheType = override.cache.type;
-                            }
                             config.ui.specifics.initial = function () {
                                 args = defaults.queryFilter[config.kind];
                                 if (override.queryFilter) {
@@ -449,9 +453,7 @@
                                             search: {
                                                 keys: (selectedIsArray ? id : [id])
                                             }
-                                        }, {
-                                            cache: true
-                                        }).then(function (response) {
+                                        }, opts).then(function (response) {
                                             var fetchedEntities = response.data.entities;
                                             if (!selectedIsArray) {
                                                 if (angular.isUndefined(config.ui.specifics._mapEntities[id])) {
@@ -529,7 +531,7 @@
                                             }
                                         };
                                         newFilter.search.filters[1].value = item.key;
-                                        models['24'].actions.search(newFilter).then(function (response) {
+                                        models['24'].actions.search(newFilter, opts).then(function (response) {
                                             var entities = response.data.entities,
                                                 child = {
                                                     item: item
@@ -584,7 +586,7 @@
                                             field: 'parent_record'
                                         }]
                                     }
-                                }).then(function (response) {
+                                }, opts).then(function (response) {
                                     var entities = response.data.entities;
                                     splitout(entities);
                                     select.product_categories.top = entities;

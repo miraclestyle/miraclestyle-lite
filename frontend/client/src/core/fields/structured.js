@@ -286,6 +286,9 @@
                                 args: rootArgs,
                                 access: config.ui.realPath,
                                 complete: function (items) {
+                                    if (!angular.isArray(config.ui.specifics.parentArgs)) {
+                                        return;
+                                    }
                                     config.ui.specifics.parentArgs.extend(items);
                                 }
                             });

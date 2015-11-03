@@ -117,6 +117,9 @@
             templateUrl: 'core/action/toolbar.html',
             link: function (scope, element, attrs) {
                 scope.spec = scope.$eval(attrs.spec);
+                scope.$on('modalStateComplete', function () {
+                    scope.spec = scope.$eval(attrs.spec);
+                });
             }
         };
     });

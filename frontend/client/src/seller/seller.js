@@ -1041,69 +1041,66 @@
                         inDirection: config.inDirection,
                         outDirection: config.outDirection,
                         noEscape: config.noEscape,
-                        resolve: {
-                            seller: function () {
+                        controller: ng(function ($scope) {
+                            $scope.$state.promise(function () {
                                 return models['23'].actions.read({
                                     account: accountKey,
                                     read_arguments: {
                                         _feedback: {},
                                         _content: {}
                                     }
-                                }).then(function (response) {
-                                    return response.data.entity;
                                 });
-                            }
-                        },
-                        controller: ng(function ($scope, seller) {
-                            $scope.view = function (key, $event) {
-                                models['31'].viewModal(key, {
-                                    popFrom: helpers.clicks.realEventTarget($event.target)
-                                });
-                            };
-                            $scope.hideClose = config.hideClose;
-                            $scope.seller = seller;
-                            $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller, config.sellerDetails);
-                            $scope.search = {
-                                results: [],
-                                pagination: models['31'].paginate({
-                                    kind: '31',
-                                    args: {
-                                        search: {
-                                            ancestor: $scope.seller.key,
-                                            filters: [{
-                                                field: 'state',
-                                                operator: 'IN',
-                                                value: ['published', 'indexed']
-                                            }],
-                                            orders: [{
-                                                field: 'published_date',
-                                                operator: 'desc'
-                                            }, {
-                                                field: 'key',
-                                                operator: 'desc'
-                                            }]
+                            }, function ($scope, response) {
+                                var seller = response.data.entity;
+                                $scope.view = function (key, $event) {
+                                    models['31'].viewModal(key, {
+                                        popFrom: helpers.clicks.realEventTarget($event.target)
+                                    });
+                                };
+                                $scope.hideClose = config.hideClose;
+                                $scope.seller = seller;
+                                $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller, config.sellerDetails);
+                                $scope.search = {
+                                    results: [],
+                                    pagination: models['31'].paginate({
+                                        kind: '31',
+                                        args: {
+                                            search: {
+                                                ancestor: $scope.seller.key,
+                                                filters: [{
+                                                    field: 'state',
+                                                    operator: 'IN',
+                                                    value: ['published', 'indexed']
+                                                }],
+                                                orders: [{
+                                                    field: 'published_date',
+                                                    operator: 'desc'
+                                                }, {
+                                                    field: 'key',
+                                                    operator: 'desc'
+                                                }]
+                                            }
+                                        },
+                                        config: {
+                                            normalizeEntity: false
+                                        },
+                                        action: 'search',
+                                        complete: function (response) {
+                                            var results = response.data.entities;
+                                            $scope.search.results.extend(results);
                                         }
-                                    },
-                                    config: {
-                                        normalizeEntity: false
-                                    },
-                                    action: 'search',
-                                    complete: function (response) {
-                                        var results = response.data.entities;
-                                        $scope.search.results.extend(results);
-                                    }
-                                })
-                            };
-                            $scope.scrollEnd = {
-                                loader: $scope.search.pagination
-                            };
-                            $scope.search.pagination.load();
-                            $scope.close = function () {
-                                var promise = $scope.$close();
-                                promise.then(config.afterClose || angular.noop);
-                                return promise;
-                            };
-
+                                    })
+                                };
+                                $scope.scrollEnd = {
+                                    loader: $scope.search.pagination
+                                };
+                                $scope.search.pagination.load();
+                                $scope.close = function () {
+                                    var promise = $scope.$close();
+                                    promise.then(config.afterClose || angular.noop);
+                                    return promise;
+                                };
+                            });
                         })
                     });
                 },

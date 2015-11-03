@@ -3,9 +3,11 @@
     <action-toolbar spec="dialog.toolbar"></action-toolbar>
     <input type="hidden" compatibility-maker="args" name="__body__" />
     <div class="modal-body">
+      <modal-loading toolbar="true"></modal-loading>
+      <content-spinner toolbar="true"></content-spinner>
       <div class="fixed-height relative overflow-auto-y has-toolbar">
             <div class="modal-body-inner">
-                <div ng-include="dialog.templateBodyUrl"></div>
+                <div ng-if="$state.isCompleted()" ng-include="dialog.templateBodyUrl"></div>
             </div>
       </div>
     </div>

@@ -1034,3 +1034,16 @@ img.auto-width, .auto-width {
 .height100 {
     height: 100%;
 }
+
+.progress-wrapper-loading.first-load .progress-wrapper {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    padding: 0px !important;
+    border-radius: inherit;
+}
+
+content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper {
+    height: calc(100% - 56px);
+}

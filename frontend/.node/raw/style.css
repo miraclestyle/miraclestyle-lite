@@ -2724,7 +2724,19 @@ img.auto-width, .auto-width {
 .height100 {
     height: 100%;
 }
-.modal-open {
+
+.progress-wrapper-loading.first-load .progress-wrapper {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    padding: 0px !important;
+    border-radius: inherit;
+}
+
+content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper {
+    height: calc(100% - 56px);
+}.modal-open {
     overflow: hidden;
 }
 
@@ -2896,9 +2908,13 @@ modal-loading .progress-wrapper {
     position: absolute;
     text-align: center;
     width: 100%;
-    height: calc(100% - 56px);
+    height: 100%;
     padding: 0px !important;
     border-radius: inherit;
+}
+
+modal-loading[toolbar="true"] .progress-wrapper {
+    height: calc(100% - 56px);
 }
 
 .modal-loading-wrapper {
@@ -3620,6 +3636,7 @@ button.product-quantity-button {
 
 .ui-view-wrapper {
     margin-top: 56px;
+    -webkit-overflow-scrolling: touch;
     overflow: auto;
 }
 

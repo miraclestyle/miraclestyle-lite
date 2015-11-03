@@ -18,7 +18,7 @@
                 <span class="md-toolbar-title">{{spec.title}}</span>
             </div>
  
-            <div ng-if="!spec.hideRight" ng-class="{'no-flat-button': spec.hideSave}" class="md-toolbar-item md-tools actions-right">
+            <div ng-if="!spec.hideRight && $state.isCompleted()" ng-class="{'no-flat-button': spec.hideSave}" class="md-toolbar-item md-tools actions-right">
   
                 <md-button 
                   ng-if="!spec.templateRight && !spec.hideSave"

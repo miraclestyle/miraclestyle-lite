@@ -76,123 +76,130 @@
 
                             deferOpen.resolve();
 
-                            $scope.$state.promise(that.actions.read({
-                                key: catalogKey,
-                                read_arguments: readArguments
-                            }, {
-                                disableUI: false
-                            }).then(function (response) {
-                                var catalog = response.data.entity,
-                                    fakeScope = (function () {
-                                        var $scope = {};
-                                        $scope.product = catalog._images[0].pricetags[0]._product;
-                                        $scope.originalProduct = angular.copy($scope.product);
-                                        $scope.catalog = catalog;
-                                        $scope.variants = [];
-                                        $scope.variantSelection = [];
-                                        $scope.hideAddToCart = false;
-                                        $scope.hideClose = config ? config.hideClose : false;
-                                        $scope.currentVariation = [];
-                                        $scope.currentVariationPure = [];
-                                        angular.forEach($scope.product.variants, function (v, i) {
+                            $scope.$state.promise(function () {
+                                return that.actions.read({
+                                    key: catalogKey,
+                                    read_arguments: readArguments
+                                }, {
+                                    disableUI: false
+                                }).then(function (response) {
+                                    var catalog = response.data.entity,
+                                        fakeScope = (function () {
+                                            var $scope = {};
+                                            $scope.product = catalog._images[0].pricetags[0]._product;
+                                            $scope.originalProduct = angular.copy($scope.product);
+                                            $scope.catalog = catalog;
+                                            $scope.variants = [];
+                                            $scope.variantSelection = [];
+                                            $scope.hideAddToCart = false;
+                                            $scope.hideClose = config ? config.hideClose : false;
+                                            $scope.currentVariation = [];
+                                            $scope.currentVariationPure = [];
+                                            angular.forEach($scope.product.variants, function (v, i) {
 
-                                            $scope.variants.push({
-                                                name: v.name,
-                                                options: v.options,
-                                                option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? variantSignatureAsDicts[i][v.name] : v.options[0]),
-                                                description: v.description,
-                                                allow_custom_value: v.allow_custom_value
-                                            });
+                                                $scope.variants.push({
+                                                    name: v.name,
+                                                    options: v.options,
+                                                    option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? variantSignatureAsDicts[i][v.name] : v.options[0]),
+                                                    description: v.description,
+                                                    allow_custom_value: v.allow_custom_value
+                                                });
 
-                                            $scope.variantSelection.push({
-                                                type: 'SuperStringProperty',
-                                                choices: (v.allow_custom_value ? null : v.options),
-                                                code_name: 'option_' + i,
-                                                ui: {
-                                                    help: v.allow_custom_value ? v.description : undefined,
-                                                    label: v.name,
-                                                    writable: true,
-                                                    attrs: {
-                                                        'ng-change': 'delayedChangeVariation(' + (v.allow_custom_value ? 'true' : 'false') + ')'
-                                                    },
-                                                    args: 'variants[' + i + '].option'
-                                                }
-                                            });
-
-                                        });
-
-                                        $scope.changeVariationPromise = function (forceSkip, disableUI) {
-                                            var buildVariantSignature = [],
-                                                skip = false,
-                                                promise,
-                                                qdefer;
-
-                                            $scope.currentVariation.empty();
-                                            $scope.currentVariationPure.empty();
-
-                                            angular.forEach($scope.variants, function (v) {
-                                                var d = {};
-                                                if (v.option === null) {
-                                                    skip = true;
-                                                }
-                                                d[v.name] = v.option;
-                                                if (!v.allow_custom_value) {
-                                                    buildVariantSignature.push(v.name + ': ' + v.option);
-                                                    $scope.currentVariationPure.push(d);
-                                                } else if (!angular.isString(v.option) || !v.option.length) {
-                                                    //return;
-                                                }
-                                                $scope.currentVariation.push(d);
-                                            });
-
-                                            if (skip || forceSkip) {
-                                                qdefer = $q.defer();
-                                                promise = qdefer.promise;
-                                                qdefer.resolve(forceSkip);
-                                                return promise;
-                                            }
-                                            // rpc to check the instance
-                                            return models['31'].actions.read({
-                                                key: this.catalog.key,
-                                                // 4 rpcs
-                                                read_arguments: {
-                                                    _images: {
-                                                        config: {
-                                                            keys: [imageKey]
+                                                $scope.variantSelection.push({
+                                                    type: 'SuperStringProperty',
+                                                    choices: (v.allow_custom_value ? null : v.options),
+                                                    code_name: 'option_' + i,
+                                                    ui: {
+                                                        help: v.allow_custom_value ? v.description : undefined,
+                                                        label: v.name,
+                                                        writable: true,
+                                                        attrs: {
+                                                            'ng-change': 'delayedChangeVariation(' + (v.allow_custom_value ? 'true' : 'false') + ')'
                                                         },
-                                                        pricetags: {
+                                                        args: 'variants[' + i + '].option'
+                                                    }
+                                                });
+
+                                            });
+
+                                            $scope.changeVariationPromise = function (forceSkip, disableUI) {
+                                                var buildVariantSignature = [],
+                                                    skip = false,
+                                                    promise,
+                                                    qdefer;
+
+                                                $scope.currentVariation.empty();
+                                                $scope.currentVariationPure.empty();
+
+                                                angular.forEach($scope.variants, function (v) {
+                                                    var d = {};
+                                                    if (v.option === null) {
+                                                        skip = true;
+                                                    }
+                                                    d[v.name] = v.option;
+                                                    if (!v.allow_custom_value) {
+                                                        buildVariantSignature.push(v.name + ': ' + v.option);
+                                                        $scope.currentVariationPure.push(d);
+                                                    } else if (!angular.isString(v.option) || !v.option.length) {
+                                                        //return;
+                                                    }
+                                                    $scope.currentVariation.push(d);
+                                                });
+
+                                                if (skip || forceSkip) {
+                                                    qdefer = $q.defer();
+                                                    promise = qdefer.promise;
+                                                    qdefer.resolve(forceSkip);
+                                                    return promise;
+                                                }
+                                                // rpc to check the instance
+                                                return models['31'].actions.read({
+                                                    key: this.catalog.key,
+                                                    // 4 rpcs
+                                                    read_arguments: {
+                                                        _images: {
                                                             config: {
-                                                                keys: [pricetagKey]
+                                                                keys: [imageKey]
                                                             },
-                                                            _product: {
-                                                                _instances: {
-                                                                    config: {
-                                                                        search: {
-                                                                            filters: [{
-                                                                                field: 'variant_options',
-                                                                                operator: 'ALL_IN',
-                                                                                value: buildVariantSignature
-                                                                            }]
+                                                            pricetags: {
+                                                                config: {
+                                                                    keys: [pricetagKey]
+                                                                },
+                                                                _product: {
+                                                                    _instances: {
+                                                                        config: {
+                                                                            search: {
+                                                                                filters: [{
+                                                                                    field: 'variant_options',
+                                                                                    operator: 'ALL_IN',
+                                                                                    value: buildVariantSignature
+                                                                                }]
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
-                                                }
-                                            }, {
-                                                disableUI: disableUI === undefined ? true : disableUI
-                                            });
+                                                }, {
+                                                    disableUI: disableUI === undefined ? true : disableUI
+                                                });
+                                            };
+
+                                            return $scope;
+                                        }());
+
+                                    return fakeScope.changeVariationPromise(undefined, false).then(function (productResponse) {
+                                        return {
+                                            catalog: catalog,
+                                            fakeScope: fakeScope,
+                                            productResponse: productResponse,
+                                            response: response
                                         };
+                                    });
 
-                                        return $scope;
-                                    }());
-
-                                return fakeScope.changeVariationPromise(undefined, false).then(function (productResponse) {
-                                    return {catalog: catalog, fakeScope: fakeScope, productResponse: productResponse, response: response};
-                                });
-
-                            }, failedOpen), function ($scope, response) {
+                                }, failedOpen);
+                            }, function ($scope, response) {
                                 var loadProductInstance,
                                     sellerKey,
                                     shareWatch,
@@ -538,10 +545,8 @@
                                     shareWatch();
                                 });
 
-                                $scope.$watch('modalOptions.opened', function (neww, old) {
-                                    if (neww === true) {
-                                        deferOpen.resolve();
-                                    }
+                                $scope.$on('modalOpen', function () {
+                                    deferOpen.resolve();
                                 });
 
                             }, failedOpen);
@@ -562,19 +567,21 @@
                         outDirection: config.outDirection,
                         noEscape: config.noEscape,
                         controller: ng(function ($scope) {
-                            $scope.$state.promise(that.actions.read({
-                                key: key,
-                                // 5 rpcs
-                                read_arguments: {
-                                    _seller: {
-                                        _content: {},
-                                        _feedback: {}
-                                    },
-                                    _images: {
-                                        pricetags: {}
+                            $scope.$state.promise(function () {
+                                return that.actions.read({
+                                    key: key,
+                                    // 5 rpcs
+                                    read_arguments: {
+                                        _seller: {
+                                            _content: {},
+                                            _feedback: {}
+                                        },
+                                        _images: {
+                                            pricetags: {}
+                                        }
                                     }
-                                }
-                            }), function ($scope, response) {
+                                });
+                            }, function ($scope, response) {
                                 var entity = response.data.entity;
                                 if (!entity._images.length) {
                                     snackbar.showK('noImagesInCatalog');

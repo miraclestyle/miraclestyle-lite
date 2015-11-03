@@ -189,9 +189,10 @@
                         }
 
                         element.oneAnimationEnd(function () {
-                            element.addClass('visible');
                             $(window).triggerHandler('modal.visible', [element]);
                             scope.modalOptions.opened = true;
+                            scope.$emit('modalOpened');
+                            scope.$broadcast('modalOpened');
                             scope.$apply();
                             $rootScope.$broadcast('disableUI', false);
                         });
@@ -517,22 +518,51 @@
                             modalScope.$state = {
                                 completed: false,
                                 errored: false,
+                                using: false,
+                                isCompleted: function () {
+                                    return modalScope.$state.completed || modalScope.$state.using === false;
+                                },
                                 complete: function () {
                                     modalScope.$state.completed = true;
+                                    modalScope.$broadcast('modalStateComplete');
                                 },
                                 promise: function (promise, callback, failure) {
-                                    if (angular.isArray(promise)) {
-                                        promise = $q.all(promise);
+                                    modalScope.$state.using = true;
+                                    if (!failure) {
+                                        failure = function () {
+                                            modalScope.close();
+                                        };
                                     }
-                                    return promise.then(function (response) {
-                                        var promise = callback.call(modalScope, modalScope, response);
-                                        if (promise && promise.then) {
-                                            return promise.then(modalScope.$state.complete, failure);
+                                    var execute = function () {
+                                        if (modalScope.$state.completed) {
+                                            return; // never call already completed
                                         }
-                                        return modalScope.$state.complete();
-                                    }, failure);
+                                        if (angular.isFunction(promise)) {
+                                            promise = promise();
+                                        }
+                                        if (angular.isArray(promise)) {
+                                            promise = $q.all(promise);
+                                        }
+                                        return promise.then(function (response) {
+                                            var maybePromise = callback.call(modalScope, modalScope, response);
+                                            if (maybePromise && maybePromise.then) {
+                                                return maybePromise.then(modalScope.$state.complete, failure);
+                                            }
+                                            return modalScope.$state.complete();
+                                        }, failure);
+                                    };
+                                    if (angular.isFunction(promise)) {
+                                        modalScope.$state.ready = execute;
+                                    } else {
+                                        return execute();
+                                    }
                                 }
                             };
+                            modalScope.$on('modalOpened', function (e) {
+                                if (modalScope.$state.ready) {
+                                    modalScope.$state.ready();
+                                }
+                            });
 
                             var ctrlInstance, ctrlLocals = {};
                             var resolveIter = 1;

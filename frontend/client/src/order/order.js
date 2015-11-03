@@ -80,6 +80,7 @@
                             sellerMode = config.sellerMode,
                             openDefer = $q.defer(),
                             openPromise = openDefer.promise,
+                            modalOpen,
                             rpc = {};
                         if (!cartMode) {
                             args = {
@@ -115,11 +116,13 @@
                             };
                         }
 
-                        models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc).then(function (response) {
-                            seller = response.data.entity._seller;
-                            var modalOpen = {
-                                templateUrl: 'order/view.html',
-                                controller: ng(function ($scope) {
+                        modalOpen = {
+                            templateUrl: 'order/view.html',
+                            controller: ng(function ($scope) {
+                                $scope.$state.promise(function () {
+                                    return models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc);
+                                }, function ($scope, response) {
+                                    seller = response.data.entity._seller;
                                     var locals = {
                                         customPlaceholder: null,
                                         updateLiveEntity: function (response, config) {
@@ -859,15 +862,13 @@
 
                                     openDefer.resolve($scope.order);
 
-                                })
-                            };
+                                });
+                            })
+                        };
 
-                            $.extend(modalOpen, config);
+                        $.extend(modalOpen, config);
 
-                            $modal.open(modalOpen);
-
-
-                        });
+                        $modal.open(modalOpen);
 
                         return openPromise;
 

@@ -558,275 +558,283 @@
                                     key: entity.key
                                 };
                             }
-                            var that = this;
-                            return models[config.kind].actions.read(args, httpConfig).then(function (response) {
-                                $.extend(entity, response.data.entity);
-                                return that.open(entity, args);
-                            });
+                            return this.openPromise(function () {
+                                return models[config.kind].actions.read(args, httpConfig);
+                            }, entity, args);
                         },
                         prepare: function (entity, args, httpConfig) {
-                            var that = this;
-                            return models[config.kind].actions.prepare(args, httpConfig).then(function (response) {
-                                $.extend(entity, response.data.entity);
-                                return that.open(entity, args);
-                            });
+                            return this.openPromise(function () {
+                                return models[config.kind].actions.prepare(args, httpConfig);
+                            }, entity, args);
                         },
-                        open: function (entity, args) {
+                        openPromise: function (promise, entity, args) {
+                            return this.open(entity, args, promise);
+                        },
+                        open: function (entity, args, promise) {
                             var opener = $modal,
                                 fn = 'open',
                                 defer = $q.defer(),
                                 completePromise = defer.promise,
                                 ctrl;
                             ctrl = function ($scope) {
-                                var field,
-                                    done = {},
-                                    rootTitle,
-                                    madeHistory = false,
-                                    makeHistory = function () {
-                                        if (madeHistory || !$scope.entity.id) {
-                                            return false;
-                                        }
-                                        if (!angular.isDefined($scope.historyConfig)) {
-                                            $scope.historyConfig = false;
-                                        }
-                                        if ($scope.historyConfig === true) {
-                                            $scope.historyConfig = {
-                                                kind: config.kind,
-                                                key: $scope.entity.key
-                                            };
-                                        } else {
-                                            if ($scope.historyConfig === false) {
-                                                return false;
-                                            }
-                                        }
-                                        madeHistory = true;
-                                        var rule = $scope.args.ui.rule.field._records;
-                                        $scope.historyConfig.key = $scope.entity.key;
-                                        if (rule && rule.visible) {
-                                            $scope.layouts.groups.push(recordBrowser.attach($scope.historyConfig));
-                                        }
-                                    },
-                                    editTitle = 'edit' + config.kind,
-                                    addTitle = 'add' + config.kind;
-                                config.getScope = function () {
-                                    return $scope;
-                                };
-                                modelsUtil.normalize(entity);
-
-                                if (!config.toolbar) {
-                                    config.toolbar = {};
-                                }
-
-                                if (angular.isUndefined(config.toolbar.titleEdit)) {
-                                    config.toolbar.titleEdit = editTitle;
-                                }
-
-                                if (angular.isUndefined(config.toolbar.titleAdd)) {
-                                    config.toolbar.titleAdd = addTitle;
-                                }
-
                                 $scope.container = {
                                     action: endpoint.url
                                 };
-                                $scope.withArgs = args;
-                                $scope.config = config;
-                                $scope.dialog = {
-                                    toolbar: config.toolbar,
-                                    templateBodyUrl: config.templateBodyUrl
-                                };
-                                $scope.entity = entity;
-                                $scope.args = config.argumentLoader($scope);
-                                $scope.rootScope = $scope;
+                                var process = function ($scope) {
+                                    var field,
+                                        done = {},
+                                        rootTitle,
+                                        madeHistory = false,
+                                        makeHistory = function () {
+                                            if (madeHistory || !$scope.entity.id) {
+                                                return false;
+                                            }
+                                            if (!angular.isDefined($scope.historyConfig)) {
+                                                $scope.historyConfig = false;
+                                            }
+                                            if ($scope.historyConfig === true) {
+                                                $scope.historyConfig = {
+                                                    kind: config.kind,
+                                                    key: $scope.entity.key
+                                                };
+                                            } else {
+                                                if ($scope.historyConfig === false) {
+                                                    return false;
+                                                }
+                                            }
+                                            madeHistory = true;
+                                            var rule = $scope.args.ui.rule.field._records;
+                                            $scope.historyConfig.key = $scope.entity.key;
+                                            if (rule && rule.visible) {
+                                                $scope.layouts.groups.push(recordBrowser.attach($scope.historyConfig));
+                                            }
+                                        },
+                                        editTitle = 'edit' + config.kind,
+                                        addTitle = 'add' + config.kind;
+                                    config.getScope = function () {
+                                        return $scope;
+                                    };
+                                    modelsUtil.normalize(entity);
 
-                                $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-                                $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
-                                $scope.validateForm = angular.bind($scope, helpers.form.validate);
-
-                                $scope.setAction = function (action) {
-                                    $scope.args.action_id = action;
-                                    config.action = action;
-                                };
-
-                                $scope.save = function (dontShowMessage) {
-                                    if (!$scope.validateForm()) {
-                                        return false;
+                                    if (!config.toolbar) {
+                                        config.toolbar = {};
                                     }
-                                    config.prepareReadArguments($scope);
-                                    var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
 
-                                    promise.then(function (response) {
-                                        $.extend($scope.entity, response.data.entity);
-                                        var new_args = config.argumentLoader($scope);
-                                        $.extend($scope.args, new_args);
-                                        makeHistory();
-                                        if (angular.isDefined(config.afterSave)) {
-                                            config.afterSave($scope);
-                                        }
-                                        $scope.formSetPristine();
-                                        if (!dontShowMessage) {
-                                            snackbar.showK('changesSaved');
-                                        }
-                                    }, function (response) {
-                                        // here handle error...
-                                        if (angular.isDefined(config.afterSaveError)) {
-                                            config.afterSaveError($scope, response);
-                                        }
-                                    });
-
-                                    return promise;
-                                };
-
-                                $scope.complete = function (response) {
-                                    $.extend($scope.entity, response.data.entity);
-                                    var newArgs = config.argumentLoader($scope);
-                                    $.extend($scope.args, newArgs);
-                                    makeHistory();
-                                    if (angular.isDefined(config.afterComplete)) {
-                                        config.afterComplete($scope);
+                                    if (angular.isUndefined(config.toolbar.titleEdit)) {
+                                        config.toolbar.titleEdit = editTitle;
                                     }
-                                    if (config.closeAfterSave) {
-                                        $timeout(function () {
-                                            $scope.close();
-                                        });
+
+                                    if (angular.isUndefined(config.toolbar.titleAdd)) {
+                                        config.toolbar.titleAdd = addTitle;
                                     }
-                                    $scope.formSetPristine();
-                                    snackbar.showK('changesSaved');
+                                    $scope.withArgs = args;
+                                    $scope.config = config;
+                                    $scope.dialog = {
+                                        toolbar: config.toolbar,
+                                        templateBodyUrl: config.templateBodyUrl
+                                    };
+                                    $scope.entity = entity;
+                                    $scope.args = config.argumentLoader($scope);
+                                    $scope.rootScope = $scope;
 
-                                };
+                                    $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                    $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                    $scope.validateForm = angular.bind($scope, helpers.form.validate);
 
-                                $scope.noComplete = function () {
-                                    if (angular.isDefined(config.noComplete)) {
-                                        config.noComplete($scope);
-                                    }
-                                };
-
-                                $scope.completeError = function (response) {
-                                    if (angular.isDefined(config.afterCompleteError)) {
-                                        config.afterCompleteError($scope, response);
-                                    }
-                                };
-
-                                $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                    $scope._close_ = undefined;
-                                    var promise = $scope.$close();
-                                    if (config.afterClose) {
-                                        config.afterClose($scope);
-                                    }
-                                    return promise;
-                                });
-
-                                $scope._close_ = $scope.close;
-
-                                rootTitle = function () {
-                                    var toolbar = $scope.dialog.toolbar,
-                                        out;
-                                    if ($scope.entity.id) {
-                                        if (angular.isDefined(toolbar.titleEdit)) {
-                                            toolbar.title = helpers.toolbar.title(toolbar.titleEdit);
-                                        }
-                                        out = toolbar.titleEdit;
-                                    } else {
-                                        if (angular.isDefined(toolbar.titleAdd)) {
-                                            toolbar.title = helpers.toolbar.title(toolbar.titleAdd);
-                                        }
-                                        out = toolbar.titleAdd;
-                                    }
-                                    return out;
-                                };
-                                config._title_ = [rootTitle];
-                                $scope.$watch('entity.id', rootTitle);
-
-                                angular.forEach(config.fields, function (field) {
-                                    field._title_ = config._title_.concat();
-                                });
-
-                                if (angular.isDefined(config.scope)) {
-                                    $.extend($scope, config.scope);
-                                }
-
-                                $scope.formBuilder = {
-                                    '0': []
-                                };
-
-                                // if no accordions are defined, use the auto accordion builder
-                                if (!angular.isDefined($scope.layouts)) {
-                                    $scope.layouts = {
-                                        groups: [{
-                                            label: false
-                                        }]
+                                    $scope.setAction = function (action) {
+                                        $scope.args.action_id = action;
+                                        config.action = action;
                                     };
 
+                                    $scope.save = function (dontShowMessage) {
+                                        if (!$scope.validateForm()) {
+                                            return false;
+                                        }
+                                        config.prepareReadArguments($scope);
+                                        var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
+
+                                        promise.then(function (response) {
+                                            $.extend($scope.entity, response.data.entity);
+                                            var new_args = config.argumentLoader($scope);
+                                            $.extend($scope.args, new_args);
+                                            makeHistory();
+                                            if (angular.isDefined(config.afterSave)) {
+                                                config.afterSave($scope);
+                                            }
+                                            $scope.formSetPristine();
+                                            if (!dontShowMessage) {
+                                                snackbar.showK('changesSaved');
+                                            }
+                                        }, function (response) {
+                                            // here handle error...
+                                            if (angular.isDefined(config.afterSaveError)) {
+                                                config.afterSaveError($scope, response);
+                                            }
+                                        });
+
+                                        return promise;
+                                    };
+
+                                    $scope.complete = function (response) {
+                                        $.extend($scope.entity, response.data.entity);
+                                        var newArgs = config.argumentLoader($scope);
+                                        $.extend($scope.args, newArgs);
+                                        makeHistory();
+                                        if (angular.isDefined(config.afterComplete)) {
+                                            config.afterComplete($scope);
+                                        }
+                                        if (config.closeAfterSave) {
+                                            $timeout(function () {
+                                                $scope.close();
+                                            });
+                                        }
+                                        $scope.formSetPristine();
+                                        snackbar.showK('changesSaved');
+
+                                    };
+
+                                    $scope.noComplete = function () {
+                                        if (angular.isDefined(config.noComplete)) {
+                                            config.noComplete($scope);
+                                        }
+                                    };
+
+                                    $scope.completeError = function (response) {
+                                        if (angular.isDefined(config.afterCompleteError)) {
+                                            config.afterCompleteError($scope, response);
+                                        }
+                                    };
+
+                                    $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                        $scope._close_ = undefined;
+                                        var promise = $scope.$close();
+                                        if (config.afterClose) {
+                                            config.afterClose($scope);
+                                        }
+                                        return promise;
+                                    });
+
+                                    $scope._close_ = $scope.close;
+
+                                    rootTitle = function () {
+                                        var toolbar = $scope.dialog.toolbar,
+                                            out;
+                                        if ($scope.entity.id) {
+                                            if (angular.isDefined(toolbar.titleEdit)) {
+                                                toolbar.title = helpers.toolbar.title(toolbar.titleEdit);
+                                            }
+                                            out = toolbar.titleEdit;
+                                        } else {
+                                            if (angular.isDefined(toolbar.titleAdd)) {
+                                                toolbar.title = helpers.toolbar.title(toolbar.titleAdd);
+                                            }
+                                            out = toolbar.titleAdd;
+                                        }
+                                        return out;
+                                    };
+                                    config._title_ = [rootTitle];
+                                    $scope.$watch('entity.id', rootTitle);
+
                                     angular.forEach(config.fields, function (field) {
-                                        if (field.is_structured && formInputTypes[field.type]) {
-                                            if (!field.ui.initialLabel) {
-                                                field.ui.initialLabel = field.ui.label;
-                                            }
-                                            $scope.layouts.groups.push({
-                                                label: $filter('humanized')((field.ui.initialLabel || field.code_name))
-                                            });
-
-                                            field.ui.label = false;
-
-                                            var next = $scope.layouts.groups.length - 1;
-
-                                            if (!angular.isDefined($scope.formBuilder[next])) {
-                                                $scope.formBuilder[next] = [];
-                                                $scope.formBuilder[next].push(field);
-                                            }
-
-                                            $scope.layouts.groups[0].disabled = false;
-                                        } else {
-                                            $scope.formBuilder['0'].push(field);
-                                        }
+                                        field._title_ = config._title_.concat();
                                     });
 
-
-                                } else {
-                                    angular.forEach($scope.layouts.groups, function (group, i) {
-                                        $scope.formBuilder[i] = [];
-                                        if (!angular.isDefined(group.fields)) {
-                                            var wait = false;
-                                            angular.forEach(config.fields, function (field) {
-                                                if (wait) {
-                                                    return;
-                                                }
-                                                if (!done[field.code_name]) {
-                                                    done[field.code_name] = 1;
-                                                    if (field.is_structured) {
-                                                        wait = true;
-                                                    }
-
-                                                    $scope.formBuilder[i].push(field);
-                                                }
-                                            });
-                                        } else {
-                                            angular.forEach(group.fields, function (field_key) {
-                                                if (!done[field_key]) {
-                                                    field = config.keyedFields[field_key];
-                                                    $scope.formBuilder[i].push(field);
-                                                    done[field_key] = 1;
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
-
-                                $scope.$watch('dialog.toolbar.title', function (neww) {
-                                    if (angular.isObject($scope.historyConfig)) {
-                                        $scope.historyConfig.title = neww;
+                                    if (angular.isDefined(config.scope)) {
+                                        $.extend($scope, config.scope);
                                     }
-                                });
 
-                                // call config constructor, needed for posible after variable setup configurations
-                                config.defaultInit($scope);
-                                config.init($scope);
-                                makeHistory();
+                                    $scope.formBuilder = {
+                                        '0': []
+                                    };
 
-                                $scope.$on('$destroy', function () {
-                                    config.getScope = undefined;
-                                });
+                                    // if no accordions are defined, use the auto accordion builder
+                                    if (!angular.isDefined($scope.layouts)) {
+                                        $scope.layouts = {
+                                            groups: [{
+                                                label: false
+                                            }]
+                                        };
 
-                                defer.resolve($scope);
+                                        angular.forEach(config.fields, function (field) {
+                                            if (field.is_structured && formInputTypes[field.type]) {
+                                                if (!field.ui.initialLabel) {
+                                                    field.ui.initialLabel = field.ui.label;
+                                                }
+                                                $scope.layouts.groups.push({
+                                                    label: $filter('humanized')((field.ui.initialLabel || field.code_name))
+                                                });
+
+                                                field.ui.label = false;
+
+                                                var next = $scope.layouts.groups.length - 1;
+
+                                                if (!angular.isDefined($scope.formBuilder[next])) {
+                                                    $scope.formBuilder[next] = [];
+                                                    $scope.formBuilder[next].push(field);
+                                                }
+
+                                                $scope.layouts.groups[0].disabled = false;
+                                            } else {
+                                                $scope.formBuilder['0'].push(field);
+                                            }
+                                        });
+
+
+                                    } else {
+                                        angular.forEach($scope.layouts.groups, function (group, i) {
+                                            $scope.formBuilder[i] = [];
+                                            if (!angular.isDefined(group.fields)) {
+                                                var wait = false;
+                                                angular.forEach(config.fields, function (field) {
+                                                    if (wait) {
+                                                        return;
+                                                    }
+                                                    if (!done[field.code_name]) {
+                                                        done[field.code_name] = 1;
+                                                        if (field.is_structured) {
+                                                            wait = true;
+                                                        }
+
+                                                        $scope.formBuilder[i].push(field);
+                                                    }
+                                                });
+                                            } else {
+                                                angular.forEach(group.fields, function (field_key) {
+                                                    if (!done[field_key]) {
+                                                        field = config.keyedFields[field_key];
+                                                        $scope.formBuilder[i].push(field);
+                                                        done[field_key] = 1;
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+
+                                    $scope.$watch('dialog.toolbar.title', function (neww) {
+                                        if (angular.isObject($scope.historyConfig)) {
+                                            $scope.historyConfig.title = neww;
+                                        }
+                                    });
+
+                                    // call config constructor, needed for posible after variable setup configurations
+                                    config.defaultInit($scope);
+                                    config.init($scope);
+                                    makeHistory();
+
+                                    $scope.$on('$destroy', function () {
+                                        config.getScope = undefined;
+                                    });
+
+                                    defer.resolve($scope);
+                                };
+                                if (angular.isFunction(promise)) {
+                                    $scope.$state.promise(promise, function ($scope, response) {
+                                        $.extend(entity, response.data.entity);
+                                        process($scope);
+                                    });
+                                } else {
+                                    process($scope);
+                                }
                             };
 
                             ctrl.$inject = ['$scope'];
@@ -856,8 +864,7 @@
                 }
                 callbacks.push(callback);
             };
-        }).factory('models', ng(function (endpoint, modelsMeta, $injector, modelsConfig, helpers, $q, GLOBAL_CONFIG) {
-            // models depency should never be included directly or indirectly, because its depency on modelsMeta
+        }).factory('models', ng(function (endpoint, modelsMeta, $injector, modelsConfig, helpers, $q, GLOBAL_CONFIG, $rootScope) {
             var models = {}, // all model instances
                 modelCreate = function (kind) {
                     // creates a new service based on kind
@@ -899,6 +906,7 @@
                                         loading: false,
                                         more: null,
                                         cursor: null,
+                                        firstLoad: true,
                                         args: theConfig.args,
                                         load: function () {
                                             var promise;
@@ -933,6 +941,7 @@
                                                 return response;
                                             })['finally'](function () {
                                                 paginate.loading = false;
+                                                paginate.firstLoad = false;
                                             });
                                             return promise;
                                         }
@@ -1007,6 +1016,7 @@
                                     more: canLoadMore(config.next),
                                     config: config,
                                     loaded: false,
+                                    firstLoad: true,
                                     previous: null,
                                     state: function (config) {
                                         this.next = config.next;
@@ -1075,6 +1085,7 @@
                                         promise['finally'](function () {
                                             reader.loading = false;
                                             reader.loaded = true;
+                                            reader.firstLoad = false;
                                             if (loadConfig.runLastFinally) {
                                                 loadConfig.runLastFinally();
                                             }
@@ -1143,7 +1154,7 @@
                                 if (overrideConfig.merge) {
                                     $.extend(defaults, overrideConfig);
                                 } else {
-                                    defaults = overrideConfig;
+                                    defaults = angular.copy(overrideConfig);
                                 }
                             }
 
@@ -1155,6 +1166,7 @@
                                 // btoa is base64encode built-in, if cache key is true then the cache key will be autogenerated
                                 cache_key = kind + '_' + action_key + '_' + window.btoa(angular.toJson(defaultArgs));
                             }
+                            //console.log(cache_key, action_key, kind, defaultArgs, defaults);
                             if (!angular.isDefined(cache_key) || cache_key === false) {
                                 return endpoint.post(action_key, kind, defaultArgs, defaults);
                             }

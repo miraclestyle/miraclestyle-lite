@@ -1,5 +1,6 @@
 <div class="fitter" fit-in-modal>
-
+    <modal-loading></modal-loading>
+    <content-spinner></content-spinner>
     <div class="modal-body">
         <div class="fixed-height relative overflow-auto-y has-toolbar">
             <div class="modal-body-inner">
@@ -11,13 +12,13 @@
                         </button>
                     </div>
 
-                    <div class="top-close top-close-right">
+                    <div ng-if="$state.isCompleted()" class="top-close top-close-right">
                         <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="sellerDetails.menu.toggle()">
                             <icon color="white" type="more_vert"></icon>
                         </button>
                     </div>
 
-                    <div class="list padding-bottom-8">
+                    <div ng-if="$state.isCompleted()" class="list padding-bottom-8">
                         <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = 240" grid-scale="{maxHeight: maxHeight}" ng-show="search.results.length" class="grid-wrapper clearfix">
                             <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
                                 <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
@@ -40,6 +41,6 @@
     </div>
 
 
-    <div ng-include="'seller/view.html'"></div>
+    <div ng-if="$state.isCompleted()" ng-include="'seller/view.html'"></div>
 
 </div>
