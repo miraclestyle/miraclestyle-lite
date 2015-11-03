@@ -23,7 +23,7 @@ LAG = False
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 if HOST_NAME in DEBUG_HOST_NAMES:
   DEBUG = True
-  LAG = 1 # 2
+  LAG = False # 2
 # Notify
 NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 

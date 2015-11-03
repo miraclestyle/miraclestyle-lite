@@ -11225,532 +11225,546 @@ $(function () {
                                 inDirection: modalSettings.inDirection,
                                 outDirection: modalSettings.outDirection,
                                 controller: ng(function ($scope, modelsUtil) {
-                                    var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
-                                        formBuilder = {
-                                            '0': []
-                                        },
-                                        fieldsMap = {},
-                                        groupBysIndx = [],
-                                        groupBysMap = {},
-                                        getTitle,
-                                        getResult = function (response, access) {
-                                            var accessPath = [],
-                                                value,
-                                                isNewAndRepeated = ($scope.isNew && config.repeated);
-                                            angular.forEach(access, function (path, i) {
-                                                var parse = parseInt(path, 10);
-                                                if (!isNaN(parse)) {
-                                                    path = 0;
-                                                }
-                                                accessPath.push(path);
-                                            });
-                                            if (isNewAndRepeated) {
-                                                accessPath.pop();
-                                            }
-                                            value = helpers.getProperty(response.data.entity, accessPath);
-                                            if (isNewAndRepeated && value.length) {
-                                                value = _.findWhere(value, {
-                                                    _state: 'created'
-                                                });
-                                            }
-
-                                            return value;
-                                        };
-
-                                    angular.forEach(config.ui.specifics.formBuilder, function (value) {
-                                        fieldsMap[value.code_name] = value;
-                                    });
-
-                                    config.ui.specifics.getScope = function () {
-                                        return $scope;
-                                    };
-
-                                    $scope.isNew = false;
-
-                                    $scope.rootFormSetDirty = rootFormSetDirty;
-                                    $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
-                                    $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-
-                                    $scope.response = null;
-                                    $scope.config = config;
-                                    if (!arg) {
-                                        arg = {
-                                            kind: config.modelclass_kind,
-                                            _sequence: length
-                                        };
-                                        modelsUtil.normalize(arg, config.modelclass,
-                                            config.ui.specifics.entity, config.code_name,
-                                            length);
-                                        if (angular.isDefined(defaultArgs)) {
-                                            $.extend(arg, defaultArgs);
-                                        }
-                                        $scope.isNew = true;
-                                    } else if (!config.ui.specifics.modal && arg.ui) {
-                                        length = _.last(arg.ui.access);
-                                    }
-
-
-                                    if (angular.isDefined(arg.ui)) {
-                                        arg.ui.access = angular.copy(config.ui.realPath);
-                                        if (!config.ui.specifics.modal) {
-                                            arg.ui.access.push(length);
-                                        }
-                                    }
-
-                                    $scope.layouts = {
-                                        groups: [{
-                                            label: false
-                                        }]
-                                    };
-
-                                    $scope.formBuilder = formBuilder;
                                     $scope.container = {
                                         action: endpoint.url
                                     };
-                                    $scope.liveArg = arg;
-                                    $scope.args = angular.copy($scope.liveArg);
-                                    $scope.parentArgs = config.ui.specifics.parentArgs;
-                                    $scope.rootScope = config.ui.specifics.rootScope;
-                                    $scope.entity = config.ui.specifics.entity;
-                                    if (config.ui.specifics.remote) {
-                                        $scope.close = angular.bind($scope, helpers.form.leave, function () {
-                                            var promise = $scope.$close();
-                                            if (config.ui.specifics.afterClose) {
-                                                config.ui.specifics.afterClose($scope);
-                                            }
-                                            return promise;
-                                        });
-
-                                    } else {
-                                        $.extend(config.ui.specifics.toolbar, {
-                                            leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
-                                            hideSave: true
-                                        });
-                                        $scope.close = function () {
-                                            if (!$scope.container.form.$dirty) {
-                                                return $scope.$close();
-                                            }
-                                            var save = $scope.save();
-                                            if (save) {
-                                                return save.then(function () {
-                                                    $scope._close_ = undefined;
-                                                    return $scope.$close();
+                                    var process = function ($scope) {
+                                        var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
+                                            formBuilder = {
+                                                '0': []
+                                            },
+                                            fieldsMap = {},
+                                            groupBysIndx = [],
+                                            groupBysMap = {},
+                                            getTitle,
+                                            getResult = function (response, access) {
+                                                var accessPath = [],
+                                                    value,
+                                                    isNewAndRepeated = ($scope.isNew && config.repeated);
+                                                angular.forEach(access, function (path, i) {
+                                                    var parse = parseInt(path, 10);
+                                                    if (!isNaN(parse)) {
+                                                        path = 0;
+                                                    }
+                                                    accessPath.push(path);
                                                 });
-                                            } else {
-                                                return modals.confirm('discardWithFieldsRequired', $scope.$close);
-                                            }
-                                        };
-
-                                        $scope._close_ = $scope.close;
-                                    }
-
-                                    $scope.validateForm = angular.bind($scope, helpers.form.validate);
-                                    $scope.$on('$destroy', function () {
-                                        config.ui.specifics.getScope = undefined;
-                                    });
-                                    if (config.ui.specifics.layoutConfig) {
-                                        delete formBuilder['0'];
-                                        $scope.layouts = {
-                                            groups: []
-                                        };
-                                        angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
-                                            var firstField = fieldsMap[value.fields[0]];
-                                            $scope.layouts.groups.push({label: value.label || (firstField.label || $filter('humanized')(firstField.code_name))});
-                                        });
-                                    }
-                                    findWhereByLayoutConfig = function (field) {
-                                        var layout = config.ui.specifics.layoutConfig,
-                                            needle,
-                                            i;
-                                        for (i = layout.length - 1; i >= 0; i--) {
-                                            if ($.inArray(field.code_name, layout[i].fields) !== -1) {
-                                                needle = i;
-                                                break;
-                                            }
-                                        }
-                                        return needle;
-                                    };
-                                    angular.forEach(config.ui.specifics.formBuilder, function (field) {
-                                        var gr, group, next;
-                                        helpers.fields.applyGlobalConfig(field);
-                                        if (!field.ui.initialRealPath) {
-                                            field.ui.initialRealPath = angular.copy(field.ui.realPath);
-                                        } else {
-                                            field.ui.realPath = angular.copy(field.ui.initialRealPath);
-                                        }
-                                        field.ui.realPath.pop();
-                                        if (!config.ui.specifics.modal) {
-                                            field.ui.realPath.push(length);
-                                        }
-                                        field.ui.realPath.push(field.code_name);
-                                        if (field.ui.groupBy) {
-                                            field.ui.hideMessages = true;
-                                            if (!groupBysMap[field.ui.groupBy]) {
-                                                gr = {
-                                                    ui: {
-                                                        group: {
-                                                            help: field.ui.groupHelp,
-                                                            label: field.ui.groupLabel,
-                                                            name: field.ui.groupBy,
-                                                            fields: [],
-                                                            messages: function () {
-                                                                var messages = {
-                                                                    help: true
-                                                                };
-                                                                angular.forEach(gr.ui.group.fields, function (field) {
-                                                                    if (field.ui.form.hasErrors() && field.ui.form.field().$dirty) {
-                                                                        messages = field.ui.form.messages();
-                                                                    }
-                                                                });
-                                                                return messages;
-                                                            },
-                                                            shouldShowMessages: function () {
-                                                                return true;
-                                                            }
-                                                        }
-                                                    }
-                                                };
-                                                groupBysMap[field.ui.groupBy] = gr;
-                                                groupBysIndx.push(field.ui.groupBy);
-                                                if (config.ui.specifics.layoutConfig) {
-                                                    next = findWhereByLayoutConfig(field);
-                                                    if (!angular.isDefined(formBuilder[next])) {
-                                                        formBuilder[next] = [];
-                                                    }
-                                                    formBuilder[next].push(gr);
-                                                } else {
-                                                    formBuilder['0'].push(gr);
+                                                if (isNewAndRepeated) {
+                                                    accessPath.pop();
                                                 }
-                                            }
-                                            groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
-                                            return;
-                                        }
-                                        if (config.ui.specifics.layoutConfig) {
-                                            next = findWhereByLayoutConfig(field);
-                                            if (!angular.isDefined(formBuilder[next])) {
-                                                formBuilder[next] = [];
-                                            }
-                                            formBuilder[next].push(field);
-                                            // this is manual layout config, skip this part
-                                            return;
-                                        }
-                                        if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
-                                            group = {
-                                                label: field.ui.label || $filter('humanized')(field.code_name)
+                                                value = helpers.getProperty(response.data.entity, accessPath);
+                                                if (isNewAndRepeated && value.length) {
+                                                    value = _.findWhere(value, {
+                                                        _state: 'created'
+                                                    });
+                                                }
+
+                                                return value;
                                             };
-                                            if (_.string.contains(field.type, 'Remote')) {
-                                                group.include = 'core/misc/action.html';
-                                                group.action = function () {
-                                                    var test = true;
-                                                    if (field.ui.specifics && field.ui.specifics.canOpen) {
-                                                        test = field.ui.specifics.canOpen();
-                                                    }
-                                                    if (test) {
-                                                        modals.fields.remote($scope, field);
-                                                    }
-                                                };
-                                            }
-                                            $scope.layouts.groups.push(group);
 
-                                            next = $scope.layouts.groups.length - 1;
+                                        angular.forEach(config.ui.specifics.formBuilder, function (value) {
+                                            fieldsMap[value.code_name] = value;
+                                        });
 
-                                            if (!angular.isDefined(formBuilder[next])) {
-                                                formBuilder[next] = [];
-                                            }
-                                            formBuilder[next].push(field);
-                                        } else {
-                                            formBuilder['0'].push(field);
-                                        }
-                                    });
-
-                                    if (config.ui.specifics.remote) {
-
-                                        // reference to args that get sent
-                                        $scope.rootArgs = rootArgs;
-                                        $scope.setAction = function (action) {
-                                            // internal helper to set the action to be executed
-                                            $scope.sendRootArgs.action_id = action;
+                                        config.ui.specifics.getScope = function () {
+                                            return $scope;
                                         };
-                                        // copy of root args used for packing the customized arguments
-                                        $scope.sendRootArgs = {};
-                                        $scope.save = function (dontShowMessage) {
-                                            if (!$scope.validateForm()) { // check if the form is valid
-                                                return false;
+
+                                        $scope.isNew = false;
+
+                                        $scope.rootFormSetDirty = rootFormSetDirty;
+                                        $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                        $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+
+                                        $scope.response = null;
+                                        $scope.config = config;
+                                        if (!arg) {
+                                            arg = {
+                                                kind: config.modelclass_kind,
+                                                _sequence: length
+                                            };
+                                            modelsUtil.normalize(arg, config.modelclass,
+                                                config.ui.specifics.entity, config.code_name,
+                                                length);
+                                            if (angular.isDefined(defaultArgs)) {
+                                                $.extend(arg, defaultArgs);
                                             }
-                                            var promise,
-                                                prepare = function () {
-                                                    var readArgs = {},
-                                                        readRootArgs = $scope.rootArgs,
-                                                        readRootArgsAsList,
-                                                        parentArgsPath = $scope.args.ui.access,
-                                                        fieldList,
-                                                        traceDeep,
-                                                        lastPart = [];
-                                                    // set this args as single item in array
-                                                    // delete all remote structured property from rpc data
-                                                    readRootArgs = angular.copy(readRootArgs);
-                                                    helpers.setProperty(readRootArgs, parentArgsPath, $scope.args);
-                                                    if (config.ui.additionalRealPaths) {
-                                                        angular.forEach(config.ui.additionalRealPaths, function (path) {
-                                                            helpers.setProperty(readRootArgs, path, $scope.args);
-                                                        });
-                                                    }
-                                                    $scope.sendRootArgs = readRootArgs;
-                                                    angular.forEach($scope.rootScope.config.fields, function (field) {
-                                                        if (_.string.contains(field.type, 'RemoteStructured') && field.code_name !== $scope.args.ui.access[0]) {
-                                                            delete readRootArgs[field.code_name];
-                                                        }
-                                                    });
-                                                    readRootArgs.read_arguments = readArgs;
-                                                    angular.forEach(parentArgsPath, function (part, i) {
-                                                        // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
-                                                        // properties in datastore that begin with an number
-                                                        if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
-                                                            readArgs[part] = {
-                                                                config: {}
-                                                            };
-                                                            readArgs = readArgs[part];
-                                                            lastPart.push(part);
-                                                        }
-                                                        // produce read path for the rpc
-                                                        readRootArgs = readRootArgs[part];
-                                                        if (angular.isArray(readRootArgs)) {
-                                                            readRootArgsAsList = readRootArgs;
-                                                        } else {
-                                                            var extraReadPath = lastPart.join('.'),
-                                                                extraRead,
-                                                                extraReadClone;
-                                                            if (config.ui.specifics.remoteOpts.read && config.ui.specifics.remoteOpts.read[extraReadPath]) {
-                                                                extraRead = config.ui.specifics.remoteOpts.read[extraReadPath];
-                                                            }
-                                                            if (angular.isDefined(readRootArgsAsList)) {
-                                                                extraReadClone = readRootArgsAsList.concat();
-                                                                readRootArgsAsList.empty();
-                                                                readRootArgsAsList.push(readRootArgs);
-                                                                if (extraRead) {
-                                                                    extraRead(extraReadClone, readRootArgsAsList);
-                                                                }
-                                                                extraReadClone = null;
+                                            $scope.isNew = true;
+                                        } else if (!config.ui.specifics.modal && arg.ui) {
+                                            length = _.last(arg.ui.access);
+                                        }
 
-                                                                readRootArgsAsList = undefined;
-                                                            }
-                                                            if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
-                                                                if (!angular.isDefined(readArgs.config.keys)) {
-                                                                    readArgs.config.keys = [];
-                                                                }
-                                                                readArgs.config.keys.push(readRootArgs.key);
 
-                                                            }
-                                                        }
-                                                    });
-
-                                                    traceDeep = function (readRootArgs, readArgs) {
-                                                        if (readRootArgs && readRootArgs.key) {
-                                                            fieldList = modelsMeta.getFields(readRootArgs.kind);
-                                                            angular.forEach(fieldList, function (field) {
-                                                                if (field.is_structured && _.string.contains(field.type, 'RemoteStructured')) {
-                                                                    var keys = [],
-                                                                        newReadArgs = {
-                                                                            config: {
-                                                                                keys: keys
-                                                                            }
-                                                                        };
-                                                                    if (field.repeated) {
-                                                                        angular.forEach(readRootArgs[field.code_name], function (ent) {
-                                                                            if (ent.key) {
-                                                                                keys.push(ent.key);
-                                                                                traceDeep(ent, newReadArgs);
-                                                                            }
-                                                                        });
-                                                                    }
-                                                                    readArgs[field.code_name] = newReadArgs;
-                                                                }
-                                                            });
-                                                        } else if (angular.isArray(readRootArgs)) {
-                                                            angular.forEach(readRootArgs, function (readRootArg) {
-                                                                traceDeep(readRootArg, readArgs);
-                                                            });
-                                                        }
-                                                    };
-
-                                                    traceDeep(readRootArgs, readArgs);
-                                                };
-
-                                            prepare();
-                                            if (config.ui.specifics.beforeSave) {
-                                                config.ui.specifics.beforeSave($scope);
+                                        if (angular.isDefined(arg.ui)) {
+                                            arg.ui.access = angular.copy(config.ui.realPath);
+                                            if (!config.ui.specifics.modal) {
+                                                arg.ui.access.push(length);
                                             }
-                                            // create rpc from root args's action model and action id
-                                            promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
-                                            promise.then(function (response) {
-                                                $scope.response = response;
-                                                var keepAccess = angular.copy($scope.args.ui.access),
-                                                    // set zero-in access path, example _images.0.pricetags.0._product.0._instances.0
-                                                    value;
-                                                if (config.ui.specifics.remoteOpts.response) {
-                                                    value = config.ui.specifics.remoteOpts.response(response);
-                                                } else {
-                                                    value = getResult(response, keepAccess);
-                                                }
-                                                $.extend($scope.args, value); // modify current args
-                                                $scope.args.ui.access = keepAccess; // reference back original access path
-                                                if ($scope.isNew) {
-                                                    if (config.repeated) {
-                                                        $scope.parentArgs.unshift($scope.args); // preappend arg if they are new
-                                                    }
-                                                    $scope.isNew = false;
-                                                }
-                                                $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
-                                                // re-run prepare to ensure proper paths for complete hook
-                                                prepare();
-                                                if (angular.isDefined(config.ui.specifics.afterSave)) {
-                                                    config.ui.specifics.afterSave($scope);
-                                                }
-                                                $scope.formSetPristine();
-                                                if (!dontShowMessage) {
-                                                    snackbar.showK('changesSaved');
-                                                }
+                                        }
 
-                                            }, function (response) {
-                                                if (angular.isDefined(config.ui.specifics.afterSaveError)) {
-                                                    config.ui.specifics.afterSaveError($scope, response);
+                                        $scope.layouts = {
+                                            groups: [{
+                                                label: false
+                                            }]
+                                        };
+
+                                        $scope.formBuilder = formBuilder;
+                                        $scope.liveArg = arg;
+                                        $scope.args = angular.copy($scope.liveArg);
+                                        $scope.parentArgs = config.ui.specifics.parentArgs;
+                                        $scope.rootScope = config.ui.specifics.rootScope;
+                                        $scope.entity = config.ui.specifics.entity;
+                                        if (config.ui.specifics.remote) {
+                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                                var promise = $scope.$close();
+                                                if (config.ui.specifics.afterClose) {
+                                                    config.ui.specifics.afterClose($scope);
                                                 }
+                                                return promise;
                                             });
 
-                                            return promise;
+                                        } else {
+                                            $.extend(config.ui.specifics.toolbar, {
+                                                leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
+                                                hideSave: true
+                                            });
+                                            $scope.close = function () {
+                                                if (!$scope.container.form.$dirty) {
+                                                    return $scope.$close();
+                                                }
+                                                var save = $scope.save();
+                                                if (save) {
+                                                    return save.then(function () {
+                                                        $scope._close_ = undefined;
+                                                        return $scope.$close();
+                                                    });
+                                                } else {
+                                                    return modals.confirm('discardWithFieldsRequired', $scope.$close);
+                                                }
+                                            };
+
+                                            $scope._close_ = $scope.close;
+                                        }
+
+                                        $scope.validateForm = angular.bind($scope, helpers.form.validate);
+                                        $scope.$on('$destroy', function () {
+                                            config.ui.specifics.getScope = undefined;
+                                        });
+                                        if (config.ui.specifics.layoutConfig) {
+                                            delete formBuilder['0'];
+                                            $scope.layouts = {
+                                                groups: []
+                                            };
+                                            angular.forEach(config.ui.specifics.layoutConfig, function (value, key) {
+                                                var firstField = fieldsMap[value.fields[0]];
+                                                $scope.layouts.groups.push({
+                                                    label: value.label || (firstField.label || $filter('humanized')(firstField.code_name))
+                                                });
+                                            });
+                                        }
+                                        findWhereByLayoutConfig = function (field) {
+                                            var layout = config.ui.specifics.layoutConfig,
+                                                needle,
+                                                i;
+                                            for (i = layout.length - 1; i >= 0; i--) {
+                                                if ($.inArray(field.code_name, layout[i].fields) !== -1) {
+                                                    needle = i;
+                                                    break;
+                                                }
+                                            }
+                                            return needle;
                                         };
-
-                                        $scope.complete = function (response) {
-                                            $scope.response = response;
-                                            var keepAccess = angular.copy($scope.args.ui.access),
-                                                value = getResult(response, keepAccess);
-
-                                            $.extend($scope.args, value);
-                                            $scope.args.ui.access = keepAccess;
-                                            if (angular.isDefined(config.ui.specifics.afterComplete)) {
-                                                config.ui.specifics.afterComplete($scope);
+                                        angular.forEach(config.ui.specifics.formBuilder, function (field) {
+                                            var gr, group, next;
+                                            helpers.fields.applyGlobalConfig(field);
+                                            if (!field.ui.initialRealPath) {
+                                                field.ui.initialRealPath = angular.copy(field.ui.realPath);
+                                            } else {
+                                                field.ui.realPath = angular.copy(field.ui.initialRealPath);
                                             }
-                                            $scope.formSetPristine();
-
-                                            snackbar.showK('changesSaved');
-                                        };
-
-                                        $scope.noComplete = function () {
-                                            // fired when the scope.complete() does not get fired i.e. when no files were sent for upload
-                                            if (angular.isDefined(config.ui.specifics.noComplete)) {
-                                                config.ui.specifics.noComplete($scope);
+                                            field.ui.realPath.pop();
+                                            if (!config.ui.specifics.modal) {
+                                                field.ui.realPath.push(length);
                                             }
-                                            $scope.formSetPristine();
-                                        };
-
-                                        $scope.completeError = function (response) {
-                                            // fired when it failed to send http-form-data rpc
-                                            if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
-                                                config.ui.specifics.afterCompleteError($scope, response);
+                                            field.ui.realPath.push(field.code_name);
+                                            if (field.ui.groupBy) {
+                                                field.ui.hideMessages = true;
+                                                if (!groupBysMap[field.ui.groupBy]) {
+                                                    gr = {
+                                                        ui: {
+                                                            group: {
+                                                                help: field.ui.groupHelp,
+                                                                label: field.ui.groupLabel,
+                                                                name: field.ui.groupBy,
+                                                                fields: [],
+                                                                messages: function () {
+                                                                    var messages = {
+                                                                        help: true
+                                                                    };
+                                                                    angular.forEach(gr.ui.group.fields, function (field) {
+                                                                        if (field.ui.form.hasErrors() && field.ui.form.field().$dirty) {
+                                                                            messages = field.ui.form.messages();
+                                                                        }
+                                                                    });
+                                                                    return messages;
+                                                                },
+                                                                shouldShowMessages: function () {
+                                                                    return true;
+                                                                }
+                                                            }
+                                                        }
+                                                    };
+                                                    groupBysMap[field.ui.groupBy] = gr;
+                                                    groupBysIndx.push(field.ui.groupBy);
+                                                    if (config.ui.specifics.layoutConfig) {
+                                                        next = findWhereByLayoutConfig(field);
+                                                        if (!angular.isDefined(formBuilder[next])) {
+                                                            formBuilder[next] = [];
+                                                        }
+                                                        formBuilder[next].push(gr);
+                                                    } else {
+                                                        formBuilder['0'].push(gr);
+                                                    }
+                                                }
+                                                groupBysMap[field.ui.groupBy].ui.group.fields.push(field);
+                                                return;
                                             }
-                                            $scope.formSetPristine();
-                                        };
-
-
-                                    } else {
-
-
-                                        $scope.save = function () {
-                                            if (!$scope.validateForm()) { // check if the form is valid
-                                                return false;
+                                            if (config.ui.specifics.layoutConfig) {
+                                                next = findWhereByLayoutConfig(field);
+                                                if (!angular.isDefined(formBuilder[next])) {
+                                                    formBuilder[next] = [];
+                                                }
+                                                formBuilder[next].push(field);
+                                                // this is manual layout config, skip this part
+                                                return;
                                             }
-                                            if ($scope.container.form.$dirty) {
-                                                $scope.rootFormSetDirty();
-                                            }
-                                            var promise = null,
-                                                saveCompleteDefer = $q.defer(),
-                                                saveCompletePromise = saveCompleteDefer.promise,
-                                                complete = function () {
-                                                    var completePromise = null,
-                                                        total = 0;
+                                            if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
+                                                group = {
+                                                    label: field.ui.label || $filter('humanized')(field.code_name)
+                                                };
+                                                if (_.string.contains(field.type, 'Remote')) {
+                                                    group.include = 'core/misc/action.html';
+                                                    group.action = function () {
+                                                        var test = true;
+                                                        if (field.ui.specifics && field.ui.specifics.canOpen) {
+                                                            test = field.ui.specifics.canOpen();
+                                                        }
+                                                        if (test) {
+                                                            modals.fields.remote($scope, field);
+                                                        }
+                                                    };
+                                                }
+                                                $scope.layouts.groups.push(group);
 
-                                                    if (config.repeated) {
-                                                        if ($scope.isNew) {
-                                                            $scope.parentArgs.unshift($scope.args);
-                                                            $scope.isNew = false;
-                                                            total = $scope.parentArgs.length - 1;
-                                                            angular.forEach($scope.parentArgs, function (item, i) {
-                                                                i = total - i;
-                                                                item._sequence = i;
-                                                                item.sequence = i;
+                                                next = $scope.layouts.groups.length - 1;
+
+                                                if (!angular.isDefined(formBuilder[next])) {
+                                                    formBuilder[next] = [];
+                                                }
+                                                formBuilder[next].push(field);
+                                            } else {
+                                                formBuilder['0'].push(field);
+                                            }
+                                        });
+
+                                        if (config.ui.specifics.remote) {
+
+                                            // reference to args that get sent
+                                            $scope.rootArgs = rootArgs;
+                                            $scope.setAction = function (action) {
+                                                // internal helper to set the action to be executed
+                                                $scope.sendRootArgs.action_id = action;
+                                            };
+                                            // copy of root args used for packing the customized arguments
+                                            $scope.sendRootArgs = {};
+                                            $scope.save = function (dontShowMessage) {
+                                                if (!$scope.validateForm()) { // check if the form is valid
+                                                    return false;
+                                                }
+                                                var promise,
+                                                    prepare = function () {
+                                                        var readArgs = {},
+                                                            readRootArgs = $scope.rootArgs,
+                                                            readRootArgsAsList,
+                                                            parentArgsPath = $scope.args.ui.access,
+                                                            fieldList,
+                                                            traceDeep,
+                                                            lastPart = [];
+                                                        // set this args as single item in array
+                                                        // delete all remote structured property from rpc data
+                                                        readRootArgs = angular.copy(readRootArgs);
+                                                        helpers.setProperty(readRootArgs, parentArgsPath, $scope.args);
+                                                        if (config.ui.additionalRealPaths) {
+                                                            angular.forEach(config.ui.additionalRealPaths, function (path) {
+                                                                helpers.setProperty(readRootArgs, path, $scope.args);
+                                                            });
+                                                        }
+                                                        $scope.sendRootArgs = readRootArgs;
+                                                        angular.forEach($scope.rootScope.config.fields, function (field) {
+                                                            if (_.string.contains(field.type, 'RemoteStructured') && field.code_name !== $scope.args.ui.access[0]) {
+                                                                delete readRootArgs[field.code_name];
+                                                            }
+                                                        });
+                                                        readRootArgs.read_arguments = readArgs;
+                                                        angular.forEach(parentArgsPath, function (part, i) {
+                                                            // parseInt can produce inconsistent stuff like 10_foo makes 10, so we must avoid names of
+                                                            // properties in datastore that begin with an number
+                                                            if (!angular.isDefined(readArgs[part]) && isNaN(parseInt(part, 10))) {
+                                                                readArgs[part] = {
+                                                                    config: {}
+                                                                };
+                                                                readArgs = readArgs[part];
+                                                                lastPart.push(part);
+                                                            }
+                                                            // produce read path for the rpc
+                                                            readRootArgs = readRootArgs[part];
+                                                            if (angular.isArray(readRootArgs)) {
+                                                                readRootArgsAsList = readRootArgs;
+                                                            } else {
+                                                                var extraReadPath = lastPart.join('.'),
+                                                                    extraRead,
+                                                                    extraReadClone;
+                                                                if (config.ui.specifics.remoteOpts.read && config.ui.specifics.remoteOpts.read[extraReadPath]) {
+                                                                    extraRead = config.ui.specifics.remoteOpts.read[extraReadPath];
+                                                                }
+                                                                if (angular.isDefined(readRootArgsAsList)) {
+                                                                    extraReadClone = readRootArgsAsList.concat();
+                                                                    readRootArgsAsList.empty();
+                                                                    readRootArgsAsList.push(readRootArgs);
+                                                                    if (extraRead) {
+                                                                        extraRead(extraReadClone, readRootArgsAsList);
+                                                                    }
+                                                                    extraReadClone = null;
+
+                                                                    readRootArgsAsList = undefined;
+                                                                }
+                                                                if (readRootArgs.key !== null && angular.isDefined(readRootArgs.key)) {
+                                                                    if (!angular.isDefined(readArgs.config.keys)) {
+                                                                        readArgs.config.keys = [];
+                                                                    }
+                                                                    readArgs.config.keys.push(readRootArgs.key);
+
+                                                                }
+                                                            }
+                                                        });
+
+                                                        traceDeep = function (readRootArgs, readArgs) {
+                                                            if (readRootArgs && readRootArgs.key) {
+                                                                fieldList = modelsMeta.getFields(readRootArgs.kind);
+                                                                angular.forEach(fieldList, function (field) {
+                                                                    if (field.is_structured && _.string.contains(field.type, 'RemoteStructured')) {
+                                                                        var keys = [],
+                                                                            newReadArgs = {
+                                                                                config: {
+                                                                                    keys: keys
+                                                                                }
+                                                                            };
+                                                                        if (field.repeated) {
+                                                                            angular.forEach(readRootArgs[field.code_name], function (ent) {
+                                                                                if (ent.key) {
+                                                                                    keys.push(ent.key);
+                                                                                    traceDeep(ent, newReadArgs);
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                        readArgs[field.code_name] = newReadArgs;
+                                                                    }
+                                                                });
+                                                            } else if (angular.isArray(readRootArgs)) {
+                                                                angular.forEach(readRootArgs, function (readRootArg) {
+                                                                    traceDeep(readRootArg, readArgs);
+                                                                });
+                                                            }
+                                                        };
+
+                                                        traceDeep(readRootArgs, readArgs);
+                                                    };
+
+                                                prepare();
+                                                if (config.ui.specifics.beforeSave) {
+                                                    config.ui.specifics.beforeSave($scope);
+                                                }
+                                                // create rpc from root args's action model and action id
+                                                promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
+                                                promise.then(function (response) {
+                                                    $scope.response = response;
+                                                    var keepAccess = angular.copy($scope.args.ui.access),
+                                                        // set zero-in access path, example _images.0.pricetags.0._product.0._instances.0
+                                                        value;
+                                                    if (config.ui.specifics.remoteOpts.response) {
+                                                        value = config.ui.specifics.remoteOpts.response(response);
+                                                    } else {
+                                                        value = getResult(response, keepAccess);
+                                                    }
+                                                    $.extend($scope.args, value); // modify current args
+                                                    $scope.args.ui.access = keepAccess; // reference back original access path
+                                                    if ($scope.isNew) {
+                                                        if (config.repeated) {
+                                                            $scope.parentArgs.unshift($scope.args); // preappend arg if they are new
+                                                        }
+                                                        $scope.isNew = false;
+                                                    }
+                                                    $.extend(arg, $scope.args); // modify provided args, usually come from the parent's scope
+                                                    // re-run prepare to ensure proper paths for complete hook
+                                                    prepare();
+                                                    if (angular.isDefined(config.ui.specifics.afterSave)) {
+                                                        config.ui.specifics.afterSave($scope);
+                                                    }
+                                                    $scope.formSetPristine();
+                                                    if (!dontShowMessage) {
+                                                        snackbar.showK('changesSaved');
+                                                    }
+
+                                                }, function (response) {
+                                                    if (angular.isDefined(config.ui.specifics.afterSaveError)) {
+                                                        config.ui.specifics.afterSaveError($scope, response);
+                                                    }
+                                                });
+
+                                                return promise;
+                                            };
+
+                                            $scope.complete = function (response) {
+                                                $scope.response = response;
+                                                var keepAccess = angular.copy($scope.args.ui.access),
+                                                    value = getResult(response, keepAccess);
+
+                                                $.extend($scope.args, value);
+                                                $scope.args.ui.access = keepAccess;
+                                                if (angular.isDefined(config.ui.specifics.afterComplete)) {
+                                                    config.ui.specifics.afterComplete($scope);
+                                                }
+                                                $scope.formSetPristine();
+
+                                                snackbar.showK('changesSaved');
+                                            };
+
+                                            $scope.noComplete = function () {
+                                                // fired when the scope.complete() does not get fired i.e. when no files were sent for upload
+                                                if (angular.isDefined(config.ui.specifics.noComplete)) {
+                                                    config.ui.specifics.noComplete($scope);
+                                                }
+                                                $scope.formSetPristine();
+                                            };
+
+                                            $scope.completeError = function (response) {
+                                                // fired when it failed to send http-form-data rpc
+                                                if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
+                                                    config.ui.specifics.afterCompleteError($scope, response);
+                                                }
+                                                $scope.formSetPristine();
+                                            };
+
+
+                                        } else {
+
+
+                                            $scope.save = function () {
+                                                if (!$scope.validateForm()) { // check if the form is valid
+                                                    return false;
+                                                }
+                                                if ($scope.container.form.$dirty) {
+                                                    $scope.rootFormSetDirty();
+                                                }
+                                                var promise = null,
+                                                    saveCompleteDefer = $q.defer(),
+                                                    saveCompletePromise = saveCompleteDefer.promise,
+                                                    complete = function () {
+                                                        var completePromise = null,
+                                                            total = 0;
+
+                                                        if (config.repeated) {
+                                                            if ($scope.isNew) {
+                                                                $scope.parentArgs.unshift($scope.args);
+                                                                $scope.isNew = false;
+                                                                total = $scope.parentArgs.length - 1;
+                                                                angular.forEach($scope.parentArgs, function (item, i) {
+                                                                    i = total - i;
+                                                                    item._sequence = i;
+                                                                    item.sequence = i;
+                                                                });
+                                                            } else {
+                                                                $.extend($scope.liveArg, $scope.args);
+                                                            }
+                                                        }
+
+                                                        if (angular.isFunction(config.ui.specifics.afterSave)) {
+                                                            completePromise = config.ui.specifics.afterSave($scope, info);
+                                                        }
+
+                                                        if (completePromise && completePromise.then) {
+                                                            completePromise.then(function () {
+                                                                $scope.formSetPristine();
+                                                                saveCompleteDefer.resolve();
+                                                                if (config.closeAfterSave) {
+                                                                    $scope.close();
+                                                                }
                                                             });
                                                         } else {
-                                                            $.extend($scope.liveArg, $scope.args);
-                                                        }
-                                                    }
-
-                                                    if (angular.isFunction(config.ui.specifics.afterSave)) {
-                                                        completePromise = config.ui.specifics.afterSave($scope, info);
-                                                    }
-
-                                                    if (completePromise && completePromise.then) {
-                                                        completePromise.then(function () {
                                                             $scope.formSetPristine();
                                                             saveCompleteDefer.resolve();
                                                             if (config.closeAfterSave) {
                                                                 $scope.close();
                                                             }
-                                                        });
-                                                    } else {
-                                                        $scope.formSetPristine();
-                                                        saveCompleteDefer.resolve();
-                                                        if (config.closeAfterSave) {
-                                                            $scope.close();
                                                         }
-                                                    }
 
-                                                };
+                                                    };
 
-                                            if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                promise = config.ui.specifics.beforeSave($scope, info);
-                                            }
+                                                if (angular.isFunction(config.ui.specifics.beforeSave)) {
+                                                    promise = config.ui.specifics.beforeSave($scope, info);
+                                                }
 
-                                            if (promise && promise.then) {
-                                                promise.then(complete);
+                                                if (promise && promise.then) {
+                                                    promise.then(complete);
 
-                                            } else {
-                                                complete();
-                                            }
-                                            return saveCompletePromise;
+                                                } else {
+                                                    complete();
+                                                }
+                                                return saveCompletePromise;
 
+                                            };
+                                        }
+
+                                        // construct direct scope
+                                        if (config.ui.specifics.scope) {
+                                            $.extend($scope, config.ui.specifics.scope);
+                                        }
+
+                                        // call constructor
+                                        if (angular.isFunction(config.ui.specifics.init)) {
+                                            config.ui.specifics.init($scope);
+                                        }
+
+                                        getTitle = function () {
+                                            return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
                                         };
-                                    }
 
-                                    // construct direct scope
-                                    if (config.ui.specifics.scope) {
-                                        $.extend($scope, config.ui.specifics.scope);
-                                    }
+                                        config._title_.push(getTitle);
 
-                                    // call constructor
-                                    if (angular.isFunction(config.ui.specifics.init)) {
-                                        config.ui.specifics.init($scope);
-                                    }
+                                        $scope.$watch('isNew', function () {
+                                            config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
+                                        });
 
-                                    getTitle = function () {
-                                        return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
+                                        angular.forEach(config.ui.specifics.fields, function (field) {
+                                            field._title_ = config._title_.concat();
+                                        });
+
+                                        $scope.$on('$destroy', function () {
+                                            config._title_.remove(getTitle);
+                                            config.ui.specifics.remoteOpts = {};
+                                            config.ui.additionalRealPaths = null;
+                                        });
+
                                     };
-
-                                    config._title_.push(getTitle);
-
-                                    $scope.$watch('isNew', function () {
-                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
-                                    });
-
-                                    angular.forEach(config.ui.specifics.fields, function (field) {
-                                        field._title_ = config._title_.concat();
-                                    });
-
-                                    $scope.$on('$destroy', function () {
-                                        config._title_.remove(getTitle);
-                                        config.ui.specifics.remoteOpts = {};
-                                        config.ui.additionalRealPaths = null;
-                                    });
-
+                                    if (angular.isFunction(arg)) {
+                                        $scope.$state.promise(arg, function ($scope, response) {
+                                            arg = response.arg;
+                                            defaultArgs = response.defaultArgs;
+                                            modalSettings = response.modalSettings;
+                                            process($scope);
+                                        });
+                                    } else {
+                                        process($scope);
+                                    }
                                 })
                             });
                         };
@@ -18622,6 +18636,8 @@ angular.module('app')
                                                 }
                                                 $scope.$broadcast('resizePricetags', pricetag);
 
+                                                //$scope.syncStart();
+
                                             };
 
                                             $scope.onDrop = function (event, ui, image) {
@@ -18676,9 +18692,10 @@ angular.module('app')
 
                                             $scope.loadingManageProduct = false;
                                             $scope.manageProduct = function (image, pricetag, $event) {
-                                                if ($scope.container.form.$dirty) {
-                                                    $scope.syncStop();
-                                                    return $scope.save(true, true).then(function () {
+                                                var syncing = ($scope.syncScheduleNext || $scope.syncLoading),
+                                                    dirty = $scope.container.form.$dirty;
+                                                if (syncing || dirty) {
+                                                    return (syncing ? $scope.saveDefer.promise : $scope.save(true)).then(function () {
                                                         image = _.findWhere($scope.args._images, {
                                                             key: image.key
                                                         });
@@ -18698,49 +18715,57 @@ angular.module('app')
                                                 $scope.loadingManageProduct = true;
                                                 setupCurrentPricetag(image, pricetag);
                                                 // perform read catalog.images.0.pricetags.0._product
-                                                models['31'].actions.read({
-                                                    key: $scope.entity.key,
-                                                    read_arguments: {
-                                                        _images: {
-                                                            config: {
-                                                                keys: [image.key]
-                                                            },
-                                                            pricetags: {
+                                                var open = function () {
+                                                    return models['31'].actions.read({
+                                                        key: $scope.entity.key,
+                                                        read_arguments: {
+                                                            _images: {
                                                                 config: {
-                                                                    keys: [pricetag.key],
+                                                                    keys: [image.key]
                                                                 },
-                                                                _product: {}
+                                                                pricetags: {
+                                                                    config: {
+                                                                        keys: [pricetag.key],
+                                                                    },
+                                                                    _product: {}
+                                                                }
                                                             }
                                                         }
-                                                    }
-                                                }).then(function (response) {
-                                                    var responseEntity = response.data.entity,
-                                                        ii = $scope.args._images.indexOf(image),
-                                                        product = responseEntity._images[0].pricetags[0]._product,
-                                                        shouldAppearDropdown = false,
-                                                        oldPricetagIndex = _.findIndex(image.pricetags, function (ipricetag) {
-                                                            return ipricetag.key === pricetag.key;
-                                                        }),
-                                                        realPath = ['_images', ii, 'pricetags', oldPricetagIndex, '_product'];
-                                                    if (!$scope.fieldProduct.ui.specifics.toolbar) {
-                                                        $scope.fieldProduct.ui.specifics.toolbar = {};
-                                                    }
-                                                    shouldAppearDropdown = $scope.entity.ui.rule.action.catalog_pricetag_duplicate.executable || $scope.entity.ui.rule.field._images.pricetags.writable;
-                                                    $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
-                                                    pricetag._product = product;
-                                                    if (!product._stock) {
-                                                        product._stock = {
-                                                            stocks: []
+                                                    }).then(function (response) {
+                                                        var responseEntity = response.data.entity,
+                                                            ii = $scope.args._images.indexOf(image),
+                                                            product = responseEntity._images[0].pricetags[0]._product,
+                                                            shouldAppearDropdown = false,
+                                                            oldPricetagIndex = _.findIndex(image.pricetags, function (ipricetag) {
+                                                                return ipricetag.key === pricetag.key;
+                                                            }),
+                                                            realPath = ['_images', ii, 'pricetags', oldPricetagIndex, '_product'];
+                                                        if (!$scope.fieldProduct.ui.specifics.toolbar) {
+                                                            $scope.fieldProduct.ui.specifics.toolbar = {};
+                                                        }
+                                                        shouldAppearDropdown = $scope.entity.ui.rule.action.catalog_pricetag_duplicate.executable || $scope.entity.ui.rule.field._images.pricetags.writable;
+                                                        $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
+                                                        pricetag._product = product;
+                                                        if (!product._stock) {
+                                                            product._stock = {
+                                                                stocks: []
+                                                            };
+                                                        }
+                                                        product.ui.access = realPath; // override normalizeEntity auto generated path
+                                                        $scope.fieldProduct.ui.realPath = realPath; // set same path
+                                                        recomputeRealPath($scope.fieldProduct);
+                                                        return {
+                                                            arg: product,
+                                                            defaultArgs: undefined,
+                                                            modalSettings: $event
                                                         };
-                                                    }
-                                                    product.ui.access = realPath; // override normalizeEntity auto generated path
-                                                    $scope.fieldProduct.ui.realPath = realPath; // set same path
-                                                    recomputeRealPath($scope.fieldProduct);
-                                                    $scope.fieldProduct.ui.specifics.manage(product, undefined, $event); // fire up modal dialog
 
-                                                })['finally'](function () {
-                                                    $scope.loadingManageProduct = false;
-                                                });
+                                                    })['finally'](function () {
+                                                        $scope.loadingManageProduct = false;
+                                                    });
+                                                };
+
+                                                $scope.fieldProduct.ui.specifics.manage(open, undefined, $event);
                                             };
 
                                             $scope.howToDrag = function ($event) {
@@ -19155,71 +19180,69 @@ angular.module('app')
                                             };
 
                                             $scope.loadingSave = false;
+                                            $scope.saveDefer = $q.defer();
 
-                                            $scope.save = function (hideSnackbar, reusePromise) {
-                                                if (reusePromise && $scope.savePromise) {
-                                                    return $scope.savePromise;
-                                                }
+                                            $scope.save = function (hideSnackbar) {
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
-                                                    $.extend($scope.entity, response.data.entity);
-                                                    var newArgs = $scope.rootScope.config.argumentLoader($scope);
-                                                    $.extend(parentScope.args, angular.copy(newArgs));
-                                                    $.extend($scope.args, angular.copy(newArgs));
-                                                    $scope.formSetPristine();
+                                                    if (!$scope.syncScheduleNext) {
+                                                        $.extend($scope.entity, response.data.entity);
+                                                        var newArgs = $scope.rootScope.config.argumentLoader($scope);
+                                                        $.extend(parentScope.args, angular.copy(newArgs));
+                                                        $.extend($scope.args, angular.copy(newArgs));
+                                                        $scope.formSetPristine();
+                                                        if ($scope.saveDefer) {
+                                                            $scope.saveDefer.resolve();
+                                                        }
+                                                        $scope.saveDefer = $q.defer();
+                                                    }
                                                     if (!hideSnackbar) {
                                                         snackbar.showK('changesSaved');
                                                     }
                                                 });
                                                 promise['finally'](function () {
                                                     $scope.loadingSave = false;
-                                                    $scope.savePromise = undefined;
                                                 });
-                                                $scope.savePromise = promise;
                                                 return promise;
                                             };
 
                                             $scope.close = function () {
                                                 if ($scope.container.form.$dirty) {
                                                     $scope.syncStop();
-                                                    return $scope.save(undefined, true).then(function () {
-                                                        return $scope.$close();
-                                                    });
+                                                    $scope.save();
                                                 }
                                                 return $scope.$close();
                                             };
-                                            $scope.syncStarted = false;
+                                            $scope.syncLoading = false;
                                             $scope.syncID = null;
-                                            $scope.syncScheduler = [];
-                                            $scope.syncSchedule = function () {
-                                                var id = _.uniqueId();
-                                                $scope.syncScheduler.push(id);
-                                                return id;
-                                            };
+                                            $scope.syncScheduleNext = false;
                                             $scope.syncStop = function () {
                                                 clearTimeout($scope.syncID);
                                             };
-                                            $scope.sync = function (hideSnackbar) {
-                                                var defer = $q.defer(),
-                                                    promise = defer.promise;
-                                                if ($scope.syncStarted) {
-                                                    defer.resolve();
-                                                    return promise;
-                                                }
-                                                $scope.syncStarted = true;
-                                                $scope.syncSchedule();
+                                            $scope.syncStart = function (hideSnackbar) {
+                                                $scope.syncScheduleNext = true;
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
-                                                    $scope.save(hideSnackbar).then(function (response) {
-                                                        $scope.syncStarted = false;
-                                                        defer.resolve(response);
-                                                        return response;
-                                                    });
+                                                    $scope.sync();
                                                 }, 1000);
-                                                return promise;
+                                            };
+                                            $scope.sync = function (hideSnackbar) {
+                                                if ($scope.syncLoading) {
+                                                    $scope.syncScheduleNext = true;
+                                                    return;
+                                                }
+                                                $scope.syncLoading = true;
+                                                $scope.syncScheduleNext = false;
+                                                $scope.save(hideSnackbar).then(function (response) {
+                                                    $scope.syncLoading = false;
+                                                    if ($scope.syncScheduleNext) {
+                                                        $scope.sync(hideSnackbar);
+                                                    }
+                                                    return response;
+                                                });
                                             };
                                         })
                                     });

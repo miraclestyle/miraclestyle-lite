@@ -1164,6 +1164,8 @@
                                                 }
                                                 $scope.$broadcast('resizePricetags', pricetag);
 
+                                                //$scope.syncStart();
+
                                             };
 
                                             $scope.onDrop = function (event, ui, image) {
@@ -1218,9 +1220,10 @@
 
                                             $scope.loadingManageProduct = false;
                                             $scope.manageProduct = function (image, pricetag, $event) {
-                                                if ($scope.container.form.$dirty) {
-                                                    $scope.syncStop();
-                                                    return $scope.save(true, true).then(function () {
+                                                var syncing = ($scope.syncScheduleNext || $scope.syncLoading),
+                                                    dirty = $scope.container.form.$dirty;
+                                                if (syncing || dirty) {
+                                                    return (syncing ? $scope.saveDefer.promise : $scope.save(true)).then(function () {
                                                         image = _.findWhere($scope.args._images, {
                                                             key: image.key
                                                         });
@@ -1240,49 +1243,57 @@
                                                 $scope.loadingManageProduct = true;
                                                 setupCurrentPricetag(image, pricetag);
                                                 // perform read catalog.images.0.pricetags.0._product
-                                                models['31'].actions.read({
-                                                    key: $scope.entity.key,
-                                                    read_arguments: {
-                                                        _images: {
-                                                            config: {
-                                                                keys: [image.key]
-                                                            },
-                                                            pricetags: {
+                                                var open = function () {
+                                                    return models['31'].actions.read({
+                                                        key: $scope.entity.key,
+                                                        read_arguments: {
+                                                            _images: {
                                                                 config: {
-                                                                    keys: [pricetag.key],
+                                                                    keys: [image.key]
                                                                 },
-                                                                _product: {}
+                                                                pricetags: {
+                                                                    config: {
+                                                                        keys: [pricetag.key],
+                                                                    },
+                                                                    _product: {}
+                                                                }
                                                             }
                                                         }
-                                                    }
-                                                }).then(function (response) {
-                                                    var responseEntity = response.data.entity,
-                                                        ii = $scope.args._images.indexOf(image),
-                                                        product = responseEntity._images[0].pricetags[0]._product,
-                                                        shouldAppearDropdown = false,
-                                                        oldPricetagIndex = _.findIndex(image.pricetags, function (ipricetag) {
-                                                            return ipricetag.key === pricetag.key;
-                                                        }),
-                                                        realPath = ['_images', ii, 'pricetags', oldPricetagIndex, '_product'];
-                                                    if (!$scope.fieldProduct.ui.specifics.toolbar) {
-                                                        $scope.fieldProduct.ui.specifics.toolbar = {};
-                                                    }
-                                                    shouldAppearDropdown = $scope.entity.ui.rule.action.catalog_pricetag_duplicate.executable || $scope.entity.ui.rule.field._images.pricetags.writable;
-                                                    $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
-                                                    pricetag._product = product;
-                                                    if (!product._stock) {
-                                                        product._stock = {
-                                                            stocks: []
+                                                    }).then(function (response) {
+                                                        var responseEntity = response.data.entity,
+                                                            ii = $scope.args._images.indexOf(image),
+                                                            product = responseEntity._images[0].pricetags[0]._product,
+                                                            shouldAppearDropdown = false,
+                                                            oldPricetagIndex = _.findIndex(image.pricetags, function (ipricetag) {
+                                                                return ipricetag.key === pricetag.key;
+                                                            }),
+                                                            realPath = ['_images', ii, 'pricetags', oldPricetagIndex, '_product'];
+                                                        if (!$scope.fieldProduct.ui.specifics.toolbar) {
+                                                            $scope.fieldProduct.ui.specifics.toolbar = {};
+                                                        }
+                                                        shouldAppearDropdown = $scope.entity.ui.rule.action.catalog_pricetag_duplicate.executable || $scope.entity.ui.rule.field._images.pricetags.writable;
+                                                        $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = (shouldAppearDropdown ? 'catalog/product/manage_actions.html' : undefined);
+                                                        pricetag._product = product;
+                                                        if (!product._stock) {
+                                                            product._stock = {
+                                                                stocks: []
+                                                            };
+                                                        }
+                                                        product.ui.access = realPath; // override normalizeEntity auto generated path
+                                                        $scope.fieldProduct.ui.realPath = realPath; // set same path
+                                                        recomputeRealPath($scope.fieldProduct);
+                                                        return {
+                                                            arg: product,
+                                                            defaultArgs: undefined,
+                                                            modalSettings: $event
                                                         };
-                                                    }
-                                                    product.ui.access = realPath; // override normalizeEntity auto generated path
-                                                    $scope.fieldProduct.ui.realPath = realPath; // set same path
-                                                    recomputeRealPath($scope.fieldProduct);
-                                                    $scope.fieldProduct.ui.specifics.manage(product, undefined, $event); // fire up modal dialog
 
-                                                })['finally'](function () {
-                                                    $scope.loadingManageProduct = false;
-                                                });
+                                                    })['finally'](function () {
+                                                        $scope.loadingManageProduct = false;
+                                                    });
+                                                };
+
+                                                $scope.fieldProduct.ui.specifics.manage(open, undefined, $event);
                                             };
 
                                             $scope.howToDrag = function ($event) {
@@ -1697,71 +1708,69 @@
                                             };
 
                                             $scope.loadingSave = false;
+                                            $scope.saveDefer = $q.defer();
 
-                                            $scope.save = function (hideSnackbar, reusePromise) {
-                                                if (reusePromise && $scope.savePromise) {
-                                                    return $scope.savePromise;
-                                                }
+                                            $scope.save = function (hideSnackbar) {
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
-                                                    $.extend($scope.entity, response.data.entity);
-                                                    var newArgs = $scope.rootScope.config.argumentLoader($scope);
-                                                    $.extend(parentScope.args, angular.copy(newArgs));
-                                                    $.extend($scope.args, angular.copy(newArgs));
-                                                    $scope.formSetPristine();
+                                                    if (!$scope.syncScheduleNext) {
+                                                        $.extend($scope.entity, response.data.entity);
+                                                        var newArgs = $scope.rootScope.config.argumentLoader($scope);
+                                                        $.extend(parentScope.args, angular.copy(newArgs));
+                                                        $.extend($scope.args, angular.copy(newArgs));
+                                                        $scope.formSetPristine();
+                                                        if ($scope.saveDefer) {
+                                                            $scope.saveDefer.resolve();
+                                                        }
+                                                        $scope.saveDefer = $q.defer();
+                                                    }
                                                     if (!hideSnackbar) {
                                                         snackbar.showK('changesSaved');
                                                     }
                                                 });
                                                 promise['finally'](function () {
                                                     $scope.loadingSave = false;
-                                                    $scope.savePromise = undefined;
                                                 });
-                                                $scope.savePromise = promise;
                                                 return promise;
                                             };
 
                                             $scope.close = function () {
                                                 if ($scope.container.form.$dirty) {
                                                     $scope.syncStop();
-                                                    return $scope.save(undefined, true).then(function () {
-                                                        return $scope.$close();
-                                                    });
+                                                    $scope.save();
                                                 }
                                                 return $scope.$close();
                                             };
-                                            $scope.syncStarted = false;
+                                            $scope.syncLoading = false;
                                             $scope.syncID = null;
-                                            $scope.syncScheduler = [];
-                                            $scope.syncSchedule = function () {
-                                                var id = _.uniqueId();
-                                                $scope.syncScheduler.push(id);
-                                                return id;
-                                            };
+                                            $scope.syncScheduleNext = false;
                                             $scope.syncStop = function () {
                                                 clearTimeout($scope.syncID);
                                             };
-                                            $scope.sync = function (hideSnackbar) {
-                                                var defer = $q.defer(),
-                                                    promise = defer.promise;
-                                                if ($scope.syncStarted) {
-                                                    defer.resolve();
-                                                    return promise;
-                                                }
-                                                $scope.syncStarted = true;
-                                                $scope.syncSchedule();
+                                            $scope.syncStart = function (hideSnackbar) {
+                                                $scope.syncScheduleNext = true;
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
-                                                    $scope.save(hideSnackbar).then(function (response) {
-                                                        $scope.syncStarted = false;
-                                                        defer.resolve(response);
-                                                        return response;
-                                                    });
+                                                    $scope.sync();
                                                 }, 1000);
-                                                return promise;
+                                            };
+                                            $scope.sync = function (hideSnackbar) {
+                                                if ($scope.syncLoading) {
+                                                    $scope.syncScheduleNext = true;
+                                                    return;
+                                                }
+                                                $scope.syncLoading = true;
+                                                $scope.syncScheduleNext = false;
+                                                $scope.save(hideSnackbar).then(function (response) {
+                                                    $scope.syncLoading = false;
+                                                    if ($scope.syncScheduleNext) {
+                                                        $scope.sync(hideSnackbar);
+                                                    }
+                                                    return response;
+                                                });
                                             };
                                         })
                                     });
