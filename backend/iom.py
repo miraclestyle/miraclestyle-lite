@@ -250,7 +250,7 @@ class Engine:
         context.error('transaction', 'failed')
         throw = False
       if throw:
-        tools.log.exception(e)
+        tools.log.error(e, exc_info=True)
         if settings.DEBUG:
           raise  # Here we raise all other unhandled exceptions!
         else:
