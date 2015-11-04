@@ -610,6 +610,7 @@
                                 accessImages.push('_images');
 
                                 imagesReader = models['31'].reader({
+                                    firstLoad: false,
                                     key: $scope.catalog.key,
                                     next: {
                                         _images: $scope.catalog._next_read_arguments._images

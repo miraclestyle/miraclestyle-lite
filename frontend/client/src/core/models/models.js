@@ -1016,7 +1016,7 @@
                                     more: canLoadMore(config.next),
                                     config: config,
                                     loaded: false,
-                                    firstLoad: true,
+                                    firstLoad: (angular.isDefined(config.firstLoad) ? config.firstLoad : true),
                                     previous: null,
                                     state: function (config) {
                                         this.next = config.next;

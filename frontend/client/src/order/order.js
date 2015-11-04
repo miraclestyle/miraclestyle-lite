@@ -468,14 +468,15 @@
                                         },
                                         sent: false,
                                         send: function (action) {
-                                            var newMessage = {
-                                                body: $scope.messages.draft.message
-                                            };
+                                            var copydraft = angular.copy($scope.messages.draft),
+                                                newMessage = {
+                                                    body: copydraft.message
+                                                };
+                                            $scope.messages.draft.message = '';
                                             $scope.order._messages.push(newMessage);
-                                            return models['34'].actions[action]($scope.messages.draft, {
+                                            return models['34'].actions[action](copydraft, {
                                                 disableUI: false
                                             }).then(function (response) {
-                                                $scope.messages.draft.message = '';
                                                 $scope.messages.forceReflow();
                                                 //$scope.order._messages.push(response.data.entity._messages[0]);
                                                 $.extend(newMessage, response.data.entity._messages[0]);

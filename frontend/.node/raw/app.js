@@ -15271,7 +15271,7 @@ $(function () {
                                     more: canLoadMore(config.next),
                                     config: config,
                                     loaded: false,
-                                    firstLoad: true,
+                                    firstLoad: (angular.isDefined(config.firstLoad) ? config.firstLoad : true),
                                     previous: null,
                                     state: function (config) {
                                         this.next = config.next;
@@ -18086,6 +18086,7 @@ angular.module('app')
                                 accessImages.push('_images');
 
                                 imagesReader = models['31'].reader({
+                                    firstLoad: false,
                                     key: $scope.catalog.key,
                                     next: {
                                         _images: $scope.catalog._next_read_arguments._images
@@ -20417,14 +20418,15 @@ angular.module('app')
                                         },
                                         sent: false,
                                         send: function (action) {
-                                            var newMessage = {
-                                                body: $scope.messages.draft.message
-                                            };
+                                            var copydraft = angular.copy($scope.messages.draft),
+                                                newMessage = {
+                                                    body: copydraft.message
+                                                };
+                                            $scope.messages.draft.message = '';
                                             $scope.order._messages.push(newMessage);
-                                            return models['34'].actions[action]($scope.messages.draft, {
+                                            return models['34'].actions[action](copydraft, {
                                                 disableUI: false
                                             }).then(function (response) {
-                                                $scope.messages.draft.message = '';
                                                 $scope.messages.forceReflow();
                                                 //$scope.order._messages.push(response.data.entity._messages[0]);
                                                 $.extend(newMessage, response.data.entity._messages[0]);
