@@ -188,7 +188,7 @@
                           isYou = !message._agent || message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
                           isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
-                          isToday = today.getDay() === message.created.getDay() && today.getMonth() === message.created.getMonth()
+                          isToday = (today.getDay() === message.created.getDay() && today.getMonth() === message.created.getMonth());
                           " ng-class="{'leftside': isYou, 'rightside': !isYou}">
                         <div class="message">
                             <div class="message-inner">
