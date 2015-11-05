@@ -257,7 +257,7 @@
                                     promise;
 
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region);
+                                    promise = models['13'].get(updatedAddress.region, {activitySpinner: true});
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
                                             updatedAddress._region = response.data.entities[0];
@@ -268,7 +268,9 @@
 
                                 if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
                                     promise = models['12'].actions.search(undefined, {
-                                        cache: true
+                                        cache: true,
+                                        cacheType: 'local',
+                                        activitySpinner: true
                                     });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
@@ -722,11 +724,7 @@
                                             rootFormSetDirty();
                                         }
                                         if (promise && promise.then) {
-                                            $scope.activitySpinner.start();
-                                            promise.then(complete)['finally'](function () {
-                                                $scope.activitySpinner.stop();
-                                            });
-
+                                            promise.then(complete);
                                         } else {
                                             complete();
 

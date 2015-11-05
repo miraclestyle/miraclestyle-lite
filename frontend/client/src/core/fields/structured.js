@@ -10,7 +10,7 @@
                             templateUrl: 'core/models/manage.html',
                             controller: ng(function ($scope) {
                                 var save = scope.save,
-                                    complete = scope.complete,
+                                    complete = scope.uploadComplete,
                                     getTitle,
                                     initial = true;
                                 getTitle = function () {
@@ -59,23 +59,13 @@
                                 $scope.save = function (dontShowMessage) {
                                     var maybePromise = save.call(scope, dontShowMessage);
                                     if (maybePromise) {
-                                        $scope.activitySpinner.start();
                                         maybePromise.then(function () {
                                             $scope.formSetPristine();
-                                        })['finally'](function () {
-                                            $scope.activitySpinner.stop();
                                         });
                                     }
                                     return maybePromise;
                                 };
-
-                                $scope.$on('ngUploadStart', function () {
-                                    $scope.activitySpinner.start();
-                                });
-                                $scope.$on('ngUploadEnd', function () {
-                                    $scope.activitySpinner.stop();
-                                });
-                                $scope.complete = function (response) {
+                                $scope.uploadComplete = function (response) {
                                     complete.call(scope, response);
                                     $scope.formSetPristine();
                                 };
@@ -766,22 +756,21 @@
 
                                                 return promise;
                                             };
-
-                                            $scope.$on('ngUploadStart', function () {
+                                            $scope.uploadStart = function () {
                                                 $scope.activitySpinner.start();
-                                            });
-                                            $scope.$on('ngUploadEnd', function () {
+                                            };
+                                            $scope.uploadEnd = function () {
                                                 $scope.activitySpinner.stop();
-                                            });
-                                            $scope.complete = function (response) {
+                                            };
+                                            $scope.uploadComplete = function (response) {
                                                 $scope.response = response;
                                                 var keepAccess = angular.copy($scope.args.ui.access),
                                                     value = getResult(response, keepAccess);
 
                                                 $.extend($scope.args, value);
                                                 $scope.args.ui.access = keepAccess;
-                                                if (angular.isDefined(config.ui.specifics.afterComplete)) {
-                                                    config.ui.specifics.afterComplete($scope);
+                                                if (angular.isDefined(config.ui.specifics.afterUploadComplete)) {
+                                                    config.ui.specifics.afterUploadComplete($scope);
                                                 }
                                                 $scope.formSetPristine();
 
@@ -796,10 +785,10 @@
                                                 $scope.formSetPristine();
                                             };
 
-                                            $scope.completeError = function (response) {
+                                            $scope.uploadError = function (response) {
                                                 // fired when it failed to send http-form-data rpc
-                                                if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
-                                                    config.ui.specifics.afterCompleteError($scope, response);
+                                                if (angular.isDefined(config.ui.specifics.afterUploadError)) {
+                                                    config.ui.specifics.afterUploadError($scope, response);
                                                 }
                                                 $scope.formSetPristine();
                                             };
@@ -864,11 +853,7 @@
                                                 }
 
                                                 if (promise && promise.then) {
-                                                    $scope.activitySpinner.start();
-                                                    promise.then(complete)['finally'](function () {
-                                                        $scope.activitySpinner.stop();
-                                                    });
-
+                                                    promise.then(complete);
                                                 } else {
                                                     complete();
                                                 }

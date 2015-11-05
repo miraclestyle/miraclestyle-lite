@@ -783,12 +783,12 @@
                             $scope.dialog.toolbar.templateActionsUrl = 'catalog/manage_actions.html';
                             callback($scope.entity);
                         },
-                        afterComplete = function ($scope) {
+                        afterUploadComplete = function ($scope) {
                             $scope.setAction('update');
                             callback($scope.entity);
                         },
                         noComplete = function ($scope) {
-                            afterComplete($scope);
+                            afterUploadComplete($scope);
                         },
                         config = {
                             kind: this.kind,
@@ -802,8 +802,8 @@
                             },
                             afterSave: afterSave,
                             afterSaveError: afterSave,
-                            afterComplete: afterComplete,
-                            afterCompleteError: afterComplete,
+                            afterUploadComplete: afterUploadComplete,
+                            afterUploadError: afterUploadComplete,
                             init: function ($scope) {
 
                                 $.extend(fields._images.ui, {
@@ -1383,7 +1383,7 @@
                                                         $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
                                                         $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
                                                     },
-                                                    afterComplete: function (fieldScope) {
+                                                    afterUploadComplete: function (fieldScope) {
                                                         // after complete hook
                                                         fieldScope.setAction('update');
                                                     },
@@ -1606,7 +1606,7 @@
                                                     afterSave: function (fieldScope) {
                                                         fieldScope.setAction('product_instance_upload_images');
                                                     },
-                                                    afterComplete: function (fieldScope) {
+                                                    afterUploadComplete: function (fieldScope) {
                                                         fieldScope.setAction('update');
                                                     },
                                                     noComplete: function (fieldScope) {

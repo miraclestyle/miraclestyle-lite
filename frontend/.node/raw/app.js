@@ -10888,7 +10888,7 @@ $(function () {
                             templateUrl: 'core/models/manage.html',
                             controller: ng(function ($scope) {
                                 var save = scope.save,
-                                    complete = scope.complete,
+                                    complete = scope.uploadComplete,
                                     getTitle,
                                     initial = true;
                                 getTitle = function () {
@@ -10937,23 +10937,13 @@ $(function () {
                                 $scope.save = function (dontShowMessage) {
                                     var maybePromise = save.call(scope, dontShowMessage);
                                     if (maybePromise) {
-                                        $scope.activitySpinner.start();
                                         maybePromise.then(function () {
                                             $scope.formSetPristine();
-                                        })['finally'](function () {
-                                            $scope.activitySpinner.stop();
                                         });
                                     }
                                     return maybePromise;
                                 };
-
-                                $scope.$on('ngUploadStart', function () {
-                                    $scope.activitySpinner.start();
-                                });
-                                $scope.$on('ngUploadEnd', function () {
-                                    $scope.activitySpinner.stop();
-                                });
-                                $scope.complete = function (response) {
+                                $scope.uploadComplete = function (response) {
                                     complete.call(scope, response);
                                     $scope.formSetPristine();
                                 };
@@ -11644,22 +11634,21 @@ $(function () {
 
                                                 return promise;
                                             };
-
-                                            $scope.$on('ngUploadStart', function () {
+                                            $scope.uploadStart = function () {
                                                 $scope.activitySpinner.start();
-                                            });
-                                            $scope.$on('ngUploadEnd', function () {
+                                            };
+                                            $scope.uploadEnd = function () {
                                                 $scope.activitySpinner.stop();
-                                            });
-                                            $scope.complete = function (response) {
+                                            };
+                                            $scope.uploadComplete = function (response) {
                                                 $scope.response = response;
                                                 var keepAccess = angular.copy($scope.args.ui.access),
                                                     value = getResult(response, keepAccess);
 
                                                 $.extend($scope.args, value);
                                                 $scope.args.ui.access = keepAccess;
-                                                if (angular.isDefined(config.ui.specifics.afterComplete)) {
-                                                    config.ui.specifics.afterComplete($scope);
+                                                if (angular.isDefined(config.ui.specifics.afterUploadComplete)) {
+                                                    config.ui.specifics.afterUploadComplete($scope);
                                                 }
                                                 $scope.formSetPristine();
 
@@ -11674,10 +11663,10 @@ $(function () {
                                                 $scope.formSetPristine();
                                             };
 
-                                            $scope.completeError = function (response) {
+                                            $scope.uploadError = function (response) {
                                                 // fired when it failed to send http-form-data rpc
-                                                if (angular.isDefined(config.ui.specifics.afterCompleteError)) {
-                                                    config.ui.specifics.afterCompleteError($scope, response);
+                                                if (angular.isDefined(config.ui.specifics.afterUploadError)) {
+                                                    config.ui.specifics.afterUploadError($scope, response);
                                                 }
                                                 $scope.formSetPristine();
                                             };
@@ -11742,11 +11731,7 @@ $(function () {
                                                 }
 
                                                 if (promise && promise.then) {
-                                                    $scope.activitySpinner.start();
-                                                    promise.then(complete)['finally'](function () {
-                                                        $scope.activitySpinner.stop();
-                                                    });
-
+                                                    promise.then(complete);
                                                 } else {
                                                     complete();
                                                 }
@@ -15007,19 +14992,19 @@ $(function () {
                                         return promise;
                                     };
 
-                                    $scope.$on('ngUploadStart', function () {
+                                    $scope.uploadStart = function () {
                                         $scope.activitySpinner.start();
-                                    });
-                                    $scope.$on('ngUploadEnd', function () {
+                                    };
+                                    $scope.uploadEnd = function () {
                                         $scope.activitySpinner.stop();
-                                    });
-                                    $scope.complete = function (response) {
+                                    };
+                                    $scope.uploadComplete = function (response) {
                                         $.extend($scope.entity, response.data.entity);
                                         var newArgs = config.argumentLoader($scope);
                                         $.extend($scope.args, newArgs);
                                         makeHistory();
-                                        if (angular.isDefined(config.afterComplete)) {
-                                            config.afterComplete($scope);
+                                        if (angular.isDefined(config.afterUploadComplete)) {
+                                            config.afterUploadComplete($scope);
                                         }
                                         if (config.closeAfterSave) {
                                             $timeout(function () {
@@ -15037,9 +15022,9 @@ $(function () {
                                         }
                                     };
 
-                                    $scope.completeError = function (response) {
-                                        if (angular.isDefined(config.afterCompleteError)) {
-                                            config.afterCompleteError($scope, response);
+                                    $scope.uploadError = function (response) {
+                                        if (angular.isDefined(config.afterUploadError)) {
+                                            config.afterUploadError($scope, response);
                                         }
                                     };
 
@@ -15220,13 +15205,13 @@ $(function () {
                             getCache: function (key) {
                                 return endpoint.getCache(this.getCacheKey(key));
                             },
-                            get: function (key) {
+                            get: function (key, opts) {
                                 if (angular.isDefined(this.actions.search)) {
                                     return this.actions.search({
                                         search: {
                                             keys: [key]
                                         }
-                                    });
+                                    }, opts);
                                 }
 
                                 console.error('get() relies on actions.search action. use actions.read() instead.');
@@ -16682,34 +16667,6 @@ $(function () {
     }));
 
 }());
-// Version (see package.json)
-// AngularJS simple file upload directive
-// this directive uses an iframe as a target
-// to enable the uploading of files without
-// losing focus in the ng-app.
-//
-// <div ng-app="app">
-//   <div ng-controller="mainCtrl">
-//    <form ng-attr-action="/uploads"
-//      ng-upload="completed(content)">
-//      ng-upload-loading="loading()"
-//      <input type="file" name="avatar"></input>
-//      <input type="submit" value="Upload"
-//         ng-disabled="$isUploading"></input>
-//    </form>
-//  </div>
-// </div>
-//
-//  angular.module('app', ['ngUpload'])
-//    .controller('mainController', function($scope) {
-//      $scope.loading = function() {
-//        console.log('loading...');
-//      }
-//      $scope.completed = function(content) {
-//        console.log(content);
-//      };
-//  });
-//
 angular.module('app')
     .directive('uploadSubmit', ["$parse", function ($parse) {
         // Utility function to get the closest parent element with a given tag
@@ -16782,6 +16739,7 @@ angular.module('app')
                     //    enableRailsCsrf: bool
                     // }
                     var fn = attrs.ngUpload ? $parse(attrs.ngUpload) : angular.noop;
+                    var startFn = attrs.ngUploadStart ? $parse(attrs.ngUploadStart) : angular.noop;
                     var endFn = attrs.ngUploadEnd ? $parse(attrs.ngUploadEnd) : angular.noop;
                     var loading = attrs.ngUploadLoading ? $parse(attrs.ngUploadLoading) : null;
                     var opts = scope.$eval(attrs.ngUploadOptions) || {};
@@ -16838,8 +16796,8 @@ angular.module('app')
                         // perform check before submit file
                         if (options.beforeSubmit && options.beforeSubmit(scope, {}) == false) return false;
 
-
-                        scope.$broadcast('ngUploadStart', content);
+                        startFn(scope);
+                        scope.$broadcast('ngUploadStart');
 
                         // bind load after submit to prevent initial load triggering uploadEnd
                         iframe.bind('load', uploadEnd);
@@ -16935,7 +16893,8 @@ angular.module('app')
                             scope.$broadcast('ngUploadError', content);
                         }
 
-                        scope.$broadcast('ngUploadEnd', content);
+                        scope.$broadcast('ngUploadEnd');
+                        endFn(scope);
 
 
                     }
@@ -17490,7 +17449,7 @@ angular.module('app')
                                         updatedAddress = $scope.args,
                                         promise;
                                     if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                        promise = models['13'].get(updatedAddress.region);
+                                        promise = models['13'].get(updatedAddress.region, {activitySpinner: true});
                                         promise.then(function (response) {
                                             if (response.data.entities.length) {
                                                 updatedAddress._region = response.data.entities[0];
@@ -17501,7 +17460,9 @@ angular.module('app')
 
                                     if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
                                         promise = models['12'].actions.search(undefined, {
-                                            cache: true
+                                            cache: true,
+                                            cacheType: 'local',
+                                            activitySpinner: true
                                         });
                                         promise.then(function (response) {
                                             if (response.data.entities.length) {
@@ -18347,12 +18308,12 @@ angular.module('app')
                             $scope.dialog.toolbar.templateActionsUrl = 'catalog/manage_actions.html';
                             callback($scope.entity);
                         },
-                        afterComplete = function ($scope) {
+                        afterUploadComplete = function ($scope) {
                             $scope.setAction('update');
                             callback($scope.entity);
                         },
                         noComplete = function ($scope) {
-                            afterComplete($scope);
+                            afterUploadComplete($scope);
                         },
                         config = {
                             kind: this.kind,
@@ -18366,8 +18327,8 @@ angular.module('app')
                             },
                             afterSave: afterSave,
                             afterSaveError: afterSave,
-                            afterComplete: afterComplete,
-                            afterCompleteError: afterComplete,
+                            afterUploadComplete: afterUploadComplete,
+                            afterUploadError: afterUploadComplete,
                             init: function ($scope) {
 
                                 $.extend(fields._images.ui, {
@@ -18947,7 +18908,7 @@ angular.module('app')
                                                         $scope.fieldProduct.ui.specifics.toolbar.templateActionsUrl = 'catalog/product/manage_actions.html';
                                                         $.extend($scope.pricetag, updatedPricetag); // after save, always update the live pricetag, because there is no way that field scope can access this scope
                                                     },
-                                                    afterComplete: function (fieldScope) {
+                                                    afterUploadComplete: function (fieldScope) {
                                                         // after complete hook
                                                         fieldScope.setAction('update');
                                                     },
@@ -19170,7 +19131,7 @@ angular.module('app')
                                                     afterSave: function (fieldScope) {
                                                         fieldScope.setAction('product_instance_upload_images');
                                                     },
-                                                    afterComplete: function (fieldScope) {
+                                                    afterUploadComplete: function (fieldScope) {
                                                         fieldScope.setAction('update');
                                                     },
                                                     noComplete: function (fieldScope) {
@@ -20732,11 +20693,9 @@ angular.module('app')
                                                 _lines: $scope.order._lines
                                             };
                                             $.extend(data, extra);
-                                            if (!config.noLoader) {
-                                                $scope.activitySpinner.start();
-                                            }
                                             return models['34'].actions.update(data, {
-                                                ignoreErrors: 2
+                                                ignoreErrors: 2,
+                                                activitySpinner: !config.noLoader
                                             }).then(function (response) {
                                                 var errors = response.data.errors;
                                                 if (errors) {
@@ -20751,9 +20710,6 @@ angular.module('app')
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
                                                 return response;
                                             })['finally'](function () {
-                                                if (!config.noLoader) {
-                                                    $scope.activitySpinner.stop();
-                                                }
                                                 if ($scope.container.paypal) {
                                                     $scope.container.paypal.$setPristine();
                                                 }
@@ -21201,7 +21157,7 @@ angular.module('app')
                                     promise;
 
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region);
+                                    promise = models['13'].get(updatedAddress.region, {activitySpinner: true});
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
                                             updatedAddress._region = response.data.entities[0];
@@ -21212,7 +21168,9 @@ angular.module('app')
 
                                 if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
                                     promise = models['12'].actions.search(undefined, {
-                                        cache: true
+                                        cache: true,
+                                        cacheType: 'local',
+                                        activitySpinner: true
                                     });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
@@ -21666,11 +21624,7 @@ angular.module('app')
                                             rootFormSetDirty();
                                         }
                                         if (promise && promise.then) {
-                                            $scope.activitySpinner.start();
-                                            promise.then(complete)['finally'](function () {
-                                                $scope.activitySpinner.stop();
-                                            });
-
+                                            promise.then(complete);
                                         } else {
                                             complete();
 

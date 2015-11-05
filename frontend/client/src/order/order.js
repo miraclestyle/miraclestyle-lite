@@ -683,11 +683,9 @@
                                                 _lines: $scope.order._lines
                                             };
                                             $.extend(data, extra);
-                                            if (!config.noLoader) {
-                                                $scope.activitySpinner.start();
-                                            }
                                             return models['34'].actions.update(data, {
-                                                ignoreErrors: 2
+                                                ignoreErrors: 2,
+                                                activitySpinner: !config.noLoader
                                             }).then(function (response) {
                                                 var errors = response.data.errors;
                                                 if (errors) {
@@ -702,9 +700,6 @@
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
                                                 return response;
                                             })['finally'](function () {
-                                                if (!config.noLoader) {
-                                                    $scope.activitySpinner.stop();
-                                                }
                                                 if ($scope.container.paypal) {
                                                     $scope.container.paypal.$setPristine();
                                                 }

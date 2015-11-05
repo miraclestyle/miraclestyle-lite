@@ -677,19 +677,19 @@
                                         return promise;
                                     };
 
-                                    $scope.$on('ngUploadStart', function () {
+                                    $scope.uploadStart = function () {
                                         $scope.activitySpinner.start();
-                                    });
-                                    $scope.$on('ngUploadEnd', function () {
+                                    };
+                                    $scope.uploadEnd = function () {
                                         $scope.activitySpinner.stop();
-                                    });
-                                    $scope.complete = function (response) {
+                                    };
+                                    $scope.uploadComplete = function (response) {
                                         $.extend($scope.entity, response.data.entity);
                                         var newArgs = config.argumentLoader($scope);
                                         $.extend($scope.args, newArgs);
                                         makeHistory();
-                                        if (angular.isDefined(config.afterComplete)) {
-                                            config.afterComplete($scope);
+                                        if (angular.isDefined(config.afterUploadComplete)) {
+                                            config.afterUploadComplete($scope);
                                         }
                                         if (config.closeAfterSave) {
                                             $timeout(function () {
@@ -707,9 +707,9 @@
                                         }
                                     };
 
-                                    $scope.completeError = function (response) {
-                                        if (angular.isDefined(config.afterCompleteError)) {
-                                            config.afterCompleteError($scope, response);
+                                    $scope.uploadError = function (response) {
+                                        if (angular.isDefined(config.afterUploadError)) {
+                                            config.afterUploadError($scope, response);
                                         }
                                     };
 
@@ -890,13 +890,13 @@
                             getCache: function (key) {
                                 return endpoint.getCache(this.getCacheKey(key));
                             },
-                            get: function (key) {
+                            get: function (key, opts) {
                                 if (angular.isDefined(this.actions.search)) {
                                     return this.actions.search({
                                         search: {
                                             keys: [key]
                                         }
-                                    });
+                                    }, opts);
                                 }
 
                                 console.error('get() relies on actions.search action. use actions.read() instead.');

@@ -1,10 +1,10 @@
 <div fit-in-modal>
     <form name="container.form"
         <% if (config.ui.specifics.remote) { %>
-        ng-upload-error="completeError(content)" 
-        ng-upload="complete(content)" 
-        ng-upload-start="completeStart()"
-        ng-upload-end="completeEnd()"
+        ng-upload-error="uploadError(content)"
+        ng-upload="uploadComplete(content)"
+        ng-upload-start="uploadStart()"
+        ng-upload-end="uploadEnd()"
         <% } else { %>
         <% } %>
         method="post" action="{{container.action}}">

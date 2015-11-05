@@ -1,31 +1,3 @@
-// Version (see package.json)
-// AngularJS simple file upload directive
-// this directive uses an iframe as a target
-// to enable the uploading of files without
-// losing focus in the ng-app.
-//
-// <div ng-app="app">
-//   <div ng-controller="mainCtrl">
-//    <form ng-attr-action="/uploads"
-//      ng-upload="completed(content)">
-//      ng-upload-loading="loading()"
-//      <input type="file" name="avatar"></input>
-//      <input type="submit" value="Upload"
-//         ng-disabled="$isUploading"></input>
-//    </form>
-//  </div>
-// </div>
-//
-//  angular.module('app', ['ngUpload'])
-//    .controller('mainController', function($scope) {
-//      $scope.loading = function() {
-//        console.log('loading...');
-//      }
-//      $scope.completed = function(content) {
-//        console.log(content);
-//      };
-//  });
-//
 angular.module('app')
     .directive('uploadSubmit', ["$parse", function ($parse) {
         // Utility function to get the closest parent element with a given tag
@@ -98,6 +70,7 @@ angular.module('app')
                     //    enableRailsCsrf: bool
                     // }
                     var fn = attrs.ngUpload ? $parse(attrs.ngUpload) : angular.noop;
+                    var startFn = attrs.ngUploadStart ? $parse(attrs.ngUploadStart) : angular.noop;
                     var endFn = attrs.ngUploadEnd ? $parse(attrs.ngUploadEnd) : angular.noop;
                     var loading = attrs.ngUploadLoading ? $parse(attrs.ngUploadLoading) : null;
                     var opts = scope.$eval(attrs.ngUploadOptions) || {};
@@ -154,8 +127,8 @@ angular.module('app')
                         // perform check before submit file
                         if (options.beforeSubmit && options.beforeSubmit(scope, {}) == false) return false;
 
-
-                        scope.$broadcast('ngUploadStart', content);
+                        startFn(scope);
+                        scope.$broadcast('ngUploadStart');
 
                         // bind load after submit to prevent initial load triggering uploadEnd
                         iframe.bind('load', uploadEnd);
@@ -251,7 +224,8 @@ angular.module('app')
                             scope.$broadcast('ngUploadError', content);
                         }
 
-                        scope.$broadcast('ngUploadEnd', content);
+                        scope.$broadcast('ngUploadEnd');
+                        endFn(scope);
 
 
                     }

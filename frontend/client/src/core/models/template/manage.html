@@ -1,9 +1,9 @@
 <div fit-in-modal>
   <form name="container.form" 
-        ng-upload-error="completeError(content)"
-        ng-upload="complete(content)"
-        ng-upload-start="completeStart()"
-        ng-upload-end="completeEnd()"
+        ng-upload-error="uploadError(content)"
+        ng-upload="uploadComplete(content)"
+        ng-upload-start="uploadStart()"
+        ng-upload-end="uploadEnd()"
         method="post" action="{{container.action}}">
     <action-toolbar spec="dialog.toolbar"></action-toolbar>
     <activity-spinner toolbar="true"></activity-spinner>
