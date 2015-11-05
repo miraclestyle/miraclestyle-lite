@@ -248,10 +248,10 @@
                             kind: this.kind,
                             action: 'update',
                             modalConfig: modalConfig,
-                            afterSave: function () {
+                            afterSave: function ($scope) {
                                 endpoint.removeCache(that.getCacheKey('current'));
                                 if (angular.isDefined(afterSave)) {
-                                    afterSave();
+                                    afterSave($scope);
                                 }
                             },
                             scope: {

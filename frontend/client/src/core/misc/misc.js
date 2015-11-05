@@ -375,7 +375,7 @@
                         }, 2000);
 
                         loadMore = function (values, done) {
-                            if (!config.loader) {
+                            if (!config.loader && !angular.isFunction(config.loader.load)) {
                                 return;
                             }
                             var promise = config.loader.load();
@@ -505,6 +505,9 @@
             };
         })).filter('labelize', ng(function (GLOBAL_CONFIG, $log) {
             return function (key, group) {
+                if (key === undefined || key === null) {
+                    return key;
+                }
                 if (angular.isUndefined(group)) {
                     group = 'default';
                 }

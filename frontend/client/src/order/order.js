@@ -317,10 +317,8 @@
                                                             }); // scope apply
                                                         };
                                                         $scope.manage = function () {
-                                                            models['19'].manageModal(response.data.entity.parent.key, function () {
-                                                                models['19'].current().then(function (response) {
-                                                                    $scope.addresses = response.data.entity.addresses;
-                                                                });
+                                                            models['19'].manageModal(response.data.entity.parent.key, function (buyerScope) {
+                                                                $scope.addresses = buyerScope.entity.addresses;
                                                             }, {
                                                                 inDirection: false,
                                                                 outDirection: false

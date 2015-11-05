@@ -12520,7 +12520,7 @@ $(function () {
                         }, 2000);
 
                         loadMore = function (values, done) {
-                            if (!config.loader) {
+                            if (!config.loader && !angular.isFunction(config.loader.load)) {
                                 return;
                             }
                             var promise = config.loader.load();
@@ -12650,6 +12650,9 @@ $(function () {
             };
         })).filter('labelize', ng(function (GLOBAL_CONFIG, $log) {
             return function (key, group) {
+                if (key === undefined || key === null) {
+                    return key;
+                }
                 if (angular.isUndefined(group)) {
                     group = 'default';
                 }
@@ -17519,10 +17522,10 @@ angular.module('app')
                             kind: this.kind,
                             action: 'update',
                             modalConfig: modalConfig,
-                            afterSave: function () {
+                            afterSave: function ($scope) {
                                 endpoint.removeCache(that.getCacheKey('current'));
                                 if (angular.isDefined(afterSave)) {
-                                    afterSave();
+                                    afterSave($scope);
                                 }
                             },
                             scope: {
@@ -20353,10 +20356,8 @@ angular.module('app')
                                                             }); // scope apply
                                                         };
                                                         $scope.manage = function () {
-                                                            models['19'].manageModal(response.data.entity.parent.key, function () {
-                                                                models['19'].current().then(function (response) {
-                                                                    $scope.addresses = response.data.entity.addresses;
-                                                                });
+                                                            models['19'].manageModal(response.data.entity.parent.key, function (buyerScope) {
+                                                                $scope.addresses = buyerScope.entity.addresses;
                                                             }, {
                                                                 inDirection: false,
                                                                 outDirection: false
