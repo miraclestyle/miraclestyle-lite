@@ -12520,7 +12520,7 @@ $(function () {
                         }, 2000);
 
                         loadMore = function (values, done) {
-                            if (!config.loader && !angular.isFunction(config.loader.load)) {
+                            if (!config.loader || !angular.isFunction(config.loader.load)) {
                                 return;
                             }
                             var promise = config.loader.load();
@@ -13476,6 +13476,9 @@ $(function () {
                             return top().find('.slide');
                         },
                         hide = function () {
+                            if (top().hasClass('ng-hide')) {
+                                return;
+                            }
                             var s = slide();
                             s.oneAnimationEnd(function () {
                                 top().addClass('ng-hide');

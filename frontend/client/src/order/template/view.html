@@ -52,6 +52,7 @@
                               <div class="list-subheader subheader">Billing info</div>
                               <button md-ink-ripple-list
                                       ng-click="addresses.browse('billing')" 
+                                      loading
                                       type="button" 
                                       class="list-row list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
                                       <div class="list-content-tile">
@@ -74,6 +75,7 @@
                               <div collapse="addresses.sameAsBilling" class="order-expanding-address" ng-form="addresses.form.shipping">
                                   <button md-ink-ripple-list
                                           ng-click="addresses.browse('shipping')" 
+                                          loading
                                           type="button" 
                                           class="list-row list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
                                           <div class="list-content-tile">
