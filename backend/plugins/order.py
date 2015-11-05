@@ -578,15 +578,15 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       mismatches.append('address_country')
     if (shipping_address.country_code != ipn['address_country_code']):
       mismatches.append('address_country_code')
-    if (shipping_address.city != ipn['address_city']):
+    if (shipping_address.city.lower() != ipn['address_city'].lower()):
       mismatches.append('address_city')
     if (shipping_address.name != ipn['address_name']):
       mismatches.append('address_name')
     if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']:  # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
       mismatches.append('address_state')
-    if (shipping_address.street != ipn['address_street']):
+    if (shipping_address.street.lower() != ipn['address_street'].lower()):
       mismatches.append('address_street')
-    if (shipping_address.postal_code != ipn['address_zip']):
+    if (shipping_address.postal_code.lower() != ipn['address_zip'].lower()):
       mismatches.append('address_zip')
 
     for line in order._lines.value:
