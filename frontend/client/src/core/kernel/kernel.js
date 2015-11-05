@@ -431,11 +431,16 @@
                         normalizeEntity = (rejection.config.normalizeEntity === undefined || rejection.config.normalizeEntity),
                         errorHandling = $injector.get('errorHandling'),
                         modelsUtil = $injector.get('modelsUtil'),
+                        shouldSpin = rejection.config.activitySpinner === true,
                         enableUI = function () {
                             $rootScope.$broadcast('disableUI', false);
                         },
                         reject,
                         shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
+
+                    if (shouldSpin) {
+                        $rootScope.activitySpinner.stop();
+                    }
 
                     if (rejection.status === -1) {
                         errorHandling.snackbar({connection_refused: true});
@@ -490,9 +495,13 @@
                     response: handleResponse,
                     responseError: handleResponse,
                     request: function (config) {
-                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true);
+                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true),
+                            shouldSpin = config.activitySpinner === true;
                         if (shouldDisable) {
                             $rootScope.$broadcast('disableUI', true);
+                        }
+                        if (shouldSpin) {
+                            $rootScope.activitySpinner.start();
                         }
                         return config || $q.when(config);
                     }

@@ -725,9 +725,10 @@
                                                 if (config.ui.specifics.beforeSave) {
                                                     config.ui.specifics.beforeSave($scope);
                                                 }
-                                                $scope.activitySpinner.start();
                                                 // create rpc from root args's action model and action id
-                                                promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
+                                                promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs, {
+                                                    activitySpinner: true
+                                                });
                                                 promise.then(function (response) {
                                                     $scope.response = response;
                                                     var keepAccess = angular.copy($scope.args.ui.access),
@@ -761,8 +762,6 @@
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {
                                                         config.ui.specifics.afterSaveError($scope, response);
                                                     }
-                                                })['finally'](function () {
-                                                    $scope.activitySpinner.stop();
                                                 });
 
                                                 return promise;

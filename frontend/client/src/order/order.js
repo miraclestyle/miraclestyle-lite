@@ -736,9 +736,10 @@
                                         cancel: function () {
                                             if ($scope.order.state === 'checkout') {
                                                 modals.confirm('cancelOrder', function () {
-                                                    $scope.activitySpinner.start();
                                                     models['34'].actions.cancel({
                                                         key: $scope.order.key
+                                                    }, {
+                                                        activitySpinner: true
                                                     }).then(function (response) {
                                                         locals.updateLiveEntity(response);
                                                         locals.reactOnUpdate(true);
@@ -820,8 +821,7 @@
                                                         line._state = 'deleted';
                                                         ui.helper.hide();
                                                         $scope.cmd.order.scheduleUpdate(undefined, {
-                                                            noLines: true,
-                                                            noLoader: true
+                                                            noLines: true
                                                         }).then(function (response) {
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');

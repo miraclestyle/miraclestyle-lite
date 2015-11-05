@@ -182,6 +182,7 @@
                                                         }
                                                     }
                                                 }, {
+                                                    activitySpinner: true,
                                                     disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
@@ -1718,8 +1719,9 @@
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
-                                                $scope.activitySpinner.start();
-                                                promise = models['31'].actions[$scope.args.action_id]($scope.args);
+                                                promise = models['31'].actions[$scope.args.action_id]($scope.args, {
+                                                    activitySpinner: true
+                                                });
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
                                                         $.extend($scope.entity, response.data.entity);
@@ -1738,7 +1740,6 @@
                                                 });
                                                 promise['finally'](function () {
                                                     $scope.loadingSave = false;
-                                                    $scope.activitySpinner.stop();
                                                 });
                                                 return promise;
                                             };

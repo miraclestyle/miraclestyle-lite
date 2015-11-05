@@ -1095,11 +1095,16 @@ $(function () {
                         normalizeEntity = (rejection.config.normalizeEntity === undefined || rejection.config.normalizeEntity),
                         errorHandling = $injector.get('errorHandling'),
                         modelsUtil = $injector.get('modelsUtil'),
+                        shouldSpin = rejection.config.activitySpinner === true,
                         enableUI = function () {
                             $rootScope.$broadcast('disableUI', false);
                         },
                         reject,
                         shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
+
+                    if (shouldSpin) {
+                        $rootScope.activitySpinner.stop();
+                    }
 
                     if (rejection.status === -1) {
                         errorHandling.snackbar({connection_refused: true});
@@ -1154,9 +1159,13 @@ $(function () {
                     response: handleResponse,
                     responseError: handleResponse,
                     request: function (config) {
-                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true);
+                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true),
+                            shouldSpin = config.activitySpinner === true;
                         if (shouldDisable) {
                             $rootScope.$broadcast('disableUI', true);
+                        }
+                        if (shouldSpin) {
+                            $rootScope.activitySpinner.start();
                         }
                         return config || $q.when(config);
                     }
@@ -11594,9 +11603,10 @@ $(function () {
                                                 if (config.ui.specifics.beforeSave) {
                                                     config.ui.specifics.beforeSave($scope);
                                                 }
-                                                $scope.activitySpinner.start();
                                                 // create rpc from root args's action model and action id
-                                                promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
+                                                promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs, {
+                                                    activitySpinner: true
+                                                });
                                                 promise.then(function (response) {
                                                     $scope.response = response;
                                                     var keepAccess = angular.copy($scope.args.ui.access),
@@ -11630,8 +11640,6 @@ $(function () {
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {
                                                         config.ui.specifics.afterSaveError($scope, response);
                                                     }
-                                                })['finally'](function () {
-                                                    $scope.activitySpinner.stop();
                                                 });
 
                                                 return promise;
@@ -14973,9 +14981,9 @@ $(function () {
                                             return false;
                                         }
                                         config.prepareReadArguments($scope);
-                                        var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
-
-                                        $scope.activitySpinner.start();
+                                        var promise = models[config.kind].actions[$scope.args.action_id]($scope.args, {
+                                            activitySpinner: true
+                                        });
 
                                         promise.then(function (response) {
                                             $.extend($scope.entity, response.data.entity);
@@ -14994,8 +15002,6 @@ $(function () {
                                             if (angular.isDefined(config.afterSaveError)) {
                                                 config.afterSaveError($scope, response);
                                             }
-                                        })['finally'](function () {
-                                            $scope.activitySpinner.stop();
                                         });
 
                                         return promise;
@@ -17740,6 +17746,7 @@ angular.module('app')
                                                         }
                                                     }
                                                 }, {
+                                                    activitySpinner: true,
                                                     disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
@@ -19276,8 +19283,9 @@ angular.module('app')
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
-                                                $scope.activitySpinner.start();
-                                                promise = models['31'].actions[$scope.args.action_id]($scope.args);
+                                                promise = models['31'].actions[$scope.args.action_id]($scope.args, {
+                                                    activitySpinner: true
+                                                });
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
                                                         $.extend($scope.entity, response.data.entity);
@@ -19296,7 +19304,6 @@ angular.module('app')
                                                 });
                                                 promise['finally'](function () {
                                                     $scope.loadingSave = false;
-                                                    $scope.activitySpinner.stop();
                                                 });
                                                 return promise;
                                             };
@@ -20778,9 +20785,10 @@ angular.module('app')
                                         cancel: function () {
                                             if ($scope.order.state === 'checkout') {
                                                 modals.confirm('cancelOrder', function () {
-                                                    $scope.activitySpinner.start();
                                                     models['34'].actions.cancel({
                                                         key: $scope.order.key
+                                                    }, {
+                                                        activitySpinner: true
                                                     }).then(function (response) {
                                                         locals.updateLiveEntity(response);
                                                         locals.reactOnUpdate(true);
@@ -20862,8 +20870,7 @@ angular.module('app')
                                                         line._state = 'deleted';
                                                         ui.helper.hide();
                                                         $scope.cmd.order.scheduleUpdate(undefined, {
-                                                            noLines: true,
-                                                            noLoader: true
+                                                            noLines: true
                                                         }).then(function (response) {
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');

@@ -651,9 +651,9 @@
                                             return false;
                                         }
                                         config.prepareReadArguments($scope);
-                                        var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
-
-                                        $scope.activitySpinner.start();
+                                        var promise = models[config.kind].actions[$scope.args.action_id]($scope.args, {
+                                            activitySpinner: true
+                                        });
 
                                         promise.then(function (response) {
                                             $.extend($scope.entity, response.data.entity);
@@ -672,8 +672,6 @@
                                             if (angular.isDefined(config.afterSaveError)) {
                                                 config.afterSaveError($scope, response);
                                             }
-                                        })['finally'](function () {
-                                            $scope.activitySpinner.stop();
                                         });
 
                                         return promise;
