@@ -172,3 +172,75 @@
     height: 100%;
     display: block;
 }
+
+@keyframes top-slide-in {
+    0% {
+        top: 0px;
+    }
+    100% {
+        top: 64px;
+    }
+}
+
+@keyframes top-slide-out {
+    0% {
+        top: 64px;
+    }
+    100% {
+        top: 0px;
+    }
+}
+
+.progress-wrapper-loading.first-load .progress-wrapper, activity-spinner .progress-wrapper-loading .progress-wrapper {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    padding: 0px !important;
+    border-radius: inherit;
+    z-index: 1;
+}
+
+activity-spinner[z-index="high"] .progress-wrapper-loading .progress-wrapper {
+    z-index: 61;
+}
+
+content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper {
+    height: calc(100% - 56px);
+}
+
+activity-spinner .progress-wrapper-loading .progress-wrapper {
+    top: 0px;
+    height: auto;
+}
+
+activity-spinner .progress-wrapper-loading .progress-wrapper.slide.in {
+    animation-name: top-slide-in;
+}
+
+activity-spinner .progress-wrapper-loading .progress-wrapper.slide {
+    animation-duration: 0.6s;
+}
+
+activity-spinner .progress-wrapper-loading .progress-wrapper.slide.out {
+    animation-name: top-slide-out;
+    animation-delay: 0.2s;
+}
+
+activity-spinner .progress-wrapper .progress.circular.raised {
+    transition-delay: 0s;
+    transition-duration: 0.2s;
+    transition-timing-function: linear;
+    transition-property: transform;
+    transform: scale(1, 1);
+}
+
+activity-spinner .progress-wrapper-loading .progress-wrapper {
+    background: none;
+}
+
+activity-spinner .progress-wrapper.slide.out .progress.circular.raised {
+    transform: scale(0, 0);
+}
+
+activity-spinner[toolbar="true"] {}

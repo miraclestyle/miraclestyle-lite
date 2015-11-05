@@ -10337,7 +10337,7 @@ $(function () {
                     });
 
                     scope.$on('ngUploadComplete', reset);
-                    scope.$on('ngUploadCompleteError', change);
+                    scope.$on('ngUploadError', change);
                 }
             };
         })).directive('submitIfFiles', ng(function ($parse, helpers) {
@@ -10445,7 +10445,7 @@ $(function () {
                     element.bind('change', change);
                     change();
                     scope.$on('ngUploadComplete', change);
-                    scope.$on('ngUploadCompleteError', change);
+                    scope.$on('ngUploadError', change);
                     scope.$on('$destroy', function () {
                         element.unbind('change', change);
                     });
@@ -10928,11 +10928,22 @@ $(function () {
                                 $scope.save = function (dontShowMessage) {
                                     var maybePromise = save.call(scope, dontShowMessage);
                                     if (maybePromise) {
-                                        maybePromise.then($scope.formSetPristine);
+                                        $scope.activitySpinner.start();
+                                        maybePromise.then(function () {
+                                            $scope.formSetPristine();
+                                        })['finally'](function () {
+                                            $scope.activitySpinner.stop();
+                                        });
                                     }
                                     return maybePromise;
                                 };
 
+                                $scope.$on('ngUploadStart', function () {
+                                    $scope.activitySpinner.start();
+                                });
+                                $scope.$on('ngUploadEnd', function () {
+                                    $scope.activitySpinner.stop();
+                                });
                                 $scope.complete = function (response) {
                                     complete.call(scope, response);
                                     $scope.formSetPristine();
@@ -11583,6 +11594,7 @@ $(function () {
                                                 if (config.ui.specifics.beforeSave) {
                                                     config.ui.specifics.beforeSave($scope);
                                                 }
+                                                $scope.activitySpinner.start();
                                                 // create rpc from root args's action model and action id
                                                 promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
                                                 promise.then(function (response) {
@@ -11618,11 +11630,19 @@ $(function () {
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {
                                                         config.ui.specifics.afterSaveError($scope, response);
                                                     }
+                                                })['finally'](function () {
+                                                    $scope.activitySpinner.stop();
                                                 });
 
                                                 return promise;
                                             };
 
+                                            $scope.$on('ngUploadStart', function () {
+                                                $scope.activitySpinner.start();
+                                            });
+                                            $scope.$on('ngUploadEnd', function () {
+                                                $scope.activitySpinner.stop();
+                                            });
                                             $scope.complete = function (response) {
                                                 $scope.response = response;
                                                 var keepAccess = angular.copy($scope.args.ui.access),
@@ -11714,7 +11734,10 @@ $(function () {
                                                 }
 
                                                 if (promise && promise.then) {
-                                                    promise.then(complete);
+                                                    $scope.activitySpinner.start();
+                                                    promise.then(complete)['finally'](function () {
+                                                        $scope.activitySpinner.stop();
+                                                    });
 
                                                 } else {
                                                     complete();
@@ -13418,17 +13441,55 @@ $(function () {
             return {
                 templateUrl: 'core/misc/content_spinner.html',
                 link: function (scope, element) {
-                    var hide = function () {
-                        element.find(':first').addClass('ng-hide');
-                    }, show = function () {
-                        element.find(':first').removeClass('ng-hide');
-                    };
+                    var top = function () {
+                            return element.find(':first');
+                        },
+                        hide = function () {
+                            top().addClass('ng-hide');
+                        },
+                        show = function () {
+                            top().removeClass('ng-hide');
+                        };
                     scope.contentSpinner.hide.push(hide);
                     scope.contentSpinner.show.push(show);
 
                     scope.$on('$destroy', function () {
                         scope.contentSpinner.hide.remove(hide);
                         scope.contentSpinner.show.remove(show);
+                    });
+                }
+            };
+        }).directive('activitySpinner', function () {
+            return {
+                scope: true,
+                templateUrl: 'core/misc/activity_spinner.html',
+                link: function (scope, element) {
+                    scope.raised = true;
+                    scope.slide = true;
+                    var top = function () {
+                            return element.find(':first');
+                        },
+                        slide = function () {
+                            return top().find('.slide');
+                        },
+                        hide = function () {
+                            var s = slide();
+                            s.oneAnimationEnd(function () {
+                                top().addClass('ng-hide');
+                                slide().removeClass('out');
+                            });
+                            s.removeClass('in').addClass('out');
+                        },
+                        show = function () {
+                            top().removeClass('ng-hide');
+                            slide().addClass('in');
+                        };
+                    scope.activitySpinner.hide.push(hide);
+                    scope.activitySpinner.show.push(show);
+
+                    scope.$on('$destroy', function () {
+                        scope.activitySpinner.hide.remove(hide);
+                        scope.activitySpinner.show.remove(show);
                     });
                 }
             };
@@ -14908,6 +14969,8 @@ $(function () {
                                         config.prepareReadArguments($scope);
                                         var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
 
+                                        $scope.activitySpinner.start();
+
                                         promise.then(function (response) {
                                             $.extend($scope.entity, response.data.entity);
                                             var new_args = config.argumentLoader($scope);
@@ -14925,11 +14988,19 @@ $(function () {
                                             if (angular.isDefined(config.afterSaveError)) {
                                                 config.afterSaveError($scope, response);
                                             }
+                                        })['finally'](function () {
+                                            $scope.activitySpinner.stop();
                                         });
 
                                         return promise;
                                     };
 
+                                    $scope.$on('ngUploadStart', function () {
+                                        $scope.activitySpinner.start();
+                                    });
+                                    $scope.$on('ngUploadEnd', function () {
+                                        $scope.activitySpinner.stop();
+                                    });
                                     $scope.complete = function (response) {
                                         $.extend($scope.entity, response.data.entity);
                                         var newArgs = config.argumentLoader($scope);
@@ -16699,7 +16770,7 @@ angular.module('app')
                     //    enableRailsCsrf: bool
                     // }
                     var fn = attrs.ngUpload ? $parse(attrs.ngUpload) : angular.noop;
-                    var errorFn = attrs.ngUploadError ? $parse(attrs.ngUploadError) : angular.noop;
+                    var endFn = attrs.ngUploadEnd ? $parse(attrs.ngUploadEnd) : angular.noop;
                     var loading = attrs.ngUploadLoading ? $parse(attrs.ngUploadLoading) : null;
                     var opts = scope.$eval(attrs.ngUploadOptions) || {};
                     var normalize = (angular.isDefined(opts.normalize) ? opts.normalize : true);
@@ -16754,6 +16825,9 @@ angular.module('app')
                         if (formController && formController.$invalid) return false;
                         // perform check before submit file
                         if (options.beforeSubmit && options.beforeSubmit(scope, {}) == false) return false;
+
+
+                        scope.$broadcast('ngUploadStart', content);
 
                         // bind load after submit to prevent initial load triggering uploadEnd
                         iframe.bind('load', uploadEnd);
@@ -16846,8 +16920,10 @@ angular.module('app')
                             scope.$broadcast('ngUploadComplete', content);
                         } else {
                             errorHandling.snackbar(content.errors);
-                            scope.$broadcast('ngUploadCompleteError', content);
+                            scope.$broadcast('ngUploadError', content);
                         }
+
+                        scope.$broadcast('ngUploadEnd', content);
 
 
                     }
@@ -17967,6 +18043,7 @@ angular.module('app')
                                         productQuantityField.$setValidity('required', false);
                                         return;
                                     }
+                                    $scope.activitySpinner.start();
                                     models['19'].current().then(function (response) {
                                         return models['34'].actions.update_line({
                                             buyer: response.data.entity.key,
@@ -17996,6 +18073,8 @@ angular.module('app')
                                         }
 
                                         snackbar.showK('cartUpdated');
+                                    })['finally'](function () {
+                                        $scope.activitySpinner.stop();
                                     });
                                 };
 
@@ -19191,6 +19270,7 @@ angular.module('app')
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
+                                                $scope.activitySpinner.start();
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
@@ -19210,6 +19290,7 @@ angular.module('app')
                                                 });
                                                 promise['finally'](function () {
                                                     $scope.loadingSave = false;
+                                                    $scope.activitySpinner.stop();
                                                 });
                                                 return promise;
                                             };
@@ -19765,7 +19846,11 @@ angular.module('app')
                     }
                 },
                 start: function () {
-                    angular.forEach(this.hide, function (cb) {
+                    var max = this.hide.length - 1;
+                    angular.forEach(this.hide, function (cb, i) {
+                        if (i === max) {
+                            return;
+                        }
                         cb();
                     });
                     if (this.show) {
@@ -19773,6 +19858,7 @@ angular.module('app')
                     }
                 }
             };
+            $rootScope.activitySpinner = angular.copy($rootScope.contentSpinner);
             $rootScope.currentAccount = currentAccount;
             $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $rootScope.JSON = JSON;
@@ -21555,7 +21641,10 @@ angular.module('app')
                                             rootFormSetDirty();
                                         }
                                         if (promise && promise.then) {
-                                            promise.then(complete);
+                                            $scope.activitySpinner.start();
+                                            promise.then(complete)['finally'](function () {
+                                                $scope.activitySpinner.stop();
+                                            });
 
                                         } else {
                                             complete();

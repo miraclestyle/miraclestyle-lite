@@ -3,10 +3,13 @@
         <% if (config.ui.specifics.remote) { %>
         ng-upload-error="completeError(content)" 
         ng-upload="complete(content)" 
+        ng-upload-start="completeStart()"
+        ng-upload-end="completeEnd()"
         <% } else { %>
         <% } %>
         method="post" action="{{container.action}}">
         <action-toolbar spec="config.ui.specifics.toolbar"></action-toolbar>
+        <activity-spinner toolbar="true"></activity-spinner>
         <% if (config.ui.specifics.remote) { %>
             <input type="hidden" compatibility-maker="sendRootArgs" name="__body__" />
         <% } %>

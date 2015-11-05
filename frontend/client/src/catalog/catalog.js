@@ -491,6 +491,7 @@
                                         productQuantityField.$setValidity('required', false);
                                         return;
                                     }
+                                    $scope.activitySpinner.start();
                                     models['19'].current().then(function (response) {
                                         return models['34'].actions.update_line({
                                             buyer: response.data.entity.key,
@@ -520,6 +521,8 @@
                                         }
 
                                         snackbar.showK('cartUpdated');
+                                    })['finally'](function () {
+                                        $scope.activitySpinner.stop();
                                     });
                                 };
 
@@ -1715,6 +1718,7 @@
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
+                                                $scope.activitySpinner.start();
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args);
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
@@ -1734,6 +1738,7 @@
                                                 });
                                                 promise['finally'](function () {
                                                     $scope.loadingSave = false;
+                                                    $scope.activitySpinner.stop();
                                                 });
                                                 return promise;
                                             };

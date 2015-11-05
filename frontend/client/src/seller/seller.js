@@ -722,7 +722,10 @@
                                             rootFormSetDirty();
                                         }
                                         if (promise && promise.then) {
-                                            promise.then(complete);
+                                            $scope.activitySpinner.start();
+                                            promise.then(complete)['finally'](function () {
+                                                $scope.activitySpinner.stop();
+                                            });
 
                                         } else {
                                             complete();

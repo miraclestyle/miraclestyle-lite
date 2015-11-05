@@ -1296,17 +1296,55 @@
             return {
                 templateUrl: 'core/misc/content_spinner.html',
                 link: function (scope, element) {
-                    var hide = function () {
-                        element.find(':first').addClass('ng-hide');
-                    }, show = function () {
-                        element.find(':first').removeClass('ng-hide');
-                    };
+                    var top = function () {
+                            return element.find(':first');
+                        },
+                        hide = function () {
+                            top().addClass('ng-hide');
+                        },
+                        show = function () {
+                            top().removeClass('ng-hide');
+                        };
                     scope.contentSpinner.hide.push(hide);
                     scope.contentSpinner.show.push(show);
 
                     scope.$on('$destroy', function () {
                         scope.contentSpinner.hide.remove(hide);
                         scope.contentSpinner.show.remove(show);
+                    });
+                }
+            };
+        }).directive('activitySpinner', function () {
+            return {
+                scope: true,
+                templateUrl: 'core/misc/activity_spinner.html',
+                link: function (scope, element) {
+                    scope.raised = true;
+                    scope.slide = true;
+                    var top = function () {
+                            return element.find(':first');
+                        },
+                        slide = function () {
+                            return top().find('.slide');
+                        },
+                        hide = function () {
+                            var s = slide();
+                            s.oneAnimationEnd(function () {
+                                top().addClass('ng-hide');
+                                slide().removeClass('out');
+                            });
+                            s.removeClass('in').addClass('out');
+                        },
+                        show = function () {
+                            top().removeClass('ng-hide');
+                            slide().addClass('in');
+                        };
+                    scope.activitySpinner.hide.push(hide);
+                    scope.activitySpinner.show.push(show);
+
+                    scope.$on('$destroy', function () {
+                        scope.activitySpinner.hide.remove(hide);
+                        scope.activitySpinner.show.remove(show);
                     });
                 }
             };

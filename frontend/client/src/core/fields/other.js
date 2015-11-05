@@ -79,7 +79,7 @@
                     });
 
                     scope.$on('ngUploadComplete', reset);
-                    scope.$on('ngUploadCompleteError', change);
+                    scope.$on('ngUploadError', change);
                 }
             };
         })).directive('submitIfFiles', ng(function ($parse, helpers) {
@@ -187,7 +187,7 @@
                     element.bind('change', change);
                     change();
                     scope.$on('ngUploadComplete', change);
-                    scope.$on('ngUploadCompleteError', change);
+                    scope.$on('ngUploadError', change);
                     scope.$on('$destroy', function () {
                         element.unbind('change', change);
                     });

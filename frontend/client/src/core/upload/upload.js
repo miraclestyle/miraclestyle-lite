@@ -98,7 +98,7 @@ angular.module('app')
                     //    enableRailsCsrf: bool
                     // }
                     var fn = attrs.ngUpload ? $parse(attrs.ngUpload) : angular.noop;
-                    var errorFn = attrs.ngUploadError ? $parse(attrs.ngUploadError) : angular.noop;
+                    var endFn = attrs.ngUploadEnd ? $parse(attrs.ngUploadEnd) : angular.noop;
                     var loading = attrs.ngUploadLoading ? $parse(attrs.ngUploadLoading) : null;
                     var opts = scope.$eval(attrs.ngUploadOptions) || {};
                     var normalize = (angular.isDefined(opts.normalize) ? opts.normalize : true);
@@ -153,6 +153,9 @@ angular.module('app')
                         if (formController && formController.$invalid) return false;
                         // perform check before submit file
                         if (options.beforeSubmit && options.beforeSubmit(scope, {}) == false) return false;
+
+
+                        scope.$broadcast('ngUploadStart', content);
 
                         // bind load after submit to prevent initial load triggering uploadEnd
                         iframe.bind('load', uploadEnd);
@@ -245,8 +248,10 @@ angular.module('app')
                             scope.$broadcast('ngUploadComplete', content);
                         } else {
                             errorHandling.snackbar(content.errors);
-                            scope.$broadcast('ngUploadCompleteError', content);
+                            scope.$broadcast('ngUploadError', content);
                         }
+
+                        scope.$broadcast('ngUploadEnd', content);
 
 
                     }

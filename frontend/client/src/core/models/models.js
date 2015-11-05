@@ -653,6 +653,8 @@
                                         config.prepareReadArguments($scope);
                                         var promise = models[config.kind].actions[$scope.args.action_id]($scope.args);
 
+                                        $scope.activitySpinner.start();
+
                                         promise.then(function (response) {
                                             $.extend($scope.entity, response.data.entity);
                                             var new_args = config.argumentLoader($scope);
@@ -670,11 +672,19 @@
                                             if (angular.isDefined(config.afterSaveError)) {
                                                 config.afterSaveError($scope, response);
                                             }
+                                        })['finally'](function () {
+                                            $scope.activitySpinner.stop();
                                         });
 
                                         return promise;
                                     };
 
+                                    $scope.$on('ngUploadStart', function () {
+                                        $scope.activitySpinner.start();
+                                    });
+                                    $scope.$on('ngUploadEnd', function () {
+                                        $scope.activitySpinner.stop();
+                                    });
                                     $scope.complete = function (response) {
                                         $.extend($scope.entity, response.data.entity);
                                         var newArgs = config.argumentLoader($scope);

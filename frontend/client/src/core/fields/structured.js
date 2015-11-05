@@ -59,11 +59,22 @@
                                 $scope.save = function (dontShowMessage) {
                                     var maybePromise = save.call(scope, dontShowMessage);
                                     if (maybePromise) {
-                                        maybePromise.then($scope.formSetPristine);
+                                        $scope.activitySpinner.start();
+                                        maybePromise.then(function () {
+                                            $scope.formSetPristine();
+                                        })['finally'](function () {
+                                            $scope.activitySpinner.stop();
+                                        });
                                     }
                                     return maybePromise;
                                 };
 
+                                $scope.$on('ngUploadStart', function () {
+                                    $scope.activitySpinner.start();
+                                });
+                                $scope.$on('ngUploadEnd', function () {
+                                    $scope.activitySpinner.stop();
+                                });
                                 $scope.complete = function (response) {
                                     complete.call(scope, response);
                                     $scope.formSetPristine();
@@ -714,6 +725,7 @@
                                                 if (config.ui.specifics.beforeSave) {
                                                     config.ui.specifics.beforeSave($scope);
                                                 }
+                                                $scope.activitySpinner.start();
                                                 // create rpc from root args's action model and action id
                                                 promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs);
                                                 promise.then(function (response) {
@@ -749,11 +761,19 @@
                                                     if (angular.isDefined(config.ui.specifics.afterSaveError)) {
                                                         config.ui.specifics.afterSaveError($scope, response);
                                                     }
+                                                })['finally'](function () {
+                                                    $scope.activitySpinner.stop();
                                                 });
 
                                                 return promise;
                                             };
 
+                                            $scope.$on('ngUploadStart', function () {
+                                                $scope.activitySpinner.start();
+                                            });
+                                            $scope.$on('ngUploadEnd', function () {
+                                                $scope.activitySpinner.stop();
+                                            });
                                             $scope.complete = function (response) {
                                                 $scope.response = response;
                                                 var keepAccess = angular.copy($scope.args.ui.access),
@@ -845,7 +865,10 @@
                                                 }
 
                                                 if (promise && promise.then) {
-                                                    promise.then(complete);
+                                                    $scope.activitySpinner.start();
+                                                    promise.then(complete)['finally'](function () {
+                                                        $scope.activitySpinner.stop();
+                                                    });
 
                                                 } else {
                                                     complete();

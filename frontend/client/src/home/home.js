@@ -60,7 +60,11 @@
                     }
                 },
                 start: function () {
-                    angular.forEach(this.hide, function (cb) {
+                    var max = this.hide.length - 1;
+                    angular.forEach(this.hide, function (cb, i) {
+                        if (i === max) {
+                            return;
+                        }
                         cb();
                     });
                     if (this.show) {
@@ -68,6 +72,7 @@
                     }
                 }
             };
+            $rootScope.activitySpinner = angular.copy($rootScope.contentSpinner);
             $rootScope.currentAccount = currentAccount;
             $rootScope.GLOBAL_CONFIG = GLOBAL_CONFIG;
             $rootScope.JSON = JSON;
